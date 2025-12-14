@@ -52,7 +52,7 @@ python jbom.py MyProject/ -i inventory.xlsx
 **Via Python:**
 ```python
 from jbom import generate_bom_api, GenerateOptions
-opts = GenerateOptions(manufacturer=True)
+opts = GenerateOptions(verbose=True)
 result = generate_bom_api('MyProject/', 'inventory.xlsx', options=opts)
 ```
 
@@ -69,38 +69,6 @@ jBOM documentation is organized as Unix man pages for clarity and reference:
 | **README.man4.md** | [KiCad plugin setup](README.man4.md) — Eeschema integration, configurations |
 | **README.developer.md** | Technical details — Matching algorithms, architecture, extending jBOM |
 
-## Common Tasks
-
-### Generate a standard BOM
-```bash
-python jbom.py MyProject/ -i inventory.xlsx -o MyProject_bom.csv
-```
-
-### Include manufacturer and part numbers
-```bash
-python jbom.py MyProject/ -i inventory.xlsx -m
-```
-
-### Generate JLCPCB-friendly format
-```bash
-python jbom.py MyProject/ -i inventory.xlsx --format jlc
-```
-
-### Generate both JLC and standard formats at once
-```bash
-python jbom.py MyProject/ -i inventory.xlsx --multi-format jlc,standard
-```
-
-### Debug component matching issues
-```bash
-python jbom.py MyProject/ -i inventory.xlsx -d
-```
-
-### List available output columns
-```bash
-python jbom.py MyProject/ -i inventory.xlsx --list-fields
-```
-
 ## Integration Methods
 
 ### 1. KiCad Eeschema Plugin
@@ -108,7 +76,7 @@ Register jBOM in the Generate BOM dialog for interactive use within Eeschema.
 
 **Setup command:**
 ```
-python3 /absolute/path/to/kicad_jbom_plugin.py %I -i /absolute/path/to/inventory.xlsx -o %O -m
+python3 /absolute/path/to/kicad_jbom_plugin.py %I -i /absolute/path/to/inventory.xlsx -o %O
 ```
 
 See [README.man4.md](README.man4.md) for detailed setup and troubleshooting.
@@ -128,7 +96,7 @@ Embed jBOM in custom tools or workflows.
 ```python
 from jbom import generate_bom_api, GenerateOptions
 
-opts = GenerateOptions(verbose=True, manufacturer=True)
+opts = GenerateOptions(verbose=True)
 result = generate_bom_api('project/', 'inventory.xlsx', options=opts)
 
 for entry in result['bom_entries']:
