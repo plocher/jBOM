@@ -56,18 +56,6 @@ result = generate_bom_api('MyProject/', 'inventory.xlsx', options=opts)
 
 That's it! The BOM is written to `MyProject_bom.csv`.
 
-## Usage Documentation
-
-jBOM integrates three ways: as a KiCad Eeschema plugin for interactive use, via command line for scripts and CI pipelines, or as a Python library in custom tools. Detailed documentation is organized as Unix man pages:
-
-|Document|Purpose|
-|---|---|
-|[README.man1.md](README.man1.md)|CLI reference — Options, fields, examples, troubleshooting|
-|[README.man3.md](README.man3.md)|Python API reference — Classes, functions, library workflows|
-|[README.man4.md](README.man4.md)|KiCad plugin setup — Eeschema integration, configurations|
-|[README.man5.md](README.man5.md)|Inventory format — Column definitions, field naming, CSV/Excel/Numbers structure|
-|[README.developer.md](README.developer.md)|Technical details — Matching algorithms, architecture, extending jBOM|
-
 ## Component Matching
 
 jBOM uses intelligent matching to find inventory parts that fit your schematic components. First, it detects the component type (resistor, capacitor, inductor, LED, IC, etc.) from the schematic symbol. Then it extracts the physical package from the footprint and parses the component value, handling various formats like 10k, 10K0, 10000, 330R, or 3R3.
