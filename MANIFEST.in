@@ -9,4 +9,5 @@ include LICENSE
 include CHANGELOG.md
 include CONTRIBUTING.md
 include WARP.md
+include kicad_jbom_plugin.py
 recursive-include tests *.py
