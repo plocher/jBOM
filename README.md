@@ -83,6 +83,68 @@ python jbom.py MyProject/ -i MyInventory.csv -m
 python jbom.py MyProject/ -i MyInventory.numbers -o console
 ```
 
+## KiCad Workflow Integration
+
+jBOM integrates with KiCad workflows in three ways. Pick the one that fits your process.
+
+### 1) KiCad Eeschema plugin (Generate BOM)
+Register jBOM as a BOM plugin so you can generate from Eeschema.
+
+Setup
+- Eeschema → Tools → Generate BOM → Add plugin
+- Command:
+  ```
+  python3 /absolute/path/to/kicad_jbom_plugin.py %I -i /absolute/path/to/INVENTORY.xlsx -o %O -m
+  ```
+  Notes:
+  - Keep %I (input schematic) and %O (output file) as-is; KiCad fills these in
+  - Replace the absolute paths with your local paths
+
+Useful flags
+- -m add Manufacturer and MFGPN columns
+- -v verbose (shows match quality)
+- -d debug diagnostics (for troubleshooting)
+- -f "Reference,Value,LCSC,Manufacturer" choose custom output columns
+
+Workflow
+- Eeschema → Tools → Generate BOM → Select the jBOM plugin → Generate
+- The CSV appears next to your project, named <Project>_bom.csv
+
+### 2) Command-line
+Ideal for scripting and CI.
+
+```bash
+# Basic
+python jbom.py MyProject/ -i inventory.xlsx -o MyProject_bom.csv
+
+# With manufacturer/verbose
+python jbom.py MyProject/ -i inventory.xlsx -o bom.csv -m -v
+
+# Debug run (helpful when parts don't match)
+python jbom.py MyProject/ -i inventory.xlsx -d
+```
+
+Tips
+- You can pass either a project directory or a specific .kicad_sch file
+- Use --outdir to place outputs in a specific folder when not using -o
+- Use --multi-format jlc,standard to emit multiple formats in one run
+
+### 3) Python library API
+Embed jBOM into other tooling.
+
+```python
+from jbom import generate_bom_api, GenerateOptions
+
+opts = GenerateOptions(verbose=True, debug=False, manufacturer=True)
+result = generate_bom_api('MyProject/', 'inventory.xlsx', options=opts)
+
+if result['exit_code'] == 0:
+    for entry in result['bom_entries']:
+        print(f"{entry.reference}: {entry.value} -> {entry.lcsc}")
+else:
+    print(result['error_message'])
+```
+
 ## Usage Examples
 
 ### Basic BOM Generation
