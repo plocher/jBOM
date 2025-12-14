@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Unit tests for jBOM (KiCad BOM Generator)
+Unit tests for jBOM
 
 Updated to reflect current design (Dec 2025):
 - Priority-based inventory ranking (removed ACTIVE/Reorder dependencies)

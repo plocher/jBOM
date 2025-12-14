@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-jBOM - KiCad BOM Generator
+jBOM - KiCad Bill of Materials Generator
 
 Takes a KiCad project and inventory file (CSV/Excel/Numbers) to generate a bill of materials.
 Matches components to inventory entries based on type, value, and attributes.

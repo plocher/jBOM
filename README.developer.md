@@ -237,7 +237,7 @@ Warnings:
 No inventory match found Component: C3 (Core-ESP32-eagle-import:CAP0603) is a 10uF 0603 Capacitor; Issue: Value '10uF' available in 1206 packages, but not 0603
 ```
 
-# Component Type Detection in KiCad BOM Generator
+# Component Type Detection in jBOM
 
 The script determines `comp_type` using the `_get_component_type()` method (lines 384-409). Here's how it works:
 

@@ -1,6 +1,6 @@
-# Unit Tests for KiCad BOM Generator
+# Unit Tests for jBOM
 
-This document provides an overview of the unit test suite for the KiCad v9 BOM Generator and instructions for running the tests.
+This document provides an overview of the unit test suite for jBOM and instructions for running the tests.
 
 ## Test Suite Overview
 

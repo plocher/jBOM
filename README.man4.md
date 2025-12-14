@@ -2,7 +2,7 @@
 
 ## NAME
 
-jbom — KiCad BOM Generator Plugin for Eeschema
+jbom — jBOM Plugin for KiCad Eeschema
 
 ## DESCRIPTION
 
