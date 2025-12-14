@@ -94,4 +94,4 @@ Hook failed? → Fix issues → git add → git commit (retry)
 
 - **Full guide**: [PRE_COMMIT_SETUP.md](PRE_COMMIT_SETUP.md)
 - **Security incident**: [SECURITY_INCIDENT_REPORT.md](SECURITY_INCIDENT_REPORT.md)
-- **Contributing**: [CONTRIBUTING.md](CONTRIBUTING.md)
+- **Contributing**: [docs/CONTRIBUTING.md](../docs/CONTRIBUTING.md)

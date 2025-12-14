@@ -6,4 +6,5 @@ include README.man5.md
 include LICENSE
 include kicad_jbom_plugin.py
 recursive-include tests *.py
-global-exclude docs/*
+recursive-include docs *
+global-exclude release-management/*

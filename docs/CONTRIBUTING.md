@@ -40,7 +40,7 @@ The repository uses pre-commit hooks to prevent secrets, enforce code style, and
 pre-commit install
 ```
 
-For detailed information about pre-commit hooks, see [PRE_COMMIT_SETUP.md](PRE_COMMIT_SETUP.md).
+For detailed information about pre-commit hooks, see [PRE_COMMIT_SETUP.md](../release-management/PRE_COMMIT_SETUP.md).
 
 ## Running Tests
 

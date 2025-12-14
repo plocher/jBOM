@@ -62,8 +62,8 @@ Comprehensive unit tests organized into 27 test classes:
 - `README.man3.md` - Python library API reference for programmatic use
 - `README.man4.md` - KiCad Eeschema plugin setup and integration guide
 - `README.man5.md` - Inventory file format specification with field definitions
-- `README.developer.md` - Technical architecture, matching algorithms, field system, and extension points
-- `README.tests.md` - Test suite documentation with descriptions and running instructions
+- `docs/README.developer.md` - Technical architecture, matching algorithms, field system, and extension points
+- `docs/README.tests.md` - Test suite documentation with descriptions and running instructions
 - `WARP.md` - This file, guidance for WARP agents working in this repo
 
 ## Directory Structure
@@ -77,9 +77,17 @@ jBOM/
 ├── README.man3.md            # Python library API (man page style)
 ├── README.man4.md            # KiCad plugin setup (man page style)
 ├── README.man5.md            # Inventory file format (man page style)
-├── README.developer.md       # Technical architecture and extension points
-├── README.tests.md           # Test suite documentation
-├── WARP.md                  # This file
+├── docs/
+│   ├── README.developer.md   # Technical architecture and extension points
+│   ├── README.tests.md       # Test suite documentation
+│   ├── CHANGELOG.md          # Version history
+│   └── CONTRIBUTING.md       # Contribution guidelines
+├── release-management/
+│   ├── WARP.md              # This file
+│   ├── PRE_COMMIT_SETUP.md   # Pre-commit hook configuration
+│   ├── PRE_COMMIT_QUICK_REFERENCE.md  # Pre-commit quick reference
+│   ├── GITHUB_SECRETS_SETUP.md        # GitHub secrets configuration
+│   └── SECURITY_INCIDENT_REPORT.md    # Security incident documentation
 ├── kicad_jbom_plugin.py     # KiCad Eeschema plugin wrapper
 ├── LICENSE                  # License terms
 └── .gitignore               # Git configuration
@@ -220,4 +228,4 @@ Contribute at: https://github.com/plocher/jBOM/issues and https://github.com/plo
 - Run full suite: `python -m unittest test_jbom -v`
 - Run specific class: `python -m unittest test_jbom.TestClassName -v`
 - Run specific test: `python -m unittest test_jbom.TestClassName.test_method -v`
-- Check test coverage areas in README.tests.md
+- Check test coverage areas in docs/README.tests.md
