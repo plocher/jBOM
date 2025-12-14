@@ -644,7 +644,6 @@ class TestKiCadParser(unittest.TestCase):
         """Test InventoryItem dataclass creation"""
         item = InventoryItem(
             ipn='R001',
-            name='330R 5%',
             keywords='resistor',
             category='RES',
             description='330Ω 5% 0603 resistor',
@@ -659,8 +658,8 @@ class TestKiCadParser(unittest.TestCase):
             manufacturer='UNI-ROYAL',
             mfgpn='0603WAJ0331T5E',
             datasheet='https://example.com',
-            package='0603',  # Package instead of generic
-            priority=1  # Priority instead of ACTIVE/Reorder/stock fields
+            package='0603',
+            priority=1
         )
         
         self.assertEqual(item.ipn, 'R001')
@@ -1017,7 +1016,7 @@ class TestHierarchicalSupport(unittest.TestCase):
 
     def test_is_hierarchical_schematic(self):
         """Test detection of hierarchical schematics"""
-        from kicad_bom_generator import is_hierarchical_schematic
+        from jbom import is_hierarchical_schematic
         
         # Create hierarchical schematic
         hierarchical_file = self.create_hierarchical_root()
@@ -1029,7 +1028,7 @@ class TestHierarchicalSupport(unittest.TestCase):
 
     def test_extract_sheet_files(self):
         """Test extraction of sheet file references"""
-        from kicad_bom_generator import extract_sheet_files
+        from jbom import extract_sheet_files
         
         hierarchical_file = self.create_hierarchical_root()
         sheet_files = extract_sheet_files(hierarchical_file)
@@ -1040,7 +1039,7 @@ class TestHierarchicalSupport(unittest.TestCase):
 
     def test_find_best_schematic_normal_file(self):
         """Test finding best schematic with normal files"""
-        from kicad_bom_generator import find_best_schematic
+        from jbom import find_best_schematic
         
         # Create files - should prefer directory-matching name
         self.create_simple_schematic("test_project.kicad_sch")
@@ -1051,7 +1050,7 @@ class TestHierarchicalSupport(unittest.TestCase):
 
     def test_find_best_schematic_hierarchical_priority(self):
         """Test that hierarchical schematics are preferred"""
-        from kicad_bom_generator import find_best_schematic
+        from jbom import find_best_schematic
         
         # Create hierarchical root and simple schematic
         self.create_hierarchical_root("test_project.kicad_sch")
@@ -1062,7 +1061,7 @@ class TestHierarchicalSupport(unittest.TestCase):
 
     def test_find_best_schematic_autosave_warning(self):
         """Test autosave file handling with warning"""
-        from kicad_bom_generator import find_best_schematic
+        from jbom import find_best_schematic
         import io
         import sys
         
@@ -1086,7 +1085,7 @@ class TestHierarchicalSupport(unittest.TestCase):
 
     def test_process_hierarchical_schematic(self):
         """Test processing of hierarchical schematic files"""
-        from kicad_bom_generator import process_hierarchical_schematic
+        from jbom import process_hierarchical_schematic
         
         # Create hierarchical root
         root_file = self.create_hierarchical_root()
@@ -1106,7 +1105,7 @@ class TestHierarchicalSupport(unittest.TestCase):
 
     def test_process_hierarchical_missing_subsheet(self):
         """Test handling of missing sub-sheet files"""
-        from kicad_bom_generator import process_hierarchical_schematic
+        from jbom import process_hierarchical_schematic
         import io
         import sys
         
@@ -1133,7 +1132,7 @@ class TestHierarchicalSupport(unittest.TestCase):
 
     def test_process_simple_schematic(self):
         """Test that simple schematics are processed normally"""
-        from kicad_bom_generator import process_hierarchical_schematic
+        from jbom import process_hierarchical_schematic
         
         simple_file = self.create_simple_schematic()
         files_to_process = process_hierarchical_schematic(simple_file, self.project_dir)
@@ -1391,7 +1390,7 @@ class TestNormalizeComponentType(unittest.TestCase):
     
     def test_normalize_component_type_mapping(self):
         """Test that normalize_component_type maps component types correctly"""
-        from kicad_bom_generator import normalize_component_type
+        from jbom import normalize_component_type
         
         # Test direct mapping to existing categories
         self.assertEqual(normalize_component_type('R'), 'RES')
@@ -1421,7 +1420,7 @@ class TestUtilityFunctions(unittest.TestCase):
     
     def test_shorten_url(self):
         """Test URL shortening function"""
-        from kicad_bom_generator import _shorten_url
+        from jbom import _shorten_url
         
         # Test short URL (no change)
         short_url = 'https://example.com'
@@ -1447,7 +1446,7 @@ class TestUtilityFunctions(unittest.TestCase):
     
     def test_wrap_text(self):
         """Test text wrapping function"""
-        from kicad_bom_generator import _wrap_text
+        from jbom import _wrap_text
         
         # Test short text (no wrapping needed)
         short_text = 'Short text'
@@ -1564,7 +1563,7 @@ class TestBOMTableFormatting(unittest.TestCase):
         """Test basic BOM table printing"""
         import sys
         from io import StringIO
-        from kicad_bom_generator import print_bom_table
+        from jbom import print_bom_table
         
         # Capture stdout
         old_stdout = sys.stdout
@@ -1592,7 +1591,7 @@ class TestBOMTableFormatting(unittest.TestCase):
         """Test verbose BOM table printing"""
         import sys
         from io import StringIO
-        from kicad_bom_generator import print_bom_table
+        from jbom import print_bom_table
         
         # Capture stdout
         old_stdout = sys.stdout
@@ -1617,7 +1616,7 @@ class TestBOMTableFormatting(unittest.TestCase):
         """Test BOM table printing with empty entries"""
         import sys
         from io import StringIO
-        from kicad_bom_generator import print_bom_table
+        from jbom import print_bom_table
         
         # Capture stdout
         old_stdout = sys.stdout
@@ -1647,7 +1646,7 @@ class TestDebugDiagnostics(unittest.TestCase):
         """Test debug diagnostics printing with empty diagnostics"""
         import sys
         from io import StringIO
-        from kicad_bom_generator import print_debug_diagnostics
+        from jbom import print_debug_diagnostics
         
         # Capture stdout
         old_stdout = sys.stdout
@@ -1717,16 +1716,17 @@ class TestSpreadsheetSupport(unittest.TestCase):
             # Check first item
             r_item = next((item for item in matcher.inventory if item.ipn == 'R001'), None)
             self.assertIsNotNone(r_item)
-            self.assertEqual(r_item.name, '330R 5%')
             self.assertEqual(r_item.category, 'RES')
             self.assertEqual(r_item.value, '330R')
             self.assertEqual(r_item.lcsc, 'C25231')
+            self.assertEqual(r_item.manufacturer, 'UNI-ROYAL')
             
             # Check second item
             c_item = next((item for item in matcher.inventory if item.ipn == 'C001'), None)
             self.assertIsNotNone(c_item)
-            self.assertEqual(c_item.name, '100nF X7R')
             self.assertEqual(c_item.category, 'CAP')
+            self.assertEqual(c_item.value, '100nF')
+            self.assertEqual(c_item.lcsc, 'C14663')
             
         finally:
             Path(temp_excel.name).unlink()
@@ -1808,6 +1808,6 @@ class TestSpreadsheetSupport(unittest.TestCase):
 
 if __name__ == '__main__':
     # Import the constants needed for skip conditions
-    from kicad_bom_generator import EXCEL_SUPPORT, NUMBERS_SUPPORT
+    from jbom import EXCEL_SUPPORT, NUMBERS_SUPPORT
     # Run with verbose output
     unittest.main(verbosity=2)
