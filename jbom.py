@@ -11,6 +11,7 @@ import sys
 import csv
 import argparse
 import warnings
+import json
 from pathlib import Path
 from typing import List, Dict, Optional, Tuple, Union
 from dataclasses import dataclass, field
@@ -2346,12 +2347,15 @@ def main():
     parser.add_argument('project_path', help='Path to KiCad project directory')
     parser.add_argument('-i', '--inventory', required=True, help='Path to inventory file (.csv, .xlsx, .xls, or .numbers)')
     parser.add_argument('-o', '--output', help='Output CSV file path')
+    parser.add_argument('--outdir', help='Directory for output files (used when --output is not provided)')
     parser.add_argument('-v', '--verbose', action='store_true', help='Include debug information and show tied priority options')
     parser.add_argument('-m', '--manufacturer', action='store_true', help='Include Manufacturer and MFGPN columns in BOM output')
     parser.add_argument('-f', '--fields', help='Comma-separated list of fields to include in BOM output. Use --list-fields to see available fields')
     parser.add_argument('--list-fields', action='store_true', help='List all available fields from inventory and component data, then exit')
     parser.add_argument('-d', '--debug', action='store_true', help='Add detailed matching information to Notes column for debugging')
     parser.add_argument('--smd', action='store_true', help='Include only SMD (Surface Mount Device) components in BOM output')
+    parser.add_argument('--quiet', action='store_true', help='Suppress non-essential output (useful for CI)')
+    parser.add_argument('--json-report', help='Write a JSON report with run statistics to the given path')
     
     args = parser.parse_args()
     
@@ -2392,7 +2396,12 @@ def main():
     else:
         # If project_path points to a directory, we infer name from it; otherwise from parent
         out_base = project_path.name if project_path.is_dir() else project_path.stem
-        output_path = (project_path if project_path.is_dir() else project_path.parent) / f"{out_base}_bom.csv"
+        base_dir = Path(args.outdir) if args.outdir else (project_path if project_path.is_dir() else project_path.parent)
+        try:
+            base_dir.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            pass
+        output_path = base_dir / f"{out_base}_bom.csv"
 
     # Collect file information for formatted output
     file_info = []
@@ -2518,33 +2527,63 @@ def main():
             print(f"Error: Unknown fields: {', '.join(invalid_fields)}")
             print(f"Use --list-fields to see available fields")
             sys.exit(1)
-    
-    # Handle output based on mode
+    # JSON report (optional)
+    if args.json_report:
+        try:
+            unmatched = sum(1 for e in bom_entries if not (e.lcsc or '').strip())
+            report = {
+                'project': str(project_path),
+                'inventory': str(inventory_path),
+                'bom_entries': len(bom_entries),
+                'unmatched': unmatched,
+                'smd_excluded': smd_excluded_count,
+                'format': 'console' if console_output else 'csv',
+                'output': '-' if console_output else str(output_path),
+                'verbose': args.verbose,
+                'debug': args.debug,
+                'smd_only': args.smd,
+            }
+            with open(args.json_report, 'w', encoding='utf-8') as jf:
+                json.dump(report, jf, indent=2)
+        except Exception:
+            pass
+
     if console_output:
         # Console output mode - don't write CSV file, just show table and summary
-        print_formatted_summary(file_info, inventory_path, len(matcher.inventory), 
-                               output_path, len(bom_entries), args.smd, smd_excluded_count, console_output=True)
-        
-        # Print debug diagnostics first if enabled
-        if args.debug and debug_diagnostics:
-            print_debug_diagnostics(debug_diagnostics)
-        
-        # Print BOM table
-        print_bom_table(bom_entries, verbose=args.verbose, include_mfg=args.manufacturer)
+        if not args.quiet:
+            print_formatted_summary(file_info, inventory_path, len(matcher.inventory), 
+                                   output_path, len(bom_entries), args.smd, smd_excluded_count, console_output=True)
+            # Print debug diagnostics first if enabled
+            if args.debug and debug_diagnostics:
+                print_debug_diagnostics(debug_diagnostics)
+            # Print BOM table
+            print_bom_table(bom_entries, verbose=args.verbose, include_mfg=args.manufacturer)
     else:
         # Normal CSV output mode
         bom_generator.write_bom_csv(bom_entries, output_path, fields)
         
         # Print formatted summary
-        print_formatted_summary(file_info, inventory_path, len(matcher.inventory), 
-                               output_path, len(bom_entries), args.smd, smd_excluded_count, console_output=False)
-        
-        # Print debug diagnostics if debug mode is enabled and there are diagnostics
-        if args.debug and debug_diagnostics:
-            print_debug_diagnostics(debug_diagnostics)
+        if not args.quiet:
+            print_formatted_summary(file_info, inventory_path, len(matcher.inventory), 
+                                   output_path, len(bom_entries), args.smd, smd_excluded_count, console_output=False)
+            # Print debug diagnostics if debug mode is enabled and there are diagnostics
+            if args.debug and debug_diagnostics:
+                print_debug_diagnostics(debug_diagnostics)
 
-
+    # Exit with 2 when there are unmatched entries (warning state), else 0
+    try:
+        unmatched_exit = sum(1 for e in bom_entries if not (e.lcsc or '').strip())
+        if unmatched_exit > 0:
+            sys.exit(2)
+    except Exception:
+        pass
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except SystemExit as e:
+        raise
+    except Exception as e:
+        # Hard error
+        sys.exit(1)
