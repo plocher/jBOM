@@ -4,6 +4,30 @@ All notable changes to jBOM are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.2] - 2025-12-14
+
+### Added
+- Pre-commit hook configuration for automated secret detection and code quality
+- Comprehensive pre-commit hooks guide: `PRE_COMMIT_SETUP.md`
+- Quick reference guide for pre-commit operations: `PRE_COMMIT_QUICK_REFERENCE.md`
+- Security incident report documentation: `SECURITY_INCIDENT_REPORT.md`
+- GitHub secrets and CI/CD configuration guide: `GITHUB_SECRETS_SETUP.md`
+
+### Changed
+- Reorganized documentation for clarity:
+  - All user-facing and developer documentation moved to `docs/` folder (included in PyPI)
+  - Release management and security documentation moved to `release-management/` folder (excluded from PyPI)
+  - `README.man*` files consolidated in `docs/` for consistency
+- Simplified MANIFEST.in using `recursive-include docs *` pattern
+- Updated cross-references throughout documentation to reflect new structure
+- WARP.md now includes updated directory structure
+
+### Improved
+- Repository root is now cleaner with only `README.md` at the top level
+- Better separation of concerns: user docs vs release/security management
+- PyPI package is leaner by excluding release management documentation
+- All documentation now properly indexed in `docs/` folder
+
 ## [1.0.1] - 2025-12-14
 
 ### Added
@@ -70,5 +94,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - `README.developer.md` - Technical architecture and extension points
   - Full docstrings and inline comments throughout
 
+[1.0.2]: https://github.com/SPCoast/jBOM/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/SPCoast/jBOM/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/SPCoast/jBOM/releases/tag/v1.0.0
