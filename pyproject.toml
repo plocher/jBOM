@@ -1,29 +1,57 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "jbom"
-version = "1.0.0"
-description = "KiCad inventory-matched Bill of Materials generator"
-authors = [{name = "John Plocher", email = "John.Plocher@gmail.com"}]
+version = "1.0.1"
+description = "Intelligent KiCad Bill of Materials generator with inventory matching"
 readme = "README.md"
-requires-python = ">=3.9"
-license = {file = "LICENSE"}
-keywords = ["kicad", "bom", "electronics", "inventory"]
+license = {text = "AGPLv3"}
+authors = [{name = "John Plocher", email = "John.Plocher@gmail.com"}]
+keywords = ["kicad", "bom", "bill-of-materials", "pcb", "electronics", "inventory"]
 classifiers = [
-  "Programming Language :: Python :: 3",
-  "License :: OSI Approved :: MIT License",
-  "Operating System :: OS Independent",
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Manufacturing",
+    "License :: OSI Approved :: GNU Affero General Public License v3",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Electronics",
+    "Topic :: Office/Business",
+    "Topic :: Utilities",
 ]
-
+requires-python = ">=3.9"
 dependencies = [
-  "sexpdata",
+    "sexpdata>=0.0.3",
 ]
 
 [project.optional-dependencies]
-excel = ["openpyxl"]
-numbers = ["numbers-parser"]
+excel = ["openpyxl>=3.0"]
+numbers = ["numbers-parser>=3.0"]
+dev = [
+    "build>=0.10.0",
+    "twine>=4.0.0",
+    "wheel>=0.37.0",
+]
+all = [
+    "openpyxl>=3.0",
+    "numbers-parser>=3.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/SPCoast/jBOM"
+Documentation = "https://github.com/SPCoast/jBOM#readme"
+Repository = "https://github.com/SPCoast/jBOM.git"
+Issues = "https://github.com/SPCoast/jBOM/issues"
 
 [project.scripts]
 jbom = "jbom:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
