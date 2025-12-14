@@ -575,8 +575,8 @@ class TestBOMGeneration(unittest.TestCase):
             temp_csv = Path(f.name)
         
         try:
-            # Basic field list (non-verbose, no manufacturer)
-            fields = ['Reference', 'Quantity', 'Description', 'Value', 'Footprint', 'LCSC', 'Datasheet', 'SMD']
+            # Basic field list (non-verbose, no manufacturer) - normalized snake_case
+            fields = ['reference', 'quantity', 'description', 'value', 'footprint', 'lcsc', 'datasheet', 'smd']
             bom_gen.write_bom_csv(bom_entries, temp_csv, fields)
             
             # Read back and verify format
@@ -584,7 +584,8 @@ class TestBOMGeneration(unittest.TestCase):
                 reader = csv.reader(f)
                 header = next(reader)
                 
-                expected_header = ['Reference', 'Quantity', 'Description', 'Value', 'Footprint', 'LCSC', 'Datasheet', 'SMD']
+                # Headers should be Title Case
+                expected_header = ['Reference', 'Quantity', 'Description', 'Value', 'Footprint', 'Lcsc', 'Datasheet', 'Smd']
                 self.assertEqual(header, expected_header)
                 
                 # Should have at least one data row
@@ -602,8 +603,8 @@ class TestBOMGeneration(unittest.TestCase):
             temp_csv = Path(f.name)
         
         try:
-            # Verbose field list with manufacturer
-            fields = ['Reference', 'Quantity', 'Description', 'Value', 'Footprint', 'LCSC', 'Manufacturer', 'MFGPN', 'Datasheet', 'SMD', 'Match_Quality', 'Priority']
+            # Verbose field list with manufacturer - normalized snake_case
+            fields = ['reference', 'quantity', 'description', 'value', 'footprint', 'lcsc', 'manufacturer', 'mfgpn', 'datasheet', 'smd', 'match_quality', 'priority']
             bom_gen.write_bom_csv(bom_entries, temp_csv, fields)
             
             # Read back and verify format includes extra columns
@@ -611,11 +612,11 @@ class TestBOMGeneration(unittest.TestCase):
                 reader = csv.reader(f)
                 header = next(reader)
                 
-                # Should include manufacturer and verbose columns (simplified)
+                # Should include manufacturer and verbose columns (simplified) - Title Case headers
                 self.assertIn('Manufacturer', header)
-                self.assertIn('MFGPN', header)
-                self.assertIn('Match_Quality', header)
-                self.assertIn('Priority', header)  # Priority instead of ACTIVE/Reorder/Stock
+                self.assertIn('Mfgpn', header)
+                self.assertIn('Match Quality', header)
+                self.assertIn('Priority', header)
         finally:
             temp_csv.unlink()
 
@@ -780,22 +781,22 @@ class TestFieldPrefixSystem(unittest.TestCase):
         bom_gen = BOMGenerator(self.components, self.matcher)
         available_fields = bom_gen.get_available_fields(self.components)
         
-        # Should have standard BOM fields
-        self.assertIn('Reference', available_fields)
-        self.assertIn('Quantity', available_fields)
-        self.assertIn('Value', available_fields)
+        # Should have standard BOM fields (normalized snake_case)
+        self.assertIn('reference', available_fields)
+        self.assertIn('quantity', available_fields)
+        self.assertIn('value', available_fields)
         
         # Should have inventory fields (both prefixed and unprefixed where appropriate)
-        self.assertIn('I:Tolerance', available_fields)
-        self.assertIn('I:Package', available_fields)
+        self.assertIn('i:tolerance', available_fields)
+        self.assertIn('i:package', available_fields)
         
         # Should have component property fields
-        self.assertIn('C:Tolerance', available_fields)
-        self.assertIn('C:Voltage', available_fields)
+        self.assertIn('c:tolerance', available_fields)
+        self.assertIn('c:voltage', available_fields)
         
         # Should have ambiguous fields that exist in both sources
-        self.assertIn('Tolerance', available_fields)  # Ambiguous field
-        self.assertIn('Voltage', available_fields)    # Ambiguous field
+        self.assertIn('tolerance', available_fields)  # Ambiguous field
+        self.assertIn('voltage', available_fields)    # Ambiguous field
 
     def test_field_value_extraction_prefixed(self):
         """Test field value extraction with explicit prefixes"""
@@ -850,8 +851,8 @@ class TestFieldPrefixSystem(unittest.TestCase):
         
         # Test ambiguous field (should return combined value)
         tolerance_value = bom_gen._get_field_value('Tolerance', resistor_entry, component, inventory_item)
-        self.assertIn('I:', tolerance_value)  # Should contain inventory marker
-        self.assertIn('C:', tolerance_value)  # Should contain component marker
+        self.assertIn('i:', tolerance_value)  # Should contain inventory marker (lowercase)
+        self.assertIn('c:', tolerance_value)  # Should contain component marker (lowercase)
 
 
 class TestDebugFunctionality(unittest.TestCase):
@@ -1277,8 +1278,8 @@ class TestCustomFieldOutput(unittest.TestCase):
             temp_csv = Path(f.name)
         
         try:
-            # Test custom fields including prefixed ones
-            custom_fields = ['Reference', 'Value', 'I:Package', 'C:Tolerance', 'Manufacturer']
+            # Test custom fields including prefixed ones (normalized snake_case)
+            custom_fields = ['reference', 'value', 'i:package', 'c:tolerance', 'manufacturer']
             bom_gen.write_bom_csv(bom_entries, temp_csv, custom_fields)
             
             # Read back and verify
@@ -1286,6 +1287,7 @@ class TestCustomFieldOutput(unittest.TestCase):
                 reader = csv.reader(f)
                 header = next(reader)
                 
+                # Headers should be Title Case without spaces after prefixes
                 expected_header = ['Reference', 'Value', 'I:Package', 'C:Tolerance', 'Manufacturer']
                 self.assertEqual(header, expected_header)
                 
@@ -1308,8 +1310,8 @@ class TestCustomFieldOutput(unittest.TestCase):
             temp_csv = Path(f.name)
         
         try:
-            # Use ambiguous field that should auto-split
-            custom_fields = ['Reference', 'Value', 'Tolerance']
+            # Use ambiguous field that should auto-split (normalized snake_case)
+            custom_fields = ['reference', 'value', 'tolerance']
             bom_gen.write_bom_csv(bom_entries, temp_csv, custom_fields)
             
             # Read back and verify
@@ -1317,7 +1319,7 @@ class TestCustomFieldOutput(unittest.TestCase):
                 reader = csv.reader(f)
                 header = next(reader)
                 
-                # Should auto-expand to separate I: and C: columns
+                # Should auto-expand to separate I: and C: columns with Title Case headers
                 expected_header = ['Reference', 'Value', 'I:Tolerance', 'C:Tolerance']
                 self.assertEqual(header, expected_header)
                 
@@ -1830,105 +1832,108 @@ class TestFieldArgumentParsing(unittest.TestCase):
         """Test expanding +jlc preset"""
         from jbom import _parse_fields_argument
         available_fields = {
-            'Reference': 'Standard BOM field',
-            'Quantity': 'Standard BOM field',
-            'LCSC': 'Standard BOM field',
-            'Value': 'Standard BOM field',
-            'Footprint': 'Standard BOM field',
-            'Description': 'Standard BOM field',
-            'Datasheet': 'Standard BOM field',
-            'SMD': 'Standard BOM field',
+            'reference': 'Standard BOM field',
+            'quantity': 'Standard BOM field',
+            'lcsc': 'Standard BOM field',
+            'value': 'Standard BOM field',
+            'footprint': 'Standard BOM field',
+            'description': 'Standard BOM field',
+            'datasheet': 'Standard BOM field',
+            'smd': 'Standard BOM field',
+            'i:package': 'Inventory field',
         }
         
         result = _parse_fields_argument('+jlc', available_fields, False, False)
-        self.assertIn('Reference', result)
-        self.assertIn('Quantity', result)
-        self.assertIn('LCSC', result)
-        self.assertIn('Value', result)
+        self.assertIn('reference', result)
+        self.assertIn('quantity', result)
+        self.assertIn('lcsc', result)
+        self.assertIn('value', result)
+        self.assertIn('i:package', result)
     
     def test_parse_standard_preset(self):
         """Test expanding +standard preset"""
         from jbom import _parse_fields_argument
         available_fields = {
-            'Reference': 'Standard',
-            'Quantity': 'Standard',
-            'Description': 'Standard',
-            'Value': 'Standard',
-            'Footprint': 'Standard',
-            'LCSC': 'Standard',
-            'Datasheet': 'Standard',
-            'SMD': 'Standard',
+            'reference': 'Standard',
+            'quantity': 'Standard',
+            'description': 'Standard',
+            'value': 'Standard',
+            'footprint': 'Standard',
+            'lcsc': 'Standard',
+            'datasheet': 'Standard',
+            'smd': 'Standard',
         }
         
         result = _parse_fields_argument('+standard', available_fields, False, False)
-        self.assertIn('Reference', result)
-        self.assertIn('Quantity', result)
-        self.assertIn('Description', result)
+        self.assertIn('reference', result)
+        self.assertIn('quantity', result)
+        self.assertIn('description', result)
     
     def test_parse_minimal_preset(self):
         """Test expanding +minimal preset"""
         from jbom import _parse_fields_argument
         available_fields = {
-            'Reference': 'Standard',
-            'Quantity': 'Standard',
-            'Value': 'Standard',
-            'LCSC': 'Standard',
+            'reference': 'Standard',
+            'quantity': 'Standard',
+            'value': 'Standard',
+            'lcsc': 'Standard',
         }
         
         result = _parse_fields_argument('+minimal', available_fields, False, False)
-        self.assertEqual(result, ['Reference', 'Quantity', 'Value', 'LCSC'])
+        self.assertEqual(result, ['reference', 'quantity', 'value', 'lcsc'])
     
     def test_parse_all_preset(self):
         """Test expanding +all preset to include all available fields"""
         from jbom import _parse_fields_argument
         available_fields = {
-            'Reference': 'Standard',
-            'Value': 'Standard',
-            'CustomField': 'Custom',
-            'LCSC': 'Standard',
+            'reference': 'Standard',
+            'value': 'Standard',
+            'customfield': 'Custom',
+            'lcsc': 'Standard',
         }
         
         result = _parse_fields_argument('+all', available_fields, False, False)
         # Should include all fields in sorted order
-        self.assertEqual(result, ['CustomField', 'LCSC', 'Reference', 'Value'])
+        self.assertEqual(result, ['customfield', 'lcsc', 'reference', 'value'])
     
     def test_parse_custom_fields(self):
         """Test parsing custom comma-separated field list"""
         from jbom import _parse_fields_argument
         available_fields = {
-            'Reference': 'Standard',
-            'Quantity': 'Standard',
-            'Value': 'Standard',
-            'LCSC': 'Standard',
+            'reference': 'Standard',
+            'quantity': 'Standard',
+            'value': 'Standard',
+            'lcsc': 'Standard',
         }
         
-        result = _parse_fields_argument('Reference,Quantity,Value,LCSC', available_fields, False, False)
-        self.assertEqual(result, ['Reference', 'Quantity', 'Value', 'LCSC'])
+        result = _parse_fields_argument('reference,quantity,value,lcsc', available_fields, False, False)
+        self.assertEqual(result, ['reference', 'quantity', 'value', 'lcsc'])
     
     def test_parse_mixed_preset_and_custom(self):
         """Test mixing preset expansion with custom fields"""
         from jbom import _parse_fields_argument
         available_fields = {
-            'Reference': 'Standard',
-            'Quantity': 'Standard',
-            'Value': 'Standard',
-            'LCSC': 'Standard',
-            'CustomField': 'Custom',
-            'Datasheet': 'Standard',
-            'SMD': 'Standard',
-            'Description': 'Standard',
-            'Footprint': 'Standard',
+            'reference': 'Standard',
+            'quantity': 'Standard',
+            'value': 'Standard',
+            'lcsc': 'Standard',
+            'customfield': 'Custom',
+            'datasheet': 'Standard',
+            'smd': 'Standard',
+            'description': 'Standard',
+            'footprint': 'Standard',
+            'i:package': 'Inventory',
         }
         
-        result = _parse_fields_argument('+jlc,CustomField', available_fields, False, False)
-        self.assertIn('Reference', result)
-        self.assertIn('CustomField', result)
-        self.assertIn('LCSC', result)
+        result = _parse_fields_argument('+jlc,customfield', available_fields, False, False)
+        self.assertIn('reference', result)
+        self.assertIn('customfield', result)
+        self.assertIn('lcsc', result)
     
     def test_invalid_preset_name(self):
         """Test error when using invalid preset name"""
         from jbom import _parse_fields_argument
-        available_fields = {'Reference': 'Standard', 'Value': 'Standard'}
+        available_fields = {'reference': 'Standard', 'value': 'Standard'}
         
         with self.assertRaises(ValueError) as context:
             _parse_fields_argument('+invalid', available_fields, False, False)
@@ -1939,10 +1944,10 @@ class TestFieldArgumentParsing(unittest.TestCase):
     def test_invalid_field_name(self):
         """Test error when using invalid field name"""
         from jbom import _parse_fields_argument
-        available_fields = {'Reference': 'Standard', 'Value': 'Standard'}
+        available_fields = {'reference': 'Standard', 'value': 'Standard'}
         
         with self.assertRaises(ValueError) as context:
-            _parse_fields_argument('Reference,InvalidField', available_fields, False, False)
+            _parse_fields_argument('reference,InvalidField', available_fields, False, False)
         
         self.assertIn('Unknown field', str(context.exception))
         self.assertIn('InvalidField', str(context.exception))
@@ -1951,30 +1956,30 @@ class TestFieldArgumentParsing(unittest.TestCase):
         """Test that duplicate fields are removed"""
         from jbom import _parse_fields_argument
         available_fields = {
-            'Reference': 'Standard',
-            'Value': 'Standard',
+            'reference': 'Standard',
+            'value': 'Standard',
         }
         
-        result = _parse_fields_argument('Reference,Value,Reference', available_fields, False, False)
+        result = _parse_fields_argument('reference,value,reference', available_fields, False, False)
         # Should have only 2 items, not 3
-        self.assertEqual(len([f for f in result if f == 'Reference']), 1)
+        self.assertEqual(len([f for f in result if f == 'reference']), 1)
     
     def test_empty_fields_argument(self):
         """Test that empty --fields defaults to standard preset"""
         from jbom import _parse_fields_argument
         available_fields = {
-            'Reference': 'Standard',
-            'Quantity': 'Standard',
-            'Description': 'Standard',
-            'Value': 'Standard',
-            'Footprint': 'Standard',
-            'LCSC': 'Standard',
-            'Datasheet': 'Standard',
-            'SMD': 'Standard',
+            'reference': 'Standard',
+            'quantity': 'Standard',
+            'description': 'Standard',
+            'value': 'Standard',
+            'footprint': 'Standard',
+            'lcsc': 'Standard',
+            'datasheet': 'Standard',
+            'smd': 'Standard',
         }
         
         result = _parse_fields_argument(None, available_fields, False, False)
-        self.assertIn('Reference', result)
+        self.assertIn('reference', result)  # Now returns snake_case
         self.assertIsNotNone(result)
         self.assertGreater(len(result), 0)
 

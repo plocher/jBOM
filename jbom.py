@@ -36,6 +36,66 @@ except ImportError:
 # Default priority value (must be defined before classes that use it)
 DEFAULT_PRIORITY = 99
 
+
+def normalize_field_name(field: str) -> str:
+    """
+    Normalize field names to canonical snake_case format.
+    Accepts: snake_case, Title Case, CamelCase, spaces, mixed formats.
+    Examples: 'match_quality', 'Match Quality', 'MatchQuality', 'MATCH_QUALITY' -> 'match_quality'
+    """
+    if not field:
+        return ''
+    
+    # Handle prefixes (I: and C:) separately
+    prefix = ''
+    if field.lower().startswith('i:'):
+        prefix = 'i:'
+        field = field[2:]
+    elif field.lower().startswith('c:'):
+        prefix = 'c:'
+        field = field[2:]
+    
+    # Replace spaces and hyphens with underscores
+    field = field.replace(' ', '_').replace('-', '_')
+    
+    # Insert underscores before uppercase letters (for CamelCase like MatchQuality -> match_quality)
+    # But avoid double underscores
+    result = []
+    for i, char in enumerate(field):
+        if i > 0 and char.isupper() and field[i-1].islower():
+            result.append('_')
+        result.append(char.lower())
+    
+    # Clean up multiple underscores
+    normalized = ''.join(result)
+    while '__' in normalized:
+        normalized = normalized.replace('__', '_')
+    
+    return prefix + normalized.strip('_')
+
+
+def field_to_header(field: str) -> str:
+    """
+    Convert normalized field name to human-readable Title Case header for CSV.
+    Examples: 'match_quality' -> 'Match Quality', 'i:package' -> 'I:Package'
+    """
+    if not field:
+        return ''
+    
+    # Handle prefixes
+    prefix = ''
+    if field.lower().startswith('i:'):
+        prefix = 'I:'
+        field = field[2:]
+    elif field.lower().startswith('c:'):
+        prefix = 'C:'
+        field = field[2:]
+    
+    # Split on underscores and capitalize each word
+    parts = field.split('_')
+    header_part = ' '.join(part.capitalize() for part in parts if part)
+    return prefix + header_part if prefix else header_part
+
 @dataclass
 class Component:
     """Represents a component from KiCad schematic"""
@@ -1609,35 +1669,46 @@ class BOMGenerator:
         return groups
     
     def get_available_fields(self, components: List[Component]) -> Dict[str, str]:
-        """Get all available fields from BOM entries, inventory, and components with descriptions"""
+        """Get all available fields from BOM entries, inventory, and components with descriptions.
+        
+        All field names are normalized to snake_case internally.
+        Returns dict mapping normalized field names to descriptions.
+        """
         fields = {}
         
-        # Standard BOM entry fields
+        # Standard BOM entry fields (normalized to snake_case)
         bom_fields = {
-            'Reference': 'Component reference designators (R1, C2, etc.)',
-            'Quantity': 'Number of components',
-            'Description': 'Component description from inventory',
-            'Value': 'Component value (10k, 100nF, etc.)',
-            'Footprint': 'PCB footprint name',
-            'LCSC': 'LCSC part number',
-            'Manufacturer': 'Component manufacturer',
-            'MFGPN': 'Manufacturer part number',
-            'Datasheet': 'Link to component datasheet',
-            'SMD': 'Surface mount/through-hole indicator',
-            'Match_Quality': 'Inventory matching score (verbose mode)',
-            'Notes': 'Additional notes and warnings',
-            'Priority': 'Inventory item priority (verbose mode)'
+            'reference': 'Component reference designators (R1, C2, etc.)',
+            'quantity': 'Number of components',
+            'description': 'Component description from inventory',
+            'value': 'Component value (10k, 100nF, etc.)',
+            'footprint': 'PCB footprint name',
+            'lcsc': 'LCSC part number',
+            'manufacturer': 'Component manufacturer',
+            'mfgpn': 'Manufacturer part number',
+            'datasheet': 'Link to component datasheet',
+            'smd': 'Surface mount/through-hole indicator',
+            'match_quality': 'Inventory matching score (verbose mode)',
+            'notes': 'Additional notes and warnings',
+            'priority': 'Inventory item priority (verbose mode)'
         }
         fields.update(bom_fields)
         
-        # Gather component properties from actual components
+        # Gather component properties from actual components - normalize field names
         component_props = set()
         for component in components:
-            component_props.update(component.properties.keys())
+            for prop_name in component.properties.keys():
+                normalized = normalize_field_name(prop_name)
+                component_props.add(normalized)
+        
+        # Normalize inventory field names
+        inventory_names = set()
+        for inv_field in self.matcher.inventory_fields:
+            normalized = normalize_field_name(inv_field)
+            inventory_names.add(normalized)
         
         # Create sets for systematic handling
-        inventory_names = set(self.matcher.inventory_fields)
-        standard_field_names = set(fields.keys())  # Already populated with standard BOM fields
+        standard_field_names = set(fields.keys())  # Already normalized
         
         # Process all inventory and component fields systematically
         all_field_names = inventory_names.union(component_props)
@@ -1652,119 +1723,150 @@ class BOMGenerator:
             
             if has_inventory and has_component:
                 # Ambiguous field - add unprefixed version and prefixed versions
-                fields[field_name] = f'Ambiguous field: {field_name} (will show both inventory and component versions)'
-                fields[f'I:{field_name}'] = f'Inventory field: {field_name}'
-                fields[f'C:{field_name}'] = f'Component property: {field_name}'
+                fields[field_name] = f'Ambiguous field: {field_to_header(field_name)} (will show both inventory and component versions)'
+                fields[f'i:{field_name}'] = f'Inventory field: {field_to_header(field_name)}'
+                fields[f'c:{field_name}'] = f'Component property: {field_to_header(field_name)}'
             elif has_inventory:
                 # Inventory only - add both unprefixed and prefixed
-                fields[field_name] = f'Inventory field: {field_name}'
-                fields[f'I:{field_name}'] = f'Inventory field: {field_name}'
+                fields[field_name] = f'Inventory field: {field_to_header(field_name)}'
+                fields[f'i:{field_name}'] = f'Inventory field: {field_to_header(field_name)}'
             elif has_component:
                 # Component only - add both unprefixed and prefixed
-                fields[field_name] = f'Component property: {field_name}'
-                fields[f'C:{field_name}'] = f'Component property: {field_name}'
+                fields[field_name] = f'Component property: {field_to_header(field_name)}'
+                fields[f'c:{field_name}'] = f'Component property: {field_to_header(field_name)}'
         
         return fields
     
     def _get_inventory_field_value(self, field: str, inventory_item: Optional[InventoryItem]) -> str:
-        """Get a value from inventory item's raw data, handling cleaned field names"""
+        """Get a value from inventory item's raw data, handling cleaned field names.
+        
+        Field should be in normalized snake_case format.
+        """
         if not inventory_item:
             return ''
         
-        # First try exact match
-        if field in inventory_item.raw_data:
-            return inventory_item.raw_data[field]
-        
-        # If not found, try to find the original field name with newlines
+        # Try to find a raw field that matches when normalized
         for raw_field, value in inventory_item.raw_data.items():
-            if raw_field and ' '.join(raw_field.replace('\n', ' ').replace('\r', ' ').split()) == field:
-                return value
+            if raw_field:
+                # Clean up the raw field name (handle newlines) and normalize it
+                cleaned_field = ' '.join(raw_field.replace('\n', ' ').replace('\r', ' ').split())
+                if normalize_field_name(cleaned_field) == field:
+                    return value
         
         return ''
     
     def _has_inventory_field(self, field: str, inventory_item: Optional[InventoryItem]) -> bool:
-        """Check if field exists in inventory data"""
+        """Check if field exists in inventory data.
+        
+        Field should be in normalized snake_case format.
+        """
         if not inventory_item:
             return False
         
-        # Check exact match
-        if field in inventory_item.raw_data:
-            return True
-        
-        # Check cleaned field names
+        # Check if a raw field matches when normalized
         for raw_field in inventory_item.raw_data.keys():
-            if raw_field and ' '.join(raw_field.replace('\n', ' ').replace('\r', ' ').split()) == field:
-                return True
+            if raw_field:
+                # Clean up the raw field name (handle newlines) and normalize it
+                cleaned_field = ' '.join(raw_field.replace('\n', ' ').replace('\r', ' ').split())
+                if normalize_field_name(cleaned_field) == field:
+                    return True
         
         return False
     
     def _get_field_value(self, field: str, entry: BOMEntry, component: Component, inventory_item: Optional[InventoryItem]) -> str:
-        """Get the value for a specific field from BOM entry, component, or inventory"""
-        # Standard BOM entry fields
-        if field == 'Reference':
+        """Get the value for a specific field from BOM entry, component, or inventory.
+        
+        Expects field to be in normalized snake_case format (e.g., 'match_quality', 'i:package').
+        """
+        # Ensure field is normalized
+        field = normalize_field_name(field)
+        
+        # Standard BOM entry fields (all normalized snake_case)
+        if field == 'reference':
             return entry.reference
-        elif field == 'Quantity':
+        elif field == 'quantity':
             return str(entry.quantity)
-        elif field == 'Description':
+        elif field == 'description':
             return entry.description
-        elif field == 'Value':
+        elif field == 'value':
             return entry.value
-        elif field == 'Footprint':
+        elif field == 'footprint':
             return entry.footprint
-        elif field == 'LCSC':
+        elif field == 'lcsc':
             return entry.lcsc
-        elif field == 'Manufacturer':
+        elif field == 'manufacturer':
             return entry.manufacturer
-        elif field == 'MFGPN':
+        elif field == 'mfgpn':
             return entry.mfgpn
-        elif field == 'Datasheet':
+        elif field == 'datasheet':
             return entry.datasheet
-        elif field == 'SMD':
+        elif field == 'smd':
             return entry.smd
-        elif field == 'Match_Quality':
+        elif field == 'match_quality':
             return entry.match_quality
-        elif field == 'Notes':
+        elif field == 'notes':
             return entry.notes
-        elif field == 'Priority':
+        elif field == 'priority':
             return str(entry.priority)
         
-        # Component properties (prefixed with C:)
-        elif field.startswith('C:'):
-            prop_name = field[2:]  # Remove 'C:' prefix
-            return component.properties.get(prop_name, '')
+        # Component properties (prefixed with c:)
+        elif field.startswith('c:'):
+            prop_name = field[2:]  # Remove 'c:' prefix
+            # Find matching property in component (normalized)
+            for comp_prop, value in component.properties.items():
+                if normalize_field_name(comp_prop) == prop_name:
+                    return value
+            return ''
         
-        # Inventory fields (prefixed with I:)
-        elif field.startswith('I:'):
-            inv_field = field[2:]  # Remove 'I:' prefix
+        # Inventory fields (prefixed with i:)
+        elif field.startswith('i:'):
+            inv_field = field[2:]  # Remove 'i:' prefix
             return self._get_inventory_field_value(inv_field, inventory_item)
         
         # Ambiguous fields (no prefix) - check if it exists in both inventory and component
-        elif inventory_item:
-            # Check if this field exists in both sources
-            has_inventory = self._has_inventory_field(field, inventory_item)
-            has_component = field in component.properties
+        else:
+            if inventory_item:
+                # Check if this field exists in both sources (using normalized names)
+                has_inventory = self._has_inventory_field(field, inventory_item)
+                has_component = any(normalize_field_name(prop) == field for prop in component.properties.keys())
+                
+                if has_inventory and has_component:
+                    # Return both values with headers - this will be handled specially in CSV writing
+                    inv_val = self._get_inventory_field_value(field, inventory_item)
+                    # Find component value with matching normalized name
+                    comp_val = ''
+                    for prop_name, prop_val in component.properties.items():
+                        if normalize_field_name(prop_name) == field:
+                            comp_val = prop_val
+                            break
+                    return f"i:{inv_val}|c:{comp_val}"
+                elif has_inventory:
+                    return self._get_inventory_field_value(field, inventory_item)
+                elif has_component:
+                    # Find component value with matching normalized name
+                    for prop_name, prop_val in component.properties.items():
+                        if normalize_field_name(prop_name) == field:
+                            return prop_val
+                    return ''
             
-            if has_inventory and has_component:
-                # Return both values with headers - this will be handled specially in CSV writing
-                return f"I:{self._get_inventory_field_value(field, inventory_item)}|C:{component.properties.get(field, '')}"
-            elif has_inventory:
+            # Fallback: try inventory field
+            if inventory_item:
                 return self._get_inventory_field_value(field, inventory_item)
-            elif has_component:
-                return component.properties.get(field, '')
-        
-        # Legacy inventory field handling (for fields that don't have I: prefix)
-        elif inventory_item:
-            return self._get_inventory_field_value(field, inventory_item)
         
         return ''
     
     def write_bom_csv(self, bom_entries: List[BOMEntry], output_path: Path, fields: List[str]):
-        """Write BOM entries to CSV file using the specified field list"""
+        """Write BOM entries to CSV file using the specified field list.
+        
+        Fields are expected to be in normalized snake_case format.
+        CSV headers will be converted to human-readable Title Case format.
+        """
         with open(output_path, 'w', newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
             
             # Process fields to handle ambiguous ones
             header = []
+            normalized_fields = []  # Keep normalized versions for value retrieval
             for field in fields:
                 # Check if this is an ambiguous field by testing with a sample entry
                 if bom_entries:
@@ -1787,13 +1889,15 @@ class BOMGenerator:
                     # Test if field returns ambiguous value
                     if sample_component and sample_inventory:
                         test_value = self._get_field_value(field, sample_entry, sample_component, sample_inventory)
-                        if '|' in test_value and test_value.startswith('I:') and 'C:' in test_value:
+                        if '|' in test_value and test_value.startswith('i:') and 'c:' in test_value:
                             # This is an ambiguous field - split into two columns
-                            header.extend([f'I:{field}', f'C:{field}'])
+                            header.extend([field_to_header(f'i:{field}'), field_to_header(f'c:{field}')])
+                            normalized_fields.extend([f'i:{field}', f'c:{field}'])
                             continue
                 
-                # Regular field
-                header.append(field)
+                # Regular field - convert to Title Case header
+                header.append(field_to_header(field))
+                normalized_fields.append(field)
             
             writer.writerow(header)
             
@@ -1817,32 +1921,38 @@ class BOMGenerator:
                             inventory_item = item
                             break
                 
-                # Build row using specified fields
+                # Build row using specified fields (normalized_fields)
                 row = []
                 i = 0
-                while i < len(header):
-                    field = header[i]
+                while i < len(normalized_fields):
+                    field = normalized_fields[i]
                     
                     # Check if this is a split ambiguous field pair
-                    if (field.startswith('I:') and i + 1 < len(header) and 
-                        header[i + 1].startswith('C:') and 
-                        field[2:] == header[i + 1][2:]):
+                    if (field.startswith('i:') and i + 1 < len(normalized_fields) and 
+                        normalized_fields[i + 1].startswith('c:') and 
+                        field[2:] == normalized_fields[i + 1][2:]):
                         
                         # Handle split ambiguous field
-                        base_field = field[2:]  # Remove I: prefix
+                        base_field = field[2:]  # Remove i: prefix
                         inv_value = self._get_inventory_field_value(base_field, inventory_item)
-                        comp_value = (component.properties.get(base_field, '') if component else '')
+                        comp_value = ''
+                        if component:
+                            # Find component value with matching normalized name
+                            for prop_name, prop_val in component.properties.items():
+                                if normalize_field_name(prop_name) == base_field:
+                                    comp_value = prop_val
+                                    break
                         row.extend([inv_value, comp_value])
                         i += 2  # Skip the next field since we handled both
                     else:
                         # Regular field
                         value = self._get_field_value(field, entry, component or Component('', '', '', ''), inventory_item)
                         # Handle ambiguous values that weren't split in header
-                        if '|' in value and value.startswith('I:') and 'C:' in value:
+                        if '|' in value and value.startswith('i:') and 'c:' in value:
                             # Split the combined value
                             parts = value.split('|')
-                            inv_part = parts[0][2:] if parts[0].startswith('I:') else ''
-                            comp_part = parts[1][2:] if len(parts) > 1 and parts[1].startswith('C:') else ''
+                            inv_part = parts[0][2:] if parts[0].startswith('i:') else ''
+                            comp_part = parts[1][2:] if len(parts) > 1 and parts[1].startswith('c:') else ''
                             row.append(f"{inv_part} / {comp_part}")
                         else:
                             row.append(value)
@@ -2342,19 +2452,20 @@ def generate_bom_api(project_path: Union[str, Path], inventory_path: Union[str, 
 # ---- CLI entrypoint -------------------------------------------------------------
 
 # Field presets - easily extensible data structure
-# Standard BOM fields don't need qualification (Reference, Quantity, Value, etc.)
-# Inventory-specific fields are qualified with I: to avoid ambiguity
+# All field names stored in normalized snake_case internally
+# Standard BOM fields don't need qualification (reference, quantity, value, etc.)
+# Inventory-specific fields are qualified with i: to avoid ambiguity
 FIELD_PRESETS = {
     'standard': {
-        'fields': ['Reference', 'Quantity', 'Description', 'Value', 'Footprint', 'LCSC', 'Datasheet', 'SMD'],
+        'fields': ['reference', 'quantity', 'description', 'value', 'footprint', 'lcsc', 'datasheet', 'smd'],
         'description': 'Comprehensive set with all standard BOM fields'
     },
     'jlc': {
-        'fields': ['Reference', 'Quantity', 'Value', 'I:Package', 'LCSC'],
+        'fields': ['reference', 'quantity', 'value', 'i:package', 'lcsc'],
         'description': 'JLCPCB requirements: Reference Designator, Quantity, Value, Package, LCSC Part Number'
     },
     'minimal': {
-        'fields': ['Reference', 'Quantity', 'Value', 'LCSC'],
+        'fields': ['reference', 'quantity', 'value', 'lcsc'],
         'description': 'Bare minimum: reference, qty, value, and LCSC part number'
     },
     'all': {
@@ -2368,11 +2479,11 @@ def _preset_fields(preset: str, include_verbose: bool, any_notes: bool) -> List[
     
     Args:
         preset: Preset name (key from FIELD_PRESETS)
-        include_verbose: Add Match_Quality and Priority columns
-        any_notes: Add Notes column if there are notes in BOM
+        include_verbose: Add match_quality and priority columns
+        any_notes: Add notes column if there are notes in BOM
     
     Returns:
-        List of field names for the preset
+        List of field names for the preset (normalized snake_case)
     
     Raises:
         ValueError: If preset name is unknown
@@ -2391,11 +2502,11 @@ def _preset_fields(preset: str, include_verbose: bool, any_notes: bool) -> List[
     result = list(preset_def['fields'])
     
     if include_verbose:
-        result.append('Match_Quality')
+        result.append('match_quality')
     if any_notes:
-        result.append('Notes')
+        result.append('notes')
     if include_verbose:
-        result.append('Priority')
+        result.append('priority')
     
     return result
 
@@ -2404,10 +2515,11 @@ def _parse_fields_argument(fields_arg: str, available_fields: Dict[str, str], in
     """
     Parse --fields argument which can contain:
     1. Preset names with + prefix: +jlc, +standard, +minimal, +all
-    2. Comma-separated field names
+    2. Comma-separated field names (case-insensitive, various formats)
     3. Mix of presets and fields: +jlc,CustomField1,CustomField2
     
-    Returns expanded field list or raises ValueError for invalid fields/presets.
+    User input is normalized: snake_case, Title Case, CamelCase, spaces all accepted.
+    Returns expanded field list (normalized snake_case) or raises ValueError for invalid fields/presets.
     """
     if not fields_arg:
         return _preset_fields('standard', include_verbose, any_notes)
@@ -2431,10 +2543,11 @@ def _parse_fields_argument(fields_arg: str, available_fields: Dict[str, str], in
                 preset_fields = _preset_fields(preset_name, include_verbose, any_notes)
                 result.extend(preset_fields)
         else:
-            # This is a field name - validate it
-            if token not in available_fields:
+            # This is a field name - normalize and validate it
+            normalized_token = normalize_field_name(token)
+            if normalized_token not in available_fields:
                 raise ValueError(f"Unknown field: {token}. Use --list-fields to see available fields.")
-            result.append(token)
+            result.append(normalized_token)
     
     # Remove duplicates while preserving order
     seen = set()
