@@ -60,13 +60,13 @@ That's it! The BOM is written to `MyProject_bom.csv`.
 
 jBOM integrates three ways: as a KiCad Eeschema plugin for interactive use, via command line for scripts and CI pipelines, or as a Python library in custom tools. Detailed documentation is organized as Unix man pages:
 
-| Document | Purpose |
-|----------|----------|
-| [README.man1.md](README.man1.md) | CLI reference — Options, fields, examples, troubleshooting |
-| [README.man3.md](README.man3.md) | Python API reference — Classes, functions, library workflows |
-| [README.man4.md](README.man4.md) | KiCad plugin setup — Eeschema integration, configurations |
-| [README.man5.md](README.man5.md) | Inventory format — Column definitions, field naming, CSV/Excel/Numbers structure |
-| [README.developer.md](README.developer.md) | Technical details — Matching algorithms, architecture, extending jBOM |
+|Document|Purpose|
+|---|---|
+|[README.man1.md](README.man1.md)|CLI reference — Options, fields, examples, troubleshooting|
+|[README.man3.md](README.man3.md)|Python API reference — Classes, functions, library workflows|
+|[README.man4.md](README.man4.md)|KiCad plugin setup — Eeschema integration, configurations|
+|[README.man5.md](README.man5.md)|Inventory format — Column definitions, field naming, CSV/Excel/Numbers structure|
+|[README.developer.md](README.developer.md)|Technical details — Matching algorithms, architecture, extending jBOM|
 
 ## Component Matching
 
