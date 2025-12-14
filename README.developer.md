@@ -373,3 +373,46 @@ SMD_PACKAGES = [..., 'wlcsp']
 - Add new fields to `get_available_fields()`
 - Extend `_get_field_value()` for custom field processing
 - Modify `write_bom_csv()` for different output formats
+
+## Project Structure
+
+```
+jBOM/
+├── jbom.py                    # Main library and CLI (~2700 lines)
+├── kicad_jbom_plugin.py       # KiCad Eeschema plugin wrapper
+├── test_jbom.py               # Test suite (74 tests)
+├── README.md                  # User-facing overview and quick start
+├── README.man1.md             # CLI reference (man page style)
+├── README.man3.md             # Python library API (man page style)
+├── README.man4.md             # KiCad plugin setup guide (man page style)
+├── README.developer.md        # This file - technical architecture and extension
+├── pyproject.toml             # Python packaging configuration
+├── LICENSE                    # AGPLv3 license
+└── .gitignore                 # Git configuration
+```
+
+### Main Files
+
+**jbom.py** (~2700 lines):
+- KiCad S-expression parser (`KiCadParser`)
+- Inventory loader supporting CSV, Excel, Numbers (`InventoryMatcher`)
+- Component matching engine with intelligent scoring (`InventoryMatcher.find_matches`)
+- BOM generation and output formatting (`BOMGenerator`)
+- CLI entrypoint with argument parsing and output modes
+
+**test_jbom.py** (~2200 lines, 74 tests):
+- Unit tests across 14 test classes
+- Coverage of parsing, matching, output formatting, and error handling
+- Integration tests with real inventory files
+
+**kicad_jbom_plugin.py** (~70 lines):
+- KiCad Eeschema plugin wrapper
+- Translates KiCad plugin interface to library API
+- Handles file I/O and error reporting for plugin context
+
+**Documentation**:
+- README.md: Entry point with installation and quick start
+- README.man1.md: Complete CLI reference
+- README.man3.md: Python library API reference  
+- README.man4.md: KiCad plugin setup and integration guide
+- README.developer.md: This file - technical deep dive and extension points

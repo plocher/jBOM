@@ -144,28 +144,13 @@ For more troubleshooting, see the relevant man page:
 - Plugin issues → [README.man4.md](README.man4.md)
 - API issues → [README.man3.md](README.man3.md)
 
-## Project Structure
-
-```
-jBOM/
-├── jbom.py                    # Main library and CLI (2700+ lines)
-├── kicad_jbom_plugin.py       # KiCad plugin wrapper
-├── test_jbom.py               # Test suite (64 tests)
-├── README.md                  # This file
-├── README.man1.md             # CLI man page
-├── README.man3.md             # Python API man page
-├── README.man4.md             # KiCad plugin man page
-├── README.developer.md        # Technical documentation
-└── LICENSE                    # License terms
-```
-
 ## Version
 
 jBOM v1.0.0 — Stable release with intelligent component matching, multiple inventory formats, and comprehensive integration options.
 
 ## License
 
-See LICENSE file for terms.
+AGPLv3 — See LICENSE file for full terms.
 
 ## Support
 
