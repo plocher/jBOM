@@ -1,362 +1,208 @@
-# jBOM - KiCad BOM Generator
+# jBOM — KiCad Bill of Materials Generator
 
-A powerful tool that generates Bill of Materials (BOM) files for KiCad projects by intelligently matching schematic components against your inventory. Supports CSV, Excel, and Apple Numbers inventory files with advanced component matching and customizable output formats.
-
-## Overview
-
-This BOM generator takes a different approach from traditional KiCad BOM workflows. Instead of hardcoding supplier part numbers into your schematic symbols, it uses intelligent matching to connect your design components with your current inventory at BOM generation time.
+A powerful, supplier-neutral BOM generator for KiCad projects. Matches schematic components against your inventory at BOM-generation time rather than hardcoding part numbers in symbols.
 
 **Key Benefits:**
-- **Keep designs supplier-neutral** - No hardcoded part numbers in schematics
-- **Use current inventory data** - Match against up-to-date stock and pricing
-- **Intelligent component matching** - Robust numeric matching for resistors, capacitors, inductors
-- **Multiple inventory formats** - CSV, Excel (.xlsx, .xls), and Apple Numbers (.numbers)
-- **Priority-based selection** - Rank suppliers and stock preferences
-- **Hierarchical schematic support** - Works with multi-sheet designs
-- **Flexible output options** - Customize BOM columns and formats
+- **Supplier-neutral designs** — No part numbers baked into schematics
+- **Current inventory data** — Match against up-to-date stock and pricing
+- **Intelligent matching** — Robust numeric parsing for resistors, capacitors, inductors, etc.
+- **Multiple inventory formats** — CSV, Excel (.xlsx, .xls), Apple Numbers (.numbers)
+- **Three integration options** — KiCad plugin, CLI, or Python library
+- **Hierarchical schematics** — Automatically processes multi-sheet designs
 
 ## Installation
 
-### Basic Installation using CSV inventory files
-
 **Required:**
 - Python 3.9 or newer
-- `sexpdata` package for KiCad file parsing
+- `sexpdata` package: `pip install sexpdata`
 
+**Optional (for spreadsheet support):**
 ```bash
-pip install sexpdata
-```
+pip install openpyxl          # For .xlsx, .xls files
+pip install numbers-parser    # For .numbers files
 
-### Optional Inventory Spreadsheet Support (Apple Numbers and Microsoft Excel)
-
-**For Excel files** (.xlsx, .xls):
-```bash
-pip install openpyxl
-```
-
-**For Apple Numbers files** (.numbers):
-```bash
-pip install numbers-parser
-```
-
-**Install everything:**
-```bash
+# Or install all at once:
 pip install sexpdata openpyxl numbers-parser
 ```
 
 ## Quick Start
 
-### 1. Prepare Your Inventory
+### 1. Prepare your inventory
 
-Create an inventory file with your components. Supported formats:
-- **CSV** - Traditional comma-separated values
-- **Excel** - Microsoft Excel (.xlsx, .xls) spreadsheets  
-- **Numbers** - Apple Numbers (.numbers) spreadsheets
+Create an inventory file (CSV, Excel, or Numbers) with required columns:
+- `IPN` — Your internal part number
+- `Category` — Component type (RES, CAP, LED, IC, etc.)
+- `Value` — Component value (10k, 100nF, etc.)
+- `Package` — Physical package (0603, SOT-23, etc.)
+- `LCSC` — Supplier part number
+- `Priority` — Integer ranking (1 = preferred, higher = less)
 
-**Required columns:**
-- `IPN` - Internal Part Number (your reference)
-- `Category` - Component type (RES, CAP, LED, IC, etc.)
-- `Value` - Component value (10k, 100nF, etc.)
-- `Package` - Physical package (0603, 0805, SOT-23, etc.)
-- `LCSC` - Supplier part number
-- `Priority` - Ranking between similar inventory items (1=most preferred, larger numbers indicate a lower preference)
+Optional: Manufacturer, MFGPN, Datasheet, Tolerance, V, A, W, and component-specific fields.
 
-**Optional columns for enhanced matching:**
-- `Manufacturer`, `MFGPN`, `Datasheet`, `Tolerance`, `V` (voltage), `A` (current), `W` (power)
-- Component-specific: `mcd` (LED brightness), `Wavelength`, `Angle`, `Pitch`, `Form`, `Frequency`, `Stability`, `Load`, `Family`, `Type`
-- See **Optional Columns for Enhanced Matching** section below for complete component-specific field details
+### 2. Generate your BOM
 
-### 2. Generate Your BOM
+**Via KiCad (interactive):**
+- Eeschema → Tools → Generate BOM → Select jBOM → Generate
 
-**Basic usage:**
+**Via command line:**
 ```bash
-python jbom.py MyProject/ -i MyInventory.xlsx
+python jbom.py MyProject/ -i inventory.xlsx
 ```
 
-**With manufacturer info:**
-```bash
-python jbom.py MyProject/ -i MyInventory.csv -m
+**Via Python:**
+```python
+from jbom import generate_bom_api, GenerateOptions
+opts = GenerateOptions(manufacturer=True)
+result = generate_bom_api('MyProject/', 'inventory.xlsx', options=opts)
 ```
 
-**Console output (no CSV file):**
+That's it! The BOM is written to `MyProject_bom.csv`.
+
+## Usage Documentation
+
+jBOM documentation is organized as Unix man pages for clarity and reference:
+
+| Document | Purpose |
+|----------|---------|
+| **README.man1.md** | [CLI reference](README.man1.md) — Options, fields, examples, troubleshooting |
+| **README.man3.md** | [Python API reference](README.man3.md) — Classes, functions, library workflows |
+| **README.man4.md** | [KiCad plugin setup](README.man4.md) — Eeschema integration, configurations |
+| **README.developer.md** | Technical details — Matching algorithms, architecture, extending jBOM |
+
+## Common Tasks
+
+### Generate a standard BOM
 ```bash
-python jbom.py MyProject/ -i MyInventory.numbers -o console
-```
-
-## KiCad Workflow Integration
-
-jBOM integrates with KiCad workflows in three ways. Pick the one that fits your process.
-
-### 1) KiCad Eeschema plugin (Generate BOM)
-Register jBOM as a BOM plugin so you can generate from Eeschema.
-
-Setup
-- Eeschema → Tools → Generate BOM → Add plugin
-- Command:
-  ```
-  python3 /absolute/path/to/kicad_jbom_plugin.py %I -i /absolute/path/to/INVENTORY.xlsx -o %O -m
-  ```
-  Notes:
-  - Keep %I (input schematic) and %O (output file) as-is; KiCad fills these in
-  - Replace the absolute paths with your local paths
-
-Useful flags
-- -m add Manufacturer and MFGPN columns
-- -v verbose (shows match quality)
-- -d debug diagnostics (for troubleshooting)
-- -f "Reference,Value,LCSC,Manufacturer" choose custom output columns
-
-Workflow
-- Eeschema → Tools → Generate BOM → Select the jBOM plugin → Generate
-- The CSV appears next to your project, named <Project>_bom.csv
-
-### 2) Command-line
-Ideal for scripting and CI.
-
-```bash
-# Basic
 python jbom.py MyProject/ -i inventory.xlsx -o MyProject_bom.csv
+```
 
-# With manufacturer/verbose
-python jbom.py MyProject/ -i inventory.xlsx -o bom.csv -m -v
+### Include manufacturer and part numbers
+```bash
+python jbom.py MyProject/ -i inventory.xlsx -m
+```
 
-# Debug run (helpful when parts don't match)
+### Generate JLCPCB-friendly format
+```bash
+python jbom.py MyProject/ -i inventory.xlsx --format jlc
+```
+
+### Generate both JLC and standard formats at once
+```bash
+python jbom.py MyProject/ -i inventory.xlsx --multi-format jlc,standard
+```
+
+### Debug component matching issues
+```bash
 python jbom.py MyProject/ -i inventory.xlsx -d
 ```
 
-Tips
-- You can pass either a project directory or a specific .kicad_sch file
-- Use --outdir to place outputs in a specific folder when not using -o
-- Use --multi-format jlc,standard to emit multiple formats in one run
+### List available output columns
+```bash
+python jbom.py MyProject/ -i inventory.xlsx --list-fields
+```
 
-### 3) Python library API
-Embed jBOM into other tooling.
+## Integration Methods
+
+### 1. KiCad Eeschema Plugin
+Register jBOM in the Generate BOM dialog for interactive use within Eeschema.
+
+**Setup command:**
+```
+python3 /absolute/path/to/kicad_jbom_plugin.py %I -i /absolute/path/to/inventory.xlsx -o %O -m
+```
+
+See [README.man4.md](README.man4.md) for detailed setup and troubleshooting.
+
+### 2. Command-Line Interface
+Use in scripts, CI pipelines, or standalone workflows.
+
+```bash
+python jbom.py PROJECT/ -i INVENTORY.xlsx [OPTIONS]
+```
+
+See [README.man1.md](README.man1.md) for all options and examples.
+
+### 3. Python Library
+Embed jBOM in custom tools or workflows.
 
 ```python
 from jbom import generate_bom_api, GenerateOptions
 
-opts = GenerateOptions(verbose=True, debug=False, manufacturer=True)
-result = generate_bom_api('MyProject/', 'inventory.xlsx', options=opts)
+opts = GenerateOptions(verbose=True, manufacturer=True)
+result = generate_bom_api('project/', 'inventory.xlsx', options=opts)
 
-if result['exit_code'] == 0:
-    for entry in result['bom_entries']:
-        print(f"{entry.reference}: {entry.value} -> {entry.lcsc}")
-else:
-    print(result['error_message'])
+for entry in result['bom_entries']:
+    print(f"{entry.reference}: {entry.lcsc}")
 ```
 
-## Usage Examples
+See [README.man3.md](README.man3.md) for the full API reference.
 
-### Basic BOM Generation
-```bash
-# Using project directory (auto-finds schematic files)
-python jbom.py AltmillSwitches/ -i SPCoast-INVENTORY.xlsx
+## Component Matching
 
-# Using specific schematic file
-python jbom.py MyProject/MyProject.kicad_sch -i inventory.csv
+jBOM uses intelligent matching to find inventory parts that fit your schematic components:
 
-# Different inventory formats
-python jbom.py Project/ -i inventory.csv        # CSV format
-python jbom.py Project/ -i inventory.xlsx       # Excel format
-python jbom.py Project/ -i inventory.numbers    # Numbers format
-```
+1. **Type detection** — Identifies resistors, capacitors, inductors, LEDs, ICs, etc.
+2. **Package matching** — Matches footprints (0603, SOT-23) to inventory packages
+3. **Value parsing** — Handles various formats (10k, 10K0, 10000, 330R, 3R3, etc.)
+4. **Property scoring** — Ranks matches by tolerance, voltage, current, and other attributes
+5. **Priority ranking** — Selects preferred parts using inventory Priority column
 
-### Advanced Options
-```bash
-# Include manufacturer and part number columns
-python jbom.py Project/ -i inventory.xlsx -m
-
-# Verbose output with matching scores and debug info
-python jbom.py Project/ -i inventory.csv -v
-
-# SMD components only
-python jbom.py Project/ -i inventory.xlsx --smd
-
-# Detailed debug information for troubleshooting
-python jbom.py Project/ -i inventory.csv -d
-
-# Custom output columns
-python jbom.py Project/ -i inventory.xlsx -f "Reference,Value,LCSC,Manufacturer"
-
-# List all available columns
-python jbom.py Project/ -i inventory.csv --list-fields
-```
-
-## Key Features
-
-### Intelligent Component Matching
-- **Type Detection**: Automatically identifies resistors, capacitors, inductors, LEDs, ICs, etc.
-- **Package Matching**: Matches footprints (0603, 0805, SOT-23) with inventory packages
-- **Numeric Value Parsing**: Handles various formats (10k, 10K0, 10000, 330R, 3R3, 100nF, 1uF, etc.)
-- **Tolerance Substitution**: Tighter tolerances can substitute for looser requirements
-
-### Priority-Based Selection
-- Uses `Priority` column from inventory (1=most preferred, higher=less preferred)
-- Supports multiple suppliers and stock preferences
-- Automatic tie-breaking when multiple options exist
-
-### Hierarchical Schematic Support
-- **Auto-detection**: Finds and processes multi-sheet designs automatically
-- **Intelligent file selection**: Prefers hierarchical roots over individual sheets
-- **Comprehensive processing**: Combines components from all sheets
-
-### Flexible Output Options
-- **Standard BOM**: Reference, Quantity, Description, Value, Footprint, LCSC, Datasheet
-- **With Manufacturers** (`-m`): Adds Manufacturer and MFGPN columns
-- **Verbose** (`-v`): Adds matching scores and priority information
-- **Custom Fields** (`-f`): Select specific columns from inventory and component data
-- **Debug Mode** (`-d`): Detailed matching information for troubleshooting
-
-### Multiple Inventory Formats
-- **CSV**: Traditional comma-separated format
-- **Excel**: Microsoft Excel (.xlsx, .xls) with intelligent header detection
-- **Numbers**: Apple Numbers (.numbers) with automatic table processing
+See README.developer.md for matching algorithm details.
 
 ## Output
 
-The tool generates:
-1. **BOM CSV file** - `ProjectName_bom.csv` with your selected columns
-2. **Console summary** - Statistics about components found and matched
-3. **Debug warnings** - Issues with unmatched components (when using `-d`)
-
-### Console Output Example
-```
-Schematic: 14 Components from AltmillSwitches.kicad_sch
-
-Inventory:
-   96 Items       SPCoast-INVENTORY.xlsx
-
-BOM:
-    6 Entries     AltmillSwitches/AltmillSwitches_bom.csv
-```
+jBOM generates:
+- **CSV BOM file** — `<ProjectName>_bom.csv` with matched components
+- **Exit code** — 0 (success), 2 (warning/unmatched), 1 (error)
+- **Console summary** — Statistics about components and matches
+- **Debug info** — Detailed diagnostics (with `-d` flag)
 
 ## Troubleshooting
 
-### Common Issues
+**Components not matching?**
+: Run with `-d` flag to see detailed matching diagnostics.
 
-**"No .kicad_sch file found"**
-- Ensure you're pointing to the correct project directory
-- Check that your schematic files have the `.kicad_sch` extension
+**Import error for Excel/Numbers?**
+: Install optional packages: `pip install openpyxl numbers-parser`
 
-**"Excel/Numbers support requires..."**
-- Install the required packages: `pip install openpyxl numbers-parser`
+**Plugin not showing in KiCad?**
+: Verify the command path is correct and use absolute paths. See [README.man4.md](README.man4.md).
 
-**"Could not find 'IPN' header column"**
-- Ensure your inventory file has an 'IPN' column
-- Check that the spreadsheet data starts in the expected location
+**Hierarchical schematics not processing all sheets?**
+: Ensure all sub-sheets are in the same directory and have `.kicad_sch` extension.
 
-**Components not matching**
-- Use `-d` flag to see detailed matching information
-- Verify component types and values in your inventory
-- Check that `Category` and `Package` columns are populated correctly
+For more troubleshooting, see the relevant man page:
+- CLI issues → [README.man1.md](README.man1.md)
+- Plugin issues → [README.man4.md](README.man4.md)
+- API issues → [README.man3.md](README.man3.md)
 
-### Debug Mode
+## Project Structure
 
-Use the `-d` flag to see detailed matching information:
-
-```bash
-python jbom.py Project/ -i inventory.csv -d
+```
+jBOM/
+├── jbom.py                    # Main library and CLI (2700+ lines)
+├── kicad_jbom_plugin.py       # KiCad plugin wrapper
+├── test_jbom.py               # Test suite (64 tests)
+├── README.md                  # This file
+├── README.man1.md             # CLI man page
+├── README.man3.md             # Python API man page
+├── README.man4.md             # KiCad plugin man page
+├── README.developer.md        # Technical documentation
+└── LICENSE                    # License terms
 ```
 
-This provides:
-- Component analysis (type detection, package extraction)
-- Specific reasons why components can't be matched
-- Available alternatives for mismatched packages
-- Filtering statistics
+## Version
 
-## Inventory Requirements
+jBOM v1.0.0 — Stable release with intelligent component matching, multiple inventory formats, and comprehensive integration options.
 
-### Required Columns
-- `IPN` - Internal Part Number (your reference)
-- `Category` - Component type (RES, CAP, LED, IC, etc.)
-- `Value` - Component value (10k, 100nF, etc.)
-- `Package` - Physical package (0603, 0805, SOT-23, etc.)
-- `LCSC` - Supplier part number
-- `Priority` - Ranking (1=preferred, higher=less preferred)
+## License
 
-### Optional Columns for Enhanced Matching
+See LICENSE file for terms.
 
-#### General Component Specifications
-- `Manufacturer`, `MFGPN`, `Datasheet` - Part identification and documentation
-- `SMD` - Surface mount indicator (SMD/PTH/TH) 
-- `Tolerance` - Component tolerance (±5%, ±1%, etc.) - **used for intelligent substitution**
-- `V` (voltage) - Voltage rating - **used for matching and safety validation**
-- `A` (current) - Current rating - **used for matching power components**  
-- `W` (power) - Power rating - **used for matching resistors and power components**
+## Support
 
-#### Component-Specific Matching Fields
-
-**Resistors** (Category: RES):
-- `Tolerance` - Component tolerance matching with intelligent substitution (tighter tolerances can substitute looser)
-- `V` - Voltage rating matching
-- `W` or `Power` - Power rating matching
-- `Temperature Coefficient` - Temperature coefficient matching
-
-**Capacitors** (Category: CAP):
-- `V` or `Voltage` - Voltage rating matching (critical for safety)
-- `Type` - Dielectric type matching (ceramic, electrolytic, film, etc.)
-- `Tolerance` - Capacitance tolerance matching
-
-**Inductors** (Category: IND):
-- `A` - Current rating matching (saturation current)
-- `W` - Power rating matching
-
-**LEDs** (Category: LED):
-- `V` - Forward voltage matching
-- `A` - Forward current matching  
-- `mcd` - Light intensity/brightness matching
-- `Wavelength` - Color/wavelength matching
-- `Angle` - Beam angle matching
-
-**Diodes** (Category: DIO):
-- `V` - Voltage rating (reverse voltage, forward voltage)
-- `A` - Current rating matching
-
-**Transistors** (Category: Q):
-- `V` - Voltage rating matching
-- `A` - Current rating matching
-- `W` - Power dissipation matching
-
-**Oscillators** (Category: OSC):
-- `Frequency` - Operating frequency matching
-- `Stability` - Frequency stability/accuracy matching
-- `Load` - Load capacitance matching
-
-**Connectors** (Category: CON):
-- `Pitch` - Pin pitch matching (2.54mm, 1.27mm, etc.)
-
-**Microcontrollers** (Category: MCU):
-- `Family` - MCU family matching (STM32, ESP32, etc.)
-- `V` - Operating voltage matching
-
-**Regulators** (Category: REG):
-- `V` - Input/output voltage matching
-- `A` - Current capacity matching
-- `W` - Power handling matching
-
-**Switches/Relays** (Category: SWI/RLY):
-- `Form` - Contact configuration (SPDT, DPDT, etc.)
-
-#### Matching Behavior
-The BOM generator uses these fields for:
-1. **Exact matching** - Finds components with identical specifications
-2. **Intelligent substitution** - E.g., ±1% resistors can substitute ±5% requirements
-3. **Safety validation** - Ensures voltage/current ratings meet or exceed requirements  
-4. **Scoring priority** - Components with better matching specifications get higher scores
-
-### Priority System
-The `Priority` column encodes all business logic (cost, availability, sourcing preferences):
-- **1** = Most preferred choice
-- **2-5** = Good alternatives
-- **Higher numbers** = Less preferred options
-
-Example: `SPCoast-INVENTORY-new.csv` in this repo shows the improved inventory structure with descriptive IPN names and Priority column.
-
-## Advanced Usage
-
-See `README.developer.md` for detailed information about:
-- Internal matching algorithms
-- Component type detection logic
-- Custom field system
-- Data flow and processing details
-- Extension and customization options
+For detailed information:
+- **Using the CLI?** See [README.man1.md](README.man1.md)
+- **Integrating with KiCad?** See [README.man4.md](README.man4.md)
+- **Using the Python API?** See [README.man3.md](README.man3.md)
+- **Understanding the matching logic?** See README.developer.md
