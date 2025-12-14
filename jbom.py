@@ -55,6 +55,8 @@ class InventoryItem:
     ipn: str
     keywords: str
     category: str
+    # Some older tests expect a 'name' field; provide a compatible optional field
+    name: str = ""
     description: str
     smd: str
     value: str
