@@ -2342,6 +2342,8 @@ def generate_bom_api(project_path: Union[str, Path], inventory_path: Union[str, 
 # ---- CLI entrypoint -------------------------------------------------------------
 
 # Field presets - easily extensible data structure
+# Standard BOM fields don't need qualification (Reference, Quantity, Value, etc.)
+# Inventory-specific fields are qualified with I: to avoid ambiguity
 FIELD_PRESETS = {
     'standard': {
         'fields': ['Reference', 'Quantity', 'Description', 'Value', 'Footprint', 'LCSC', 'Datasheet', 'SMD'],
