@@ -159,7 +159,29 @@ Use `--list-fields` to see the complete list. Common fields include:
 **Component properties** (prefix with `C:`)
 : Tolerance, Voltage, Current, Power, and component-specific properties from the schematic.
 
+## CASE-INSENSITIVE FIELD NAMES
+
+Field names in the `-f` argument and column names in inventory files accept flexible formatting:
+
+**Accepted formats** (all equivalent):
+- Snake_case: `match_quality`, `i:package`, `c:tolerance`
+- Title Case: `Match Quality`, `I:Package`, `C:Tolerance`
+- UPPERCASE: `MATCH_QUALITY`, `I:PACKAGE`, `C:TOLERANCE`
+- Mixed: `MatchQuality`, `Match-Quality`
+- Spaced: `Match Quality` (spaces converted to underscores)
+
+All formats are normalized internally. CSV headers in output always use Title Case for readability.
+
+Example (all equivalent):
+```bash
+python jbom.py project -i inv.csv -f "Reference,Match Quality,I:PACKAGE"
+python jbom.py project -i inv.csv -f "reference,match_quality,i:package"
+python jbom.py project -i inv.csv -f "REFERENCE,MATCH_QUALITY,I:PACKAGE"
+```
+
 ## INVENTORY FILE FORMAT
+
+Detailed inventory file format documentation is in [inventory(5)](README.man5.md).
 
 Required columns:
 : IPN, Category, Value, Package, LCSC, Priority
@@ -168,6 +190,8 @@ Optional columns:
 : Manufacturer, MFGPN, Datasheet, Keywords, SMD, Tolerance, V, A, W, Type, Form, Frequency, Stability, Load, Family, mcd, Wavelength, Angle, Pitch
 
 **Priority** uses integer ranking (1 = preferred, higher = less preferred). When multiple parts match, the lowest Priority is selected.
+
+See [README.man5.md](README.man5.md) for complete column definitions and examples.
 
 ## TROUBLESHOOTING
 

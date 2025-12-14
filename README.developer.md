@@ -145,7 +145,24 @@ BOM:
   
 ## Field System and Custom Columns
 
-The BOM generator supports a sophisticated field system for customizing output columns:
+The BOM generator supports a sophisticated field system for customizing output columns with case-insensitive field name handling.
+
+### Case-Insensitive Field Naming
+
+All field names are normalized internally to canonical snake_case, allowing flexible user input:
+
+**Normalization function** (`normalize_field_name()`):
+- Converts Title Case → snake_case: `Match Quality` → `match_quality`
+- Converts CamelCase → snake_case: `MatchQuality` → `match_quality`
+- Converts UPPERCASE → lowercase: `MATCH_QUALITY` → `match_quality`
+- Handles prefixes: `I:Package` → `i:package`, `C:Tolerance` → `c:tolerance`
+- Normalizes whitespace: multiple spaces and hyphens → underscores
+- Idempotent: normalizing twice yields same result
+
+**Header generation** (`field_to_header()`):
+- Converts snake_case → Title Case for CSV output: `match_quality` → `Match Quality`
+- Preserves prefixes without spaces: `i:package` → `I:Package` (not `I: Package`)
+- All user input normalized before lookup; output headers remain human-readable
 
 ### Field Discovery
 
@@ -156,9 +173,11 @@ python3 jbom.py AltmillSwitches -i SPCoast-INVENTORY.csv --list-fields
 ```
 
 This shows:
-- **Standard BOM fields**: Reference, Quantity, Value, LCSC, etc.
-- **Inventory fields**: All columns from your inventory CSV
-- **Component fields**: Properties found in schematic components
+- **Standard BOM fields**: Reference, Quantity, Value, LCSC, etc. (normalized snake_case internally)
+- **Inventory fields**: All columns from your inventory CSV (normalized for matching)
+- **Component fields**: Properties found in schematic components (normalized for matching)
+
+All fields are displayed and can be used in any case format.
 
 ### Field Prefixes (I:/C: System)
 

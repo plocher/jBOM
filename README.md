@@ -65,6 +65,7 @@ jBOM integrates three ways: as a KiCad Eeschema plugin for interactive use, via 
 <tr><td> **README.man1.md** </td><td> [CLI reference](README.man1.md) — Options, fields, examples, troubleshooting </td></tr>
 <tr><td>  **README.man3.md** </td><td> [Python API reference](README.man3.md) — Classes, functions, library workflows </td></tr>
 <tr><td>  **README.man4.md** </td><td> [KiCad plugin setup](README.man4.md) — Eeschema integration, configurations </td></tr>
+<tr><td>  **README.man5.md** </td><td> [Inventory format](README.man5.md) — Column definitions, field naming, CSV/Excel/Numbers structure </td></tr>
 <tr><td>  **README.developer.md** </td><td> Technical details — Matching algorithms, architecture, extending jBOM </td></tr>
 </table>
 
@@ -80,6 +81,16 @@ See README.developer.md for detailed information about the matching algorithm.
 
 jBOM generates a CSV BOM file (`<ProjectName>_bom.csv`) with all matched components and their supplier part numbers. It also prints a summary to the console showing statistics about how many components were found and how many successfully matched. With the `-d` flag, you get detailed diagnostic information about why any components failed to match. The exit code indicates success (0), warning/unmatched components (2), or error (1).
 
+## Field Naming & Case-Insensitivity
+
+jBOM accepts field names in any format:
+- Snake_case: `match_quality`, `i:package`
+- Title Case: `Match Quality`, `I:Package`
+- UPPERCASE: `MATCH_QUALITY`, `I:PACKAGE`
+- Mixed: `MatchQuality`, `Match-Quality`
+
+All formats are normalized internally, so you can use whichever is most convenient. CSV headers are always output in Title Case for readability.
+
 ## Troubleshooting
 
 **Components not matching?**
@@ -92,6 +103,7 @@ For more troubleshooting, see the relevant man page:
 - CLI issues → [README.man1.md](README.man1.md)
 - Plugin issues → [README.man4.md](README.man4.md)
 - API issues → [README.man3.md](README.man3.md)
+- Inventory format → [README.man5.md](README.man5.md)
 
 ## Version
 
