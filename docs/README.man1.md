@@ -210,8 +210,8 @@ See [README.man5.md](README.man5.md) for complete column definitions and example
 
 ## SEE ALSO
 
-- [**README.md**](README.md) — Overview and quick start
+- [**README.md**](../README.md) — Overview and quick start
 - [**README.man3.md**](README.man3.md) — Python library API reference
 - [**README.man4.md**](README.man4.md) — KiCad Eeschema plugin integration
 - [**README.man5.md**](README.man5.md) — Inventory file format
-- [**docs/README.developer.md**](docs/README.developer.md) — Architecture and matching algorithms
+- [**README.developer.md**](README.developer.md) — Architecture and matching algorithms

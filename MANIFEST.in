@@ -1,8 +1,4 @@
 include README.md
-include README.man1.md
-include README.man3.md
-include README.man4.md
-include README.man5.md
 include LICENSE
 include kicad_jbom_plugin.py
 recursive-include tests *.py

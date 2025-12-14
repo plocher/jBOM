@@ -58,10 +58,10 @@ Comprehensive unit tests organized into 27 test classes:
 ## Documentation
 
 - `README.md` - User-facing overview with installation, quick start, and key concepts
-- `README.man1.md` - CLI reference with options, fields, examples, and troubleshooting
-- `README.man3.md` - Python library API reference for programmatic use
-- `README.man4.md` - KiCad Eeschema plugin setup and integration guide
-- `README.man5.md` - Inventory file format specification with field definitions
+- `docs/README.man1.md` - CLI reference with options, fields, examples, and troubleshooting
+- `docs/README.man3.md` - Python library API reference for programmatic use
+- `docs/README.man4.md` - KiCad Eeschema plugin setup and integration guide
+- `docs/README.man5.md` - Inventory file format specification with field definitions
 - `docs/README.developer.md` - Technical architecture, matching algorithms, field system, and extension points
 - `docs/README.tests.md` - Test suite documentation with descriptions and running instructions
 - `WARP.md` - This file, guidance for WARP agents working in this repo
@@ -73,11 +73,11 @@ jBOM/
 ├── jbom.py                    # Main application (~2700 lines)
 ├── test_jbom.py              # Test suite (~2200 lines, 98 tests, 27 classes)
 ├── README.md                 # User documentation with quick start
-├── README.man1.md            # CLI reference (man page style)
-├── README.man3.md            # Python library API (man page style)
-├── README.man4.md            # KiCad plugin setup (man page style)
-├── README.man5.md            # Inventory file format (man page style)
 ├── docs/
+│   ├── README.man1.md        # CLI reference (man page style)
+│   ├── README.man3.md        # Python library API (man page style)
+│   ├── README.man4.md        # KiCad plugin setup (man page style)
+│   ├── README.man5.md        # Inventory file format (man page style)
 │   ├── README.developer.md   # Technical architecture and extension points
 │   ├── README.tests.md       # Test suite documentation
 │   ├── CHANGELOG.md          # Version history
@@ -177,9 +177,9 @@ Run tests with: `python -m unittest test_jbom -v`
 
 ### Documentation Updates (Completed)
 - Created README.man5.md for inventory file format specification (213 lines)
-- Created README.man3.md for Python library API reference
-- Created README.man4.md for KiCad plugin integration guide
-- Added README.tests.md for test suite documentation
+- Created docs/README.man3.md for Python library API reference
+- Created docs/README.man4.md for KiCad plugin integration guide
+- Added docs/README.tests.md for test suite documentation
 - Added SEE ALSO sections with markdown links to all READMEs for easy navigation
 - Removed redundant Usage Documentation section from README.md
 - Standardized naming to "jBOM" throughout all documentation

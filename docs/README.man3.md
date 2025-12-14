@@ -247,7 +247,7 @@ The library may raise:
 
 ## SEE ALSO
 
-- **README.md** — Overview and quick start
-- **README.man1.md** — Command-line interface reference
-- **README.man4.md** — KiCad Eeschema plugin integration
-- **docs/README.developer.md** — Matching algorithms and internals
+- [**README.md**](../README.md) — Overview and quick start
+- [**README.man1.md**](README.man1.md) — Command-line interface reference
+- [**README.man4.md**](README.man4.md) — KiCad Eeschema plugin integration
+- [**README.developer.md**](README.developer.md) — Matching algorithms and internals

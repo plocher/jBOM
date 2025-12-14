@@ -84,22 +84,22 @@ All formats are normalized internally, so you can use whichever is most convenie
 : Run with `-d` flag to see detailed matching diagnostics.
 
 **Plugin not showing in KiCad?**
-: Verify the command path is correct and use absolute paths. See [README.man4.md](README.man4.md).
+: Verify the command path is correct and use absolute paths. See [docs/README.man4.md](docs/README.man4.md).
 
 For more troubleshooting, see the relevant man page:
-- CLI issues → [README.man1.md](README.man1.md)
-- Plugin issues → [README.man4.md](README.man4.md)
-- API issues → [README.man3.md](README.man3.md)
-- Inventory format → [README.man5.md](README.man5.md)
+- CLI issues → [docs/README.man1.md](docs/README.man1.md)
+- Plugin issues → [docs/README.man4.md](docs/README.man4.md)
+- API issues → [docs/README.man3.md](docs/README.man3.md)
+- Inventory format → [docs/README.man5.md](docs/README.man5.md)
 
 ## SEE ALSO
 
-- [**README.man1.md**](README.man1.md) — CLI reference
-- [**README.man3.md**](README.man3.md) — Python library API
-- [**README.man4.md**](README.man4.md) — KiCad plugin setup
-- [**README.man5.md**](README.man5.md) — Inventory file format
+- [**docs/README.man1.md**](docs/README.man1.md) — CLI reference
+- [**docs/README.man3.md**](docs/README.man3.md) — Python library API
+- [**docs/README.man4.md**](docs/README.man4.md) — KiCad plugin setup
+- [**docs/README.man5.md**](docs/README.man5.md) — Inventory file format
 - [**docs/README.developer.md**](docs/README.developer.md) — Technical architecture
-- [**docs/**](docs/) — Development documentation (contributing, release process, security, pre-commit setup)
+- [**docs/**](docs/) — All documentation (user guides, developer guides, changelog, contributing)
 
 ## Contributing
 

@@ -168,7 +168,7 @@ Exit code is returned to KiCad (0=success, non-zero=error). Errors are logged to
 
 ### CI/Automation:
 
-For automated BOM generation in build scripts, use the command-line interface directly (see README.man1.md). The plugin is primarily for interactive use in Eeschema.
+For automated BOM generation in build scripts, use the command-line interface directly (see [README.man1.md](README.man1.md)). The plugin is primarily for interactive use in Eeschema.
 
 ## INVENTORY FILE REQUIREMENTS
 
@@ -183,12 +183,12 @@ The inventory file must have these columns:
 Optional columns for enhanced matching:
 - Manufacturer, MFGPN, Datasheet, SMD, Tolerance, V, A, W, Type, Frequency, etc.
 
-See README.man1.md (INVENTORY FILE FORMAT section) for complete details.
+See [README.man1.md](README.man1.md) (INVENTORY FILE FORMAT section) for complete details.
 
 ## SEE ALSO
 
-- **README.md** — Overview and quick start
-- **README.man1.md** — Command-line interface reference
-- **README.man3.md** — Python library API reference
-- **docs/README.developer.md** — Matching algorithms and internals
-- **kicad_jbom_plugin.py** — The wrapper script (source code)
+- [**README.md**](../README.md) — Overview and quick start
+- [**README.man1.md**](README.man1.md) — Command-line interface reference
+- [**README.man3.md**](README.man3.md) — Python library API reference
+- [**README.developer.md**](README.developer.md) — Matching algorithms and internals
+- [**kicad_jbom_plugin.py**](../kicad_jbom_plugin.py) — The wrapper script (source code)
