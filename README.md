@@ -1,28 +1,22 @@
 # jBOM — KiCad Bill of Materials Generator
 
-A powerful, supplier-neutral BOM generator for KiCad projects. Matches schematic components against your inventory at BOM-generation time rather than hardcoding part numbers in symbols.
+A powerful BOM generator for KiCad projects, jBOM matches schematic components against your inventory at BOM-generation time rather than hardcoding part numbers in eeschema symbols. This makes your designs supplier-neutral, meaning you can match against current inventory and pricing whenever you generate a BOM.
 
-**Key Benefits:**
-- **Supplier-neutral designs** — No part numbers baked into schematics
-- **Current inventory data** — Match against up-to-date stock and pricing
-- **Intelligent matching** — Robust numeric parsing for resistors, capacitors, inductors, etc.
-- **Multiple inventory formats** — CSV, Excel (.xlsx, .xls), Apple Numbers (.numbers)
-- **Three integration options** — KiCad plugin, CLI, or Python library
-- **Hierarchical schematics** — Automatically processes multi-sheet designs
+jBOM handles multiple inventory formats (CSV, Excel, Apple Numbers), supports KiCad's hierarchical schematics, and provides intelligent component matching with robust numeric parsing for resistors, capacitors, inductors, and other component types. You can integrate it three ways: as a KiCad Eeschema plugin, via the command line, or as a Python library in your custom tools.
 
 ## Installation
 
-**Required:**
-- Python 3.9 or newer
-- `sexpdata` package: `pip install sexpdata`
+You need Python 3.9 or newer and the following packages:
 
-**Optional (for spreadsheet support):**
 ```bash
-pip install openpyxl          # For .xlsx, .xls files
-pip install numbers-parser    # For .numbers files
+# For basic operation with csv inventories
+pip install sexpdata
 
-# Or install all at once:
-pip install sexpdata openpyxl numbers-parser
+# To add support for Microsoft Excel Spreadsheet Inventories
+pip install openpyxl 
+
+# To add support for Apple Numbers Spreadsheet Inventories
+pip install numbers-parser
 ```
 
 ## Quick Start
@@ -42,7 +36,10 @@ Optional: Manufacturer, MFGPN, Datasheet, Tolerance, V, A, W, and component-spec
 ### 2. Generate your BOM
 
 **Via KiCad (interactive):**
-- Eeschema → Tools → Generate BOM → Select jBOM → Generate
+
+
+  `Eeschema` → `Tools` → `Generate BOM` → `Select jBOM` → `Generate`
+
 
 **Via command line:**
 ```bash
@@ -52,6 +49,7 @@ python jbom.py MyProject/ -i inventory.xlsx
 **Via Python:**
 ```python
 from jbom import generate_bom_api, GenerateOptions
+
 opts = GenerateOptions(verbose=True)
 result = generate_bom_api('MyProject/', 'inventory.xlsx', options=opts)
 ```
@@ -60,84 +58,35 @@ That's it! The BOM is written to `MyProject_bom.csv`.
 
 ## Usage Documentation
 
-jBOM documentation is organized as Unix man pages for clarity and reference:
+jBOM integrates three ways: as a KiCad Eeschema plugin for interactive use, via command line for scripts and CI pipelines, or as a Python library in custom tools. Detailed documentation is organized as Unix man pages:
 
-| Document | Purpose |
-|----------|---------|
-| **README.man1.md** | [CLI reference](README.man1.md) — Options, fields, examples, troubleshooting |
-| **README.man3.md** | [Python API reference](README.man3.md) — Classes, functions, library workflows |
-| **README.man4.md** | [KiCad plugin setup](README.man4.md) — Eeschema integration, configurations |
-| **README.developer.md** | Technical details — Matching algorithms, architecture, extending jBOM |
-
-## Integration Methods
-
-### 1. KiCad Eeschema Plugin
-Register jBOM in the Generate BOM dialog for interactive use within Eeschema.
-
-**Setup command:**
-```
-python3 /absolute/path/to/kicad_jbom_plugin.py %I -i /absolute/path/to/inventory.xlsx -o %O
-```
-
-See [README.man4.md](README.man4.md) for detailed setup and troubleshooting.
-
-### 2. Command-Line Interface
-Use in scripts, CI pipelines, or standalone workflows.
-
-```bash
-python jbom.py PROJECT/ -i INVENTORY.xlsx [OPTIONS]
-```
-
-See [README.man1.md](README.man1.md) for all options and examples.
-
-### 3. Python Library
-Embed jBOM in custom tools or workflows.
-
-```python
-from jbom import generate_bom_api, GenerateOptions
-
-opts = GenerateOptions(verbose=True)
-result = generate_bom_api('project/', 'inventory.xlsx', options=opts)
-
-for entry in result['bom_entries']:
-    print(f"{entry.reference}: {entry.lcsc}")
-```
-
-See [README.man3.md](README.man3.md) for the full API reference.
+<table>
+<tr><th> Document </th><th> Purpose </th></tr>
+<tr><td> **README.man1.md** </td><td> [CLI reference](README.man1.md) — Options, fields, examples, troubleshooting </td></tr>
+<tr><td>  **README.man3.md** </td><td> [Python API reference](README.man3.md) — Classes, functions, library workflows </td></tr>
+<tr><td>  **README.man4.md** </td><td> [KiCad plugin setup](README.man4.md) — Eeschema integration, configurations </td></tr>
+<tr><td>  **README.developer.md** </td><td> Technical details — Matching algorithms, architecture, extending jBOM </td></tr>
+</table>
 
 ## Component Matching
 
-jBOM uses intelligent matching to find inventory parts that fit your schematic components:
+jBOM uses intelligent matching to find inventory parts that fit your schematic components. First, it detects the component type (resistor, capacitor, inductor, LED, IC, etc.) from the schematic symbol. Then it extracts the physical package from the footprint and parses the component value, handling various formats like 10k, 10K0, 10000, 330R, or 3R3.
 
-1. **Type detection** — Identifies resistors, capacitors, inductors, LEDs, ICs, etc.
-2. **Package matching** — Matches footprints (0603, SOT-23) to inventory packages
-3. **Value parsing** — Handles various formats (10k, 10K0, 10000, 330R, 3R3, etc.)
-4. **Property scoring** — Ranks matches by tolerance, voltage, current, and other attributes
-5. **Priority ranking** — Selects preferred parts using inventory Priority column
+For each potential match, jBOM scores candidates by comparing properties like tolerance, voltage, and current ratings. Finally, it uses the inventory's Priority column (1 = preferred, higher = less preferred) to break ties and select the best part.
 
-See README.developer.md for matching algorithm details.
+See README.developer.md for detailed information about the matching algorithm.
 
 ## Output
 
-jBOM generates:
-- **CSV BOM file** — `<ProjectName>_bom.csv` with matched components
-- **Exit code** — 0 (success), 2 (warning/unmatched), 1 (error)
-- **Console summary** — Statistics about components and matches
-- **Debug info** — Detailed diagnostics (with `-d` flag)
+jBOM generates a CSV BOM file (`<ProjectName>_bom.csv`) with all matched components and their supplier part numbers. It also prints a summary to the console showing statistics about how many components were found and how many successfully matched. With the `-d` flag, you get detailed diagnostic information about why any components failed to match. The exit code indicates success (0), warning/unmatched components (2), or error (1).
 
 ## Troubleshooting
 
 **Components not matching?**
 : Run with `-d` flag to see detailed matching diagnostics.
 
-**Import error for Excel/Numbers?**
-: Install optional packages: `pip install openpyxl numbers-parser`
-
 **Plugin not showing in KiCad?**
 : Verify the command path is correct and use absolute paths. See [README.man4.md](README.man4.md).
-
-**Hierarchical schematics not processing all sheets?**
-: Ensure all sub-sheets are in the same directory and have `.kicad_sch` extension.
 
 For more troubleshooting, see the relevant man page:
 - CLI issues → [README.man1.md](README.man1.md)
@@ -148,14 +97,9 @@ For more troubleshooting, see the relevant man page:
 
 jBOM v1.0.0 — Stable release with intelligent component matching, multiple inventory formats, and comprehensive integration options.
 
+Author: John Plocher
+
 ## License
 
 AGPLv3 — See LICENSE file for full terms.
 
-## Support
-
-For detailed information:
-- **Using the CLI?** See [README.man1.md](README.man1.md)
-- **Integrating with KiCad?** See [README.man4.md](README.man4.md)
-- **Using the Python API?** See [README.man3.md](README.man3.md)
-- **Understanding the matching logic?** See README.developer.md
