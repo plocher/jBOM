@@ -2342,6 +2342,24 @@ def generate_bom_api(project_path: Union[str, Path], inventory_path: Union[str, 
 
 # ---- CLI entrypoint -------------------------------------------------------------
 
+def _preset_fields(preset: str, include_mfg: bool, include_verbose: bool, any_notes: bool) -> List[str]:
+    preset = (preset or 'standard').lower()
+    base = ['Reference', 'Quantity', 'Description', 'Value', 'Footprint', 'LCSC']
+    if preset == 'jlc':
+        # Minimal JLC-friendly set; can be extended in future
+        base = ['Reference', 'Quantity', 'LCSC', 'Value', 'Footprint']
+    if include_mfg and 'Manufacturer' not in base:
+        base += ['Manufacturer', 'MFGPN']
+    base += ['Datasheet', 'SMD']
+    if include_verbose:
+        base.append('Match_Quality')
+    if any_notes:
+        base.append('Notes')
+    if include_verbose:
+        base.append('Priority')
+    return base
+
+
 def main():
     parser = argparse.ArgumentParser(description='jBOM - Generate BOM from KiCad project')
     parser.add_argument('project_path', help='Path to KiCad project directory')
@@ -2351,6 +2369,9 @@ def main():
     parser.add_argument('-v', '--verbose', action='store_true', help='Include debug information and show tied priority options')
     parser.add_argument('-m', '--manufacturer', action='store_true', help='Include Manufacturer and MFGPN columns in BOM output')
     parser.add_argument('-f', '--fields', help='Comma-separated list of fields to include in BOM output. Use --list-fields to see available fields')
+    parser.add_argument('--fields-preset', choices=['standard','jlc'], help='Choose a predefined field set')
+    parser.add_argument('--format', choices=['standard','jlc'], default='standard', help='Output format (affects defaults)')
+    parser.add_argument('--multi-format', help='Comma-separated list of formats to emit in one run (e.g., jlc,standard)')
     parser.add_argument('--list-fields', action='store_true', help='List all available fields from inventory and component data, then exit')
     parser.add_argument('-d', '--debug', action='store_true', help='Add detailed matching information to Notes column for debugging')
     parser.add_argument('--smd', action='store_true', help='Include only SMD (Surface Mount Device) components in BOM output')
@@ -2516,8 +2537,10 @@ def main():
     if args.verbose:
         default_fields.append('Priority')
     
-    # Use custom fields if provided, otherwise use defaults
+    # Use custom fields if provided, otherwise use defaults or preset
     fields = default_fields
+    if args.fields_preset and not args.fields:
+        fields = _preset_fields(args.fields_preset, args.manufacturer, args.verbose, any_notes)
     if args.fields:
         fields = [field.strip() for field in args.fields.split(',')]
         # Validate fields against available ones
@@ -2560,7 +2583,18 @@ def main():
             print_bom_table(bom_entries, verbose=args.verbose, include_mfg=args.manufacturer)
     else:
         # Normal CSV output mode
-        bom_generator.write_bom_csv(bom_entries, output_path, fields)
+        if args.multi_format:
+            formats = [f.strip().lower() for f in args.multi_format.split(',') if f.strip()]
+        else:
+            formats = [args.format]
+
+        # Determine base name and directory
+        out_base = (output_path.stem[:-4] if output_path.name.endswith('_bom.csv') else output_path.stem)
+        out_dir = output_path.parent
+        for fmt in formats:
+            fmt_fields = fields if args.fields else _preset_fields(fmt, args.manufacturer, args.verbose, any_notes)
+            out_file = output_path if len(formats) == 1 else out_dir / f"{out_base}_bom.{fmt}.csv"
+            bom_generator.write_bom_csv(bom_entries, out_file, fmt_fields)
         
         # Print formatted summary
         if not args.quiet:
