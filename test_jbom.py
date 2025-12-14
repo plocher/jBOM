@@ -1984,6 +1984,422 @@ class TestFieldArgumentParsing(unittest.TestCase):
         self.assertGreater(len(result), 0)
 
 
+class TestNormalizeFieldName(unittest.TestCase):
+    """Test normalize_field_name function for case-insensitive field handling"""
+    
+    def test_snake_case_preserved(self):
+        """Test that snake_case format is preserved as-is"""
+        from jbom import normalize_field_name
+        
+        test_cases = [
+            ('match_quality', 'match_quality'),
+            ('reference', 'reference'),
+            ('i:package', 'i:package'),
+            ('c:tolerance', 'c:tolerance'),
+            ('my_custom_field', 'my_custom_field'),
+        ]
+        
+        for input_val, expected in test_cases:
+            with self.subTest(input_val=input_val):
+                result = normalize_field_name(input_val)
+                self.assertEqual(result, expected)
+    
+    def test_title_case_conversion(self):
+        """Test that Title Case is converted to snake_case"""
+        from jbom import normalize_field_name
+        
+        test_cases = [
+            ('Match Quality', 'match_quality'),
+            ('Reference', 'reference'),
+            ('Package', 'package'),
+            ('Manufacturer PN', 'manufacturer_pn'),
+            ('I:Package', 'i:package'),
+            ('C:Tolerance', 'c:tolerance'),
+        ]
+        
+        for input_val, expected in test_cases:
+            with self.subTest(input_val=input_val):
+                result = normalize_field_name(input_val)
+                self.assertEqual(result, expected)
+    
+    def test_camelcase_conversion(self):
+        """Test that CamelCase is converted to snake_case"""
+        from jbom import normalize_field_name
+        
+        test_cases = [
+            ('MatchQuality', 'match_quality'),
+            ('MyCustomField', 'my_custom_field'),
+            ('IPackage', 'ipackage'),  # Consecutive caps like XMLData -> xmldata
+            ('DataValue', 'data_value'),
+        ]
+        
+        for input_val, expected in test_cases:
+            with self.subTest(input_val=input_val):
+                result = normalize_field_name(input_val)
+                self.assertEqual(result, expected)
+    
+    def test_uppercase_conversion(self):
+        """Test that UPPERCASE is converted to lowercase"""
+        from jbom import normalize_field_name
+        
+        test_cases = [
+            ('REFERENCE', 'reference'),
+            ('MATCH_QUALITY', 'match_quality'),
+            ('VALUE', 'value'),
+            ('I:PACKAGE', 'i:package'),
+            ('C:TOLERANCE', 'c:tolerance'),
+        ]
+        
+        for input_val, expected in test_cases:
+            with self.subTest(input_val=input_val):
+                result = normalize_field_name(input_val)
+                self.assertEqual(result, expected)
+    
+    def test_prefix_handling(self):
+        """Test that I: and C: prefixes are handled correctly"""
+        from jbom import normalize_field_name
+        
+        test_cases = [
+            ('I:Package', 'i:package'),
+            ('i:package', 'i:package'),
+            ('C:Tolerance', 'c:tolerance'),
+            ('c:tolerance', 'c:tolerance'),
+            ('I:Match Quality', 'i:match_quality'),
+            ('C:Custom Field', 'c:custom_field'),
+        ]
+        
+        for input_val, expected in test_cases:
+            with self.subTest(input_val=input_val):
+                result = normalize_field_name(input_val)
+                self.assertEqual(result, expected)
+    
+    def test_whitespace_handling(self):
+        """Test that extra whitespace is normalized"""
+        from jbom import normalize_field_name
+        
+        test_cases = [
+            ('Match  Quality', 'match_quality'),  # Double space
+            ('  reference  ', 'reference'),       # Leading/trailing spaces
+            ('Match   Quality', 'match_quality'), # Multiple spaces
+            ('Package  Type', 'package_type'),    # Space in middle
+        ]
+        
+        for input_val, expected in test_cases:
+            with self.subTest(input_val=input_val):
+                result = normalize_field_name(input_val)
+                self.assertEqual(result, expected)
+    
+    def test_whitespace_in_fields_conversion(self):
+        """Test that various whitespace formats are handled"""
+        from jbom import normalize_field_name
+        
+        # Note: normalize_field_name handles spaces but not embedded newlines
+        # Newlines are typically cleaned by inventory loader before reaching normalize_field_name
+        test_cases = [
+            ('Match Quality', 'match_quality'),    # Space between words
+            ('Tol erance', 'tol_erance'),          # Space in word
+            ('Pack age', 'pack_age'),              # Space in word
+        ]
+        
+        for input_val, expected in test_cases:
+            with self.subTest(input_val=input_val):
+                result = normalize_field_name(input_val)
+                self.assertEqual(result, expected)
+    
+    def test_hyphen_to_underscore(self):
+        """Test that hyphens are converted to underscores"""
+        from jbom import normalize_field_name
+        
+        test_cases = [
+            ('match-quality', 'match_quality'),
+            ('ref-des', 'ref_des'),
+            ('custom-field-name', 'custom_field_name'),
+        ]
+        
+        for input_val, expected in test_cases:
+            with self.subTest(input_val=input_val):
+                result = normalize_field_name(input_val)
+                self.assertEqual(result, expected)
+    
+    def test_multiple_underscores_collapsed(self):
+        """Test that multiple underscores are collapsed to single"""
+        from jbom import normalize_field_name
+        
+        test_cases = [
+            ('match__quality', 'match_quality'),
+            ('field___name', 'field_name'),
+        ]
+        
+        for input_val, expected in test_cases:
+            with self.subTest(input_val=input_val):
+                result = normalize_field_name(input_val)
+                self.assertEqual(result, expected)
+    
+    def test_idempotence(self):
+        """Test that normalizing twice yields same result"""
+        from jbom import normalize_field_name
+        
+        test_inputs = [
+            'match_quality',
+            'Match Quality',
+            'MatchQuality',
+            'i:package',
+            'I:Package',
+        ]
+        
+        for test_input in test_inputs:
+            with self.subTest(test_input=test_input):
+                first_norm = normalize_field_name(test_input)
+                second_norm = normalize_field_name(first_norm)
+                self.assertEqual(first_norm, second_norm)
+    
+    def test_empty_string(self):
+        """Test edge case of empty string"""
+        from jbom import normalize_field_name
+        
+        result = normalize_field_name('')
+        self.assertEqual(result, '')
+    
+    def test_mixed_formats(self):
+        """Test mixed format conversions"""
+        from jbom import normalize_field_name
+        
+        test_cases = [
+            ('Match_Quality', 'match_quality'),     # Already snake_case
+            ('MATCH_Quality', 'match_quality'),     # Mixed case
+            ('match Quality', 'match_quality'),     # Space instead of underscore
+            ('Match-Quality', 'match_quality'),     # Hyphen instead of underscore
+        ]
+        
+        for input_val, expected in test_cases:
+            with self.subTest(input_val=input_val):
+                result = normalize_field_name(input_val)
+                self.assertEqual(result, expected)
+
+
+class TestFieldToHeader(unittest.TestCase):
+    """Test field_to_header function for CSV header generation"""
+    
+    def test_basic_snake_case_to_title_case(self):
+        """Test conversion of snake_case to Title Case"""
+        from jbom import field_to_header
+        
+        test_cases = [
+            ('reference', 'Reference'),
+            ('match_quality', 'Match Quality'),
+            ('lcsc', 'Lcsc'),
+            ('manufacturer', 'Manufacturer'),
+            ('mfgpn', 'Mfgpn'),
+        ]
+        
+        for input_val, expected in test_cases:
+            with self.subTest(input_val=input_val):
+                result = field_to_header(input_val)
+                self.assertEqual(result, expected)
+    
+    def test_prefixed_fields_no_space_after_prefix(self):
+        """Test that prefixed fields have no space after prefix"""
+        from jbom import field_to_header
+        
+        test_cases = [
+            ('i:package', 'I:Package'),      # NOT "I: Package"
+            ('c:tolerance', 'C:Tolerance'),  # NOT "C: Tolerance"
+            ('i:voltage', 'I:Voltage'),      # NOT "I: Voltage"
+            ('c:custom_field', 'C:Custom Field'),
+        ]
+        
+        for input_val, expected in test_cases:
+            with self.subTest(input_val=input_val):
+                result = field_to_header(input_val)
+                self.assertEqual(result, expected)
+                # Verify no space after colon
+                if ':' in result:
+                    self.assertNotIn(': ', result)
+    
+    def test_multiword_fields(self):
+        """Test multiword field name conversion"""
+        from jbom import field_to_header
+        
+        test_cases = [
+            ('match_quality', 'Match Quality'),
+            ('custom_field_name', 'Custom Field Name'),
+            ('temperature_coefficient', 'Temperature Coefficient'),
+            ('i:temperature_coefficient', 'I:Temperature Coefficient'),
+        ]
+        
+        for input_val, expected in test_cases:
+            with self.subTest(input_val=input_val):
+                result = field_to_header(input_val)
+                self.assertEqual(result, expected)
+    
+    def test_empty_string(self):
+        """Test edge case of empty string"""
+        from jbom import field_to_header
+        
+        result = field_to_header('')
+        self.assertEqual(result, '')
+    
+    def test_single_word_fields(self):
+        """Test single-word field names"""
+        from jbom import field_to_header
+        
+        test_cases = [
+            ('reference', 'Reference'),
+            ('value', 'Value'),
+            ('datasheet', 'Datasheet'),
+            ('quantity', 'Quantity'),
+        ]
+        
+        for input_val, expected in test_cases:
+            with self.subTest(input_val=input_val):
+                result = field_to_header(input_val)
+                self.assertEqual(result, expected)
+
+
+class TestInventoryRawHeaderMatching(unittest.TestCase):
+    """Test inventory field matching with raw CSV header variations"""
+    
+    def setUp(self):
+        # Create inventory with intentionally varied column names
+        self.temp_inv = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.csv')
+        csv_content = [
+            'IPN,Part Name,Category,Package,Value,Tolerance,LCSC,Manufacturer,Mfg PN,Description,Priority',
+            'R001,330R 5%,RES,0603,330R,5%,C25231,UNI-ROYAL,0603WAJ0331T5E,330Ω resistor,1',
+        ]
+        self.temp_inv.write('\n'.join(csv_content))
+        self.temp_inv.close()
+        
+        self.matcher = InventoryMatcher(Path(self.temp_inv.name))
+        self.bom_gen = BOMGenerator([], self.matcher)
+    
+    def tearDown(self):
+        Path(self.temp_inv.name).unlink()
+    
+    def test_get_inventory_field_value_exact_match(self):
+        """Test getting inventory field value with exact field name match"""
+        item = self.matcher.inventory[0]
+        
+        # Direct field names from CSV
+        value = self.bom_gen._get_inventory_field_value('value', item)
+        self.assertEqual(value, '330R')
+        
+        value = self.bom_gen._get_inventory_field_value('tolerance', item)
+        self.assertEqual(value, '5%')
+    
+    def test_get_inventory_field_value_with_spaces(self):
+        """Test getting inventory field value when raw CSV has spaces"""
+        item = self.matcher.inventory[0]
+        
+        # Raw CSV has "Mfg PN" with space, should still match normalized "mfg_pn"
+        value = self.bom_gen._get_inventory_field_value('mfg_pn', item)
+        self.assertEqual(value, '0603WAJ0331T5E')
+    
+    def test_has_inventory_field(self):
+        """Test checking if inventory field exists"""
+        item = self.matcher.inventory[0]
+        
+        # Should find normalized field names
+        self.assertTrue(self.bom_gen._has_inventory_field('value', item))
+        self.assertTrue(self.bom_gen._has_inventory_field('tolerance', item))
+        self.assertTrue(self.bom_gen._has_inventory_field('mfg_pn', item))
+        
+        # Should not find non-existent fields
+        self.assertFalse(self.bom_gen._has_inventory_field('nonexistent', item))
+    
+    def test_missing_inventory_field_returns_empty(self):
+        """Test that missing fields return empty string"""
+        item = self.matcher.inventory[0]
+        
+        value = self.bom_gen._get_inventory_field_value('nonexistent_field', item)
+        self.assertEqual(value, '')
+
+
+class TestCaseInsensitiveFieldInput(unittest.TestCase):
+    """Test that field input accepts various case/format combinations"""
+    
+    def setUp(self):
+        self.temp_inv = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.csv')
+        csv_content = [
+            'IPN,Category,Package,Value,Tolerance,LCSC,Priority',
+            'R001,RES,0603,330R,5%,C25231,1',
+        ]
+        self.temp_inv.write('\n'.join(csv_content))
+        self.temp_inv.close()
+        
+        self.matcher = InventoryMatcher(Path(self.temp_inv.name))
+        self.components = [
+            Component('R1', 'Device:R', '330R', 'PCM_SPCoast:0603-RES',
+                     properties={'Tolerance': '1%'}),
+        ]
+    
+    def tearDown(self):
+        Path(self.temp_inv.name).unlink()
+    
+    def test_get_field_value_case_insensitive(self):
+        """Test that _get_field_value works with various input formats"""
+        bom_gen = BOMGenerator(self.components, self.matcher)
+        bom_entries, _, _ = bom_gen.generate_bom()
+        
+        entry = bom_entries[0]
+        component = self.components[0]
+        item = self.matcher.inventory[0]
+        
+        # All these formats should work and return same result
+        test_cases = [
+            'reference',      # snake_case
+            'Reference',      # Title Case
+            'REFERENCE',      # UPPERCASE
+        ]
+        
+        expected = 'R1'
+        for field_input in test_cases:
+            with self.subTest(field_input=field_input):
+                result = bom_gen._get_field_value(field_input, entry, component, item)
+                self.assertEqual(result, expected)
+    
+    def test_prefixed_field_case_insensitive(self):
+        """Test that prefixed fields work case-insensitively"""
+        bom_gen = BOMGenerator(self.components, self.matcher)
+        bom_entries, _, _ = bom_gen.generate_bom()
+        
+        entry = bom_entries[0]
+        component = self.components[0]
+        item = self.matcher.inventory[0]
+        
+        # All should return '5%' (from inventory tolerance)
+        test_cases = [
+            'i:tolerance',
+            'I:Tolerance',
+            'I:TOLERANCE',
+        ]
+        
+        for field_input in test_cases:
+            with self.subTest(field_input=field_input):
+                result = bom_gen._get_field_value(field_input, entry, component, item)
+                self.assertEqual(result, '5%')
+    
+    def test_component_property_case_insensitive(self):
+        """Test that component property fields work case-insensitively"""
+        bom_gen = BOMGenerator(self.components, self.matcher)
+        bom_entries, _, _ = bom_gen.generate_bom()
+        
+        entry = bom_entries[0]
+        component = self.components[0]
+        item = self.matcher.inventory[0]
+        
+        # All should return '1%' (from component tolerance)
+        test_cases = [
+            'c:tolerance',
+            'C:Tolerance',
+            'C:TOLERANCE',
+        ]
+        
+        for field_input in test_cases:
+            with self.subTest(field_input=field_input):
+                result = bom_gen._get_field_value(field_input, entry, component, item)
+                self.assertEqual(result, '1%')
+
+
 if __name__ == '__main__':
     # Import the constants needed for skip conditions
     from jbom import EXCEL_SUPPORT, NUMBERS_SUPPORT
