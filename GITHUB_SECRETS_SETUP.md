@@ -36,7 +36,8 @@ jBOM needs **1 Repository Secret** for automated PyPI publishing.
 8. Click **Create token**
 9. **Copy the token** (starts with `pypi-`)
    - ⚠️ This is the only time you'll see it - copy it now
-   - Example: `REDACTED...`
+   - Format: `pypi-XXXXXXXXXXXXXXXXXXXXXXXXXX` (long string of characters)
+   - NEVER share or commit this token
 
 ### Part 2: Add Repository Secret to GitHub
 
@@ -59,7 +60,8 @@ jBOM needs **1 Repository Secret** for automated PyPI publishing.
 # If you have GitHub CLI installed
 gh secret set PYPI_API_TOKEN \
   --repo plocher/jBOM \
-  --body "REDACTED..."
+  --body "YOUR_ACTUAL_TOKEN_HERE"
+# Replace YOUR_ACTUAL_TOKEN_HERE with your actual PyPI token
 ```
 
 Or interactively:
