@@ -2250,6 +2250,97 @@ def print_formatted_summary(file_info: List[tuple], inventory_path: Path, invent
         print(f"   {bom_count:2d} Entries     {output_path}{smd_text}")
 
 
+# ---- Library API (no prints/exits) -------------------------------------------------
+
+@dataclass
+class GenerateOptions:
+    verbose: bool = False
+    debug: bool = False
+    smd_only: bool = False
+    fields: Optional[List[str]] = None
+    manufacturer: bool = False
+
+
+def generate_bom_api(project_path: Union[str, Path], inventory_path: Union[str, Path], options: Optional[GenerateOptions] = None):
+    """
+    Library API to generate a BOM without printing or exiting the process.
+
+    Returns a dict with keys:
+      - file_info: List[Tuple[count:int, file_path:Path, warning:Optional[str]]]
+      - inventory_count: int
+      - bom_entries: List[BOMEntry]
+      - smd_excluded_count: int
+      - debug_diagnostics: List[dict]
+      - components: List[Component]
+      - available_fields: Dict[str, str]
+    """
+    options = options or GenerateOptions()
+
+    proj_path = Path(project_path)
+    inv_path = Path(inventory_path)
+
+    if not inv_path.exists():
+        raise FileNotFoundError(f"Inventory file not found: {inv_path}")
+
+    file_extension = inv_path.suffix.lower()
+    if file_extension not in ['.csv', '.xlsx', '.xls', '.numbers']:
+        raise ValueError(f"Unsupported inventory file format: {file_extension}")
+    if file_extension in ['.xlsx', '.xls'] and not EXCEL_SUPPORT:
+        raise ImportError("Excel support requires openpyxl. Install with: pip install openpyxl")
+    if file_extension == '.numbers' and not NUMBERS_SUPPORT:
+        raise ImportError("Numbers support requires numbers-parser. Install with: pip install numbers-parser")
+
+    # Determine schematic file(s)
+    if proj_path.suffix == '.kicad_sch':
+        if not proj_path.exists():
+            raise FileNotFoundError(f"Schematic file not found: {proj_path}")
+        schematic_path = proj_path
+        search_dir = proj_path.parent
+    else:
+        search_dir = proj_path
+        schematic_path = find_best_schematic(search_dir)
+        if schematic_path is None:
+            raise FileNotFoundError("No .kicad_sch file found in project directory")
+
+    # Parse components (hierarchical aware)
+    components: List[Component] = []
+    file_info: List[Tuple[int, Path, Optional[str]]] = []
+
+    processed_files = process_hierarchical_schematic(schematic_path, search_dir)
+    for file_path in processed_files:
+        parser_obj = KiCadParser(file_path)
+        file_components = parser_obj.parse()
+        components.extend(file_components)
+        warning = "Warning: autosave file may be incomplete!" if file_path.name.startswith('_autosave-') else None
+        file_info.append((len(file_components), file_path, warning))
+
+    # Match inventory and generate BOM
+    matcher = InventoryMatcher(inv_path)
+    bom_generator = BOMGenerator(components, matcher)
+    bom_entries, smd_excluded_count, debug_diagnostics = bom_generator.generate_bom(
+        verbose=options.verbose, debug=options.debug, smd_only=options.smd_only
+    )
+
+    # Validate optional fields if provided
+    if options.fields:
+        available_fields = bom_generator.get_available_fields(components)
+        invalid = [f for f in options.fields if f not in available_fields]
+        if invalid:
+            raise ValueError(f"Unknown fields: {', '.join(invalid)}")
+
+    return {
+        'file_info': file_info,
+        'inventory_count': len(matcher.inventory),
+        'bom_entries': bom_entries,
+        'smd_excluded_count': smd_excluded_count,
+        'debug_diagnostics': debug_diagnostics,
+        'components': components,
+        'available_fields': bom_generator.get_available_fields(components),
+    }
+
+
+# ---- CLI entrypoint -------------------------------------------------------------
+
 def main():
     parser = argparse.ArgumentParser(description='jBOM - Generate BOM from KiCad project')
     parser.add_argument('project_path', help='Path to KiCad project directory')
