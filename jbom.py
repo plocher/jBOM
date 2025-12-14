@@ -2344,23 +2344,19 @@ def generate_bom_api(project_path: Union[str, Path], inventory_path: Union[str, 
 # Field presets - easily extensible data structure
 FIELD_PRESETS = {
     'standard': {
-        'base': ['Reference', 'Quantity', 'Description', 'Value', 'Footprint', 'LCSC'],
-        'suffix': ['Datasheet', 'SMD'],
+        'fields': ['Reference', 'Quantity', 'Description', 'Value', 'Footprint', 'LCSC', 'Datasheet', 'SMD'],
         'description': 'Comprehensive set with all standard BOM fields'
     },
     'jlc': {
-        'base': ['Reference', 'Quantity', 'Value', 'LCSC', 'Description'],
-        'suffix': ['Datasheet', 'SMD'],
+        'fields': ['Reference', 'Quantity', 'LCSC', 'Value', 'Footprint', 'Description', 'Datasheet', 'SMD'],
         'description': 'Minimal column set optimized for JLCPCB uploads'
     },
     'minimal': {
-        'base': ['Reference', 'Quantity', 'Value', 'LCSC'],
-        'suffix': [],
+        'fields': ['Reference', 'Quantity', 'Value', 'LCSC'],
         'description': 'Bare minimum: reference, qty, value, and LCSC part number'
     },
     'all': {
-        'base': None,  # Special case: means "include all available fields"
-        'suffix': [],
+        'fields': None,  # Special case: means "include all available fields"
         'description': 'All available fields from inventory and components'
     },
 }
@@ -2387,11 +2383,10 @@ def _preset_fields(preset: str, include_verbose: bool, any_notes: bool) -> List[
     preset_def = FIELD_PRESETS[preset]
     
     # Special case: 'all' preset is handled later when we know available fields
-    if preset_def['base'] is None:
+    if preset_def['fields'] is None:
         return []  # Placeholder, will be expanded in _parse_fields_argument
     
-    result = list(preset_def['base'])
-    result.extend(preset_def['suffix'])
+    result = list(preset_def['fields'])
     
     if include_verbose:
         result.append('Match_Quality')
