@@ -437,6 +437,148 @@ jBOM/
 - [README.man5.md](README.man5.md): Inventory file format
 - [README.developer.md](README.developer.md): This file - technical deep dive and extension points
 
+## Automated Releases with Semantic Versioning
+
+jBOM uses GitHub Actions with python-semantic-release for automated version management and PyPI publishing.
+
+### How It Works
+
+The release process is triggered automatically by commits to the main branch:
+
+1. **Conventional Commits**: Write commit messages following the Conventional Commits standard
+2. **Automatic Analysis**: python-semantic-release analyzes commit messages
+3. **Version Bump**: Determines MAJOR.MINOR.PATCH version change
+4. **Update Files**: Updates `src/jbom/__version__.py` and `pyproject.toml`
+5. **Create Tag**: Creates annotated git tag (e.g., v1.0.2)
+6. **GitHub Release**: Generates release notes from commit messages
+7. **PyPI Upload**: Builds and publishes to PyPI automatically
+8. **Tests**: Full test suite runs before release
+
+### Commit Message Format (Conventional Commits)
+
+**Patch Release (1.0.1 → 1.0.2):**
+```
+fix: correct tolerance gap calculation in resistor matching
+
+Fixes #42 - Tolerance gaps were not calculated correctly
+when inventory had multiple candidates with different tolerances.
+```
+
+**Minor Release (1.0.1 → 1.1.0):**
+```
+feat: add support for custom validation functions
+
+Users can now provide custom validation functions for
+component matching via the new ValidatorFunc interface.
+```
+
+**Major Release (1.0.1 → 2.0.0):**
+```
+feat!: redesign component matching API
+
+BREAKING CHANGE: The matching algorithm has been redesigned
+for better performance. The old match_properties() method
+is no longer available. Use new_match_scoring() instead.
+```
+
+### Git Tags
+
+Tags are created automatically by the release process in the format `vX.Y.Z`:
+
+```bash
+# View all tags
+git tag -l
+
+# View a specific tag
+git show v1.0.1
+
+# Create manual tag (only if overriding automation)
+git tag -a v1.0.2 -m "Release v1.0.2"
+git push origin v1.0.2
+```
+
+### Commit Types
+
+- **feat**: A new feature (results in a MINOR version bump)
+- **fix**: A bug fix (results in a PATCH version bump)
+- **feat!**: A breaking feature (results in a MAJOR version bump)
+- **BREAKING CHANGE**: Indicates breaking changes (results in MAJOR bump)
+- **docs**: Documentation only (no version bump)
+- **style**: Code style changes (no version bump)
+- **refactor**: Code refactoring (no version bump)
+- **perf**: Performance improvements (no version bump)
+- **test**: Test additions/changes (no version bump)
+- **ci**: CI/CD changes (no version bump)
+- **chore**: Maintenance tasks (no version bump)
+
+### Workflows
+
+Three GitHub Actions workflows automate the release process:
+
+**test.yml**: Runs on every push and PR
+- Tests on Python 3.9, 3.10, 3.11, 3.12
+- Fails if any tests don't pass
+- Prevents merging broken code
+
+**semantic-release.yml**: Runs on pushes to main
+- Analyzes conventional commits
+- Determines version bump
+- Updates version files
+- Creates git tag
+- Generates release notes
+- Triggers publish workflow
+
+**publish.yml**: Runs on release creation
+- Runs full test suite
+- Builds distribution packages
+- Validates with twine
+- Publishes to PyPI
+- Creates GitHub Release page
+
+### Manual Release Override
+
+For edge cases, manually trigger a release:
+
+```bash
+# Create a release commit that skips CI
+git commit --allow-empty -m "chore: release v1.1.0\n\n[skip ci]"
+git push origin main
+```
+
+Or trigger manually in GitHub Actions UI:
+- Go to Actions → Semantic Release → Run workflow
+
+### Version Constraints
+
+- Versions must follow semantic versioning: MAJOR.MINOR.PATCH
+- Pre-release versions: 1.0.0-alpha.1, 1.0.0-beta.2
+- Build metadata: 1.0.0+build.123 (not recommended for releases)
+
+### Checking Latest Release
+
+```bash
+# Show latest git tag
+git describe --tags --abbrev=0
+
+# Show current version in code
+grep "__version__" src/jbom/__version__.py
+
+# Check PyPI for latest published version
+python -m pip index versions jbom
+```
+
+### Development Before Release
+
+During development, use work-in-progress commits:
+
+```bash
+# WIP commits don't trigger releases
+git commit -m "wip: refactoring tolerance calculation"
+
+# When ready, convert to proper commit
+git commit --amend -m "feat: improve tolerance calculation algorithm"
+```
+
 ## SEE ALSO
 
 - [**README.md**](README.md) — Overview and quick start

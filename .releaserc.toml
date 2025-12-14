@@ -1,0 +1,22 @@
+[tool.semantic_release]
+version_variable = "src/jbom/__version__.py:__version__"
+upload_to_pypi = true
+upload_to_release = true
+build_command = "python -m build"
+remove_dist = true
+
+[tool.semantic_release.branches.main]
+match = "^main$"
+prerelease = false
+
+[tool.semantic_release.changelog]
+exclude_patterns = ["^chore", "^ci"]
+
+[tool.semantic_release.commit_parser_options]
+patch_patterns = ["^fix(\\(.+\\))?!?:", "^hotfix(\\(.+\\))?!?:"]
+minor_patterns = ["^feat(\\(.+\\))?!?:"]
+major_patterns = ["^(feat|fix|refactor)(\\(.+\\))?!:", "BREAKING CHANGE"]
+
+[tool.semantic_release.publish]
+# PyPI credentials handled via environment variables (PYPI_TOKEN)
+# GitHub token handled via GITHUB_TOKEN environment variable

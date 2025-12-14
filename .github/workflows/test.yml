@@ -1,0 +1,40 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install sexpdata openpyxl numbers-parser
+
+    - name: Run tests
+      run: |
+        python -m unittest tests.test_jbom -v
+
+    - name: Test coverage
+      if: matrix.python-version == '3.9'
+      run: |
+        pip install coverage
+        coverage run -m unittest tests.test_jbom
+        coverage report -m
