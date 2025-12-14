@@ -60,14 +60,13 @@ That's it! The BOM is written to `MyProject_bom.csv`.
 
 jBOM integrates three ways: as a KiCad Eeschema plugin for interactive use, via command line for scripts and CI pipelines, or as a Python library in custom tools. Detailed documentation is organized as Unix man pages:
 
-<table>
-<tr><th> Document </th><th> Purpose </th></tr>
-<tr><td> **README.man1.md** </td><td> [CLI reference](README.man1.md) — Options, fields, examples, troubleshooting </td></tr>
-<tr><td>  **README.man3.md** </td><td> [Python API reference](README.man3.md) — Classes, functions, library workflows </td></tr>
-<tr><td>  **README.man4.md** </td><td> [KiCad plugin setup](README.man4.md) — Eeschema integration, configurations </td></tr>
-<tr><td>  **README.man5.md** </td><td> [Inventory format](README.man5.md) — Column definitions, field naming, CSV/Excel/Numbers structure </td></tr>
-<tr><td>  **README.developer.md** </td><td> Technical details — Matching algorithms, architecture, extending jBOM </td></tr>
-</table>
+| Document | Purpose |
+|----------|----------|
+| [README.man1.md](README.man1.md) | CLI reference — Options, fields, examples, troubleshooting |
+| [README.man3.md](README.man3.md) | Python API reference — Classes, functions, library workflows |
+| [README.man4.md](README.man4.md) | KiCad plugin setup — Eeschema integration, configurations |
+| [README.man5.md](README.man5.md) | Inventory format — Column definitions, field naming, CSV/Excel/Numbers structure |
+| [README.developer.md](README.developer.md) | Technical details — Matching algorithms, architecture, extending jBOM |
 
 ## Component Matching
 
