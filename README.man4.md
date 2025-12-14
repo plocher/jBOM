@@ -54,13 +54,18 @@ python3 /path/to/kicad_jbom_plugin.py SCHEMATIC -i INVENTORY -o OUTPUT [FLAGS]
 **FLAGS** (optional):
 - `-v, --verbose` — Include Match_Quality and Priority columns
 - `-d, --debug` — Emit detailed diagnostics to stderr
-- `-f, --fields FIELDS` — Comma-separated custom fields
+- `-f, --fields FIELDS` — Field selection: use `+jlc` or `+standard` presets, or comma-separated field list
 
 ## COMMON CONFIGURATIONS
 
-**Minimal (quick generation):**
+**Minimal (quick generation - standard preset):**
 ```
 python3 /path/to/kicad_jbom_plugin.py %I -i /path/to/inventory.csv -o %O
+```
+
+**With JLC preset:**
+```
+python3 /path/to/kicad_jbom_plugin.py %I -i /path/to/inventory.csv -o %O -f +jlc
 ```
 
 **With matching scores and priorities (verbose):**
@@ -89,9 +94,10 @@ python3 /path/to/kicad_jbom_plugin.py %I -i /path/to/inventory.csv -o %O -f "Ref
 
 The plugin writes a CSV file to the location specified in the KiCad Generate BOM dialog. The file contains:
 
-- **Default columns**: Reference, Quantity, Description, Value, Footprint, LCSC, Datasheet, SMD
-- **With -v**: adds Match_Quality, Priority
-- **With -d**: notes field contains debugging information
+- **Default columns** (standard preset): Reference, Quantity, Description, Value, Footprint, LCSC, Datasheet, SMD
+- **With `-f +jlc`**: Reference, Quantity, LCSC, Value, Footprint, Description, Datasheet, SMD
+- **With `-v`**: adds Match_Quality, Priority columns
+- **With `-d`**: Notes field contains debugging information
 
 Exit code is returned to KiCad (0=success, non-zero=error). Errors are logged to stderr.
 

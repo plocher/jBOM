@@ -2342,11 +2342,12 @@ def generate_bom_api(project_path: Union[str, Path], inventory_path: Union[str, 
 # ---- CLI entrypoint -------------------------------------------------------------
 
 def _preset_fields(preset: str, include_verbose: bool, any_notes: bool) -> List[str]:
+    """Build a preset field list (standard or jlc) with optional verbose/notes fields."""
     preset = (preset or 'standard').lower()
     base = ['Reference', 'Quantity', 'Description', 'Value', 'Footprint', 'LCSC']
     if preset == 'jlc':
-        # Minimal JLC-friendly set; can be extended in future
-        base = ['Reference', 'Quantity', 'LCSC', 'Value', 'Footprint']
+        # Minimal JLC-friendly set
+        base = ['Reference', 'Quantity', 'LCSC', 'Value', 'Footprint', 'Description']
     base += ['Datasheet', 'SMD']
     if include_verbose:
         base.append('Match_Quality')
@@ -2357,6 +2358,48 @@ def _preset_fields(preset: str, include_verbose: bool, any_notes: bool) -> List[
     return base
 
 
+def _parse_fields_argument(fields_arg: str, available_fields: Dict[str, str], include_verbose: bool, any_notes: bool) -> List[str]:
+    """
+    Parse --fields argument which can contain:
+    1. Preset names with + prefix: +jlc, +standard
+    2. Comma-separated field names
+    3. Mix of presets and fields: +jlc,CustomField1,CustomField2
+    
+    Returns expanded field list or raises ValueError for invalid fields/presets.
+    """
+    if not fields_arg:
+        return _preset_fields('standard', include_verbose, any_notes)
+    
+    tokens = [t.strip() for t in fields_arg.split(',') if t.strip()]
+    result = []
+    known_presets = {'jlc', 'standard'}
+    
+    for token in tokens:
+        if token.startswith('+'):
+            # This is a preset expansion
+            preset_name = token[1:].lower()
+            if preset_name not in known_presets:
+                raise ValueError(f"Unknown preset: {preset_name} (valid: {', '.join(known_presets)})")
+            # Expand preset inline
+            preset_fields = _preset_fields(preset_name, include_verbose, any_notes)
+            result.extend(preset_fields)
+        else:
+            # This is a field name - validate it
+            if token not in available_fields:
+                raise ValueError(f"Unknown field: {token}. Use --list-fields to see available fields.")
+            result.append(token)
+    
+    # Remove duplicates while preserving order
+    seen = set()
+    deduped = []
+    for f in result:
+        if f not in seen:
+            seen.add(f)
+            deduped.append(f)
+    
+    return deduped if deduped else _preset_fields('standard', include_verbose, any_notes)
+
+
 def main():
     parser = argparse.ArgumentParser(description='jBOM - Generate BOM from KiCad project')
     parser.add_argument('project_path', help='Path to KiCad project directory')
@@ -2364,9 +2407,7 @@ def main():
     parser.add_argument('-o', '--output', help='Output CSV file path')
     parser.add_argument('--outdir', help='Directory for output files (used when --output is not provided)')
     parser.add_argument('-v', '--verbose', action='store_true', help='Include Match_Quality and Priority columns. Shows detailed scoring information')
-    parser.add_argument('-f', '--fields', help='Comma-separated list of fields to include in BOM output. Use --list-fields to see available fields')
-    parser.add_argument('--fields-preset', choices=['standard','jlc'], help='Choose a predefined field set')
-    parser.add_argument('--format', choices=['standard','jlc'], default='standard', help='Output format (affects defaults)')
+    parser.add_argument('-f', '--fields', help='Field selection: use preset name with + prefix (+jlc, +standard) or comma-separated field list (Reference,Quantity,Value,LCSC). Mix both: +jlc,CustomField. Use --list-fields to see available fields')
     parser.add_argument('--multi-format', help='Comma-separated list of formats to emit in one run (e.g., jlc,standard)')
     parser.add_argument('--list-fields', action='store_true', help='List all available fields from inventory and component data, then exit')
     parser.add_argument('-d', '--debug', action='store_true', help='Add detailed matching information to Notes column for debugging')
@@ -2510,33 +2551,25 @@ def main():
                 display_field = field.replace('C:', '', 1) if field.startswith('C:') else field
                 print(f"{display_field:<25} - {clean_desc} (use: {field})")
         
-        print("\nExample usage:")
-        print(f"  python {sys.argv[0]} project.kicad_sch -i inventory.csv -f Reference,Quantity,Value,LCSC,Manufacturer")
-        print(f"  python {sys.argv[0]} project.kicad_sch -i inventory.xlsx -f Reference,Value,I:Package,I:Category,C:Tolerance")
-        print(f"  python {sys.argv[0]} project.kicad_sch -i inventory.numbers -f Reference,Value,Tolerance")
-        print(f"  python {sys.argv[0]} project.kicad_sch -i inventory.csv -f Reference,Value,Tolerance  # Shows both I: and C: columns")
+        print("\nExample usage (custom fields):")
+        print(f"  python {sys.argv[0]} project.kicad_sch -i inventory.csv -f Reference,Quantity,Value,LCSC")
+        print(f"\nExample usage (preset expansion):")
+        print(f"  python {sys.argv[0]} project.kicad_sch -i inventory.xlsx -f +jlc")
+        print(f"  python {sys.argv[0]} project.kicad_sch -i inventory.csv -f +standard")
+        print(f"\nExample usage (mixed preset + custom):")
+        print(f"  python {sys.argv[0]} project.kicad_sch -i inventory.csv -f +jlc,I:Tolerance,C:Voltage")
         return
     
     # Define default fields and parse custom fields if provided
     any_notes = any((e.notes or '').strip() for e in bom_entries)
+    available_fields = bom_generator.get_available_fields(components)
     
-    # Use custom fields if provided, otherwise use defaults or preset
-    fields = None
-    if args.fields_preset:
-        fields = _preset_fields(args.fields_preset, args.verbose, any_notes)
-    if args.fields:
-        fields = [field.strip() for field in args.fields.split(',')]
-        # Validate fields against available ones
-        available_fields = bom_generator.get_available_fields(components)
-        invalid_fields = [f for f in fields if f not in available_fields]
-        if invalid_fields:
-            print(f"Error: Unknown fields: {', '.join(invalid_fields)}")
-            print(f"Use --list-fields to see available fields")
-            sys.exit(1)
-    
-    # Use standard preset if no fields specified
-    if fields is None:
-        fields = _preset_fields('standard', args.verbose, any_notes)
+    # Parse --fields argument (supports presets with + prefix or custom field lists)
+    try:
+        fields = _parse_fields_argument(args.fields, available_fields, args.verbose, any_notes)
+    except ValueError as e:
+        print(f"Error: {e}")
+        sys.exit(1)
     # JSON report (optional)
     if args.json_report:
         try:
@@ -2573,12 +2606,13 @@ def main():
         if args.multi_format:
             formats = [f.strip().lower() for f in args.multi_format.split(',') if f.strip()]
         else:
-            formats = [args.format]
+            formats = ['standard']
 
         # Determine base name and directory
         out_base = (output_path.stem[:-4] if output_path.name.endswith('_bom.csv') else output_path.stem)
         out_dir = output_path.parent
         for fmt in formats:
+            # If --fields was specified, use it as-is; otherwise use preset for that format
             fmt_fields = fields if args.fields else _preset_fields(fmt, args.verbose, any_notes)
             out_file = output_path if len(formats) == 1 else out_dir / f"{out_base}_bom.{fmt}.csv"
             bom_generator.write_bom_csv(bom_entries, out_file, fmt_fields)

@@ -39,16 +39,15 @@ Generates a bill of materials (BOM) for a KiCad project by intelligently matchin
 : Emit detailed matching diagnostics to stderr. Helpful for troubleshooting missing or mismatched components.
 
 **-f, --fields FIELDS**
-: Comma-separated list of output columns. See FIELDS section and `--list-fields` for available options.
-
-**--fields-preset PRESET**
-: Choose a predefined field set: `standard` (default) or `jlc`. Overridden by `-f` if both provided.
-
-**--format FORMAT**
-: Preset for defaults; `standard` or `jlc`. Default: `standard`. Used when neither `-f` nor `--fields-preset` is given.
+: Specify output columns. Use either:
+  - Preset name with `+` prefix: `+jlc` or `+standard` to expand a preset
+  - Comma-separated field list: `Reference,Quantity,Value,LCSC,I:Tolerance`
+  - Mix both: `+jlc,CustomField,I:Tolerance` expands jlc preset then adds custom fields
+  Default (if omitted): standard preset. Use `--list-fields` to see available fields.
 
 **--multi-format FORMATS**
-: Emit multiple formats in one run. Pass a comma-separated list (e.g., `jlc,standard`). Output files are named `<project>_bom.FORMAT.csv`.
+: Emit multiple BOM formats in one run. Pass a comma-separated list (e.g., `jlc,standard`). Output files are named `<project>_bom.FORMAT.csv`.
+  When used with `-f`, the same field list applies to all formats.
 
 **--list-fields**
 : Print all available fields (standard BOM, inventory, component properties) and exit. Useful for building custom field lists.
@@ -77,19 +76,36 @@ Generates a bill of materials (BOM) for a KiCad project by intelligently matchin
 
 ## FIELD PRESETS
 
-**standard**
-: Reference, Quantity, Description, Value, Footprint, LCSC, Datasheet, SMD, [Match_Quality], [Notes], [Priority]
-: (Brackets indicate conditional inclusion based on flags and content.)
+Presets are activated with the `+` prefix in the `-f` argument (e.g., `-f "+jlc"`).
 
-**jlc**
-: Reference, Quantity, LCSC, Value, Footprint, Datasheet, SMD, [Match_Quality], [Notes], [Priority]
+**+standard** (default if no `-f` given)
+: Reference, Quantity, Description, Value, Footprint, LCSC, Datasheet, SMD, [Match_Quality], [Notes], [Priority]
+: Comprehensive set with all standard BOM fields.
+
+**+jlc**
+: Reference, Quantity, LCSC, Value, Footprint, Description, Datasheet, SMD, [Match_Quality], [Notes], [Priority]
 : Minimal column set optimized for JLCPCB uploads.
 
 ## EXAMPLES
 
-Basic usage:
+Basic usage (standard preset):
 ```
 python jbom.py MyProject/ -i SPCoast-INVENTORY.xlsx
+```
+
+Use JLC preset:
+```
+python jbom.py MyProject/ -i inventory.csv -f +jlc
+```
+
+Custom field list:
+```
+python jbom.py MyProject/ -i inventory.csv -f "Reference,Quantity,Value,LCSC"
+```
+
+Expand preset and add custom fields:
+```
+python jbom.py MyProject/ -i inventory.csv -f "+standard,I:Tolerance,C:Voltage"
 ```
 
 With verbose scoring (show Match_Quality and Priority):
@@ -100,11 +116,6 @@ python jbom.py MyProject/ -i inventory.csv -v
 Generate both JLC and standard formats:
 ```
 python jbom.py MyProject/ -i inventory.xlsx --multi-format jlc,standard
-```
-
-Custom columns (include resistor tolerance):
-```
-python jbom.py MyProject/ -i inventory.csv -f "Reference,Quantity,Value,LCSC,I:Tolerance"
 ```
 
 Debug run (show matching details):

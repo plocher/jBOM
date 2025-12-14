@@ -1806,6 +1806,152 @@ class TestSpreadsheetSupport(unittest.TestCase):
             Path(temp_csv.name).unlink()
 
 
+class TestFieldArgumentParsing(unittest.TestCase):
+    """Test --fields argument parsing with preset expansion"""
+    
+    def setUp(self):
+        """Create a matcher with some test inventory for field validation"""
+        self.temp_inv = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.csv')
+        csv_writer = csv.DictWriter(self.temp_inv, fieldnames=[
+            'IPN', 'Category', 'Package', 'Value', 'LCSC', 'Priority'
+        ])
+        csv_writer.writeheader()
+        csv_writer.writerow({
+            'IPN': 'R001', 'Category': 'RES', 'Package': '0603', 'Value': '330R',
+            'LCSC': 'C25231', 'Priority': '1'
+        })
+        self.temp_inv.close()
+        self.matcher = InventoryMatcher(Path(self.temp_inv.name))
+    
+    def tearDown(self):
+        Path(self.temp_inv.name).unlink()
+    
+    def test_parse_jlc_preset(self):
+        """Test expanding +jlc preset"""
+        from jbom import _parse_fields_argument
+        available_fields = {
+            'Reference': 'Standard BOM field',
+            'Quantity': 'Standard BOM field',
+            'LCSC': 'Standard BOM field',
+            'Value': 'Standard BOM field',
+            'Footprint': 'Standard BOM field',
+            'Description': 'Standard BOM field',
+            'Datasheet': 'Standard BOM field',
+            'SMD': 'Standard BOM field',
+        }
+        
+        result = _parse_fields_argument('+jlc', available_fields, False, False)
+        self.assertIn('Reference', result)
+        self.assertIn('Quantity', result)
+        self.assertIn('LCSC', result)
+        self.assertIn('Value', result)
+    
+    def test_parse_standard_preset(self):
+        """Test expanding +standard preset"""
+        from jbom import _parse_fields_argument
+        available_fields = {
+            'Reference': 'Standard',
+            'Quantity': 'Standard',
+            'Description': 'Standard',
+            'Value': 'Standard',
+            'Footprint': 'Standard',
+            'LCSC': 'Standard',
+            'Datasheet': 'Standard',
+            'SMD': 'Standard',
+        }
+        
+        result = _parse_fields_argument('+standard', available_fields, False, False)
+        self.assertIn('Reference', result)
+        self.assertIn('Quantity', result)
+        self.assertIn('Description', result)
+    
+    def test_parse_custom_fields(self):
+        """Test parsing custom comma-separated field list"""
+        from jbom import _parse_fields_argument
+        available_fields = {
+            'Reference': 'Standard',
+            'Quantity': 'Standard',
+            'Value': 'Standard',
+            'LCSC': 'Standard',
+        }
+        
+        result = _parse_fields_argument('Reference,Quantity,Value,LCSC', available_fields, False, False)
+        self.assertEqual(result, ['Reference', 'Quantity', 'Value', 'LCSC'])
+    
+    def test_parse_mixed_preset_and_custom(self):
+        """Test mixing preset expansion with custom fields"""
+        from jbom import _parse_fields_argument
+        available_fields = {
+            'Reference': 'Standard',
+            'Quantity': 'Standard',
+            'Value': 'Standard',
+            'LCSC': 'Standard',
+            'CustomField': 'Custom',
+            'Datasheet': 'Standard',
+            'SMD': 'Standard',
+            'Description': 'Standard',
+            'Footprint': 'Standard',
+        }
+        
+        result = _parse_fields_argument('+jlc,CustomField', available_fields, False, False)
+        self.assertIn('Reference', result)
+        self.assertIn('CustomField', result)
+        self.assertIn('LCSC', result)
+    
+    def test_invalid_preset_name(self):
+        """Test error when using invalid preset name"""
+        from jbom import _parse_fields_argument
+        available_fields = {'Reference': 'Standard', 'Value': 'Standard'}
+        
+        with self.assertRaises(ValueError) as context:
+            _parse_fields_argument('+invalid', available_fields, False, False)
+        
+        self.assertIn('Unknown preset', str(context.exception))
+        self.assertIn('invalid', str(context.exception))
+    
+    def test_invalid_field_name(self):
+        """Test error when using invalid field name"""
+        from jbom import _parse_fields_argument
+        available_fields = {'Reference': 'Standard', 'Value': 'Standard'}
+        
+        with self.assertRaises(ValueError) as context:
+            _parse_fields_argument('Reference,InvalidField', available_fields, False, False)
+        
+        self.assertIn('Unknown field', str(context.exception))
+        self.assertIn('InvalidField', str(context.exception))
+    
+    def test_deduplication(self):
+        """Test that duplicate fields are removed"""
+        from jbom import _parse_fields_argument
+        available_fields = {
+            'Reference': 'Standard',
+            'Value': 'Standard',
+        }
+        
+        result = _parse_fields_argument('Reference,Value,Reference', available_fields, False, False)
+        # Should have only 2 items, not 3
+        self.assertEqual(len([f for f in result if f == 'Reference']), 1)
+    
+    def test_empty_fields_argument(self):
+        """Test that empty --fields defaults to standard preset"""
+        from jbom import _parse_fields_argument
+        available_fields = {
+            'Reference': 'Standard',
+            'Quantity': 'Standard',
+            'Description': 'Standard',
+            'Value': 'Standard',
+            'Footprint': 'Standard',
+            'LCSC': 'Standard',
+            'Datasheet': 'Standard',
+            'SMD': 'Standard',
+        }
+        
+        result = _parse_fields_argument(None, available_fields, False, False)
+        self.assertIn('Reference', result)
+        self.assertIsNotNone(result)
+        self.assertGreater(len(result), 0)
+
+
 if __name__ == '__main__':
     # Import the constants needed for skip conditions
     from jbom import EXCEL_SUPPORT, NUMBERS_SUPPORT
