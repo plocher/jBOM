@@ -2457,7 +2457,7 @@ def main():
     parser.add_argument('-o', '--output', help='Output CSV file path')
     parser.add_argument('--outdir', help='Directory for output files (used when --output is not provided)')
     parser.add_argument('-v', '--verbose', action='store_true', help='Include Match_Quality and Priority columns. Shows detailed scoring information')
-    parser.add_argument('-f', '--fields', help='Field selection: use preset name with + prefix (+jlc, +standard) or comma-separated field list (Reference,Quantity,Value,LCSC). Mix both: +jlc,CustomField. Use --list-fields to see available fields')
+    parser.add_argument('-f', '--fields', help='Field selection: use preset with + prefix (+standard, +jlc, +minimal, +all) or comma-separated field list. Mix both: +jlc,CustomField. Use --list-fields to see available fields')
     parser.add_argument('--multi-format', help='Comma-separated list of formats to emit in one run (e.g., jlc,standard)')
     parser.add_argument('--list-fields', action='store_true', help='List all available fields from inventory and component data, then exit')
     parser.add_argument('-d', '--debug', action='store_true', help='Add detailed matching information to Notes column for debugging')
