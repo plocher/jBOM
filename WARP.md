@@ -25,12 +25,14 @@ The primary component matching engine supporting:
 - **SMD filtering** capability for Surface Mount Device selection
 - **Custom field system** with I:/C: prefix disambiguation for inventory vs component properties
 
-### Test Suite (`test_jbom.py` - ~2200 lines, 46 tests)
-Comprehensive unit tests organized into 14 test classes:
-- Core parsing: resistors, capacitors, inductors, component type detection
-- Matching algorithms: inventory matching, priority ranking, BOM generation
-- Advanced features: hierarchical schematics, SMD filtering, debug functionality
-- Output options: custom fields, field disambiguation, verbose output
+### Test Suite (`test_jbom.py` - ~2200 lines, 98 tests)
+Comprehensive unit tests organized into 27 test classes:
+- **Core parsing**: Resistors, capacitors, inductors, component type detection
+- **Matching algorithms**: Inventory matching, priority ranking, BOM generation, sorting
+- **Field system**: Field normalization, case-insensitive handling, I:/C: prefix disambiguation
+- **Advanced features**: Hierarchical schematics, SMD filtering, debug functionality, alternative matches
+- **Output options**: Custom fields, field discovery, verbose output, multiple formats
+- **Spreadsheet support**: CSV, Excel, and Numbers file handling
 
 ## Architecture Key Points
 
@@ -55,34 +57,44 @@ Comprehensive unit tests organized into 14 test classes:
 
 ## Documentation
 
-- `README.md` - User-facing documentation with installation, usage examples, and troubleshooting (10.7 KB)
-- `README.developer.md` - Technical documentation covering architecture, matching algorithms, field system, and extension points (16.3 KB)
-- `README.tests.md` - Test suite documentation with test class descriptions and running instructions (11.3 KB)
+- `README.md` - User-facing overview with installation, quick start, and key concepts
+- `README.man1.md` - CLI reference with options, fields, examples, and troubleshooting
+- `README.man3.md` - Python library API reference for programmatic use
+- `README.man4.md` - KiCad Eeschema plugin setup and integration guide
+- `README.man5.md` - Inventory file format specification with field definitions
+- `README.developer.md` - Technical architecture, matching algorithms, field system, and extension points
+- `README.tests.md` - Test suite documentation with descriptions and running instructions
 - `WARP.md` - This file, guidance for WARP agents working in this repo
 
 ## Directory Structure
 
 ```
 jBOM/
-├── jbom.py                 # Main application (~2700 lines)
-├── test_jbom.py           # Test suite (~2200 lines, 46 tests)
-├── README.md              # User documentation
-├── README.developer.md    # Developer/technical documentation
-├── README.tests.md        # Test suite documentation
-├── WARP.md               # This file
-├── LICENSE               # License terms
-└── .gitignore            # Git configuration
+├── jbom.py                    # Main application (~2700 lines)
+├── test_jbom.py              # Test suite (~2200 lines, 98 tests, 27 classes)
+├── README.md                 # User documentation with quick start
+├── README.man1.md            # CLI reference (man page style)
+├── README.man3.md            # Python library API (man page style)
+├── README.man4.md            # KiCad plugin setup (man page style)
+├── README.man5.md            # Inventory file format (man page style)
+├── README.developer.md       # Technical architecture and extension points
+├── README.tests.md           # Test suite documentation
+├── WARP.md                  # This file
+├── kicad_jbom_plugin.py     # KiCad Eeschema plugin wrapper
+├── LICENSE                  # License terms
+└── .gitignore               # Git configuration
 ```
 
 ## Development Focus Areas
 
 ### Strengths
 - Well-organized data flow with clear separation of concerns
-- Comprehensive test coverage (46 tests across 14 test classes)
+- Comprehensive test coverage (98 tests across 27 test classes)
 - Sophisticated matching logic handling real-world component variations
 - Multiple inventory format support (CSV, Excel, Numbers)
-- Extensive documentation across three specialized README files
+- Extensive documentation across four specialized README files plus man pages
 - Clean dataclass-based architecture for Component, InventoryItem, BOMEntry
+- Case-insensitive field name handling with normalization throughout
 
 ### Complexity Hotspots
 - Component type detection logic with multiple pattern matching rules
@@ -139,4 +151,68 @@ Run tests with: `python -m unittest test_jbom -v`
 - Clear separation between parsing, matching, and output phases
 - Data validation at intake points (e.g., inventory loading)
 - Debug mode uses Notes column for detailed information
+
+## Recent Development Activities
+
+### Case-Insensitive Field Handling (Completed)
+- Implemented `normalize_field_name()` function for canonical snake_case normalization
+- Created `field_to_header()` for Title Case output formatting
+- Updated all field processing to use normalized names internally
+- Added 24 new unit tests for field normalization and disambiguation
+- All field matching now handles variations: snake_case, Title Case, CamelCase, UPPERCASE, spaces, hyphens
+
+### Tolerance Substitution Enhancement (Completed)
+- Modified tolerance scoring to prefer exact matches over tighter tolerances
+- Implemented next-tighter preference: when exact match unavailable, 5% is preferred over 1% for a 10% requirement
+- Scoring penalty for over-specification: gap ≤ 1% gets full bonus, gap > 1% gets reduced bonus
+- Updated documentation with concrete examples and scoring behavior explanation
+
+### Documentation Updates (Completed)
+- Created README.man5.md for inventory file format specification (213 lines)
+- Created README.man3.md for Python library API reference
+- Created README.man4.md for KiCad plugin integration guide
+- Added README.tests.md for test suite documentation
+- Added SEE ALSO sections with markdown links to all READMEs for easy navigation
+- Removed redundant Usage Documentation section from README.md
+- Standardized naming to "jBOM" throughout all documentation
+
+### Test Suite Growth
+- Expanded from 46 tests to 98 tests (27 test classes)
+- Added comprehensive field normalization tests
+- Added spreadsheet format support tests
+- Added tolerance substitution behavior tests
+- All tests passing with 3 skipped (optional dependencies)
+
+## Key Recent Changes
+
+### Field System Enhancements
+- Case-insensitive input: users can specify field names in any format
+- Internal canonical representation using snake_case
+- CSV output maintains human-readable Title Case headers
+- I:/C: prefix system fully functional for field disambiguation
+
+### Tolerance-Aware Matching
+- Exact tolerance matches always preferred
+- Tighter tolerances can substitute (with preference for next-tighter)
+- No looser substitution (1% schematic cannot match 5% or 10% inventory)
+- Scoring ensures sensible substitutions without over-specification
+
+### Integration Options
+- **KiCad plugin**: via `kicad_jbom_plugin.py` wrapper for Eeschema integration
+- **Command-line**: via `jbom.py` with comprehensive options and presets
+- **Python library**: programmatic use via `generate_bom_api()` function
+
+## Extensions and Customization
+
+### Adding New Features
+- **New component types**: Add to `ComponentType` class, update `_get_component_type()`, add field mappings
+- **New matching properties**: Modify `_match_properties()` scoring, update field systems
+- **New spreadsheet formats**: Add optional import, implement `_load_FORMAT_inventory()` method
+- **Custom output fields**: Extend `get_available_fields()` and `_get_field_value()`
+
+### Testing New Features
+- Run full suite: `python -m unittest test_jbom -v`
+- Run specific class: `python -m unittest test_jbom.TestClassName -v`
+- Run specific test: `python -m unittest test_jbom.TestClassName.test_method -v`
+- Check test coverage areas in README.tests.md
 
