@@ -26,40 +26,40 @@ Generates a bill of materials (BOM) for a KiCad project by intelligently matchin
 
 ## OPTIONS
 
-**-o, --output FILE**
-: Output CSV file path. If omitted, generates `<PROJECT>_bom.csv` in the project directory. Special values: `-`, `console`, `stdout` for terminal output.
+**-o, --output FILE**  
+Output CSV file path. If omitted, generates `<PROJECT>_bom.csv` in the project directory. Special values: `-`, `console`, `stdout` for terminal output.
 
-**--outdir DIR**
-: Directory for output files when `-o` is not specified. Useful for redirecting BOMs to a separate folder.
+**--outdir DIR**  
+Directory for output files when `-o` is not specified. Useful for redirecting BOMs to a separate folder.
 
-**-v, --verbose**
-: Include Match_Quality and Priority columns. Shows detailed scoring information.
+**-v, --verbose**  
+Include Match_Quality and Priority columns. Shows detailed scoring information.
 
-**-d, --debug**
-: Emit detailed matching diagnostics to stderr. Helpful for troubleshooting missing or mismatched components.
+**-d, --debug**  
+Emit detailed matching diagnostics to stderr. Helpful for troubleshooting missing or mismatched components.
 
-**-f, --fields FIELDS**
-: Specify output columns. Use either:
-  - Preset name with `+` prefix: `+standard`, `+jlc`, `+minimal`, or `+all`
-  - Comma-separated field list: `Reference,Quantity,Value,LCSC,I:Tolerance`
-  - Mix both: `+jlc,CustomField,I:Tolerance` expands jlc preset then adds custom fields
-  Default (if omitted): standard preset. Use `--list-fields` to see available fields.
+**-f, --fields FIELDS**  
+Specify output columns. Use either:
+- Preset name with `+` prefix: `+standard`, `+jlc`, `+minimal`, or `+all`
+- Comma-separated field list: `Reference,Quantity,Value,LCSC,I:Tolerance`
+- Mix both: `+jlc,CustomField,I:Tolerance` expands jlc preset then adds custom fields
 
-**--multi-format FORMATS**
-: Emit multiple BOM formats in one run. Pass a comma-separated list (e.g., `jlc,standard`). Output files are named `<project>_bom.FORMAT.csv`.
-  When used with `-f`, the same field list applies to all formats.
+Default (if omitted): standard preset. Use `--list-fields` to see available fields.
 
-**--list-fields**
-: Print all available fields (standard BOM, inventory, component properties) and exit. Useful for building custom field lists.
+**--multi-format FORMATS**  
+Emit multiple BOM formats in one run. Pass a comma-separated list (e.g., `jlc,standard`). Output files are named `<project>_bom.FORMAT.csv`. When used with `-f`, the same field list applies to all formats.
 
-**--smd**
-: Emit only SMD (surface mount device) components in the BOM. Filters out through-hole and mixed components.
+**--list-fields**  
+Print all available fields (standard BOM, inventory, component properties) and exit. Useful for building custom field lists.
 
-**--quiet**
-: Suppress non-essential console output. Useful for CI pipelines.
+**--smd**  
+Emit only SMD (surface mount device) components in the BOM. Filters out through-hole and mixed components.
 
-**--json-report FILE**
-: Write a JSON report to FILE with statistics (entry count, unmatched count, format, etc.).
+**--quiet**  
+Suppress non-essential console output. Useful for CI pipelines.
+
+**--json-report FILE**  
+Write a JSON report to FILE with statistics (entry count, unmatched count, format, etc.).
 
 ## OUTPUT
 
