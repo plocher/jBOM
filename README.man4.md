@@ -20,7 +20,7 @@ Register jBOM as a BOM plugin in KiCad:
 4. Enter a name: `jBOM` (or similar)
 5. Enter the command:
    ```
-   python3 /absolute/path/to/kicad_jbom_plugin.py %I -i /absolute/path/to/INVENTORY.xlsx -o %O -m
+   python3 /absolute/path/to/kicad_jbom_plugin.py %I -i /absolute/path/to/INVENTORY.xlsx -o %O
    ```
 
 **Important:**
@@ -52,7 +52,6 @@ python3 /path/to/kicad_jbom_plugin.py SCHEMATIC -i INVENTORY -o OUTPUT [FLAGS]
 **-o, --output OUTPUT** — Output CSV path (provided by KiCad as `%O`)
 
 **FLAGS** (optional):
-- `-m, --manufacturer` — Include Manufacturer and MFGPN columns
 - `-v, --verbose` — Include Match_Quality and Priority columns
 - `-d, --debug` — Emit detailed diagnostics to stderr
 - `-f, --fields FIELDS` — Comma-separated custom fields
@@ -64,14 +63,9 @@ python3 /path/to/kicad_jbom_plugin.py SCHEMATIC -i INVENTORY -o OUTPUT [FLAGS]
 python3 /path/to/kicad_jbom_plugin.py %I -i /path/to/inventory.csv -o %O
 ```
 
-**With manufacturer and supplier part numbers:**
-```
-python3 /path/to/kicad_jbom_plugin.py %I -i /path/to/inventory.xlsx -o %O -m
-```
-
 **With matching scores and priorities (verbose):**
 ```
-python3 /path/to/kicad_jbom_plugin.py %I -i /path/to/inventory.csv -o %O -m -v
+python3 /path/to/kicad_jbom_plugin.py %I -i /path/to/inventory.csv -o %O -v
 ```
 
 **For troubleshooting (debug output):**
@@ -96,7 +90,6 @@ python3 /path/to/kicad_jbom_plugin.py %I -i /path/to/inventory.csv -o %O -f "Ref
 The plugin writes a CSV file to the location specified in the KiCad Generate BOM dialog. The file contains:
 
 - **Default columns**: Reference, Quantity, Description, Value, Footprint, LCSC, Datasheet, SMD
-- **With -m**: adds Manufacturer, MFGPN
 - **With -v**: adds Match_Quality, Priority
 - **With -d**: notes field contains debugging information
 

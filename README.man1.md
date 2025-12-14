@@ -32,9 +32,6 @@ Generates a bill of materials (BOM) for a KiCad project by intelligently matchin
 **--outdir DIR**
 : Directory for output files when `-o` is not specified. Useful for redirecting BOMs to a separate folder.
 
-**-m, --manufacturer**
-: Include Manufacturer and MFGPN columns in output.
-
 **-v, --verbose**
 : Include Match_Quality and Priority columns. Shows detailed scoring information.
 
@@ -81,11 +78,11 @@ Generates a bill of materials (BOM) for a KiCad project by intelligently matchin
 ## FIELD PRESETS
 
 **standard**
-: Reference, Quantity, Description, Value, Footprint, LCSC, [Manufacturer, MFGPN], Datasheet, SMD, [Match_Quality], [Notes], [Priority]
+: Reference, Quantity, Description, Value, Footprint, LCSC, Datasheet, SMD, [Match_Quality], [Notes], [Priority]
 : (Brackets indicate conditional inclusion based on flags and content.)
 
 **jlc**
-: Reference, Quantity, LCSC, Value, Footprint, [Manufacturer, MFGPN], Datasheet, SMD, [Match_Quality], [Notes], [Priority]
+: Reference, Quantity, LCSC, Value, Footprint, Datasheet, SMD, [Match_Quality], [Notes], [Priority]
 : Minimal column set optimized for JLCPCB uploads.
 
 ## EXAMPLES
@@ -95,14 +92,14 @@ Basic usage:
 python jbom.py MyProject/ -i SPCoast-INVENTORY.xlsx
 ```
 
-With manufacturer info and verbose scoring:
+With verbose scoring (show Match_Quality and Priority):
 ```
-python jbom.py MyProject/ -i inventory.csv -m -v
+python jbom.py MyProject/ -i inventory.csv -v
 ```
 
 Generate both JLC and standard formats:
 ```
-python jbom.py MyProject/ -i inventory.xlsx --multi-format jlc,standard -m
+python jbom.py MyProject/ -i inventory.xlsx --multi-format jlc,standard
 ```
 
 Custom columns (include resistor tolerance):

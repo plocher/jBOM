@@ -51,7 +51,7 @@ def generate_bom_api(
 ```python
 from jbom import generate_bom_api, GenerateOptions
 
-opts = GenerateOptions(verbose=True, manufacturer=True, debug=False)
+opts = GenerateOptions(verbose=True, debug=False)
 result = generate_bom_api('MyProject/', 'inventory.xlsx', options=opts)
 
 if result['exit_code'] == 0:
@@ -71,7 +71,6 @@ class GenerateOptions:
     debug: bool = False
     smd_only: bool = False
     fields: Optional[List[str]] = None
-    manufacturer: bool = False
 ```
 
 **Attributes**
@@ -79,7 +78,6 @@ class GenerateOptions:
 : **debug** — Emit detailed matching diagnostics
 : **smd_only** — Filter to surface-mount components only
 : **fields** — List of output field names (None = use defaults)
-: **manufacturer** — Include Manufacturer/MFGPN columns
 
 ### Class: Component
 
@@ -198,7 +196,6 @@ from pathlib import Path
 # Option 1: High-level API (recommended for most use cases)
 opts = GenerateOptions(
     verbose=True,
-    manufacturer=True,
     fields=['Reference', 'Quantity', 'Value', 'LCSC', 'Manufacturer']
 )
 result = generate_bom_api('MyProject/', 'inventory.xlsx', options=opts)
