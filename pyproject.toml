@@ -45,10 +45,10 @@ all = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/SPCoast/jBOM"
-Documentation = "https://github.com/SPCoast/jBOM#readme"
-Repository = "https://github.com/SPCoast/jBOM.git"
-Issues = "https://github.com/SPCoast/jBOM/issues"
+Homepage = "https://github.com/plocher/jBOM"
+Documentation = "https://github.com/plocher/jBOM#readme"
+Repository = "https://github.com/plocher/jBOM.git"
+Issues = "https://github.com/plocher/jBOM/issues"
 
 [project.scripts]
 jbom = "jbom:main"

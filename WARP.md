@@ -183,6 +183,12 @@ Run tests with: `python -m unittest test_jbom -v`
 - Added tolerance substitution behavior tests
 - All tests passing with 3 skipped (optional dependencies)
 
+## GitHub Repository
+
+Public repository: https://github.com/plocher/jBOM
+
+Contribute at: https://github.com/plocher/jBOM/issues and https://github.com/plocher/jBOM/pulls
+
 ## Key Recent Changes
 
 ### Field System Enhancements

@@ -100,9 +100,22 @@ For more troubleshooting, see the relevant man page:
 - [**README.man5.md**](README.man5.md) — Inventory file format
 - [**README.developer.md**](README.developer.md) — Technical architecture
 
+## Contributing
+
+Contributions are welcome! jBOM is developed on GitHub at [github.com/plocher/jBOM](https://github.com/plocher/jBOM).
+
+To contribute:
+1. Fork the repository on GitHub
+2. Create a feature branch for your changes
+3. Make your changes and add tests
+4. Run the test suite: `python -m unittest tests.test_jbom -v`
+5. Submit a pull request
+
+For detailed development setup, coding standards, and testing guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Version
 
-jBOM v1.0.0 — Stable release with intelligent component matching, multiple inventory formats, and comprehensive integration options.
+jBOM v1.0.1 — Stable release with intelligent component matching, case-insensitive field handling, enhanced tolerance-aware matching, multiple inventory formats, and comprehensive integration options.
 
 Author: John Plocher
 
