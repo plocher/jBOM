@@ -150,10 +150,12 @@ jBOM matches schematic components to inventory items through:
 2. **Scoring** (selection when multiple match):
    - Priority ranking (1 preferred over 2, etc.)
    - Technical score from property matches (Tolerance, V, A, W, etc.)
-   - Tolerance-aware substitution: tighter tolerances can substitute for looser requirements
-     - Example: Schematic requires 10kΩ 5% → inventory 10kΩ 1% is acceptable (tighter)
-     - Example: Schematic requires 10kΩ 1% → inventory 10kΩ 5% is not acceptable (looser)
-     - Scoring bonus is awarded for an exact tolerance match; a smaller bonus is awarded when inventory is tighter than required
+   - Tolerance-aware substitution: exact tolerance matches are preferred; tighter tolerances substitute only when exact match is unavailable
+     - Exact match preferred: Schematic requires 10kΩ 10% and 10% is available → 10% part is selected (full scoring bonus)
+     - Next-tighter preferred over tightest: Schematic requires 10kΩ 10%, inventory has only 5% and 1% → 5% is ranked higher (tolerance gap 5% vs 9%, closer to requirement gets higher score)
+     - Scoring penalizes over-specification: Substitution within 1% of requirement gets full bonus; more than 1% tighter gets reduced bonus to encourage sensible substitutions
+     - No looser substitution: Schematic requires 10kΩ 1% but inventory has only 5% or 10% → no match (looser tolerances cannot substitute)
+     - Example ranking when no exact match: 5% substitution scores higher than 1% substitution because it's closer to the required 10% tolerance
 
 3. **Tie-breaking**:
    - Uses Priority column as primary sort

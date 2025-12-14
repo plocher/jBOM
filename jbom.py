@@ -1054,19 +1054,28 @@ class InventoryMatcher:
         comp_type = self._get_component_type(component)
         relevant_fields = get_category_fields(comp_type) if comp_type else get_category_fields('')
         
-        # Tolerance matching - tighter tolerances can substitute for looser ones
+        # Tolerance matching - exact match preferred; tighter tolerances substitute only when exact unavailable
         if CommonFields.TOLERANCE in relevant_fields and CommonFields.TOLERANCE in component.properties and item.tolerance:
             comp_tol = self._parse_tolerance_percent(component.properties[CommonFields.TOLERANCE])
             item_tol = self._parse_tolerance_percent(item.tolerance)
             
             if comp_tol is not None and item_tol is not None:
                 if comp_tol == item_tol:
-                    # Exact match
+                    # Exact match - full score
                     score += ScoreWeights.TOLERANCE_EXACT
-                elif item_tol <= comp_tol:
+                elif item_tol < comp_tol:
                     # Inventory has tighter tolerance than required - acceptable substitution
-                    score += ScoreWeights.TOLERANCE_BETTER
-                # If item_tol > comp_tol, no points (looser tolerance can't substitute)
+                    # Prefer next-tighter over overly-tight: score inversely proportional to tightness gap
+                    # Gap = comp_tol - item_tol (positive value)
+                    # Closer gap (smaller tightness difference) gets higher score
+                    # Use a bonus that decreases as tolerance gets tighter than necessary
+                    tolerance_gap = comp_tol - item_tol
+                    # Award full bonus if within 1% of required, half bonus if tighter
+                    if tolerance_gap <= 1.0:
+                        score += ScoreWeights.TOLERANCE_BETTER  # Nearly exact or 1% tighter
+                    else:
+                        score += max(1, ScoreWeights.TOLERANCE_BETTER // 2)  # Significantly tighter gets reduced bonus
+                # If item_tol >= comp_tol, no points (exact match handled above, looser can't substitute)
         
         # Voltage matching (V or Voltage)
         if any(field in relevant_fields for field in [CommonFields.VOLTAGE, 'Voltage']) and item.voltage:
