@@ -32,6 +32,16 @@ This installs jBOM in editable mode plus:
 - `excel` extras: openpyxl (for Excel support)
 - `numbers` extras: numbers-parser (for Apple Numbers support)
 
+### Install Pre-Commit Hooks
+
+The repository uses pre-commit hooks to prevent secrets, enforce code style, and catch common issues:
+
+```bash
+pre-commit install
+```
+
+For detailed information about pre-commit hooks, see [PRE_COMMIT_SETUP.md](PRE_COMMIT_SETUP.md).
+
 ## Running Tests
 
 Run the full test suite:
@@ -72,15 +82,15 @@ jBOM follows PEP 8 with the following guidelines:
 def normalize_field_name(field: str) -> str:
     """
     Normalize field names to canonical snake_case format.
-    
+
     Accepts any format: snake_case, Title Case, CamelCase, spaces, mixed formats.
-    
+
     Args:
         field: The field name in any format
-        
+
     Returns:
         The normalized snake_case field name, or empty string if input is empty
-        
+
     Examples:
         >>> normalize_field_name('Match Quality')
         'match_quality'
@@ -211,17 +221,17 @@ Tests are organized into 27 test classes covering:
 ```python
 class TestNewFeature(unittest.TestCase):
     """Test description"""
-    
+
     def setUp(self):
         """Set up test fixtures"""
         # Create temporary files if needed
         self.temp_inv = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.csv')
         # ... initialize test data
-    
+
     def tearDown(self):
         """Clean up after tests"""
         Path(self.temp_inv.name).unlink()
-    
+
     def test_specific_behavior(self):
         """Test description - what should happen"""
         # Arrange: set up test data
