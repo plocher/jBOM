@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jbom"
+version = "1.0.0"
+description = "KiCad inventory-matched Bill of Materials generator"
+authors = [{name = "John Plocher", email = "John.Plocher@gmail.com"}]
+readme = "README.md"
+requires-python = ">=3.9"
+license = {file = "LICENSE"}
+keywords = ["kicad", "bom", "electronics", "inventory"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+]
+
+dependencies = [
+  "sexpdata",
+]
+
+[project.optional-dependencies]
+excel = ["openpyxl"]
+numbers = ["numbers-parser"]
+
+[project.scripts]
+jbom = "jbom:main"
