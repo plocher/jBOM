@@ -2259,7 +2259,6 @@ class GenerateOptions:
     debug: bool = False
     smd_only: bool = False
     fields: Optional[List[str]] = None
-    manufacturer: bool = False
 
 
 def generate_bom_api(project_path: Union[str, Path], inventory_path: Union[str, Path], options: Optional[GenerateOptions] = None):
@@ -2342,14 +2341,12 @@ def generate_bom_api(project_path: Union[str, Path], inventory_path: Union[str, 
 
 # ---- CLI entrypoint -------------------------------------------------------------
 
-def _preset_fields(preset: str, include_mfg: bool, include_verbose: bool, any_notes: bool) -> List[str]:
+def _preset_fields(preset: str, include_verbose: bool, any_notes: bool) -> List[str]:
     preset = (preset or 'standard').lower()
     base = ['Reference', 'Quantity', 'Description', 'Value', 'Footprint', 'LCSC']
     if preset == 'jlc':
         # Minimal JLC-friendly set; can be extended in future
         base = ['Reference', 'Quantity', 'LCSC', 'Value', 'Footprint']
-    if include_mfg and 'Manufacturer' not in base:
-        base += ['Manufacturer', 'MFGPN']
     base += ['Datasheet', 'SMD']
     if include_verbose:
         base.append('Match_Quality')
@@ -2366,8 +2363,7 @@ def main():
     parser.add_argument('-i', '--inventory', required=True, help='Path to inventory file (.csv, .xlsx, .xls, or .numbers)')
     parser.add_argument('-o', '--output', help='Output CSV file path')
     parser.add_argument('--outdir', help='Directory for output files (used when --output is not provided)')
-    parser.add_argument('-v', '--verbose', action='store_true', help='Include debug information and show tied priority options')
-    parser.add_argument('-m', '--manufacturer', action='store_true', help='Include Manufacturer and MFGPN columns in BOM output')
+    parser.add_argument('-v', '--verbose', action='store_true', help='Include Match_Quality and Priority columns. Shows detailed scoring information')
     parser.add_argument('-f', '--fields', help='Comma-separated list of fields to include in BOM output. Use --list-fields to see available fields')
     parser.add_argument('--fields-preset', choices=['standard','jlc'], help='Choose a predefined field set')
     parser.add_argument('--format', choices=['standard','jlc'], default='standard', help='Output format (affects defaults)')
@@ -2522,25 +2518,12 @@ def main():
         return
     
     # Define default fields and parse custom fields if provided
-    # Default field list (previously in write_bom_csv legacy mode)
     any_notes = any((e.notes or '').strip() for e in bom_entries)
-    default_fields = [
-        'Reference', 'Quantity', 'Description', 'Value', 'Footprint', 'LCSC'
-    ]
-    if args.manufacturer:
-        default_fields += ['Manufacturer', 'MFGPN']
-    default_fields += ['Datasheet', 'SMD']
-    if args.verbose:
-        default_fields.append('Match_Quality')
-    if any_notes:
-        default_fields.append('Notes')
-    if args.verbose:
-        default_fields.append('Priority')
     
     # Use custom fields if provided, otherwise use defaults or preset
-    fields = default_fields
-    if args.fields_preset and not args.fields:
-        fields = _preset_fields(args.fields_preset, args.manufacturer, args.verbose, any_notes)
+    fields = None
+    if args.fields_preset:
+        fields = _preset_fields(args.fields_preset, args.verbose, any_notes)
     if args.fields:
         fields = [field.strip() for field in args.fields.split(',')]
         # Validate fields against available ones
@@ -2550,6 +2533,10 @@ def main():
             print(f"Error: Unknown fields: {', '.join(invalid_fields)}")
             print(f"Use --list-fields to see available fields")
             sys.exit(1)
+    
+    # Use standard preset if no fields specified
+    if fields is None:
+        fields = _preset_fields('standard', args.verbose, any_notes)
     # JSON report (optional)
     if args.json_report:
         try:
@@ -2580,7 +2567,7 @@ def main():
             if args.debug and debug_diagnostics:
                 print_debug_diagnostics(debug_diagnostics)
             # Print BOM table
-            print_bom_table(bom_entries, verbose=args.verbose, include_mfg=args.manufacturer)
+            print_bom_table(bom_entries, verbose=args.verbose, include_mfg=False)
     else:
         # Normal CSV output mode
         if args.multi_format:
@@ -2592,7 +2579,7 @@ def main():
         out_base = (output_path.stem[:-4] if output_path.name.endswith('_bom.csv') else output_path.stem)
         out_dir = output_path.parent
         for fmt in formats:
-            fmt_fields = fields if args.fields else _preset_fields(fmt, args.manufacturer, args.verbose, any_notes)
+            fmt_fields = fields if args.fields else _preset_fields(fmt, args.verbose, any_notes)
             out_file = output_path if len(formats) == 1 else out_dir / f"{out_base}_bom.{fmt}.csv"
             bom_generator.write_bom_csv(bom_entries, out_file, fmt_fields)
         
