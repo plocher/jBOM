@@ -1865,6 +1865,33 @@ class TestFieldArgumentParsing(unittest.TestCase):
         self.assertIn('Quantity', result)
         self.assertIn('Description', result)
     
+    def test_parse_minimal_preset(self):
+        """Test expanding +minimal preset"""
+        from jbom import _parse_fields_argument
+        available_fields = {
+            'Reference': 'Standard',
+            'Quantity': 'Standard',
+            'Value': 'Standard',
+            'LCSC': 'Standard',
+        }
+        
+        result = _parse_fields_argument('+minimal', available_fields, False, False)
+        self.assertEqual(result, ['Reference', 'Quantity', 'Value', 'LCSC'])
+    
+    def test_parse_all_preset(self):
+        """Test expanding +all preset to include all available fields"""
+        from jbom import _parse_fields_argument
+        available_fields = {
+            'Reference': 'Standard',
+            'Value': 'Standard',
+            'CustomField': 'Custom',
+            'LCSC': 'Standard',
+        }
+        
+        result = _parse_fields_argument('+all', available_fields, False, False)
+        # Should include all fields in sorted order
+        self.assertEqual(result, ['CustomField', 'LCSC', 'Reference', 'Value'])
+    
     def test_parse_custom_fields(self):
         """Test parsing custom comma-separated field list"""
         from jbom import _parse_fields_argument

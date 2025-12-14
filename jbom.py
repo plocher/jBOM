@@ -2341,27 +2341,72 @@ def generate_bom_api(project_path: Union[str, Path], inventory_path: Union[str, 
 
 # ---- CLI entrypoint -------------------------------------------------------------
 
+# Field presets - easily extensible data structure
+FIELD_PRESETS = {
+    'standard': {
+        'base': ['Reference', 'Quantity', 'Description', 'Value', 'Footprint', 'LCSC'],
+        'suffix': ['Datasheet', 'SMD'],
+        'description': 'Comprehensive set with all standard BOM fields'
+    },
+    'jlc': {
+        'base': ['Reference', 'Quantity', 'LCSC', 'Value', 'Footprint', 'Description'],
+        'suffix': ['Datasheet', 'SMD'],
+        'description': 'Minimal column set optimized for JLCPCB uploads'
+    },
+    'minimal': {
+        'base': ['Reference', 'Quantity', 'Value', 'LCSC'],
+        'suffix': [],
+        'description': 'Bare minimum: reference, qty, value, and LCSC part number'
+    },
+    'all': {
+        'base': None,  # Special case: means "include all available fields"
+        'suffix': [],
+        'description': 'All available fields from inventory and components'
+    },
+}
+
 def _preset_fields(preset: str, include_verbose: bool, any_notes: bool) -> List[str]:
-    """Build a preset field list (standard or jlc) with optional verbose/notes fields."""
+    """Build a preset field list with optional verbose/notes fields.
+    
+    Args:
+        preset: Preset name (key from FIELD_PRESETS)
+        include_verbose: Add Match_Quality and Priority columns
+        any_notes: Add Notes column if there are notes in BOM
+    
+    Returns:
+        List of field names for the preset
+    
+    Raises:
+        ValueError: If preset name is unknown
+    """
     preset = (preset or 'standard').lower()
-    base = ['Reference', 'Quantity', 'Description', 'Value', 'Footprint', 'LCSC']
-    if preset == 'jlc':
-        # Minimal JLC-friendly set
-        base = ['Reference', 'Quantity', 'LCSC', 'Value', 'Footprint', 'Description']
-    base += ['Datasheet', 'SMD']
+    
+    if preset not in FIELD_PRESETS:
+        raise ValueError(f"Unknown preset: {preset} (valid: {', '.join(FIELD_PRESETS.keys())})")
+    
+    preset_def = FIELD_PRESETS[preset]
+    
+    # Special case: 'all' preset is handled later when we know available fields
+    if preset_def['base'] is None:
+        return []  # Placeholder, will be expanded in _parse_fields_argument
+    
+    result = list(preset_def['base'])
+    result.extend(preset_def['suffix'])
+    
     if include_verbose:
-        base.append('Match_Quality')
+        result.append('Match_Quality')
     if any_notes:
-        base.append('Notes')
+        result.append('Notes')
     if include_verbose:
-        base.append('Priority')
-    return base
+        result.append('Priority')
+    
+    return result
 
 
 def _parse_fields_argument(fields_arg: str, available_fields: Dict[str, str], include_verbose: bool, any_notes: bool) -> List[str]:
     """
     Parse --fields argument which can contain:
-    1. Preset names with + prefix: +jlc, +standard
+    1. Preset names with + prefix: +jlc, +standard, +minimal, +all
     2. Comma-separated field names
     3. Mix of presets and fields: +jlc,CustomField1,CustomField2
     
@@ -2372,17 +2417,22 @@ def _parse_fields_argument(fields_arg: str, available_fields: Dict[str, str], in
     
     tokens = [t.strip() for t in fields_arg.split(',') if t.strip()]
     result = []
-    known_presets = {'jlc', 'standard'}
+    known_presets = set(FIELD_PRESETS.keys())
     
     for token in tokens:
         if token.startswith('+'):
             # This is a preset expansion
             preset_name = token[1:].lower()
             if preset_name not in known_presets:
-                raise ValueError(f"Unknown preset: {preset_name} (valid: {', '.join(known_presets)})")
-            # Expand preset inline
-            preset_fields = _preset_fields(preset_name, include_verbose, any_notes)
-            result.extend(preset_fields)
+                raise ValueError(f"Unknown preset: +{preset_name} (valid: {', '.join('+' + p for p in sorted(known_presets))})")
+            
+            # Handle special case: +all expands to all available fields
+            if preset_name == 'all':
+                result.extend(sorted(available_fields.keys()))
+            else:
+                # Expand preset inline
+                preset_fields = _preset_fields(preset_name, include_verbose, any_notes)
+                result.extend(preset_fields)
         else:
             # This is a field name - validate it
             if token not in available_fields:

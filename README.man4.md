@@ -54,7 +54,7 @@ python3 /path/to/kicad_jbom_plugin.py SCHEMATIC -i INVENTORY -o OUTPUT [FLAGS]
 **FLAGS** (optional):
 - `-v, --verbose` — Include Match_Quality and Priority columns
 - `-d, --debug` — Emit detailed diagnostics to stderr
-- `-f, --fields FIELDS` — Field selection: use `+jlc` or `+standard` presets, or comma-separated field list
+- `-f, --fields FIELDS` — Field selection: use presets (+standard, +jlc, +minimal, +all) or comma-separated field list
 
 ## COMMON CONFIGURATIONS
 
@@ -66,6 +66,11 @@ python3 /path/to/kicad_jbom_plugin.py %I -i /path/to/inventory.csv -o %O
 **With JLC preset:**
 ```
 python3 /path/to/kicad_jbom_plugin.py %I -i /path/to/inventory.csv -o %O -f +jlc
+```
+
+**With minimal preset:**
+```
+python3 /path/to/kicad_jbom_plugin.py %I -i /path/to/inventory.csv -o %O -f +minimal
 ```
 
 **With matching scores and priorities (verbose):**

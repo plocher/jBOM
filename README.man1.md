@@ -40,7 +40,7 @@ Generates a bill of materials (BOM) for a KiCad project by intelligently matchin
 
 **-f, --fields FIELDS**
 : Specify output columns. Use either:
-  - Preset name with `+` prefix: `+jlc` or `+standard` to expand a preset
+  - Preset name with `+` prefix: `+standard`, `+jlc`, `+minimal`, or `+all`
   - Comma-separated field list: `Reference,Quantity,Value,LCSC,I:Tolerance`
   - Mix both: `+jlc,CustomField,I:Tolerance` expands jlc preset then adds custom fields
   Default (if omitted): standard preset. Use `--list-fields` to see available fields.
@@ -84,7 +84,15 @@ Presets are activated with the `+` prefix in the `-f` argument (e.g., `-f "+jlc"
 
 **+jlc**
 : Reference, Quantity, LCSC, Value, Footprint, Description, Datasheet, SMD, [Match_Quality], [Notes], [Priority]
-: Minimal column set optimized for JLCPCB uploads.
+: Column set optimized for JLCPCB uploads (LCSC part number first).
+
+**+minimal**
+: Reference, Quantity, Value, LCSC
+: Bare minimum: reference, quantity, component value, and LCSC part number only.
+
+**+all**
+: Includes every available field from inventory and schematic components (sorted alphabetically).
+: Useful for debugging or exporting complete data for external tools.
 
 ## EXAMPLES
 
@@ -96,6 +104,16 @@ python jbom.py MyProject/ -i SPCoast-INVENTORY.xlsx
 Use JLC preset:
 ```
 python jbom.py MyProject/ -i inventory.csv -f +jlc
+```
+
+Use minimal preset:
+```
+python jbom.py MyProject/ -i inventory.csv -f +minimal
+```
+
+Use all available fields:
+```
+python jbom.py MyProject/ -i inventory.csv -f +all
 ```
 
 Custom field list:
