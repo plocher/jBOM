@@ -430,8 +430,17 @@ jBOM/
 - Handles file I/O and error reporting for plugin context
 
 **Documentation**:
-- README.md: Entry point with installation and quick start
-- README.man1.md: Complete CLI reference
-- README.man3.md: Python library API reference  
-- README.man4.md: KiCad plugin setup and integration guide
-- README.developer.md: This file - technical deep dive and extension points
+- [README.md](README.md): Entry point with installation and quick start
+- [README.man1.md](README.man1.md): Complete CLI reference
+- [README.man3.md](README.man3.md): Python library API reference  
+- [README.man4.md](README.man4.md): KiCad plugin setup and integration guide
+- [README.man5.md](README.man5.md): Inventory file format
+- [README.developer.md](README.developer.md): This file - technical deep dive and extension points
+
+## SEE ALSO
+
+- [**README.md**](README.md) — Overview and quick start
+- [**README.man1.md**](README.man1.md) — CLI reference
+- [**README.man3.md**](README.man3.md) — Python library API
+- [**README.man4.md**](README.man4.md) — KiCad plugin setup
+- [**README.man5.md**](README.man5.md) — Inventory file format

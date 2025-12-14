@@ -213,6 +213,6 @@ Invalid or missing optional columns are tolerated; matching simply skips those p
 
 ## SEE ALSO
 
-- **README.md** — Quick start guide
-- **README.man1.md** — CLI reference with field list
-- **README.developer.md** — Matching algorithm details
+- [**README.md**](README.md) — Quick start guide
+- [**README.man1.md**](README.man1.md) — CLI reference with field list
+- [**README.developer.md**](README.developer.md) — Matching algorithm details

@@ -104,6 +104,14 @@ For more troubleshooting, see the relevant man page:
 - API issues → [README.man3.md](README.man3.md)
 - Inventory format → [README.man5.md](README.man5.md)
 
+## SEE ALSO
+
+- [**README.man1.md**](README.man1.md) — CLI reference
+- [**README.man3.md**](README.man3.md) — Python library API
+- [**README.man4.md**](README.man4.md) — KiCad plugin setup
+- [**README.man5.md**](README.man5.md) — Inventory file format
+- [**README.developer.md**](README.developer.md) — Technical architecture
+
 ## Version
 
 jBOM v1.0.0 — Stable release with intelligent component matching, multiple inventory formats, and comprehensive integration options.
