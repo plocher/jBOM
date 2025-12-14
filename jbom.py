@@ -55,8 +55,6 @@ class InventoryItem:
     ipn: str
     keywords: str
     category: str
-    # Some older tests expect a 'name' field; provide a compatible optional field
-    name: str = ""
     description: str
     smd: str
     value: str
@@ -72,6 +70,8 @@ class InventoryItem:
     package: str = ""
     priority: int = DEFAULT_PRIORITY  # Priority from CSV: 1=most desirable, higher=less desirable
     raw_data: Dict[str, str] = field(default_factory=dict)
+    # Some older tests expect a 'name' field; provide a compatible optional field at the end
+    name: str = ""
 
 
 @dataclass
@@ -565,6 +565,7 @@ class InventoryMatcher:
                 keywords=row.get('Keywords', ''),
                 category=row.get('Category', ''),
                 description=row.get('Description', ''),
+                name=row.get('Name', ''),
                 smd=row.get('SMD', ''),
                 value=row.get('Value', ''),
                 type=row.get('Type', ''),
