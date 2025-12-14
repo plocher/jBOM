@@ -94,7 +94,7 @@ with:
   password: ${{ secrets.PYPI_API_TOKEN }}  # ← Repository secret
 ```
 
-**Access**: 
+**Access**:
 - Available to all workflows in the repository
 - Not visible to workflows from forked repos (security feature)
 - Visible to: Repo admins only (encrypted in UI)

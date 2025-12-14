@@ -90,7 +90,7 @@ The test suite (`test_kicad_bom_generator.py`) contains **46 tests** organized i
 
 ### Prerequisites
 
-- Python 3.9+ 
+- Python 3.9+
 - Required dependencies: `sexpdata`
 
 ### Basic Test Execution
@@ -140,19 +140,19 @@ pytest test_kicad_bom_generator.py::TestCategorySpecificFields -v
 
 ### Core BOM Generation (Tests 1-8)
 - ✅ **Value Parsing**: Resistors, capacitors, inductors with EIA formatting
-- ✅ **Component Matching**: Type detection, inventory matching, priority ranking  
+- ✅ **Component Matching**: Type detection, inventory matching, priority ranking
 - ✅ **BOM Assembly**: Component grouping, sorting, CSV generation
 - ✅ **Precision Handling**: 1% resistor detection and warnings
 - ✅ **Output Formats**: Basic, verbose, and manufacturer columns
 
-### Enhanced Features (Tests 9-14)  
+### Enhanced Features (Tests 9-14)
 - ✅ **Category-Specific Fields**: Component-appropriate property extraction
 - ✅ **Field Disambiguation**: I:/C: prefix system for inventory vs component fields
 - ✅ **Custom Output**: User-specified field selection with `-f` option
 - ✅ **Ambiguous Fields**: Automatic expansion into separate columns
 - ✅ **Field Discovery**: Dynamic detection of available fields
 - ✅ **Debug Functionality**: Comprehensive debug mode testing including:
-  - Enhanced Notes column with detailed matching information  
+  - Enhanced Notes column with detailed matching information
   - Alternative match display with IPN, scores, priorities, and part numbers
   - Debug mode enabled/disabled behavior validation
   - Method signature validation for 3-tuple return format
@@ -174,7 +174,7 @@ pytest test_kicad_bom_generator.py::TestCategorySpecificFields -v
 Tests use temporary CSV files and mock components to avoid dependencies on external files. The test inventory includes:
 
 - Standard resistor values (E6/E12/E24 series)
-- Precision resistors (1% tolerance) 
+- Precision resistors (1% tolerance)
 - Common capacitors and inductors
 - Priority-ranked components for testing selection logic
 - Fields that demonstrate inventory/component conflicts
@@ -227,7 +227,7 @@ python -m unittest test_kicad_bom_generator.TestDebugFunctionality.test_debug_al
 
 The debug tests validate:
 - **Debug information presence**: Notes column contains component analysis
-- **Alternative matches**: Multiple options shown with IPN, scores, and part numbers  
+- **Alternative matches**: Multiple options shown with IPN, scores, and part numbers
 - **Method signatures**: 3-tuple returns from `find_matches()` with debug info
 - **Mode switching**: Debug on/off behavior works correctly
 
@@ -262,7 +262,7 @@ python -m unittest test_kicad_bom_generator.TestResistorParsing.test_parse_res_t
 Add print statements to see intermediate values:
 ```python
 def test_example(self):
-    result = self.matcher._parse_res_to_ohms('10K0') 
+    result = self.matcher._parse_res_to_ohms('10K0')
     print(f"Parsed result: {result}")  # Debug output
     self.assertEqual(result, 10000.0)
 ```
@@ -272,7 +272,7 @@ def test_example(self):
 When adding new features to the BOM generator:
 
 1. **Add corresponding tests** to validate the new functionality
-2. **Update existing tests** if interfaces change  
+2. **Update existing tests** if interfaces change
 3. **Run the full test suite** to ensure no regressions
 4. **Update this README** if new test classes or significant functionality is added
 

@@ -153,7 +153,7 @@ matcher = InventoryMatcher(inventory_path: Path)
 
 **Methods**
 ```python
-find_matches(component: Component, debug: bool = False) 
+find_matches(component: Component, debug: bool = False)
     -> List[Tuple[InventoryItem, int, Optional[str]]]
 ```
 : Returns up to 3 matches: (inventory_item, score, debug_info_or_none)
@@ -188,7 +188,7 @@ get_available_fields(components: List[Component]) -> Dict[str, str]
 
 ```python
 from jbom import (
-    generate_bom_api, GenerateOptions, BOMGenerator, 
+    generate_bom_api, GenerateOptions, BOMGenerator,
     InventoryMatcher, Component, InventoryItem
 )
 from pathlib import Path
@@ -204,7 +204,7 @@ if result['exit_code'] == 0:
     # Process BOM entries
     for entry in result['bom_entries']:
         print(f"{entry.reference}: {entry.lcsc}")
-    
+
     # Access diagnostics
     if result['debug_diagnostics']:
         for diagnostic in result['debug_diagnostics']:
@@ -250,4 +250,4 @@ The library may raise:
 - **README.md** — Overview and quick start
 - **README.man1.md** — Command-line interface reference
 - **README.man4.md** — KiCad Eeschema plugin integration
-- **README.developer.md** — Matching algorithms and internals
+- **docs/README.developer.md** — Matching algorithms and internals

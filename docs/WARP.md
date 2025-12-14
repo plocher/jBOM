@@ -221,4 +221,3 @@ Contribute at: https://github.com/plocher/jBOM/issues and https://github.com/plo
 - Run specific class: `python -m unittest test_jbom.TestClassName -v`
 - Run specific test: `python -m unittest test_jbom.TestClassName.test_method -v`
 - Check test coverage areas in README.tests.md
-

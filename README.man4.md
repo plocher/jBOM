@@ -190,5 +190,5 @@ See README.man1.md (INVENTORY FILE FORMAT section) for complete details.
 - **README.md** — Overview and quick start
 - **README.man1.md** — Command-line interface reference
 - **README.man3.md** — Python library API reference
-- **README.developer.md** — Matching algorithms and internals
+- **docs/README.developer.md** — Matching algorithms and internals
 - **kicad_jbom_plugin.py** — The wrapper script (source code)

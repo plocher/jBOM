@@ -142,7 +142,7 @@ BOM:
     *  SMD indicators: 0402, 0603, 0805, 1206, 1210, sot-23, soic, tssop, qfn, dfn, bga
     *  Through-hole indicators: dip, through-hole, axial, radial
   4) Conservative default: Includes components when uncertain (better to include than exclude)
-  
+
 ## Field System and Custom Columns
 
 The BOM generator supports a sophisticated field system for customizing output columns with case-insensitive field name handling.
@@ -184,7 +184,7 @@ All fields are displayed and can be used in any case format.
 When inventory and component properties have the same name, use prefixes:
 
 - `I:fieldname` - Force use of inventory field
-- `C:fieldname` - Force use of component property field  
+- `C:fieldname` - Force use of component property field
 - `fieldname` - Ambiguous field (combines both sources)
 
 ### Custom Field Examples
@@ -254,12 +254,12 @@ The method applies these rules in order:
 
 ### Resistors → `'RES'`
 - Contains `'resistor'` in lib_id
-- lib_id ends with `':r'` (e.g., \"Device:R\" → split(':') gives [\"Device\", \"R\"])  
+- lib_id ends with `':r'` (e.g., \"Device:R\" → split(':') gives [\"Device\", \"R\"])
 - Contains `'res'` in footprint
 
 ### Capacitors → `'CAP'`
 - Contains `'capacitor'` in lib_id
-- lib_id ends with `':c'` 
+- lib_id ends with `':c'`
 - Contains `'cap'` in footprint
 
 ### Diodes → `'DIO'`
@@ -296,7 +296,7 @@ The method applies these rules in order:
 \"Device:R\"                    → 'RES'
 \"Device:C\"                    → 'CAP'
 \"Device:LED\"                  → 'LED'
-\"Connector:Conn_01x02\"        → 'CON' 
+\"Connector:Conn_01x02\"        → 'CON'
 \"MCU:ESP32\"                   → 'IC'
 \"SPCoast:resistor\"            → 'RES'
 
@@ -355,7 +355,7 @@ The tool supports multiple inventory file formats through a unified architecture
 **Fully Automatic**: The footprint matching system now uses automatic dash removal, eliminating the need for manual mappings. The architecture is maximally simplified:
 
 1. **`SMD_PACKAGES`**: Single authoritative list of SMD packages with consistent dash usage
-2. **`PACKAGE_EXTRACTION_PATTERNS`**: Completely eliminated! 
+2. **`PACKAGE_EXTRACTION_PATTERNS`**: Completely eliminated!
 3. **`FOOTPRINT_PACKAGE_MAPPINGS`**: Completely eliminated!
 4. **Automatic dash removal**: Handles inventory variations like 'sot23' vs 'sot-23' automatically
 
@@ -371,7 +371,7 @@ SMD_PACKAGES = [..., 'wlcsp']
 
 **Automatic Dash Handling**:
 - Footprint: `sot-23` matches inventory: `sot23` ✓
-- Footprint: `sod-123` matches inventory: `sod123` ✓  
+- Footprint: `sod-123` matches inventory: `sod123` ✓
 - Footprint: `sc-70` matches inventory: `sc70` ✓
 - All 14+ packages with dashes work automatically
 - No manual mapping tables to maintain
@@ -432,7 +432,7 @@ jBOM/
 **Documentation**:
 - [README.md](README.md): Entry point with installation and quick start
 - [README.man1.md](README.man1.md): Complete CLI reference
-- [README.man3.md](README.man3.md): Python library API reference  
+- [README.man3.md](README.man3.md): Python library API reference
 - [README.man4.md](README.man4.md): KiCad plugin setup and integration guide
 - [README.man5.md](README.man5.md): Inventory file format
 - [README.developer.md](README.developer.md): This file - technical deep dive and extension points

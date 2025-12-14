@@ -1,8 +1,8 @@
 # Security Incident Report: Exposed PyPI Token
 
-**Date**: 2025-12-14  
-**Status**: ✅ RESOLVED  
-**Severity**: HIGH  
+**Date**: 2025-12-14
+**Status**: ✅ RESOLVED
+**Severity**: HIGH
 **Impact**: Mitigated - Token rotated immediately
 
 ## Incident Summary

@@ -26,19 +26,19 @@ Generates a bill of materials (BOM) for a KiCad project by intelligently matchin
 
 ## OPTIONS
 
-**-o, --output FILE**  
+**-o, --output FILE**
 Output CSV file path. If omitted, generates `<PROJECT>_bom.csv` in the project directory. Special values: `-`, `console`, `stdout` for terminal output.
 
-**--outdir DIR**  
+**--outdir DIR**
 Directory for output files when `-o` is not specified. Useful for redirecting BOMs to a separate folder.
 
-**-v, --verbose**  
+**-v, --verbose**
 Include Match_Quality and Priority columns. Shows detailed scoring information.
 
-**-d, --debug**  
+**-d, --debug**
 Emit detailed matching diagnostics to stderr. Helpful for troubleshooting missing or mismatched components.
 
-**-f, --fields FIELDS**  
+**-f, --fields FIELDS**
 Specify output columns. Use either:
 - Preset name with `+` prefix: `+standard`, `+jlc`, `+minimal`, or `+all`
 - Comma-separated field list: `Reference,Quantity,Value,LCSC,I:Tolerance`
@@ -46,19 +46,19 @@ Specify output columns. Use either:
 
 Default (if omitted): standard preset. Use `--list-fields` to see available fields.
 
-**--multi-format FORMATS**  
+**--multi-format FORMATS**
 Emit multiple BOM formats in one run. Pass a comma-separated list (e.g., `jlc,standard`). Output files are named `<project>_bom.FORMAT.csv`. When used with `-f`, the same field list applies to all formats.
 
-**--list-fields**  
+**--list-fields**
 Print all available fields (standard BOM, inventory, component properties) and exit. Useful for building custom field lists.
 
-**--smd**  
+**--smd**
 Emit only SMD (surface mount device) components in the BOM. Filters out through-hole and mixed components.
 
-**--quiet**  
+**--quiet**
 Suppress non-essential console output. Useful for CI pipelines.
 
-**--json-report FILE**  
+**--json-report FILE**
 Write a JSON report to FILE with statistics (entry count, unmatched count, format, etc.).
 
 ## OUTPUT
@@ -214,4 +214,4 @@ See [README.man5.md](README.man5.md) for complete column definitions and example
 - [**README.man3.md**](README.man3.md) — Python library API reference
 - [**README.man4.md**](README.man4.md) — KiCad Eeschema plugin integration
 - [**README.man5.md**](README.man5.md) — Inventory file format
-- [**README.developer.md**](README.developer.md) — Architecture and matching algorithms
+- [**docs/README.developer.md**](docs/README.developer.md) — Architecture and matching algorithms

@@ -13,7 +13,7 @@ You need Python 3.9 or newer and the following packages:
 pip install sexpdata
 
 # To add support for Microsoft Excel Spreadsheet Inventories
-pip install openpyxl 
+pip install openpyxl
 
 # To add support for Apple Numbers Spreadsheet Inventories
 pip install numbers-parser
@@ -62,7 +62,7 @@ jBOM uses intelligent matching to find inventory parts that fit your schematic c
 
 For each potential match, jBOM scores candidates by comparing properties like tolerance, voltage, and current ratings. Finally, it uses the inventory's Priority column (1 = preferred, higher = less preferred) to break ties and select the best part.
 
-See README.developer.md for detailed information about the matching algorithm.
+See docs/README.developer.md for detailed information about the matching algorithm.
 
 ## Output
 
@@ -98,7 +98,8 @@ For more troubleshooting, see the relevant man page:
 - [**README.man3.md**](README.man3.md) — Python library API
 - [**README.man4.md**](README.man4.md) — KiCad plugin setup
 - [**README.man5.md**](README.man5.md) — Inventory file format
-- [**README.developer.md**](README.developer.md) — Technical architecture
+- [**docs/README.developer.md**](docs/README.developer.md) — Technical architecture
+- [**docs/**](docs/) — Development documentation (contributing, release process, security, pre-commit setup)
 
 ## Contributing
 
@@ -111,7 +112,7 @@ To contribute:
 4. Run the test suite: `python -m unittest tests.test_jbom -v`
 5. Submit a pull request
 
-For detailed development setup, coding standards, and testing guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).
+For detailed development setup, coding standards, and testing guidelines, see [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md).
 
 ## Version
 
@@ -122,4 +123,3 @@ Author: John Plocher
 ## License
 
 AGPLv3 — See LICENSE file for full terms.
-

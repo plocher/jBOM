@@ -3,11 +3,7 @@ include README.man1.md
 include README.man3.md
 include README.man4.md
 include README.man5.md
-include README.developer.md
-include README.tests.md
 include LICENSE
-include CHANGELOG.md
-include CONTRIBUTING.md
-include WARP.md
 include kicad_jbom_plugin.py
 recursive-include tests *.py
+global-exclude docs/*
