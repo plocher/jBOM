@@ -21,6 +21,9 @@ PLACEMENT_FIELDS: Dict[str, str] = {
     'side': 'Placement side (TOP/BOTTOM)',
     'footprint': 'Footprint name (lib:footprint)',
     'package': 'Package token (e.g., 0603, SOT-23, QFN)',
+    'datasheet': 'Component datasheet URL',
+    'version': 'KiCad version info',
+    'smd': 'Footprint type (SMD/PTH)',
 }
 
 PLACEMENT_PRESETS: Dict[str, Dict[str, Optional[List[str]]]] = {
@@ -166,6 +169,12 @@ class PositionGenerator:
                         row.append(c.footprint_name)
                     elif fld == 'package':
                         row.append(c.package_token)
+                    elif fld == 'datasheet':
+                        row.append(c.attributes.get('datasheet', ''))
+                    elif fld == 'version':
+                        row.append(c.attributes.get('version', ''))
+                    elif fld == 'smd':
+                        row.append(c.attributes.get('smd', ''))
                     else:
                         row.append("")
                 w.writerow(row)
@@ -247,6 +256,12 @@ def print_pos_table(gen: PositionGenerator, fields: Optional[List[str]] = None) 
                 col_widths[field] = max(col_widths[field], len(comp.footprint_name))
             elif field == 'package':
                 col_widths[field] = max(col_widths[field], len(comp.package_token or ''))
+            elif field == 'datasheet':
+                col_widths[field] = max(col_widths[field], len(comp.attributes.get('datasheet', '')))
+            elif field == 'version':
+                col_widths[field] = max(col_widths[field], len(comp.attributes.get('version', '')))
+            elif field == 'smd':
+                col_widths[field] = max(col_widths[field], len(comp.attributes.get('smd', '')))
     
     # Cap maximum widths for readability
     max_widths = {
@@ -257,6 +272,9 @@ def print_pos_table(gen: PositionGenerator, fields: Optional[List[str]] = None) 
         'side': 8,
         'footprint': 40,
         'package': 15,
+        'datasheet': 40,
+        'version': 15,
+        'smd': 6,
     }
     
     for field in norm_fields:
@@ -304,6 +322,13 @@ def print_pos_table(gen: PositionGenerator, fields: Optional[List[str]] = None) 
                 content = fp if len(fp) <= width else fp[:width-3] + '...'
             elif field == 'package':
                 content = comp.package_token or ''
+            elif field == 'datasheet':
+                ds = comp.attributes.get('datasheet', '')
+                content = ds if len(ds) <= width else ds[:width-3] + '...'
+            elif field == 'version':
+                content = comp.attributes.get('version', '')
+            elif field == 'smd':
+                content = comp.attributes.get('smd', '')
             else:
                 content = ''
             

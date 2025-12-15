@@ -87,6 +87,42 @@ class BoardLoader:
 
             # Side
             side = "BOTTOM" if getattr(fp, "IsFlipped", lambda: False)() else "TOP"
+            
+            # Extract attributes (datasheet, version, SMD type)
+            attributes = {}
+            
+            # Get properties
+            try:
+                # Try to get properties (KiCad 7+)
+                if hasattr(fp, 'GetProperties'):
+                    props = fp.GetProperties()
+                    for key, val in props.items():
+                        if isinstance(key, str) and isinstance(val, str):
+                            attributes[key.lower()] = val
+            except Exception:
+                pass
+            
+            # Get datasheet
+            try:
+                if hasattr(fp, 'GetDatasheet'):
+                    ds = fp.GetDatasheet()
+                    if ds:
+                        attributes['datasheet'] = ds
+            except Exception:
+                pass
+            
+            # Get SMD type from footprint attributes
+            try:
+                if hasattr(fp, 'GetAttributes'):
+                    attrs = fp.GetAttributes()
+                    # attrs is typically an integer flag
+                    # FP_SMD = 1, FP_THROUGH_HOLE = 2
+                    if attrs == 1 or (hasattr(fp, 'IsSMD') and fp.IsSMD()):
+                        attributes['smd'] = 'SMD'
+                    elif attrs == 2:
+                        attributes['smd'] = 'PTH'
+            except Exception:
+                pass
 
             pkg = self._extract_package_token(fp_name)
             board.footprints.append(
@@ -98,6 +134,7 @@ class BoardLoader:
                     center_y_mm=y_mm,
                     rotation_deg=rot,
                     side=side,
+                    attributes=attributes,
                 )
             )
         return board
@@ -127,6 +164,10 @@ class BoardLoader:
         x_mm = y_mm = 0.0
         rot = 0.0
         side = "TOP"
+        attributes = {}
+        datasheet = ""
+        version = ""
+        smd_type = ""
 
         for child in node[2:]:
             if not (isinstance(child, list) and child):
@@ -152,19 +193,38 @@ class BoardLoader:
                 if child[1] == Symbol("reference") and isinstance(child[2], str):
                     ref = child[2]
             elif head == Symbol("property") and len(child) >= 3:
-                # (property "Reference" "R1" ... ) in KiCad 7/8
+                # (property "Reference" "R1" ... ) or (property "Datasheet" "url" ...)
                 try:
                     key = child[1]
                     val = child[2]
-                    if isinstance(key, str) and key == "Reference" and isinstance(val, str):
-                        ref = val
+                    if isinstance(key, str) and isinstance(val, str):
+                        if key == "Reference":
+                            ref = val
+                        elif key == "Datasheet":
+                            datasheet = val
+                        elif key == "ki_version":
+                            version = val
+                        else:
+                            # Store other properties in attributes
+                            attributes[key] = val
                 except Exception:
                     pass
+            elif head == Symbol("attr"):
+                # (attr smd) or (attr through_hole) or (attr board_only)
+                # This indicates the footprint type
+                if len(child) >= 2:
+                    attr_type = str(child[1])
+                    if attr_type in ('smd', 'through_hole', 'board_only', 'exclude_from_pos_files', 'exclude_from_bom'):
+                        if attr_type == 'smd':
+                            smd_type = 'SMD'
+                        elif attr_type == 'through_hole':
+                            smd_type = 'PTH'
 
         if not ref:
             return None
         pkg = self._extract_package_token(fp_name or "")
-        return PcbComponent(
+        
+        comp = PcbComponent(
             reference=ref,
             footprint_name=fp_name or "",
             package_token=pkg,
@@ -172,7 +232,18 @@ class BoardLoader:
             center_y_mm=y_mm,
             rotation_deg=rot,
             side=side,
+            attributes=attributes,
         )
+        
+        # Add extracted fields to attributes for easy access
+        if datasheet:
+            comp.attributes['datasheet'] = datasheet
+        if version:
+            comp.attributes['version'] = version
+        if smd_type:
+            comp.attributes['smd'] = smd_type
+        
+        return comp
 
     # -------------------- helpers --------------------
     def _extract_package_token(self, footprint_name: str) -> str:
