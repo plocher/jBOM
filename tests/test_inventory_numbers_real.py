@@ -11,10 +11,14 @@ import os
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-INVENTORY_PATH = Path(os.environ.get('INVENTORY', '/dev/null'))
+# Get inventory path from environment (None if not set)
+_inventory_env = os.environ.get('INVENTORY', '').strip()
+INVENTORY_PATH = Path(_inventory_env) if _inventory_env else None
+
 # Prefer an explicit list from PROJECTS_LIST; fall back to PROJECTS root
 _PROJECTS_LIST = os.environ.get('PROJECTS_LIST', '').strip()
-PROJECTS_ROOT = Path(os.environ.get('PROJECTS', '/dev/null')) if not _PROJECTS_LIST else None
+_projects_env = os.environ.get('PROJECTS', '').strip()
+PROJECTS_ROOT = Path(_projects_env) if (_projects_env and not _PROJECTS_LIST) else None
 
 
 class TestRealNumbersInventory(unittest.TestCase):
@@ -27,6 +31,8 @@ class TestRealNumbersInventory(unittest.TestCase):
             import numbers_parser  # noqa: F401
         except Exception:
             self.skipTest('numbers-parser not installed')
+        if not INVENTORY_PATH:
+            self.skipTest('INVENTORY environment variable not set')
         if not INVENTORY_PATH.exists() or not INVENTORY_PATH.is_file():
             self.skipTest('Real Numbers inventory file not present')
         if INVENTORY_PATH.suffix.lower() not in ['.csv', '.xlsx', '.xls', '.numbers']:
@@ -39,6 +45,8 @@ class TestRealNumbersInventory(unittest.TestCase):
             import numbers_parser  # noqa: F401
         except Exception:
             self.skipTest('numbers-parser not installed')
+        if not INVENTORY_PATH:
+            self.skipTest('INVENTORY environment variable not set')
         if not INVENTORY_PATH.exists() or not INVENTORY_PATH.is_file():
             self.skipTest('Real Numbers inventory file not present')
         if INVENTORY_PATH.suffix.lower() not in ['.csv', '.xlsx', '.xls', '.numbers']:
