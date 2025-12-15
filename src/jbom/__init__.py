@@ -18,7 +18,15 @@ from .processors.component_types import normalize_component_type
 # Import inventory matcher
 from .inventory import InventoryMatcher
 
-# Import from jbom.py (main CLI functions)
+# Import v3.0 unified API
+from .api import (
+    generate_bom,
+    generate_pos,
+    BOMOptions,
+    POSOptions,
+)
+
+# Import from jbom.py (main CLI functions and backward compatibility)
 from .jbom import (
     GenerateOptions,
     generate_bom_api,
@@ -39,15 +47,24 @@ from .jbom import (
 __all__ = [
     "__version__",
     "__version_info__",
+    # Core types
     "Component",
     "InventoryItem",
     "BOMEntry",
     "ComponentType",
     "DiagnosticIssue",
     "CommonFields",
+    # Loaders
     "SchematicLoader",
     "InventoryMatcher",
+    # Generators
     "BOMGenerator",
+    # v3.0 Unified API (primary)
+    "generate_bom",
+    "generate_pos",
+    "BOMOptions",
+    "POSOptions",
+    # v2.x API (backward compatibility)
     "GenerateOptions",
     "generate_bom_api",
     "EXCEL_SUPPORT",
