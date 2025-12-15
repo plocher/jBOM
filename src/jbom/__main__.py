@@ -1,10 +1,11 @@
-"""Command-line interface entry point for jBOM
+"""Command-line interface entry point for jBOM (v2 CLI).
 
-Allows running jBOM as: python -m jbom [args]
+Usage:
+  python -m jbom bom [options]
+  python -m jbom pos [options]
 """
-
 import sys
-from .jbom import main
+from .cli.main import main
 
 if __name__ == "__main__":
     sys.exit(main())

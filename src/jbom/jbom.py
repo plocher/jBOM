@@ -811,216 +811,40 @@ class InventoryMatcher:
     _OHM_RE = re.compile(r"^\s*([0-9]*\.?[0-9]+)\s*([kKmMrR]?)\s*\+?\s*$")
 
     def _parse_res_to_ohms(self, s: str) -> Optional[float]:
-        """Parse a resistor value string to ohms (float).
-        Supports: 330, 330Ω, 330R, 3R3, 22k, 22k0, 2M2, 0R22, etc.
-        """
-        if not s:
-            return None
-        t = s.strip()
-        t = t.replace('Ω', '').replace('ω', '').replace('ohm', '').replace('OHM', '')
-        t = t.replace(' ', '')
-        # EIA decimal letter forms
-        t = t.upper()
-        # Convert forms like 3R3, 2K2 to decimal
-        m = re.match(r"^([0-9]*)R([0-9]+)$", t)
-        if m:
-            left = m.group(1) or '0'
-            right = m.group(2)
-            return float(f"{left}.{right}")
-        m = re.match(r"^([0-9]*)K([0-9]*)$", t)
-        if m:
-            left = m.group(1) or '0'
-            right = m.group(2) or '0'
-            return float(f"{left}.{right}") * 1e3
-        m = re.match(r"^([0-9]*)M([0-9]*)$", t)
-        if m:
-            left = m.group(1) or '0'
-            right = m.group(2) or '0'
-            return float(f"{left}.{right}") * 1e6
-        # Plain number with optional unit suffix
-        m = self._OHM_RE.match(t)
-        if not m:
-            # Try trailing unit forms like 330R0, 22K0
-            m2 = re.match(r"^([0-9]+)([RKM])[0]+$", t)
-            if m2:
-                base = float(m2.group(1))
-                unit = m2.group(2)
-                if unit == 'R':
-                    return base
-                if unit == 'K':
-                    return base * 1e3
-                if unit == 'M':
-                    return base * 1e6
-            return None
-        num = float(m.group(1))
-        suffix = m.group(2).upper()
-        if suffix == 'K':
-            num *= 1e3
-        elif suffix == 'M':
-            num *= 1e6
-        elif suffix == 'R' or suffix == '':
-            pass
-        return num
+        """Delegate to common.values.parse_res_to_ohms (kept for back-compat)."""
+        from .common.values import parse_res_to_ohms
+        return parse_res_to_ohms(s)
 
     def _ohms_to_eia(self, ohms: float, *, force_trailing_zero: bool = False) -> str:
-        """Format a resistance in ohms into EIA-like string.
-        Examples: 3R3, 330R, 2K2, 10K, 10K0 (when precision required), 1M, 1M0.
-        Set force_trailing_zero=True to append a trailing 0 after K/M when appropriate.
-        """
-        if ohms is None:
-            return ''
-        # Choose unit
-        if ohms >= 1e6:
-            val = ohms / 1e6
-            s = f"{val:.3g}"
-            if s.endswith('.0'):
-                s = s[:-2]
-            if '.' in s:
-                return s.replace('.', 'M')
-            # Integer M value
-            return s + ('M0' if force_trailing_zero else 'M')
-        if ohms >= 1e3:
-            val = ohms / 1e3
-            s = f"{val:.3g}"
-            if s.endswith('.0'):
-                s = s[:-2]
-            if '.' in s:
-                return s.replace('.', 'K')
-            # Integer K value
-            return s + ('K0' if force_trailing_zero else 'K')
-        if ohms >= 1:
-            # Use R as decimal point; avoid trailing .0
-            if abs(ohms - round(ohms)) < 1e-9:
-                return f"{int(round(ohms))}R"
-            s = f"{ohms:.3g}".rstrip('0').rstrip('.')
-            return s.replace('.', 'R')
-        # Less than 1 ohm -> leading 0R
-        val = ohms
-        s = f"{val:.2g}"
-        if '.' in s:
-            left, right = s.split('.')
-            return f"{left}R{right}"
-        return f"0R{s}"
+        """Delegate to common.values.ohms_to_eia (kept for back-compat)."""
+        from .common.values import ohms_to_eia
+        return ohms_to_eia(ohms, force_trailing_zero=force_trailing_zero)
 
     # ---- Capacitor parsing / EIA-ish formatting ----
     def _parse_cap_to_farad(self, s: str) -> Optional[float]:
-        if not s:
-            return None
-        t = (s or '').strip().lower().replace('μ','u')
-        t = t.replace(' ', '')
-        # Accept forms like 100n, 0.1u, 1u0, 220pF, 100nf
-        m = re.match(r"^([0-9]*\.?[0-9]+)\s*([fpnum]?)(f)?$", t)
-        if not m:
-            # 1n0 style: numeric with trailing zero after unit letter
-            m2 = re.match(r"^([0-9]+)([fpnum])0$", t)
-            if m2:
-                base = float(m2.group(1))
-                unit = m2.group(2)
-                return base * self._cap_unit_multiplier(unit)
-            return None
-        val = float(m.group(1))
-        unit = (m.group(2) or '')
-        return val * self._cap_unit_multiplier(unit)
+        from .common.values import parse_cap_to_farad
+        return parse_cap_to_farad(s)
 
     def _cap_unit_multiplier(self, unit: str) -> float:
-        u = unit.lower()
-        return {
-            'f': 1.0,
-            'p': 1e-12,
-            'n': 1e-9,
-            'u': 1e-6,
-            'm': 1e-3,
-            '': 1.0,
-        }.get(u, 1.0)
+        from .common.values import cap_unit_multiplier
+        return cap_unit_multiplier(unit)
 
     def _farad_to_eia(self, farad: float) -> str:
-        if farad is None:
-            return ''
-        # Prefer n/u for readability; always append trailing 'F'
-        if farad >= 1e-6:
-            v = farad / 1e-6
-            s = f"{v:.3g}"
-            if s.endswith('.0'):
-                s = s[:-2]  # Remove only trailing .0, not all zeros
-            if '.' in s:
-                return s.replace('.', 'u') + 'F'
-            return s + 'uF'
-        if farad >= 1e-9:
-            v = farad / 1e-9
-            s = f"{v:.3g}"
-            if s.endswith('.0'):
-                s = s[:-2]  # Remove only trailing .0, not all zeros
-            if '.' in s:
-                return s.replace('.', 'n') + 'F'
-            return s + 'nF'
-        # default to pF region
-        v = farad / 1e-12
-        s = f"{v:.3g}"
-        if s.endswith('.0'):
-            s = s[:-2]  # Remove only trailing .0, not all zeros
-        if '.' in s:
-            return s.replace('.', 'p') + 'F'
-        return s + 'pF'
+        from .common.values import farad_to_eia
+        return farad_to_eia(farad)
 
     # ---- Inductor parsing / EIA-ish formatting ----
     def _parse_ind_to_henry(self, s: str) -> Optional[float]:
-        if not s:
-            return None
-        t = (s or '').strip().lower().replace('μ','u')
-        t = t.replace(' ', '')
-        # Accept 10uH, 10u, 2m2, 100nH
-        t = t.replace('h', '')
-        m = re.match(r"^([0-9]*\.?[0-9]+)\s*([num]?)$", t)
-        if not m:
-            # 2m2 style
-            m2 = re.match(r"^([0-9]+)([num])([0-9]+)$", t)
-            if m2:
-                left = m2.group(1)
-                unit = m2.group(2)
-                right = m2.group(3)
-                val = float(f"{left}.{right}")
-                return val * self._ind_unit_multiplier(unit)
-            return None
-        val = float(m.group(1))
-        unit = (m.group(2) or '')
-        return val * self._ind_unit_multiplier(unit)
+        from .common.values import parse_ind_to_henry
+        return parse_ind_to_henry(s)
 
     def _ind_unit_multiplier(self, unit: str) -> float:
-        u = unit.lower()
-        return {
-            '': 1.0,
-            'm': 1e-3,
-            'u': 1e-6,
-            'n': 1e-9,
-        }.get(u, 1.0)
+        from .common.values import ind_unit_multiplier
+        return ind_unit_multiplier(unit)
 
     def _henry_to_eia(self, henry: float) -> str:
-        if henry is None:
-            return ''
-        # Always append trailing 'H'
-        if henry >= 1e-3:
-            v = henry / 1e-3
-            s = f"{v:.3g}"
-            if s.endswith('.0'):
-                s = s[:-2]  # Remove only trailing .0, not all zeros
-            if '.' in s:
-                return s.replace('.', 'm') + 'H'
-            return s + 'mH'
-        if henry >= 1e-6:
-            v = henry / 1e-6
-            s = f"{v:.3g}"
-            if s.endswith('.0'):
-                s = s[:-2]  # Remove only trailing .0, not all zeros
-            if '.' in s:
-                return s.replace('.', 'u') + 'H'
-            return s + 'uH'
-        v = henry / 1e-9
-        s = f"{v:.3g}"
-        if s.endswith('.0'):
-            s = s[:-2]  # Remove only trailing .0, not all zeros
-        if '.' in s:
-            return s.replace('.', 'n') + 'H'
-        return s + 'nH'
+        from .common.values import henry_to_eia
+        return henry_to_eia(henry)
     
     def _footprint_matches(self, footprint: str, package: str) -> bool:
         """Check if footprint matches package inventory designation"""
