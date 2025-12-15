@@ -23,16 +23,59 @@ from jbom.cli.common import apply_jlc_flag
 
 
 def _cmd_bom(argv: List[str]) -> int:
-    p = argparse.ArgumentParser(prog='jbom bom', description='Generate BOM (CSV)')
-    p.add_argument('project', help='KiCad project directory or .kicad_sch path')
-    p.add_argument('-i', '--inventory', required=True, help='Inventory file (.csv/.xlsx/.xls/.numbers)')
-    p.add_argument('-o', '--output', help='Output path (file, -, stdout for CSV, or console for formatted table)')
-    p.add_argument('--outdir', help='Output directory if --output not provided')
-    p.add_argument('-f', '--fields', help='Fields/presets (e.g., +jlc or Reference,Value,...)')
-    p.add_argument('--jlc', action='store_true', help='Imply +jlc field preset')
-    p.add_argument('-v', '--verbose', action='store_true')
-    p.add_argument('-d', '--debug', action='store_true')
-    p.add_argument('--smd-only', action='store_true')
+    p = argparse.ArgumentParser(
+        prog='jbom bom',
+        description='Generate Bill of Materials (BOM) from KiCad schematic with inventory matching',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog='''Examples:
+  jbom bom project/ -i inventory.csv                    # Generate BOM with default fields
+  jbom bom project/ -i inventory.csv -o console         # Display formatted table
+  jbom bom project/ -i inventory.csv -o - | grep LCSC   # CSV to stdout for piping
+  jbom bom project/ -i inventory.csv --jlc              # Use JLCPCB field preset
+  jbom bom project/ -i inventory.csv -f +jlc,Tolerance  # Mix preset with custom fields
+  jbom bom project/ -i inventory.csv -v                 # Include match quality scores
+  jbom bom project/ -i inventory.csv --smd-only         # Only surface-mount components
+''')
+    p.add_argument('project',
+                   help='Path to KiCad project directory or .kicad_sch file')
+    p.add_argument('-i', '--inventory',
+                   required=True,
+                   metavar='FILE',
+                   help='Inventory file containing component data (.csv, .xlsx, .xls, or .numbers format)')
+    p.add_argument('-o', '--output',
+                   metavar='PATH',
+                   help='''Output destination:
+  filename.csv  - Write to file
+  -             - CSV to stdout (pipeline-friendly)
+  stdout        - CSV to stdout (pipeline-friendly)
+  console       - Formatted table to console (human-readable)
+  (default: PROJECT_bom.csv in project directory)''')
+    p.add_argument('--outdir',
+                   metavar='DIR',
+                   help='Output directory for generated files (only used if -o not specified)')
+    p.add_argument('-f', '--fields',
+                   metavar='FIELDS',
+                   help='''Field selection: comma-separated list of fields or presets.
+  Presets (use + prefix):
+    +standard - Reference, Quantity, Description, Value, Footprint, LCSC, Datasheet, SMD
+    +jlc      - Reference, Quantity, Value, Package, LCSC (JLCPCB format)
+    +minimal  - Reference, Quantity, Value, LCSC
+    +all      - All available fields
+  Custom fields: Reference,Value,LCSC,Manufacturer,I:Tolerance
+  Mixed: +jlc,I:Voltage,C:Tolerance
+  Use I: prefix for inventory fields, C: for component fields''')
+    p.add_argument('--jlc',
+                   action='store_true',
+                   help='Use JLCPCB field preset (+jlc): optimized for JLCPCB assembly service')
+    p.add_argument('-v', '--verbose',
+                   action='store_true',
+                   help='Include verbose output: add Match_Quality and Priority columns showing match scores')
+    p.add_argument('-d', '--debug',
+                   action='store_true',
+                   help='Enable debug mode: add detailed matching diagnostics to Notes column')
+    p.add_argument('--smd-only',
+                   action='store_true',
+                   help='Filter output to only include surface-mount (SMD) components')
     args = p.parse_args(argv)
 
     opts = GenerateOptions(verbose=args.verbose, debug=args.debug, smd_only=args.smd_only, fields=None)
@@ -79,16 +122,69 @@ def _cmd_bom(argv: List[str]) -> int:
 
 
 def _cmd_pos(argv: List[str]) -> int:
-    p = argparse.ArgumentParser(prog='jbom pos', description='Generate placement/CPL CSV')
-    p.add_argument('board', help='KiCad project directory or .kicad_pcb path')
-    p.add_argument('-o', '--output', help='Output path (file, -, stdout, or console for CSV to stdout)')
-    p.add_argument('-f', '--fields', help='Fields/presets (e.g., +jlc, +kicad_pos, Reference,X,Y,...)')
-    p.add_argument('--jlc', action='store_true', help='Imply +jlc field preset')
-    p.add_argument('--units', choices=['mm', 'inch'], default='mm')
-    p.add_argument('--origin', choices=['board', 'aux'], default='board')
-    p.add_argument('--smd-only', action='store_true', default=True)
-    p.add_argument('--layer', choices=['TOP', 'BOTTOM'])
-    p.add_argument('--loader', choices=['auto', 'pcbnew', 'sexp'], default='auto')
+    p = argparse.ArgumentParser(
+        prog='jbom pos',
+        description='Generate component placement (POS/CPL) file from KiCad PCB for pick-and-place assembly',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog='''Examples:
+  jbom pos board.kicad_pcb                              # Generate POS with default fields
+  jbom pos board.kicad_pcb -o console                   # Display formatted table
+  jbom pos board.kicad_pcb -o - | wc -l                 # CSV to stdout for piping
+  jbom pos board.kicad_pcb --jlc                        # Use JLCPCB field preset
+  jbom pos board.kicad_pcb -f +kicad_pos,smd,datasheet  # Add custom fields
+  jbom pos board.kicad_pcb --units inch --origin aux    # Imperial units with aux origin
+  jbom pos board.kicad_pcb --layer TOP                  # Only top-side components
+''')
+    p.add_argument('board',
+                   help='Path to KiCad project directory or .kicad_pcb file')
+    p.add_argument('-o', '--output',
+                   metavar='PATH',
+                   help='''Output destination:
+  filename.csv  - Write to file
+  -             - CSV to stdout (pipeline-friendly)
+  stdout        - CSV to stdout (pipeline-friendly)
+  console       - Formatted table to console (human-readable)
+  (default: BOARD_pos.csv in board directory)''')
+    p.add_argument('-f', '--fields',
+                   metavar='FIELDS',
+                   help='''Field selection: comma-separated list of fields or presets.
+  Presets (use + prefix):
+    +kicad_pos - Reference, X, Y, Rotation, Side, Footprint (default)
+    +jlc       - Reference, Side, X, Y, Rotation, Package (JLCPCB format)
+    +minimal   - Reference, X, Y, Side
+    +all       - All available fields
+  Available fields: reference, x, y, rotation, side, footprint, package, datasheet, version, smd
+  Custom: Reference,X,Y,Rotation,SMD
+  Mixed: +kicad_pos,smd,datasheet''')
+    p.add_argument('--jlc',
+                   action='store_true',
+                   help='Use JLCPCB field preset (+jlc): optimized for JLCPCB assembly service')
+    p.add_argument('--units',
+                   choices=['mm', 'inch'],
+                   default='mm',
+                   help='Coordinate units for X/Y positions (default: mm)')
+    p.add_argument('--origin',
+                   choices=['board', 'aux'],
+                   default='board',
+                   help='''Coordinate origin:
+  board - Use board origin (lower-left corner, typically 0,0)
+  aux   - Use auxiliary axis origin (user-defined in PCB)
+  (default: board)''')
+    p.add_argument('--smd-only',
+                   action='store_true',
+                   default=True,
+                   help='Include only surface-mount components (default: enabled)')
+    p.add_argument('--layer',
+                   choices=['TOP', 'BOTTOM'],
+                   metavar='SIDE',
+                   help='Filter to only components on specified layer (TOP or BOTTOM)')
+    p.add_argument('--loader',
+                   choices=['auto', 'pcbnew', 'sexp'],
+                   default='auto',
+                   help='''PCB loading method:
+  auto   - Try pcbnew API, fallback to S-expression parser (default)
+  pcbnew - Use KiCad pcbnew Python API (requires KiCad Python environment)
+  sexp   - Use built-in S-expression parser (works without KiCad)''')
     args = p.parse_args(argv)
 
     # Find PCB file (auto-detect if directory)
@@ -133,9 +229,28 @@ def _cmd_pos(argv: List[str]) -> int:
 def main(argv: List[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     if not argv or argv[0] in ('-h', '--help'):
-        print('Usage: jbom {bom|pos} [options]\n'\
-              '  jbom bom PROJECT -i INVENTORY [options]\n'\
-              '  jbom pos PROJECT [options]')
+        print('''jBOM - KiCad Bill of Materials and Placement File Generator
+
+Usage:
+  jbom bom PROJECT -i INVENTORY [options]    Generate BOM from schematic
+  jbom pos BOARD [options]                   Generate placement file from PCB
+
+Commands:
+  bom    Generate Bill of Materials with inventory matching
+  pos    Generate component placement (POS/CPL) file for pick-and-place
+
+Get help on specific commands:
+  jbom bom --help
+  jbom pos --help
+
+Examples:
+  jbom bom project/ -i inventory.csv                    # Generate BOM
+  jbom bom project/ -i inventory.csv -o console         # Show formatted table
+  jbom bom project/ -i inventory.csv --jlc              # JLCPCB format
+  jbom pos board.kicad_pcb                              # Generate placement file
+  jbom pos board.kicad_pcb -o console                   # Show formatted table
+  jbom pos board.kicad_pcb -f +kicad_pos,smd,datasheet  # Custom fields
+''')
         return 0
     cmd, *rest = argv
     if cmd == 'bom':
