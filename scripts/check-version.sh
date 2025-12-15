@@ -31,7 +31,7 @@ echo ""
 # Check if all versions match
 if [ "$VERSION_PY" = "$VERSION_TOML" ] && [ "$VERSION_PY" = "$VERSION_README" ]; then
     echo -e "${GREEN}✅ All versions match: $VERSION_PY${NC}"
-    
+
     # Check if CLI returns same version
     CLI_VERSION=$(PYTHONPATH=src python -m jbom --version 2>&1 | grep -o "[0-9]\+\.[0-9]\+\.[0-9]\+")
     if [ "$CLI_VERSION" = "$VERSION_PY" ]; then
@@ -39,7 +39,7 @@ if [ "$VERSION_PY" = "$VERSION_TOML" ] && [ "$VERSION_PY" = "$VERSION_README" ];
     else
         echo -e "${YELLOW}⚠️  CLI --version returns: $CLI_VERSION (expected: $VERSION_PY)${NC}"
     fi
-    
+
     # Check git tags
     LATEST_TAG=$(git tag -l --sort=-version:refname | head -1)
     echo ""
@@ -50,7 +50,7 @@ if [ "$VERSION_PY" = "$VERSION_TOML" ] && [ "$VERSION_PY" = "$VERSION_README" ];
         echo -e "${YELLOW}⚠️  Version $VERSION_PY does not match latest tag $LATEST_TAG${NC}"
         echo "   This is normal if you have unreleased changes."
     fi
-    
+
     exit 0
 else
     echo -e "${RED}❌ Version mismatch detected!${NC}"
