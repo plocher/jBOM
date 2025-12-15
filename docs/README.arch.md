@@ -9,11 +9,7 @@ This document summarizes the current high-level module layout supporting both BO
   - `jbom.cli.main` → CLI parsing, `bom` and `pos` subcommands
 
 ### Schematic Module
-- `jbom.sch` — schematic-focused API that re-exports from `jbom.jbom`:
-  - `jbom.sch.api` → `GenerateOptions`, `generate_bom_api`
-  - `jbom.sch.model` → `Component`
-  - `jbom.sch.parser` → `KiCadParser`
-  - `jbom.sch.bom` → `BOMEntry`, `BOMGenerator`
+- `jbom.sch` — schematic-focused API that re-exports from `jbom.jbom` for convenience
 
 ### PCB Module (NEW)
 - `jbom.pcb` — PCB integration for placement file generation:
@@ -30,8 +26,7 @@ This document summarizes the current high-level module layout supporting both BO
   - `utils` → utility functions (currently placeholder)
 
 ### Inventory Module
-- `jbom.inventory` — inventory matching API:
-  - `jbom.inventory.matcher` → `InventoryMatcher`, `InventoryItem` (re-exports from jbom.jbom)
+- `jbom.inventory` — inventory matching API that re-exports from `jbom.jbom` for convenience
 
 ## Command-Line Interface
 
@@ -52,13 +47,10 @@ Both subcommands support:
 
 ## API Usage
 
-### BOM Generation (Backward Compatible)
+### BOM Generation
 ```python
-# Legacy import (still works)
+# Standard import
 from jbom import generate_bom_api, GenerateOptions
-
-# New schematic-specific import
-from jbom.sch import generate_bom_api, GenerateOptions
 
 opts = GenerateOptions(verbose=True)
 result = generate_bom_api('project/', 'inventory.xlsx', options=opts)
@@ -73,7 +65,7 @@ board = BoardLoader.load('board.kicad_pcb', mode='auto')
 
 # Generate placement file
 gen = PositionGenerator(board)
-gen.write_csv('output.csv', 
+gen.write_csv('output.csv',
               fields_preset='jlc',
               units='mm',
               origin='aux')

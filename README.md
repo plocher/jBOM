@@ -61,7 +61,7 @@ python -m jbom pos MyBoard.kicad_pcb -o MyBoard.pos.csv
 
 **Via Python:**
 ```python
-from jbom.sch import generate_bom_api, GenerateOptions
+from jbom import generate_bom_api, GenerateOptions
 from jbom.pcb import BoardLoader, PositionGenerator
 
 # Generate BOM
@@ -129,9 +129,10 @@ For more troubleshooting, see the relevant man page:
 - [**docs/**](docs/) — All documentation (user guides, developer guides, changelog, contributing)
 
 ## Modules and imports
-- Backward compatible: `from jbom import generate_bom_api, GenerateOptions`.
-- New (optional) schematic namespace: `from jbom.sch import generate_bom_api, GenerateOptions`.
-- Shared helpers (for advanced use): `from jbom.common.values import parse_res_to_ohms, farad_to_eia, ...`.
+- Main API: `from jbom import generate_bom_api, GenerateOptions`
+- PCB module: `from jbom.pcb import BoardLoader, PositionGenerator`
+- Shared utilities: `from jbom.common import normalize_field_name, resolve_output_path`
+- Optional convenience: `from jbom.sch import Component, BOMGenerator` (same as importing from jbom)
 
 ## Contributing
 

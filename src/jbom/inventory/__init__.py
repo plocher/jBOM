@@ -1,5 +1,9 @@
-"""Inventory matching API surface (shim)."""
+"""Inventory matching API surface.
 
-from .matcher import InventoryMatcher, InventoryItem
+Re-exports inventory API from jbom.jbom for convenience.
+This allows imports like: from jbom.inventory import InventoryMatcher
+"""
+
+from ..jbom import InventoryMatcher, InventoryItem
 
 __all__ = ["InventoryMatcher", "InventoryItem"]
