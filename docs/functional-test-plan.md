@@ -3,7 +3,7 @@
 ## Overview
 This document outlines functional tests needed to complement existing unit tests. 
 
-**Status Update (2025-12-15):** Happy path functional tests have been implemented! The test suite now includes 130 total tests (109 unit + 21 functional) covering end-to-end CLI workflows. Remaining work focuses on error handling and edge cases.
+**Status Update (2025-12-15):** Functional test implementation is progressing well! The test suite now includes 157 total tests (109 unit + 48 functional) covering end-to-end CLI workflows, error handling, and edge cases. Recent additions include inventory format tests and schematic edge cases.
 
 ## Current Test Coverage
 
