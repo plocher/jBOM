@@ -26,7 +26,7 @@ def _cmd_bom(argv: List[str]) -> int:
     p = argparse.ArgumentParser(prog='jbom bom', description='Generate BOM (CSV)')
     p.add_argument('project', help='KiCad project directory or .kicad_sch path')
     p.add_argument('-i', '--inventory', required=True, help='Inventory file (.csv/.xlsx/.xls/.numbers)')
-    p.add_argument('-o', '--output', help='Output CSV path')
+    p.add_argument('-o', '--output', help='Output path (file, -, stdout for CSV, or console for formatted table)')
     p.add_argument('--outdir', help='Output directory if --output not provided')
     p.add_argument('-f', '--fields', help='Fields/presets (e.g., +jlc or Reference,Value,...)')
     p.add_argument('--jlc', action='store_true', help='Imply +jlc field preset')
@@ -46,13 +46,20 @@ def _cmd_bom(argv: List[str]) -> int:
     else:
         fields = _parse_fields_argument('+standard', result['available_fields'], include_verbose=args.verbose, any_notes=any_notes)
 
-    # Check if output should be formatted console output
+    # Check output mode: CSV to stdout vs formatted console table
     output_str = args.output.lower() if args.output else ''
-    console_output = output_str in ('-', 'console', 'stdout')
+    csv_to_stdout = output_str in ('-', 'stdout')
+    formatted_console = output_str == 'console'
     
-    if console_output:
-        # Formatted table output to console
+    if formatted_console:
+        # Formatted table output to console (human-readable)
         print_bom_table(result['bom_entries'], verbose=args.verbose, include_mfg=False)
+    elif csv_to_stdout:
+        # CSV output to stdout (pipeline-friendly)
+        from jbom.jbom import InventoryMatcher, BOMGenerator
+        matcher = InventoryMatcher(Path(args.inventory))
+        bom_gen = BOMGenerator(result['components'], matcher)
+        bom_gen.write_bom_csv(result['bom_entries'], Path('-'), fields)
     else:
         # Determine output path using shared utility
         out = resolve_output_path(
@@ -74,7 +81,7 @@ def _cmd_bom(argv: List[str]) -> int:
 def _cmd_pos(argv: List[str]) -> int:
     p = argparse.ArgumentParser(prog='jbom pos', description='Generate placement/CPL CSV')
     p.add_argument('board', help='KiCad project directory or .kicad_pcb path')
-    p.add_argument('-o', '--output', help='Output CSV path (default: PROJECT_pos.csv)')
+    p.add_argument('-o', '--output', help='Output path (file, -, stdout, or console for CSV to stdout)')
     p.add_argument('-f', '--fields', help='Fields/presets (e.g., +jlc, +kicad_pos, Reference,X,Y,...)')
     p.add_argument('--jlc', action='store_true', help='Imply +jlc field preset')
     p.add_argument('--units', choices=['mm', 'inch'], default='mm')
@@ -99,15 +106,23 @@ def _cmd_pos(argv: List[str]) -> int:
     fields_arg = apply_jlc_flag(args.fields, args.jlc)
     fields = gen.parse_fields_argument(fields_arg) if fields_arg else gen.parse_fields_argument('+kicad_pos')
     
-    # Determine output path using shared utility
-    out = resolve_output_path(
-        board_path_input,
-        args.output,
-        None,  # pos command doesn't have --outdir
-        '_pos.csv'
-    )
+    # Check output mode: CSV to stdout (pipeline-friendly) or file
+    output_str = args.output.lower() if args.output else ''
+    csv_to_stdout = output_str in ('-', 'stdout', 'console')
     
-    gen.write_csv(out, fields)
+    if csv_to_stdout:
+        # CSV output to stdout (pipeline-friendly)
+        gen.write_csv(Path('-'), fields)
+    else:
+        # Determine output path using shared utility
+        out = resolve_output_path(
+            board_path_input,
+            args.output,
+            None,  # pos command doesn't have --outdir
+            '_pos.csv'
+        )
+        gen.write_csv(out, fields)
+    
     return 0
 
 
