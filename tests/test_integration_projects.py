@@ -61,7 +61,7 @@ class TestIntegrationProjects(unittest.TestCase):
                 with tempfile.TemporaryDirectory() as td:
                     out = Path(td) / f'{boards[0].stem}.pos.csv'
                     pg = PositionGenerator(board, PlacementOptions(units='mm', origin='board', smd_only=False))
-                    fields = pg.parse_fields_argument('+kicad_pos')
+                    fields = pg.parse_fields_argument('+standard')
                     pg.write_csv(out, fields)
                     text = out.read_text(encoding='utf-8').splitlines()
                     self.assertGreaterEqual(len(text), 1)

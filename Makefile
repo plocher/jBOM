@@ -8,10 +8,10 @@ PIP ?= pip3
 export PYTHONPATH := src
 
 # Real inventory and project roots (override as needed)
-INVENTORY ?= /Users/jplocher/Dropbox/KiCad/spcoast-inventory/SPCoast-INVENTORY.numbers
+INVENTORY ?= /Users/jplocher/Dropbox/KiCad/jBOM-dev/SPCoast-INVENTORY.numbers
 PROJECTS  ?= /Users/jplocher/Dropbox/KiCad/projects
 # Comma-separated list of specific projects to test
-PROJECTS_LIST ?= /Users/jplocher/Dropbox/KiCad/projects/Core-wt32-eth0,/Users/jplocher/Dropbox/KiCad/projects/AltmillSwitches,/Users/jplocher/Dropbox/KiCad/projects/Brakeman-RED
+PROJECTS_LIST ?= /Users/jplocher/Dropbox/KiCad/projects/AltmillSwitches,/Users/jplocher/Dropbox/KiCad/projects/Core-wt32-eth0,/Users/jplocher/Dropbox/KiCad/projects/LEDStripDriver
 
 # Test module lists
 INTEGRATION_MODULES := tests.test_inventory_numbers_real tests.test_integration_projects

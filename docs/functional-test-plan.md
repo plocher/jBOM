@@ -353,29 +353,42 @@ These expand on existing test_integration_projects.py:
 ## Implementation Strategy
 
 ### Test Fixtures Needed
-Create `tests/fixtures/` directory with:
 
-1. **Minimal project** (happy path)
+#### Using Real Projects and Inventory
+For realistic functional testing, use existing real-world resources:
+
+**Inventory File:**
+- `/Users/jplocher/Dropbox/KiCad/jBOM-dev/SPCoast-INVENTORY.numbers`
+  - Full production inventory with comprehensive component data
+  - Tests Numbers format support (requires numbers-parser)
+
+**Sample KiCad Projects:**
+- `/Users/jplocher/Dropbox/KiCad/projects/AltmillSwitches`
+- `/Users/jplocher/Dropbox/KiCad/projects/Core-wt32-eth0`
+- `/Users/jplocher/Dropbox/KiCad/projects/LEDStripDriver`
+
+These provide:
+- Real schematics and PCBs with actual component data
+- Variety of component types and complexities
+- Known-good baselines for validation
+
+#### Additional Test Fixtures (create in `tests/fixtures/`)
+
+1. **Minimal project** (for isolated testing)
    - Simple 1-sheet schematic with 5-10 components
    - Matching PCB with same components
    - Small CSV inventory with exact matches
    
-2. **Complex project** (edge cases)
-   - Hierarchical schematic (3+ sheets)
-   - 50+ components with variety (R, C, L, IC, connectors)
-   - PCB with TOP and BOTTOM components
-   - Some components with no matches
-   
-3. **Error test fixtures**
+2. **Error test fixtures** (for error path testing)
    - Malformed schematic (invalid S-expression)
    - Malformed PCB
    - Invalid inventory (wrong format, missing headers)
    - Empty files
 
-4. **Inventory variants**
+3. **Inventory variants** (for format testing)
    - minimal.csv (CSV format)
    - inventory.xlsx (Excel, for optional test)
-   - inventory.numbers (Numbers, for optional test)
+   - Use SPCoast-INVENTORY.numbers for Numbers format
 
 ### Test Infrastructure
 
@@ -387,8 +400,17 @@ class FunctionalTestBase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.fixtures = Path(__file__).parent / 'fixtures'
+        
+        # Real-world resources for integration testing
+        cls.inventory_numbers = Path('/Users/jplocher/Dropbox/KiCad/jBOM-dev/SPCoast-INVENTORY.numbers')
+        cls.real_projects = {
+            'altmill': Path('/Users/jplocher/Dropbox/KiCad/projects/AltmillSwitches'),
+            'core_wt32': Path('/Users/jplocher/Dropbox/KiCad/projects/Core-wt32-eth0'),
+            'led_strip': Path('/Users/jplocher/Dropbox/KiCad/projects/LEDStripDriver'),
+        }
+        
+        # Test fixtures for isolated/error testing
         cls.minimal_proj = cls.fixtures / 'minimal_project'
-        cls.complex_proj = cls.fixtures / 'complex_project'
         cls.inventory_csv = cls.fixtures / 'inventory.csv'
     
     def setUp(self):

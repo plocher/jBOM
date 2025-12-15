@@ -6,6 +6,18 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 
 jBOM is a sophisticated KiCad Bill of Materials (BOM) generator written in Python. It intelligently matches schematic components against an inventory file (CSV, Excel, or Apple Numbers) to produce fabrication-ready BOMs. The tool emphasizes supplier-neutral designs, up-to-date inventory matching, and flexible output customization.
 
+## Expectations
+- if this is a git repository
+   - use git mv, git rm and git add when renaming, moving, adding or removing files
+   - use semantic versioning commits for each significant set of changes
+- When adding or changing functionality, update the various README documentation files
+- Use agent timeframes in estimates, not human ones
+- When an example inventory file is needed to test the jBOM program, use the file /Users/jplocher/Dropbox/KiCad/jBOM-dev/SPCoast-INVENTORY.numbers 
+- When a sample kicad project is needed, use one of
+    - /Users/jplocher/Dropbox/KiCad/projects/AltmillSwitches 
+    - /Users/jplocher/Dropbox/KiCad/projects/Core-wt32-eth0 
+    - /Users/jplocher/Dropbox/KiCad/projects/LEDStripDriver 
+
 ## Core Functionality
 
 The application consists of two main files:
