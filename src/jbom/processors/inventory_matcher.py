@@ -30,8 +30,8 @@ from jbom.common.values import (
 from jbom.loaders.inventory import InventoryLoader
 
 
-# Import component type detection utilities from sch module
-from jbom.sch.types import get_component_type, get_category_fields
+# Import component type detection utilities from processors module
+from jbom.processors.component_types import get_component_type, get_category_fields
 
 
 class InventoryMatcher:

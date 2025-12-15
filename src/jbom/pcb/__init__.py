@@ -5,6 +5,7 @@ Provides:
 - Board model and component data structures
 - Position file generation
 """
-from jbom.pcb.loader import BoardLoader, load_board
+# Backward compatibility: re-export from new locations
+from jbom.loaders.pcb import PCBLoader as BoardLoader, load_board
 
 __all__ = ["BoardLoader", "load_board"]

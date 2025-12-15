@@ -13,7 +13,7 @@ from .common.fields import normalize_field_name, field_to_header
 
 # Import schematic loader and BOM generator
 from .sch import SchematicLoader, BOMGenerator
-from .sch.types import normalize_component_type
+from .processors.component_types import normalize_component_type
 
 # Import inventory matcher
 from .inventory import InventoryMatcher

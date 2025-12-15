@@ -14,8 +14,8 @@ import os
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from jbom.pcb.board_loader import load_board
-from jbom.pcb.position import PositionGenerator, PlacementOptions
+from jbom.loaders.pcb import load_board
+from jbom.generators.pos import POSGenerator, PlacementOptions
 
 INVENTORY_PATH = Path(os.environ.get('INVENTORY', '/dev/null'))
 # PROJECTS_LIST: comma-separated list of project directories provided by Makefile
@@ -60,7 +60,7 @@ class TestIntegrationProjects(unittest.TestCase):
                 # Write POS CSV
                 with tempfile.TemporaryDirectory() as td:
                     out = Path(td) / f'{boards[0].stem}.pos.csv'
-                    pg = PositionGenerator(board, PlacementOptions(units='mm', origin='board', smd_only=False))
+                    pg = POSGenerator(board, PlacementOptions(units='mm', origin='board', smd_only=False))
                     fields = pg.parse_fields_argument('+standard')
                     pg.write_csv(out, fields)
                     text = out.read_text(encoding='utf-8').splitlines()

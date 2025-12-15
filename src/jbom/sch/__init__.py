@@ -7,9 +7,10 @@ Provides:
 - Category-specific field mappings
 """
 
-from jbom.sch.loader import SchematicLoader
-from jbom.sch.generator import BOMGenerator
-from jbom.sch.types import (
+# Backward compatibility: re-export from new locations
+from jbom.loaders.schematic import SchematicLoader
+from jbom.generators.bom import BOMGenerator
+from jbom.processors.component_types import (
     get_component_type,
     get_category_fields,
     get_value_interpretation,

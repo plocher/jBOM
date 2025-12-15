@@ -66,7 +66,7 @@ class TestCLIJlcImplicationPos(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
-    @patch('jbom.cli.main.PositionGenerator.parse_fields_argument')
+    @patch('jbom.cli.main.POSGenerator.parse_fields_argument')
     def test_pos_jlc_implies_preset(self, mock_parse):
         mock_parse.return_value = ['reference','side','x','y','rotation','package']
         rc = cli_main(['pos', str(self.board), '-o', str(self.out), '--jlc', '--loader', 'sexp'])

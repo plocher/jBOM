@@ -26,9 +26,10 @@ from jbom.common.constants import (
     ComponentType, DiagnosticIssue, CommonFields, ScoreWeights,
     CATEGORY_FIELDS, VALUE_INTERPRETATION
 )
-from jbom.sch import SchematicLoader, BOMGenerator
-from jbom.sch.types import get_category_fields, get_value_interpretation
-from jbom.inventory import InventoryMatcher
+from jbom.loaders.schematic import SchematicLoader
+from jbom.generators.bom import BOMGenerator
+from jbom.processors.component_types import get_category_fields, get_value_interpretation
+from jbom.processors.inventory_matcher import InventoryMatcher
 from jbom.jbom import EXCEL_SUPPORT, NUMBERS_SUPPORT
 
 

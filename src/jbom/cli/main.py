@@ -15,8 +15,8 @@ from jbom.jbom import (
     _parse_fields_argument,
     print_bom_table,
 )
-from jbom.pcb.board_loader import load_board
-from jbom.pcb.position import PositionGenerator, PlacementOptions, print_pos_table
+from jbom.loaders.pcb import load_board
+from jbom.generators.pos import POSGenerator, PlacementOptions, print_pos_table
 from jbom.common.utils import find_best_pcb
 from jbom.common.output import resolve_output_path
 from jbom.cli.common import apply_jlc_flag
@@ -286,7 +286,7 @@ def _cmd_pos_impl(argv: List[str]) -> int:
         smd_only=args.smd_only,
         layer_filter=args.layer,
     )
-    gen = PositionGenerator(board, opts)
+    gen = POSGenerator(board, opts)
 
     # Apply --jlc flag using shared utility
     fields_arg = apply_jlc_flag(args.fields, args.jlc)
