@@ -8,12 +8,12 @@
 ## Pre-commit Hooks
 - Auto-fix formatting, linting, security checks
 - Re-add modified files after hook fixes before committing
-- Configuration in `PRE_COMMIT_SETUP.md`
+- Configuration in `pre-commit-setup.md`
 
 ## GitHub Secrets Required
 - `PYPI_API_TOKEN` - PyPI publishing token
 - `GITHUB_TOKEN` - Automatic repository access
-- Setup guide in `GITHUB_SECRETS_SETUP.md`
+- Setup guide in `github-secrets-setup.md`
 
 ## Release Process
 1. Make code changes with conventional commit messages
@@ -22,6 +22,6 @@
 4. No manual releases needed
 
 ## Security
-- Token rotation procedures in `SECURITY_INCIDENT_REPORT.md`
+- Token rotation procedures in `security-incident-response.md`
 - Use `__token__` as username for PyPI authentication
 - Never expose tokens in logs or commits
