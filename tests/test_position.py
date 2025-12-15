@@ -39,20 +39,20 @@ class TestPlacementFields(unittest.TestCase):
 
     def test_presets(self):
         pg = PositionGenerator(self.board, PlacementOptions(smd_only=False))
-        self.assertEqual(pg.parse_fields_argument('+kicad_pos'), ['reference','x','y','rotation','side','footprint'])
-        self.assertEqual(pg.parse_fields_argument('+jlc'), ['reference','side','x','y','rotation','package'])
+        self.assertEqual(pg.parse_fields_argument('+standard'), ['reference','x','y','rotation','side','footprint','smd'])
+        self.assertEqual(pg.parse_fields_argument('+jlc'), ['reference','side','x','y','rotation','package','smd'])
         # Custom list
         self.assertEqual(pg.parse_fields_argument('Reference,X,Y,Side'), ['reference','x','y','side'])
         # All includes all known fields
-        self.assertCountEqual(pg.parse_fields_argument('+all'), ['reference','x','y','rotation','side','footprint','package'])
+        self.assertCountEqual(pg.parse_fields_argument('+all'), ['reference','x','y','rotation','side','footprint','package','datasheet','version','smd'])
 
     def test_units_and_origin(self):
         # Coordinates are 25.4,50.8 mm → 1.0000,2.0000 inches
         pg = PositionGenerator(self.board, PlacementOptions(units='inch', origin='board', smd_only=False))
         out = Path(self.tmp.name) / 'out.csv'
-        pg.write_csv(out, pg.parse_fields_argument('+kicad_pos'))
+        pg.write_csv(out, pg.parse_fields_argument('+standard'))
         data = out.read_text(encoding='utf-8').splitlines()
-        self.assertIn('Reference,X,Y,Rotation,Side,Footprint', data[0])
+        self.assertIn('Reference,X,Y,Rotation,Side,Footprint,Smd', data[0])
         # R1 row in inches with 4 decimals
         self.assertIn('R1,1.0000,2.0000,90.0,TOP,Resistor_SMD:R_0603_1608Metric', data[1])
 

@@ -14,7 +14,6 @@ PROJECTS  ?= /Users/jplocher/Dropbox/KiCad/projects
 PROJECTS_LIST ?= /Users/jplocher/Dropbox/KiCad/projects/Core-wt32-eth0,/Users/jplocher/Dropbox/KiCad/projects/AltmillSwitches,/Users/jplocher/Dropbox/KiCad/projects/Brakeman-RED
 
 # Test module lists
-UNIT_MODULES := $(shell ls tests/test_*.py | grep -v 'test_inventory_numbers_real.py' | grep -v 'test_integration_projects.py' | sed -e 's|/|.|g' -e 's|\\.py$$||')
 INTEGRATION_MODULES := tests.test_inventory_numbers_real tests.test_integration_projects
 
 .PHONY: help test unit integration clean
@@ -37,8 +36,8 @@ test: unit integration
 
 # Unit tests (exclude integration modules)
 unit:
-	@echo "[unit] Running: $(UNIT_MODULES)"
-	$(PY) -m unittest -v $(UNIT_MODULES)
+	@echo "[unit] Running unit tests with discover"
+	$(PY) -m unittest discover -s tests -p "test_*.py" -v
 
 # Integration tests (real inventory and projects)
 integration:
