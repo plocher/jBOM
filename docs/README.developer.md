@@ -396,19 +396,21 @@ SMD_PACKAGES = [..., 'wlcsp']
 ## Project Structure
 
 ```
-jBOM/
-├── jbom.py                    # Main library and CLI (~2700 lines)
-├── kicad_jbom_plugin.py       # KiCad Eeschema plugin wrapper
-├── test_jbom.py               # Test suite (74 tests)
-├── README.md                  # User-facing overview and quick start
-├── README.man1.md             # CLI reference (man page style)
-├── README.man3.md             # Python library API (man page style)
-├── README.man4.md             # KiCad plugin setup guide (man page style)
-├── README.developer.md        # This file - technical architecture and extension
-├── pyproject.toml             # Python packaging configuration
-├── LICENSE                    # AGPLv3 license
-└── .gitignore                 # Git configuration
+src/jbom/
+  ├── jbom.py              # Main library and CLI (source of truth, schematic path)
+  ├── __init__.py          # Public re-exports (back-compat)
+  ├── sch/                 # Schematic-focused API (re-exports for now)
+  ├── common/              # Shared helpers (values, fields, types, packages)
+  ├── inventory/           # Inventory matcher API (re-exports for now)
+  └── pcb/                 # Placeholder for PCB integration
 ```
+
+See [docs/README.arch.md](README.arch.md) for details.
+
+### Import paths
+- Back-compat: `from jbom import generate_bom_api, GenerateOptions`
+- Preferred (schematic): `from jbom.sch import generate_bom_api, GenerateOptions`
+- Shared helpers: `from jbom.common.values import parse_res_to_ohms, farad_to_eia, ...`
 
 ### Main Files
 

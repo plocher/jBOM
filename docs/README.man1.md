@@ -1,30 +1,36 @@
-# jbom(1) — KiCad Bill of Materials Generator
+# jbom(1) — jBOM CLI (BOM and POS)
 
 ## NAME
 
-jbom — generate bill of materials from KiCad schematics
+jbom — generate Bill of Materials (BOM) and Component Placement (CPL/POS)
 
 ## SYNOPSIS
 
 ```
-python jbom.py PROJECT_PATH -i INVENTORY [-o OUTPUT] [OPTIONS]
+python -m jbom bom PROJECT -i INVENTORY [-o OUTPUT] [BOM OPTIONS]
+python -m jbom pos BOARD.kicad_pcb -o OUTPUT [POS OPTIONS]
 ```
 
 ## DESCRIPTION
 
-Generates a bill of materials (BOM) for a KiCad project by intelligently matching schematic components against an inventory file. Components are matched by type, value, and package; the result is written to CSV with customizable columns.
+jBOM provides two subcommands:
+- `bom` — generate a BOM from KiCad schematics by matching components against an inventory file
+- `pos` — generate component placement (CPL/POS) from KiCad PCB files for manufacturing
 
-**Key design:** Keeps designs supplier-neutral by matching at BOM-generation time rather than hardcoding part numbers in schematics.
+The BOM flow keeps designs supplier-neutral by matching at generation time rather than hardcoding part numbers in schematics.
 
-## ARGUMENTS
+## BOM ARGUMENTS
 
-**PROJECT_PATH**
-: Path to KiCad project directory or a specific .kicad_sch schematic file. If a directory is given, jBOM will auto-detect and process hierarchical schematics.
+**PROJECT**
+: KiCad project directory or a specific .kicad_sch file. If a directory is given, jBOM auto-detects the root schematic and processes hierarchical sheets.
 
 **-i, --inventory FILE**
-: Path to inventory file (required). Supported formats: .csv, .xlsx, .xls, .numbers
+: Inventory file (required). Supported: .csv, .xlsx, .xls, .numbers
 
-## OPTIONS
+## BOM OPTIONS
+
+**--jlc**
+Imply `+jlc` field preset (prepends `+jlc` to `-f` if provided, or uses it by default when `-f` is omitted).
 
 **-o, --output FILE**
 Output CSV file path. If omitted, generates `<PROJECT>_bom.csv` in the project directory. Special values: `-`, `console`, `stdout` for terminal output.
@@ -61,6 +67,39 @@ Suppress non-essential console output. Useful for CI pipelines.
 **--json-report FILE**
 Write a JSON report to FILE with statistics (entry count, unmatched count, format, etc.).
 
+## POS ARGUMENTS
+
+**BOARD.kicad_pcb**
+: Path to a KiCad PCB file.
+
+## POS OPTIONS
+
+**--jlc**
+Imply `+jlc` field preset (prepends `+jlc` to `-f` if provided, or uses it by default when `-f` is omitted).
+
+**-o, --output FILE**
+: Output CSV path (required).
+
+**-f, --fields FIELDS**
+: Column selection for CPL/POS. Use presets with `+` prefix or a comma-separated list.
+- Presets: `+kicad_pos`, `+jlc`, `+minimal`, `+all`
+- Custom: `Reference,X,Y,Rotation,Side,Footprint`
+
+**--units {mm,inch}**
+: Output units.
+
+**--origin {board,aux}**
+: Coordinate origin. `aux` uses the board’s aux origin when available.
+
+**--smd-only**
+: Include SMD components only (heuristic by package token).
+
+**--layer {TOP,BOTTOM}**
+: Filter by side.
+
+**--loader {auto,pcbnew,sexp}**
+: Load method. `auto` tries pcbnew then falls back to S-expression.
+
 ## OUTPUT
 
 **BOM CSV File**
@@ -74,11 +113,11 @@ Write a JSON report to FILE with statistics (entry count, unmatched count, forma
 : 2 on warning (one or more components unmatched; BOM written)
 : 1 on error (file not found, invalid option, etc.)
 
-## FIELD PRESETS
+## BOM FIELD PRESETS
 
-Presets are activated with the `+` prefix in the `-f` argument (e.g., `-f "+jlc"`).
+Use `-f "+PRESET"`.
 
-**+standard** (default if no `-f` given)
+**+standard**
 : Reference, Quantity, Description, Value, Footprint, LCSC, Datasheet, SMD, [Match_Quality], [Notes], [Priority]
 : Comprehensive set with all standard BOM fields.
 
@@ -96,54 +135,39 @@ Presets are activated with the `+` prefix in the `-f` argument (e.g., `-f "+jlc"
 
 ## EXAMPLES
 
-Basic usage (standard preset):
+BOM (standard preset):
 ```
-python jbom.py MyProject/ -i SPCoast-INVENTORY.xlsx
-```
-
-Use JLC preset:
-```
-python jbom.py MyProject/ -i inventory.csv -f +jlc
+python -m jbom bom MyProject/ -i SPCoast-INVENTORY.xlsx
 ```
 
-Use minimal preset:
+BOM JLC preset:
 ```
-python jbom.py MyProject/ -i inventory.csv -f +minimal
-```
-
-Use all available fields:
-```
-python jbom.py MyProject/ -i inventory.csv -f +all
+python -m jbom bom MyProject/ -i inventory.csv -f +jlc
 ```
 
-Custom field list:
+BOM all fields:
 ```
-python jbom.py MyProject/ -i inventory.csv -f "Reference,Quantity,Value,LCSC"
-```
-
-Expand preset and add custom fields:
-```
-python jbom.py MyProject/ -i inventory.csv -f "+standard,I:Tolerance,C:Voltage"
+python -m jbom bom MyProject/ -i inventory.csv -f +all
 ```
 
-With verbose scoring (show Match_Quality and Priority):
+POS (KiCad-like columns):
 ```
-python jbom.py MyProject/ -i inventory.csv -v
-```
-
-Generate both JLC and standard formats:
-```
-python jbom.py MyProject/ -i inventory.xlsx --multi-format jlc,standard
+python -m jbom pos MyBoard.kicad_pcb -o MyBoard.pos.csv -f +kicad_pos --units mm --origin board
 ```
 
-Debug run (show matching details):
+POS (JLC-style columns):
 ```
-python jbom.py MyProject/ -i inventory.csv -d
+python -m jbom pos MyBoard.kicad_pcb -o MyBoard.cpl.csv -f +jlc --units mm --origin aux
 ```
 
-Console output (no file):
+Verbose BOM scoring:
 ```
-python jbom.py MyProject/ -i inventory.csv -o console
+python -m jbom bom MyProject/ -i inventory.csv -v
+```
+
+Debug BOM run:
+```
+python -m jbom bom MyProject/ -i inventory.csv -d
 ```
 
 ## FIELDS

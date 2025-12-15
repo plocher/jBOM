@@ -43,7 +43,11 @@ Optional: Manufacturer, MFGPN, Datasheet, Tolerance, V, A, W, and component-spec
 
 **Via command line:**
 ```bash
-python jbom.py MyProject/ -i inventory.xlsx
+# BOM (schematics → CSV)
+python -m jbom bom MyProject/ -i inventory.xlsx
+
+# Placement/CPL (PCB → CSV)
+python -m jbom pos MyBoard.kicad_pcb -o MyBoard.pos.csv -f +kicad_pos
 ```
 
 **Via Python:**
@@ -94,12 +98,18 @@ For more troubleshooting, see the relevant man page:
 
 ## SEE ALSO
 
+- [**docs/README.arch.md**](docs/README.arch.md) — Current architecture and module layout
 - [**docs/README.man1.md**](docs/README.man1.md) — CLI reference
 - [**docs/README.man3.md**](docs/README.man3.md) — Python library API
 - [**docs/README.man4.md**](docs/README.man4.md) — KiCad plugin setup
 - [**docs/README.man5.md**](docs/README.man5.md) — Inventory file format
 - [**docs/README.developer.md**](docs/README.developer.md) — Technical architecture
 - [**docs/**](docs/) — All documentation (user guides, developer guides, changelog, contributing)
+
+## Modules and imports
+- Backward compatible: `from jbom import generate_bom_api, GenerateOptions`.
+- New (optional) schematic namespace: `from jbom.sch import generate_bom_api, GenerateOptions`.
+- Shared helpers (for advanced use): `from jbom.common.values import parse_res_to_ohms, farad_to_eia, ...`.
 
 ## Contributing
 
