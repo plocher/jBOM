@@ -50,7 +50,7 @@ Repository = "https://github.com/plocher/jBOM.git"
 Issues = "https://github.com/plocher/jBOM/issues"
 
 [project.scripts]
-jbom = "jbom:main"
+jbom = "jbom.cli.main:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
