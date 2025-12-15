@@ -1,12 +1,14 @@
-"""Schematic parsing and component type detection for jBOM.
+"""Schematic loading, BOM generation, and component type detection for jBOM.
 
 Provides:
-- KiCad schematic parsing (.kicad_sch files)
+- KiCad schematic loading (.kicad_sch files)
+- BOM generation from components and inventory
 - Component type detection from library IDs and footprints
 - Category-specific field mappings
 """
 
-from jbom.sch.parser import KiCadParser
+from jbom.sch.loader import SchematicLoader
+from jbom.sch.generator import BOMGenerator
 from jbom.sch.types import (
     get_component_type,
     get_category_fields,
@@ -16,7 +18,8 @@ from jbom.sch.types import (
 from jbom.common.types import Component, BOMEntry
 
 __all__ = [
-    "KiCadParser",
+    "SchematicLoader",
+    "BOMGenerator",
     "get_component_type",
     "get_category_fields",
     "get_value_interpretation",

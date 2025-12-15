@@ -1,7 +1,7 @@
 """
-KiCad schematic parser for jBOM.
+KiCad schematic loader for jBOM.
 
-Parses KiCad schematic files (.kicad_sch) using S-expression format
+Loads and parses KiCad schematic files (.kicad_sch) using S-expression format
 to extract component information for BOM generation.
 """
 
@@ -14,8 +14,8 @@ from jbom.common.types import Component
 from jbom.common.sexp_parser import load_kicad_file, walk_nodes
 
 
-class KiCadParser:
-    """Parser for KiCad schematic files using S-expression parser (sexpdata)."""
+class SchematicLoader:
+    """Loads KiCad schematic files and extracts component data using S-expression parser (sexpdata)."""
 
     def __init__(self, schematic_path: Path):
         self.schematic_path = schematic_path

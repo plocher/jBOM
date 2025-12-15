@@ -21,14 +21,15 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 # Import the classes and functions to test
-from jbom.jbom import (
-    Component, InventoryItem, BOMEntry,
-    InventoryMatcher, BOMGenerator, KiCadParser,
-    get_category_fields, get_value_interpretation,
-    CATEGORY_FIELDS, VALUE_INTERPRETATION,
+from jbom.common.types import Component, InventoryItem, BOMEntry
+from jbom.common.constants import (
     ComponentType, DiagnosticIssue, CommonFields, ScoreWeights,
-    EXCEL_SUPPORT, NUMBERS_SUPPORT
+    CATEGORY_FIELDS, VALUE_INTERPRETATION
 )
+from jbom.sch import SchematicLoader, BOMGenerator
+from jbom.sch.types import get_category_fields, get_value_interpretation
+from jbom.inventory import InventoryMatcher
+from jbom.jbom import EXCEL_SUPPORT, NUMBERS_SUPPORT
 
 
 class TestResistorParsing(unittest.TestCase):
@@ -625,7 +626,7 @@ class TestBOMGeneration(unittest.TestCase):
             temp_csv.unlink()
 
 
-class TestKiCadParser(unittest.TestCase):
+class TestSchematicLoader(unittest.TestCase):
     """Test KiCad schematic parsing (basic functionality)"""
 
     def test_component_creation(self):

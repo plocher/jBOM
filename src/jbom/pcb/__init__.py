@@ -1,5 +1,10 @@
-"""PCB integration package (placeholder).
+"""PCB integration package.
 
-Future modules will live here: board_loader, model, position, check, etc.
+Provides:
+- PCB board loading (.kicad_pcb files)
+- Board model and component data structures
+- Position file generation
 """
-__all__: list[str] = []
+from jbom.pcb.loader import BoardLoader, load_board
+
+__all__ = ["BoardLoader", "load_board"]

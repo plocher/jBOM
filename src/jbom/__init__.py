@@ -5,22 +5,26 @@ against an inventory file (CSV, Excel, or Apple Numbers) to produce fabrication-
 """
 
 from .__version__ import __version__, __version_info__
+
+# Import data types
+from .common.types import Component, InventoryItem, BOMEntry
+from .common.constants import ComponentType, DiagnosticIssue, CommonFields
+from .common.fields import normalize_field_name, field_to_header
+
+# Import schematic loader and BOM generator
+from .sch import SchematicLoader, BOMGenerator
+from .sch.types import normalize_component_type
+
+# Import inventory matcher
+from .inventory import InventoryMatcher
+
+# Import from jbom.py (main CLI functions)
 from .jbom import (
-    Component,
-    InventoryItem,
-    BOMEntry,
-    ComponentType,
-    DiagnosticIssue,
-    CommonFields,
-    KiCadParser,
-    InventoryMatcher,
-    BOMGenerator,
     GenerateOptions,
     generate_bom_api,
+    EXCEL_SUPPORT,
+    NUMBERS_SUPPORT,
     # Extra re-exports for backward/test compatibility
-    normalize_field_name,
-    field_to_header,
-    normalize_component_type,
     extract_sheet_files,
     find_best_schematic,
     is_hierarchical_schematic,
@@ -41,11 +45,13 @@ __all__ = [
     "ComponentType",
     "DiagnosticIssue",
     "CommonFields",
-    "KiCadParser",
+    "SchematicLoader",
     "InventoryMatcher",
     "BOMGenerator",
     "GenerateOptions",
     "generate_bom_api",
+    "EXCEL_SUPPORT",
+    "NUMBERS_SUPPORT",
     # Helpers (tests/back-compat)
     "normalize_field_name",
     "field_to_header",
