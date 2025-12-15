@@ -2,6 +2,36 @@
 
 <!-- version list -->
 
+## v2.1.0 (2025-12-15)
+
+### Documentation
+
+- Add detailed implementation notes for Steps 5-6 (generator refactoring)
+  ([`6a7d730`](https://github.com/plocher/jBOM/commit/6a7d730a93fb9e634ec4d6faeb8aeb4254e4cf78))
+
+- Add structural cleanup analysis
+  ([`44587df`](https://github.com/plocher/jBOM/commit/44587df53fd0b55ce82a3c47a32f4dbe78e5ab8b))
+
+- Enhance documentation for BOM and PCB placement features
+  ([`ede97cb`](https://github.com/plocher/jBOM/commit/ede97cb7349d7640ba5ac332d2f807b37b8ccd3c))
+
+### Features
+
+- Add auto-detection of PCB files for pos command
+  ([`ba56527`](https://github.com/plocher/jBOM/commit/ba56527d178433800b695f232961797858a77de9))
+
+### Refactoring
+
+- Add generator infrastructure Phase 1 - common abstractions
+  ([`56b606f`](https://github.com/plocher/jBOM/commit/56b606feb64eb01ae490dc9ac164774067bc5564))
+
+- Consolidate file discovery functions in common.utils
+  ([`99f7672`](https://github.com/plocher/jBOM/commit/99f76723ce3270a3512241004efd2e13c79331f5))
+
+- Simplify CLI using shared utilities (Phase 3)
+  ([`74a1419`](https://github.com/plocher/jBOM/commit/74a1419dbd969d49125fc59484fa59c8032b430d))
+
+
 ## v2.0.0 (2025-12-15)
 
 ### Build System
