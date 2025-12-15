@@ -17,6 +17,7 @@ jBOM is a sophisticated KiCad Bill of Materials (BOM) generator written in Pytho
     - /Users/jplocher/Dropbox/KiCad/projects/AltmillSwitches 
     - /Users/jplocher/Dropbox/KiCad/projects/Core-wt32-eth0 
     - /Users/jplocher/Dropbox/KiCad/projects/LEDStripDriver 
+- Concise prose and tables are preferred over long  bulleted lists
 
 ## Core Functionality
 
