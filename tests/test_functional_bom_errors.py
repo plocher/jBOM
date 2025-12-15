@@ -172,8 +172,6 @@ class TestBOMErrorCases(FunctionalTestBase):
     
     def test_bom_missing_inventory_headers(self):
         """Inventory without required headers should produce error."""
-        self.skipTest("TODO: Inventory header validation not yet implemented")
-        
         bad_inv = self.output_dir / 'bad_inventory.csv'
         # Missing required columns like IPN, Category, etc.
         bad_inv.write_text('SomeColumn,AnotherColumn\nvalue1,value2\n')

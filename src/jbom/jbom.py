@@ -604,6 +604,17 @@ class InventoryMatcher:
     
     def _process_inventory_data(self, headers: List[str], rows: List[Dict[str, str]]):
         """Process inventory data from any source format into InventoryItem objects"""
+        # Validate required headers
+        required_headers = ['IPN', 'Category']
+        header_upper = [h.upper() for h in headers]
+        missing_headers = [req for req in required_headers if req.upper() not in header_upper]
+        
+        if missing_headers:
+            raise ValueError(
+                f"Inventory file is missing required columns: {', '.join(missing_headers)}. "
+                f"Found columns: {', '.join(headers)}"
+            )
+        
         # Clean up field names - replace newlines and extra whitespace
         self.inventory_fields = []
         for field in headers:
