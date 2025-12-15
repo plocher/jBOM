@@ -104,22 +104,16 @@ class BoardLoader:
 
     # -------------------- S-expression path --------------------
     def _load_with_sexp(self) -> BoardModel:
-        from sexpdata import loads, Symbol
+        from ..common.sexp_parser import load_kicad_file, walk_nodes
 
-        text = self.board_path.read_text(encoding="utf-8")
-        sexp = loads(text)
+        sexp = load_kicad_file(self.board_path)
         board = BoardModel(path=self.board_path)
 
-        def walk(n):
-            if isinstance(n, list) and n:
-                if n[0] == Symbol("footprint"):
-                    comp = self._parse_footprint_node(n)
-                    if comp:
-                        board.footprints.append(comp)
-                else:
-                    for ch in n:
-                        walk(ch)
-        walk(sexp)
+        for footprint_node in walk_nodes(sexp, "footprint"):
+            comp = self._parse_footprint_node(footprint_node)
+            if comp:
+                board.footprints.append(comp)
+
         return board
 
     def _parse_footprint_node(self, node) -> Optional[PcbComponent]:

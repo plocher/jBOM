@@ -15,7 +15,7 @@ import json
 from pathlib import Path
 from typing import List, Dict, Optional, Tuple, Union
 from dataclasses import dataclass, field
-from sexpdata import loads, Symbol
+from sexpdata import Symbol
 
 # Suppress specific Numbers version warning
 warnings.filterwarnings("ignore", message="Numbers version 14.3 not tested with this version")
@@ -385,14 +385,13 @@ class KiCadParser:
 
 
     def _parse_with_sexp(self) -> List[Component]:
-        with open(self.schematic_path, 'r', encoding='utf-8') as f:
-            content = f.read()
-        sexp = loads(content)
-        for node in sexp:
-            if isinstance(node, list) and node and node[0] == Symbol('symbol'):
-                comp = self._parse_symbol(node)
-                if comp and comp.in_bom and not comp.dnp and not comp.reference.startswith('#'):
-                    self.components.append(comp)
+        from jbom.common.sexp_parser import load_kicad_file, walk_nodes
+
+        sexp = load_kicad_file(self.schematic_path)
+        for symbol_node in walk_nodes(sexp, 'symbol'):
+            comp = self._parse_symbol(symbol_node)
+            if comp and comp.in_bom and not comp.dnp and not comp.reference.startswith('#'):
+                self.components.append(comp)
         return self.components
 
     def _parse_symbol(self, node: list) -> Optional[Component]:
