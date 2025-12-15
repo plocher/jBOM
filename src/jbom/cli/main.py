@@ -17,6 +17,8 @@ from jbom.jbom import (
 from jbom.pcb.board_loader import load_board
 from jbom.pcb.position import PositionGenerator, PlacementOptions
 from jbom.common.utils import find_best_pcb
+from jbom.common.output import resolve_output_path
+from jbom.cli.common import apply_jlc_flag
 
 
 def _cmd_bom(argv: List[str]) -> int:
@@ -35,28 +37,21 @@ def _cmd_bom(argv: List[str]) -> int:
     opts = GenerateOptions(verbose=args.verbose, debug=args.debug, smd_only=args.smd_only, fields=None)
     result = generate_bom_api(args.project, args.inventory, options=opts)
 
-    # Compute fields (apply --jlc implication)
+    # Compute fields (apply --jlc implication using shared utility)
     any_notes = any(((e.notes or '').strip()) for e in result['bom_entries'])
-    fields_arg = args.fields
-    if args.jlc:
-        if not fields_arg:
-            fields_arg = '+jlc'
-        elif '+jlc' not in fields_arg.split(','):
-            fields_arg = '+jlc,' + fields_arg
+    fields_arg = apply_jlc_flag(args.fields, args.jlc)
     if fields_arg:
         fields = _parse_fields_argument(fields_arg, result['available_fields'], include_verbose=args.verbose, any_notes=any_notes)
     else:
         fields = _parse_fields_argument('+standard', result['available_fields'], include_verbose=args.verbose, any_notes=any_notes)
 
-    # Determine output path
-    out = Path(args.output) if args.output else None
-    if out is None:
-        base = Path(args.project)
-        if base.is_dir():
-            name = base.name
-            out = (Path(args.outdir) if args.outdir else base) / f"{name}_bom.csv"
-        else:
-            out = (Path(args.outdir) if args.outdir else base.parent) / f"{base.stem}_bom.csv"
+    # Determine output path using shared utility
+    out = resolve_output_path(
+        Path(args.project),
+        args.output,
+        args.outdir,
+        '_bom.csv'
+    )
 
     # Write via BOMGenerator (recreate matcher)
     from jbom.jbom import InventoryMatcher, BOMGenerator
@@ -91,23 +86,17 @@ def _cmd_pos(argv: List[str]) -> int:
     opts = PlacementOptions(units=args.units, origin=args.origin, smd_only=args.smd_only, layer_filter=args.layer)
     gen = PositionGenerator(board, opts)
 
-    fields_arg = args.fields
-    if args.jlc:
-        if not fields_arg:
-            fields_arg = '+jlc'
-        elif '+jlc' not in fields_arg.split(','):
-            fields_arg = '+jlc,' + fields_arg
+    # Apply --jlc flag using shared utility
+    fields_arg = apply_jlc_flag(args.fields, args.jlc)
     fields = gen.parse_fields_argument(fields_arg) if fields_arg else gen.parse_fields_argument('+kicad_pos')
     
-    # Determine output path
-    if args.output:
-        out = Path(args.output)
-    else:
-        # Default output name
-        if board_path_input.is_dir():
-            out = board_path_input / f"{board_path_input.name}_pos.csv"
-        else:
-            out = board_path.parent / f"{board_path.stem}_pos.csv"
+    # Determine output path using shared utility
+    out = resolve_output_path(
+        board_path_input,
+        args.output,
+        None,  # pos command doesn't have --outdir
+        '_pos.csv'
+    )
     
     gen.write_csv(out, fields)
     return 0
