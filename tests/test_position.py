@@ -52,7 +52,7 @@ class TestPlacementFields(unittest.TestCase):
         out = Path(self.tmp.name) / 'out.csv'
         pg.write_csv(out, pg.parse_fields_argument('+standard'))
         data = out.read_text(encoding='utf-8').splitlines()
-        self.assertIn('Reference,X,Y,Rotation,Side,Footprint,Smd', data[0])
+        self.assertIn('Reference,X,Y,Rotation,Side,Footprint,SMD', data[0])
         # R1 row in inches with 4 decimals
         self.assertIn('R1,1.0000,2.0000,90.0,TOP,Resistor_SMD:R_0603_1608Metric', data[1])
 

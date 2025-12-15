@@ -37,7 +37,7 @@ class TestPOSHappyPaths(FunctionalTestBase):
         self.assertIn('Rotation', header)
         self.assertIn('Side', header)
         self.assertIn('Footprint', header)
-        self.assertIn('Smd', header)
+        self.assertIn('SMD', header)
     
     def test_pos_jlc_flag(self):
         """Generate POS with --jlc flag (JLC preset)."""
@@ -62,7 +62,7 @@ class TestPOSHappyPaths(FunctionalTestBase):
         self.assertIn('Y', header)
         self.assertIn('Rotation', header)
         self.assertIn('Package', header)
-        self.assertIn('Smd', header)
+        self.assertIn('SMD', header)
     
     def test_pos_custom_fields(self):
         """Generate POS with custom field list."""
@@ -77,7 +77,7 @@ class TestPOSHappyPaths(FunctionalTestBase):
         ])
         
         self.assertEqual(rc, 0)
-        rows = self.assert_csv_headers(output, ['Reference', 'X', 'Y', 'Smd'])
+        rows = self.assert_csv_headers(output, ['Reference', 'X', 'Y', 'SMD'])
         self.assertGreater(len(rows), 1)
     
     def test_pos_units_mm(self):

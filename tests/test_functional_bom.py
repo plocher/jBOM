@@ -35,9 +35,9 @@ class TestBOMHappyPaths(FunctionalTestBase):
         self.assertIn('Description', header)
         self.assertIn('Value', header)
         self.assertIn('Footprint', header)
-        self.assertIn('Lcsc', header)  # Normalized to title case
+        self.assertIn('LCSC', header)  # Normalized to title case
         self.assertIn('Datasheet', header)
-        self.assertIn('Smd', header)
+        self.assertIn('SMD', header)
     
     def test_bom_jlc_flag(self):
         """Generate BOM with --jlc flag (JLC preset)."""
@@ -61,8 +61,8 @@ class TestBOMHappyPaths(FunctionalTestBase):
         # Package field may appear as 'I:Package' when using inventory prefix
         self.assertTrue('Package' in header or 'I:Package' in header, 
             f"Package field not found in header: {header}")
-        self.assertIn('Lcsc', header)  # Normalized to title case
-        self.assertIn('Smd', header)
+        self.assertIn('LCSC', header)  # Normalized to title case
+        self.assertIn('SMD', header)
     
     def test_bom_custom_fields(self):
         """Generate BOM with custom field list."""
@@ -76,7 +76,7 @@ class TestBOMHappyPaths(FunctionalTestBase):
         ])
         
         self.assertEqual(rc, 0)
-        rows = self.assert_csv_headers(output, ['Reference', 'Value', 'Lcsc'])
+        rows = self.assert_csv_headers(output, ['Reference', 'Value', 'LCSC'])
         self.assertGreater(len(rows), 1)
     
     def test_bom_mixed_preset_and_custom(self):
@@ -99,7 +99,7 @@ class TestBOMHappyPaths(FunctionalTestBase):
         self.assertIn('Reference', header)
         self.assertIn('Quantity', header)
         self.assertIn('Value', header)
-        self.assertIn('Lcsc', header)  # Normalized to title case
+        self.assertIn('LCSC', header)  # Normalized to title case
         self.assertIn('Footprint', header)
     
     def test_bom_to_console(self):

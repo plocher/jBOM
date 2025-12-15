@@ -74,10 +74,23 @@ def normalize_field_name(field: str) -> str:
     return prefix + normalized.strip('_')
 
 
+# Known acronyms in PCB/electronics domain (lowercase for matching)
+KNOWN_ACRONYMS = {
+    'lcsc', 'smd', 'pcb', 'bom', 'dnp', 'pth', 'ipn', 'mfgpn',
+    'jlc', 'jlcpcb', 'csv', 'xlsx', 'usb', 'uart', 'i2c', 'spi',
+    'led', 'pwm', 'adc', 'dac', 'ic', 'rf', 'esd', 'emi', 'emc',
+    'url', 'pdf', 'png', 'jpg', 'via', 'gnd', 'vcc', 'can', 'psu'
+}
+
 def field_to_header(field: str) -> str:
     """
-    Convert normalized field name to human-readable Title Case header for CSV.
-    Examples: 'match_quality' -> 'Match Quality', 'i:package' -> 'I:Package'
+    Convert normalized field name to human-readable header for CSV.
+    Uses Title Case with special handling for known acronyms.
+    Examples: 
+        'match_quality' -> 'Match Quality'
+        'lcsc' -> 'LCSC'
+        'i:package' -> 'I:Package'
+        'mfgpn' -> 'MFGPN'
     """
     if not field:
         return ''
@@ -91,9 +104,21 @@ def field_to_header(field: str) -> str:
         prefix = 'C:'
         field = field[2:]
     
-    # Split on underscores and capitalize each word
+    # Split on underscores and handle each part
     parts = field.split('_')
-    header_part = ' '.join(part.capitalize() for part in parts if part)
+    result_parts = []
+    
+    for part in parts:
+        if not part:
+            continue
+        lower_part = part.lower()
+        # Check if this part is a known acronym
+        if lower_part in KNOWN_ACRONYMS:
+            result_parts.append(part.upper())
+        else:
+            result_parts.append(part.capitalize())
+    
+    header_part = ' '.join(result_parts)
     return prefix + header_part if prefix else header_part
 
 @dataclass

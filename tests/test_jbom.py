@@ -589,7 +589,7 @@ class TestBOMGeneration(unittest.TestCase):
                 header = next(reader)
                 
                 # Headers should be Title Case
-                expected_header = ['Reference', 'Quantity', 'Description', 'Value', 'Footprint', 'Lcsc', 'Datasheet', 'Smd']
+                expected_header = ['Reference', 'Quantity', 'Description', 'Value', 'Footprint', 'LCSC', 'Datasheet', 'SMD']
                 self.assertEqual(header, expected_header)
                 
                 # Should have at least one data row
@@ -618,7 +618,7 @@ class TestBOMGeneration(unittest.TestCase):
                 
                 # Should include manufacturer and verbose columns (simplified) - Title Case headers
                 self.assertIn('Manufacturer', header)
-                self.assertIn('Mfgpn', header)
+                self.assertIn('MFGPN', header)
                 self.assertIn('Match Quality', header)
                 self.assertIn('Priority', header)
         finally:
@@ -2191,9 +2191,9 @@ class TestFieldToHeader(unittest.TestCase):
         test_cases = [
             ('reference', 'Reference'),
             ('match_quality', 'Match Quality'),
-            ('lcsc', 'Lcsc'),
+            ('lcsc', 'LCSC'),
             ('manufacturer', 'Manufacturer'),
-            ('mfgpn', 'Mfgpn'),
+            ('mfgpn', 'MFGPN'),
         ]
         
         for input_val, expected in test_cases:
