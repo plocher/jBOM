@@ -15,6 +15,7 @@ __all__ = [
     "parse_ind_to_henry",
     "henry_to_eia",
     "ind_unit_multiplier",
+    "parse_tolerance_percent",
 ]
 
 _OHM_RE = re.compile(r"^\s*([0-9]*\.?[0-9]+)\s*([kKmMrR]?)\s*\+?\s*$")
@@ -219,3 +220,35 @@ def henry_to_eia(henry: float) -> str:
     if "." in s:
         return s.replace(".", "n") + "H"
     return s + "nH"
+
+
+# ---- Tolerance ----
+
+
+def parse_tolerance_percent(tol_str: str) -> Optional[float]:
+    """Parse tolerance string like '±5%', '5%', '±1%' to numeric percentage.
+
+    Args:
+        tol_str: Tolerance string (e.g., "±5%", "5%", "1%")
+
+    Returns:
+        Numeric tolerance value as float, or None if parsing fails
+
+    Examples:
+        >>> parse_tolerance_percent("±5%")
+        5.0
+        >>> parse_tolerance_percent("1%")
+        1.0
+        >>> parse_tolerance_percent("invalid")
+        None
+    """
+    if not tol_str:
+        return None
+
+    # Clean up the string - remove ±, %, spaces
+    cleaned = tol_str.strip().replace("±", "").replace("%", "").strip()
+
+    try:
+        return float(cleaned)
+    except ValueError:
+        return None

@@ -5,8 +5,15 @@ generator base classes, and output utilities.
 """
 
 from .fields import normalize_field_name, field_to_header
-from .types import ComponentType, DiagnosticIssue, CommonFields
-from .packages import PackageType, SMDType
+from .types import Component, InventoryItem, BOMEntry, DEFAULT_PRIORITY
+from .constants import (
+    ComponentType,
+    DiagnosticIssue,
+    CommonFields,
+    SMDType,
+    ScoreWeights,
+)
+from .packages import PackageType
 from .utils import (
     find_best_schematic,
     find_best_pcb,
@@ -23,12 +30,18 @@ __all__ = [
     # Field utilities
     "normalize_field_name",
     "field_to_header",
-    # Types
+    # Data classes
+    "Component",
+    "InventoryItem",
+    "BOMEntry",
+    "DEFAULT_PRIORITY",
+    # Constants
     "ComponentType",
     "DiagnosticIssue",
     "CommonFields",
     "PackageType",
     "SMDType",
+    "ScoreWeights",
     # File discovery
     "find_best_schematic",
     "find_best_pcb",
