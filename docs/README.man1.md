@@ -75,38 +75,51 @@ Write a JSON report to FILE with statistics (entry count, unmatched count, forma
 ## POS OPTIONS
 
 **--jlc**
-Imply `+jlc` field preset (prepends `+jlc` to `-f` if provided, or uses it by default when `-f` is omitted).
+Imply `+jlc` field preset for JLCPCB-compatible placement output. This preset includes: Designator, Mid X, Mid Y, Layer, Rotation columns in the order expected by JLCPCB's assembly service.
 
 **-o, --output FILE**
-: Output CSV path (required).
+: Output CSV path (required). File will contain component placement data.
 
 **-f, --fields FIELDS**
-: Column selection for CPL/POS. Use presets with `+` prefix or a comma-separated list.
-- Presets: `+kicad_pos`, `+jlc`, `+minimal`, `+all`
-- Custom: `Reference,X,Y,Rotation,Side,Footprint`
+: Column selection for CPL/POS output. Use presets with `+` prefix or a comma-separated list of field names.
+- Presets:
+  - `+kicad_pos`: Reference, X, Y, Rotation, Side, Footprint (KiCad-style format)
+  - `+jlc`: Designator, Mid X, Mid Y, Layer, Rotation (JLCPCB format)
+  - `+minimal`: Reference, X, Y (bare minimum)
+  - `+all`: All available fields from PCB
+- Custom: `Reference,X,Y,Rotation,Side,Footprint` or any combination
+- Fields are case-insensitive and can use various formats
 
 **--units {mm,inch}**
-: Output units.
+: Output coordinate units. Default: `mm`. Most pick-and-place machines expect millimeters.
 
 **--origin {board,aux}**
-: Coordinate origin. `aux` uses the board’s aux origin when available.
+: Coordinate origin reference point.
+- `board`: Use board's lower-left corner (0,0)
+- `aux`: Use auxiliary axis origin if defined in PCB, otherwise falls back to board origin
 
 **--smd-only**
-: Include SMD components only (heuristic by package token).
+: Include only SMD (surface mount) components in output. Filters out through-hole parts. Uses footprint heuristics to detect component type.
 
 **--layer {TOP,BOTTOM}**
-: Filter by side.
+: Filter components by board side. Only include components on specified layer.
 
 **--loader {auto,pcbnew,sexp}**
-: Load method. `auto` tries pcbnew then falls back to S-expression.
+: PCB file loading method.
+- `auto`: Try pcbnew Python API first, fall back to S-expression parser (recommended)
+- `pcbnew`: Use KiCad's pcbnew Python API (requires KiCad Python environment)
+- `sexp`: Use built-in S-expression parser (works without KiCad installation)
 
 ## OUTPUT
 
 **BOM CSV File**
-: Default name `<ProjectName>_bom.csv`. Contains component reference, quantity, and matched supplier info.
+: Default name `<ProjectName>_bom.csv`. Contains component reference, quantity, and matched supplier info with columns like Reference, Quantity, Value, LCSC, Footprint, Description, etc.
+
+**POS CSV File**
+: Specified by `-o` option. Contains component placement data with columns like Reference, X, Y, Rotation, Side, Footprint (or Designator, Mid X, Mid Y, Layer, Rotation for JLCPCB format). Coordinates are in specified units (mm or inches).
 
 **Console Output**
-: Summary line with schematic statistics, inventory count, and BOM entry count. Use `-d` to see detailed diagnostics.
+: Summary line with schematic statistics, inventory count, and BOM entry count. For POS files, shows component count and layer distribution. Use `-d` to see detailed diagnostics.
 
 **Exit Code**
 : 0 on success (all components matched or user accepted matches)
@@ -150,14 +163,24 @@ BOM all fields:
 python -m jbom bom MyProject/ -i inventory.csv -f +all
 ```
 
-POS (KiCad-like columns):
+POS (KiCad-style columns):
 ```
 python -m jbom pos MyBoard.kicad_pcb -o MyBoard.pos.csv -f +kicad_pos --units mm --origin board
 ```
 
-POS (JLC-style columns):
+POS (JLCPCB-style with --jlc flag):
 ```
-python -m jbom pos MyBoard.kicad_pcb -o MyBoard.cpl.csv -f +jlc --units mm --origin aux
+python -m jbom pos MyBoard.kicad_pcb -o MyBoard_cpl.csv --jlc --units mm --origin aux
+```
+
+POS (SMD only, top side):
+```
+python -m jbom pos MyBoard.kicad_pcb -o MyBoard_top.csv --smd-only --layer TOP
+```
+
+POS (custom fields):
+```
+python -m jbom pos MyBoard.kicad_pcb -o MyBoard.csv -f "Reference,X,Y,Footprint,Side"
 ```
 
 Verbose BOM scoring:

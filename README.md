@@ -1,8 +1,10 @@
-# jBOM — KiCad Bill of Materials Generator
+# jBOM — KiCad Bill of Materials and Placement Generator
 
-A powerful BOM generator for KiCad projects, jBOM matches schematic components against your inventory at BOM-generation time rather than hardcoding part numbers in eeschema symbols. This makes your designs supplier-neutral, meaning you can match against current inventory and pricing whenever you generate a BOM.
+A comprehensive fabrication tool for KiCad projects, jBOM generates both Bills of Materials (BOM) and Component Placement Lists (CPL/POS) for PCB manufacturing. It matches schematic components against your inventory at generation time rather than hardcoding part numbers in symbols, making your designs supplier-neutral so you can match against current inventory and pricing whenever needed.
 
-jBOM handles multiple inventory formats (CSV, Excel, Apple Numbers), supports KiCad's hierarchical schematics, and provides intelligent component matching with robust numeric parsing for resistors, capacitors, inductors, and other component types. You can integrate it three ways: as a KiCad Eeschema plugin, via the command line, or as a Python library in your custom tools.
+jBOM handles multiple inventory formats (CSV, Excel, Apple Numbers), supports KiCad's hierarchical schematics, and provides intelligent component matching with robust numeric parsing for resistors, capacitors, inductors, and other component types. It also generates accurate placement files from PCB layouts with support for multiple coordinate systems and formats.
+
+You can integrate jBOM in three ways: as a KiCad plugin (Eeschema or Pcbnew), via the command line, or as a Python library in your custom tools.
 
 ## Installation
 
@@ -37,28 +39,39 @@ Optional: Manufacturer, MFGPN, Datasheet, Tolerance, V, A, W, and component-spec
 
 **Via KiCad (interactive):**
 
-
   `Eeschema` → `Tools` → `Generate BOM` → `Select jBOM` → `Generate`
-
 
 **Via command line:**
 ```bash
-# BOM (schematics → CSV)
+# BOM (schematics → CSV with inventory matching)
 python -m jbom bom MyProject/ -i inventory.xlsx
 
-# Placement/CPL (PCB → CSV)
-python -m jbom pos MyBoard.kicad_pcb -o MyBoard.pos.csv -f +kicad_pos
+# BOM with JLCPCB-optimized fields
+python -m jbom bom MyProject/ -i inventory.xlsx --jlc
+
+# Placement/CPL (PCB → CSV for pick-and-place machines)
+python -m jbom pos MyBoard.kicad_pcb -o MyBoard.pos.csv
+
+# Placement with JLCPCB format
+python -m jbom pos MyBoard.kicad_pcb -o MyBoard_cpl.csv --jlc
 ```
 
 **Via Python:**
 ```python
-from jbom import generate_bom_api, GenerateOptions
+from jbom.sch import generate_bom_api, GenerateOptions
+from jbom.pcb import BoardLoader, PositionGenerator
 
+# Generate BOM
 opts = GenerateOptions(verbose=True)
 result = generate_bom_api('MyProject/', 'inventory.xlsx', options=opts)
+
+# Generate placement file
+board = BoardLoader.load('MyBoard.kicad_pcb')
+gen = PositionGenerator(board)
+gen.write_csv('MyBoard.pos.csv', fields_preset='jlc')
 ```
 
-That's it! The BOM is written to `MyProject_bom.csv`.
+That's it! The BOM is written to `MyProject_bom.csv` and placement to `MyBoard.pos.csv`.
 
 ## Component Matching
 
@@ -70,7 +83,13 @@ See docs/README.developer.md for detailed information about the matching algorit
 
 ## Output
 
-jBOM generates a CSV BOM file (`<ProjectName>_bom.csv`) with all matched components and their supplier part numbers. It also prints a summary to the console showing statistics about how many components were found and how many successfully matched. With the `-d` flag, you get detailed diagnostic information about why any components failed to match. The exit code indicates success (0), warning/unmatched components (2), or error (1).
+**BOM Files:**
+jBOM generates a CSV BOM file (`<ProjectName>_bom.csv`) with all matched components and their supplier part numbers. It also prints a summary to the console showing statistics about how many components were found and how many successfully matched. With the `-d` flag, you get detailed diagnostic information about why any components failed to match.
+
+**Placement Files:**
+The `pos` command generates CSV placement files (CPL/POS format) with component positions, rotations, and layers for pick-and-place machines. Output includes X/Y coordinates, rotation angle, component side (top/bottom), and footprint information in formats compatible with major PCB assemblers.
+
+**Exit codes:** 0 = success, 2 = warning/unmatched components, 1 = error
 
 ## Field Naming & Case-Insensitivity
 

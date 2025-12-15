@@ -4,7 +4,11 @@ This document provides detailed technical information about jBOM's internal work
 
 ## Architecture Overview
 
-The BOM generator leverages the expressive ability of schematic component fields and the ease of maintenance of an inventory spreadsheet at BOM generation time. Using robust numeric matching for resistors, capacitors, and inductors, preference ranking for stocked/JLC parts, and flexible output options, this tool heuristically matches components found in the schematic to stock items in the inventory and produces a customizable BOM.csv file suitable for fabrication.
+jBOM is a comprehensive fabrication tool that provides two main capabilities:
+
+1. **BOM Generation**: Leverages schematic component fields and inventory spreadsheets to match components at BOM generation time. Using robust numeric matching for resistors, capacitors, and inductors, preference ranking for stocked/JLC parts, and flexible output options, this tool heuristically matches components found in the schematic to stock items in the inventory and produces a customizable BOM.csv file suitable for fabrication.
+
+2. **Placement Generation**: Extracts component placement data from KiCad PCB files to generate CPL/POS files for pick-and-place assembly. Supports multiple loader methods (pcbnew API and S-expression parsing), flexible coordinate systems (board origin and aux origin), and output formats (KiCad-style and JLCPCB-compatible).
 
 ## Key Features (Technical)
 
@@ -314,6 +318,67 @@ If none of the patterns match, the method returns None, which means:
 
 This approach allows the system to work with both standard KiCad libraries and custom library naming conventions, making it quite flexible for different PCB design workflows.
 
+## PCB Module Architecture
+
+The PCB module provides component placement extraction from KiCad PCB files for pick-and-place manufacturing.
+
+### Board Loading
+
+**Dual-mode loader** (`BoardLoader`):
+- **pcbnew API mode**: Uses KiCad's native Python API when available (requires KiCad Python environment)
+- **S-expression mode**: Built-in parser that works without KiCad installation
+- **Auto mode**: Tries pcbnew first, falls back to S-expression automatically
+
+**Features**:
+- Extracts component positions (X, Y coordinates)
+- Reads rotation angles (normalized 0-360°)
+- Detects component layer (F.Cu/B.Cu → TOP/BOTTOM)
+- Retrieves footprint information
+- Supports KiCad 7 and 8 Reference property formats
+- Recursive field discovery from footprint properties
+
+### Position Generation
+
+**PositionGenerator** class:
+- Flexible field selection (presets and custom fields)
+- Unit conversion (mm/inch)
+- Origin selection (board origin or auxiliary axis)
+- Layer filtering (TOP/BOTTOM)
+- SMD-only filtering
+- CSV output with customizable columns
+
+**Field Presets**:
+- `+kicad_pos`: Reference, X, Y, Rotation, Side, Footprint
+- `+jlc`: Designator, Mid X, Mid Y, Layer, Rotation (JLCPCB format)
+- `+minimal`: Reference, X, Y
+- `+all`: All available fields
+
+**Coordinate Systems**:
+- Board origin: Lower-left corner (0,0)
+- Aux origin: User-defined auxiliary axis (when set in PCB)
+- Automatic fallback if aux origin not defined
+
+### S-expression Parser
+
+The S-expression parser handles `.kicad_pcb` files directly:
+- Parses KiCad's nested S-expression format using `sexpdata`
+- Handles both simple and complex property structures
+- Supports multiple KiCad version formats
+- Robust error handling for malformed files
+
+### Integration with CLI
+
+The `pos` subcommand integrates the PCB module:
+```bash
+python -m jbom pos BOARD.kicad_pcb -o OUTPUT.csv [OPTIONS]
+```
+
+Options cascade through:
+1. CLI argument parsing (`cli/main.py`)
+2. BoardLoader instantiation with specified mode
+3. PositionGenerator with field selection and filters
+4. CSV output with proper formatting
+
 ## Spreadsheet Support Architecture
 
 The tool supports multiple inventory file formats through a unified architecture:
@@ -399,10 +464,25 @@ SMD_PACKAGES = [..., 'wlcsp']
 src/jbom/
   ├── jbom.py              # Main library and CLI (source of truth, schematic path)
   ├── __init__.py          # Public re-exports (back-compat)
+  ├── cli/                 # CLI interface with subcommands
+  │   └── main.py          # Argument parsing and dispatch
   ├── sch/                 # Schematic-focused API (re-exports for now)
+  │   ├── api.py           # BOM generation API
+  │   ├── bom.py           # BOM entry and generator
+  │   ├── model.py         # Component model
+  │   └── parser.py        # KiCad schematic parser
   ├── common/              # Shared helpers (values, fields, types, packages)
+  │   ├── fields.py        # Field normalization
+  │   ├── types.py         # Common enums and types
+  │   ├── packages.py      # Package lists (SMD/PTH)
+  │   ├── values.py        # Numeric parsers (R/C/L)
+  │   └── utils.py         # Utility functions
   ├── inventory/           # Inventory matcher API (re-exports for now)
-  └── pcb/                 # Placeholder for PCB integration
+  │   └── matcher.py       # Inventory matching logic
+  └── pcb/                 # PCB integration modules
+      ├── board_loader.py  # PCB file loading (pcbnew + S-expression)
+      ├── model.py         # Board and component models
+      └── position.py      # Placement file generation
 ```
 
 See [docs/README.arch.md](README.arch.md) for details.
@@ -410,6 +490,7 @@ See [docs/README.arch.md](README.arch.md) for details.
 ### Import paths
 - Back-compat: `from jbom import generate_bom_api, GenerateOptions`
 - Preferred (schematic): `from jbom.sch import generate_bom_api, GenerateOptions`
+- PCB module: `from jbom.pcb import BoardLoader, PositionGenerator`
 - Shared helpers: `from jbom.common.values import parse_res_to_ohms, farad_to_eia, ...`
 
 ### Main Files

@@ -1,25 +1,125 @@
 # jBOM Architecture (Dec 2025)
-This document summarizes the current high-level module layout to support upcoming PCB integration while maintaining backward compatibility.
+This document summarizes the current high-level module layout supporting both BOM generation and PCB placement extraction.
 
 ## Packages
-- `jbom.jbom` — existing implementation (schematic parsing, inventory matcher, BOM generator, CLI). Still the source of truth.
-- `jbom.sch` — schematic-focused API surface that re-exports from `jbom.jbom`:
+
+### Core Modules
+- `jbom.jbom` — main implementation (schematic parsing, inventory matcher, BOM generator). Source of truth for schematic functionality.
+- `jbom.cli` — command-line interface with subcommands:
+  - `jbom.cli.main` → CLI parsing, `bom` and `pos` subcommands
+
+### Schematic Module
+- `jbom.sch` — schematic-focused API that re-exports from `jbom.jbom`:
   - `jbom.sch.api` → `GenerateOptions`, `generate_bom_api`
   - `jbom.sch.model` → `Component`
   - `jbom.sch.parser` → `KiCadParser`
   - `jbom.sch.bom` → `BOMEntry`, `BOMGenerator`
-- `jbom.common` — shared helpers (for both schematic and future PCB code):
-  - `fields` (normalize names), `types` (enums/constants), `packages` (package lists)
-  - `values` (numeric parsers/formatters for RES/CAP/IND)
-  - `utils` (placeholder for future file-discovery/natsort helpers)
-- `jbom.inventory` — inventory loader/matcher API surface (re-exports for now)
-- `jbom.pcb` — placeholder for upcoming PCB integration modules (`board_loader`, `model`, `position`, `check`).
+
+### PCB Module (NEW)
+- `jbom.pcb` — PCB integration for placement file generation:
+  - `jbom.pcb.board_loader` → `BoardLoader` (pcbnew API + S-expression parser)
+  - `jbom.pcb.model` → `Board`, `BoardComponent` data models
+  - `jbom.pcb.position` → `PositionGenerator` (CPL/POS file generation)
+
+### Shared Utilities
+- `jbom.common` — shared helpers for both schematic and PCB:
+  - `fields` → field name normalization (`normalize_field_name`, `field_to_header`)
+  - `types` → common enums and types (`ComponentType`, `DiagnosticIssue`, etc.)
+  - `packages` → package lists (`SMD_PACKAGES`, `THROUGH_HOLE_PACKAGES`)
+  - `values` → numeric parsers for RES/CAP/IND (`parse_res_to_ohms`, `farad_to_eia`, etc.)
+  - `utils` → utility functions (currently placeholder)
+
+### Inventory Module
+- `jbom.inventory` — inventory matching API:
+  - `jbom.inventory.matcher` → `InventoryMatcher`, `InventoryItem` (re-exports from jbom.jbom)
+
+## Command-Line Interface
+
+New subcommand-based CLI (breaking change from v1.x):
+
+```bash
+# BOM generation
+python -m jbom bom PROJECT -i INVENTORY [OPTIONS]
+
+# Placement generation
+python -m jbom pos BOARD.kicad_pcb -o OUTPUT.csv [OPTIONS]
+```
+
+Both subcommands support:
+- `--jlc` flag for JLCPCB-optimized field presets
+- `-f/--fields` for custom field selection
+- Field presets with `+` prefix (`+standard`, `+jlc`, `+minimal`, `+all`)
+
+## API Usage
+
+### BOM Generation (Backward Compatible)
+```python
+# Legacy import (still works)
+from jbom import generate_bom_api, GenerateOptions
+
+# New schematic-specific import
+from jbom.sch import generate_bom_api, GenerateOptions
+
+opts = GenerateOptions(verbose=True)
+result = generate_bom_api('project/', 'inventory.xlsx', options=opts)
+```
+
+### Placement Generation (New)
+```python
+from jbom.pcb import BoardLoader, PositionGenerator
+
+# Load board with auto-detection
+board = BoardLoader.load('board.kicad_pcb', mode='auto')
+
+# Generate placement file
+gen = PositionGenerator(board)
+gen.write_csv('output.csv', 
+              fields_preset='jlc',
+              units='mm',
+              origin='aux')
+```
 
 ## Compatibility
-- Public imports documented previously continue to work (e.g., `from jbom import generate_bom_api`).
-- Tests and the KiCad Eeschema wrapper remain unchanged.
-- New imports (optional now): `from jbom.sch import GenerateOptions, generate_bom_api`.
 
-## Next steps
-- Extract more shared utilities from `jbom.jbom` into `jbom.common` incrementally, keeping tests green.
-- Implement `jbom.pcb` modules and a Pcbnew Action Plugin that consumes the shared helpers.
+### Maintained Compatibility
+- Public API imports continue to work: `from jbom import generate_bom_api`
+- Python library API unchanged for BOM generation
+- KiCad Eeschema plugin wrapper unchanged
+
+### Breaking Changes
+- CLI completely redesigned with subcommands (v1.x → v2.x)
+- Old CLI syntax no longer supported
+- Must use `jbom bom` instead of `jbom` directly
+
+## Design Patterns
+
+### Dual-Mode Loading
+Both schematic and PCB modules support flexible loading:
+- Schematic: Auto-detects hierarchical roots vs. individual sheets
+- PCB: Auto-detects pcbnew API availability, falls back to S-expression parser
+
+### Field System
+- Case-insensitive field names throughout
+- Preset system with `+` prefix for common configurations
+- Custom field selection with comma-separated lists
+- I:/C: prefix system for disambiguating inventory vs. component fields (BOM)
+
+### Output Flexibility
+- Multiple output formats via presets
+- Extensible column selection
+- JLCPCB-specific optimizations
+- Manufacturer-agnostic default formats
+
+## Future Development
+
+### Planned Enhancements
+- PCB consistency checker (compare schematic vs. PCB footprints)
+- Pcbnew Action Plugin for in-editor placement generation
+- Board visualization and component highlighting
+- Advanced placement validation (clearances, off-board components)
+
+### Extension Points
+- Additional placement format presets
+- Custom coordinate transformations
+- Integration with other fabrication workflows
+- Advanced filtering and grouping options
