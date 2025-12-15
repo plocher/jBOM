@@ -13,7 +13,13 @@ jBOM is a sophisticated KiCad Bill of Materials (BOM) generator written in Pytho
        - When commits are performed, use semantic versioning style commit vocabulary
    - These release hooks tie in to publishing the jBOM package onm pypi once a release is ready
    - use git mv, git rm and git add when renaming, moving, adding or removing files
-   - use semantic versioning commits for each significant set of changes
+   - For releases, just use conventional semantic commit messages (fix:, feat:, etc.) and the automation will handle:
+       *  Creating version bump commits with proper conventional commit messages
+       *  Updating version in pyproject.toml, src/jbom/__version__.py, and CHANGELOG.md
+       *  Creating git tags
+       *  Publishing to PyPI
+       *  Creating GitHub releases
+
 - When adding or changing functionality, update the various README documentation files
 - Use agent timeframes in estimates, not human ones
 - When an example inventory file is needed to test the jBOM program, use these files
