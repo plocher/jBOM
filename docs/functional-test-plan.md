@@ -20,11 +20,13 @@ This document outlines functional tests needed to complement existing unit tests
 - **test_functional_pos.py** (284 LOC, 12 tests): POS happy path end-to-end tests ✅
 - **test_functional_bom_errors.py** (197 LOC, 8 tests): BOM error case tests ✅
 - **test_functional_pos_errors.py** (174 LOC, 6 tests): POS error case tests ✅
+- **test_functional_inventory_formats.py** (199 LOC, 7 tests): Inventory format tests ✅
+- **test_functional_schematic_edge_cases.py** (265 LOC, 6 tests): Schematic edge cases ✅
 - **Test fixtures**: Minimal project with schematic, PCB, and CSV inventory for isolated testing
 
 ### Coverage Status
 
-**✅ Implemented (35 tests):**
+**✅ Implemented (48 tests):**
 - End-to-end CLI workflows (actual file I/O, no mocks)
 - Output format validation (CSV structure, header correctness)
 - Field preset combinations and custom field lists
@@ -33,10 +35,13 @@ This document outlines functional tests needed to complement existing unit tests
 - Error handling for missing files and invalid inputs
 - Argparse validation for CLI arguments
 - Parse error handling for malformed files
+- Multiple inventory formats (CSV, XLSX, Numbers) ✅
+- Inventory edge cases (empty, unicode, extra columns) ✅
+- Schematic edge cases (empty, unicode, DNP, in_bom=no) ✅
+- Component filtering and CSV escaping ✅
 
 **⏳ Still TODO:**
-- Edge cases (empty files, unicode, special characters)
-- Multiple inventory formats (CSV, XLSX, Numbers)
+- PCB edge cases (empty PCB, rotation normalization)
 - Hierarchical schematic traversal with real files
 - Performance tests with large projects
 - Golden file regression tests
@@ -132,18 +137,19 @@ Note: test_pos_invalid_origin was removed as --origin validation is not needed (
 
 ### 3. Edge Cases and Boundary Conditions (26 tests TODO)
 
-#### Schematic Edge Cases (7 tests)
+#### Schematic Edge Cases (6/9 tests in `test_functional_schematic_edge_cases.py`)
 
 | Status | Test Scenario | Expected Result |
 |--------|---------------|------------------|
-| ⏳ | Empty schematic (no components) | Empty BOM, no error |
+| ✅ | Empty schematic (no components) | Empty BOM, no error |
 | ⏳ | Hierarchical schematic (multi-sheet) | All sheets parsed, components aggregated |
 | ⏳ | Hierarchical with missing sub-sheet | Warning about missing file, continue |
 | ⏳ | Autosave file (_autosave-*.kicad_sch) | Warning but still process |
-| ⏳ | Component with no value | Empty value field, no crash |
-| ⏳ | Component with special characters | Proper CSV escaping (quotes, commas) |
-| ⏳ | Component with unicode characters | UTF-8 encoding preserved |
-
+| ✅ | Component with no value | Empty value field, no crash |
+| ✅ | Component with special characters | Proper CSV escaping (quotes, commas) |
+| ✅ | Component with unicode characters | UTF-8 encoding preserved |
+| ✅ | DNP components excluded | Components with dnp=yes excluded |
+| ✅ | Components with in_bom=no excluded | Power symbols and non-BOM parts excluded |
 #### PCB Edge Cases (6 tests)
 
 | Status | Test Scenario | Expected Result |
@@ -155,18 +161,19 @@ Note: test_pos_invalid_origin was removed as --origin validation is not needed (
 | ⏳ | Footprint with missing package token | Empty package field, no crash |
 | ⏳ | Footprint with missing datasheet | Empty datasheet field |
 
-#### Inventory Edge Cases (7 tests)
+#### Inventory Edge Cases (7/8 tests in `test_functional_inventory_formats.py`)
 
 | Status | Test Scenario | Expected Result |
 |--------|---------------|------------------|
-| ⏳ | Empty inventory file | No matches, warning |
+| ✅ | Empty inventory file | No matches, BOM still generated |
 | ⏳ | Inventory with duplicate IPNs | Warning or error |
-| ⏳ | Inventory with missing required columns | Clear error message |
-| ⏳ | Inventory with extra/unknown columns | Ignored gracefully |
-| ⏳ | XLSX inventory (requires openpyxl) | Works if installed, error otherwise |
-| ⏳ | Numbers inventory (requires numbers-parser) | Works if installed, error otherwise |
-| ⏳ | Inventory with unicode characters | UTF-8 handling |
-
+| ✅ | Inventory with missing required columns | Clear error message (IPN, Category required) |
+| ✅ | Inventory with extra/unknown columns | Ignored gracefully |
+| ✅ | CSV inventory format | Loads successfully |
+| ✅ | XLSX inventory (requires openpyxl) | Works if installed, skips if not |
+| ✅ | Numbers inventory (requires numbers-parser) | Works if installed, skips if not |
+| ✅ | Inventory with unicode characters | UTF-8 handling |
+| ✅ | All formats produce consistent results | CSV/XLSX/Numbers produce similar BOMs |
 #### Matching Edge Cases (6 tests)
 
 | Status | Test Scenario | Expected Result |
