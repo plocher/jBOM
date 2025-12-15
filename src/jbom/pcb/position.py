@@ -124,9 +124,28 @@ class PositionGenerator:
 
     # ---------------- CSV writers ----------------
     def write_csv(self, output_path: Path, fields: List[str]) -> None:
+        """Write placement CSV to file or stdout.
+        
+        Special output_path values for stdout:
+        - "-"
+        - "console"
+        - "stdout"
+        """
+        import sys
+        
         norm_fields = [normalize_field_name(f) for f in fields]
         headers = [field_to_header(f) for f in norm_fields]
-        with open(output_path, 'w', newline='', encoding='utf-8') as f:
+        
+        # Check if output should go to stdout
+        output_str = str(output_path)
+        use_stdout = output_str in ('-', 'console', 'stdout')
+        
+        if use_stdout:
+            f = sys.stdout
+        else:
+            f = open(output_path, 'w', newline='', encoding='utf-8')
+        
+        try:
             w = csv.writer(f)
             w.writerow(headers)
             for c in self.iter_components():
@@ -150,6 +169,9 @@ class PositionGenerator:
                     else:
                         row.append("")
                 w.writerow(row)
+        finally:
+            if not use_stdout:
+                f.close()
 
     # Convenience generators (still available)
     def generate_kicad_pos_rows(self) -> List[List[str]]:

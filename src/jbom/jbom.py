@@ -1688,12 +1688,28 @@ class BOMGenerator:
         return ''
     
     def write_bom_csv(self, bom_entries: List[BOMEntry], output_path: Path, fields: List[str]):
-        """Write BOM entries to CSV file using the specified field list.
+        """Write BOM entries to CSV file or stdout using the specified field list.
         
         Fields are expected to be in normalized snake_case format.
         CSV headers will be converted to human-readable Title Case format.
+        
+        Special output_path values for stdout:
+        - "-"
+        - "console"
+        - "stdout"
         """
-        with open(output_path, 'w', newline='', encoding='utf-8') as f:
+        import sys
+        
+        # Check if output should go to stdout
+        output_str = str(output_path)
+        use_stdout = output_str in ('-', 'console', 'stdout')
+        
+        if use_stdout:
+            f = sys.stdout
+        else:
+            f = open(output_path, 'w', newline='', encoding='utf-8')
+        
+        try:
             writer = csv.writer(f)
             
             # Process fields to handle ambiguous ones
@@ -1791,6 +1807,9 @@ class BOMGenerator:
                         i += 1
                 
                 writer.writerow(row)
+        finally:
+            if not use_stdout:
+                f.close()
 
 
 # Import file discovery functions from common.utils
