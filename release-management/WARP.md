@@ -12,7 +12,10 @@ jBOM is a sophisticated KiCad Bill of Materials (BOM) generator written in Pytho
    - use semantic versioning commits for each significant set of changes
 - When adding or changing functionality, update the various README documentation files
 - Use agent timeframes in estimates, not human ones
-- When an example inventory file is needed to test the jBOM program, use the file /Users/jplocher/Dropbox/KiCad/jBOM-dev/SPCoast-INVENTORY.numbers 
+- When an example inventory file is needed to test the jBOM program, use these files
+    - /Users/jplocher/Dropbox/KiCad/jBOM-dev/SPCoast-INVENTORY.numbers 
+    - /Users/jplocher/Dropbox/KiCad/jBOM-dev/SPCoast-INVENTORY.xlsx 
+    - /Users/jplocher/Dropbox/KiCad/jBOM-dev/SPCoast-INVENTORY.csv
 - When a sample kicad project is needed, use one of
     - /Users/jplocher/Dropbox/KiCad/projects/AltmillSwitches 
     - /Users/jplocher/Dropbox/KiCad/projects/Core-wt32-eth0 
