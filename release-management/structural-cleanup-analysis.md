@@ -84,11 +84,11 @@ sch/
 
 inventory/
   matcher.py      - InventoryMatcher (actual implementation)
-  
+
 common/
   values.py       - Value parsers (already extracted)
   fields.py       - Field utilities (already extracted)
-  
+
 jbom.py          - Re-exports for backward compatibility only
 ```
 
@@ -96,7 +96,7 @@ jbom.py          - Re-exports for backward compatibility only
 
 This is the "finish the refactoring" work that was started but not completed.
 
-**Estimated Effort:** 
+**Estimated Effort:**
 - Extract to modules: 6-8 hours
 - Update imports: 2-3 hours
 - Test everything: 4-6 hours
@@ -149,7 +149,7 @@ def load_kicad_file(path: Path):
 
 def walk_nodes(sexp, node_type: str):
     """Generator that yields all nodes of a specific type.
-    
+
     Example:
         for footprint_node in walk_nodes(sexp, 'footprint'):
             # process footprint
@@ -210,7 +210,7 @@ class BoardLoader:
 - ✅ Easier to test
 - ✅ Single import point for sexpdata dependency
 
-**Effort:** 
+**Effort:**
 - Create shared module: 2 hours
 - Refactor both parsers to use it: 3-4 hours
 - Test: 2 hours
@@ -266,7 +266,7 @@ Move actual `InventoryMatcher` implementation to `inventory/matcher.py`, keep ba
 **Files to delete:**
 ```
 src/jbom/sch/api.py
-src/jbom/sch/model.py  
+src/jbom/sch/model.py
 src/jbom/sch/bom.py
 src/jbom/sch/parser.py
 src/jbom/inventory/matcher.py
@@ -311,7 +311,7 @@ src/jbom/common/sexp_parser.py
 **Update:**
 ```
 src/jbom/jbom.py - Use shared utilities
-src/jbom/pcb/board_loader.py - Use shared utilities  
+src/jbom/pcb/board_loader.py - Use shared utilities
 src/jbom/common/__init__.py - Export new module
 ```
 

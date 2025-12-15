@@ -47,7 +47,7 @@ Created shared S-expression parser to eliminate duplicate code:
 
 Created `docs/jbom-extraction-plan.md` documenting strategy to extract code from the 2500-line God Object:
 - Move schematic code to `sch/` package
-- Move inventory code to `inventory/` package  
+- Move inventory code to `inventory/` package
 - Maintain backward compatibility via re-exports
 - Estimated effort: 11-15 hours (future work)
 
@@ -120,7 +120,7 @@ Made output options more Unix-friendly:
 
 **Targets:**
 - `make` - Process all projects
-- `make list-projects` - List detected projects  
+- `make list-projects` - List detected projects
 - `make clean` - Remove generated BOM/POS files
 - `make help` - Show help and configuration
 - `make process-project PROJECT_DIR=./Name/` - Process single project

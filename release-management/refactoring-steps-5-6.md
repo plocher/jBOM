@@ -64,31 +64,31 @@ from jbom.jbom import BOMEntry, Component, InventoryMatcher
 
 class BOMGeneratorAdapter(Generator):
     """Adapter that wraps legacy BOMGenerator with new Generator interface.
-    
+
     This allows new code to use the unified Generator API while
     existing code continues to work unchanged.
     """
-    
+
     def __init__(
-        self, 
+        self,
         components: List[Component],
         matcher: InventoryMatcher,
         options: GeneratorOptions
     ):
         super().__init__(options)
-        
+
         # Wrap the legacy generator
         self._legacy_generator = LegacyBOMGenerator(components, matcher)
-        
+
         # Set up field registry with BOM presets
         self._registry = FieldPresetRegistry()
         self._register_bom_presets()
-        
+
         # Cache for generated entries
         self._entries_cache = None
         self._excluded_count = 0
         self._diagnostics = []
-    
+
     def _register_bom_presets(self):
         """Register BOM field presets in the registry."""
         # Import existing FIELD_PRESETS from jbom.jbom
@@ -99,7 +99,7 @@ class BOMGeneratorAdapter(Generator):
                 preset_def['fields'],
                 preset_def['description']
             )
-    
+
     def generate(self) -> List[BOMEntry]:
         """Generate BOM entries using legacy implementation."""
         if self._entries_cache is None:
@@ -111,23 +111,23 @@ class BOMGeneratorAdapter(Generator):
             self._entries_cache = entries
             self._excluded_count = excluded
             self._diagnostics = diag
-        
+
         return self._entries_cache
-    
+
     def write_csv(self, output_path: Path, fields: List[str]) -> None:
         """Write BOM CSV using legacy implementation."""
         entries = self.generate()
         self._legacy_generator.write_bom_csv(entries, output_path, fields)
-    
+
     def get_available_fields(self) -> Dict[str, str]:
         """Delegate to legacy generator."""
         components = self._legacy_generator.components
         return self._legacy_generator.get_available_fields(components)
-    
+
     def default_preset(self) -> str:
         """Return default BOM preset."""
         return 'standard'
-    
+
     def parse_fields(self, fields_arg: Optional[str]) -> List[str]:
         """Parse fields using the registry."""
         available = self.get_available_fields()
@@ -147,16 +147,16 @@ def test_adapter_matches_legacy():
     """Verify adapter produces identical results to legacy."""
     components = [...]  # Load test components
     matcher = InventoryMatcher(...)  # Load test inventory
-    
+
     # Generate using legacy
     legacy_gen = LegacyBOMGenerator(components, matcher)
     legacy_entries, _, _ = legacy_gen.generate_bom()
-    
+
     # Generate using adapter
     options = GeneratorOptions()
     adapter_gen = BOMGeneratorAdapter(components, matcher, options)
     adapter_entries = adapter_gen.generate()
-    
+
     # Compare results
     assert len(legacy_entries) == len(adapter_entries)
     for legacy, adapter in zip(legacy_entries, adapter_entries):
@@ -188,7 +188,7 @@ USE_ADAPTER = os.environ.get('JBOM_USE_ADAPTER', 'false').lower() == 'true'
 if USE_ADAPTER:
     from jbom.sch.bom_adapter import BOMGeneratorAdapter
     from jbom.common.options import BOMOptions
-    
+
     bom_opts = BOMOptions(
         verbose=options.verbose,
         debug=options.debug,
@@ -236,18 +236,18 @@ from jbom.pcb.position import (
 
 class PositionGeneratorAdapter(Generator):
     """Adapter for PositionGenerator with unified interface."""
-    
+
     def __init__(self, board: BoardModel, options: PlacementOptions):
         super().__init__(options)
-        
+
         # Wrap legacy generator
         # Note: Legacy takes PlacementOptions directly, which is compatible
         self._legacy_generator = LegacyPositionGenerator(board, options)
-        
+
         # Set up registry
         self._registry = FieldPresetRegistry()
         self._register_placement_presets()
-    
+
     def _register_placement_presets(self):
         """Register placement presets."""
         for name, preset_def in PLACEMENT_PRESETS.items():
@@ -256,23 +256,23 @@ class PositionGeneratorAdapter(Generator):
                 preset_def['fields'],
                 preset_def['description']
             )
-    
+
     def generate(self) -> List[PcbComponent]:
         """Generate list of components (with filtering applied)."""
         return list(self._legacy_generator.iter_components())
-    
+
     def write_csv(self, output_path: Path, fields: List[str]) -> None:
         """Delegate to legacy write_csv."""
         self._legacy_generator.write_csv(output_path, fields)
-    
+
     def get_available_fields(self) -> Dict[str, str]:
         """Return available placement fields."""
         return self._legacy_generator.get_available_fields()
-    
+
     def default_preset(self) -> str:
         """Return default placement preset."""
         return 'kicad_pos'
-    
+
     def parse_fields(self, fields_arg: Optional[str]) -> List[str]:
         """Parse using registry."""
         available = self.get_available_fields()
@@ -325,7 +325,7 @@ If adapter approach feels too heavy for PositionGenerator, it could be refactore
 
 3. **Replace local field parsing**:
    - Remove `parse_fields_argument()` method
-   - Remove `_preset_fields()` method  
+   - Remove `_preset_fields()` method
    - Use inherited `parse_fields()` from base
 
 4. **Use FieldPresetRegistry**:
@@ -348,7 +348,7 @@ If adapter approach feels too heavy for PositionGenerator, it could be refactore
 3. **Field Parsing Tests**: Registry produces same results as old code
 4. **Edge Cases**: Empty inputs, invalid presets, unknown fields
 
-### Integration Tests  
+### Integration Tests
 1. **Real Project Tests**: Use existing integration test projects
 2. **Inventory Tests**: Use real Numbers/Excel inventory files
 3. **CLI Tests**: Run commands with both code paths
@@ -423,7 +423,7 @@ If adapter approach feels too heavy for PositionGenerator, it could be refactore
 - Integration: 2-3 hours
 - **Total: ~15 hours**
 
-### PositionGenerator Adapter  
+### PositionGenerator Adapter
 - Implementation: 2-3 hours
 - Testing: 3-4 hours
 - Integration: 1-2 hours

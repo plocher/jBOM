@@ -4,7 +4,7 @@
 
 ### Phase 1: Structural Cleanup (3 steps)
 1. ✅ Removed 5 unused Phase P0 shim files
-2. ✅ Extracted shared S-expression parser utilities  
+2. ✅ Extracted shared S-expression parser utilities
 3. ✅ Documented jbom.py extraction strategy
 
 ### Phase 2: Test Fixes

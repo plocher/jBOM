@@ -1,7 +1,7 @@
 # jBOM Functional Test Plan
 
 ## Overview
-This document outlines functional tests needed to complement existing unit tests. 
+This document outlines functional tests needed to complement existing unit tests.
 
 **Status Update (2025-12-15):** Functional test implementation is progressing well! The test suite now includes 157 total tests (109 unit + 48 functional) covering end-to-end CLI workflows, error handling, and edge cases. Recent additions include inventory format tests and schematic edge cases.
 
@@ -249,7 +249,7 @@ These provide:
    - Simple 1-sheet schematic with 5-10 components
    - Matching PCB with same components
    - Small CSV inventory with exact matches
-   
+
 2. **Error test fixtures** (for error path testing)
    - Malformed schematic (invalid S-expression)
    - Malformed PCB
@@ -267,11 +267,11 @@ These provide:
 # tests/test_functional_base.py
 class FunctionalTestBase(unittest.TestCase):
     """Base class for functional tests with common utilities."""
-    
+
     @classmethod
     def setUpClass(cls):
         cls.fixtures = Path(__file__).parent / 'fixtures'
-        
+
         # Real-world resources for integration testing
         cls.inventory_numbers = Path('/Users/jplocher/Dropbox/KiCad/jBOM-dev/SPCoast-INVENTORY.numbers')
         cls.real_projects = {
@@ -279,28 +279,28 @@ class FunctionalTestBase(unittest.TestCase):
             'core_wt32': Path('/Users/jplocher/Dropbox/KiCad/projects/Core-wt32-eth0'),
             'led_strip': Path('/Users/jplocher/Dropbox/KiCad/projects/LEDStripDriver'),
         }
-        
+
         # Test fixtures for isolated/error testing
         cls.minimal_proj = cls.fixtures / 'minimal_project'
         cls.inventory_csv = cls.fixtures / 'inventory.csv'
-    
+
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.output_dir = Path(self.tmp.name)
-    
+
     def tearDown(self):
         self.tmp.cleanup()
-    
+
     def run_jbom(self, args, expected_rc=0):
         """Run jBOM CLI and capture output."""
         from io import StringIO
         from jbom.cli.main import main
-        
+
         old_stdout = sys.stdout
         old_stderr = sys.stderr
         stdout = StringIO()
         stderr = StringIO()
-        
+
         try:
             sys.stdout = stdout
             sys.stderr = stderr
@@ -308,13 +308,13 @@ class FunctionalTestBase(unittest.TestCase):
         finally:
             sys.stdout = old_stdout
             sys.stderr = old_stderr
-        
+
         if expected_rc is not None:
-            self.assertEqual(rc, expected_rc, 
+            self.assertEqual(rc, expected_rc,
                 f"Expected exit code {expected_rc}, got {rc}\nstderr: {stderr.getvalue()}")
-        
+
         return rc, stdout.getvalue(), stderr.getvalue()
-    
+
     def assert_csv_valid(self, csv_path):
         """Validate CSV file is well-formed."""
         import csv
@@ -323,7 +323,7 @@ class FunctionalTestBase(unittest.TestCase):
             rows = list(reader)
         self.assertGreater(len(rows), 0, "CSV is empty")
         return rows
-    
+
     def assert_csv_headers(self, csv_path, expected_headers):
         """Validate CSV has expected headers."""
         rows = self.assert_csv_valid(csv_path)
