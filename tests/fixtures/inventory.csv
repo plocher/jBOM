@@ -1,0 +1,6 @@
+IPN,Category,Package,Value,Footprint,LCSC,Datasheet,Manufacturer,Description,Priority
+R-0603-100R,Resistor,0603,100R,Resistor_SMD:R_0603_1608Metric,C22775,https://datasheet.lcsc.com/C22775.pdf,Yageo,100Ω 0603 Resistor,10
+R-0603-1K,Resistor,0603,1K,Resistor_SMD:R_0603_1608Metric,C21190,https://datasheet.lcsc.com/C21190.pdf,Yageo,1KΩ 0603 Resistor,10
+C-0603-100nF,Capacitor,0603,100nF,Capacitor_SMD:C_0603_1608Metric,C14663,https://datasheet.lcsc.com/C14663.pdf,Samsung,100nF 50V 0603 Capacitor,10
+LED-0603-RED,LED,0603,RED,LED_SMD:LED_0603_1608Metric,C2286,https://datasheet.lcsc.com/C2286.pdf,Everlight,Red LED 0603,10
+CONN-HDR-1x2,Connector,PinHeader_1x02,CONN_01x02,Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical,C124413,https://datasheet.lcsc.com/C124413.pdf,BOOMELE,2-pin header,10
