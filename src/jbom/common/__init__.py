@@ -1,11 +1,18 @@
-"""Common utilities shared (eventually) by schematic and PCB modules.
+"""Common utilities shared by schematic and PCB modules.
 
-Phase P0: thin re-exports from jbom.jbom for backward-compat.
+Provides field normalization, type definitions, package lists, and file discovery.
 """
 
 from .fields import normalize_field_name, field_to_header
 from .types import ComponentType, DiagnosticIssue, CommonFields
 from .packages import PackageType, SMDType
+from .utils import (
+    find_best_schematic,
+    find_best_pcb,
+    is_hierarchical_schematic,
+    extract_sheet_files,
+    process_hierarchical_schematic,
+)
 
 __all__ = [
     "normalize_field_name",
@@ -15,4 +22,9 @@ __all__ = [
     "CommonFields",
     "PackageType",
     "SMDType",
+    "find_best_schematic",
+    "find_best_pcb",
+    "is_hierarchical_schematic",
+    "extract_sheet_files",
+    "process_hierarchical_schematic",
 ]

@@ -16,53 +16,7 @@ from jbom.jbom import (
 )
 from jbom.pcb.board_loader import load_board
 from jbom.pcb.position import PositionGenerator, PlacementOptions
-
-
-def find_best_pcb(search_path: Path) -> Optional[Path]:
-    """Find the best PCB file in a directory or return the file itself.
-    
-    Args:
-        search_path: Directory or .kicad_pcb file path
-        
-    Returns:
-        Path to .kicad_pcb file, or None if not found
-    """
-    if search_path.is_file() and search_path.suffix == '.kicad_pcb':
-        return search_path
-    
-    if not search_path.is_dir():
-        return None
-    
-    # Find all PCB files in directory
-    pcb_files = list(search_path.glob('*.kicad_pcb'))
-    if not pcb_files:
-        print(f"No .kicad_pcb file found in {search_path}", file=sys.stderr)
-        return None
-    
-    # Separate autosave and normal files
-    normal_files = [f for f in pcb_files if not f.name.startswith('_autosave-')]
-    autosave_files = [f for f in pcb_files if f.name.startswith('_autosave-')]
-    
-    dir_name = search_path.name
-    
-    # Prefer normal files that match directory name
-    matching_normal = [f for f in normal_files if f.stem == dir_name]
-    if matching_normal:
-        return matching_normal[0]
-    
-    # Use any normal file
-    if normal_files:
-        return sorted(normal_files)[0]
-    
-    # Fall back to autosave files with warning
-    if autosave_files:
-        print(f"WARNING: Only autosave PCB files found in {search_path}. Using autosave file (may be incomplete).", file=sys.stderr)
-        matching_autosave = [f for f in autosave_files if f.stem == f'_autosave-{dir_name}']
-        if matching_autosave:
-            return matching_autosave[0]
-        return sorted(autosave_files)[0]
-    
-    return None
+from jbom.common.utils import find_best_pcb
 
 
 def _cmd_bom(argv: List[str]) -> int:
