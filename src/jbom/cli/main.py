@@ -23,6 +23,22 @@ from jbom.cli.common import apply_jlc_flag
 
 
 def _cmd_bom(argv: List[str]) -> int:
+    """BOM command handler with exception handling."""
+    try:
+        return _cmd_bom_impl(argv)
+    except FileNotFoundError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+    except (ValueError, KeyError, ImportError) as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+    except Exception as e:
+        print(f"Unexpected error: {type(e).__name__}: {e}", file=sys.stderr)
+        return 1
+
+
+def _cmd_bom_impl(argv: List[str]) -> int:
+    """BOM command implementation."""
     p = argparse.ArgumentParser(
         prog='jbom bom',
         description='Generate Bill of Materials (BOM) from KiCad schematic with inventory matching',
@@ -122,6 +138,22 @@ def _cmd_bom(argv: List[str]) -> int:
 
 
 def _cmd_pos(argv: List[str]) -> int:
+    """POS command handler with exception handling."""
+    try:
+        return _cmd_pos_impl(argv)
+    except FileNotFoundError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+    except (ValueError, KeyError, ImportError) as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+    except Exception as e:
+        print(f"Unexpected error: {type(e).__name__}: {e}", file=sys.stderr)
+        return 1
+
+
+def _cmd_pos_impl(argv: List[str]) -> int:
+    """POS command implementation."""
     p = argparse.ArgumentParser(
         prog='jbom pos',
         description='Generate component placement (POS/CPL) file from KiCad PCB for pick-and-place assembly',

@@ -67,10 +67,6 @@ class FunctionalTestBase(unittest.TestCase):
         except SystemExit as e:
             # Argparse calls sys.exit() on error
             rc = e.code if e.code is not None else 1
-        except Exception as e:
-            # Other exceptions should be treated as failures
-            stderr.write(f"Error: {type(e).__name__}: {str(e)}\n")
-            rc = 1
         finally:
             sys.stdout = old_stdout
             sys.stderr = old_stderr
