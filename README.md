@@ -50,10 +50,13 @@ python -m jbom bom MyProject/ -i inventory.xlsx
 python -m jbom bom MyProject/ -i inventory.xlsx --jlc
 
 # Placement/CPL (PCB → CSV for pick-and-place machines)
-python -m jbom pos MyBoard.kicad_pcb -o MyBoard.pos.csv
+python -m jbom pos MyProject/
 
-# Placement with JLCPCB format
-python -m jbom pos MyBoard.kicad_pcb -o MyBoard_cpl.csv --jlc
+# Placement with JLCPCB format (auto-detects PCB in project)
+python -m jbom pos MyProject/ --jlc
+
+# Or specify PCB file directly
+python -m jbom pos MyBoard.kicad_pcb -o MyBoard.pos.csv
 ```
 
 **Via Python:**

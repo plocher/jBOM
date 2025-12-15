@@ -8,7 +8,7 @@ jbom — generate Bill of Materials (BOM) and Component Placement (CPL/POS)
 
 ```
 python -m jbom bom PROJECT -i INVENTORY [-o OUTPUT] [BOM OPTIONS]
-python -m jbom pos BOARD.kicad_pcb -o OUTPUT [POS OPTIONS]
+python -m jbom pos PROJECT [-o OUTPUT] [POS OPTIONS]
 ```
 
 ## DESCRIPTION
@@ -69,8 +69,8 @@ Write a JSON report to FILE with statistics (entry count, unmatched count, forma
 
 ## POS ARGUMENTS
 
-**BOARD.kicad_pcb**
-: Path to a KiCad PCB file.
+**PROJECT**
+: KiCad project directory or a specific .kicad_pcb file. If a directory is given, jBOM auto-detects the PCB file (prefers files matching the directory name).
 
 ## POS OPTIONS
 
@@ -78,7 +78,7 @@ Write a JSON report to FILE with statistics (entry count, unmatched count, forma
 Imply `+jlc` field preset for JLCPCB-compatible placement output. This preset includes: Designator, Mid X, Mid Y, Layer, Rotation columns in the order expected by JLCPCB's assembly service.
 
 **-o, --output FILE**
-: Output CSV path (required). File will contain component placement data.
+: Output CSV path. If omitted, generates `<PROJECT>_pos.csv` in the project directory. File will contain component placement data.
 
 **-f, --fields FIELDS**
 : Column selection for CPL/POS output. Use presets with `+` prefix or a comma-separated list of field names.
@@ -163,24 +163,29 @@ BOM all fields:
 python -m jbom bom MyProject/ -i inventory.csv -f +all
 ```
 
-POS (KiCad-style columns):
+POS (auto-detect from project directory):
 ```
-python -m jbom pos MyBoard.kicad_pcb -o MyBoard.pos.csv -f +kicad_pos --units mm --origin board
+python -m jbom pos MyProject/
 ```
 
 POS (JLCPCB-style with --jlc flag):
 ```
-python -m jbom pos MyBoard.kicad_pcb -o MyBoard_cpl.csv --jlc --units mm --origin aux
+python -m jbom pos MyProject/ --jlc
 ```
 
 POS (SMD only, top side):
 ```
-python -m jbom pos MyBoard.kicad_pcb -o MyBoard_top.csv --smd-only --layer TOP
+python -m jbom pos MyProject/ --smd-only --layer TOP
 ```
 
-POS (custom fields):
+POS (custom fields and explicit PCB file):
 ```
 python -m jbom pos MyBoard.kicad_pcb -o MyBoard.csv -f "Reference,X,Y,Footprint,Side"
+```
+
+POS (specific output location):
+```
+python -m jbom pos MyProject/ -o fabrication/placement.csv
 ```
 
 Verbose BOM scoring:
