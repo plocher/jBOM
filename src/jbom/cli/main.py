@@ -13,6 +13,7 @@ from jbom.jbom import (
     GenerateOptions,
     generate_bom_api,
     _parse_fields_argument,
+    print_bom_table,
 )
 from jbom.pcb.board_loader import load_board
 from jbom.pcb.position import PositionGenerator, PlacementOptions
@@ -45,19 +46,27 @@ def _cmd_bom(argv: List[str]) -> int:
     else:
         fields = _parse_fields_argument('+standard', result['available_fields'], include_verbose=args.verbose, any_notes=any_notes)
 
-    # Determine output path using shared utility
-    out = resolve_output_path(
-        Path(args.project),
-        args.output,
-        args.outdir,
-        '_bom.csv'
-    )
-
-    # Write via BOMGenerator (recreate matcher)
-    from jbom.jbom import InventoryMatcher, BOMGenerator
-    matcher = InventoryMatcher(Path(args.inventory))
-    bom_gen = BOMGenerator(result['components'], matcher)
-    bom_gen.write_bom_csv(result['bom_entries'], out, fields)
+    # Check if output should be formatted console output
+    output_str = args.output.lower() if args.output else ''
+    console_output = output_str in ('-', 'console', 'stdout')
+    
+    if console_output:
+        # Formatted table output to console
+        print_bom_table(result['bom_entries'], verbose=args.verbose, include_mfg=False)
+    else:
+        # Determine output path using shared utility
+        out = resolve_output_path(
+            Path(args.project),
+            args.output,
+            args.outdir,
+            '_bom.csv'
+        )
+        
+        # Write via BOMGenerator (recreate matcher)
+        from jbom.jbom import InventoryMatcher, BOMGenerator
+        matcher = InventoryMatcher(Path(args.inventory))
+        bom_gen = BOMGenerator(result['components'], matcher)
+        bom_gen.write_bom_csv(result['bom_entries'], out, fields)
 
     return 0
 
