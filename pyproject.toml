@@ -89,3 +89,5 @@ patch_tags = ["fix", "perf", "refactor"]
 [tool.semantic_release.publish]
 dist_glob_patterns = ["dist/*"]
 upload_to_vcs_release = true
+upload_to_pypi = true
+upload_to_repository = true
