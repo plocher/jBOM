@@ -1,9 +1,11 @@
-"""Inventory matching API surface.
+"""Inventory management for jBOM.
 
-Re-exports inventory API from jbom.jbom for convenience.
-This allows imports like: from jbom.inventory import InventoryMatcher
+Provides inventory loading and matching functionality.
+Supports CSV, Excel (.xlsx, .xls), and Apple Numbers (.numbers) file formats.
 """
 
-from ..jbom import InventoryMatcher, InventoryItem
+from jbom.inventory.loader import InventoryLoader
+from jbom.inventory.matcher import InventoryMatcher
+from jbom.common.types import InventoryItem
 
-__all__ = ["InventoryMatcher", "InventoryItem"]
+__all__ = ["InventoryLoader", "InventoryMatcher", "InventoryItem"]
