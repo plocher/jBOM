@@ -260,12 +260,20 @@ def _cmd_pos_impl(argv: List[str]) -> int:
 
 def main(argv: List[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
+    
+    # Handle --version flag
+    if argv and argv[0] in ('-V', '--version'):
+        from jbom.__version__ import __version__
+        print(f"jBOM version {__version__}")
+        return 0
+    
     if not argv or argv[0] in ('-h', '--help'):
         print('''jBOM - KiCad Bill of Materials and Placement File Generator
 
 Usage:
   jbom bom PROJECT -i INVENTORY [options]    Generate BOM from schematic
   jbom pos BOARD [options]                   Generate placement file from PCB
+  jbom --version                             Show version information
 
 Commands:
   bom    Generate Bill of Materials with inventory matching

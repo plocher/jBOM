@@ -149,7 +149,7 @@ For detailed development setup, coding standards, and testing guidelines, see [d
 
 ## Version
 
-jBOM v1.0.1 — Stable release with intelligent component matching, case-insensitive field handling, enhanced tolerance-aware matching, multiple inventory formats, and comprehensive integration options.
+jBOM v2.1.0 — Feature release with intelligent component matching, comprehensive functional testing, proper acronym handling in CSV headers, improved CLI exception handling, and extensive edge case coverage.
 
 Author: John Plocher
 
