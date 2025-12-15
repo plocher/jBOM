@@ -1,23 +1,26 @@
-"""Schematic-focused API surface for jBOM.
+"""Schematic parsing and component type detection for jBOM.
 
-Re-exports schematic/BOM API from jbom.jbom for convenience.
-This allows imports like: from jbom.sch import Component, BOMGenerator
+Provides:
+- KiCad schematic parsing (.kicad_sch files)
+- Component type detection from library IDs and footprints
+- Category-specific field mappings
 """
 
-from ..jbom import (
-    GenerateOptions,
-    generate_bom_api,
-    Component,
-    BOMEntry,
-    BOMGenerator,
-    KiCadParser,
+from jbom.sch.parser import KiCadParser
+from jbom.sch.types import (
+    get_component_type,
+    get_category_fields,
+    get_value_interpretation,
+    normalize_component_type,
 )
+from jbom.common.types import Component, BOMEntry
 
 __all__ = [
-    "GenerateOptions",
-    "generate_bom_api",
+    "KiCadParser",
+    "get_component_type",
+    "get_category_fields",
+    "get_value_interpretation",
+    "normalize_component_type",
     "Component",
     "BOMEntry",
-    "BOMGenerator",
-    "KiCadParser",
 ]

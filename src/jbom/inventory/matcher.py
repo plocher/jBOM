@@ -30,23 +30,8 @@ from jbom.common.values import (
 from jbom.inventory.loader import InventoryLoader
 
 
-# Import component type detection utilities from jbom module
-def get_component_type(lib_id: str, footprint: str) -> Optional[str]:
-    """Determine component type from lib_id or footprint.
-
-    This function is imported from jbom.jbom to maintain consistency.
-    """
-    from jbom.jbom import get_component_type as _get_type
-    return _get_type(lib_id, footprint)
-
-
-def get_category_fields(component_type: str) -> List[str]:
-    """Get relevant fields for a component category.
-
-    This function is imported from jbom.jbom to maintain consistency.
-    """
-    from jbom.jbom import get_category_fields as _get_fields
-    return _get_fields(component_type)
+# Import component type detection utilities from sch module
+from jbom.sch.types import get_component_type, get_category_fields
 
 
 class InventoryMatcher:
