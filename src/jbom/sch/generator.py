@@ -4,7 +4,10 @@ Generates bill of materials (BOM) from parsed KiCad components,
 matching them against inventory items to produce fabrication-ready output.
 """
 
+import csv
 import re
+import sys
+from pathlib import Path
 from typing import List, Dict, Optional, Tuple
 
 from jbom.common.types import Component, InventoryItem, BOMEntry
@@ -16,6 +19,7 @@ from jbom.common.constants import (
     PRECISION_THRESHOLD,
 )
 from jbom.common.packages import PackageType
+from jbom.common.fields import normalize_field_name, field_to_header
 from jbom.sch.types import get_component_type
 from jbom.inventory.matcher import InventoryMatcher
 
@@ -602,3 +606,369 @@ class BOMGenerator:
             groups[key].append(component)
 
         return groups
+
+    def get_available_fields(self, components: List[Component]) -> Dict[str, str]:
+        """Get all available fields from BOM entries, inventory, and components with descriptions.
+
+        All field names are normalized to snake_case internally.
+        Returns dict mapping normalized field names to descriptions.
+        """
+        fields = {}
+
+        # Standard BOM entry fields (normalized to snake_case)
+        bom_fields = {
+            "reference": "Component reference designators (R1, C2, etc.)",
+            "quantity": "Number of components",
+            "description": "Component description from inventory",
+            "value": "Component value (10k, 100nF, etc.)",
+            "footprint": "PCB footprint name",
+            "lcsc": "LCSC part number",
+            "manufacturer": "Component manufacturer",
+            "mfgpn": "Manufacturer part number",
+            "datasheet": "Link to component datasheet",
+            "smd": "Surface mount/through-hole indicator",
+            "match_quality": "Inventory matching score (verbose mode)",
+            "notes": "Additional notes and warnings",
+            "priority": "Inventory item priority (verbose mode)",
+        }
+        fields.update(bom_fields)
+
+        # Gather component properties from actual components - normalize field names
+        component_props = set()
+        for component in components:
+            for prop_name in component.properties.keys():
+                normalized = normalize_field_name(prop_name)
+                component_props.add(normalized)
+
+        # Normalize inventory field names
+        inventory_names = set()
+        for inv_field in self.matcher.inventory_fields:
+            normalized = normalize_field_name(inv_field)
+            inventory_names.add(normalized)
+
+        # Create sets for systematic handling
+        standard_field_names = set(fields.keys())  # Already normalized
+
+        # Process all inventory and component fields systematically
+        all_field_names = inventory_names.union(component_props)
+
+        for field_name in sorted(all_field_names):
+            # Skip if it's already a standard BOM field
+            if field_name in standard_field_names:
+                continue
+
+            has_inventory = field_name in inventory_names
+            has_component = field_name in component_props
+
+            if has_inventory and has_component:
+                # Ambiguous field - add unprefixed version and prefixed versions
+                fields[
+                    field_name
+                ] = f"Ambiguous field: {field_to_header(field_name)} (will show both inventory and component versions)"
+                fields[
+                    f"i:{field_name}"
+                ] = f"Inventory field: {field_to_header(field_name)}"
+                fields[
+                    f"c:{field_name}"
+                ] = f"Component property: {field_to_header(field_name)}"
+            elif has_inventory:
+                # Inventory only - add both unprefixed and prefixed
+                fields[field_name] = f"Inventory field: {field_to_header(field_name)}"
+                fields[
+                    f"i:{field_name}"
+                ] = f"Inventory field: {field_to_header(field_name)}"
+            elif has_component:
+                # Component only - add both unprefixed and prefixed
+                fields[
+                    field_name
+                ] = f"Component property: {field_to_header(field_name)}"
+                fields[
+                    f"c:{field_name}"
+                ] = f"Component property: {field_to_header(field_name)}"
+
+        return fields
+
+    def _get_inventory_field_value(
+        self, field: str, inventory_item: Optional[InventoryItem]
+    ) -> str:
+        """Get a value from inventory item's raw data, handling cleaned field names.
+
+        Field should be in normalized snake_case format.
+        """
+        if not inventory_item:
+            return ""
+
+        # Try to find a raw field that matches when normalized
+        for raw_field, value in inventory_item.raw_data.items():
+            if raw_field:
+                # Clean up the raw field name (handle newlines) and normalize it
+                cleaned_field = " ".join(
+                    raw_field.replace("\n", " ").replace("\r", " ").split()
+                )
+                if normalize_field_name(cleaned_field) == field:
+                    return value
+
+        return ""
+
+    def _has_inventory_field(
+        self, field: str, inventory_item: Optional[InventoryItem]
+    ) -> bool:
+        """Check if field exists in inventory data.
+
+        Field should be in normalized snake_case format.
+        """
+        if not inventory_item:
+            return False
+
+        # Check if a raw field matches when normalized
+        for raw_field in inventory_item.raw_data.keys():
+            if raw_field:
+                # Clean up the raw field name (handle newlines) and normalize it
+                cleaned_field = " ".join(
+                    raw_field.replace("\n", " ").replace("\r", " ").split()
+                )
+                if normalize_field_name(cleaned_field) == field:
+                    return True
+
+        return False
+
+    def _get_field_value(
+        self,
+        field: str,
+        entry: BOMEntry,
+        component: Component,
+        inventory_item: Optional[InventoryItem],
+    ) -> str:
+        """Get the value for a specific field from BOM entry, component, or inventory.
+
+        Expects field to be in normalized snake_case format (e.g., 'match_quality', 'i:package').
+        """
+        # Ensure field is normalized
+        field = normalize_field_name(field)
+
+        # Standard BOM entry fields (all normalized snake_case)
+        if field == "reference":
+            return entry.reference
+        elif field == "quantity":
+            return str(entry.quantity)
+        elif field == "description":
+            return entry.description
+        elif field == "value":
+            return entry.value
+        elif field == "footprint":
+            return entry.footprint
+        elif field == "lcsc":
+            return entry.lcsc
+        elif field == "manufacturer":
+            return entry.manufacturer
+        elif field == "mfgpn":
+            return entry.mfgpn
+        elif field == "datasheet":
+            return entry.datasheet
+        elif field == "smd":
+            return entry.smd
+        elif field == "match_quality":
+            return entry.match_quality
+        elif field == "notes":
+            return entry.notes
+        elif field == "priority":
+            return str(entry.priority)
+
+        # Component properties (prefixed with c:)
+        elif field.startswith("c:"):
+            prop_name = field[2:]  # Remove 'c:' prefix
+            # Find matching property in component (normalized)
+            for comp_prop, value in component.properties.items():
+                if normalize_field_name(comp_prop) == prop_name:
+                    return value
+            return ""
+
+        # Inventory fields (prefixed with i:)
+        elif field.startswith("i:"):
+            inv_field = field[2:]  # Remove 'i:' prefix
+            return self._get_inventory_field_value(inv_field, inventory_item)
+
+        # Ambiguous fields (no prefix) - check if it exists in both inventory and component
+        else:
+            if inventory_item:
+                # Check if this field exists in both sources (using normalized names)
+                has_inventory = self._has_inventory_field(field, inventory_item)
+                has_component = any(
+                    normalize_field_name(prop) == field
+                    for prop in component.properties.keys()
+                )
+
+                if has_inventory and has_component:
+                    # Return both values with headers - this will be handled specially in CSV writing
+                    inv_val = self._get_inventory_field_value(field, inventory_item)
+                    # Find component value with matching normalized name
+                    comp_val = ""
+                    for prop_name, prop_val in component.properties.items():
+                        if normalize_field_name(prop_name) == field:
+                            comp_val = prop_val
+                            break
+                    return f"i:{inv_val}|c:{comp_val}"
+                elif has_inventory:
+                    return self._get_inventory_field_value(field, inventory_item)
+                elif has_component:
+                    # Find component value with matching normalized name
+                    for prop_name, prop_val in component.properties.items():
+                        if normalize_field_name(prop_name) == field:
+                            return prop_val
+                    return ""
+
+            # Fallback: try inventory field
+            if inventory_item:
+                return self._get_inventory_field_value(field, inventory_item)
+
+        return ""
+
+    def write_bom_csv(
+        self, bom_entries: List[BOMEntry], output_path: Path, fields: List[str]
+    ):
+        """Write BOM entries to CSV file or stdout using the specified field list.
+
+        Fields are expected to be in normalized snake_case format.
+        CSV headers will be converted to human-readable Title Case format.
+
+        Special output_path values for stdout:
+        - "-"
+        - "console"
+        - "stdout"
+        """
+        # Check if output should go to stdout
+        output_str = str(output_path)
+        use_stdout = output_str in ("-", "console", "stdout")
+
+        if use_stdout:
+            f = sys.stdout
+        else:
+            f = open(output_path, "w", newline="", encoding="utf-8")
+
+        try:
+            writer = csv.writer(f)
+
+            # Process fields to handle ambiguous ones
+            header = []
+            normalized_fields = []  # Keep normalized versions for value retrieval
+            for field in fields:
+                # Check if this is an ambiguous field by testing with a sample entry
+                if bom_entries:
+                    sample_entry = bom_entries[0]
+                    first_ref = sample_entry.reference.replace("ALT: ", "").split(", ")[
+                        0
+                    ]
+                    sample_component = None
+                    sample_inventory = None
+
+                    # Find sample component and inventory item
+                    for comp in self.components:
+                        if comp.reference == first_ref:
+                            sample_component = comp
+                            break
+                    if sample_entry.lcsc:
+                        for item in self.matcher.inventory:
+                            if item.lcsc == sample_entry.lcsc:
+                                sample_inventory = item
+                                break
+
+                    # Test if field returns ambiguous value
+                    if sample_component and sample_inventory:
+                        test_value = self._get_field_value(
+                            field, sample_entry, sample_component, sample_inventory
+                        )
+                        if (
+                            "|" in test_value
+                            and test_value.startswith("i:")
+                            and "c:" in test_value
+                        ):
+                            # This is an ambiguous field - split into two columns
+                            header.extend(
+                                [
+                                    field_to_header(f"i:{field}"),
+                                    field_to_header(f"c:{field}"),
+                                ]
+                            )
+                            normalized_fields.extend([f"i:{field}", f"c:{field}"])
+                            continue
+
+                # Regular field - convert to Title Case header
+                header.append(field_to_header(field))
+                normalized_fields.append(field)
+
+            writer.writerow(header)
+
+            # Write entries
+            for entry in bom_entries:
+                # Parse first component reference to get original component data
+                first_ref = entry.reference.replace("ALT: ", "").split(", ")[0]
+                component = None
+                inventory_item = None
+
+                # Find the component by reference
+                for comp in self.components:
+                    if comp.reference == first_ref:
+                        component = comp
+                        break
+
+                # Find matching inventory item if LCSC is available
+                if entry.lcsc:
+                    for item in self.matcher.inventory:
+                        if item.lcsc == entry.lcsc:
+                            inventory_item = item
+                            break
+
+                # Build row using specified fields (normalized_fields)
+                row = []
+                i = 0
+                while i < len(normalized_fields):
+                    field = normalized_fields[i]
+
+                    # Check if this is a split ambiguous field pair
+                    if (
+                        field.startswith("i:")
+                        and i + 1 < len(normalized_fields)
+                        and normalized_fields[i + 1].startswith("c:")
+                        and field[2:] == normalized_fields[i + 1][2:]
+                    ):
+                        # Handle split ambiguous field
+                        base_field = field[2:]  # Remove i: prefix
+                        inv_value = self._get_inventory_field_value(
+                            base_field, inventory_item
+                        )
+                        comp_value = ""
+                        if component:
+                            # Find component value with matching normalized name
+                            for prop_name, prop_val in component.properties.items():
+                                if normalize_field_name(prop_name) == base_field:
+                                    comp_value = prop_val
+                                    break
+                        row.extend([inv_value, comp_value])
+                        i += 2  # Skip the next field since we handled both
+                    else:
+                        # Regular field
+                        value = self._get_field_value(
+                            field,
+                            entry,
+                            component or Component("", "", "", ""),
+                            inventory_item,
+                        )
+                        # Handle ambiguous values that weren't split in header
+                        if "|" in value and value.startswith("i:") and "c:" in value:
+                            # Split the combined value
+                            parts = value.split("|")
+                            inv_part = parts[0][2:] if parts[0].startswith("i:") else ""
+                            comp_part = (
+                                parts[1][2:]
+                                if len(parts) > 1 and parts[1].startswith("c:")
+                                else ""
+                            )
+                            row.append(f"{inv_part} / {comp_part}")
+                        else:
+                            row.append(value)
+                        i += 1
+
+                writer.writerow(row)
+        finally:
+            if not use_stdout:
+                f.close()

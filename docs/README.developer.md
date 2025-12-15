@@ -10,6 +10,45 @@ jBOM is a comprehensive fabrication tool that provides two main capabilities:
 
 2. **Placement Generation**: Extracts component placement data from KiCad PCB files to generate CPL/POS files for pick-and-place assembly. Supports multiple loader methods (pcbnew API and S-expression parsing), flexible coordinate systems (board origin and aux origin), and output formats (KiCad-style and JLCPCB-compatible).
 
+### Module Structure
+
+jBOM follows a clean, modular architecture (as of Dec 2025 refactoring):
+
+```
+src/jbom/
+├── common/              # Shared utilities and data types
+│   ├── types.py         # Data classes: Component, InventoryItem, BOMEntry
+│   ├── constants.py     # Enums and constants (ComponentType, ScoreWeights, etc.)
+│   ├── fields.py        # Field name normalization and formatting
+│   ├── values.py        # Value parsing utilities
+│   ├── packages.py      # Package type detection
+│   ├── sexp_parser.py   # S-expression parsing utilities
+│   └── utils.py         # File discovery and hierarchical schematic utilities
+│
+├── inventory/           # Inventory management
+│   ├── loader.py        # InventoryLoader: Load inventory from CSV/Excel/Numbers
+│   └── matcher.py       # InventoryMatcher: Match components to inventory
+│
+├── sch/                 # Schematic processing and BOM generation
+│   ├── loader.py        # SchematicLoader: Parse KiCad .kicad_sch files
+│   ├── types.py         # Component type detection and category fields
+│   └── generator.py     # BOMGenerator: Generate BOM from components and inventory
+│
+├── pcb/                 # PCB processing and position file generation
+│   ├── loader.py        # BoardLoader: Load KiCad .kicad_pcb files
+│   ├── model.py         # BoardModel and PcbComponent data structures
+│   └── position.py      # PositionGenerator: Generate CPL/POS files
+│
+└── jbom.py             # CLI interface and main orchestration (970 lines)
+```
+
+**Key Design Principles:**
+- **Naming Consistency**: All file loaders use `loader.py` (InventoryLoader, SchematicLoader, BoardLoader)
+- **Generator Pattern**: Both BOMGenerator and PositionGenerator follow identical patterns
+- **Type Safety**: Extensive use of type hints and dataclasses
+- **Separation of Concerns**: Parsing → Matching → Generation pipeline
+- **No Circular Dependencies**: Clean import hierarchy
+
 ## Key Features (Technical)
 
 - **KiCad schematic parsing**
@@ -146,6 +185,109 @@ BOM:
     *  SMD indicators: 0402, 0603, 0805, 1206, 1210, sot-23, soic, tssop, qfn, dfn, bga
     *  Through-hole indicators: dip, through-hole, axial, radial
   4) Conservative default: Includes components when uncertain (better to include than exclude)
+
+## BOMGenerator Class (`sch/generator.py`)
+
+The `BOMGenerator` class (974 lines) is responsible for generating bill of materials from parsed components and inventory matches.
+
+### Initialization
+
+```python
+from jbom.sch import BOMGenerator
+from jbom.inventory import InventoryMatcher
+
+# Create BOM generator with components and matcher
+generator = BOMGenerator(components, matcher)
+```
+
+### Core Methods
+
+**`generate_bom(verbose, debug, smd_only)`**
+- Main BOM generation method
+- Returns: `(bom_entries, excluded_count, debug_diagnostics)`
+- Groups components by matching inventory item
+- Handles 1% resistor tolerance detection and warnings
+- Filters for SMD-only if requested
+- Sorts by category and component numbering
+
+**`write_bom_csv(bom_entries, output_path, fields)`**
+- Writes BOM to CSV file or stdout
+- Handles field normalization and header generation
+- Supports ambiguous field splitting (I:/C: prefixes)
+- Special paths: "-", "console", "stdout" write to stdout
+
+**`get_available_fields(components)`**
+- Discovers all available fields from:
+  - Standard BOM entry fields
+  - Inventory CSV columns
+  - Component properties from schematic
+- Returns dict mapping normalized field names to descriptions
+- Handles ambiguous fields (present in both inventory and components)
+
+### Field Access Methods
+
+**`_get_field_value(field, entry, component, inventory_item)`**
+- Retrieves field value from appropriate source
+- Handles standard BOM fields, inventory fields (i: prefix), component properties (c: prefix)
+- Normalizes field names for case-insensitive matching
+- Returns combined values for ambiguous fields
+
+**`_get_inventory_field_value(field, inventory_item)`**
+- Extracts field from inventory item's raw data
+- Handles field name normalization and whitespace cleanup
+
+**`_has_inventory_field(field, inventory_item)`**
+- Checks if field exists in inventory data
+- Uses normalized field name matching
+
+### Component Analysis Methods
+
+**`_analyze_no_match_component(component)`**
+- Diagnoses why a component has no inventory matches
+- Returns structured diagnostic data with:
+  - Component information (reference, lib_id, value, footprint)
+  - Analysis results (type, package, normalized value)
+  - Issue classification (type unknown, no type match, no value match, package mismatch)
+
+**`_generate_diagnostic_message(diagnostic_data, format_type)`**
+- Formats diagnostic data for different outputs:
+  - "bom": Semicolon-separated format for CSV Notes column
+  - "console": User-friendly multi-line format for warnings
+
+**`_format_issue_message(issue, comp_type, format_type)`**
+- Formats specific issue messages based on issue type
+- Provides context-appropriate error descriptions
+
+### Utility Methods
+
+**`_group_components()`**
+- Groups components by best matching inventory item (IPN + footprint)
+- Ensures equivalent component notations are grouped together
+- Fallback grouping by value + footprint for unmatched components
+
+**`_format_display_value(component)`**
+- Converts component values to EIA format for display
+- Handles precision indicators (10K0 for 1% resistors)
+- Type-specific formatting (R/C/L)
+
+**`_analyze_matches(matches, best_item, verbose)`**
+- Handles tied priority matches
+- Returns notes and alternative items based on verbose flag
+- Limits alternative entries to keep BOM manageable (max 2)
+
+**`_is_smd_component(entry)`**
+- Determines if component is surface mount
+- Uses multi-level detection (explicit field → footprint inference → conservative default)
+
+**`_bom_sort_key(entry)`**
+- Generates sort key for BOM entry
+- Returns: (category, min_component_number, full_reference)
+- Handles multi-component entries (e.g., "R1, R2, R3")
+
+**`_parse_reference(ref)`**
+- Parses component reference into category and number
+- Handles multi-letter prefixes (LED, IC, etc.)
+- Returns: (category, number) for sorting
 
 ## Field System and Custom Columns
 
