@@ -1,6 +1,16 @@
 # CHANGELOG
 
 
+## v2.1.3 (2025-12-15)
+
+### Bug Fixes
+
+* fix(ci): enable PyPI uploads in semantic-release config
+
+Added upload_to_pypi and upload_to_repository options to ensure
+packages are uploaded to PyPI during the publish step. ([`c91f8dd`](https://github.com/plocher/jBOM/commit/c91f8dd6ba737a31b0884dda8807491c1f90b3c6))
+
+
 ## v2.1.2 (2025-12-15)
 
 ### Bug Fixes
