@@ -1,6 +1,40 @@
 # CHANGELOG
 
 
+## v2.1.2 (2025-12-15)
+
+### Bug Fixes
+
+* fix(ci): use separate version and publish commands
+
+The 'publish' command alone does not create new versions - it only
+publishes an existing version. Need to run 'version' first to create
+the new version, then 'publish' to upload distributions to PyPI. ([`be97b6d`](https://github.com/plocher/jBOM/commit/be97b6d1b0cfabcc90077bbbce58b0ebd3377d98))
+
+* fix(ci): add verbose output to semantic-release workflow for debugging ([`3e2d90b`](https://github.com/plocher/jBOM/commit/3e2d90bf7eea1c68e6349381a893ea9156728efa))
+
+* fix(ci): move semantic-release config to pyproject.toml
+
+The configuration was in .releaserc.toml but python-semantic-release v9
+reads from pyproject.toml. This caused version files to not be updated.
+
+Moved all [tool.semantic_release] configuration from .releaserc.toml
+to pyproject.toml and deleted the obsolete file. ([`845a701`](https://github.com/plocher/jBOM/commit/845a7019de4542c5e19a7ed3157fa8e1c6aaac99))
+
+* fix(ci): correct semantic-release workflow to update version files
+
+Changed semantic-release workflow to use single 'publish' command instead
+of split 'version' and 'publish'. The v9 'publish' command does both
+version bumping and publishing in one step.
+
+Also updated environment variables to use REPOSITORY_USERNAME and
+REPOSITORY_PASSWORD which are the correct variable names for PyPI
+authentication in python-semantic-release v9.
+
+This should fix the issue where semantic-release was only updating
+CHANGELOG.md but not version files or publishing to PyPI. ([`cbc4391`](https://github.com/plocher/jBOM/commit/cbc439165932c4a68978f363db26ade2d5815604))
+
+
 ## v2.1.1 (2025-12-15)
 
 ### Bug Fixes
@@ -34,91 +68,8 @@ Changes to pyproject.toml:
 This enables automatic PyPI publishing when semantic-release creates
 new versions based on conventional commit messages. ([`152d67d`](https://github.com/plocher/jBOM/commit/152d67da8544c66291b7ded5e1a22fd360df4943))
 
-### Chores
-
-* chore: apply pre-commit formatting fixes
-
-- Black formatting applied to src/jbom/cli/main.py
-- Fix trailing whitespace in scripts/check-version.sh
-- Update .secrets.baseline from detect-secrets hook
-- Remove unused Optional import ([`245d0cf`](https://github.com/plocher/jBOM/commit/245d0cf631f6d135d9b3f09931915b6dfbce19bb))
-
-* chore: synchronize version to 2.1.0 and add version management tools
-
-- Update version to 2.1.0 in __version__.py, pyproject.toml, and README.md
-- Add --version flag to CLI (returns version from __version__.py)
-- Create VERSION_MANAGEMENT.md documentation
-- Add scripts/check-version.sh to verify version consistency
-- Document single source of truth pattern for version management
-- Note semantic-release integration for automated versioning
-
-Fixes version drift between git tag v2.0.0 and code version.
-All version references now consistent at 2.1.0. ([`49d191f`](https://github.com/plocher/jBOM/commit/49d191fbb99208ba826049934701961c8bc47ae9))
-
 
 ## v2.1.0 (2025-12-15)
-
-### Documentation
-
-* docs: Add structural cleanup analysis
-
-Comprehensive analysis of remaining cleanup opportunities:
-
-Issue 1: Unused Legacy Shims
-- sch/api.py, sch/model.py, sch/bom.py, sch/parser.py are unused
-- inventory/matcher.py is unused
-- Marked as "Phase P0" temporary but never removed
-- Only referenced in documentation, not actual code
-- Recommendation: DELETE (1-2 hours, zero risk)
-
-Issue 2: BOM API in Wrong Location
-- generate_bom_api() should be in sch/ not jbom.py
-- jbom.py is 2700 lines (God Object anti-pattern)
-- Violates modular structure from refactoring
-- Recommendation: Extract over time (2-3 days, medium risk)
-
-Issue 3: Duplicate S-expression Parsing
-- Both schematic and PCB parsing use sexpdata
-- Similar patterns: loads(), Symbol, recursive walking
-- Recommendation: Create common/sexp_parser.py (1 day, low risk)
-
-Issue 4: inventory/ Package Structure
-- Similar shim situation as sch/
-- Recommendation: Same as Issue 2
-
-Priority: Remove shims first (quick win), extract S-expr utils next,
-finish jbom.py extraction as future work. ([`44587df`](https://github.com/plocher/jBOM/commit/44587df53fd0b55ce82a3c47a32f4dbe78e5ab8b))
-
-* docs: Add detailed implementation notes for Steps 5-6 (generator refactoring)
-
-Create comprehensive de-risking documentation for remaining refactoring work:
-
-- Risk assessment of BOMGenerator and PositionGenerator refactoring
-- Recommended Adapter Pattern approach (vs direct refactoring)
-- Detailed code examples for both adapters
-- Complete testing strategy with validation checklist
-- Phased rollout plan with feature flags
-- Estimated effort: ~30 hours with buffer
-- Success criteria and decision points
-
-Key insights:
-- Adapter pattern eliminates risk to existing code
-- Feature flags enable gradual rollout and easy rollback
-- PositionGenerator simpler, good proof-of-concept candidate
-- BOMGenerator complex, needs extensive testing
-
-This documentation enables informed decision-making about completing
-the remaining 25% of the refactoring plan. ([`6a7d730`](https://github.com/plocher/jBOM/commit/6a7d730a93fb9e634ec4d6faeb8aeb4254e4cf78))
-
-* docs: Enhance documentation for BOM and PCB placement features
-
-- Update README title and description to reflect dual BOM/placement functionality
-- Add comprehensive PCB placement examples and usage patterns
-- Enhance CLI man page with detailed POS command documentation
-- Add PCB module architecture section to developer guide
-- Update architecture doc with complete module hierarchy and API usage
-- Document dual-mode loading, field system, and JLCPCB integration
-- Include future development roadmap for PCB features ([`ede97cb`](https://github.com/plocher/jBOM/commit/ede97cb7349d7640ba5ac332d2f807b37b8ccd3c))
 
 ### Features
 
@@ -800,24 +751,6 @@ This refactor maintains API compatibility but changes internal imports. ([`8ce30
 - Externalize inventory path via INVENTORY env var
 - Provides clean developer experience with `make test`, `make integration`, etc. ([`b60284d`](https://github.com/plocher/jBOM/commit/b60284dbf89b2e476ffaded5a23f040f47ed1c26))
 
-### Chores
-
-* chore: Apply pre-commit formatting fixes
-
-- Black formatting for values.py
-- Update .secrets.baseline timestamp
-- Track .DS_Store files ([`491e165`](https://github.com/plocher/jBOM/commit/491e16544bf8bcc04f6c5d525959e9570f3ac6eb))
-
-### Documentation
-
-* docs: Update documentation for new architecture and CLI
-
-- Update README with new subcommand-based CLI examples
-- Add architecture documentation describing modular package structure
-- Update developer guide with new module layout and testing approach
-- Update man page for new CLI interface
-- Remove obsolete docs/README.md ([`6976709`](https://github.com/plocher/jBOM/commit/69767093a58b214cc6527669a8d195b8c72f465d))
-
 ### Features
 
 * feat: Add PCB board loading with pcbnew API and S-expression fallback
@@ -828,47 +761,8 @@ This refactor maintains API compatibility but changes internal imports. ([`8ce30
 - Extract position, rotation, layer, and footprint for all components
 - Foundation for PCB-based fabrication workflows ([`e8f56ca`](https://github.com/plocher/jBOM/commit/e8f56ca36f12e71a967b8e448aa439c879b3ce7e))
 
-### Testing
-
-* test: Add comprehensive unit, CLI, and integration tests
-
-- Unit tests for position generation with various field presets
-- CLI tests for bom and pos subcommands with --jlc flag
-- Integration tests against real KiCad projects and Numbers inventory
-- Tests validate PCB loading, placement generation, and inventory matching ([`caa38b9`](https://github.com/plocher/jBOM/commit/caa38b932737a4e7e2401d5c2e19d807e5c44315))
-
 
 ## v1.0.2 (2025-12-14)
-
-### Chores
-
-* chore: bump version to 1.0.2 ([`5cefe86`](https://github.com/plocher/jBOM/commit/5cefe86e9f5be2b179820ddcd42eed5a81d9d645))
-
-* chore: add pre-commit hook configuration and documentation
-
-- Add .pre-commit-config.yaml with security and code quality hooks
-- Add .secrets.baseline for secret detection baseline
-- Add PRE_COMMIT_SETUP.md guide for pre-commit hook usage
-- Update CONTRIBUTING.md with pre-commit setup instructions
-
-Hooks configured:
-- detect-secrets: Prevents committing API keys, tokens, passwords
-- trailing-whitespace: Remove trailing spaces
-- end-of-file-fixer: Ensure newline at EOF
-- YAML/JSON/TOML validators: Syntax checking
-- merge-conflict detector: Prevent merge conflict markers
-- debug-statements: Prevent debugger imports
-- mixed-line-ending fixer: Normalize to LF
-- black: Python code formatting
-- flake8: Python style guide enforcement
-- bandit: Security issue scanning
-
-This completes the security hardening setup following the PyPI token
-exposure incident. All future commits will be scanned for secrets. ([`9ea2b5e`](https://github.com/plocher/jBOM/commit/9ea2b5e94fe958e6e58527ab2e5e1f2e5f6ffcbe))
-
-### Documentation
-
-* docs: add pre-commit hooks quick reference guide ([`bbae25f`](https://github.com/plocher/jBOM/commit/bbae25fa793edb630bb5e9ab95f101000afb11ed))
 
 ### Refactoring
 
