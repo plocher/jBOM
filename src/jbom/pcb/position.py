@@ -201,3 +201,117 @@ class PositionGenerator:
                 c.package_token,
             ])
         return rows
+
+
+def print_pos_table(gen: PositionGenerator, fields: Optional[List[str]] = None) -> None:
+    """Print placement data as a formatted console table.
+    
+    Args:
+        gen: PositionGenerator instance with board and options configured
+        fields: List of field names to display (normalized). If None, uses kicad_pos preset.
+    """
+    if fields is None:
+        fields = gen._preset_fields('kicad_pos')
+    
+    # Normalize fields
+    norm_fields = [normalize_field_name(f) for f in fields]
+    headers = [field_to_header(f) for f in norm_fields]
+    
+    # Get components
+    components = list(gen.iter_components())
+    if not components:
+        print("No components to display.")
+        return
+    
+    # Set column widths
+    col_widths = {}
+    for i, field in enumerate(norm_fields):
+        col_widths[field] = len(headers[i])
+    
+    # Calculate widths based on data
+    for comp in components:
+        x, y = gen._xy_in_units(comp)
+        
+        for field in norm_fields:
+            if field == 'reference':
+                col_widths[field] = max(col_widths[field], len(comp.reference))
+            elif field == 'x':
+                col_widths[field] = max(col_widths[field], len(f"{x:.4f}"))
+            elif field == 'y':
+                col_widths[field] = max(col_widths[field], len(f"{y:.4f}"))
+            elif field == 'rotation':
+                col_widths[field] = max(col_widths[field], len(f"{comp.rotation_deg:.1f}"))
+            elif field == 'side':
+                col_widths[field] = max(col_widths[field], len(comp.side))
+            elif field == 'footprint':
+                col_widths[field] = max(col_widths[field], len(comp.footprint_name))
+            elif field == 'package':
+                col_widths[field] = max(col_widths[field], len(comp.package_token or ''))
+    
+    # Cap maximum widths for readability
+    max_widths = {
+        'reference': 20,
+        'x': 12,
+        'y': 12,
+        'rotation': 10,
+        'side': 8,
+        'footprint': 40,
+        'package': 15,
+    }
+    
+    for field in norm_fields:
+        if field in max_widths:
+            col_widths[field] = min(col_widths[field], max_widths[field])
+    
+    # Print header
+    header_line = ''
+    separator_line = ''
+    for i, (field, header) in enumerate(zip(norm_fields, headers)):
+        width = col_widths[field]
+        header_line += f"{header:<{width}}"
+        separator_line += '-' * width
+        if i < len(headers) - 1:
+            header_line += ' | '
+            separator_line += '-+-'
+    
+    print()
+    print("Placement Table:")
+    print("=" * min(120, len(header_line)))
+    print(header_line)
+    print(separator_line)
+    
+    # Print entries
+    for comp in components:
+        x, y = gen._xy_in_units(comp)
+        row_line = ''
+        
+        for i, field in enumerate(norm_fields):
+            width = col_widths[field]
+            
+            if field == 'reference':
+                content = comp.reference[:width]
+            elif field == 'x':
+                content = f"{x:.4f}"
+            elif field == 'y':
+                content = f"{y:.4f}"
+            elif field == 'rotation':
+                content = f"{comp.rotation_deg:.1f}"
+            elif field == 'side':
+                content = comp.side
+            elif field == 'footprint':
+                # Truncate long footprint names
+                fp = comp.footprint_name
+                content = fp if len(fp) <= width else fp[:width-3] + '...'
+            elif field == 'package':
+                content = comp.package_token or ''
+            else:
+                content = ''
+            
+            row_line += f"{content:<{width}}"
+            if i < len(norm_fields) - 1:
+                row_line += ' | '
+        
+        print(row_line)
+    
+    print()
+    print(f"Total: {len(components)} components")

@@ -16,7 +16,7 @@ from jbom.jbom import (
     print_bom_table,
 )
 from jbom.pcb.board_loader import load_board
-from jbom.pcb.position import PositionGenerator, PlacementOptions
+from jbom.pcb.position import PositionGenerator, PlacementOptions, print_pos_table
 from jbom.common.utils import find_best_pcb
 from jbom.common.output import resolve_output_path
 from jbom.cli.common import apply_jlc_flag
@@ -106,11 +106,15 @@ def _cmd_pos(argv: List[str]) -> int:
     fields_arg = apply_jlc_flag(args.fields, args.jlc)
     fields = gen.parse_fields_argument(fields_arg) if fields_arg else gen.parse_fields_argument('+kicad_pos')
     
-    # Check output mode: CSV to stdout (pipeline-friendly) or file
+    # Check output mode: CSV to stdout vs formatted console table
     output_str = args.output.lower() if args.output else ''
-    csv_to_stdout = output_str in ('-', 'stdout', 'console')
+    csv_to_stdout = output_str in ('-', 'stdout')
+    formatted_console = output_str == 'console'
     
-    if csv_to_stdout:
+    if formatted_console:
+        # Formatted table output to console (human-readable)
+        print_pos_table(gen, fields)
+    elif csv_to_stdout:
         # CSV output to stdout (pipeline-friendly)
         gen.write_csv(Path('-'), fields)
     else:
