@@ -17,6 +17,19 @@ from .jbom import (
     BOMGenerator,
     GenerateOptions,
     generate_bom_api,
+    # Extra re-exports for backward/test compatibility
+    normalize_field_name,
+    field_to_header,
+    normalize_component_type,
+    extract_sheet_files,
+    find_best_schematic,
+    is_hierarchical_schematic,
+    process_hierarchical_schematic,
+    _parse_fields_argument,
+    print_bom_table,
+    print_debug_diagnostics,
+    _shorten_url,
+    _wrap_text,
 )
 
 __all__ = [
@@ -33,4 +46,17 @@ __all__ = [
     "BOMGenerator",
     "GenerateOptions",
     "generate_bom_api",
+    # Helpers (tests/back-compat)
+    "normalize_field_name",
+    "field_to_header",
+    "normalize_component_type",
+    "extract_sheet_files",
+    "find_best_schematic",
+    "is_hierarchical_schematic",
+    "process_hierarchical_schematic",
+    "_parse_fields_argument",
+    "print_bom_table",
+    "print_debug_diagnostics",
+    "_shorten_url",
+    "_wrap_text",
 ]
