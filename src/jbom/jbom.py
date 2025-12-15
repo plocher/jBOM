@@ -2198,7 +2198,7 @@ FIELD_PRESETS = {
         'description': 'Comprehensive set with all standard BOM fields'
     },
     'jlc': {
-        'fields': ['reference', 'quantity', 'value', 'i:package', 'lcsc'],
+        'fields': ['reference', 'quantity', 'value', 'i:package', 'lcsc', 'smd'],
         'description': 'JLCPCB requirements: Reference Designator, Quantity, Value, Package, LCSC Part Number'
     },
     'minimal': {

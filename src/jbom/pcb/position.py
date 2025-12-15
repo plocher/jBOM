@@ -27,12 +27,12 @@ PLACEMENT_FIELDS: Dict[str, str] = {
 }
 
 PLACEMENT_PRESETS: Dict[str, Dict[str, Optional[List[str]]]] = {
-    'kicad_pos': {
-        'fields': ['reference', 'x', 'y', 'rotation', 'side', 'footprint'],
-        'description': 'KiCad-like POS columns',
+    'standard': {
+        'fields': ['reference', 'x', 'y', 'rotation', 'side', 'footprint', 'smd'],
+        'description': 'Standard POS columns with SMD indicator',
     },
     'jlc': {
-        'fields': ['reference', 'side', 'x', 'y', 'rotation', 'package'],
+        'fields': ['reference', 'side', 'x', 'y', 'rotation', 'package', 'smd'],
         'description': 'JLC-style CPL columns (headers not yet vendor-specific)',
     },
     'minimal': {
@@ -65,7 +65,7 @@ class PositionGenerator:
         return dict(PLACEMENT_FIELDS)
 
     def _preset_fields(self, preset: str) -> List[str]:
-        p = (preset or 'kicad_pos').lower()
+        p = (preset or 'standard').lower()
         if p not in PLACEMENT_PRESETS:
             raise ValueError(f"Unknown preset: {preset} (valid: {', '.join(sorted(PLACEMENT_PRESETS))})")
         spec = PLACEMENT_PRESETS[p]
@@ -75,7 +75,7 @@ class PositionGenerator:
 
     def parse_fields_argument(self, fields_arg: Optional[str]) -> List[str]:
         if not fields_arg:
-            return self._preset_fields('kicad_pos')
+            return self._preset_fields('standard')
         tokens = [t.strip() for t in fields_arg.split(',') if t.strip()]
         result: List[str] = []
         presets = set(PLACEMENT_PRESETS.keys())
@@ -97,7 +97,7 @@ class PositionGenerator:
             if f not in seen:
                 seen.add(f)
                 deduped.append(f)
-        return deduped or self._preset_fields('kicad_pos')
+        return deduped or self._preset_fields('standard')
 
     # ---------------- component iteration ----------------
     def iter_components(self) -> Iterable[PcbComponent]:

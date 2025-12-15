@@ -57,8 +57,8 @@ def _cmd_bom(argv: List[str]) -> int:
                    metavar='FIELDS',
                    help='''Field selection: comma-separated list of fields or presets.
   Presets (use + prefix):
-    +standard - Reference, Quantity, Description, Value, Footprint, LCSC, Datasheet, SMD
-    +jlc      - Reference, Quantity, Value, Package, LCSC (JLCPCB format)
+    +standard - Reference, Quantity, Description, Value, Footprint, LCSC, Datasheet, SMD (default)
+    +jlc      - Reference, Quantity, Value, Package, LCSC, SMD (JLCPCB format)
     +minimal  - Reference, Quantity, Value, LCSC
     +all      - All available fields
   Custom fields: Reference,Value,LCSC,Manufacturer,I:Tolerance
@@ -131,7 +131,7 @@ def _cmd_pos(argv: List[str]) -> int:
   jbom pos board.kicad_pcb -o console                   # Display formatted table
   jbom pos board.kicad_pcb -o - | wc -l                 # CSV to stdout for piping
   jbom pos board.kicad_pcb --jlc                        # Use JLCPCB field preset
-  jbom pos board.kicad_pcb -f +kicad_pos,smd,datasheet  # Add custom fields
+  jbom pos board.kicad_pcb -f +standard,datasheet       # Add custom fields
   jbom pos board.kicad_pcb --units inch --origin aux    # Imperial units with aux origin
   jbom pos board.kicad_pcb --layer TOP                  # Only top-side components
 ''')
@@ -149,13 +149,13 @@ def _cmd_pos(argv: List[str]) -> int:
                    metavar='FIELDS',
                    help='''Field selection: comma-separated list of fields or presets.
   Presets (use + prefix):
-    +kicad_pos - Reference, X, Y, Rotation, Side, Footprint (default)
-    +jlc       - Reference, Side, X, Y, Rotation, Package (JLCPCB format)
-    +minimal   - Reference, X, Y, Side
-    +all       - All available fields
+    +standard - Reference, X, Y, Rotation, Side, Footprint, SMD (default)
+    +jlc      - Reference, Side, X, Y, Rotation, Package, SMD (JLCPCB format)
+    +minimal  - Reference, X, Y, Side
+    +all      - All available fields
   Available fields: reference, x, y, rotation, side, footprint, package, datasheet, version, smd
   Custom: Reference,X,Y,Rotation,SMD
-  Mixed: +kicad_pos,smd,datasheet''')
+  Mixed: +standard,datasheet,version''')
     p.add_argument('--jlc',
                    action='store_true',
                    help='Use JLCPCB field preset (+jlc): optimized for JLCPCB assembly service')
@@ -200,7 +200,7 @@ def _cmd_pos(argv: List[str]) -> int:
 
     # Apply --jlc flag using shared utility
     fields_arg = apply_jlc_flag(args.fields, args.jlc)
-    fields = gen.parse_fields_argument(fields_arg) if fields_arg else gen.parse_fields_argument('+kicad_pos')
+    fields = gen.parse_fields_argument(fields_arg) if fields_arg else gen.parse_fields_argument('+standard')
     
     # Check output mode: CSV to stdout vs formatted console table
     output_str = args.output.lower() if args.output else ''
