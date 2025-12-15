@@ -1,6 +1,23 @@
 # CHANGELOG
 
 
+## v2.1.5 (2025-12-15)
+
+### Refactoring
+
+* refactor: optimize WARP.md structure following best practices
+
+- Streamlined root WARP.md to focused essentials only
+- Created directory-specific WARP.md files for targeted guidance:
+  - src/WARP.md - Source code architecture and patterns
+  - tests/WARP.md - Testing requirements and organization
+  - docs/WARP.md - Documentation standards and structure
+  - release-management/WARP.md - CI/CD and release process
+- Moved development planning files from docs/ to release-management/
+- Organized content by context for better agent performance
+- Reduced token usage while maintaining comprehensive coverage ([`1a372d9`](https://github.com/plocher/jBOM/commit/1a372d9a81c49f4d398659c6bdd1bf8299011277))
+
+
 ## v2.1.4 (2025-12-15)
 
 ### Bug Fixes
