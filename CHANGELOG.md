@@ -1,6 +1,16 @@
 # CHANGELOG
 
 
+## v2.1.4 (2025-12-15)
+
+### Bug Fixes
+
+* fix(ci): add separate twine upload step for PyPI
+
+python-semantic-release v9 doesn't upload to PyPI automatically.
+Added explicit twine upload step after semantic-release version. ([`f7d57b9`](https://github.com/plocher/jBOM/commit/f7d57b90362cf225a7582aeb9c092281e7d555bd))
+
+
 ## v2.1.3 (2025-12-15)
 
 ### Bug Fixes
