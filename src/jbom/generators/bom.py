@@ -20,8 +20,8 @@ from jbom.common.constants import (
 )
 from jbom.common.packages import PackageType
 from jbom.common.fields import normalize_field_name, field_to_header
-from jbom.sch.types import get_component_type
-from jbom.inventory.matcher import InventoryMatcher
+from jbom.processors.component_types import get_component_type
+from jbom.processors.inventory_matcher import InventoryMatcher
 
 
 class BOMGenerator:

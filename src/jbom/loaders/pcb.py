@@ -3,11 +3,11 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Optional, List
 
-from .model import BoardModel, PcbComponent
-from ..common.packages import PackageType
+from jbom.loaders.pcb_model import BoardModel, PcbComponent
+from jbom.common.packages import PackageType
 
 
-class BoardLoader:
+class PCBLoader:
     def __init__(self, board_path: Path, mode: str = "auto"):
         self.board_path = Path(board_path)
         self.mode = mode  # 'auto' | 'pcbnew' | 'sexp'
@@ -141,7 +141,7 @@ class BoardLoader:
 
     # -------------------- S-expression path --------------------
     def _load_with_sexp(self) -> BoardModel:
-        from ..common.sexp_parser import load_kicad_file, walk_nodes
+        from jbom.common.sexp_parser import load_kicad_file, walk_nodes
 
         sexp = load_kicad_file(self.board_path)
         board = BoardModel(path=self.board_path)
@@ -255,4 +255,4 @@ class BoardLoader:
 
 
 def load_board(board_path: Path, *, mode: str = "auto") -> BoardModel:
-    return BoardLoader(board_path, mode=mode).load()
+    return PCBLoader(board_path, mode=mode).load()

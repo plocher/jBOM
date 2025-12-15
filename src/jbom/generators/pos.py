@@ -5,9 +5,9 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Literal, Optional
 import csv
 
-from .model import BoardModel, PcbComponent
-from ..common.fields import normalize_field_name, field_to_header
-from ..common.packages import PackageType
+from jbom.loaders.pcb_model import BoardModel, PcbComponent
+from jbom.common.fields import normalize_field_name, field_to_header
+from jbom.common.packages import PackageType
 
 Layer = Literal['TOP', 'BOTTOM']
 Units = Literal['mm', 'inch']
@@ -55,7 +55,7 @@ class PlacementOptions:
     layer_filter: Optional[Layer] = None
 
 
-class PositionGenerator:
+class POSGenerator:
     def __init__(self, board: BoardModel, options: PlacementOptions = PlacementOptions()):
         self.board = board
         self.options = options

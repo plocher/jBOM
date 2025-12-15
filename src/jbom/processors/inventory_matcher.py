@@ -27,7 +27,7 @@ from jbom.common.values import (
     cap_unit_multiplier,
     ind_unit_multiplier,
 )
-from jbom.inventory.loader import InventoryLoader
+from jbom.loaders.inventory import InventoryLoader
 
 
 # Import component type detection utilities from sch module
