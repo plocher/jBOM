@@ -43,328 +43,168 @@ This document outlines functional tests needed to complement existing unit tests
 
 ### 1. CLI End-to-End Tests
 
-#### BOM Command - Happy Paths ✅ IMPLEMENTED (9 tests in `test_functional_bom.py`)
-- ✅ **test_bom_default_fields**: Generate BOM with default (+standard) fields
-  - Validates: Reference, Quantity, Description, Value, Footprint, Lcsc, Datasheet, Smd headers
-  
-- ✅ **test_bom_jlc_flag**: Generate BOM with --jlc flag
-  - Validates: JLCPCB field preset (Reference, Quantity, Value, Package, Lcsc, Smd)
-  
-- ✅ **test_bom_custom_fields**: Generate BOM with custom fields
-  - Input: -f "Reference,Value,Lcsc"
-  - Validates: Only specified fields in output
-  
-- ✅ **test_bom_mixed_preset_and_custom**: Generate BOM with mixed preset + custom
-  - Input: -f "+minimal,Footprint"
-  - Validates: Minimal fields + Footprint field
-  
-- ✅ **test_bom_to_console**: Generate BOM to console
-  - Input: -o console
-  - Validates: Formatted table output (not CSV)
-  
-- ✅ **test_bom_to_stdout**: Generate BOM to stdout
-  - Input: -o -
-  - Validates: CSV to stdout (pipeline-friendly)
-  
-- ✅ **test_bom_verbose_mode**: Generate BOM with verbose mode
-  - Input: -v
-  - Validates: "Match Quality" and "Priority" columns present
-  
-- ✅ **test_bom_debug_mode**: Generate BOM with debug mode
-  - Input: -d
-  - Validates: Successful generation (Notes column if diagnostics present)
-  
-- ✅ **test_bom_smd_only**: Generate BOM with --smd-only filter
-  - Validates: J1 (through-hole) excluded, SMD components included
+#### BOM Command - Happy Paths (9 tests in `test_functional_bom.py`)
 
-#### BOM Command - Error Cases ⏳ TODO
-- ⏳ **Test**: Missing inventory file
-  - Input: -i nonexistent.csv
-  - Expected: Clear error message, exit code 1
-  
-- ⏳ **Test**: Invalid inventory format
-  - Input: -i textfile.txt
-  - Expected: Error about unsupported format
-  
-- ⏳ **Test**: Missing project directory
-  - Input: nonexistent_project/
-  - Expected: Error about missing project
-  
-- ⏳ **Test**: Project with no schematic files
-  - Input: Empty directory
-  - Expected: Error "No .kicad_sch file found"
-  
-- ⏳ **Test**: Invalid field name
-  - Input: -f "Reference,InvalidField"
-  - Expected: Error listing valid fields
-  
-- ⏳ **Test**: Invalid preset name
-  - Input: -f "+invalid_preset"
-  - Expected: Error listing valid presets (+standard, +jlc, +minimal, +all)
-  
-- ⏳ **Test**: Malformed schematic file
-  - Input: Invalid S-expression syntax
-  - Expected: Parse error with file name
-  
-- ⏳ **Test**: Missing required headers in inventory
-  - Input: CSV without required columns
-  - Expected: Error about missing headers
+| Status | Test Name | Input/Options | Validates |
+|--------|-----------|---------------|------------|
+| ✅ | test_bom_default_fields | Default | +standard preset headers (Reference, Quantity, Description, Value, Footprint, Lcsc, Datasheet, Smd) |
+| ✅ | test_bom_jlc_flag | --jlc | JLCPCB preset fields (Reference, Quantity, Value, Package, Lcsc, Smd) |
+| ✅ | test_bom_custom_fields | -f "Reference,Value,Lcsc" | Only specified fields in output |
+| ✅ | test_bom_mixed_preset_and_custom | -f "+minimal,Footprint" | Minimal fields + Footprint |
+| ✅ | test_bom_to_console | -o console | Formatted table output (not CSV) |
+| ✅ | test_bom_to_stdout | -o - | CSV to stdout (pipeline-friendly) |
+| ✅ | test_bom_verbose_mode | -v | "Match Quality" and "Priority" columns |
+| ✅ | test_bom_debug_mode | -d | Successful generation with diagnostics |
+| ✅ | test_bom_smd_only | --smd-only | J1 (PTH) excluded, SMD components included |
 
-#### POS Command - Happy Paths ✅ IMPLEMENTED (12 tests in `test_functional_pos.py`)
-- ✅ **test_pos_default_fields**: Generate POS with default (+standard) fields
-  - Validates: Reference, X, Y, Rotation, Side, Footprint, Smd headers
-  
-- ✅ **test_pos_jlc_flag**: Generate POS with --jlc flag
-  - Validates: JLCPCB field order (Reference, Side, X, Y, Rotation, Package, Smd)
-  
-- ✅ **test_pos_custom_fields**: Generate POS with custom fields
-  - Input: -f "Reference,X,Y,Smd"
-  - Validates: Only specified fields in output
-  
-- ✅ **test_pos_units_mm**: Generate POS with millimeter units (default)
-  - Validates: Coordinates in mm range (50-100mm)
-  
-- ✅ **test_pos_units_inch**: Generate POS in inches
-  - Input: --units inch
-  - Validates: Coordinates converted to inches (~2-4 inches)
-  
-- ✅ **test_pos_origin_board**: Generate POS with board origin (default)
-  - Validates: Successful generation with board origin
-  
-- ✅ **test_pos_origin_aux**: Generate POS with aux origin
-  - Input: --origin aux
-  - Validates: Coordinates relative to aux axis
-  
-- ✅ **test_pos_layer_top**: Generate POS for TOP layer only
-  - Input: --layer TOP
-  - Validates: All components have Side=TOP
-  
-- ✅ **test_pos_layer_bottom**: Generate POS for BOTTOM layer only
-  - Input: --layer BOTTOM
-  - Validates: Only bottom-side components
-  
-- ✅ **test_pos_to_console**: Generate POS to console
-  - Input: -o console
-  - Validates: Formatted table output (not CSV)
-  
-- ✅ **test_pos_to_stdout**: Generate POS to stdout
-  - Input: -o -
-  - Validates: CSV to stdout (pipeline-friendly)
-  
-- ✅ **test_pos_coordinate_precision**: Verify coordinate precision
-  - Validates: X/Y have ≤4 decimal places, Rotation has ≤1 decimal place
+#### BOM Command - Error Cases (8 tests TODO)
 
-#### POS Command - Error Cases ⏳ TODO
-- ⏳ **Test**: Missing PCB file
-  - Input: nonexistent.kicad_pcb
-  - Expected: Error about missing file
-  
-- ⏳ **Test**: Directory with no PCB
-  - Input: Empty directory
-  - Expected: Error "Could not find PCB file"
-  
-- ⏳ **Test**: Malformed PCB file
-  - Input: Invalid S-expression
-  - Expected: Parse error with filename
-  
-- ⏳ **Test**: Invalid units
-  - Input: --units kilometers
-  - Expected: argparse error with valid choices
-  
-- ⏳ **Test**: Invalid origin
-  - Input: --origin center
-  - Expected: argparse error
-  
-- ⏳ **Test**: Invalid layer
-  - Input: --layer MIDDLE
-  - Expected: argparse error
-  
-- ⏳ **Test**: Invalid loader
-  - Input: --loader magic
-  - Expected: argparse error
+| Status | Test Scenario | Input | Expected Result |
+|--------|---------------|-------|------------------|
+| ⏳ | Missing inventory file | -i nonexistent.csv | Clear error message, exit code 1 |
+| ⏳ | Invalid inventory format | -i textfile.txt | Error about unsupported format |
+| ⏳ | Missing project directory | nonexistent_project/ | Error about missing project |
+| ⏳ | Project with no schematics | Empty directory | Error "No .kicad_sch file found" |
+| ⏳ | Invalid field name | -f "Reference,InvalidField" | Error listing valid fields |
+| ⏳ | Invalid preset name | -f "+invalid_preset" | Error listing valid presets |
+| ⏳ | Malformed schematic file | Invalid S-expression | Parse error with file name |
+| ⏳ | Missing inventory headers | CSV without required columns | Error about missing headers |
 
-### 2. Output Format Validation
+#### POS Command - Happy Paths (12 tests in `test_functional_pos.py`)
 
-#### CSV Structure Tests ✅ COVERED BY HAPPY PATH TESTS
-- ✅ **BOM CSV has correct headers**: Covered in test_bom_default_fields, test_bom_jlc_flag
-  - Validates header row matches field list (Title Case)
-  
-- ✅ **BOM CSV has correct row count**: Covered in test_bom_smd_only
-  - Validates component count after filtering
-  
-- ✅ **BOM CSV is valid CSV**: Covered in all BOM tests via assert_csv_valid()
-  - Uses csv.reader to validate structure
-  
-- ✅ **POS CSV has correct headers**: Covered in test_pos_default_fields, test_pos_jlc_flag
-  - Validates header row matches field list
-  
-- ✅ **POS CSV coordinate precision**: Covered in test_pos_coordinate_precision
-  - Verifies ≤4 decimal places for coordinates
-  
-- ✅ **POS CSV rotation precision**: Covered in test_pos_coordinate_precision
-  - Verifies ≤1 decimal place for rotation
-  
-- ✅ **Console output is not CSV**: Covered in test_bom_to_console, test_pos_to_console
-  - Verifies formatted table has visual separators
-  
-- ✅ **Stdout output is valid CSV**: Covered in test_bom_to_stdout, test_pos_to_stdout
-  - Verifies -o - produces parseable CSV
+| Status | Test Name | Input/Options | Validates |
+|--------|-----------|---------------|------------|
+| ✅ | test_pos_default_fields | Default | +standard preset headers (Reference, X, Y, Rotation, Side, Footprint, Smd) |
+| ✅ | test_pos_jlc_flag | --jlc | JLCPCB field order (Reference, Side, X, Y, Rotation, Package, Smd) |
+| ✅ | test_pos_custom_fields | -f "Reference,X,Y,Smd" | Only specified fields in output |
+| ✅ | test_pos_units_mm | --units mm | Coordinates in mm range (50-100mm) |
+| ✅ | test_pos_units_inch | --units inch | Coordinates in inches (~2-4 inches) |
+| ✅ | test_pos_origin_board | --origin board | Board origin coordinates |
+| ✅ | test_pos_origin_aux | --origin aux | Aux axis origin coordinates |
+| ✅ | test_pos_layer_top | --layer TOP | All components have Side=TOP |
+| ✅ | test_pos_layer_bottom | --layer BOTTOM | Only bottom-side components |
+| ✅ | test_pos_to_console | -o console | Formatted table output (not CSV) |
+| ✅ | test_pos_to_stdout | -o - | CSV to stdout (pipeline-friendly) |
+| ✅ | test_pos_coordinate_precision | Default | X/Y ≤4 decimals, Rotation ≤1 decimal |
 
-#### Field System Tests ✅ COVERED BY HAPPY PATH TESTS
-- ✅ **All preset fields exist in output**: Covered in test_bom_default_fields, test_bom_jlc_flag, test_pos_default_fields, test_pos_jlc_flag
-  - Validates all preset fields are present
-  
-- ✅ **Custom fields appear in correct order**: Covered in test_bom_custom_fields, test_pos_custom_fields
-  - Validates user-specified order is preserved
-  
-- **Test**: Inventory-prefixed fields (I:) work
-  - I:Package pulls from inventory, not component
-  
-- **Test**: Component-prefixed fields (C:) work
-  - C:Value pulls from component, not inventory
-  
-- **Test**: Field normalization works
-  - "Reference", "REFERENCE", "reference" all work
+#### POS Command - Error Cases (7 tests TODO)
 
-### 3. Edge Cases and Boundary Conditions (`tests/test_functional_edge_cases.py`)
+| Status | Test Scenario | Input | Expected Result |
+|--------|---------------|-------|------------------|
+| ⏳ | Missing PCB file | nonexistent.kicad_pcb | Error about missing file |
+| ⏳ | Directory with no PCB | Empty directory | Error "Could not find PCB file" |
+| ⏳ | Malformed PCB file | Invalid S-expression | Parse error with filename |
+| ⏳ | Invalid units | --units kilometers | argparse error with valid choices |
+| ⏳ | Invalid origin | --origin center | argparse error |
+| ⏳ | Invalid layer | --layer MIDDLE | argparse error |
+| ⏳ | Invalid loader | --loader magic | argparse error |
 
-#### Schematic Edge Cases
-- **Test**: Empty schematic (no components)
-  - Expected: Empty BOM, no error
-  
-- **Test**: Hierarchical schematic (multi-sheet)
-  - Expected: All sheets parsed, components aggregated
-  
-- **Test**: Hierarchical with missing sub-sheet
-  - Expected: Warning about missing file, continue
-  
-- **Test**: Autosave file (_autosave-*.kicad_sch)
-  - Expected: Warning but still process
-  
-- **Test**: Component with no value
-  - Expected: Empty value field, no crash
-  
-- **Test**: Component with special characters in value
-  - Expected: Proper CSV escaping (quotes, commas)
-  
-- **Test**: Component with unicode characters
-  - Expected: UTF-8 encoding preserved
+### 2. Output Format Validation (Covered by Happy Path Tests)
 
-#### PCB Edge Cases
-- **Test**: Empty PCB (no footprints)
-  - Expected: Empty POS, no error
-  
-- **Test**: PCB with no aux origin set
-  - Expected: --origin aux uses (0,0)
-  
-- **Test**: Footprint with no reference designator
-  - Expected: Skip or handle gracefully
-  
-- **Test**: Footprint with rotation > 360 or < 0
-  - Expected: Normalized to 0-360 range
-  
-- **Test**: Footprint with missing package token
-  - Expected: Empty package field, no crash
-  
-- **Test**: Footprint with missing datasheet property
-  - Expected: Empty datasheet field
+#### CSV Structure Tests
 
-#### Inventory Edge Cases
-- **Test**: Empty inventory file
-  - Expected: No matches, warning
-  
-- **Test**: Inventory with duplicate IPNs
-  - Expected: Warning or error
-  
-- **Test**: Inventory with missing required columns
-  - Expected: Clear error message
-  
-- **Test**: Inventory with extra/unknown columns
-  - Expected: Ignored gracefully
-  
-- **Test**: XLSX inventory (requires openpyxl)
-  - Expected: Works if installed, error otherwise
-  
-- **Test**: Numbers inventory (requires numbers-parser)
-  - Expected: Works if installed, error otherwise
-  
-- **Test**: Inventory with unicode characters
-  - Expected: UTF-8 handling
+| Status | Test Aspect | Covered By | Validation |
+|--------|-------------|------------|-------------|
+| ✅ | BOM CSV headers | test_bom_default_fields, test_bom_jlc_flag | Header row matches field list (Title Case) |
+| ✅ | BOM CSV row count | test_bom_smd_only | Component count after filtering |
+| ✅ | BOM CSV valid | All BOM tests via assert_csv_valid() | csv.reader validates structure |
+| ✅ | POS CSV headers | test_pos_default_fields, test_pos_jlc_flag | Header row matches field list |
+| ✅ | POS coordinate precision | test_pos_coordinate_precision | X/Y ≤4 decimal places |
+| ✅ | POS rotation precision | test_pos_coordinate_precision | Rotation ≤1 decimal place |
+| ✅ | Console output format | test_bom_to_console, test_pos_to_console | Formatted table with visual separators |
+| ✅ | Stdout CSV format | test_bom_to_stdout, test_pos_to_stdout | Valid parseable CSV output |
 
-#### Matching Edge Cases
-- **Test**: Component with no matches in inventory
-  - Expected: Warning in output, empty LCSC
-  
-- **Test**: Component with multiple matches (ambiguous)
-  - Expected: Best match selected, debug shows alternatives
-  
-- **Test**: Component with precision resistor value
-  - Expected: Warning about precision matching
-  
-- **Test**: Resistor value parsing (K, M, R notation)
-  - Expected: Correct normalization (1K = 1000 ohm)
-  
-- **Test**: Capacitor value parsing (pF, nF, uF)
-  - Expected: Correct normalization
-  
-- **Test**: Inductor value parsing (uH, mH, H)
-  - Expected: Correct normalization
+#### Field System Tests
 
-### 4. File I/O Tests (`tests/test_functional_io.py`)
+| Status | Test Aspect | Covered By | Validation |
+|--------|-------------|------------|-------------|
+| ✅ | All preset fields exist | test_bom_default_fields, test_bom_jlc_flag, test_pos_default_fields, test_pos_jlc_flag | All preset fields present |
+| ✅ | Custom field order | test_bom_custom_fields, test_pos_custom_fields | User-specified order preserved |
+| ⏳ | Inventory-prefixed fields (I:) | TODO | I:Package from inventory |
+| ⏳ | Component-prefixed fields (C:) | TODO | C:Value from component |
+| ⏳ | Field normalization | TODO | "Reference", "REFERENCE", "reference" all work |
 
-#### Input File Formats
-- **Test**: Read CSV inventory with various encodings
-  - UTF-8, UTF-8-BOM, Latin-1
-  
-- **Test**: Read schematic with Windows line endings
-  - CRLF vs LF
-  
-- **Test**: Read PCB with various KiCad versions
-  - KiCad 5, 6, 7, 8 formats
-  
-- **Test**: Read from symbolic links
-  - Expected: Follow links
+### 3. Edge Cases and Boundary Conditions (26 tests TODO)
 
-#### Output File Handling
-- **Test**: Write to existing file (overwrite)
-  - Expected: File replaced
-  
-- **Test**: Write to read-only directory
-  - Expected: Permission error
-  
-- **Test**: Write to non-existent directory
-  - Expected: Create parent directories or error
-  
-- **Test**: Write with --outdir option
-  - Expected: File created in specified directory
-  
-- **Test**: Default output filename generation
-  - project/ → project_bom.csv
-  - board.kicad_pcb → board_pos.csv
-  
-- **Test**: Write to stdout with other output
-  - Ensure diagnostic messages go to stderr, not stdout
+#### Schematic Edge Cases (7 tests)
 
-### 5. Integration with Real Projects (`tests/test_functional_integration.py`)
+| Status | Test Scenario | Expected Result |
+|--------|---------------|------------------|
+| ⏳ | Empty schematic (no components) | Empty BOM, no error |
+| ⏳ | Hierarchical schematic (multi-sheet) | All sheets parsed, components aggregated |
+| ⏳ | Hierarchical with missing sub-sheet | Warning about missing file, continue |
+| ⏳ | Autosave file (_autosave-*.kicad_sch) | Warning but still process |
+| ⏳ | Component with no value | Empty value field, no crash |
+| ⏳ | Component with special characters | Proper CSV escaping (quotes, commas) |
+| ⏳ | Component with unicode characters | UTF-8 encoding preserved |
 
-These expand on existing test_integration_projects.py:
+#### PCB Edge Cases (6 tests)
 
-- **Test**: Process all example projects
-  - Use projects in tests/fixtures/ directory
-  
-- **Test**: BOM + POS workflow
-  - Generate both for same project, verify consistency
-  
-- **Test**: Compare output with known-good baseline
-  - Golden file testing (snapshot testing)
-  
-- **Test**: Performance with large projects
-  - Project with 1000+ components
-  - Should complete in reasonable time (< 10s)
-  
-- **Test**: Memory usage with large inventory
-  - 10,000+ inventory items
-  - Should not exhaust memory
+| Status | Test Scenario | Expected Result |
+|--------|---------------|------------------|
+| ⏳ | Empty PCB (no footprints) | Empty POS, no error |
+| ⏳ | PCB with no aux origin set | --origin aux uses (0,0) |
+| ⏳ | Footprint with no reference designator | Skip or handle gracefully |
+| ⏳ | Footprint with rotation > 360 or < 0 | Normalized to 0-360 range |
+| ⏳ | Footprint with missing package token | Empty package field, no crash |
+| ⏳ | Footprint with missing datasheet | Empty datasheet field |
+
+#### Inventory Edge Cases (7 tests)
+
+| Status | Test Scenario | Expected Result |
+|--------|---------------|------------------|
+| ⏳ | Empty inventory file | No matches, warning |
+| ⏳ | Inventory with duplicate IPNs | Warning or error |
+| ⏳ | Inventory with missing required columns | Clear error message |
+| ⏳ | Inventory with extra/unknown columns | Ignored gracefully |
+| ⏳ | XLSX inventory (requires openpyxl) | Works if installed, error otherwise |
+| ⏳ | Numbers inventory (requires numbers-parser) | Works if installed, error otherwise |
+| ⏳ | Inventory with unicode characters | UTF-8 handling |
+
+#### Matching Edge Cases (6 tests)
+
+| Status | Test Scenario | Expected Result |
+|--------|---------------|------------------|
+| ⏳ | Component with no matches | Warning in output, empty LCSC |
+| ⏳ | Component with multiple matches | Best match selected, debug shows alternatives |
+| ⏳ | Component with precision resistor value | Warning about precision matching |
+| ⏳ | Resistor value parsing (K, M, R notation) | Correct normalization (1K = 1000 ohm) |
+| ⏳ | Capacitor value parsing (pF, nF, uF) | Correct normalization |
+| ⏳ | Inductor value parsing (uH, mH, H) | Correct normalization |
+
+### 4. File I/O Tests (9 tests TODO)
+
+#### Input File Formats (4 tests)
+
+| Status | Test Scenario | Details | Expected Result |
+|--------|---------------|---------|------------------|
+| ⏳ | CSV inventory encodings | UTF-8, UTF-8-BOM, Latin-1 | All encodings handled |
+| ⏳ | Schematic line endings | CRLF vs LF | Both formats work |
+| ⏳ | PCB KiCad versions | KiCad 5, 6, 7, 8 formats | All versions supported |
+| ⏳ | Symbolic links | Symlinked files | Follow links correctly |
+
+#### Output File Handling (5 tests)
+
+| Status | Test Scenario | Expected Result |
+|--------|---------------|------------------|
+| ⏳ | Write to existing file | File replaced |
+| ⏳ | Write to read-only directory | Permission error |
+| ⏳ | Write to non-existent directory | Create directories or error |
+| ⏳ | Write with --outdir option | File created in specified directory |
+| ⏳ | Default output filename | project/ → project_bom.csv, board.kicad_pcb → board_pos.csv |
+| ⏳ | Stdout with diagnostics | Diagnostics go to stderr, not stdout |
+
+### 5. Integration with Real Projects (5 tests TODO)
+
+Expands on existing test_integration_projects.py:
+
+| Status | Test Scenario | Details | Expected Result |
+|--------|---------------|---------|------------------|
+| ⏳ | Process example projects | Use projects in tests/fixtures/ | All projects process successfully |
+| ⏳ | BOM + POS workflow | Generate both for same project | Consistent output, no errors |
+| ⏳ | Golden file baseline | Compare with known-good output | Matches baseline (snapshot testing) |
+| ⏳ | Performance test | Project with 1000+ components | Complete in < 10 seconds |
+| ⏳ | Memory usage test | 10,000+ inventory items | No memory exhaustion |
 
 ---
 
