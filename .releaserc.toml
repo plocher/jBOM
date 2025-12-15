@@ -1,22 +1,35 @@
+# Python Semantic Release v9 configuration
+# See: https://python-semantic-release.readthedocs.io/
+
 [tool.semantic_release]
-version_variable = "src/jbom/__version__.py:__version__"
-upload_to_pypi = true
-upload_to_release = true
-build_command = "python -m build"
-remove_dist = true
+# Version management
+version_toml = ["pyproject.toml:project.version"]
+version_variables = ["src/jbom/__version__.py:__version__"]
 
-[tool.semantic_release.branches.main]
-match = "^main$"
-prerelease = false
+# Build configuration
+build_command = "pip install build && python -m build"
+dist_glob_patterns = ["dist/*"]
 
+# Branch configuration
+branch = "main"
+
+# Changelog configuration
 [tool.semantic_release.changelog]
-exclude_patterns = ["^chore", "^ci"]
+exclude_commit_patterns = [
+    "^chore(?:\\(.+\\))?: .*",
+    "^ci(?:\\(.+\\))?: .*",
+    "^docs(?:\\(.+\\))?: .*",
+    "^style(?:\\(.+\\))?: .*",
+    "^test(?:\\(.+\\))?: .*",
+]
 
+# Commit parsing (use default Angular-style)
 [tool.semantic_release.commit_parser_options]
-patch_patterns = ["^fix(\\(.+\\))?!?:", "^hotfix(\\(.+\\))?!?:"]
-minor_patterns = ["^feat(\\(.+\\))?!?:"]
-major_patterns = ["^(feat|fix|refactor)(\\(.+\\))?!:", "BREAKING CHANGE"]
+major_tags = ["breaking"]
+minor_tags = ["feat", "feature"]
+patch_tags = ["fix", "perf", "refactor"]
 
+# Publishing configuration
 [tool.semantic_release.publish]
-# PyPI credentials handled via environment variables (PYPI_TOKEN)
-# GitHub token handled via GITHUB_TOKEN environment variable
+dist_glob_patterns = ["dist/*"]
+upload_to_vcs_release = true

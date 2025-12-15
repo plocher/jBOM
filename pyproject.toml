@@ -7,7 +7,7 @@ name = "jbom"
 version = "2.1.0"
 description = "Intelligent KiCad Bill of Materials generator with inventory matching"
 readme = "README.md"
-license = {text = "AGPL-3.0-only"}
+license = "AGPL-3.0-only"
 authors = [{name = "John Plocher", email = "John.Plocher@gmail.com"}]
 keywords = ["kicad", "bom", "bill-of-materials", "pcb", "electronics", "inventory"]
 classifiers = [
@@ -15,7 +15,6 @@ classifiers = [
     "Environment :: Console",
     "Intended Audience :: Developers",
     "Intended Audience :: Manufacturing",
-    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
