@@ -27,8 +27,10 @@ class TestRealNumbersInventory(unittest.TestCase):
             import numbers_parser  # noqa: F401
         except Exception:
             self.skipTest('numbers-parser not installed')
-        if not INVENTORY_PATH.exists():
+        if not INVENTORY_PATH.exists() or not INVENTORY_PATH.is_file():
             self.skipTest('Real Numbers inventory file not present')
+        if INVENTORY_PATH.suffix.lower() not in ['.csv', '.xlsx', '.xls', '.numbers']:
+            self.skipTest('Inventory file has no valid extension')
         matcher = InventoryMatcher(INVENTORY_PATH)
         self.assertGreaterEqual(len(matcher.inventory), 1)
 
@@ -37,8 +39,10 @@ class TestRealNumbersInventory(unittest.TestCase):
             import numbers_parser  # noqa: F401
         except Exception:
             self.skipTest('numbers-parser not installed')
-        if not INVENTORY_PATH.exists():
+        if not INVENTORY_PATH.exists() or not INVENTORY_PATH.is_file():
             self.skipTest('Real Numbers inventory file not present')
+        if INVENTORY_PATH.suffix.lower() not in ['.csv', '.xlsx', '.xls', '.numbers']:
+            self.skipTest('Inventory file has no valid extension')
 
         from jbom.jbom import generate_bom_api
         # Determine a project to run against
