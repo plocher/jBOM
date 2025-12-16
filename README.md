@@ -91,18 +91,24 @@ jbom pos MyBoard.kicad_pcb -o MyBoard.pos.csv
 
 **Via Python:**
 ```python
-from jbom.api import generate_bom, BOMOptions
-from jbom.loaders.pcb import PCBLoader
-from jbom.generators.pos import POSGenerator
+from jbom.api import generate_bom, generate_pos, BOMOptions, POSOptions
 
 # Generate BOM
 opts = BOMOptions(verbose=True)
-result = generate_bom(input='MyProject/', inventory='inventory.xlsx', options=opts)
+result = generate_bom(
+    input='MyProject/',
+    inventory='inventory.xlsx',
+    output='MyProject_bom.csv',
+    options=opts
+)
 
 # Generate placement file
-board = PCBLoader.load('MyBoard.kicad_pcb')
-gen = POSGenerator(board)
-gen.write_csv('MyBoard.pos.csv', fields_preset='jlc')
+opts = POSOptions(units='mm', smd_only=True)
+result = generate_pos(
+    input='MyProject/',
+    output='MyProject_pos.csv',
+    options=opts
+)
 ```
 
 That's it! The BOM is written to `MyProject_bom.csv` and placement to `MyBoard.pos.csv`.
