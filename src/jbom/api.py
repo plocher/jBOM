@@ -18,6 +18,7 @@ from jbom.generators.bom import BOMGenerator
 from jbom.generators.pos import POSGenerator, PlacementOptions
 from jbom.common.utils import find_best_schematic, find_best_pcb
 from jbom.common.types import Component, BOMEntry
+from jbom.common.fields import parse_fields_argument
 
 
 @dataclass
@@ -103,30 +104,31 @@ def generate_bom(
         raise FileNotFoundError(f"Inventory file not found: {inventory_path}")
     
     # Load schematic
-    loader = SchematicLoader()
-    components = loader.load_schematic(schematic_path)
+    loader = SchematicLoader(schematic_path)
+    components = loader.parse()
     
     # Load inventory and create matcher
     matcher = InventoryMatcher(inventory_path)
     
     # Generate BOM
     generator = BOMGenerator(components, matcher)
-    bom_entries = generator.generate_bom(
+    bom_entries, excluded_count, debug_diagnostics = generator.generate_bom(
         verbose=opts.verbose,
         debug=opts.debug,
         smd_only=opts.smd_only
     )
     
     # Get available fields
-    available_fields = generator.get_available_fields()
+    available_fields = generator.get_available_fields(components)
     
     # Write output if specified
     if output_path:
         output_str = str(output_path).lower()
         if output_str in ("-", "stdout"):
             # CSV to stdout
-            fields = opts.fields or generator.parse_fields_argument(
-                "+standard", available_fields, include_verbose=opts.verbose, any_notes=False
+            any_notes = any((e.notes or "").strip() for e in bom_entries)
+            fields = opts.fields or parse_fields_argument(
+                "+standard", available_fields, include_verbose=opts.verbose, any_notes=any_notes
             )
             generator.write_bom_csv(bom_entries, Path("-"), fields)
         elif output_str == "console":
@@ -134,8 +136,9 @@ def generate_bom(
             pass
         else:
             # Write to file
-            fields = opts.fields or generator.parse_fields_argument(
-                "+standard", available_fields, include_verbose=opts.verbose, any_notes=False
+            any_notes = any((e.notes or "").strip() for e in bom_entries)
+            fields = opts.fields or parse_fields_argument(
+                "+standard", available_fields, include_verbose=opts.verbose, any_notes=any_notes
             )
             generator.write_bom_csv(bom_entries, output_path, fields)
     
