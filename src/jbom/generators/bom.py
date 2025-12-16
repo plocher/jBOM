@@ -842,6 +842,8 @@ class BOMGenerator:
         if use_stdout:
             f = sys.stdout
         else:
+            # Create parent directories if needed
+            output_path.parent.mkdir(parents=True, exist_ok=True)
             f = open(output_path, "w", newline="", encoding="utf-8")
 
         try:

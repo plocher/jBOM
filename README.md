@@ -61,16 +61,17 @@ python -m jbom pos MyBoard.kicad_pcb -o MyBoard.pos.csv
 
 **Via Python:**
 ```python
-from jbom import generate_bom_api, GenerateOptions
-from jbom.pcb import BoardLoader, PositionGenerator
+from jbom.api import generate_bom, BOMOptions
+from jbom.loaders.pcb import PCBLoader
+from jbom.generators.pos import POSGenerator
 
 # Generate BOM
-opts = GenerateOptions(verbose=True)
-result = generate_bom_api('MyProject/', 'inventory.xlsx', options=opts)
+opts = BOMOptions(verbose=True)
+result = generate_bom(input='MyProject/', inventory='inventory.xlsx', options=opts)
 
 # Generate placement file
-board = BoardLoader.load('MyBoard.kicad_pcb')
-gen = PositionGenerator(board)
+board = PCBLoader.load('MyBoard.kicad_pcb')
+gen = POSGenerator(board)
 gen.write_csv('MyBoard.pos.csv', fields_preset='jlc')
 ```
 
@@ -129,10 +130,12 @@ For more troubleshooting, see the relevant man page:
 - [**docs/**](docs/) — All documentation (user guides, developer guides, changelog, contributing)
 
 ## Modules and imports
-- Main API: `from jbom import generate_bom_api, GenerateOptions`
-- PCB module: `from jbom.pcb import BoardLoader, PositionGenerator`
-- Shared utilities: `from jbom.common import normalize_field_name, resolve_output_path`
-- Optional convenience: `from jbom.sch import Component, BOMGenerator` (same as importing from jbom)
+- Main API: `from jbom.api import generate_bom, BOMOptions`
+- PCB module: `from jbom.loaders.pcb import PCBLoader`
+- Position generation: `from jbom.generators.pos import POSGenerator`
+- BOM generation: `from jbom.generators.bom import BOMGenerator`
+- Shared utilities: `from jbom.common.fields import normalize_field_name`
+- Output handling: `from jbom.common.output import resolve_output_path`
 
 ## Contributing
 
@@ -147,9 +150,24 @@ To contribute:
 
 For detailed development setup, coding standards, and testing guidelines, see [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md).
 
+## KiCad Plugin Integration
+
+To use jBOM as a KiCad BOM tool in Eeschema:
+
+1. In KiCad Eeschema, go to `Tools` → `Generate BOM`
+2. Click `+` to add a new plugin
+3. Enter the full path to `kicad_jbom_plugin.py`
+4. In the command line field, add your inventory path and any options:
+   ```
+   python3 /path/to/kicad_jbom_plugin.py "%I" -i /path/to/inventory.xlsx -o "%O" --jlc
+   ```
+5. Click `Generate` to create your BOM
+
+The plugin is a thin wrapper that translates KiCad's interface to jBOM CLI calls. All CLI options are supported.
+
 ## Version
 
-jBOM v2.1.0 — Feature release with intelligent component matching, comprehensive functional testing, proper acronym handling in CSV headers, improved CLI exception handling, and extensive edge case coverage.
+jBOM v3.0.0 — Major architectural refactoring with data-flow architecture, argparse CLI with Command pattern, comprehensive test coverage (169 tests), and KiCad plugin integration.
 
 Author: John Plocher
 
