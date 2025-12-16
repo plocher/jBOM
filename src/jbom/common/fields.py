@@ -1,5 +1,6 @@
 """Field normalization and formatting utilities."""
 from __future__ import annotations
+from typing import List, Dict
 
 # Known acronyms in PCB/electronics domain (lowercase for matching)
 KNOWN_ACRONYMS = {
@@ -117,8 +118,6 @@ def field_to_header(field: str) -> str:
     return prefix + header_part if prefix else header_part
 
 
-from typing import List, Dict
-
 # Field presets - easily extensible data structure
 # All field names stored in normalized snake_case internally
 # Standard BOM fields don't need qualification (reference, quantity, value, etc.)
@@ -227,7 +226,9 @@ def parse_fields_argument(
                 result.extend(sorted(available_fields.keys()))
             else:
                 # Expand preset inline
-                preset_fields_list = preset_fields(preset_name, include_verbose, any_notes)
+                preset_fields_list = preset_fields(
+                    preset_name, include_verbose, any_notes
+                )
                 result.extend(preset_fields_list)
         else:
             # This is a field name - normalize and validate it
@@ -246,9 +247,7 @@ def parse_fields_argument(
             seen.add(f)
             deduped.append(f)
 
-    return (
-        deduped if deduped else preset_fields("standard", include_verbose, any_notes)
-    )
+    return deduped if deduped else preset_fields("standard", include_verbose, any_notes)
 
 
 __all__ = [

@@ -9,17 +9,16 @@ import sys
 from pathlib import Path
 from typing import List
 
-from jbom.jbom import (
-    GenerateOptions,
-    generate_bom_api,
-    _parse_fields_argument,
-    print_bom_table,
-)
+from jbom.api import generate_bom, BOMOptions
+from jbom.common.fields import parse_fields_argument
 from jbom.loaders.pcb import load_board
+from jbom.generators.bom import BOMGenerator
 from jbom.generators.pos import POSGenerator, PlacementOptions, print_pos_table
+from jbom.processors.inventory_matcher import InventoryMatcher
 from jbom.common.utils import find_best_pcb
 from jbom.common.output import resolve_output_path
 from jbom.cli.common import apply_jlc_flag
+from jbom.cli.formatting import print_bom_table
 
 
 def _cmd_bom(argv: List[str]) -> int:
@@ -115,23 +114,23 @@ def _cmd_bom_impl(argv: List[str]) -> int:
     )
     args = p.parse_args(argv)
 
-    opts = GenerateOptions(
+    opts = BOMOptions(
         verbose=args.verbose, debug=args.debug, smd_only=args.smd_only, fields=None
     )
-    result = generate_bom_api(args.project, args.inventory, options=opts)
+    result = generate_bom(input=args.project, inventory=args.inventory, options=opts)
 
     # Compute fields (apply --jlc implication using shared utility)
     any_notes = any(((e.notes or "").strip()) for e in result["bom_entries"])
     fields_arg = apply_jlc_flag(args.fields, args.jlc)
     if fields_arg:
-        fields = _parse_fields_argument(
+        fields = parse_fields_argument(
             fields_arg,
             result["available_fields"],
             include_verbose=args.verbose,
             any_notes=any_notes,
         )
     else:
-        fields = _parse_fields_argument(
+        fields = parse_fields_argument(
             "+standard",
             result["available_fields"],
             include_verbose=args.verbose,
@@ -148,8 +147,6 @@ def _cmd_bom_impl(argv: List[str]) -> int:
         print_bom_table(result["bom_entries"], verbose=args.verbose, include_mfg=False)
     elif csv_to_stdout:
         # CSV output to stdout (pipeline-friendly)
-        from jbom.jbom import InventoryMatcher, BOMGenerator
-
         matcher = InventoryMatcher(Path(args.inventory))
         bom_gen = BOMGenerator(result["components"], matcher)
         bom_gen.write_bom_csv(result["bom_entries"], Path("-"), fields)
@@ -160,8 +157,6 @@ def _cmd_bom_impl(argv: List[str]) -> int:
         )
 
         # Write via BOMGenerator (recreate matcher)
-        from jbom.jbom import InventoryMatcher, BOMGenerator
-
         matcher = InventoryMatcher(Path(args.inventory))
         bom_gen = BOMGenerator(result["components"], matcher)
         bom_gen.write_bom_csv(result["bom_entries"], out, fields)

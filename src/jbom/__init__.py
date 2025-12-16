@@ -11,12 +11,11 @@ from .common.types import Component, InventoryItem, BOMEntry
 from .common.constants import ComponentType, DiagnosticIssue, CommonFields
 from .common.fields import normalize_field_name, field_to_header
 
-# Import schematic loader and BOM generator
-from .sch import SchematicLoader, BOMGenerator
+# Import from new v3.0 module structure
+from .loaders.schematic import SchematicLoader
+from .generators.bom import BOMGenerator
 from .processors.component_types import normalize_component_type
-
-# Import inventory matcher
-from .inventory import InventoryMatcher
+from .processors.inventory_matcher import InventoryMatcher
 
 # Import v3.0 unified API
 from .api import (

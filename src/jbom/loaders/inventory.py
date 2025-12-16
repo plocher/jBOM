@@ -8,10 +8,16 @@ Handles loading inventory data from multiple file formats:
 """
 
 import csv
+import warnings
 from pathlib import Path
 from typing import List, Dict
 
 from jbom.common.types import InventoryItem, DEFAULT_PRIORITY
+
+# Suppress specific Numbers version warning
+warnings.filterwarnings(
+    "ignore", message="Numbers version 14.3 not tested with this version"
+)
 
 # Optional imports for spreadsheet support
 try:
