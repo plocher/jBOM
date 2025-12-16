@@ -63,7 +63,7 @@ class TestIntegrationProjects(unittest.TestCase):
                 with tempfile.TemporaryDirectory() as td:
                     out = Path(td) / f"{boards[0].stem}.pos.csv"
                     opts = POSOptions(units="mm", origin="board", smd_only=False)
-                    result = generate_pos(
+                    generate_pos(
                         input=boards[0], output=out, options=opts, loader_mode="sexp"
                     )
                     text = out.read_text(encoding="utf-8").splitlines()

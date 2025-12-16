@@ -201,11 +201,8 @@ class TestBOMHappyPaths(FunctionalTestBase):
 
         self.assertEqual(rc, 0)
         rows = self.assert_csv_valid(output)
-        header = rows[0]
 
         # Debug adds Notes column when there are notes to display
-        # Check if any BOM entries have notes
-        has_notes = any("Notes" in h for h in header)
         # Note: Notes column may not appear if no components have notes
         # Just verify the file was generated successfully
         self.assertGreater(len(rows), 1, "BOM should have data rows")

@@ -3,8 +3,6 @@
 
 These tests exercise the new 'pos' functionality introduced in the v2 CLI.
 """
-import csv
-import io
 import tempfile
 import unittest
 from pathlib import Path

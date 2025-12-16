@@ -105,12 +105,10 @@ class TestPOSHappyPaths(FunctionalTestBase):
         # Check that coordinates are reasonable for mm
         # Our test components are at ~50-100 mm
         x_idx = rows[0].index("X")
-        y_idx = rows[0].index("Y")
 
         for row in rows[1:]:
             if row:
                 x_val = float(row[x_idx])
-                y_val = float(row[y_idx])
                 # Should be in the range we set (around 50-100 mm)
                 self.assertGreater(x_val, 40)
                 self.assertLess(x_val, 110)
@@ -139,12 +137,10 @@ class TestPOSHappyPaths(FunctionalTestBase):
         # Check that coordinates are reasonable for inches
         # Our test components at 50-100 mm = ~2-4 inches
         x_idx = rows[0].index("X")
-        y_idx = rows[0].index("Y")
 
         for row in rows[1:]:
             if row:
                 x_val = float(row[x_idx])
-                y_val = float(row[y_idx])
                 # Should be in inch range
                 self.assertGreater(x_val, 1.5)
                 self.assertLess(x_val, 4.5)
@@ -294,13 +290,11 @@ class TestPOSHappyPaths(FunctionalTestBase):
         rows = self.assert_csv_valid(output)
 
         x_idx = rows[0].index("X")
-        y_idx = rows[0].index("Y")
         rot_idx = rows[0].index("Rotation")
 
         for row in rows[1:]:
             if row:
                 x_str = row[x_idx]
-                y_str = row[y_idx]
                 rot_str = row[rot_idx]
 
                 # Coordinates should have up to 4 decimal places

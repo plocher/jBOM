@@ -1,0 +1,15 @@
+[flake8]
+max-line-length = 100
+exclude =
+    .git,
+    __pycache__,
+    .venv,
+    venv,
+    build,
+    dist,
+    *.egg-info
+
+# Ignore E402 (module level import not at top) in test files
+# Tests need sys.path manipulation before imports
+per-file-ignores =
+    tests/*.py:E402

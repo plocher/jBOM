@@ -13,8 +13,6 @@ import unittest
 import tempfile
 import csv
 from pathlib import Path
-from unittest.mock import patch, mock_open
-from typing import List
 import sys
 
 # Add src directory to path for imports during testing
@@ -30,7 +28,6 @@ from jbom.common.constants import (
     CATEGORY_FIELDS,
     VALUE_INTERPRETATION,
 )
-from jbom.loaders.schematic import SchematicLoader
 from jbom.generators.bom import BOMGenerator
 from jbom.processors.component_types import (
     get_category_fields,
@@ -819,10 +816,6 @@ class TestBOMSorting(unittest.TestCase):
         # Extract references to check order
         references = [entry.reference for entry in bom_entries]
 
-        # Expected order: C (capacitors), D (diodes), LED, R (resistors)
-        # Within each category, sorted by number
-        expected_order = ["C2", "D5", "LED3", "R1, R2", "R10"]
-
         # The actual references might be grouped, so check the essential ordering
         self.assertEqual(len(references), 5)
 
@@ -1091,24 +1084,24 @@ class TestHierarchicalSupport(unittest.TestCase):
     def create_hierarchical_root(self, filename="test_project.kicad_sch"):
         """Create a mock hierarchical root schematic file"""
         root_content = """(kicad_sch
-	(version 20231120)
-	(generator "eeschema")
-	(generator_version "8.0")
-	(uuid "test-root-uuid")
-	(paper "A4")
-	(lib_symbols)
-	(sheet
-		(at 25.4 25.4)
-		(size 12.7 3.81)
-		(property "Sheetname" "SubSheet1")
-		(property "Sheetfile" "subsheet1.kicad_sch")
-	)
-	(sheet
-		(at 45.4 25.4)
-		(size 12.7 3.81)
-		(property "Sheetname" "SubSheet2")
-		(property "Sheetfile" "subsheet2.kicad_sch")
-	)
+    (version 20231120)
+    (generator "eeschema")
+    (generator_version "8.0")
+    (uuid "test-root-uuid")
+    (paper "A4")
+    (lib_symbols)
+    (sheet
+        (at 25.4 25.4)
+        (size 12.7 3.81)
+        (property "Sheetname" "SubSheet1")
+        (property "Sheetfile" "subsheet1.kicad_sch")
+    )
+    (sheet
+        (at 45.4 25.4)
+        (size 12.7 3.81)
+        (property "Sheetname" "SubSheet2")
+        (property "Sheetfile" "subsheet2.kicad_sch")
+    )
 )"""
         root_file = self.project_dir / filename
         root_file.write_text(root_content)
@@ -1120,21 +1113,21 @@ class TestHierarchicalSupport(unittest.TestCase):
         """Create a mock simple schematic file"""
         if with_components:
             content = """(kicad_sch
-	(version 20231120)
-	(lib_symbols
-		(symbol "Device:R" (properties...))
-	)
-	(symbol (lib_id "Device:R") (at 50 50 0) (unit 1)
-		(in_bom yes) (on_board yes) (dnp no)
-		(property "Reference" "R1" (at 52 50 0))
-		(property "Value" "330R" (at 50 47 0))
-		(property "Footprint" "PCM_SPCoast:0603-RES" (at 50 45 0))
-	)
+    (version 20231120)
+    (lib_symbols
+        (symbol "Device:R" (properties...))
+    )
+    (symbol (lib_id "Device:R") (at 50 50 0) (unit 1)
+        (in_bom yes) (on_board yes) (dnp no)
+        (property "Reference" "R1" (at 52 50 0))
+        (property "Value" "330R" (at 50 47 0))
+        (property "Footprint" "PCM_SPCoast:0603-RES" (at 50 45 0))
+    )
 )"""
         else:
             content = """(kicad_sch
-	(version 20231120)
-	(lib_symbols)
+    (version 20231120)
+    (lib_symbols)
 )"""
         simple_file = self.project_dir / filename
         simple_file.write_text(content)
