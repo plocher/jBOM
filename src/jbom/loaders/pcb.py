@@ -5,12 +5,19 @@ from typing import Optional
 
 from jbom.loaders.pcb_model import BoardModel, PcbComponent
 from jbom.common.packages import PackageType
+from jbom.common.generator import Diagnostics
 
 
 class PCBLoader:
-    def __init__(self, board_path: Path, mode: str = "auto"):
+    def __init__(
+        self,
+        board_path: Path,
+        mode: str = "auto",
+        diagnostics: Optional[Diagnostics] = None,
+    ):
         self.board_path = Path(board_path)
         self.mode = mode  # 'auto' | 'pcbnew' | 'sexp'
+        self.diag = diagnostics
 
     def load(self) -> BoardModel:
         """Load board via selected mode.
@@ -24,6 +31,13 @@ class PCBLoader:
             try:
                 return self._load_with_pcbnew()
             except Exception:
+                if self.diag:
+                    self.diag.warn(
+                        "pcbnew.load_failed",
+                        "Falling back to S-expression loader due to pcbnew error",
+                        path=str(self.board_path),
+                        mode=self.mode,
+                    )
                 if self.mode == "pcbnew":
                     raise
         return self._load_with_sexp()
@@ -42,15 +56,33 @@ class PCBLoader:
             board.aux_origin_mm = (pcbnew.ToMM(aux.x), pcbnew.ToMM(aux.y))
         except Exception:
             board.aux_origin_mm = None
+            if self.diag:
+                self.diag.info(
+                    "pcbnew.aux_origin_unavailable",
+                    "Aux origin not available",
+                    path=str(self.board_path),
+                )
         try:
             ori = brd.GetDesignSettings().GetGridOrigin()
             board.board_origin_mm = (pcbnew.ToMM(ori.x), pcbnew.ToMM(ori.y))
         except Exception:
             board.board_origin_mm = None
+            if self.diag:
+                self.diag.info(
+                    "pcbnew.board_origin_unavailable",
+                    "Board origin not available",
+                    path=str(self.board_path),
+                )
         try:
             board.kicad_version = getattr(pcbnew, "GetBuildVersion", lambda: None)()
         except Exception:
             board.kicad_version = None
+            if self.diag:
+                self.diag.info(
+                    "pcbnew.version_unknown",
+                    "Could not read KiCad build version",
+                    path=str(self.board_path),
+                )
 
         for fp in brd.GetFootprints():
             ref = fp.GetReference()
@@ -64,8 +96,22 @@ class PCBLoader:
                     lib = getattr(fpid, "GetLibNickname", lambda: "")()
                     name = getattr(fpid, "GetLibItemName", lambda: "")()
                     fp_name = f"{lib}:{name}" if lib or name else str(fpid)
+                    if self.diag:
+                        self.diag.info(
+                            "pcbnew.fpid_asstring_failed",
+                            "Fallback to composed footprint name",
+                            reference=ref,
+                            lib=lib,
+                            name=name,
+                        )
             except Exception:
                 fp_name = getattr(fp, "GetFPIDAsString", lambda: fp.GetValue())()
+                if self.diag:
+                    self.diag.info(
+                        "pcbnew.fpid_unavailable",
+                        "Fallback to GetFPIDAsString",
+                        reference=ref,
+                    )
 
             # Position in mm
             pos = fp.GetPosition()
@@ -73,8 +119,23 @@ class PCBLoader:
                 x_mm = pcbnew.ToMM(pos.x)
                 y_mm = pcbnew.ToMM(pos.y)
             except Exception:
-                x_mm = float(pos.x)
-                y_mm = float(pos.y)
+                try:
+                    x_mm = float(pos.x)
+                    y_mm = float(pos.y)
+                    if self.diag:
+                        self.diag.info(
+                            "pcbnew.position_float_fallback",
+                            "Used float() for position conversion",
+                            reference=ref,
+                        )
+                except Exception:
+                    x_mm, y_mm = 0.0, 0.0
+                    if self.diag:
+                        self.diag.warn(
+                            "pcbnew.position_unreadable",
+                            "Position could not be read; defaulting to 0,0",
+                            reference=ref,
+                        )
 
             # Rotation
             rot = 0.0
@@ -85,6 +146,12 @@ class PCBLoader:
                     rot = float(fp.GetOrientation()) / 10.0
                 except Exception:
                     rot = 0.0
+                    if self.diag:
+                        self.diag.info(
+                            "pcbnew.rotation_unavailable",
+                            "Rotation could not be read; defaulting to 0",
+                            reference=ref,
+                        )
 
             # Side
             side = "BOTTOM" if getattr(fp, "IsFlipped", lambda: False)() else "TOP"
@@ -101,7 +168,12 @@ class PCBLoader:
                         if isinstance(key, str) and isinstance(val, str):
                             attributes[key.lower()] = val
             except Exception:
-                pass
+                if self.diag:
+                    self.diag.info(
+                        "pcbnew.properties_unavailable",
+                        "Properties not available on footprint",
+                        reference=ref,
+                    )
 
             # Get datasheet
             try:
@@ -110,7 +182,12 @@ class PCBLoader:
                     if ds:
                         attributes["datasheet"] = ds
             except Exception:
-                pass
+                if self.diag:
+                    self.diag.info(
+                        "pcbnew.datasheet_unavailable",
+                        "Datasheet not available on footprint",
+                        reference=ref,
+                    )
 
             # Get SMD type from footprint attributes
             try:
@@ -123,7 +200,12 @@ class PCBLoader:
                     elif attrs == 2:
                         attributes["smd"] = "PTH"
             except Exception:
-                pass
+                if self.diag:
+                    self.diag.info(
+                        "pcbnew.smd_attr_unavailable",
+                        "SMD attribute not available on footprint",
+                        reference=ref,
+                    )
 
             pkg = self._extract_package_token(fp_name)
             board.footprints.append(
@@ -191,12 +273,22 @@ class PCBLoader:
                         x_mm = float(child[1])
                         y_mm = float(child[2])
                     except Exception:
-                        pass
+                        if self.diag:
+                            self.diag.warn(
+                                "sexp.position_parse_failed",
+                                "Could not parse footprint position; keeping defaults",
+                                node_head=str(head),
+                            )
                 if len(child) >= 4:
                     try:
                         rot = float(child[3])
                     except Exception:
-                        pass
+                        if self.diag:
+                            self.diag.info(
+                                "sexp.rotation_parse_failed",
+                                "Could not parse rotation; defaulting to 0",
+                                node_head=str(head),
+                            )
             elif head == Symbol("fp_text") and len(child) >= 3:
                 # (fp_text reference "R1" ...)
                 if child[1] == Symbol("reference") and isinstance(child[2], str):
@@ -217,7 +309,12 @@ class PCBLoader:
                             # Store other properties in attributes
                             attributes[key] = val
                 except Exception:
-                    pass
+                    if self.diag:
+                        self.diag.info(
+                            "sexp.property_parse_failed",
+                            "Skipping malformed property entry",
+                            property_node=str(child[:3]),
+                        )
             elif head == Symbol("attr"):
                 # (attr smd) or (attr through_hole) or (attr board_only)
                 # This indicates the footprint type
@@ -269,5 +366,7 @@ class PCBLoader:
         return ""
 
 
-def load_board(board_path: Path, *, mode: str = "auto") -> BoardModel:
-    return PCBLoader(board_path, mode=mode).load()
+def load_board(
+    board_path: Path, *, mode: str = "auto", diagnostics: Optional[Diagnostics] = None
+) -> BoardModel:
+    return PCBLoader(board_path, mode=mode, diagnostics=diagnostics).load()

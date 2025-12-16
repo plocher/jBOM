@@ -106,7 +106,10 @@ class POSGenerator(Generator):
             Loaded BoardModel
         """
         loader_mode = getattr(self.options, "loader_mode", "auto")
-        self.board = load_board(input_path, mode=loader_mode)
+        # Pass diagnostics collector for robust fallbacks reporting
+        self.board = load_board(
+            input_path, mode=loader_mode, diagnostics=self.diagnostics
+        )
         return self.board
 
     def process(self, data: BoardModel) -> tuple[List[PcbComponent], Dict[str, Any]]:
