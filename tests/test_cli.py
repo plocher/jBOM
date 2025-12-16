@@ -6,113 +6,150 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 import unittest
 import tempfile
-from unittest.mock import patch
+import csv
 
 from jbom.cli.main import main as cli_main
 
 
-class TestCLIJlcImplicationBom(unittest.TestCase):
+class TestCLIBehavior(unittest.TestCase):
+    """Test CLI behavior without mocking implementation details"""
+
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
-        # Dummy paths
-        self.inv = Path(self.tmp.name) / "inv.csv"
+        self.tmpdir = Path(self.tmp.name)
+
+        # Create minimal inventory
+        self.inv = self.tmpdir / "inv.csv"
         self.inv.write_text(
-            "IPN,Category,Package,Value,LCSC,Priority\n", encoding="utf-8"
+            "IPN,Category,Package,Value,LCSC,Priority\n"
+            "R-0603-330,RES,0603,330R,C123,1\n",
+            encoding="utf-8",
         )
-        self.proj = Path(self.tmp.name) / "proj"
-        self.proj.mkdir()
+
+        # Create minimal schematic
+        self.schematic = self.tmpdir / "test.kicad_sch"
+        self.schematic.write_text(
+            "(kicad_sch (version 20211123) "
+            '(lib_symbols (symbol "Device:R" (property "Reference" "R"))) '
+            '(symbol (lib_id "Device:R") (at 10 10 0) '
+            '(property "Reference" "R1" (id 0)) '
+            '(property "Value" "330R" (id 1)) '
+            '(property "Footprint" "Resistor_SMD:R_0603_1608Metric" (id 2))))',
+            encoding="utf-8",
+        )
+
+        # Create minimal PCB
+        self.pcb = self.tmpdir / "test.kicad_pcb"
+        self.pcb.write_text(
+            '(kicad_pcb (version 20211014) (host pcbnew "6") '
+            '(footprint "Resistor_SMD:R_0603_1608Metric" (layer "F.Cu") (at 10 20 0) '
+            '(fp_text reference "R1" (at 0 0 0) (layer "F.SilkS"))))',
+            encoding="utf-8",
+        )
 
     def tearDown(self):
         self.tmp.cleanup()
 
-    @patch("jbom.cli.main.BOMGenerator")
-    @patch("jbom.cli.main.InventoryMatcher")
-    @patch("jbom.cli.main.parse_fields_argument")
-    @patch("jbom.cli.main.generate_bom")
-    def test_bom_jlc_implies_preset(self, mock_gen_api, mock_parse, _m_inv, _m_bomgen):
-        mock_gen_api.return_value = {
-            "bom_entries": [],
-            "available_fields": {
-                "reference": "d",
-                "quantity": "d",
-                "lcsc": "d",
-                "value": "d",
-                "i:package": "d",
-            },
-            "components": [],
-        }
-        mock_parse.return_value = ["reference", "quantity", "lcsc"]
-        rc = cli_main(["bom", str(self.proj), "-i", str(self.inv), "--jlc"])
-        self.assertEqual(rc, 0)
-        # First arg to _parse_fields_argument should be '+jlc'
-        called_args = mock_parse.call_args[0]
-        self.assertTrue(called_args[0].startswith("+jlc"))
-
-    @patch("jbom.cli.main.BOMGenerator")
-    @patch("jbom.cli.main.InventoryMatcher")
-    @patch("jbom.cli.main.parse_fields_argument")
-    @patch("jbom.cli.main.generate_bom")
-    def test_bom_jlc_prepends_when_fields_present(
-        self, mock_gen_api, mock_parse, _m_inv, _m_bomgen
-    ):
-        mock_gen_api.return_value = {
-            "bom_entries": [],
-            "available_fields": {
-                "reference": "d",
-                "quantity": "d",
-                "lcsc": "d",
-                "value": "d",
-            },
-            "components": [],
-        }
-        mock_parse.return_value = ["reference", "lcsc"]
+    def test_bom_with_jlc_flag_produces_jlc_fields(self):
+        """--jlc flag should produce JLC-specific field layout"""
+        output = self.tmpdir / "bom_jlc.csv"
         rc = cli_main(
             [
                 "bom",
-                str(self.proj),
+                str(self.schematic),
                 "-i",
                 str(self.inv),
+                "-o",
+                str(output),
                 "--jlc",
-                "-f",
-                "reference,lcsc",
             ]
         )
+
         self.assertEqual(rc, 0)
-        called_args = mock_parse.call_args[0]
-        self.assertTrue(called_args[0].split(",")[0] == "+jlc")
+        self.assertTrue(output.exists())
 
+        # Check that JLC fields are present
+        with open(output, encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            headers = reader.fieldnames
+            # JLC format should have these specific fields
+            self.assertIn("Reference", headers)
+            self.assertIn("Quantity", headers)
+            self.assertIn("Value", headers)
+            self.assertIn("LCSC", headers)
+            # Package comes from inventory (I:Package)
+            self.assertTrue(any("Package" in h for h in headers))
 
-class TestCLIJlcImplicationPos(unittest.TestCase):
-    def setUp(self):
-        self.tmp = tempfile.TemporaryDirectory()
-        self.board = Path(self.tmp.name) / "b.kicad_pcb"
-        self.board.write_text(
-            '(kicad_pcb (version 20211014) (host pcbnew "6") (footprint "Res:R_0603" (layer "F.Cu") (at 1 2 0) (fp_text reference "R1"))))'.replace(
-                "))))", ")))"
-            ),
-            encoding="utf-8",
-        )
-        self.out = Path(self.tmp.name) / "out.csv"
-
-    def tearDown(self):
-        self.tmp.cleanup()
-
-    @patch("jbom.cli.main.POSGenerator.parse_fields_argument")
-    def test_pos_jlc_implies_preset(self, mock_parse):
-        mock_parse.return_value = ["reference", "side", "x", "y", "rotation", "package"]
+    def test_bom_with_custom_fields(self):
+        """Custom field list should be respected"""
+        output = self.tmpdir / "bom_custom.csv"
         rc = cli_main(
-            ["pos", str(self.board), "-o", str(self.out), "--jlc", "--loader", "sexp"]
+            [
+                "bom",
+                str(self.schematic),
+                "-i",
+                str(self.inv),
+                "-o",
+                str(output),
+                "-f",
+                "Reference,Value,LCSC",
+            ]
         )
-        self.assertEqual(rc, 0)
-        called_args = mock_parse.call_args[0]
-        self.assertTrue(called_args[0].startswith("+jlc"))
 
-    def test_pos_end_to_end_writes_file(self):
-        # Ensure CLI writes a CSV using sexp loader
-        rc = cli_main(["pos", str(self.board), "-o", str(self.out), "--loader", "sexp"])
         self.assertEqual(rc, 0)
-        self.assertTrue(self.out.exists())
-        self.assertIn("Reference", self.out.read_text(encoding="utf-8").splitlines()[0])
+        with open(output, encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            headers = reader.fieldnames
+            self.assertIn("Reference", headers)
+            self.assertIn("Value", headers)
+            self.assertIn("LCSC", headers)
+            # Should have exactly these fields (or very close)
+            self.assertLessEqual(len(headers), 5)  # Allow for minor additions
+
+    def test_pos_with_jlc_flag_produces_jlc_fields(self):
+        """--jlc flag should produce JLC placement format"""
+        output = self.tmpdir / "pos_jlc.csv"
+        rc = cli_main(
+            ["pos", str(self.pcb), "-o", str(output), "--jlc", "--loader", "sexp"]
+        )
+
+        self.assertEqual(rc, 0)
+        self.assertTrue(output.exists())
+
+        with open(output, encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            headers = reader.fieldnames
+            # JLC POS format
+            self.assertIn("Reference", headers)
+            self.assertIn("Side", headers)
+            self.assertIn("X", headers)
+            self.assertIn("Y", headers)
+            self.assertIn("Rotation", headers)
+
+    def test_pos_writes_csv_file(self):
+        """POS command should create valid CSV output"""
+        output = self.tmpdir / "pos.csv"
+        rc = cli_main(["pos", str(self.pcb), "-o", str(output), "--loader", "sexp"])
+
+        self.assertEqual(rc, 0)
+        self.assertTrue(output.exists())
+
+        content = output.read_text(encoding="utf-8")
+        self.assertIn("Reference", content)
+        self.assertIn("R1", content)
+
+    def test_cli_help_works(self):
+        """CLI help should not crash"""
+        with self.assertRaises(SystemExit) as cm:
+            cli_main(["--help"])
+        # argparse exits with 0 for help
+        self.assertEqual(cm.exception.code, 0)
+
+    def test_cli_version_works(self):
+        """CLI version flag should work"""
+        with self.assertRaises(SystemExit) as cm:
+            cli_main(["--version"])
+        self.assertEqual(cm.exception.code, 0)
 
 
 if __name__ == "__main__":
