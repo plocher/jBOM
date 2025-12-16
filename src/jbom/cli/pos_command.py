@@ -3,9 +3,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from jbom.loaders.pcb import load_board
 from jbom.generators.pos import POSGenerator, PlacementOptions, print_pos_table
-from jbom.common.utils import find_best_pcb
 from jbom.common.output import resolve_output_path
 from jbom.cli.commands import Command, OutputMode
 from jbom.cli.common import apply_jlc_flag
@@ -102,44 +100,37 @@ class POSCommand(Command):
 
     def execute(self, args: argparse.Namespace) -> int:
         """Execute POS generation"""
-        # Find PCB file (auto-detect if directory)
-        board_path_input = Path(args.board)
-        board_path = find_best_pcb(board_path_input)
-        if not board_path:
-            import sys
-
-            print(
-                f"Error: Could not find PCB file in {board_path_input}", file=sys.stderr
-            )
-            return 1
-
-        # Load board
-        board = load_board(board_path, mode=args.loader)
-
         # Create placement options
         opts = PlacementOptions(
             units=args.units,
             origin=args.origin,
             smd_only=args.smd_only,
             layer_filter=args.layer,
+            loader_mode=args.loader,
         )
-        gen = POSGenerator(board, opts)
 
         # Process fields
         fields_arg = apply_jlc_flag(args.fields, args.jlc)
-        fields = (
-            gen.parse_fields_argument(fields_arg)
-            if fields_arg
-            else gen.parse_fields_argument("+standard")
-        )
+        if fields_arg:
+            opts.fields = POSGenerator(opts).parse_fields_argument(fields_arg)
+
+        gen = POSGenerator(opts)
 
         # Handle output
         output_mode, output_path = self.determine_output_mode(args.output)
+        board_path_input = Path(args.board)
 
         if output_mode == OutputMode.CONSOLE:
+            # Need to run first to load data
+            gen.run(input=args.board)
+            fields = opts.fields or gen.parse_fields_argument("+standard")
             print_pos_table(gen, fields)
         elif output_mode == OutputMode.STDOUT:
-            gen.write_csv(Path("-"), fields)
+            # Run with stdout output
+            fields = opts.fields or gen.parse_fields_argument("+standard")
+            opts.fields = fields
+            gen.options = opts  # Update options
+            gen.run(input=args.board, output="-")
         else:
             # File output
             if output_path:
@@ -148,6 +139,9 @@ class POSCommand(Command):
                 out = resolve_output_path(
                     board_path_input, args.output, args.outdir, "_pos.csv"
                 )
-            gen.write_csv(out, fields)
+            fields = opts.fields or gen.parse_fields_argument("+standard")
+            opts.fields = fields
+            gen.options = opts  # Update options
+            gen.run(input=args.board, output=out)
 
         return 0

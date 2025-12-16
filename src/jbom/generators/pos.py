@@ -2,12 +2,16 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, List, Literal, Optional
+from typing import Any, Dict, Iterable, List, Literal, Optional
 import csv
+import sys
 
 from jbom.loaders.pcb_model import BoardModel, PcbComponent
+from jbom.loaders.pcb import load_board
+from jbom.common.generator import Generator, GeneratorOptions
 from jbom.common.fields import normalize_field_name, field_to_header
 from jbom.common.packages import PackageType
+from jbom.common.utils import find_best_pcb
 
 Layer = Literal["TOP", "BOTTOM"]
 Units = Literal["mm", "inch"]
@@ -47,19 +51,148 @@ PLACEMENT_PRESETS: Dict[str, Dict[str, Optional[List[str]]]] = {
 
 
 @dataclass
-class PlacementOptions:
+class PlacementOptions(GeneratorOptions):
+    """Options for placement generation, extends GeneratorOptions"""
+
     units: Units = "mm"
     origin: Origin = "board"
     smd_only: bool = True
     layer_filter: Optional[Layer] = None
+    loader_mode: str = "auto"  # PCB loading method
 
 
-class POSGenerator:
-    def __init__(
-        self, board: BoardModel, options: PlacementOptions = PlacementOptions()
-    ):
-        self.board = board
-        self.options = options
+class POSGenerator(Generator):
+    """Generate placement files from KiCad PCB.
+
+    Inherits from Generator base class to get consistent file discovery,
+    loading, and output handling.
+    """
+
+    def __init__(self, options: Optional[PlacementOptions] = None):
+        """Initialize generator with placement options.
+
+        Args:
+            options: PlacementOptions for units, origin, filters
+        """
+        super().__init__(options or PlacementOptions())
+        self.board: Optional[BoardModel] = None  # Set by load_input()
+
+    # ---------------- Generator abstract methods ----------------
+
+    def discover_input(self, input_path: Path) -> Path:
+        """Find PCB file in directory.
+
+        Args:
+            input_path: Directory to search
+
+        Returns:
+            Path to discovered .kicad_pcb file
+
+        Raises:
+            FileNotFoundError: If no .kicad_pcb file found
+        """
+        pcb_path = find_best_pcb(input_path)
+        if not pcb_path:
+            raise FileNotFoundError(f"No .kicad_pcb file found in {input_path}")
+        return pcb_path
+
+    def load_input(self, input_path: Path) -> BoardModel:
+        """Load and parse PCB file.
+
+        Args:
+            input_path: Path to .kicad_pcb file
+
+        Returns:
+            Loaded BoardModel
+        """
+        loader_mode = getattr(self.options, "loader_mode", "auto")
+        self.board = load_board(input_path, mode=loader_mode)
+        return self.board
+
+    def process(self, data: BoardModel) -> tuple[List[PcbComponent], Dict[str, Any]]:
+        """Process board data into placement entries.
+
+        Args:
+            data: BoardModel from load_input()
+
+        Returns:
+            Tuple of (components, metadata)
+        """
+        # Store board if not already set
+        if self.board is None:
+            self.board = data
+
+        # Get filtered components
+        components = list(self.iter_components())
+
+        metadata = {
+            "board": data,
+            "component_count": len(components),
+            "generator": self,  # For backward compatibility
+        }
+
+        return components, metadata
+
+    def write_csv(
+        self, entries: List[PcbComponent], output_path: Path, fields: List[str]
+    ) -> None:
+        """Write placement data to CSV.
+
+        Args:
+            entries: List of PcbComponent objects
+            output_path: Output file path (or "-" for stdout)
+            fields: List of field names to include
+        """
+        norm_fields = [normalize_field_name(f) for f in fields]
+        headers = [field_to_header(f) for f in norm_fields]
+
+        # Check if output should go to stdout
+        output_str = str(output_path)
+        use_stdout = output_str in ("-", "console", "stdout")
+
+        if use_stdout:
+            f = sys.stdout
+        else:
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            f = open(output_path, "w", newline="", encoding="utf-8")
+
+        try:
+            w = csv.writer(f)
+            w.writerow(headers)
+            for c in entries:
+                row: List[str] = []
+                x, y = self._xy_in_units(c)
+                for fld in norm_fields:
+                    if fld == "reference":
+                        row.append(c.reference)
+                    elif fld == "x":
+                        row.append(f"{x:.4f}")
+                    elif fld == "y":
+                        row.append(f"{y:.4f}")
+                    elif fld == "rotation":
+                        row.append(f"{c.rotation_deg:.1f}")
+                    elif fld == "side":
+                        row.append(c.side)
+                    elif fld == "footprint":
+                        row.append(c.footprint_name)
+                    elif fld == "package":
+                        row.append(c.package_token)
+                    elif fld == "datasheet":
+                        row.append(c.attributes.get("datasheet", ""))
+                    elif fld == "version":
+                        row.append(c.attributes.get("version", ""))
+                    elif fld == "smd":
+                        row.append(c.attributes.get("smd", ""))
+                    else:
+                        row.append("")
+                w.writerow(row)
+        finally:
+            if not use_stdout:
+                f.close()
+
+    def default_preset(self) -> str:
+        """Return default field preset name."""
+        return "standard"
 
     # ---------------- column system ----------------
     def get_available_fields(self) -> Dict[str, str]:
@@ -130,64 +263,7 @@ class POSGenerator:
             return (x / 25.4, y / 25.4)
         return (x, y)
 
-    # ---------------- CSV writers ----------------
-    def write_csv(self, output_path: Path, fields: List[str]) -> None:
-        """Write placement CSV to file or stdout.
-
-        Special output_path values for stdout:
-        - "-"
-        - "console"
-        - "stdout"
-        """
-        import sys
-
-        norm_fields = [normalize_field_name(f) for f in fields]
-        headers = [field_to_header(f) for f in norm_fields]
-
-        # Check if output should go to stdout
-        output_str = str(output_path)
-        use_stdout = output_str in ("-", "console", "stdout")
-
-        if use_stdout:
-            f = sys.stdout
-        else:
-            f = open(output_path, "w", newline="", encoding="utf-8")
-
-        try:
-            w = csv.writer(f)
-            w.writerow(headers)
-            for c in self.iter_components():
-                row: List[str] = []
-                x, y = self._xy_in_units(c)
-                for fld in norm_fields:
-                    if fld == "reference":
-                        row.append(c.reference)
-                    elif fld == "x":
-                        row.append(f"{x:.4f}")
-                    elif fld == "y":
-                        row.append(f"{y:.4f}")
-                    elif fld == "rotation":
-                        row.append(f"{c.rotation_deg:.1f}")
-                    elif fld == "side":
-                        row.append(c.side)
-                    elif fld == "footprint":
-                        row.append(c.footprint_name)
-                    elif fld == "package":
-                        row.append(c.package_token)
-                    elif fld == "datasheet":
-                        row.append(c.attributes.get("datasheet", ""))
-                    elif fld == "version":
-                        row.append(c.attributes.get("version", ""))
-                    elif fld == "smd":
-                        row.append(c.attributes.get("smd", ""))
-                    else:
-                        row.append("")
-                w.writerow(row)
-        finally:
-            if not use_stdout:
-                f.close()
-
-    # Convenience generators (still available)
+    # ---------------- Convenience generators (backward compatibility) ----------------
     def generate_kicad_pos_rows(self) -> List[List[str]]:
         rows: List[List[str]] = []
         for c in self.iter_components():

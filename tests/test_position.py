@@ -37,7 +37,9 @@ class TestPlacementFields(unittest.TestCase):
         self.tmp.cleanup()
 
     def test_presets(self):
-        pg = POSGenerator(self.board, PlacementOptions(smd_only=False))
+        opts = PlacementOptions(smd_only=False)
+        pg = POSGenerator(opts)
+        pg.board = self.board  # Set board directly for testing
         self.assertEqual(
             pg.parse_fields_argument("+standard"),
             ["reference", "x", "y", "rotation", "side", "footprint", "smd"],
@@ -70,11 +72,12 @@ class TestPlacementFields(unittest.TestCase):
 
     def test_units_and_origin(self):
         # Coordinates are 25.4,50.8 mm → 1.0000,2.0000 inches
-        pg = POSGenerator(
-            self.board, PlacementOptions(units="inch", origin="board", smd_only=False)
-        )
+        opts = PlacementOptions(units="inch", origin="board", smd_only=False)
+        pg = POSGenerator(opts)
+        pg.board = self.board  # Set board directly for testing
         out = Path(self.tmp.name) / "out.csv"
-        pg.write_csv(out, pg.parse_fields_argument("+standard"))
+        components = list(pg.iter_components())
+        pg.write_csv(components, out, pg.parse_fields_argument("+standard"))
         data = out.read_text(encoding="utf-8").splitlines()
         self.assertIn("Reference,X,Y,Rotation,Side,Footprint,SMD", data[0])
         # R1 row in inches with 4 decimals
@@ -84,16 +87,18 @@ class TestPlacementFields(unittest.TestCase):
 
     def test_filters(self):
         # smd_only=True should exclude the header footprint lacking an SMD package token
-        pg = POSGenerator(self.board, PlacementOptions(smd_only=True))
+        opts = PlacementOptions(smd_only=True)
+        pg = POSGenerator(opts)
+        pg.board = self.board  # Set board directly for testing
         rows = pg.generate_kicad_pos_rows()
         # Only R1 (0603) should remain
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0][0], "R1")
 
         # layer filter TOP keeps R1 only
-        pg2 = POSGenerator(
-            self.board, PlacementOptions(smd_only=False, layer_filter="TOP")
-        )
+        opts2 = PlacementOptions(smd_only=False, layer_filter="TOP")
+        pg2 = POSGenerator(opts2)
+        pg2.board = self.board  # Set board directly for testing
         rows2 = pg2.generate_kicad_pos_rows()
         self.assertEqual(len(rows2), 1)
         self.assertEqual(rows2[0][0], "R1")

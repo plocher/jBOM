@@ -11,11 +11,10 @@ from typing import Optional, Union, List, Dict, Any
 from dataclasses import dataclass
 
 from jbom.loaders.schematic import SchematicLoader
-from jbom.loaders.pcb import load_board
 from jbom.processors.inventory_matcher import InventoryMatcher
 from jbom.generators.bom import BOMGenerator
 from jbom.generators.pos import POSGenerator, PlacementOptions
-from jbom.common.utils import find_best_schematic, find_best_pcb
+from jbom.common.utils import find_best_schematic
 from jbom.common.fields import parse_fields_argument
 
 
@@ -173,7 +172,8 @@ def generate_pos(
     Returns:
         Dictionary containing:
         - board: BoardModel object
-        - rows: List of position data rows
+        - entries: List of PcbComponent objects
+        - component_count: Number of components
         - generator: POSGenerator instance for advanced usage
 
     Examples:
@@ -201,44 +201,22 @@ def generate_pos(
     """
     opts = options or POSOptions()
 
-    # Convert to Path objects
-    input_path = Path(input)
-    output_path = Path(output) if output else None
-
-    # Auto-discover PCB if input is a directory
-    if input_path.is_dir():
-        pcb_path = find_best_pcb(input_path)
-        if not pcb_path:
-            raise FileNotFoundError(f"No .kicad_pcb file found in {input_path}")
-    else:
-        pcb_path = input_path
-        if not pcb_path.exists():
-            raise FileNotFoundError(f"PCB file not found: {pcb_path}")
-
-    # Load board
-    board = load_board(pcb_path, mode=loader_mode)
-
-    # Create placement options
+    # Create placement options from POSOptions
     placement_opts = PlacementOptions(
         units=opts.units,
         origin=opts.origin,
         smd_only=opts.smd_only,
         layer_filter=opts.layer_filter,
+        loader_mode=loader_mode,
+        fields=opts.fields,
     )
 
-    # Generate position data
-    generator = POSGenerator(board, placement_opts)
+    # Create generator and run
+    generator = POSGenerator(placement_opts)
+    result = generator.run(input=input, output=output)
+
+    # Generate rows for backward compatibility
     rows = generator.generate_kicad_pos_rows()
+    result["rows"] = rows
 
-    # Write output if specified
-    if output_path:
-        output_str = str(output_path).lower()
-        if output_str not in ("console",):  # console handled by caller
-            fields = opts.fields or generator.parse_fields_argument("+standard")
-            generator.write_csv(output_path, fields)
-
-    return {
-        "board": board,
-        "rows": rows,
-        "generator": generator,  # For advanced usage
-    }
+    return result
