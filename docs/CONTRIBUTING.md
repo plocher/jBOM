@@ -34,7 +34,7 @@ This installs jBOM in editable mode plus:
 
 ### Install Pre-Commit Hooks
 
-The repository uses pre-commit hooks to prevent secrets, enforce code style, and catch common issues:
+The repository uses pre-commit hooks to enforce code style and catch common issues (no secret scanner is used in this repo):
 
 ```bash
 pre-commit install

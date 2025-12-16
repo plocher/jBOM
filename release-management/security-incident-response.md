@@ -90,14 +90,6 @@ git log -S "pypi-AgEI" --all
 
 ## Recommended Tools for Prevention
 
-### Pre-commit Hook for Secret Detection
-Install and configure `detect-secrets`:
-```bash
-pip install detect-secrets
-detect-secrets scan > .secrets.baseline
-git add .secrets.baseline
-```
-
 ### GitHub Secret Scanning
 - Enable in repository Settings → Security and analysis
 - Automatically detects exposed tokens
@@ -112,9 +104,8 @@ git add .secrets.baseline
 
 1. ✅ Documentation updated with placeholders
 2. ✅ Added security warnings to guide
-3. ⏳ Consider: Add pre-commit secret detection
-4. ⏳ Consider: Enable GitHub secret scanning
-5. ⏳ Consider: Use GitHub branch protection rules
+3. ✅ Enable GitHub secret scanning
+4. ⏳ Consider: Use GitHub branch protection rules
 
 ## Files Modified
 

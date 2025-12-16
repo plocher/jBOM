@@ -1,11 +1,10 @@
 # Pre-Commit Hooks Setup Guide
 
-This guide explains the pre-commit hooks configured for jBOM to prevent secrets, code quality issues, and maintain code standards.
+This guide explains the pre-commit hooks configured for jBOM to maintain code standards and quality (no secret scanner is used).
 
 ## What Are Pre-Commit Hooks?
 
 Pre-commit hooks are scripts that run automatically before you commit code. They can:
-- Detect secrets (API keys, tokens, passwords)
 - Fix code formatting issues
 - Validate file syntax
 - Enforce code quality standards
@@ -31,34 +30,6 @@ ls -la .git/hooks/pre-commit
 
 ## What Hooks Are Running?
 
-### 1. **detect-secrets** (CRITICAL - Prevents token leaks)
-
-**Purpose**: Detects API keys, tokens, passwords, and other secrets in code
-
-**What it catches**:
-- PyPI API tokens
-- GitHub tokens
-- AWS credentials
-- Private keys
-- Database passwords
-- Any string that looks like a secret
-
-**How it works**:
-- Scans all Python files
-- Compares against baseline of known secrets
-- Fails commit if new secrets detected
-
-**If a secret is detected**:
-```
-Detect secrets scan.....................................................................Failed
-Secret 'PiKey' found in src/config.py
-```
-
-**Solution**:
-1. Remove the secret from the file
-2. Use GitHub secrets instead (for tokens)
-3. Use environment variables (for credentials)
-4. If it's a false positive, update baseline (see below)
 
 ### 2. **Trailing Whitespace**
 
@@ -92,7 +63,7 @@ Auto-formats Python code to consistent style
 
 Enforces Python style guide (PEP 8)
 
-### 10. **Bandit Security Scanner**
+### 9. **Bandit Security Scanner**
 
 Detects common security issues in Python code
 
@@ -102,8 +73,6 @@ Detects common security issues in Python code
 
 ```bash
 $ git commit -m "feat: add new feature"
-
-Detect secrets scan.....................................................................Passed
 trim trailing whitespace.................................................Passed
 fix end of file.........................................................Passed
 check yaml.............................................................Passed
@@ -119,7 +88,6 @@ bandit..................................................................Passed
 [main a1b2c3d] feat: add new feature
 ```
 
-### Failed Commit (Secret Detected)
 
 ```bash
 $ git commit -m "add pypi token"
@@ -144,28 +112,6 @@ error: cannot format src/module.py: Cannot parse: 1:0:
 
 **Action**: Fix the syntax error, then commit again.
 
-## Managing False Positives
-
-Sometimes legitimate code triggers the secret detector (e.g., test credentials, example values).
-
-### Update Secrets Baseline
-
-If you have a legitimate reason for a detected "secret":
-
-1. Review the finding carefully
-2. Update the baseline:
-   ```bash
-   detect-secrets scan --force-use-all-plugins > .secrets.baseline
-   ```
-3. Commit the updated baseline with explanation:
-   ```bash
-   git add .secrets.baseline
-   git commit -m "chore: update secrets baseline
-
-   This is a false positive - it's a test/example value, not a real secret."
-   ```
-
-### Skip a Specific Hook
 
 If you need to skip hooks for a commit (not recommended):
 
@@ -257,7 +203,6 @@ pre-commit install
 ## Files Related to Pre-Commit
 
 - `.pre-commit-config.yaml` - Configuration for all hooks
-- `.secrets.baseline` - Baseline of known/allowed secrets
 - `.git/hooks/pre-commit` - Installed hook (auto-generated)
 
 ## Security Best Practices
@@ -266,8 +211,8 @@ pre-commit install
 2. ✅ **Never commit secrets** even accidentally
 3. ✅ **Use GitHub secrets** for API tokens
 4. ✅ **Use environment variables** for credentials
-5. ✅ **Review baseline updates** carefully
-6. ❌ **Don't commit fake tokens** in examples (use placeholders instead)
+5. ✅ **Don't commit fake tokens** in examples (use placeholders instead)
+6. ✅ Enable GitHub Secret Scanning in repo settings
 
 ## Updating Hooks
 

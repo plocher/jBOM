@@ -15,7 +15,6 @@ pre-commit run --all-files
 
 ### Run a specific hook
 ```bash
-pre-commit run detect-secrets --all-files
 pre-commit run black --all-files
 pre-commit run flake8 --all-files
 ```
@@ -32,7 +31,6 @@ pre-commit autoupdate
 
 ## What Each Hook Does
 
-**detect-secrets** - Prevents committing API keys, tokens, passwords (auto-fix: no)
 **trailing-whitespace** - Removes trailing spaces (auto-fix: yes)
 **end-of-file-fixer** - Adds newline at EOF (auto-fix: yes)
 **check-yaml** - Validates YAML syntax (auto-fix: no)
@@ -47,11 +45,10 @@ pre-commit autoupdate
 
 ## If a Hook Fails
 
-### Secret detected
-1. Remove the secret from the file
-2. Use GitHub secrets for API tokens
-3. Use environment variables for credentials
-4. Commit again
+### Security findings (Bandit)
+1. Review the finding and the affected code
+2. Refactor to remove the unsafe pattern or justify with a clear code comment
+3. Re-run hooks and commit when clean
 
 ### Code formatting (black)
 ```bash
@@ -69,14 +66,6 @@ flake8 src/  # Show violations
 ### Merge conflicts
 Search for `<<<<<<<`, `=======`, `>>>>>>>` and resolve before committing.
 
-### False positive (secret detection)
-```bash
-detect-secrets scan --force-use-all-plugins > .secrets.baseline
-git add .secrets.baseline
-git commit -m "chore: update secrets baseline
-
-This is a false positive - [explanation]"
-```
 
 ## Pre-Commit Workflow
 
