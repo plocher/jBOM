@@ -78,6 +78,7 @@ repos:
         description: Security issue scanner for Python
         types: [python]
         args: ['-ll', '-i', '-x']  # -ll: low severity, -i: use inline skips, -x: test files
+        additional_dependencies: ['pbr']  # Required for bandit import
 
 ci:
   autofix_commit_msg: |
