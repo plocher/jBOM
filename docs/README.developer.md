@@ -12,42 +12,55 @@ jBOM is a comprehensive fabrication tool that provides two main capabilities:
 
 ### Module Structure
 
-jBOM follows a clean, modular architecture (as of Dec 2025 refactoring):
+jBOM follows a data-flow architecture (v3.0 refactoring, Dec 2024):
 
 ```
 src/jbom/
+├── api.py               # High-level API (generate_bom, BOMOptions)
+│
+├── cli/                 # Command-line interface
+│   ├── main.py          # Argparse dispatcher with subcommands
+│   ├── commands.py      # Base Command class with OutputMode
+│   ├── bom_command.py   # BOM subcommand implementation
+│   ├── pos_command.py   # POS subcommand implementation
+│   ├── common.py        # Shared CLI utilities
+│   └── formatting.py    # Console output formatting
+│
 ├── common/              # Shared utilities and data types
 │   ├── types.py         # Data classes: Component, InventoryItem, BOMEntry
-│   ├── constants.py     # Enums and constants (ComponentType, ScoreWeights, etc.)
+│   ├── constants.py     # Enums: ComponentType, ScoreWeights, etc.
 │   ├── fields.py        # Field name normalization and formatting
-│   ├── values.py        # Value parsing utilities
-│   ├── packages.py      # Package type detection
+│   ├── fields_system.py # Field discovery and category-specific fields
+│   ├── values.py        # Value parsing (resistors, capacitors, inductors)
+│   ├── packages.py      # Package type detection from footprints
 │   ├── sexp_parser.py   # S-expression parsing utilities
-│   └── utils.py         # File discovery and hierarchical schematic utilities
+│   ├── utils.py         # File discovery and hierarchical schematics
+│   ├── options.py       # BOMOptions dataclass
+│   ├── output.py        # Output path resolution
+│   └── generator.py     # Base generator utilities
 │
-├── inventory/           # Inventory management
-│   ├── loader.py        # InventoryLoader: Load inventory from CSV/Excel/Numbers
-│   └── matcher.py       # InventoryMatcher: Match components to inventory
+├── loaders/             # Input file parsing
+│   ├── schematic.py     # SchematicLoader: Parse .kicad_sch files
+│   ├── pcb.py           # PCBLoader: Parse .kicad_pcb files
+│   ├── pcb_model.py     # BoardModel and PcbComponent data structures
+│   └── inventory.py     # InventoryLoader: CSV/Excel/Numbers
 │
-├── sch/                 # Schematic processing and BOM generation
-│   ├── loader.py        # SchematicLoader: Parse KiCad .kicad_sch files
-│   ├── types.py         # Component type detection and category fields
-│   └── generator.py     # BOMGenerator: Generate BOM from components and inventory
+├── processors/          # Business logic
+│   ├── component_types.py    # Component type detection and categorization
+│   └── inventory_matcher.py  # InventoryMatcher: Match components to inventory
 │
-├── pcb/                 # PCB processing and position file generation
-│   ├── loader.py        # BoardLoader: Load KiCad .kicad_pcb files
-│   ├── model.py         # BoardModel and PcbComponent data structures
-│   └── position.py      # PositionGenerator: Generate CPL/POS files
-│
-└── jbom.py             # CLI interface and main orchestration (970 lines)
+└── generators/          # Output file creation
+    ├── bom.py           # BOMGenerator: Generate BOM CSV files
+    └── pos.py           # POSGenerator: Generate placement CSV files
 ```
 
 **Key Design Principles:**
-- **Naming Consistency**: All file loaders use `loader.py` (InventoryLoader, SchematicLoader, BoardLoader)
-- **Generator Pattern**: Both BOMGenerator and PositionGenerator follow identical patterns
-- **Type Safety**: Extensive use of type hints and dataclasses
-- **Separation of Concerns**: Parsing → Matching → Generation pipeline
-- **No Circular Dependencies**: Clean import hierarchy
+- **Data-Flow Architecture**: Input (loaders) → Processing (processors) → Output (generators)
+- **Separation by Function**: CLI, loaders, processors, generators are independent
+- **Type Safety**: Extensive use of type hints and dataclasses throughout
+- **Command Pattern**: CLI uses subcommands with shared base class
+- **No Circular Dependencies**: Clean import hierarchy from common → loaders → processors → generators
+- **Consistent Naming**: Loaders parse files, Processors transform data, Generators write output
 
 ## Key Features (Technical)
 
@@ -186,17 +199,20 @@ BOM:
     *  Through-hole indicators: dip, through-hole, axial, radial
   4) Conservative default: Includes components when uncertain (better to include than exclude)
 
-## BOMGenerator Class (`sch/generator.py`)
+## BOMGenerator Class (`generators/bom.py`)
 
-The `BOMGenerator` class (974 lines) is responsible for generating bill of materials from parsed components and inventory matches.
+The `BOMGenerator` class is responsible for generating bill of materials from parsed components and inventory matches.
 
 ### Initialization
 
 ```python
-from jbom.sch import BOMGenerator
-from jbom.inventory import InventoryMatcher
+from jbom.generators.bom import BOMGenerator
+from jbom.processors.inventory_matcher import InventoryMatcher
+from pathlib import Path
 
 # Create BOM generator with components and matcher
+components = [...] # from SchematicLoader
+matcher = InventoryMatcher(Path('inventory.xlsx'))
 generator = BOMGenerator(components, matcher)
 ```
 
@@ -512,7 +528,7 @@ The S-expression parser handles `.kicad_pcb` files directly:
 
 The `pos` subcommand integrates the PCB module:
 ```bash
-python -m jbom pos BOARD.kicad_pcb -o OUTPUT.csv [OPTIONS]
+jbom pos BOARD.kicad_pcb -o OUTPUT.csv [OPTIONS]
 ```
 
 Options cascade through:
@@ -604,36 +620,48 @@ SMD_PACKAGES = [..., 'wlcsp']
 
 ```
 src/jbom/
-  ├── jbom.py              # Main library and CLI (source of truth, schematic path)
-  ├── __init__.py          # Public re-exports (back-compat)
-  ├── cli/                 # CLI interface with subcommands
-  │   └── main.py          # Argument parsing and dispatch
-  ├── sch/                 # Schematic-focused API (re-exports for now)
-  │   ├── api.py           # BOM generation API
-  │   ├── bom.py           # BOM entry and generator
-  │   ├── model.py         # Component model
-  │   └── parser.py        # KiCad schematic parser
-  ├── common/              # Shared helpers (values, fields, types, packages)
+  ├── api.py               # High-level API (generate_bom, BOMOptions)
+  ├── __init__.py          # Public re-exports
+  ├── cli/                 # CLI interface with Command pattern
+  │   ├── main.py          # Argparse dispatcher
+  │   ├── commands.py      # Base Command class
+  │   ├── bom_command.py   # BOM subcommand
+  │   ├── pos_command.py   # POS subcommand
+  │   ├── common.py        # Shared CLI utilities
+  │   └── formatting.py    # Console output
+  ├── common/              # Shared utilities and data types
+  │   ├── types.py         # Data classes (Component, InventoryItem, BOMEntry)
+  │   ├── constants.py     # Enums (ComponentType, ScoreWeights)
   │   ├── fields.py        # Field normalization
-  │   ├── types.py         # Common enums and types
-  │   ├── packages.py      # Package lists (SMD/PTH)
-  │   ├── values.py        # Numeric parsers (R/C/L)
-  │   └── utils.py         # Utility functions
-  ├── inventory/           # Inventory matcher API (re-exports for now)
-  │   └── matcher.py       # Inventory matching logic
-  └── pcb/                 # PCB integration modules
-      ├── board_loader.py  # PCB file loading (pcbnew + S-expression)
-      ├── model.py         # Board and component models
-      └── position.py      # Placement file generation
+  │   ├── fields_system.py # Field discovery
+  │   ├── values.py        # Value parsing (R/C/L)
+  │   ├── packages.py      # Package detection
+  │   ├── utils.py         # File utilities
+  │   └── ... (output.py, options.py, generator.py)
+  ├── loaders/             # Input file parsing
+  │   ├── schematic.py     # SchematicLoader (.kicad_sch)
+  │   ├── pcb.py           # PCBLoader (.kicad_pcb)
+  │   ├── pcb_model.py     # Board/component models
+  │   └── inventory.py     # InventoryLoader (CSV/Excel/Numbers)
+  ├── processors/          # Business logic
+  │   ├── component_types.py    # Type detection
+  │   └── inventory_matcher.py  # Component matching
+  └── generators/          # Output file creation
+      ├── bom.py           # BOMGenerator (CSV output)
+      └── pos.py           # POSGenerator (placement files)
 ```
 
 See [docs/README.arch.md](README.arch.md) for details.
 
 ### Import paths
-- Back-compat: `from jbom import generate_bom_api, GenerateOptions`
-- Preferred (schematic): `from jbom.sch import generate_bom_api, GenerateOptions`
-- PCB module: `from jbom.pcb import BoardLoader, PositionGenerator`
-- Shared helpers: `from jbom.common.values import parse_res_to_ohms, farad_to_eia, ...`
+- High-level API: `from jbom.api import generate_bom, BOMOptions`
+- Loaders: `from jbom.loaders.schematic import SchematicLoader`
+- Loaders: `from jbom.loaders.pcb import PCBLoader`
+- Loaders: `from jbom.loaders.inventory import InventoryLoader`
+- Processors: `from jbom.processors.inventory_matcher import InventoryMatcher`
+- Generators: `from jbom.generators.bom import BOMGenerator`
+- Generators: `from jbom.generators.pos import POSGenerator`
+- Shared helpers: `from jbom.common.values import parse_res_to_ohms, farad_to_eia`
 
 ### Main Files
 

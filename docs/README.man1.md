@@ -7,8 +7,8 @@ jbom — generate Bill of Materials (BOM) and Component Placement (CPL/POS)
 ## SYNOPSIS
 
 ```
-python -m jbom bom PROJECT -i INVENTORY [-o OUTPUT] [BOM OPTIONS]
-python -m jbom pos PROJECT [-o OUTPUT] [POS OPTIONS]
+jbom bom PROJECT -i INVENTORY [-o OUTPUT] [BOM OPTIONS]
+jbom pos PROJECT [-o OUTPUT] [POS OPTIONS]
 ```
 
 ## DESCRIPTION
@@ -150,52 +150,52 @@ Use `-f "+PRESET"`.
 
 BOM (standard preset):
 ```
-python -m jbom bom MyProject/ -i SPCoast-INVENTORY.xlsx
+jbom bom MyProject/ -i SPCoast-INVENTORY.xlsx
 ```
 
 BOM JLC preset:
 ```
-python -m jbom bom MyProject/ -i inventory.csv -f +jlc
+jbom bom MyProject/ -i inventory.csv -f +jlc
 ```
 
 BOM all fields:
 ```
-python -m jbom bom MyProject/ -i inventory.csv -f +all
+jbom bom MyProject/ -i inventory.csv -f +all
 ```
 
 POS (auto-detect from project directory):
 ```
-python -m jbom pos MyProject/
+jbom pos MyProject/
 ```
 
 POS (JLCPCB-style with --jlc flag):
 ```
-python -m jbom pos MyProject/ --jlc
+jbom pos MyProject/ --jlc
 ```
 
 POS (SMD only, top side):
 ```
-python -m jbom pos MyProject/ --smd-only --layer TOP
+jbom pos MyProject/ --smd-only --layer TOP
 ```
 
 POS (custom fields and explicit PCB file):
 ```
-python -m jbom pos MyBoard.kicad_pcb -o MyBoard.csv -f "Reference,X,Y,Footprint,Side"
+jbom pos MyBoard.kicad_pcb -o MyBoard.csv -f "Reference,X,Y,Footprint,Side"
 ```
 
 POS (specific output location):
 ```
-python -m jbom pos MyProject/ -o fabrication/placement.csv
+jbom pos MyProject/ -o fabrication/placement.csv
 ```
 
 Verbose BOM scoring:
 ```
-python -m jbom bom MyProject/ -i inventory.csv -v
+jbom bom MyProject/ -i inventory.csv -v
 ```
 
 Debug BOM run:
 ```
-python -m jbom bom MyProject/ -i inventory.csv -d
+jbom bom MyProject/ -i inventory.csv -d
 ```
 
 ## FIELDS
