@@ -13,6 +13,8 @@ __all__ = [
     "FieldProvider",
     "Generator",
     "GeneratorOptions",
+    "DiagnosticEvent",
+    "Diagnostics",
 ]
 
 
@@ -27,6 +29,56 @@ class FieldProvider(ABC):
             Dict mapping normalized field names to human-readable descriptions
         """
         pass
+
+
+@dataclass
+class DiagnosticEvent:
+    level: str  # info | warning | error
+    code: str
+    message: str
+    context: Optional[Dict[str, Any]] = None
+    exception: Optional[str] = None
+
+
+class Diagnostics:
+    """Collects non-fatal diagnostics during generation.
+
+    Use this to record parse fallbacks, data coercions, missing fields, etc.
+    Keeps generators pure while still exposing rich debug context to callers.
+    """
+
+    def __init__(self) -> None:
+        self.events: List[DiagnosticEvent] = []
+
+    def info(self, code: str, message: str, **context: Any) -> None:
+        self.events.append(DiagnosticEvent("info", code, message, context or None))
+
+    def warn(self, code: str, message: str, **context: Any) -> None:
+        self.events.append(DiagnosticEvent("warning", code, message, context or None))
+
+    def error(
+        self,
+        code: str,
+        message: str,
+        exc: Optional[BaseException] = None,
+        **context: Any,
+    ) -> None:
+        exc_str = f"{type(exc).__name__}: {exc}" if exc else None
+        self.events.append(
+            DiagnosticEvent("error", code, message, context or None, exception=exc_str)
+        )
+
+    def as_dicts(self) -> List[Dict[str, Any]]:
+        return [
+            {
+                "level": e.level,
+                "code": e.code,
+                "message": e.message,
+                **({"context": e.context} if e.context else {}),
+                **({"exception": e.exception} if e.exception else {}),
+            }
+            for e in self.events
+        ]
 
 
 @dataclass
@@ -69,6 +121,10 @@ class Generator(FieldProvider):
             options: Generator configuration options
         """
         self.options = options or GeneratorOptions()
+        # Diagnostics collector available to subclasses as self.diag
+        self.diagnostics = Diagnostics()
+        # Convenience alias
+        self.diag = self.diagnostics
 
     @abstractmethod
     def discover_input(self, input_path: Path) -> Path:
@@ -189,11 +245,12 @@ class Generator(FieldProvider):
                 fields = self.options.fields or self._get_default_fields()
                 self.write_csv(entries, output_path, fields)
 
-        # 7. Return result
+        # 7. Return result (include diagnostics)
         return {
             "data": data,
             "entries": entries,
             **metadata,  # Merge generator-specific metadata
+            "diagnostics": self.diagnostics.as_dicts(),
         }
 
     def _get_default_fields(self) -> List[str]:
