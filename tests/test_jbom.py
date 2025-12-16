@@ -438,7 +438,10 @@ class TestPrecisionResistorDetection(unittest.TestCase):
                 self.assertEqual(
                     matches,
                     should_match,
-                    f"Value '{value}' should {'match' if should_match else 'not match'} precision pattern",
+                    (
+                        f"Value '{value}' should "
+                        f"{'match' if should_match else 'not match'} precision pattern"
+                    ),
                 )
 
     def test_bom_generation_precision_warnings(self):
@@ -489,11 +492,26 @@ class TestInventoryMatching(unittest.TestCase):
             mode="w", delete=False, suffix=".csv"
         )
         csv_content = [
-            "IPN,Name,Category,Generic,Package,Value,Tolerance,LCSC,Manufacturer,MFGPN,Description,Datasheet,Priority",
-            "R001,330R 5%,RES,0603,0603,330R,5%,C25231,UNI-ROYAL,0603WAJ0331T5E,330Ω 5% 0603,https://example.com/r1,1",
-            "R002,10K 1%,RES,0603,0603,10K,1%,C25232,UNI-ROYAL,0603WAF1002T5E,10kΩ 1% 0603,https://example.com/r2,2",
-            "C001,100nF,CAP,0603,0603,100nF,10%,C14663,YAGEO,CC0603KRX7R9BB104,100nF X7R 0603,https://example.com/c1,1",
-            "L001,10uH,IND,0603,0603,10uH,20%,C1608,SUNLORD,SWPA3012S100MT,10µH 0603,https://example.com/l1,5",
+            (
+                "IPN,Name,Category,Generic,Package,Value,Tolerance,LCSC,Manufacturer,"
+                "MFGPN,Description,Datasheet,Priority"
+            ),
+            (
+                "R001,330R 5%,RES,0603,0603,330R,5%,C25231,UNI-ROYAL,0603WAJ0331T5E,"
+                "330Ω 5% 0603,https://example.com/r1,1"
+            ),
+            (
+                "R002,10K 1%,RES,0603,0603,10K,1%,C25232,UNI-ROYAL,0603WAF1002T5E,"
+                "10kΩ 1% 0603,https://example.com/r2,2"
+            ),
+            (
+                "C001,100nF,CAP,0603,0603,100nF,10%,C14663,YAGEO,CC0603KRX7R9BB104,"
+                "100nF X7R 0603,https://example.com/c1,1"
+            ),
+            (
+                "L001,10uH,IND,0603,0603,10uH,20%,C1608,SUNLORD,SWPA3012S100MT,"
+                "10µH 0603,https://example.com/l1,5"
+            ),
         ]
         self.temp_inv.write("\n".join(csv_content))
         self.temp_inv.close()
@@ -568,9 +586,18 @@ class TestBOMGeneration(unittest.TestCase):
             mode="w", delete=False, suffix=".csv"
         )
         csv_content = [
-            "IPN,Name,Category,Generic,Package,Value,LCSC,Manufacturer,MFGPN,Description,Datasheet,Priority",
-            "R001,330R,RES,0603,0603,330R,C25231,UNI-ROYAL,0603WAJ0331T5E,330Ω 5% 0603,https://example.com/r1,1",
-            "C001,100nF,CAP,0603,0603,100nF,C14663,YAGEO,CC0603KRX7R9BB104,100nF X7R 0603,https://example.com/c1,1",
+            (
+                "IPN,Name,Category,Generic,Package,Value,LCSC,Manufacturer,MFGPN,"
+                "Description,Datasheet,Priority"
+            ),
+            (
+                "R001,330R,RES,0603,0603,330R,C25231,UNI-ROYAL,0603WAJ0331T5E,"
+                "330Ω 5% 0603,https://example.com/r1,1"
+            ),
+            (
+                "C001,100nF,CAP,0603,0603,100nF,C14663,YAGEO,CC0603KRX7R9BB104,"
+                "100nF X7R 0603,https://example.com/c1,1"
+            ),
         ]
         self.temp_inv.write("\n".join(csv_content))
         self.temp_inv.close()
@@ -774,12 +801,30 @@ class TestBOMSorting(unittest.TestCase):
             mode="w", delete=False, suffix=".csv"
         )
         csv_content = [
-            "IPN,Name,Category,Generic,Package,Value,LCSC,Manufacturer,MFGPN,Description,Datasheet,Priority",
-            "R001,330R,RES,0603,0603,330R,C25231,UNI-ROYAL,0603WAJ0331T5E,330Ω 5% 0603,https://example.com/r1,1",
-            "R002,10K,RES,0603,0603,10K,C25232,UNI-ROYAL,0603WAF1002T5E,10kΩ 5% 0603,https://example.com/r2,1",
-            "C001,1uF,CAP,0603,0603,1uF,C14663,YAGEO,CC0603KRX7R9BB104,1uF X7R 0603,https://example.com/c1,1",
-            "D001,BAT54A,DIO,SOT-23,SOT-23,BAT54A,C12345,FOSAN,BAT54A,BAT54A Schottky,https://example.com/d1,1",
-            "LED001,WS2812B,LED,5050,5050,WS2812B,C54678,XINGLIGHT,WS2812B,RGB LED,https://example.com/led1,1",
+            (
+                "IPN,Name,Category,Generic,Package,Value,LCSC,Manufacturer,MFGPN,"
+                "Description,Datasheet,Priority"
+            ),
+            (
+                "R001,330R,RES,0603,0603,330R,C25231,UNI-ROYAL,0603WAJ0331T5E,"
+                "330Ω 5% 0603,https://example.com/r1,1"
+            ),
+            (
+                "R002,10K,RES,0603,0603,10K,C25232,UNI-ROYAL,0603WAF1002T5E,"
+                "10kΩ 5% 0603,https://example.com/r2,1"
+            ),
+            (
+                "C001,1uF,CAP,0603,0603,1uF,C14663,YAGEO,CC0603KRX7R9BB104,"
+                "1uF X7R 0603,https://example.com/c1,1"
+            ),
+            (
+                "D001,BAT54A,DIO,SOT-23,SOT-23,BAT54A,C12345,FOSAN,BAT54A,BAT54A Schottky,"
+                "https://example.com/d1,1"
+            ),
+            (
+                "LED001,WS2812B,LED,5050,5050,WS2812B,C54678,XINGLIGHT,WS2812B,RGB LED,"
+                "https://example.com/led1,1"
+            ),
         ]
         self.temp_inv.write("\n".join(csv_content))
         self.temp_inv.close()
@@ -986,10 +1031,22 @@ class TestDebugFunctionality(unittest.TestCase):
             mode="w", delete=False, suffix=".csv"
         )
         csv_content = [
-            "IPN,Name,Category,Package,Value,Tolerance,LCSC,Manufacturer,MFGPN,Description,Priority",
-            "R001,330R 5%,RES,0603,330R,5%,C25231,UNI-ROYAL,0603WAJ0331T5E,330Ω 5% 0603,1",
-            "R002,330R 1%,RES,0603,330R,1%,C25232,YAGEO,RC0603FR-07330RL,330Ω 1% 0603,2",
-            "R003,330R 10%,RES,0603,330R,10%,C25233,VISHAY,CRCW0603330RJNEA,330Ω 10% 0603,3",
+            (
+                "IPN,Name,Category,Package,Value,Tolerance,LCSC,Manufacturer,MFGPN,"
+                "Description,Priority"
+            ),
+            (
+                "R001,330R 5%,RES,0603,330R,5%,C25231,UNI-ROYAL,0603WAJ0331T5E,"
+                "330Ω 5% 0603,1"
+            ),
+            (
+                "R002,330R 1%,RES,0603,330R,1%,C25232,YAGEO,RC0603FR-07330RL,"
+                "330Ω 1% 0603,2"
+            ),
+            (
+                "R003,330R 10%,RES,0603,330R,10%,C25233,VISHAY,CRCW0603330RJNEA,"
+                "330Ω 10% 0603,3"
+            ),
         ]
         self.temp_inv.write("\n".join(csv_content))
         self.temp_inv.close()
@@ -1337,12 +1394,15 @@ class TestSMDFiltering(unittest.TestCase):
 
     def test_smd_filtering_disabled(self):
         """Test that SMD filtering is off by default"""
-        # Create a simple test with one SMD and one PTH component that match different inventory items
+        # Create a simple test with one SMD and one PTH component
+        # that match different inventory items
         temp_inv2 = tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".csv")
         csv_content2 = [
             "IPN,Name,Category,Package,Value,SMD,LCSC,Manufacturer,MFGPN,Description,Priority",
             "R001,330R SMD,RES,0603,330R,SMD,C25231,UNI-ROYAL,0603WAJ0331T5E,330Ω SMD 0603,1",
-            "R003,1K PTH,RES,THT,1K,PTH,C25233,VISHAY,PTR06031K,1kΩ PTH,1",  # Different value to force different match
+            (
+                "R003,1K PTH,RES,THT,1K,PTH,C25233,VISHAY,PTR06031K,1kΩ PTH,1"
+            ),  # Different value to force different match
         ]
         temp_inv2.write("\n".join(csv_content2))
         temp_inv2.close()
@@ -2325,8 +2385,14 @@ class TestInventoryRawHeaderMatching(unittest.TestCase):
             mode="w", delete=False, suffix=".csv"
         )
         csv_content = [
-            "IPN,Part Name,Category,Package,Value,Tolerance,LCSC,Manufacturer,Mfg PN,Description,Priority",
-            "R001,330R 5%,RES,0603,330R,5%,C25231,UNI-ROYAL,0603WAJ0331T5E,330Ω resistor,1",
+            (
+                "IPN,Name,Category,Package,Value,Tolerance,LCSC,Manufacturer,MFGPN,"
+                "Description,Priority"
+            ),
+            (
+                "R001,330R 5%,RES,0603,330R,5%,C25231,UNI-ROYAL,0603WAJ0331T5E,"
+                "330Ω resistor,1"
+            ),
         ]
         self.temp_inv.write("\n".join(csv_content))
         self.temp_inv.close()

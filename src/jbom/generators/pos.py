@@ -219,9 +219,8 @@ class POSGenerator(Generator):
             if tok.startswith("+"):
                 name = tok[1:].lower()
                 if name not in presets:
-                    raise ValueError(
-                        f"Unknown preset: +{name} (valid: {', '.join('+'+p for p in sorted(presets))})"
-                    )
+                    valids = ", ".join("+" + p for p in sorted(presets))
+                    raise ValueError(f"Unknown preset: +{name} (valid: {valids})")
                 result.extend(self._preset_fields(name))
             else:
                 n = normalize_field_name(tok)
