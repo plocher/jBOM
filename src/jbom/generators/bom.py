@@ -8,7 +8,7 @@ import csv
 import re
 import sys
 from pathlib import Path
-from typing import List, Dict, Optional, Tuple
+from typing import Any, List, Dict, Optional, Tuple, Union
 
 from jbom.common.types import Component, InventoryItem, BOMEntry
 from jbom.common.constants import (
@@ -18,19 +18,146 @@ from jbom.common.constants import (
     SMDType,
     PRECISION_THRESHOLD,
 )
+from jbom.common.generator import Generator, GeneratorOptions
 from jbom.common.packages import PackageType
-from jbom.common.fields import normalize_field_name, field_to_header
+from jbom.common.fields import normalize_field_name, field_to_header, parse_fields_argument
+from jbom.common.utils import find_best_schematic
+from jbom.loaders.schematic import SchematicLoader
 from jbom.processors.component_types import get_component_type
 from jbom.processors.inventory_matcher import InventoryMatcher
 
 
-class BOMGenerator:
-    """Generates bill of materials from components and inventory matches"""
+class BOMGenerator(Generator):
+    """Generates bill of materials from components and inventory matches.
+    
+    Inherits from Generator base class to get consistent file discovery,
+    loading, and output handling.
+    """
 
-    def __init__(self, components: List[Component], matcher: InventoryMatcher):
-        self.components = components
+    def __init__(self, matcher: InventoryMatcher, options: Optional[GeneratorOptions] = None):
+        """Initialize BOM generator with inventory matcher.
+        
+        Args:
+            matcher: InventoryMatcher with loaded inventory
+            options: GeneratorOptions for verbose, debug, fields, etc.
+        """
+        super().__init__(options or GeneratorOptions())
         self.matcher = matcher
+        self.components: List[Component] = []  # Set by load_input()
 
+    # ---------------- Generator abstract methods ----------------
+    
+    def discover_input(self, input_path: Path) -> Path:
+        """Find schematic file in directory.
+        
+        Args:
+            input_path: Directory to search
+            
+        Returns:
+            Path to discovered .kicad_sch file
+            
+        Raises:
+            FileNotFoundError: If no .kicad_sch file found
+        """
+        schematic_path = find_best_schematic(input_path)
+        if not schematic_path:
+            raise FileNotFoundError(f"No .kicad_sch file found in {input_path}")
+        return schematic_path
+    
+    def load_input(self, input_path: Path) -> List[Component]:
+        """Load and parse schematic file.
+        
+        Args:
+            input_path: Path to .kicad_sch file
+            
+        Returns:
+            List of Component objects
+        """
+        # Load schematic
+        loader = SchematicLoader(input_path)
+        self.components = loader.parse()
+        
+        return self.components
+    
+    def process(self, data: List[Component]) -> tuple[List[BOMEntry], Dict[str, Any]]:
+        """Process components and inventory into BOM entries.
+        
+        Args:
+            data: List of Component objects from load_input()
+            
+        Returns:
+            Tuple of (bom_entries, metadata)
+        """
+        components = data
+        
+        # Store if not already set
+        if not self.components:
+            self.components = components
+        
+        # Generate BOM using existing logic
+        verbose = getattr(self.options, 'verbose', False)
+        debug = getattr(self.options, 'debug', False)
+        smd_only = getattr(self.options, 'smd_only', False)
+        
+        bom_entries, excluded_count, debug_diagnostics = self.generate_bom(
+            verbose=verbose, debug=debug, smd_only=smd_only
+        )
+        
+        # Get available fields
+        available_fields = self.get_available_fields(components)
+        
+        metadata = {
+            "components": components,
+            "bom_entries": bom_entries,
+            "inventory_count": len(self.matcher.inventory),
+            "available_fields": available_fields,
+            "excluded_count": excluded_count,
+            "debug_diagnostics": debug_diagnostics,
+            "generator": self,
+        }
+        
+        return bom_entries, metadata
+    
+    def write_csv(self, entries: List[BOMEntry], output_path: Path, fields: List[str]) -> None:
+        """Write BOM entries to CSV.
+        
+        Args:
+            entries: List of BOMEntry objects
+            output_path: Output file path (or "-" for stdout)
+            fields: List of field names to include
+        """
+        # Delegate to existing write_bom_csv method
+        self.write_bom_csv(entries, output_path, fields)
+    
+    def default_preset(self) -> str:
+        """Return default field preset name."""
+        return "standard"
+    
+    def _get_default_fields(self) -> List[str]:
+        """Get default field list for BOM generation.
+        
+        Overrides base class to handle BOM-specific field resolution.
+        """
+        if not self.components:
+            # Return standard preset fields if no components loaded yet
+            return ["reference", "quantity", "description", "value", "footprint", "lcsc", "datasheet", "smd"]
+        
+        # Get available fields from components
+        available_fields = self.get_available_fields(self.components)
+        
+        # Parse standard preset
+        verbose = getattr(self.options, 'verbose', False)
+        any_notes = False  # Default to False if entries not available yet
+        
+        return parse_fields_argument(
+            "+standard",
+            available_fields,
+            include_verbose=verbose,
+            any_notes=any_notes,
+        )
+
+    # ---------------- BOM generation logic ----------------
+    
     def generate_bom(
         self, verbose: bool = False, debug: bool = False, smd_only: bool = False
     ) -> Tuple[List[BOMEntry], int, List[dict]]:

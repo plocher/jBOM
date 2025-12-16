@@ -10,11 +10,8 @@ from pathlib import Path
 from typing import Optional, Union, List, Dict, Any
 from dataclasses import dataclass
 
-from jbom.loaders.schematic import SchematicLoader
-from jbom.processors.inventory_matcher import InventoryMatcher
 from jbom.generators.bom import BOMGenerator
 from jbom.generators.pos import POSGenerator, PlacementOptions
-from jbom.common.utils import find_best_schematic
 from jbom.common.fields import parse_fields_argument
 
 
@@ -26,6 +23,16 @@ class BOMOptions:
     debug: bool = False
     smd_only: bool = False
     fields: Optional[List[str]] = None
+    
+    def to_generator_options(self):
+        """Convert to GeneratorOptions"""
+        from jbom.common.generator import GeneratorOptions
+        opts = GeneratorOptions()
+        opts.verbose = self.verbose
+        opts.debug = self.debug
+        opts.fields = self.fields
+        opts.smd_only = self.smd_only  # Add as attribute
+        return opts
 
 
 @dataclass
@@ -82,76 +89,24 @@ def generate_bom(
         ... )
     """
     opts = options or BOMOptions()
-
-    # Convert to Path objects
-    input_path = Path(input)
-    inventory_path = Path(inventory)
-    output_path = Path(output) if output else None
-
-    # Auto-discover schematic if input is a directory
-    if input_path.is_dir():
-        schematic_path = find_best_schematic(input_path)
-        if not schematic_path:
-            raise FileNotFoundError(f"No .kicad_sch file found in {input_path}")
-    else:
-        schematic_path = input_path
-        if not schematic_path.exists():
-            raise FileNotFoundError(f"Schematic file not found: {schematic_path}")
-
+    
     # Verify inventory file exists
+    inventory_path = Path(inventory)
     if not inventory_path.exists():
         raise FileNotFoundError(f"Inventory file not found: {inventory_path}")
-
-    # Load schematic
-    loader = SchematicLoader(schematic_path)
-    components = loader.parse()
-
+    
     # Load inventory and create matcher
+    from jbom.processors.inventory_matcher import InventoryMatcher
     matcher = InventoryMatcher(inventory_path)
-
-    # Generate BOM
-    generator = BOMGenerator(components, matcher)
-    bom_entries, excluded_count, debug_diagnostics = generator.generate_bom(
-        verbose=opts.verbose, debug=opts.debug, smd_only=opts.smd_only
-    )
-
-    # Get available fields
-    available_fields = generator.get_available_fields(components)
-
-    # Write output if specified
-    if output_path:
-        output_str = str(output_path).lower()
-        if output_str in ("-", "stdout"):
-            # CSV to stdout
-            any_notes = any((e.notes or "").strip() for e in bom_entries)
-            fields = opts.fields or parse_fields_argument(
-                "+standard",
-                available_fields,
-                include_verbose=opts.verbose,
-                any_notes=any_notes,
-            )
-            generator.write_bom_csv(bom_entries, Path("-"), fields)
-        elif output_str == "console":
-            # Formatted table (handled by caller, not here)
-            pass
-        else:
-            # Write to file
-            any_notes = any((e.notes or "").strip() for e in bom_entries)
-            fields = opts.fields or parse_fields_argument(
-                "+standard",
-                available_fields,
-                include_verbose=opts.verbose,
-                any_notes=any_notes,
-            )
-            generator.write_bom_csv(bom_entries, output_path, fields)
-
-    return {
-        "components": components,
-        "bom_entries": bom_entries,
-        "inventory_count": len(matcher.inventory),
-        "available_fields": available_fields,
-        "generator": generator,  # For advanced usage
-    }
+    
+    # Create generator with matcher and options
+    gen_opts = opts.to_generator_options()
+    generator = BOMGenerator(matcher, gen_opts)
+    
+    # Run generator
+    result = generator.run(input=input, output=output)
+    
+    return result
 
 
 def generate_pos(
