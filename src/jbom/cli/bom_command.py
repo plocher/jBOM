@@ -6,8 +6,6 @@ from pathlib import Path
 from jbom.api import generate_bom, BOMOptions
 from jbom.common.fields import parse_fields_argument
 from jbom.common.output import resolve_output_path
-from jbom.generators.bom import BOMGenerator
-from jbom.processors.inventory_matcher import InventoryMatcher
 from jbom.cli.commands import Command, OutputMode
 from jbom.cli.common import apply_jlc_flag
 from jbom.cli.formatting import print_bom_table
@@ -126,8 +124,8 @@ class BOMCommand(Command):
                 result["bom_entries"], verbose=args.verbose, include_mfg=False
             )
         elif output_mode == OutputMode.STDOUT:
-            matcher = InventoryMatcher(Path(args.inventory))
-            bom_gen = BOMGenerator(result["components"], matcher)
+            # Use generator from result dict
+            bom_gen = result["generator"]
             bom_gen.write_bom_csv(result["bom_entries"], Path("-"), fields)
         else:
             # File output
@@ -137,8 +135,8 @@ class BOMCommand(Command):
                 out = resolve_output_path(
                     Path(args.project), args.output, args.outdir, "_bom.csv"
                 )
-            matcher = InventoryMatcher(Path(args.inventory))
-            bom_gen = BOMGenerator(result["components"], matcher)
+            # Use generator from result dict
+            bom_gen = result["generator"]
             bom_gen.write_bom_csv(result["bom_entries"], out, fields)
 
         return 0

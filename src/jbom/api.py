@@ -12,7 +12,6 @@ from dataclasses import dataclass
 
 from jbom.generators.bom import BOMGenerator
 from jbom.generators.pos import POSGenerator, PlacementOptions
-from jbom.common.fields import parse_fields_argument
 
 
 @dataclass
@@ -23,10 +22,11 @@ class BOMOptions:
     debug: bool = False
     smd_only: bool = False
     fields: Optional[List[str]] = None
-    
+
     def to_generator_options(self):
         """Convert to GeneratorOptions"""
         from jbom.common.generator import GeneratorOptions
+
         opts = GeneratorOptions()
         opts.verbose = self.verbose
         opts.debug = self.debug
@@ -89,23 +89,24 @@ def generate_bom(
         ... )
     """
     opts = options or BOMOptions()
-    
+
     # Verify inventory file exists
     inventory_path = Path(inventory)
     if not inventory_path.exists():
         raise FileNotFoundError(f"Inventory file not found: {inventory_path}")
-    
+
     # Load inventory and create matcher
     from jbom.processors.inventory_matcher import InventoryMatcher
+
     matcher = InventoryMatcher(inventory_path)
-    
+
     # Create generator with matcher and options
     gen_opts = opts.to_generator_options()
     generator = BOMGenerator(matcher, gen_opts)
-    
+
     # Run generator
     result = generator.run(input=input, output=output)
-    
+
     return result
 
 
@@ -169,9 +170,5 @@ def generate_pos(
     # Create generator and run
     generator = POSGenerator(placement_opts)
     result = generator.run(input=input, output=output)
-
-    # Generate rows for backward compatibility
-    rows = generator.generate_kicad_pos_rows()
-    result["rows"] = rows
 
     return result

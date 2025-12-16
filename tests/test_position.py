@@ -90,18 +90,18 @@ class TestPlacementFields(unittest.TestCase):
         opts = PlacementOptions(smd_only=True)
         pg = POSGenerator(opts)
         pg.board = self.board  # Set board directly for testing
-        rows = pg.generate_kicad_pos_rows()
+        components = list(pg.iter_components())
         # Only R1 (0603) should remain
-        self.assertEqual(len(rows), 1)
-        self.assertEqual(rows[0][0], "R1")
+        self.assertEqual(len(components), 1)
+        self.assertEqual(components[0].reference, "R1")
 
         # layer filter TOP keeps R1 only
         opts2 = PlacementOptions(smd_only=False, layer_filter="TOP")
         pg2 = POSGenerator(opts2)
         pg2.board = self.board  # Set board directly for testing
-        rows2 = pg2.generate_kicad_pos_rows()
-        self.assertEqual(len(rows2), 1)
-        self.assertEqual(rows2[0][0], "R1")
+        components2 = list(pg2.iter_components())
+        self.assertEqual(len(components2), 1)
+        self.assertEqual(components2[0].reference, "R1")
 
 
 if __name__ == "__main__":

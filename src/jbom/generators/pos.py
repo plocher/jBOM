@@ -263,39 +263,6 @@ class POSGenerator(Generator):
             return (x / 25.4, y / 25.4)
         return (x, y)
 
-    # ---------------- Convenience generators (backward compatibility) ----------------
-    def generate_kicad_pos_rows(self) -> List[List[str]]:
-        rows: List[List[str]] = []
-        for c in self.iter_components():
-            x, y = self._xy_in_units(c)
-            rows.append(
-                [
-                    c.reference,
-                    round(x, 4),
-                    round(y, 4),
-                    round(c.rotation_deg, 1),
-                    c.side,
-                    c.footprint_name,
-                ]
-            )
-        return rows
-
-    def generate_jlc_cpl_rows(self) -> List[List[str]]:
-        rows: List[List[str]] = []
-        for c in self.iter_components():
-            x, y = self._xy_in_units(c)
-            rows.append(
-                [
-                    c.reference,
-                    c.side,
-                    round(x, 4),
-                    round(y, 4),
-                    round(c.rotation_deg, 1),
-                    c.package_token,
-                ]
-            )
-        return rows
-
 
 def print_pos_table(gen: POSGenerator, fields: Optional[List[str]] = None) -> None:
     """Print placement data as a formatted console table.

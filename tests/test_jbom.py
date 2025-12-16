@@ -443,7 +443,8 @@ class TestPrecisionResistorDetection(unittest.TestCase):
 
     def test_bom_generation_precision_warnings(self):
         """Test that BOM generation includes precision warnings"""
-        bom_gen = BOMGenerator(self.components, self.matcher)
+        bom_gen = BOMGenerator(self.matcher)
+        bom_gen.components = self.components
         bom_entries, _, _ = bom_gen.generate_bom()
 
         # Create lookup by reference
@@ -588,7 +589,8 @@ class TestBOMGeneration(unittest.TestCase):
 
     def test_component_grouping(self):
         """Test that components are grouped by their matching inventory item"""
-        bom_gen = BOMGenerator(self.components, self.matcher)
+        bom_gen = BOMGenerator(self.matcher)
+        bom_gen.components = self.components
         groups = bom_gen._group_components()
 
         # Should have 2 groups: one for R1,R2 (same inventory item) and one for C1
@@ -606,7 +608,8 @@ class TestBOMGeneration(unittest.TestCase):
 
     def test_bom_generation(self):
         """Test basic BOM generation"""
-        bom_gen = BOMGenerator(self.components, self.matcher)
+        bom_gen = BOMGenerator(self.matcher)
+        bom_gen.components = self.components
         bom_entries, _, _ = bom_gen.generate_bom()
 
         # Should have entries for grouped components
@@ -625,7 +628,8 @@ class TestBOMGeneration(unittest.TestCase):
 
     def test_csv_output_basic(self):
         """Test basic CSV output format"""
-        bom_gen = BOMGenerator(self.components, self.matcher)
+        bom_gen = BOMGenerator(self.matcher)
+        bom_gen.components = self.components
         bom_entries, _, _ = bom_gen.generate_bom()
 
         with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".csv") as f:
@@ -671,7 +675,10 @@ class TestBOMGeneration(unittest.TestCase):
 
     def test_csv_output_verbose(self):
         """Test verbose CSV output format"""
-        bom_gen = BOMGenerator(self.components, self.matcher)
+        from jbom.common.generator import GeneratorOptions
+
+        bom_gen = BOMGenerator(self.matcher, GeneratorOptions(verbose=True))
+        bom_gen.components = self.components
         bom_entries, _, _ = bom_gen.generate_bom(
             verbose=True
         )  # Pass verbose to generate_bom
@@ -793,7 +800,8 @@ class TestBOMSorting(unittest.TestCase):
 
     def test_bom_sort_key_parsing(self):
         """Test component reference parsing for sorting"""
-        bom_gen = BOMGenerator(self.components, self.matcher)
+        bom_gen = BOMGenerator(self.matcher)
+        bom_gen.components = self.components
 
         test_cases = [
             ("R1", ("R", 1)),
@@ -810,7 +818,8 @@ class TestBOMSorting(unittest.TestCase):
 
     def test_bom_sorting_order(self):
         """Test that BOM entries are sorted correctly"""
-        bom_gen = BOMGenerator(self.components, self.matcher)
+        bom_gen = BOMGenerator(self.matcher)
+        bom_gen.components = self.components
         bom_entries, _, _ = bom_gen.generate_bom()
 
         # Extract references to check order
@@ -878,7 +887,8 @@ class TestFieldPrefixSystem(unittest.TestCase):
 
     def test_field_discovery(self):
         """Test that field discovery finds both inventory and component fields"""
-        bom_gen = BOMGenerator(self.components, self.matcher)
+        bom_gen = BOMGenerator(self.matcher)
+        bom_gen.components = self.components
         available_fields = bom_gen.get_available_fields(self.components)
 
         # Should have standard BOM fields (normalized snake_case)
@@ -900,7 +910,8 @@ class TestFieldPrefixSystem(unittest.TestCase):
 
     def test_field_value_extraction_prefixed(self):
         """Test field value extraction with explicit prefixes"""
-        bom_gen = BOMGenerator(self.components, self.matcher)
+        bom_gen = BOMGenerator(self.matcher)
+        bom_gen.components = self.components
         bom_entries, _, _ = bom_gen.generate_bom()
 
         # Find resistor entry
@@ -936,7 +947,8 @@ class TestFieldPrefixSystem(unittest.TestCase):
 
     def test_ambiguous_field_handling(self):
         """Test that ambiguous fields return combined values"""
-        bom_gen = BOMGenerator(self.components, self.matcher)
+        bom_gen = BOMGenerator(self.matcher)
+        bom_gen.components = self.components
         bom_entries, _, _ = bom_gen.generate_bom()
 
         # Find resistor entry
@@ -992,7 +1004,8 @@ class TestDebugFunctionality(unittest.TestCase):
 
     def test_debug_mode_enabled(self):
         """Test that debug mode works without polluting BOM notes"""
-        bom_gen = BOMGenerator(self.components, self.matcher)
+        bom_gen = BOMGenerator(self.matcher)
+        bom_gen.components = self.components
         bom_entries, _, _ = bom_gen.generate_bom(debug=True)
 
         self.assertEqual(len(bom_entries), 1)
@@ -1009,7 +1022,8 @@ class TestDebugFunctionality(unittest.TestCase):
 
     def test_debug_alternatives_displayed(self):
         """Test that debug mode processes multiple matches correctly"""
-        bom_gen = BOMGenerator(self.components, self.matcher)
+        bom_gen = BOMGenerator(self.matcher)
+        bom_gen.components = self.components
         bom_entries, _, _ = bom_gen.generate_bom(debug=True)
 
         entry = bom_entries[0]
@@ -1026,7 +1040,8 @@ class TestDebugFunctionality(unittest.TestCase):
 
     def test_debug_mode_disabled(self):
         """Test that normal mode doesn't show debug information"""
-        bom_gen = BOMGenerator(self.components, self.matcher)
+        bom_gen = BOMGenerator(self.matcher)
+        bom_gen.components = self.components
         bom_entries, _, _ = bom_gen.generate_bom(debug=False)
 
         self.assertEqual(len(bom_entries), 1)
@@ -1306,7 +1321,8 @@ class TestSMDFiltering(unittest.TestCase):
 
     def test_smd_filtering_enabled(self):
         """Test that SMD filtering works when enabled"""
-        bom_gen = BOMGenerator(self.components, self.matcher)
+        bom_gen = BOMGenerator(self.matcher)
+        bom_gen.components = self.components
 
         # Generate BOM with SMD filtering
         bom_entries, _, _ = bom_gen.generate_bom(smd_only=True)
@@ -1341,7 +1357,8 @@ class TestSMDFiltering(unittest.TestCase):
             ),  # Should match PTH item
         ]
 
-        bom_gen = BOMGenerator(components2, matcher2)
+        bom_gen = BOMGenerator(matcher2)
+        bom_gen.components = components2
         bom_entries, _, _ = bom_gen.generate_bom(smd_only=False)
 
         # Should include both SMD and PTH components
@@ -1441,7 +1458,8 @@ class TestCustomFieldOutput(unittest.TestCase):
 
     def test_custom_field_csv_output(self):
         """Test CSV output with custom field selection"""
-        bom_gen = BOMGenerator(self.components, self.matcher)
+        bom_gen = BOMGenerator(self.matcher)
+        bom_gen.components = self.components
         bom_entries, _, _ = bom_gen.generate_bom()
 
         with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".csv") as f:
@@ -1485,7 +1503,8 @@ class TestCustomFieldOutput(unittest.TestCase):
 
     def test_ambiguous_field_csv_output(self):
         """Test CSV output with ambiguous fields that auto-split into columns"""
-        bom_gen = BOMGenerator(self.components, self.matcher)
+        bom_gen = BOMGenerator(self.matcher)
+        bom_gen.components = self.components
         bom_entries, _, _ = bom_gen.generate_bom()
 
         with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".csv") as f:
@@ -2387,7 +2406,8 @@ class TestCaseInsensitiveFieldInput(unittest.TestCase):
 
     def test_get_field_value_case_insensitive(self):
         """Test that _get_field_value works with various input formats"""
-        bom_gen = BOMGenerator(self.components, self.matcher)
+        bom_gen = BOMGenerator(self.matcher)
+        bom_gen.components = self.components
         bom_entries, _, _ = bom_gen.generate_bom()
 
         entry = bom_entries[0]
@@ -2409,7 +2429,8 @@ class TestCaseInsensitiveFieldInput(unittest.TestCase):
 
     def test_prefixed_field_case_insensitive(self):
         """Test that prefixed fields work case-insensitively"""
-        bom_gen = BOMGenerator(self.components, self.matcher)
+        bom_gen = BOMGenerator(self.matcher)
+        bom_gen.components = self.components
         bom_entries, _, _ = bom_gen.generate_bom()
 
         entry = bom_entries[0]
@@ -2430,7 +2451,8 @@ class TestCaseInsensitiveFieldInput(unittest.TestCase):
 
     def test_component_property_case_insensitive(self):
         """Test that component property fields work case-insensitively"""
-        bom_gen = BOMGenerator(self.components, self.matcher)
+        bom_gen = BOMGenerator(self.matcher)
+        bom_gen.components = self.components
         bom_entries, _, _ = bom_gen.generate_bom()
 
         entry = bom_entries[0]

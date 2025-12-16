@@ -131,17 +131,17 @@ class TestGeneratePOSAPI(unittest.TestCase):
         result = generate_pos(input=self.pcb, loader_mode="sexp")
 
         self.assertIn("board", result)
-        self.assertIn("rows", result)
+        self.assertIn("entries", result)
         self.assertIn("generator", result)
         # SMD only by default, so only R1 (top layer)
-        self.assertGreaterEqual(len(result["rows"]), 1)
+        self.assertGreaterEqual(len(result["entries"]), 1)
 
     def test_generate_pos_with_directory_input(self):
         """Test generate_pos with directory (auto-discovery)"""
         result = generate_pos(input=self.tmpdir, loader_mode="sexp")
 
-        self.assertIn("rows", result)
-        self.assertGreaterEqual(len(result["rows"]), 1)
+        self.assertIn("entries", result)
+        self.assertGreaterEqual(len(result["entries"]), 1)
 
     def test_generate_pos_with_output_file(self):
         """Test generate_pos writes output file"""
@@ -165,7 +165,7 @@ class TestGeneratePOSAPI(unittest.TestCase):
         result = generate_pos(input=self.pcb, options=opts, loader_mode="sexp")
 
         # Should have at least R1 on top
-        self.assertGreaterEqual(len(result["rows"]), 1)
+        self.assertGreaterEqual(len(result["entries"]), 1)
 
     def test_generate_pos_file_not_found(self):
         """Test generate_pos raises error for missing file"""
