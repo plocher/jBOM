@@ -1,25 +1,55 @@
 # jBOM — KiCad Bill of Materials and Placement Generator
 
-A comprehensive fabrication tool for KiCad projects, jBOM generates both Bills of Materials (BOM) and Component Placement Lists (CPL/POS) for PCB manufacturing. It matches schematic components against your inventory at generation time rather than hardcoding part numbers in symbols, making your designs supplier-neutral so you can match against current inventory and pricing whenever needed.
+## Why jBOM?
 
-jBOM handles multiple inventory formats (CSV, Excel, Apple Numbers), supports KiCad's hierarchical schematics, and provides intelligent component matching with robust numeric parsing for resistors, capacitors, inductors, and other component types. It also generates accurate placement files from PCB layouts with support for multiple coordinate systems and formats.
+Designing a PCB in KiCad is only half the battle. Before you can manufacture your board, you need:
 
-You can integrate jBOM in three ways: as a KiCad plugin (Eeschema or Pcbnew), via the command line, or as a Python library in your custom tools.
+1. **A Bill of Materials (BOM)** — telling the assembler which parts to use
+2. **A placement file (CPL/POS)** — telling pick-and-place machines where to put them
+
+Most BOM tools force you to hardcode specific part numbers (like "LCSC:C123456") directly into your KiCad symbols. This creates problems:
+- Your design becomes **locked to specific vendors** and part numbers
+- When parts go out of stock or prices change, you must **manually edit your schematics**
+- You can't easily **switch suppliers** or take advantage of bulk pricing
+- Design reuse becomes difficult when inventory changes
+
+**jBOM solves this** by separating part selection from circuit design. You design with generic values ("10kΩ resistor, 0603"), maintain a separate inventory file with your available parts, and jBOM intelligently matches them at BOM generation time. Update your inventory whenever you want—your schematics stay clean and vendor-neutral.
+
+## Where jBOM Fits in Your Workflow
+
+```
+KiCad Design → jBOM → Manufacturing Files → PCB Assembly
+```
+
+**Typical workflow:**
+1. Design your circuit in KiCad using generic component values
+2. Maintain an inventory spreadsheet with your available parts (or supplier catalogs)
+3. **Run jBOM** to generate:
+   - BOM with matched supplier part numbers (for ordering/assembly)
+   - Placement file (for pick-and-place machines)
+4. Send files to your PCB assembler (JLCPCB, PCBWay, etc.)
+
+jBOM integrates directly into KiCad's "Generate BOM" tool, works from the command line for automation, or can be called from Python scripts for custom workflows.
 
 ## Installation
 
-You need Python 3.9 or newer and the following packages:
+**From PyPI (recommended):**
 
 ```bash
-# For basic operation with csv inventories
-pip install sexpdata
+# Basic installation (CSV inventory support)
+pip install jbom
 
-# To add support for Microsoft Excel Spreadsheet Inventories
-pip install openpyxl
+# With Excel support
+pip install jbom[excel]
 
-# To add support for Apple Numbers Spreadsheet Inventories
-pip install numbers-parser
+# With Apple Numbers support
+pip install jbom[numbers]
+
+# Everything
+pip install jbom[all]
 ```
+
+Requires Python 3.9 or newer.
 
 ## Quick Start
 
@@ -44,19 +74,19 @@ Optional: Manufacturer, MFGPN, Datasheet, Tolerance, V, A, W, and component-spec
 **Via command line:**
 ```bash
 # BOM (schematics → CSV with inventory matching)
-python -m jbom bom MyProject/ -i inventory.xlsx
+jbom bom MyProject/ -i inventory.xlsx
 
 # BOM with JLCPCB-optimized fields
-python -m jbom bom MyProject/ -i inventory.xlsx --jlc
+jbom bom MyProject/ -i inventory.xlsx --jlc
 
 # Placement/CPL (PCB → CSV for pick-and-place machines)
-python -m jbom pos MyProject/
+jbom pos MyProject/
 
 # Placement with JLCPCB format (auto-detects PCB in project)
-python -m jbom pos MyProject/ --jlc
+jbom pos MyProject/ --jlc
 
 # Or specify PCB file directly
-python -m jbom pos MyBoard.kicad_pcb -o MyBoard.pos.csv
+jbom pos MyBoard.kicad_pcb -o MyBoard.pos.csv
 ```
 
 **Via Python:**
@@ -77,13 +107,19 @@ gen.write_csv('MyBoard.pos.csv', fields_preset='jlc')
 
 That's it! The BOM is written to `MyProject_bom.csv` and placement to `MyBoard.pos.csv`.
 
-## Component Matching
+## How Matching Works
 
-jBOM uses intelligent matching to find inventory parts that fit your schematic components. First, it detects the component type (resistor, capacitor, inductor, LED, IC, etc.) from the schematic symbol. Then it extracts the physical package from the footprint and parses the component value, handling various formats like 10k, 10K0, 10000, 330R, or 3R3.
+jBOM automatically finds the best inventory parts for your schematic components using intelligent matching:
 
-For each potential match, jBOM scores candidates by comparing properties like tolerance, voltage, and current ratings. Finally, it uses the inventory's Priority column (1 = preferred, higher = less preferred) to break ties and select the best part.
+1. **Type detection** — Identifies component type (resistor, capacitor, LED, IC, etc.) from symbol
+2. **Value parsing** — Understands various formats: 10k, 10K0, 10000, 330R, 3R3, 100nF, 0.1uF
+3. **Package extraction** — Reads physical package (0603, SOT-23, etc.) from footprint
+4. **Candidate scoring** — Compares tolerance, voltage, current ratings, and other parameters
+5. **Priority ranking** — Uses your inventory's Priority column (1 = most preferred) to break ties
 
-See docs/README.developer.md for detailed information about the matching algorithm.
+The result: jBOM selects the best matching part from your inventory automatically.
+
+For technical details about the matching algorithm, see [docs/README.developer.md](docs/README.developer.md).
 
 ## Output
 
@@ -145,7 +181,7 @@ To contribute:
 1. Fork the repository on GitHub
 2. Create a feature branch for your changes
 3. Make your changes and add tests
-4. Run the test suite: `python -m unittest tests.test_jbom -v`
+4. Run the test suite: `python -m unittest discover -s tests -v`
 5. Submit a pull request
 
 For detailed development setup, coding standards, and testing guidelines, see [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md).
