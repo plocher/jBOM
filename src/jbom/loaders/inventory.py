@@ -22,12 +22,14 @@ warnings.filterwarnings(
 # Optional imports for spreadsheet support
 try:
     import openpyxl
+
     EXCEL_SUPPORT = True
 except ImportError:
     EXCEL_SUPPORT = False
 
 try:
     from numbers_parser import Document as NumbersDocument
+
     NUMBERS_SUPPORT = True
 except ImportError:
     NUMBERS_SUPPORT = False

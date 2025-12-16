@@ -42,7 +42,6 @@ class BOMGenerator:
         grouped_components = self._group_components()
 
         for group_key, group_components in grouped_components.items():
-            reference = group_components[0].reference
             quantity = len(group_components)
 
             # Find matches for first component in group

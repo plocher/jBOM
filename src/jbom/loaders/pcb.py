@@ -1,7 +1,7 @@
 """Load KiCad .kicad_pcb into BoardModel with pcbnew→S-expression fallback."""
 from __future__ import annotations
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional
 
 from jbom.loaders.pcb_model import BoardModel, PcbComponent
 from jbom.common.packages import PackageType
@@ -31,6 +31,7 @@ class PCBLoader:
     # -------------------- pcbnew path --------------------
     def _load_with_pcbnew(self) -> BoardModel:
         import importlib
+
         pcbnew = importlib.import_module("pcbnew")  # raises ImportError if unavailable
         brd = pcbnew.LoadBoard(str(self.board_path))
 
@@ -87,40 +88,40 @@ class PCBLoader:
 
             # Side
             side = "BOTTOM" if getattr(fp, "IsFlipped", lambda: False)() else "TOP"
-            
+
             # Extract attributes (datasheet, version, SMD type)
             attributes = {}
-            
+
             # Get properties
             try:
                 # Try to get properties (KiCad 7+)
-                if hasattr(fp, 'GetProperties'):
+                if hasattr(fp, "GetProperties"):
                     props = fp.GetProperties()
                     for key, val in props.items():
                         if isinstance(key, str) and isinstance(val, str):
                             attributes[key.lower()] = val
             except Exception:
                 pass
-            
+
             # Get datasheet
             try:
-                if hasattr(fp, 'GetDatasheet'):
+                if hasattr(fp, "GetDatasheet"):
                     ds = fp.GetDatasheet()
                     if ds:
-                        attributes['datasheet'] = ds
+                        attributes["datasheet"] = ds
             except Exception:
                 pass
-            
+
             # Get SMD type from footprint attributes
             try:
-                if hasattr(fp, 'GetAttributes'):
+                if hasattr(fp, "GetAttributes"):
                     attrs = fp.GetAttributes()
                     # attrs is typically an integer flag
                     # FP_SMD = 1, FP_THROUGH_HOLE = 2
-                    if attrs == 1 or (hasattr(fp, 'IsSMD') and fp.IsSMD()):
-                        attributes['smd'] = 'SMD'
+                    if attrs == 1 or (hasattr(fp, "IsSMD") and fp.IsSMD()):
+                        attributes["smd"] = "SMD"
                     elif attrs == 2:
-                        attributes['smd'] = 'PTH'
+                        attributes["smd"] = "PTH"
             except Exception:
                 pass
 
@@ -173,8 +174,16 @@ class PCBLoader:
             if not (isinstance(child, list) and child):
                 continue
             head = child[0]
-            if head == Symbol("layer") and len(child) >= 2 and isinstance(child[1], str):
-                side = "TOP" if child[1].startswith("F.") else ("BOTTOM" if child[1].startswith("B.") else side)
+            if (
+                head == Symbol("layer")
+                and len(child) >= 2
+                and isinstance(child[1], str)
+            ):
+                side = (
+                    "TOP"
+                    if child[1].startswith("F.")
+                    else ("BOTTOM" if child[1].startswith("B.") else side)
+                )
             elif head == Symbol("at"):
                 # (at x y [rot])
                 if len(child) >= 3:
@@ -214,16 +223,22 @@ class PCBLoader:
                 # This indicates the footprint type
                 if len(child) >= 2:
                     attr_type = str(child[1])
-                    if attr_type in ('smd', 'through_hole', 'board_only', 'exclude_from_pos_files', 'exclude_from_bom'):
-                        if attr_type == 'smd':
-                            smd_type = 'SMD'
-                        elif attr_type == 'through_hole':
-                            smd_type = 'PTH'
+                    if attr_type in (
+                        "smd",
+                        "through_hole",
+                        "board_only",
+                        "exclude_from_pos_files",
+                        "exclude_from_bom",
+                    ):
+                        if attr_type == "smd":
+                            smd_type = "SMD"
+                        elif attr_type == "through_hole":
+                            smd_type = "PTH"
 
         if not ref:
             return None
         pkg = self._extract_package_token(fp_name or "")
-        
+
         comp = PcbComponent(
             reference=ref,
             footprint_name=fp_name or "",
@@ -234,15 +249,15 @@ class PCBLoader:
             side=side,
             attributes=attributes,
         )
-        
+
         # Add extracted fields to attributes for easy access
         if datasheet:
-            comp.attributes['datasheet'] = datasheet
+            comp.attributes["datasheet"] = datasheet
         if version:
-            comp.attributes['version'] = version
+            comp.attributes["version"] = version
         if smd_type:
-            comp.attributes['smd'] = smd_type
-        
+            comp.attributes["smd"] = smd_type
+
         return comp
 
     # -------------------- helpers --------------------

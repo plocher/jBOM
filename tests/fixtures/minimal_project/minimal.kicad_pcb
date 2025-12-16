@@ -4,42 +4,42 @@
   (layers
     (0 "F.Cu" signal)
     (31 "B.Cu" signal))
-  
+
   (footprint "Resistor_SMD:R_0603_1608Metric" (layer "F.Cu") (at 50.8 50.8 0)
     (attr smd)
     (fp_text reference "R1" (at 0 0) (layer "F.SilkS"))
     (fp_text value "100R" (at 0 1.5) (layer "F.Fab"))
     (property "Datasheet" "https://datasheet.lcsc.com/C22775.pdf" (at 0 0 0))
     (property "ki_version" "6.0" (at 0 0 0)))
-  
+
   (footprint "Resistor_SMD:R_0603_1608Metric" (layer "F.Cu") (at 60.96 50.8 0)
     (attr smd)
     (fp_text reference "R2" (at 0 0) (layer "F.SilkS"))
     (fp_text value "100R" (at 0 1.5) (layer "F.Fab"))
     (property "Datasheet" "https://datasheet.lcsc.com/C22775.pdf" (at 0 0 0))
     (property "ki_version" "6.0" (at 0 0 0)))
-  
+
   (footprint "Resistor_SMD:R_0603_1608Metric" (layer "F.Cu") (at 71.12 50.8 0)
     (attr smd)
     (fp_text reference "R3" (at 0 0) (layer "F.SilkS"))
     (fp_text value "1K" (at 0 1.5) (layer "F.Fab"))
     (property "Datasheet" "https://datasheet.lcsc.com/C21190.pdf" (at 0 0 0))
     (property "ki_version" "6.0" (at 0 0 0)))
-  
+
   (footprint "Capacitor_SMD:C_0603_1608Metric" (layer "F.Cu") (at 81.28 50.8 0)
     (attr smd)
     (fp_text reference "C1" (at 0 0) (layer "F.SilkS"))
     (fp_text value "100nF" (at 0 1.5) (layer "F.Fab"))
     (property "Datasheet" "https://datasheet.lcsc.com/C14663.pdf" (at 0 0 0))
     (property "ki_version" "6.0" (at 0 0 0)))
-  
+
   (footprint "LED_SMD:LED_0603_1608Metric" (layer "F.Cu") (at 91.44 50.8 0)
     (attr smd)
     (fp_text reference "D1" (at 0 0) (layer "F.SilkS"))
     (fp_text value "RED" (at 0 1.5) (layer "F.Fab"))
     (property "Datasheet" "https://datasheet.lcsc.com/C2286.pdf" (at 0 0 0))
     (property "ki_version" "6.0" (at 0 0 0)))
-  
+
   (footprint "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical" (layer "B.Cu") (at 101.6 50.8 180)
     (attr through_hole)
     (fp_text reference "J1" (at 0 0 180) (layer "B.SilkS"))

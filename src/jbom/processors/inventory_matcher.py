@@ -10,12 +10,7 @@ from pathlib import Path
 from typing import List, Optional, Tuple
 
 from jbom.common.types import Component, InventoryItem
-from jbom.common.constants import (
-    ComponentType,
-    CommonFields,
-    ScoreWeights,
-    PRECISION_THRESHOLD,
-)
+from jbom.common.constants import ComponentType, CommonFields, ScoreWeights
 from jbom.common.packages import PackageType
 from jbom.common.values import (
     parse_res_to_ohms,
@@ -135,7 +130,7 @@ class InventoryMatcher:
             if footprint_match:
                 score += 30
                 if debug:
-                    debug_parts.append(f"Footprint match: +30")
+                    debug_parts.append("Footprint match: +30")
             elif debug:
                 debug_parts.append(
                     f"Footprint mismatch: {component.footprint} ≠ {item.package}"
@@ -152,7 +147,7 @@ class InventoryMatcher:
         if component.value in item.keywords:
             score += 10
             if debug:
-                debug_parts.append(f"Keyword match: +10")
+                debug_parts.append("Keyword match: +10")
 
         debug_info = ", ".join(debug_parts) if debug and debug_parts else None
         return score, debug_info

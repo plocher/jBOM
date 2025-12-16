@@ -16,6 +16,7 @@ __all__ = [
 @dataclass
 class GeneratorOptions:
     """Base options for all generators."""
+
     verbose: bool = False
     debug: bool = False
     fields: Optional[List[str]] = None
@@ -24,13 +25,15 @@ class GeneratorOptions:
 @dataclass
 class BOMOptions(GeneratorOptions):
     """Options specific to BOM generation."""
+
     smd_only: bool = False
 
 
 @dataclass
 class PlacementOptions(GeneratorOptions):
     """Options specific to placement/CPL generation."""
-    units: Literal['mm', 'inch'] = 'mm'
-    origin: Literal['board', 'aux'] = 'board'
+
+    units: Literal["mm", "inch"] = "mm"
+    origin: Literal["board", "aux"] = "board"
     smd_only: bool = True
-    layer_filter: Optional[Literal['TOP', 'BOTTOM']] = None
+    layer_filter: Optional[Literal["TOP", "BOTTOM"]] = None

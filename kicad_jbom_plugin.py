@@ -21,15 +21,20 @@ from jbom import GenerateOptions, BOMGenerator, InventoryMatcher
 
 def main():
     p = argparse.ArgumentParser(description="KiCad wrapper for jBOM")
-    p.add_argument('schematic', help='KiCad schematic file path (%I) or project dir')
-    p.add_argument('-i', '--inventory', required=True, help='Inventory file (.csv/.xlsx/.xls/.numbers)')
-    p.add_argument('-o', '--output', required=True, help='Output CSV path (%O)')
-    p.add_argument('-v', '--verbose', action='store_true')
-    p.add_argument('-d', '--debug', action='store_true')
-    p.add_argument('-f', '--fields', help='Comma-separated custom fields')
+    p.add_argument("schematic", help="KiCad schematic file path (%I) or project dir")
+    p.add_argument(
+        "-i",
+        "--inventory",
+        required=True,
+        help="Inventory file (.csv/.xlsx/.xls/.numbers)",
+    )
+    p.add_argument("-o", "--output", required=True, help="Output CSV path (%O)")
+    p.add_argument("-v", "--verbose", action="store_true")
+    p.add_argument("-d", "--debug", action="store_true")
+    p.add_argument("-f", "--fields", help="Comma-separated custom fields")
     args = p.parse_args()
 
-    fields = [f.strip() for f in args.fields.split(',')] if args.fields else None
+    fields = [f.strip() for f in args.fields.split(",")] if args.fields else None
 
     opts = GenerateOptions(
         verbose=args.verbose,
@@ -42,18 +47,28 @@ def main():
     result = jbom.generate_bom_api(args.schematic, args.inventory, options=opts)
 
     # Compute field list (mirror jbom default logic)
-    any_notes = any((e.notes or '').strip() for e in result['bom_entries'])
-    out_fields = fields if fields else [
-        'Reference', 'Quantity', 'Description', 'Value', 'Footprint', 'LCSC',
-        'Datasheet', 'SMD'
-    ]
+    any_notes = any((e.notes or "").strip() for e in result["bom_entries"])
+    out_fields = (
+        fields
+        if fields
+        else [
+            "Reference",
+            "Quantity",
+            "Description",
+            "Value",
+            "Footprint",
+            "LCSC",
+            "Datasheet",
+            "SMD",
+        ]
+    )
     if not fields:
         if args.verbose:
-            out_fields.append('Match_Quality')
+            out_fields.append("Match_Quality")
         if any_notes:
-            out_fields.append('Notes')
+            out_fields.append("Notes")
         if args.verbose:
-            out_fields.append('Priority')
+            out_fields.append("Priority")
 
     # Write CSV
     out_path = Path(args.output)
@@ -61,11 +76,11 @@ def main():
 
     # Recreate matcher for write_bom_csv field resolution
     matcher = InventoryMatcher(Path(args.inventory))
-    bom_gen = BOMGenerator(result['components'], matcher)
-    bom_gen.write_bom_csv(result['bom_entries'], out_path, out_fields)
+    bom_gen = BOMGenerator(result["components"], matcher)
+    bom_gen.write_bom_csv(result["bom_entries"], out_path, out_fields)
 
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

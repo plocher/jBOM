@@ -51,6 +51,7 @@ def walk_nodes(sexp: Any, node_type: str) -> Iterator[List]:
             # Process footprint node
             ref = find_child(footprint_node, 'reference')
     """
+
     def walk(n: Any) -> Iterator[List]:
         if isinstance(n, list) and n:
             if n[0] == Symbol(node_type):

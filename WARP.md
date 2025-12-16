@@ -19,6 +19,22 @@ jBOM is a sophisticated KiCad Bill of Materials generator in Python. It matches 
 - Prefer concise prose and tables over long bulleted lists
 - Run `python -m unittest test_jbom -v` for full test suite
 
+### Shell & Environment Gotchas
+**Testing:**
+- Use `unittest`, NOT `pytest` - run with `python -m unittest discover -s tests`
+- Test module paths: `tests.test_jbom`, not `test_jbom`
+
+**Git Commits (zsh on macOS):**
+- ALWAYS use single quotes for commit messages with special characters
+- Example: `git commit -m 'feat!: breaking change'` (NOT double quotes)
+- Exclamation marks (!) trigger zsh history expansion in double quotes
+- Use `--no-verify` to bypass pre-commit hooks if needed
+
+**Pre-commit Hooks:**
+- Hooks may modify files - re-add them after running
+- If hooks fail, check output and fix issues before retrying
+- Common issues: flake8 line length, unused imports, tabs vs spaces
+
 ### Code Standards
 - PEP 8 compliant with type hints throughout
 - Extensive docstrings and inline comments
