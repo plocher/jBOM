@@ -14,8 +14,8 @@ import os
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from jbom.loaders.pcb import load_board
-from jbom.generators.pos import POSGenerator, PlacementOptions
+# Use new v3.0 API
+from jbom import generate_bom, generate_pos, POSOptions
 
 INVENTORY_PATH = Path(os.environ.get('INVENTORY', '/dev/null'))
 # PROJECTS_LIST: comma-separated list of project directories provided by Makefile
@@ -33,14 +33,12 @@ class TestIntegrationProjects(unittest.TestCase):
         if not INVENTORY_PATH.exists():
             self.skipTest('Numbers inventory not present')
 
-        from jbom.jbom import generate_bom_api
-
         for proj in PROJECTS:
             with self.subTest(project=str(proj)):
                 if not proj.exists():
                     self.skipTest(f'Project directory missing: {proj}')
-                # Use project directory (generate_bom_api will locate schematic)
-                result = generate_bom_api(str(proj), str(INVENTORY_PATH))
+                # Use v3.0 API with directory input (auto-discovery)
+                result = generate_bom(input=proj, inventory=INVENTORY_PATH)
                 self.assertIn('inventory_count', result)
                 self.assertGreaterEqual(result['inventory_count'], 1)
                 # Ensure keys present; do not assert entry counts (projects may vary)
@@ -56,13 +54,11 @@ class TestIntegrationProjects(unittest.TestCase):
                 boards = list(proj.rglob('*.kicad_pcb'))
                 if not boards:
                     self.skipTest(f'No .kicad_pcb under {proj}')
-                board = load_board(boards[0], mode='sexp')
-                # Write POS CSV
+                # Use v3.0 API with file input
                 with tempfile.TemporaryDirectory() as td:
                     out = Path(td) / f'{boards[0].stem}.pos.csv'
-                    pg = POSGenerator(board, PlacementOptions(units='mm', origin='board', smd_only=False))
-                    fields = pg.parse_fields_argument('+standard')
-                    pg.write_csv(out, fields)
+                    opts = POSOptions(units='mm', origin='board', smd_only=False)
+                    result = generate_pos(input=boards[0], output=out, options=opts, loader_mode='sexp')
                     text = out.read_text(encoding='utf-8').splitlines()
                     self.assertGreaterEqual(len(text), 1)
                     self.assertIn('Reference', text[0])
