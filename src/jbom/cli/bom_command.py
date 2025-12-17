@@ -41,9 +41,11 @@ class BOMCommand(Command):
             "-i",
             "--inventory",
             required=False,
+            action="append",
             metavar="FILE",
             help=(
-                "Inventory file containing component data (.csv, .xlsx, .xls, or .numbers format). "
+                "Inventory file(s) containing component data (.csv, .xlsx, .xls, or .numbers format). "
+                "Can be specified multiple times. "
                 "If omitted, inventory is generated from project components."
             ),
         )

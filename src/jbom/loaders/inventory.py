@@ -10,9 +10,11 @@ Handles loading inventory data from multiple file formats:
 import csv
 import warnings
 from pathlib import Path
-from typing import List, Dict
+from typing import List, Dict, Optional, Union
 
+# warnings imported at line 11 already
 from jbom.common.types import InventoryItem, DEFAULT_PRIORITY
+from jbom.loaders.jlc_loader import JLCPrivateInventoryLoader
 
 # Suppress specific Numbers version warning
 warnings.filterwarnings(
@@ -38,60 +40,85 @@ except ImportError:
 class InventoryLoader:
     """Loads inventory data from various file formats."""
 
-    def __init__(self, inventory_path: Path):
-        """Initialize loader with path to inventory file.
+    def __init__(self, inventory_paths: Union[Path, List[Path]]):
+        """Initialize loader with path(s) to inventory file(s).
 
         Args:
-            inventory_path: Path to inventory file (.csv, .xlsx, .xls, or .numbers)
+            inventory_paths: Path or list of Paths to inventory file(s)
         """
-        self.inventory_path = inventory_path
+        if isinstance(inventory_paths, Path):
+            self.inventory_paths = [inventory_paths]
+        else:
+            self.inventory_paths = inventory_paths
+
         self.inventory: List[InventoryItem] = []
         self.inventory_fields: List[str] = []
 
     def load(self) -> tuple[List[InventoryItem], List[str]]:
-        """Load inventory from supported file format.
+        """Load inventory from all provided files.
 
         Returns:
-            Tuple of (inventory items list, field names list)
-
-        Raises:
-            ImportError: If required package for file format is not installed
-            ValueError: If file format is unsupported or file structure is invalid
+            Tuple of (aggregated inventory items list, aggregated field names list)
         """
-        file_extension = self.inventory_path.suffix.lower()
+        for path in self.inventory_paths:
+            self._load_file(path)
+
+        return self.inventory, list(set(self.inventory_fields))
+
+    def _load_file(self, path: Path):
+        """Load a single inventory file."""
+        file_extension = path.suffix.lower()
 
         if file_extension == ".csv":
-            self._load_csv_inventory()
+            self._load_csv_inventory(path)
         elif file_extension in [".xlsx", ".xls"]:
             if not EXCEL_SUPPORT:
                 raise ImportError(
                     "Excel support requires openpyxl package. Install with: pip install openpyxl"
                 )
-            self._load_excel_inventory()
+            # Try JLC Loader first for Excel files
+            if self._try_load_jlc(path):
+                return
+
+            self._load_excel_inventory(path)
         elif file_extension == ".numbers":
             if not NUMBERS_SUPPORT:
                 raise ImportError(
                     "Numbers support requires numbers-parser package. Install with: pip install numbers-parser"
                 )
-            self._load_numbers_inventory()
+            self._load_numbers_inventory(path)
         else:
             raise ValueError(
                 f"Unsupported inventory file format: {file_extension}. Supported formats: .csv, .xlsx, .xls, .numbers"
             )
 
-        return self.inventory, self.inventory_fields
+    def _try_load_jlc(self, path: Path) -> bool:
+        """Attempt to load as JLC Private Inventory. Returns True if successful."""
+        try:
+            loader = JLCPrivateInventoryLoader(path)
+            # We need to peek at headers or just try loading
+            # The loader handles validation internally
+            items, fields = loader.load()
 
-    def _load_csv_inventory(self):
+            # Merge results
+            self.inventory.extend(items)
+            self.inventory_fields.extend(fields)
+            return True
+        except (ValueError, KeyError):
+            # Not a JLC file, or missing headers
+            return False
+
+    def _load_csv_inventory(self, path: Path):
         """Load inventory from CSV file"""
-        with open(self.inventory_path, "r", encoding="utf-8") as f:
+        with open(path, "r", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             rows = list(reader)
             headers = reader.fieldnames or []
-            self._process_inventory_data(headers, rows)
+            self._process_inventory_data(headers, rows, source="CSV", source_file=path)
 
-    def _load_excel_inventory(self):
+    def _load_excel_inventory(self, path: Path):
         """Load inventory from Excel file (.xlsx or .xls)"""
-        workbook = openpyxl.load_workbook(self.inventory_path, data_only=True)
+        workbook = openpyxl.load_workbook(path, data_only=True)
         # Use the first worksheet
         worksheet = workbook.active
 
@@ -113,7 +140,7 @@ class InventoryLoader:
 
         if not header_row:
             raise ValueError(
-                "Could not find 'IPN' header column in Excel file. Make sure the inventory has an 'IPN' column."
+                f"Could not find 'IPN' header column in Excel file {path}. Make sure the inventory has an 'IPN' column."
             )
 
         # Get headers from the identified header row
@@ -152,11 +179,11 @@ class InventoryLoader:
                 rows.append(row_data)
 
         workbook.close()
-        self._process_inventory_data(headers, rows)
+        self._process_inventory_data(headers, rows, source="Excel", source_file=path)
 
-    def _load_numbers_inventory(self):
+    def _load_numbers_inventory(self, path: Path):
         """Load inventory from Apple Numbers file"""
-        doc = NumbersDocument(self.inventory_path)
+        doc = NumbersDocument(path)
         # Get the first table from the first sheet
         if not doc.sheets:
             raise ValueError("No sheets found in Numbers file")
@@ -220,9 +247,15 @@ class InventoryLoader:
             if has_data:
                 rows.append(row_data)
 
-        self._process_inventory_data(headers, rows)
+        self._process_inventory_data(headers, rows, source="Numbers", source_file=path)
 
-    def _process_inventory_data(self, headers: List[str], rows: List[Dict[str, str]]):
+    def _process_inventory_data(
+        self,
+        headers: List[str],
+        rows: List[Dict[str, str]],
+        source: str = "Unknown",
+        source_file: Optional[Path] = None,
+    ):
         """Process inventory data from any source format into InventoryItem objects"""
         # Validate required headers
         required_headers = ["IPN", "Category"]
@@ -272,6 +305,8 @@ class InventoryLoader:
                 priority=self._parse_priority(
                     row.get("Priority", str(DEFAULT_PRIORITY))
                 ),
+                source=source,
+                source_file=source_file,
                 raw_data=row,
             )
             self.inventory.append(item)

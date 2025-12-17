@@ -77,7 +77,9 @@ class TestBOMHappyPaths(FunctionalTestBase):
             f"Package field not found in header: {header}",
         )
         self.assertIn("Fabricator", header)
-        self.assertIn("Fabricator Part Number", header)
+        # JLC Fabricator renames 'Fabricator Part Number' to 'LCSC'
+        self.assertIn("LCSC", header)
+        self.assertNotIn("Fabricator Part Number", header)
         self.assertIn("SMD", header)
 
     def test_bom_custom_fields(self):

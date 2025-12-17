@@ -7,7 +7,7 @@ that considers component type, value, package, and various properties.
 
 import re
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 from jbom.common.types import Component, InventoryItem
 from jbom.common.constants import ComponentType, CommonFields, ScoreWeights
@@ -35,7 +35,7 @@ from jbom.common.fabricators import Fabricator
 class InventoryMatcher:
     """Matches components to inventory items"""
 
-    def __init__(self, inventory_path: Optional[Path] = None):
+    def __init__(self, inventory_path: Optional[Union[Path, List[Path]]] = None):
         self.inventory_path = inventory_path
         self.inventory: List[InventoryItem] = []
         self.inventory_fields: List[str] = []

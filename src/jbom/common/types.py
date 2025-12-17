@@ -1,7 +1,8 @@
 """Data classes for jBOM components, inventory, and BOM entries."""
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Dict
+from typing import Dict, Optional
+from pathlib import Path
 
 # Default priority value
 DEFAULT_PRIORITY = 99
@@ -45,6 +46,9 @@ class InventoryItem:
     priority: int = (
         DEFAULT_PRIORITY  # Priority from CSV: 1=most desirable, higher=less desirable
     )
+    # Source tracking for federated inventory
+    source: str = "Unknown"  # e.g. "CSV", "JLC-Private", "Project"
+    source_file: Optional[Path] = None  # Path to the file where this item was found
     raw_data: Dict[str, str] = field(default_factory=dict)
 
 
