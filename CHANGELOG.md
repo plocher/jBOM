@@ -1,6 +1,41 @@
 # CHANGELOG
 
 
+## v3.1.0 (2025-12-17)
+
+### Features
+
+* feat: implement federated inventory loading (Step 3.5)
+
+Adds support for loading multiple inventory files and JLC Private Inventory export format.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`92abc9f`](https://github.com/plocher/jBOM/commit/92abc9f93cf945600cdb60b016bf0b7fe4b25e94))
+
+* feat: add fabricator-aware part number lookup and filtering
+
+- Added Fabricator base class and implementations for JLC, Seeed, PCBWay
+- Implemented strict filtering: matching inventory items MUST have fabricator-specific part number
+- Added --fabricator flag to BOM command
+- Refactored field presets: replaced "standard" with "default" using "Fabricator Part Number"
+- Updated InventoryMatcher to support fabricator-based filtering
+- Updated BOMGenerator to output fabricator-specific data ([`3341979`](https://github.com/plocher/jBOM/commit/33419799b79b20b5ba1091456bcd25ad58d7064e))
+
+* feat: add inventory generation and support inventory-less BOM creation
+
+- Added ProjectInventoryLoader to create inventory from schematic components
+- Added `jbom inventory` command to export generated inventory
+- Updated `jbom bom` to allow running without -i flag (auto-generates inventory)
+- Updated API and BOMGenerator to support optional inventory source ([`caac096`](https://github.com/plocher/jBOM/commit/caac0962b3d364c0ee981651d3de0782e518a854))
+
+### Unknown
+
+* Merge pull request #1 from plocher/feat/federated-inventory
+
+feat/federated inventory ([`7b80f61`](https://github.com/plocher/jBOM/commit/7b80f614092286248f91e7139d47f3335f638793))
+
+* Merge branch 'main' of https://github.com/plocher/jBOM ([`46a400b`](https://github.com/plocher/jBOM/commit/46a400b6722a85a3695b4ffaf4321f4623afd2ce))
+
+
 ## v3.0.0 (2025-12-17)
 
 ### Breaking
