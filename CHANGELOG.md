@@ -1,6 +1,335 @@
 # CHANGELOG
 
 
+## v3.0.0 (2025-12-17)
+
+### Breaking
+
+* refactor(cli): use argparse subparsers with Command pattern
+
+BREAKING CHANGE: CLI now uses argparse subparsers
+
+- Created Command base class with shared patterns
+- Implemented BOMCommand and POSCommand classes
+- Replaced manual dispatch with argparse subparsers
+- Added --outdir to POS command for consistency
+- Rewrote tests to check behavior not implementation
+- 163 tests passing (gained 2 tests) ([`15a2b3f`](https://github.com/plocher/jBOM/commit/15a2b3f1af4516d2a75b3f99f74a37a10384ba6d))
+
+* feat: complete v3.0 architecture refactoring - remove backward compatibility
+
+BREAKING CHANGE: Removed all v2.x backward compatibility code
+
+Phase 8 complete:
+- Removed jbom.py and empty module directories
+- Fixed CLI to use v3.0 API
+- Created cli/formatting.py for console output
+- All 161 tests passing
+
+Clean architecture: loaders, processors, generators, common, api, cli ([`7d4b570`](https://github.com/plocher/jBOM/commit/7d4b5701cd9ebc35498586cfe20f67292bef811d))
+
+### Bug Fixes
+
+* fix: add pbr dependency to bandit pre-commit hook
+
+Fixes ModuleNotFoundError when bandit tries to import pbr.version
+Pre-commit will now install pbr in bandit virtual environment ([`e4397a6`](https://github.com/plocher/jBOM/commit/e4397a69e4d6f6e95cfe7d75925d85297a8a32a1))
+
+* fix: Update CLI entry point to jbom.cli.main:main
+
+The entry point was pointing to jbom:main which doesn't exist after reorganization.
+Updated to point to the correct location in cli/main.py module. ([`7053365`](https://github.com/plocher/jBOM/commit/7053365fe04fc4aa29353a6e31a00060530502ed))
+
+### Features
+
+* feat(common): add Diagnostics to Generator base and include in API results ([`92d79d5`](https://github.com/plocher/jBOM/commit/92d79d533db076749358cb0c5568417c2dcbd4c9))
+
+* feat: enhance Generator base class with template method pattern (POC)
+
+- Added run() template method that orchestrates common generation flow:
+  1. Input discovery (directory vs file)
+  2. File loading
+  3. Data processing
+  4. Output writing
+  5. Result dictionary
+- New abstract methods enforce consistent interface:
+  - discover_input(): Auto-find files in directories
+  - load_input(): Parse input files
+  - process(): Transform data to entries (returns tuple with metadata)
+  - write_csv(): Write output (signature updated to include entries)
+- Created test_generator_poc.py demonstrating the pattern
+- POC shows 65% code reduction for new generators
+- Foundation for refactoring BOMGenerator and POSGenerator
+
+This is the architectural improvement discussed - enforces consistency
+through base class while keeping domain logic in subclasses. ([`8c41e3d`](https://github.com/plocher/jBOM/commit/8c41e3da05384b98556b2afc7f6bd0c02ed5f762))
+
+* feat: refactor KiCad plugin as CLI wrapper, add comprehensive tests
+
+- Simplified kicad_jbom_plugin.py to be a thin CLI wrapper (~50 lines)
+- Plugin now calls `jbom bom` CLI directly instead of duplicating logic
+- Added comprehensive test suite (6 tests) in tests/test_kicad_plugin.py
+- Fixed BOMGenerator.write_bom_csv to create parent directories
+- Updated README.md with v3.0 API examples and KiCad plugin integration guide
+- All 169 tests passing (gained 6 from plugin test suite)
+
+Pre-existing flake8 E501 line-length violations in bom.py remain (not introduced by this commit) ([`e041f25`](https://github.com/plocher/jBOM/commit/e041f2501ff09b4de41c2e5bd29d1eb77e1aa2ea))
+
+* feat(v3.0): Phase 4 - Create unified API with input=/output= parameters
+
+Phase 4 Complete: New v3.0 API created with simplified interface
+
+NEW API FILE: src/jbom/api.py
+- generate_bom(input=, inventory=, output=, options=)
+- generate_pos(input=, output=, options=, loader_mode=)
+- BOMOptions dataclass (verbose, debug, smd_only, fields)
+- POSOptions dataclass (units, origin, smd_only, layer_filter, fields)
+
+KEY FEATURES:
+- Unified input= parameter accepts both directories and specific files
+- Auto-discovery: input='MyProject/' finds .kicad_sch or .kicad_pcb
+- Consistent output= parameter for both BOM and POS
+- Backward compatible: old generate_bom_api() still works
+
+EXPORTS UPDATED:
+- jbom/__init__.py: Export new API functions and options classes
+- Marked v3.0 API as primary, v2.x as backward compatibility
+
+NEXT: Phase 5 - Update CLI to use new API (optional but cleaner) ([`1a7971d`](https://github.com/plocher/jBOM/commit/1a7971d512dfc849c44f3833d14ebafd8c22bc1a))
+
+### Refactoring
+
+* refactor(pcb): replace try/except pass with safe fallbacks and diagnostics; plumb diagnostics from POSGenerator ([`685ec0f`](https://github.com/plocher/jBOM/commit/685ec0ff0943344a22131987ba3c58af13158828))
+
+* refactor: complete v3.0 BOMGenerator refactoring and test updates
+
+- Updated BOMGenerator constructor signature from (components, matcher) to (matcher, options)
+- Updated all 23 test instances in test_jbom.py to use new pattern
+- Updated CLI bom_command.py to use generator from API result dict
+- Removed backward compatibility methods (generate_kicad_pos_rows, generate_jlc_cpl_rows)
+- Updated test_api_v3.py to check for "entries" instead of "rows" in results
+- Updated test_position.py to use iter_components() instead of removed methods
+- Removed test_generator_poc.py
+
+All 169 tests passing. v3.0 refactoring complete. ([`a4ee7f4`](https://github.com/plocher/jBOM/commit/a4ee7f418b2caf9789cd3dfe46f80b14ea3408c8))
+
+* refactor: BOMGenerator now inherits from Generator base class (WIP)
+
+- BOMGenerator implements Generator abstract methods:
+  - discover_input(): Find .kicad_sch files in directories
+  - load_input(): Load schematic using SchematicLoader
+  - process(): Generate BOM entries with matching
+  - write_csv(): Delegate to existing write_bom_csv()
+- Constructor now takes InventoryMatcher instead of components
+  - Cleaner separation: inventory loading separate from BOM generation
+  - Follows dependency injection pattern
+- Updated api.generate_bom() to create matcher and use generator.run()
+- BOMOptions.to_generator_options() converts to GeneratorOptions
+- Override _get_default_fields() for BOM-specific field resolution
+
+REMAINING WORK:
+- Update test files (test_jbom.py) to use new BOMGenerator(matcher, opts) signature
+- 32 test failures, 7 errors due to old constructor usage
+- Once tests fixed, remove old compatibility methods
+- Update CLI bom_command.py to use new pattern
+
+Phase 2 (BOMGenerator) in progress - POSGenerator already complete. ([`63d0dc1`](https://github.com/plocher/jBOM/commit/63d0dc1e6e6dfe03e3369fef1a826346de50d4b3))
+
+* refactor: POSGenerator now inherits from Generator base class
+
+- POSGenerator implements Generator abstract methods:
+  - discover_input(): Find .kicad_pcb files in directories
+  - load_input(): Load PCB using PCBLoader
+  - process(): Filter components and return metadata
+  - write_csv(): Write placement data with parent dir creation
+- PlacementOptions now extends GeneratorOptions
+- Updated api.generate_pos() to use generator.run()
+- Updated cli/pos_command.py to use new pattern
+- Updated tests to use new constructor signature
+- Removed unused imports
+- All 169 tests passing ✓
+
+Phase 1 of template method refactoring complete. ([`bc00180`](https://github.com/plocher/jBOM/commit/bc0018062cdde45365d160b5351f19d37243871f))
+
+* refactor(v3.0): Fix architecture - move field parsing to common/
+
+ARCHITECTURAL FIX: Proper dependency flow
+
+PROBLEM: api.py was importing from jbom.py (violation of layered architecture)
+- This creates circular dependency risk
+- Violates separation of concerns (CLI shouldn't be a library)
+
+SOLUTION: Move reusable utilities DOWN to common/
+- Moved FIELD_PRESETS, preset_fields(), parse_fields_argument() to common/fields.py
+- Updated api.py to import from common/fields (not jbom.py)
+- Updated jbom.py to import from common/fields (single source of truth)
+
+ARCHITECTURE NOW CORRECT:
+  CLI (jbom.py, cli/main.py, api.py)
+      ↓
+  Generators (generators/)
+      ↓
+  Processors (processors/)
+      ↓
+  Loaders (loaders/)
+      ↓
+  Common utilities (common/)
+
+No upward or sideways dependencies - only downward to lower layers.
+
+TESTS: All 168 tests passing (11 new v3.0 API tests included) ([`a4f19b7`](https://github.com/plocher/jBOM/commit/a4f19b74133a58cc580eeaed5a9814df3602daba))
+
+* refactor(v3.0): Phase 2 - Update imports throughout codebase
+
+Phase 2 Complete: All imports updated to new module structure
+
+UPDATED FILES:
+Backward compatibility wrappers:
+- sch/__init__.py: Re-exports from new loaders/generators/processors
+- inventory/__init__.py: Re-exports from new loaders/processors
+- pcb/__init__.py: Re-exports from new loaders (BoardLoader→PCBLoader alias)
+
+Main module imports:
+- jbom/__init__.py: Import from processors.component_types
+- cli/main.py: Import from loaders.pcb, generators.pos (POSGenerator)
+
+Internal cross-references:
+- processors/inventory_matcher.py: Import from processors.component_types
+
+Test files updated:
+- tests/test_jbom.py: Import from loaders/generators/processors
+- tests/test_position.py: Use POSGenerator, loaders.pcb
+- tests/test_integration_projects.py: Use POSGenerator, loaders.pcb
+- tests/test_cli.py: Mock POSGenerator instead of PositionGenerator
+
+TEST RESULTS: 157 tests passing (5 skipped)
+
+NEXT: Phase 3 - Verify class renames complete, clean up old directories ([`fce8ed3`](https://github.com/plocher/jBOM/commit/fce8ed315529a467d0e2d0d3fce32826157ea66e))
+
+* refactor(v3.0): Phase 1 - Reorganize by data flow (loaders/processors/generators)
+
+Phase 1 Complete: New architecture with clean separation of concerns
+
+MOVED FILES (preserving git history):
+Loaders (INPUT):
+- inventory/loader.py → loaders/inventory.py
+- sch/loader.py → loaders/schematic.py
+- pcb/loader.py → loaders/pcb.py (BoardLoader → PCBLoader)
+- pcb/model.py → loaders/pcb_model.py
+
+Processors (PROCESSING):
+- sch/types.py → processors/component_types.py
+- inventory/matcher.py → processors/inventory_matcher.py
+
+Generators (OUTPUT):
+- sch/generator.py → generators/bom.py
+- pcb/position.py → generators/pos.py (PositionGenerator → POSGenerator)
+
+UPDATES:
+- Created __init__.py for loaders/, processors/, generators/
+- Updated all internal imports to new locations
+- Renamed BoardLoader → PCBLoader for consistency
+- Renamed PositionGenerator → POSGenerator (matches BOM acronym)
+
+NEXT: Phase 2 - Update main jbom.py and cli/ imports ([`8cdd694`](https://github.com/plocher/jBOM/commit/8cdd6946764e0e8c70524e1fdb57186fc68f0b10))
+
+* refactor: Complete BOMGenerator extraction with CSV writing and field methods
+
+- Added 370 lines of CSV writing and field access methods to BOMGenerator
+- Completed methods: write_bom_csv(), get_available_fields(), _get_field_value()
+- Added field access helpers: _get_inventory_field_value(), _has_inventory_field()
+- BOMGenerator now fully self-contained at 974 lines
+- All 98 tests passing (3 skipped)
+- Updated developer docs with:
+  - New modular architecture overview
+  - Complete BOMGenerator class documentation
+  - Method descriptions for all public and private methods
+  - Module structure diagram
+
+Phase 5b now complete:
+- sch/generator.py: 974 lines (complete BOM generation)
+- jbom.py: 970 lines (CLI orchestration only)
+- Naming standardized across all loaders
+- Pattern consistency between BOMGenerator and PositionGenerator ready for Phase 6 ([`dac1ab6`](https://github.com/plocher/jBOM/commit/dac1ab6161d4043ff13017a4206f50659ffa9f43))
+
+* refactor: Phase 5b - Extract BOMGenerator to sch/generator.py and standardize naming
+
+- Created sch/generator.py with BOMGenerator class (604 lines)
+- Renamed sch/parser.py → sch/loader.py (KiCadParser → SchematicLoader)
+- Renamed pcb/board_loader.py → pcb/loader.py (kept BoardLoader class name)
+- Updated all imports and module __init__.py files
+- Reduced jbom.py from 1933 lines to 969 lines (50% reduction)
+- Updated test imports to use new module structure
+
+Naming convention now standardized:
+- inventory/loader.py - InventoryLoader
+- sch/loader.py - SchematicLoader
+- pcb/loader.py - BoardLoader
+- sch/generator.py - BOMGenerator
+
+Note: BOMGenerator extraction is partial - CSV writing and field access methods
+still need to be added to complete Phase 5b. Tests currently show 20 errors due
+to missing methods (write_bom_csv, get_available_fields, _get_field_value, etc.) ([`9d89bac`](https://github.com/plocher/jBOM/commit/9d89baca4f058080f84cef97347ddf28f3c59b26))
+
+* refactor: extract schematic parsing and component type detection to sch module (phase 5a)
+
+- Created sch/parser.py with KiCadParser class for parsing .kicad_sch files
+- Created sch/types.py with component type detection utilities:
+  - get_component_type(): Detect type from lib_id/footprint
+  - get_category_fields(): Get relevant fields for component category
+  - get_value_interpretation(): Get value field meaning by category
+  - normalize_component_type(): Normalize type strings
+- Updated sch/__init__.py to export new modules
+- Removed ~140 lines from jbom.py (2072 → 1933 lines)
+- Updated inventory/matcher.py to import from sch.types
+- Maintained backward compatibility via re-exports in jbom.py
+- All 98 tests passing (3 skipped)
+
+This completes Phase 5a of the refactoring plan, achieving:
+- Clear separation: schematic parsing logic isolated in sch/
+- No circular imports
+- jbom.py continues to shrink toward pure orchestration role ([`cca4dcc`](https://github.com/plocher/jBOM/commit/cca4dccbe53411ef39d97db9bd495d60e45f9e5e))
+
+* refactor: extract inventory loading and matching logic to separate modules (phase 4)
+
+- Created inventory/loader.py with InventoryLoader class handling CSV/Excel/Numbers file loading
+- Created inventory/matcher.py with InventoryMatcher class handling component-to-inventory matching
+- Removed ~700 lines from jbom.py by extracting all inventory-related code
+- Updated inventory/__init__.py to export new modules
+- Maintained backward compatibility by re-exporting InventoryMatcher from jbom.py
+- All 98 tests passing (3 skipped)
+
+This completes Phase 4 of the refactoring plan, achieving clear separation:
+- loader.py: File I/O and data parsing (CSV/Excel/Numbers)
+- matcher.py: Matching algorithms and scoring logic
+- jbom.py: CLI interface and BOM generation orchestration ([`6cdeafc`](https://github.com/plocher/jBOM/commit/6cdeafc00a375a4882d8d732bc9a448a8356af67))
+
+* refactor: extract data classes, constants, and utilities to common modules (phases 1-3)
+
+Refactored jbom.py by moving reusable components to common/ modules:
+
+Phase 1 - Data classes and constants:
+- Created common/types.py with Component, InventoryItem, BOMEntry dataclasses
+- Created common/constants.py with ComponentType, DiagnosticIssue, CommonFields,
+  ScoreWeights, SMDType, and all field mapping dictionaries
+- Moved PackageType from shim to full implementation in common/packages.py
+
+Phase 2 - Field utilities:
+- Moved field normalization functions from jbom.py to common/fields.py
+- Implemented normalize_field_name(), field_to_header(), and KNOWN_ACRONYMS
+- Removed shim re-exports
+
+Phase 3 - Value utilities:
+- Added parse_tolerance_percent() to common/values.py
+- Value parsers for resistors, capacitors, inductors already present
+
+Results:
+- Reduced jbom.py from 2577 to 2304 lines (10.6% reduction)
+- Eliminated circular imports between common modules
+- Maintained backward compatibility via imports in jbom.py
+- All 98 tests passing ([`5ea293e`](https://github.com/plocher/jBOM/commit/5ea293efaca26faf94879625682e6aac994a380a))
+
+
 ## v2.1.5 (2025-12-15)
 
 ### Refactoring
