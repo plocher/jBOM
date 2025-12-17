@@ -12,6 +12,10 @@ from dataclasses import dataclass
 
 from jbom.generators.bom import BOMGenerator
 from jbom.generators.pos import POSGenerator, PlacementOptions
+from jbom.loaders.inventory import InventoryLoader
+from jbom.processors.annotator import SchematicAnnotator
+from jbom.common.generator import GeneratorOptions
+from jbom.processors.inventory_matcher import InventoryMatcher
 
 
 @dataclass
@@ -120,6 +124,107 @@ def generate_bom(
     result = generator.run(input=input, output=output)
 
     return result
+
+
+def back_annotate(
+    project: Union[str, Path],
+    inventory: Union[str, Path],
+    dry_run: bool = False,
+) -> Dict[str, Any]:
+    """Back-annotate inventory data to KiCad schematic.
+
+    Args:
+        project: Path to KiCad project directory or .kicad_sch file
+        inventory: Path to inventory file with updated data
+        dry_run: If True, do not save changes to file
+
+    Returns:
+        Dictionary containing:
+        - success: bool
+        - updated_count: int
+        - schematic_path: Path
+        - updates: List[Dict] (details of updates)
+        - error: str (if failed)
+    """
+    # 1. Discover Schematic
+    matcher = InventoryMatcher(None)
+    generator = BOMGenerator(matcher, GeneratorOptions())
+    try:
+        schematic_path = generator.discover_input(Path(project))
+    except Exception as e:
+        return {"success": False, "error": f"Error finding schematic: {e}"}
+
+    if schematic_path.suffix != ".kicad_sch":
+        return {
+            "success": False,
+            "error": f"Error: Back-annotation only supports .kicad_sch files. Found: {schematic_path}",
+        }
+
+    # 2. Load Inventory
+    try:
+        loader = InventoryLoader(Path(inventory))
+        items, fields = loader.load()
+    except Exception as e:
+        return {"success": False, "error": f"Error loading inventory: {e}"}
+
+    if not items:
+        return {"success": False, "error": "Inventory is empty."}
+
+    # 3. Load Annotator
+    annotator = SchematicAnnotator(schematic_path)
+    try:
+        annotator.load()
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Error loading schematic structure: {e}",
+        }
+
+    # 4. Iterate and Update
+    component_count = 0
+    update_details = []
+
+    for item in items:
+        if not item.uuid:
+            continue
+
+        # Prepare updates
+        updates: Dict[str, str] = {}
+
+        # Map Inventory Fields -> Schematic Properties
+        if item.value:
+            updates["Value"] = item.value
+        if item.package:
+            updates["Footprint"] = item.package
+        if item.lcsc:
+            updates["LCSC"] = item.lcsc
+        if item.manufacturer:
+            updates["Manufacturer"] = item.manufacturer
+        if item.mfgpn:
+            updates["MFGPN"] = item.mfgpn
+
+        if not updates:
+            continue
+
+        # Split UUIDs (comma separated)
+        uuids = [u.strip() for u in item.uuid.split(",") if u.strip()]
+
+        for uuid in uuids:
+            if annotator.update_component(uuid, updates):
+                component_count += 1
+                update_details.append({"uuid": uuid, "updates": updates})
+
+    # 5. Save
+    if annotator.modified and not dry_run:
+        annotator.save()
+
+    return {
+        "success": True,
+        "updated_count": component_count,
+        "schematic_path": schematic_path,
+        "updates": update_details,
+        "modified": annotator.modified,
+    }
 
 
 def generate_pos(

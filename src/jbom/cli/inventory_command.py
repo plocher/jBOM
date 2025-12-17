@@ -120,6 +120,7 @@ class InventoryCommand(Command):
                     "Wattage",
                     "Type",
                     "SMD",
+                    "UUID",
                 ]
 
                 # Filter fields to only those present in the generated items + standard ones
@@ -144,6 +145,8 @@ class InventoryCommand(Command):
                             val = getattr(item, field_lower)
                         elif field in item.raw_data:
                             val = item.raw_data[field]
+                        elif field == "UUID":
+                            val = item.uuid
                         row.append(val)
                     writer.writerow(row)
 

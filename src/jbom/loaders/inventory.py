@@ -302,6 +302,7 @@ class InventoryLoader:
                 mfgpn=row.get("MFGPN", ""),
                 datasheet=row.get("Datasheet", ""),
                 package=row.get("Package", ""),
+                uuid=row.get("UUID", ""),
                 priority=self._parse_priority(
                     row.get("Priority", str(DEFAULT_PRIORITY))
                 ),

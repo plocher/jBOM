@@ -7,24 +7,25 @@ jbom — Python library for KiCad bill of materials generation
 ## SYNOPSIS
 
 ```python
-from jbom import generate_bom_api, GenerateOptions, BOMGenerator, InventoryMatcher
+from jbom.api import generate_bom, generate_pos, back_annotate, BOMOptions, POSOptions
 from pathlib import Path
 ```
 
 ## DESCRIPTION
 
-The jBOM library provides programmatic access to bill-of-materials generation. Use it to embed BOM generation into other tools or custom workflows.
+The jBOM library provides programmatic access to bill-of-materials generation, placement file generation, and schematic back-annotation.
 
 ## PUBLIC API
 
-### Function: generate_bom_api()
+### Function: generate_bom()
 
 **Signature**
 ```python
-def generate_bom_api(
-    project_path: Union[str, Path],
-    inventory_path: Union[str, Path],
-    options: Optional[GenerateOptions] = None
+def generate_bom(
+    input: Union[str, Path],
+    inventory: Optional[Union[str, Path, List[Union[str, Path]]]] = None,
+    output: Optional[Union[str, Path]] = None,
+    options: Optional[BOMOptions] = None
 ) -> Dict[str, Any]
 ```
 
@@ -32,45 +33,93 @@ def generate_bom_api(
 : Generates a bill of materials for a KiCad project. Parses schematics, matches components against inventory, and returns structured data.
 
 **Parameters**
-: **project_path** — Path to project directory or .kicad_sch file
-: **inventory_path** — Path to inventory file (.csv, .xlsx, .xls, .numbers)
-: **options** — GenerateOptions instance (see below) or None for defaults
+: **input** — Path to project directory or .kicad_sch file
+: **inventory** — Path(s) to inventory file(s) (.csv, .xlsx, .xls, .numbers)
+: **output** — Output path (optional)
+: **options** — BOMOptions instance or None
 
 **Return value** (dict)
-: **exit_code** — 0 (success), 2 (warning/unmatched), 1 (error)
-: **error_message** — Error text if exit_code != 0
-: **file_info** — List of (component_count, filepath, warning) tuples
+: **bom_entries** — List of BOMEntry objects
 : **inventory_count** — Number of items in inventory
-: **bom_entries** — List of BOMEntry objects (see below)
-: **smd_excluded_count** — Components excluded by SMD filter
-: **debug_diagnostics** — Diagnostic data if options.debug=True
+: **excluded_count** — Count of excluded components (e.g. non-SMD)
+: **debug_diagnostics** — Diagnostic data list
 : **components** — List of Component objects from schematics
 : **available_fields** — Dict of {fieldname: description}
 
-**Example**
+### Function: generate_pos()
+
+**Signature**
 ```python
-from jbom import generate_bom_api, GenerateOptions
-
-opts = GenerateOptions(verbose=True, debug=False)
-result = generate_bom_api('MyProject/', 'inventory.xlsx', options=opts)
-
-if result['exit_code'] == 0:
-    for entry in result['bom_entries']:
-        print(f"{entry.reference}: {entry.value} → {entry.lcsc}")
-else:
-    print(f"Error: {result['error_message']}")
+def generate_pos(
+    input: Union[str, Path],
+    output: Optional[Union[str, Path]] = None,
+    options: Optional[POSOptions] = None
+) -> Dict[str, Any]
 ```
 
-### Class: GenerateOptions
+**Description**
+: Generates a component placement file (CPL/POS) for a KiCad project.
+
+**Parameters**
+: **input** — Path to project directory or .kicad_pcb file
+: **output** — Output path (optional)
+: **options** — POSOptions instance
+
+**Return value** (dict)
+: **board** — BoardModel object
+: **entries** — List of PcbComponent objects
+: **component_count** — Number of components found
+
+### Function: back_annotate()
+
+**Signature**
+```python
+def back_annotate(
+    project: Union[str, Path],
+    inventory: Union[str, Path],
+    dry_run: bool = False
+) -> Dict[str, Any]
+```
+
+**Description**
+: Updates KiCad schematic files with data from an inventory file (Value, Footprint, LCSC, etc.) by matching UUIDs.
+
+**Parameters**
+: **project** — Path to project directory or .kicad_sch file
+: **inventory** — Path to inventory file containing updates
+: **dry_run** — If True, reports changes without writing to file
+
+**Return value** (dict)
+: **success** — Boolean success status
+: **updated_count** — Number of components updated
+: **updates** — List of update details
+: **modified** — Boolean indicating if file was changed
+: **error** — Error message string (if success=False)
+
+**Example**
+```python
+from jbom.api import generate_bom, BOMOptions
+
+# Generate BOM
+opts = BOMOptions(verbose=True)
+result = generate_bom(input='MyProject/', inventory='inventory.xlsx', options=opts)
+
+if result['bom_entries']:
+    for entry in result['bom_entries']:
+        print(f"{entry.reference}: {entry.value} -> {entry.lcsc}")
+```
+
+### Class: BOMOptions
 
 **Signature**
 ```python
 @dataclass
-class GenerateOptions:
+class BOMOptions:
     verbose: bool = False
     debug: bool = False
     smd_only: bool = False
     fields: Optional[List[str]] = None
+    fabricator: Optional[str] = None
 ```
 
 **Attributes**
@@ -78,6 +127,20 @@ class GenerateOptions:
 : **debug** — Emit detailed matching diagnostics
 : **smd_only** — Filter to surface-mount components only
 : **fields** — List of output field names (None = use defaults)
+: **fabricator** — Target fabricator (e.g. "jlc") for part number lookup
+
+### Class: POSOptions
+
+**Signature**
+```python
+@dataclass
+class POSOptions:
+    units: str = "mm"
+    origin: str = "board"
+    smd_only: bool = True
+    layer_filter: Optional[str] = None
+    fields: Optional[List[str]] = None
+```
 
 ### Class: Component
 

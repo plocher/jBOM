@@ -44,6 +44,7 @@ class SchematicLoader:
         reference = ""
         value = ""
         footprint = ""
+        uuid = ""
         in_bom = True
         exclude_from_sim = False
         dnp = False
@@ -55,6 +56,8 @@ class SchematicLoader:
                 tag = item[0]
                 if tag == Symbol("lib_id") and len(item) >= 2:
                     lib_id = item[1]
+                elif tag == Symbol("uuid") and len(item) >= 2:
+                    uuid = item[1]
                 elif tag == Symbol("in_bom") and len(item) >= 2:
                     in_bom = item[1] == Symbol("yes")
                 elif tag == Symbol("exclude_from_sim") and len(item) >= 2:
@@ -82,6 +85,7 @@ class SchematicLoader:
             lib_id=lib_id,
             value=value or "",
             footprint=footprint or "",
+            uuid=uuid,
             properties=properties,
             in_bom=in_bom,
             exclude_from_sim=exclude_from_sim,

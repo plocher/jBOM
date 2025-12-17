@@ -16,6 +16,7 @@ class Component:
     lib_id: str
     value: str
     footprint: str
+    uuid: str = ""  # KiCad UUID
     properties: Dict[str, str] = field(default_factory=dict)
     in_bom: bool = True
     exclude_from_sim: bool = False
@@ -42,6 +43,7 @@ class InventoryItem:
     mfgpn: str
     datasheet: str
     package: str = ""
+    uuid: str = ""  # KiCad UUID for back-annotation
     fabricator: str = ""  # Specific fabricator for this item (e.g. "JLC", "Seeed")
     priority: int = (
         DEFAULT_PRIORITY  # Priority from CSV: 1=most desirable, higher=less desirable
