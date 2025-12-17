@@ -84,12 +84,26 @@ Refer to the full API documentation found in [docs/README.man3.md](docs/README.m
 jBOM exposes a clean Python API for integrating into custom scripts or CI/CD pipelines.
 
 ```python
-from jbom.api import generate_bom, BOMOptions
+from jbom.api import generate_bom, generate_pos, back_annotate, BOMOptions, POSOptions
 
+# Generate BOM
 result = generate_bom(
     input='MyProject/',
     inventory='my_inventory.csv',
     options=BOMOptions(verbose=True)
+)
+
+# Generate Placement
+pos_result = generate_pos(
+    input='MyProject/',
+    options=POSOptions(smd_only=True)
+)
+
+# Back-Annotate
+anno_result = back_annotate(
+    project='MyProject/',
+    inventory='updated_inventory.csv',
+    dry_run=True
 )
 ```
 
