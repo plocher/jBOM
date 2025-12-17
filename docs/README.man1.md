@@ -25,7 +25,8 @@ The BOM flow keeps designs supplier-neutral by matching at generation time rathe
 : KiCad project directory or a specific .kicad_sch file. If a directory is given, jBOM auto-detects the root schematic and processes hierarchical sheets.
 
 **-i, --inventory FILE**
-: Inventory file (required). Supported: .csv, .xlsx, .xls, .numbers
+: Inventory file (required). Supported: .csv, .xlsx, .xls, .numbers.
+: Can be specified multiple times to load from multiple sources (e.g., `-i local.csv -i jlc_export.xlsx`).
 
 ## BOM OPTIONS
 
@@ -148,9 +149,14 @@ Use `-f "+PRESET"`.
 
 ## EXAMPLES
 
-BOM (standard preset):
+BOM from multiple inventory sources:
 ```
-jbom bom MyProject/ -i SPCoast-INVENTORY.xlsx
+jbom bom MyProject/ -i local_stock.csv -i "Parts Inventory on JLCPCB.xlsx"
+```
+
+BOM with JLCPCB-optimized fields (using JLC Private Export):
+```
+jbom bom MyProject/ -i "Parts Inventory on JLCPCB.xlsx" --jlc
 ```
 
 BOM JLC preset:

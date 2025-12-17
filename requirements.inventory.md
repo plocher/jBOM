@@ -59,7 +59,24 @@
         * The user wishes to fabricate their project from different vendors at different times, yet keep a unified inventory
         * The user wishes to select the supplier or fabricator that they will be using for production
 
-4. add the ability to interact with distributor, supplier and fabricator online component parts lists
+3.5. [x] refactor to support multiple / federated inventory sources
+    * Allow loading multiple inventory files simultaneously (-i file1 -i file2)
+    * Track "Source" of each item (e.g., "Local", "JLC-Private")
+    * Support loading JLC's "My Parts Lib" export format (.xlsx)
+    * This enables the workflow: Check "Private Stock" first, then fallback to others.
+
+4. Back-Annotation (Closing the Loop)
+    * The user workflow often involves generating a prototype inventory, filling in missing data (Values, LCSC numbers) in the CSV/Excel file.
+    * Currently, this data stays in the CSV. The schematic remains "incomplete" (e.g. empty Value fields).
+    * We need a way to push these updates BACK to the KiCad schematic to establish it as the Source of Truth.
+    * Strategies:
+        * `jbom annotate` command.
+        * Match rows by UUID (need to ensure UUID is exported in Step 2).
+        * Update Symbol Fields (Value, Footprint, LCSC, etc.).
+        * Use `sexpdata` to safely patch `.kicad_sch` files (or investigate KiCad IPC if feasible, but file patching is more robust for batch/CI).
+
+5. External/Offline Search (Find parts in Fabricator DB)
+    * Once the schematic is complete (thanks to Step 4), we can robustly search for parts.
     * use cases are:
         * find components that match the items in the online inventory (type, values, tolerances, etc, similar to the existing matching algorithm)
         * filter them to remove unsuitable results (non-stocked/long lead time etc)
