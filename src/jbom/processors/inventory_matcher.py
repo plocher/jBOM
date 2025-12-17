@@ -29,22 +29,36 @@ from jbom.loaders.inventory import InventoryLoader
 from jbom.processors.component_types import get_component_type, get_category_fields
 
 
+from jbom.common.fabricators import Fabricator
+
+
 class InventoryMatcher:
     """Matches components to inventory items"""
 
-    def __init__(self, inventory_path: Path):
+    def __init__(self, inventory_path: Optional[Path] = None):
         self.inventory_path = inventory_path
         self.inventory: List[InventoryItem] = []
         self.inventory_fields: List[str] = []
-        self._load_inventory()
+        if self.inventory_path:
+            self._load_inventory()
+
+    def set_inventory(self, items: List[InventoryItem], fields: List[str]):
+        """Manually set inventory items (e.g. from project components)"""
+        self.inventory = items
+        self.inventory_fields = fields
 
     def _load_inventory(self):
         """Load inventory from supported file format (CSV, Excel, Numbers)"""
+        if not self.inventory_path:
+            return
         loader = InventoryLoader(self.inventory_path)
         self.inventory, self.inventory_fields = loader.load()
 
     def find_matches(
-        self, component: Component, debug: bool = False
+        self,
+        component: Component,
+        debug: bool = False,
+        fabricator: Optional[Fabricator] = None,
     ) -> List[Tuple[InventoryItem, int, Optional[str]]]:
         """Find matching inventory items for a component using primary filtering first."""
         matches: List[Tuple[InventoryItem, int, Tuple[int, int], Optional[str]]] = []
@@ -62,11 +76,17 @@ class InventoryMatcher:
             debug_info.append(f"Detected type: {comp_type or 'Unknown'}")
             debug_info.append(f"Package: {comp_pkg or 'None'}")
             debug_info.append(f"Value: {component.value or 'None'}")
+            if fabricator:
+                debug_info.append(f"Fabricator filter: {fabricator.name}")
 
         candidates_checked = 0
         candidates_passed = 0
 
         for item in self.inventory:
+            # Filter by fabricator if specified
+            if fabricator and not fabricator.matches(item):
+                continue
+
             candidates_checked += 1
             if not self._passes_primary_filters(
                 comp_type, comp_pkg, comp_val_norm, component, item, debug

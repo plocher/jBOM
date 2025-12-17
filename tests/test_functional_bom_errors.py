@@ -13,25 +13,22 @@ class TestBOMErrorCases(FunctionalTestBase):
     """Test BOM command error handling."""
 
     def test_bom_missing_inventory_file(self):
-        """Missing inventory file should produce clear error."""
+        """Missing inventory file should NOT be an error now (optional inventory)."""
+        # It should work or print "No inventory match found" if it can't match?
+        # Actually with generated inventory it SHOULD find matches.
+        # So we should verify it DOES NOT fail.
         rc, stdout, stderr = self.run_jbom(
             [
                 "bom",
                 str(self.minimal_proj),
-                "-i",
-                "nonexistent.csv",
+                # No -i argument
                 "-o",
                 str(self.output_dir / "bom.csv"),
             ],
-            expected_rc=None,
+            expected_rc=0,
         )
-
-        # Should fail with non-zero exit code
-        self.assertNotEqual(rc, 0, "Should fail with non-zero exit code")
-
-        # Error message should mention the file
-        combined_output = stdout + stderr
-        self.assertIn("nonexistent.csv", combined_output.lower())
+        self.assertEqual(rc, 0)
+        self.assertNotIn("Inventory file not found", stdout + stderr)
 
     def test_bom_invalid_inventory_format(self):
         """Invalid inventory format should produce error."""

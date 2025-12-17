@@ -29,6 +29,8 @@ from jbom.common.utils import find_best_schematic
 from jbom.loaders.schematic import SchematicLoader
 from jbom.processors.component_types import get_component_type
 from jbom.processors.inventory_matcher import InventoryMatcher
+from jbom.loaders.project_inventory import ProjectInventoryLoader
+from jbom.common.fabricators import get_fabricator, Fabricator
 
 
 class BOMGenerator(Generator):
@@ -50,6 +52,14 @@ class BOMGenerator(Generator):
         super().__init__(options or GeneratorOptions())
         self.matcher = matcher
         self.components: List[Component] = []  # Set by load_input()
+
+        # Initialize fabricator
+        fab_name = getattr(self.options, "fabricator", None)
+        if fab_name:
+            self.fabricator: Optional[Fabricator] = get_fabricator(fab_name)
+        else:
+            # If no fabricator specified, use GenericFabricator (matches all)
+            self.fabricator = get_fabricator("generic")
 
     # ---------------- Generator abstract methods ----------------
 
@@ -100,6 +110,12 @@ class BOMGenerator(Generator):
         if not self.components:
             self.components = components
 
+        # If matcher has no inventory (no -i file provided), generate it from components
+        if not self.matcher.inventory:
+            project_loader = ProjectInventoryLoader(components)
+            items, fields = project_loader.load()
+            self.matcher.set_inventory(items, fields)
+
         # Generate BOM using existing logic
         verbose = getattr(self.options, "verbose", False)
         debug = getattr(self.options, "debug", False)
@@ -139,7 +155,7 @@ class BOMGenerator(Generator):
 
     def default_preset(self) -> str:
         """Return default field preset name."""
-        return "standard"
+        return "default"
 
     def _get_default_fields(self) -> List[str]:
         """Get default field list for BOM generation.
@@ -147,14 +163,17 @@ class BOMGenerator(Generator):
         Overrides base class to handle BOM-specific field resolution.
         """
         if not self.components:
-            # Return standard preset fields if no components loaded yet
+            # Return default preset fields if no components loaded yet
             return [
                 "reference",
                 "quantity",
                 "description",
                 "value",
                 "footprint",
-                "lcsc",
+                "manufacturer",
+                "mfgpn",
+                "fabricator",
+                "fabricator_part_number",
                 "datasheet",
                 "smd",
             ]
@@ -167,7 +186,7 @@ class BOMGenerator(Generator):
         any_notes = False  # Default to False if entries not available yet
 
         return parse_fields_argument(
-            "+standard",
+            "+default",
             available_fields,
             include_verbose=verbose,
             any_notes=any_notes,
@@ -189,7 +208,9 @@ class BOMGenerator(Generator):
             quantity = len(group_components)
 
             # Find matches for first component in group
-            matches = self.matcher.find_matches(group_components[0], debug=debug)
+            matches = self.matcher.find_matches(
+                group_components[0], debug=debug, fabricator=self.fabricator
+            )
 
             if matches:
                 # Use best match
@@ -241,6 +262,14 @@ class BOMGenerator(Generator):
 
                 # Debug information is handled by verbose console output, not BOM notes
                 notes_combined = (base_notes + warn).strip()
+
+                # Determine fabricator data
+                fab_name = ""
+                fab_pn = ""
+                if self.fabricator:
+                    fab_name = self.fabricator.get_name(best_item)
+                    fab_pn = self.fabricator.get_part_number(best_item)
+
                 entry = BOMEntry(
                     reference=", ".join([c.reference for c in group_components]),
                     quantity=quantity,
@@ -255,6 +284,8 @@ class BOMGenerator(Generator):
                     match_quality=f"Score: {score}",
                     notes=notes_combined,
                     priority=best_item.priority,
+                    fabricator=fab_name,
+                    fabricator_part_number=fab_pn,
                 )
 
                 bom_entries.append(entry)
@@ -773,6 +804,8 @@ class BOMGenerator(Generator):
             "match_quality": "Inventory matching score (verbose mode)",
             "notes": "Additional notes and warnings",
             "priority": "Inventory item priority (verbose mode)",
+            "fabricator": "PCB Fabricator name (e.g. JLC, Seeed)",
+            "fabricator_part_number": "Part number for the selected fabricator",
         }
         fields.update(bom_fields)
 
@@ -916,6 +949,10 @@ class BOMGenerator(Generator):
             return entry.notes
         elif field == "priority":
             return str(entry.priority)
+        elif field == "fabricator":
+            return entry.fabricator
+        elif field == "fabricator_part_number":
+            return entry.fabricator_part_number
 
         # Component properties (prefixed with c:)
         elif field.startswith("c:"):
@@ -1038,7 +1075,10 @@ class BOMGenerator(Generator):
                             continue
 
                 # Regular field - convert to Title Case header
-                header.append(field_to_header(field))
+                if field == "fabricator_part_number" and self.fabricator:
+                    header.append(self.fabricator.part_number_header)
+                else:
+                    header.append(field_to_header(field))
                 normalized_fields.append(field)
 
             writer.writerow(header)

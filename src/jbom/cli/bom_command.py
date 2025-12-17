@@ -40,9 +40,12 @@ class BOMCommand(Command):
         parser.add_argument(
             "-i",
             "--inventory",
-            required=True,
+            required=False,
             metavar="FILE",
-            help="Inventory file containing component data (.csv, .xlsx, .xls, or .numbers format)",
+            help=(
+                "Inventory file containing component data (.csv, .xlsx, .xls, or .numbers format). "
+                "If omitted, inventory is generated from project components."
+            ),
         )
 
         # Output arguments
@@ -82,6 +85,11 @@ class BOMCommand(Command):
             help="Enable debug mode: add detailed matching diagnostics to Notes column",
         )
         parser.add_argument(
+            "--fabricator",
+            choices=["jlc", "seeed", "pcbway"],
+            help="Specify PCB fabricator for part number lookup (e.g. JLC, Seeed)",
+        )
+        parser.add_argument(
             "--smd-only",
             action="store_true",
             help="Filter output to only include surface-mount (SMD) components",
@@ -89,9 +97,18 @@ class BOMCommand(Command):
 
     def execute(self, args: argparse.Namespace) -> int:
         """Execute BOM generation"""
+        # Handle --jlc implication for fabricator
+        fabricator = args.fabricator
+        if args.jlc and not fabricator:
+            fabricator = "jlc"
+
         # Generate BOM using v3.0 API
         opts = BOMOptions(
-            verbose=args.verbose, debug=args.debug, smd_only=args.smd_only, fields=None
+            verbose=args.verbose,
+            debug=args.debug,
+            smd_only=args.smd_only,
+            fields=None,
+            fabricator=fabricator,
         )
         result = generate_bom(
             input=args.project, inventory=args.inventory, options=opts
@@ -110,7 +127,7 @@ class BOMCommand(Command):
             )
         else:
             fields = parse_fields_argument(
-                "+standard",
+                "+default",
                 result["available_fields"],
                 include_verbose=args.verbose,
                 any_notes=any_notes,
