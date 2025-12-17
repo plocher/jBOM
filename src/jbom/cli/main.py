@@ -9,6 +9,7 @@ from typing import List
 
 from jbom.cli.bom_command import BOMCommand
 from jbom.cli.pos_command import POSCommand
+from jbom.cli.inventory_command import InventoryCommand
 
 
 def main(argv: List[str] | None = None) -> int:
@@ -60,6 +61,7 @@ For detailed help on each command:
     commands = {
         "bom": BOMCommand(),
         "pos": POSCommand(),
+        "inventory": InventoryCommand(),
     }
 
     for cmd_name, cmd_instance in commands.items():

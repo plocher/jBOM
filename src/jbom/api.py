@@ -22,6 +22,7 @@ class BOMOptions:
     debug: bool = False
     smd_only: bool = False
     fields: Optional[List[str]] = None
+    fabricator: Optional[str] = None
 
     def to_generator_options(self):
         """Convert to GeneratorOptions"""
@@ -32,6 +33,7 @@ class BOMOptions:
         opts.debug = self.debug
         opts.fields = self.fields
         opts.smd_only = self.smd_only  # Add as attribute
+        opts.fabricator = self.fabricator  # Add as attribute
         return opts
 
 
@@ -48,7 +50,7 @@ class POSOptions:
 
 def generate_bom(
     input: Union[str, Path],
-    inventory: Union[str, Path],
+    inventory: Optional[Union[str, Path, List[Union[str, Path]]]] = None,
     output: Optional[Union[str, Path]] = None,
     options: Optional[BOMOptions] = None,
 ) -> Dict[str, Any]:
@@ -56,7 +58,8 @@ def generate_bom(
 
     Args:
         input: Path to KiCad project directory or .kicad_sch file
-        inventory: Path to inventory file (.csv, .xlsx, .xls, or .numbers)
+        inventory: Path(s) to inventory file(s) (.csv, .xlsx, .xls, or .numbers).
+                  If None, inventory is generated from project components.
         output: Optional output path. If None, returns data without writing file.
                 Special values: "-" or "stdout" for stdout, "console" for formatted table
         options: Optional BOMOptions for customization
@@ -90,15 +93,24 @@ def generate_bom(
     """
     opts = options or BOMOptions()
 
-    # Verify inventory file exists
-    inventory_path = Path(inventory)
-    if not inventory_path.exists():
-        raise FileNotFoundError(f"Inventory file not found: {inventory_path}")
+    # Verify inventory file(s) exist if provided
+    inventory_paths = []
+    if inventory:
+        if isinstance(inventory, (str, Path)):
+            paths = [inventory]
+        else:
+            paths = inventory
+
+        for p in paths:
+            path = Path(p)
+            if not path.exists():
+                raise FileNotFoundError(f"Inventory file not found: {path}")
+            inventory_paths.append(path)
 
     # Load inventory and create matcher
     from jbom.processors.inventory_matcher import InventoryMatcher
 
-    matcher = InventoryMatcher(inventory_path)
+    matcher = InventoryMatcher(inventory_paths if inventory_paths else None)
 
     # Create generator with matcher and options
     gen_opts = opts.to_generator_options()

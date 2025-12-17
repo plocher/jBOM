@@ -76,7 +76,7 @@ class TestCLIBehavior(unittest.TestCase):
             self.assertIn("Reference", headers)
             self.assertIn("Quantity", headers)
             self.assertIn("Value", headers)
-            self.assertIn("LCSC", headers)
+            self.assertIn("LCSC", headers)  # JLC fabricator
             # Package comes from inventory (I:Package)
             self.assertTrue(any("Package" in h for h in headers))
 

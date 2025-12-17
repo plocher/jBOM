@@ -1944,17 +1944,20 @@ class TestFieldArgumentParsing(unittest.TestCase):
             "datasheet": "Standard BOM field",
             "smd": "Standard BOM field",
             "i:package": "Inventory field",
+            "fabricator": "Standard BOM field",
+            "fabricator_part_number": "Standard BOM field",
         }
 
         result = _parse_fields_argument("+jlc", available_fields, False, False)
         self.assertIn("reference", result)
         self.assertIn("quantity", result)
-        self.assertIn("lcsc", result)
         self.assertIn("value", result)
         self.assertIn("i:package", result)
+        self.assertIn("fabricator", result)
+        self.assertIn("fabricator_part_number", result)
 
     def test_parse_standard_preset(self):
-        """Test expanding +standard preset"""
+        """Test expanding +default preset"""
         from jbom.common.fields import parse_fields_argument as _parse_fields_argument
 
         available_fields = {
@@ -1966,12 +1969,20 @@ class TestFieldArgumentParsing(unittest.TestCase):
             "lcsc": "Standard",
             "datasheet": "Standard",
             "smd": "Standard",
+            "manufacturer": "Standard",
+            "mfgpn": "Standard",
+            "fabricator": "Standard",
+            "fabricator_part_number": "Standard",
         }
 
-        result = _parse_fields_argument("+standard", available_fields, False, False)
+        result = _parse_fields_argument("+default", available_fields, False, False)
         self.assertIn("reference", result)
         self.assertIn("quantity", result)
         self.assertIn("description", result)
+        self.assertIn("manufacturer", result)
+        self.assertIn("mfgpn", result)
+        self.assertIn("fabricator", result)
+        self.assertIn("fabricator_part_number", result)
 
     def test_parse_minimal_preset(self):
         """Test expanding +minimal preset"""
@@ -2040,7 +2051,7 @@ class TestFieldArgumentParsing(unittest.TestCase):
         )
         self.assertIn("reference", result)
         self.assertIn("customfield", result)
-        self.assertIn("lcsc", result)
+        self.assertIn("fabricator_part_number", result)
 
     def test_invalid_preset_name(self):
         """Test error when using invalid preset name"""
@@ -2386,7 +2397,7 @@ class TestInventoryRawHeaderMatching(unittest.TestCase):
         )
         csv_content = [
             (
-                "IPN,Name,Category,Package,Value,Tolerance,LCSC,Manufacturer,MFGPN,"
+                "IPN,Name,Category,Package,Value,Tolerance,LCSC,Manufacturer,Mfg PN,"
                 "Description,Priority"
             ),
             (
