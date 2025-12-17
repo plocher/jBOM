@@ -1,70 +1,71 @@
 # WARP.md
 
-Project-wide guidance for AI agents working with jBOM.
+This file provides guidance to WARP (warp.dev) when working with code in this repository.
 
-## Project Overview
+# jBOM Project Guidance
+
 jBOM is a sophisticated KiCad Bill of Materials generator in Python. It matches schematic components against inventory files (CSV, Excel, Numbers) to produce fabrication-ready BOMs with supplier-neutral designs and flexible output customization.
 
-## Core Standards
+## Common Commands
 
-### Git & Versioning
-- Always use conventional commits (`fix:`, `feat:`, `chore:`, etc.)
-- Semantic versioning is automated - commit messages trigger version bumps
-- Use `git mv`, `git rm`, `git add` for file operations
-- Pre-commit hooks auto-fix issues - re-add modified files before committing
+### Development & Testing
+- **Run all unit tests**: `make unit` or `python -m unittest discover -s tests -v`
+- **Run full test suite (including integration)**: `make test`
+- **Run a specific test module**: `python -m unittest tests.test_jbom -v`
+- **Run a specific test class**: `python -m unittest tests.test_jbom.TestBOMGenerator -v`
+- **Install for development**: `pip install -e .[dev,all]`
+- **Clean artifacts**: `make clean`
 
-### Development Workflow
-- Update README files when adding/changing functionality
-- Use agent timeframes in estimates, not human ones
-- Prefer concise prose and tables over long bulleted lists
-- Run `python -m unittest test_jbom -v` for full test suite
+### Version Control & Release
+- **Commit Messages**: MUST follow **Conventional Commits** (`feat:`, `fix:`, `chore:`, `docs:`, etc.) to trigger automated semantic versioning.
+  - Example: `git commit -m 'feat: add support for new inventory format'`
+  - **Important**: Use **single quotes** for commit messages to avoid shell expansion issues (especially with `!`).
+  - **Breaking Changes**: Use `feat!:` or include `BREAKING CHANGE:` in the footer.
+- **Pre-commit Hooks**: This repo uses pre-commit hooks (flake8, etc.). If a hook modifies a file, you must `git add` the file again and retry the commit.
+- **File Operations**: Use `git mv`, `git rm`, `git add` to track changes properly.
 
-### Shell & Environment Gotchas
-**Testing:**
-- Use `unittest`, NOT `pytest` - run with `python -m unittest discover -s tests`
-- Test module paths: `tests.test_jbom`, not `test_jbom`
+## Architecture Overview
 
-**Git Commits (zsh on macOS):**
-- ALWAYS use single quotes for commit messages with special characters
-- Example: `git commit -m 'feat!: breaking change'` (NOT double quotes)
-- Exclamation marks (!) trigger zsh history expansion in double quotes
-- Use `--no-verify` to bypass pre-commit hooks if needed
+jBOM follows a strict **Data-Flow Architecture**:
+`Loaders (Input) → Processors (Logic) → Generators (Output)`
 
-**Pre-commit Hooks:**
-- Hooks may modify files - re-add them after running
-- If hooks fail, check output and fix issues before retrying
-- Common issues: flake8 line length, unused imports, tabs vs spaces
+### Core Modules (`src/jbom/`)
+1.  **`loaders/`**: Parses input files.
+    -   `schematic.py`: Parses `.kicad_sch` using `sexpdata`. Handles hierarchical schematics.
+    -   `pcb.py`: Parses `.kicad_pcb`. Dual-mode (pcbnew API or direct S-expression parsing).
+    -   `inventory.py`: Loads CSV, Excel, or Numbers files. Normalizes data.
+2.  **`processors/`**: Business logic.
+    -   `inventory_matcher.py`: Core matching engine. Scores candidates based on value, footprint, and properties.
+    -   `component_types.py`: Heuristics to classify components (RES, CAP, LED, etc.) from LibID/Footprint.
+3.  **`generators/`**: Produces output.
+    -   `bom.py`: Generates BOM CSVs. Handles grouping, sorting, and field formatting.
+    -   `pos.py`: Generates Pick-and-Place files.
+4.  **`cli/`**: Command-line interface.
+    -   Uses `argparse` with a Command pattern (`commands.py`).
 
-### Code Standards
-- PEP 8 compliant with type hints throughout
-- Extensive docstrings and inline comments
-- Clear separation: parsing → matching → output phases
-- Data validation at intake points
+### Key Concepts
+-   **Matching Logic**: Parsing → Filtering (Type/Value/Package) → Scoring → Ranking (Priority).
+-   **Field System**:
+    -   Internal: Normalized `snake_case`.
+    -   Prefixes: `I:` for inventory fields, `C:` for component fields (e.g., `I:Voltage`).
+-   **Hierarchical Schematics**: Automatically detects root sheets and processes sub-sheets.
 
-### Test Requirements
-- Add tests for new component types in `TestComponentTypeDetection`
-- Test new matching logic with corresponding test cases
-- Functional tests in `tests/` directory for end-to-end validation
-- 98 tests across 27 test classes - maintain coverage
+## Coding Standards
+
+-   **Style**: PEP 8 compliant with type hints throughout.
+-   **Documentation**: Docstrings for all public methods. Inline comments for complex matching logic.
+-   **Testing**:
+    -   Use `unittest` (NOT `pytest`).
+    -   New component types require tests in `TestComponentTypeDetection`.
+    -   New matching logic requires functional tests in `tests/`.
+    -   Maintain high test coverage.
 
 ## Test Data Locations
-**Example inventory files:**
-- `/Users/jplocher/Dropbox/KiCad/jBOM/examples/example-INVENTORY.{csv,xlsx,numbers}`
+- **Example inventory files**: `/Users/jplocher/Dropbox/KiCad/jBOM/examples/example-INVENTORY.{csv,xlsx,numbers}`
+- **Sample KiCad projects**: `/Users/jplocher/Dropbox/KiCad/projects/{AltmillSwitches,Core-wt32-eth0,LEDStripDriver}`
 
-**Sample KiCad projects:**
-- `/Users/jplocher/Dropbox/KiCad/projects/{AltmillSwitches,Core-wt32-eth0,LEDStripDriver}`
+## Environment Gotchas
 
-## Repository Structure
-- `src/jbom/` - Main application code
-- `tests/` - Functional and unit tests
-- `docs/` - User and developer documentation
-- `release-management/` - CI/CD and release configuration
-
-## Architecture Summary
-**Component Matching Pipeline:** parsing → filtering → ranking → scoring → output
-
-**Key Data Classes:** `Generator`, `Component`, `InventoryItem`, `BOMEntry`
-
-**Component Categories:** Resistors, Capacitors, Inductors, LEDs, ICs, Connectors, MCUs, Switches
-
-**Features:** Check `docs/README.developer.md` for architecture details
+-   **Shell**: On macOS zsh, exclamation marks `!` in double quotes trigger history expansion. Always use single quotes for commit messages like `fix!: something`.
+-   **Test Paths**: Use dot notation for tests (`tests.test_jbom`), not file paths.
+-   **Auto-save Files**: The loader logic specifically handles (and usually ignores/warns about) KiCad autosave files.

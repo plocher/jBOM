@@ -8,30 +8,47 @@ Most BOM tools force you to hardcode specific part numbers (like "LCSC:C123456")
 
 **jBOM solves this** by separating part selection from circuit design. You design with generic values ("10kΩ resistor, 0603"), maintain a separate inventory file with your available parts, and jBOM intelligently matches them at BOM generation time.
 
+## Installation
+Requires Python 3.9 or newer.
+
+**From PyPI (recommended):**
+
+```bash
+# Basic installation (CSV inventory support)
+pip install jbom
+
+# With Excel support
+pip install jbom[excel]
+
+# With Apple Numbers support
+pip install jbom[numbers]
+
+# Everything
+pip install jbom[all]
+```
+
 ## Quick Start - using the jBOM command
+**Scenario: You have a project but no inventory file and wish to have JLC fabricate your design.**
 
 Refer to the full command line documentation found in [docs/README.man1.md](docs/README.man1.md).
 
 ### 1. Start with an existing KiCad project
 
-**Scenario: You have a project but no inventory file.**
-
 Run jBOM to extract a prototype inventory from the components used in your project:
 
 ```bash
-jbom inventory MyProject/ -o my_new_inventory.csv --jlc
+jbom inventory --jlc MyProject/ -o my_new_inventory.csv
 ```
 
 This creates a CSV file listing all the parts found in your schematics (Resistors, Capacitors, ICs, etc.) with their values and packages. Adding `--jlc` ensures the columns for JLCPCB part numbers are included.
 
 ### 2. Edit/Update your inventory
 
-Now that you have a prototype inventory file (`my_new_inventory.csv`), you must fill in the missing details:
+This new `my_new_inventory.csv` inventory is missing some fabrication details needed by JLC:
 
 1.  Open the file in Excel, Numbers, or a text editor.
-2.  **Crucial**: If your schematic symbols were generic (e.g. no value), fill in the **Value** and **Package** columns now.
+2.  **Crucial**: If your schematic symbols were generic, fill in the missing **Value** and **Package** columns now.
 3.  Fill in the **LCSC** column (or **MFGPN**) for the parts you want to buy.
-4.  (Optional) Add a **Priority** (1 = preferred) if you have multiple options for the same part.
 4.  (Optional) Add your own parts from other sources (e.g., local stock).
 
 ### 3. Generate your BOM and Placement files
@@ -40,23 +57,14 @@ Now run jBOM to verify your inventory and generate the manufacturing files.
 
 **Generate BOM:**
 ```bash
-# Basic BOM
-jbom bom MyProject/ -i my_new_inventory.csv
-
 # BOM with JLCPCB-optimized columns
-jbom bom MyProject/ -i my_new_inventory.csv --jlc
+jbom bom --jlc MyProject/ -i my_new_inventory.csv
 ```
 
 **Generate Placement (CPL):**
 ```bash
 # Auto-detects PCB file in project directory
-jbom pos MyProject/ --jlc
-```
-
-**Verify/Audit:**
-If you have multiple inventory sources (e.g., local stock + JLC parts), you can check them all:
-```bash
-jbom bom MyProject/ -i local_parts.csv -i my_new_inventory.csv
+jbom pos --jlc MyProject/
 ```
 
 ## Quick Start - using the Python API
@@ -88,26 +96,6 @@ You can run jBOM directly from KiCad's **Generate BOM** dialog:
     ```
 3.  Click `Generate`.
 
-## Installation
-
-**From PyPI (recommended):**
-
-```bash
-# Basic installation (CSV inventory support)
-pip install jbom
-
-# With Excel support
-pip install jbom[excel]
-
-# With Apple Numbers support
-pip install jbom[numbers]
-
-# Everything
-pip install jbom[all]
-```
-
-Requires Python 3.9 or newer.
-
 ## Documentation
 
 Detailed documentation is available in the `docs/` directory:
@@ -129,8 +117,6 @@ To contribute:
 4. Submit a pull request
 
 See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for details.
-
-## Version & License
 
 **jBOM v3.0.0** — Major architectural refactoring with data-flow architecture, federated inventory support, and KiCad integration.
 
