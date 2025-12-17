@@ -41,6 +41,7 @@ class InventoryItem:
     mfgpn: str
     datasheet: str
     package: str = ""
+    fabricator: str = ""  # Specific fabricator for this item (e.g. "JLC", "Seeed")
     priority: int = (
         DEFAULT_PRIORITY  # Priority from CSV: 1=most desirable, higher=less desirable
     )
@@ -63,6 +64,9 @@ class BOMEntry:
     smd: str = ""
     match_quality: str = ""
     notes: str = ""
+    # Fabricator specific fields
+    fabricator: str = ""
+    fabricator_part_number: str = ""
     # Debug fields (emitted when --verbose)
     priority: int = 0
 

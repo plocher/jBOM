@@ -123,6 +123,22 @@ def field_to_header(field: str) -> str:
 # Standard BOM fields don't need qualification (reference, quantity, value, etc.)
 # Inventory-specific fields are qualified with i: to avoid ambiguity
 FIELD_PRESETS = {
+    "default": {
+        "fields": [
+            "reference",
+            "quantity",
+            "description",
+            "value",
+            "footprint",
+            "manufacturer",
+            "mfgpn",
+            "fabricator",
+            "fabricator_part_number",
+            "datasheet",
+            "smd",
+        ],
+        "description": "Default BOM fields including Manufacturer, MFGPN, and Fabricator info",
+    },
     "standard": {
         "fields": [
             "reference",
@@ -130,15 +146,56 @@ FIELD_PRESETS = {
             "description",
             "value",
             "footprint",
-            "lcsc",
+            "manufacturer",
+            "mfgpn",
+            "fabricator",
+            "fabricator_part_number",
             "datasheet",
             "smd",
         ],
-        "description": "Comprehensive set with all standard BOM fields",
+        "description": "Legacy alias for default preset",
     },
     "jlc": {
-        "fields": ["reference", "quantity", "value", "i:package", "lcsc", "smd"],
-        "description": "JLCPCB requirements: Reference Designator, Quantity, Value, Package, LCSC Part Number",
+        "fields": [
+            "reference",
+            "quantity",
+            "value",
+            "i:package",
+            "fabricator",
+            "fabricator_part_number",
+            "smd",
+        ],
+        "description": "JLCPCB requirements: Reference Designator, Quantity, Value, Package, Fabricator (JLC), JLC Part Number",
+    },
+    "seeed": {
+        "fields": [
+            "reference",
+            "quantity",
+            "value",
+            "i:package",
+            "fabricator",
+            "fabricator_part_number",
+            "smd",
+        ],
+        "description": (
+            "Seeed Studio requirements: Reference Designator, Quantity, Value, "
+            "Package, Fabricator (Seeed), Seeed Part Number"
+        ),
+    },
+    "pcbway": {
+        "fields": [
+            "reference",
+            "quantity",
+            "value",
+            "i:package",
+            "fabricator",
+            "fabricator_part_number",
+            "smd",
+        ],
+        "description": (
+            "PCBWay requirements: Reference Designator, Quantity, Value, "
+            "Package, Fabricator (PCBWay), PCBWay Part Number"
+        ),
     },
     "minimal": {
         "fields": ["reference", "quantity", "value", "lcsc"],
@@ -165,7 +222,7 @@ def preset_fields(preset: str, include_verbose: bool, any_notes: bool) -> List[s
     Raises:
         ValueError: If preset name is unknown
     """
-    preset = (preset or "standard").lower()
+    preset = (preset or "default").lower()
 
     if preset not in FIELD_PRESETS:
         raise ValueError(
@@ -174,9 +231,9 @@ def preset_fields(preset: str, include_verbose: bool, any_notes: bool) -> List[s
 
     preset_def = FIELD_PRESETS[preset]
 
-    # Special case: 'all' preset is handled later when we know available fields
     if preset_def["fields"] is None:
-        return []  # Placeholder, will be expanded in parse_fields_argument
+        # Placeholder, will be expanded in parse_fields_argument
+        return []
 
     result = list(preset_def["fields"])
 
@@ -206,7 +263,7 @@ def parse_fields_argument(
     Returns expanded field list (normalized snake_case) or raises ValueError for invalid fields/presets.
     """
     if not fields_arg:
-        return preset_fields("standard", include_verbose, any_notes)
+        return preset_fields("default", include_verbose, any_notes)
 
     tokens = [t.strip() for t in fields_arg.split(",") if t.strip()]
     result = []
@@ -217,9 +274,8 @@ def parse_fields_argument(
             # This is a preset expansion
             preset_name = token[1:].lower()
             if preset_name not in known_presets:
-                raise ValueError(
-                    f"Unknown preset: +{preset_name} (valid: {', '.join('+' + p for p in sorted(known_presets))})"
-                )
+                valid = ", ".join("+" + p for p in sorted(known_presets))
+                raise ValueError(f"Unknown preset: +{preset_name} (valid: {valid})")
 
             # Handle special case: +all expands to all available fields
             if preset_name == "all":
@@ -247,7 +303,7 @@ def parse_fields_argument(
             seen.add(f)
             deduped.append(f)
 
-    return deduped if deduped else preset_fields("standard", include_verbose, any_notes)
+    return deduped if deduped else preset_fields("default", include_verbose, any_notes)
 
 
 __all__ = [

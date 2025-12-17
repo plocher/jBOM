@@ -40,7 +40,10 @@ class TestBOMHappyPaths(FunctionalTestBase):
         self.assertIn("Description", header)
         self.assertIn("Value", header)
         self.assertIn("Footprint", header)
-        self.assertIn("LCSC", header)  # Normalized to title case
+        self.assertIn("Manufacturer", header)
+        self.assertIn("MFGPN", header)
+        self.assertIn("Fabricator", header)
+        self.assertIn("Fabricator Part Number", header)
         self.assertIn("Datasheet", header)
         self.assertIn("SMD", header)
 
@@ -73,7 +76,8 @@ class TestBOMHappyPaths(FunctionalTestBase):
             "Package" in header or "I:Package" in header,
             f"Package field not found in header: {header}",
         )
-        self.assertIn("LCSC", header)  # Normalized to title case
+        self.assertIn("Fabricator", header)
+        self.assertIn("Fabricator Part Number", header)
         self.assertIn("SMD", header)
 
     def test_bom_custom_fields(self):
