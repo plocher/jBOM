@@ -67,6 +67,16 @@ jbom bom --jlc MyProject/ -i my_new_inventory.csv
 jbom pos --jlc MyProject/
 ```
 
+### 4. (Optional) Back-Annotate to KiCad
+
+If you updated component values or packages in your inventory CSV (Step 2), your schematic is now out of sync. You can push these changes back to KiCad to keep your schematic as the single source of truth.
+
+```bash
+jbom annotate MyProject/ -i my_new_inventory.csv
+```
+
+This updates your `.kicad_sch` files with the correct Value, Footprint, and LCSC part numbers found in your inventory.
+
 ## Quick Start - using the Python API
 
 Refer to the full API documentation found in [docs/README.man3.md](docs/README.man3.md).
