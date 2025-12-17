@@ -49,7 +49,7 @@ jBOM is a sophisticated KiCad Bill of Materials generator in Python. It matches 
 
 ## Test Data Locations
 **Example inventory files:**
-- `/Users/jplocher/Dropbox/KiCad/jBOM-dev/SPCoast-INVENTORY.{csv,xlsx,numbers}`
+- `/Users/jplocher/Dropbox/KiCad/jBOM/examples/example-INVENTORY.{csv,xlsx,numbers}`
 
 **Sample KiCad projects:**
 - `/Users/jplocher/Dropbox/KiCad/projects/{AltmillSwitches,Core-wt32-eth0,LEDStripDriver}`
@@ -63,16 +63,8 @@ jBOM is a sophisticated KiCad Bill of Materials generator in Python. It matches 
 ## Architecture Summary
 **Component Matching Pipeline:** parsing → filtering → ranking → scoring → output
 
-**Key Data Classes:** `Component`, `InventoryItem`, `BOMEntry`
+**Key Data Classes:** `Generator`, `Component`, `InventoryItem`, `BOMEntry`
 
-**Component Categories:** Resistors, Capacitors, Inductors, LEDs, ICs, Connectors
+**Component Categories:** Resistors, Capacitors, Inductors, LEDs, ICs, Connectors, MCUs, Switches
 
-## Common Development Tasks
-**New Component Types:**
-1. Update `ComponentType` class
-2. Modify `_get_component_type()`
-3. Add to `CATEGORY_FIELDS`
-4. Add matching logic
-5. Add tests to `TestComponentTypeDetection`
-
-**New Features:** Check `docs/README.developer.md` for architecture details
+**Features:** Check `docs/README.developer.md` for architecture details
