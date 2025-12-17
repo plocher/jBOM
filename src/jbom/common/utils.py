@@ -70,6 +70,13 @@ def find_best_pcb(search_path: Path) -> Optional[Path]:
 
 def find_best_schematic(search_dir: Path) -> Optional[Path]:
     """Find the best schematic file in a directory, handling autosave files appropriately."""
+    # Check if input is already a file
+    if search_dir.is_file() and search_dir.suffix == ".kicad_sch":
+        return search_dir
+
+    if not search_dir.is_dir():
+        return None
+
     schematic_files = list(search_dir.glob("*.kicad_sch"))
     if not schematic_files:
         print(f"No .kicad_sch file found in {search_dir}")

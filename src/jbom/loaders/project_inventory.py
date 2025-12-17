@@ -52,12 +52,17 @@ class ProjectInventoryLoader:
             "MFGPN",
             "Datasheet",
             "LCSC",
+            "UUID",
         }
 
         for key, comps in grouped_components.items():
             # Use the first component as representative
             representative = comps[0]
-            item = self._create_inventory_item(representative)
+            # Collect all UUIDs in the group
+            uuids = [c.uuid for c in comps if c.uuid]
+            uuid_str = ",".join(uuids)
+
+            item = self._create_inventory_item(representative, uuid_str)
             self.inventory.append(item)
 
             # Add any extra fields found in properties
@@ -77,7 +82,9 @@ class ProjectInventoryLoader:
 
         return f"{component.value}|{component.footprint}|{component.lib_id}|{prop_key}"
 
-    def _create_inventory_item(self, component: Component) -> InventoryItem:
+    def _create_inventory_item(
+        self, component: Component, uuid_str: str = ""
+    ) -> InventoryItem:
         """Create an InventoryItem from a Component."""
 
         # Determine category
@@ -115,7 +122,9 @@ class ProjectInventoryLoader:
             mfgpn=props.get("MFGPN", props.get("MPN", "")),
             datasheet=props.get("Datasheet", ""),
             package=package,
+            uuid=uuid_str,
             priority=DEFAULT_PRIORITY,
+            source="Project",
             raw_data=props,
         )
 
