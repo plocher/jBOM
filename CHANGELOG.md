@@ -1,6 +1,31 @@
 # CHANGELOG
 
 
+## v3.2.0 (2025-12-17)
+
+### Features
+
+* feat: implement back-annotation (Step 4)
+
+Adds 'jbom annotate' command to update schematic from inventory via UUID matching.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`80765fd`](https://github.com/plocher/jBOM/commit/80765fd5fd6c187eb58e888ab0fb35b4bcea64c3))
+
+### Refactoring
+
+* refactor: introduce Schematic API shim (Step 4 extension)
+
+Abstracts S-expression manipulation behind an object-oriented API modeled after Pcbnew, facilitating future migration to KiCad Schematic API.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`fda7277`](https://github.com/plocher/jBOM/commit/fda72772277fe662f7620a2073776b5cd18601af))
+
+### Unknown
+
+* Merge pull request #2 from plocher/feat/back-annotation
+
+feat: implement back-annotation (Step 4) ([`555a89b`](https://github.com/plocher/jBOM/commit/555a89b50e79eb593b2f4df96ffc6b0ec28889ff))
+
+
 ## v3.1.0 (2025-12-17)
 
 ### Features
