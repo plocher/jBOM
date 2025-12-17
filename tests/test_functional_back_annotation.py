@@ -1,14 +1,16 @@
 """
-Tests for back-annotation (Step 4).
+Functional tests for back-annotation (Step 4).
 """
-import unittest
-import tempfile
-import shutil
+import sys
 import csv
+import unittest
 from pathlib import Path
+
+# Ensure tests directory is on path for imports
+sys.path.insert(0, str(Path(__file__).parent))
+
+from test_functional_base import FunctionalTestBase
 from jbom.processors.annotator import SchematicAnnotator
-from jbom.cli.annotate_command import AnnotateCommand
-import argparse
 
 # Minimal schematic with one component
 TEST_SCHEMATIC = """(kicad_sch (version 20211014) (generator eeschema)
@@ -30,15 +32,12 @@ TEST_SCHEMATIC = """(kicad_sch (version 20211014) (generator eeschema)
 )"""
 
 
-class TestBackAnnotation(unittest.TestCase):
+class TestBackAnnotation(FunctionalTestBase):
     def setUp(self):
-        self.test_dir = tempfile.mkdtemp()
-        self.sch_path = Path(self.test_dir) / "test.kicad_sch"
+        super().setUp()
+        self.sch_path = self.output_dir / "test.kicad_sch"
         with open(self.sch_path, "w") as f:
             f.write(TEST_SCHEMATIC)
-
-    def tearDown(self):
-        shutil.rmtree(self.test_dir)
 
     def test_annotator_update(self):
         """Test SchematicAnnotator updates component directly."""
@@ -56,17 +55,14 @@ class TestBackAnnotation(unittest.TestCase):
         annotator.save()
 
         # Verify changes in file
-        with open(self.sch_path, "r") as f:
-            content = f.read()
-
-        self.assertIn('"LCSC" "C12345"', content)
-        self.assertIn('"Value" "10k 1%"', content)
-        self.assertIn('"Manufacturer" "Yageo"', content)
+        self.assert_file_contains(self.sch_path, '"LCSC" "C12345"')
+        self.assert_file_contains(self.sch_path, '"Value" "10k 1%"')
+        self.assert_file_contains(self.sch_path, '"Manufacturer" "Yageo"')
 
     def test_annotate_command(self):
         """Test full jbom annotate command workflow."""
         # Create an inventory file
-        inv_path = Path(self.test_dir) / "inventory.csv"
+        inv_path = self.output_dir / "inventory.csv"
         with open(inv_path, "w", newline="") as f:
             writer = csv.writer(f)
             writer.writerow(["IPN", "Category", "Value", "LCSC", "UUID"])
@@ -81,20 +77,15 @@ class TestBackAnnotation(unittest.TestCase):
                 ]
             )
 
-        cmd = AnnotateCommand()
-        args = argparse.Namespace(
-            project=str(self.sch_path), inventory=str(inv_path), dry_run=False
+        rc, stdout, stderr = self.run_jbom(
+            ["annotate", str(self.sch_path), "-i", str(inv_path)]
         )
 
-        rc = cmd.execute(args)
         self.assertEqual(rc, 0)
 
         # Verify file updated
-        with open(self.sch_path, "r") as f:
-            content = f.read()
-
-        self.assertIn('"LCSC" "C99999"', content)
-        self.assertIn('"Value" "10k 1%"', content)
+        self.assert_file_contains(self.sch_path, '"LCSC" "C99999"')
+        self.assert_file_contains(self.sch_path, '"Value" "10k 1%"')
 
 
 if __name__ == "__main__":
