@@ -1,6 +1,25 @@
 # CHANGELOG
 
 
+## v3.3.0 (2025-12-18)
+
+### Features
+
+* feat: add federated inventory, PCBWay support, and Mouser search
+
+Implements Step 3.5 (Federation), Step 5 (Search), and part of Step 6 (Fab Integration POC).
+
+Features:
+- Search: Added `jbom search` command using Mouser API.
+- Search: Added smart filtering (In Stock, Parametric) and sorting.
+- Federation: Updated InventoryItem to track source and distributor fields.
+- Federation: Updated InventoryLoader to handle multiple files and distributor columns.
+- Fabrication: Added PCBWayFabricator with custom column mapping.
+- Tests: Added comprehensive functional test suite for all new features.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`7b9bea5`](https://github.com/plocher/jBOM/commit/7b9bea5e8741ca54ac498015ad19df5915567766))
+
+
 ## v3.2.0 (2025-12-17)
 
 ### Features
