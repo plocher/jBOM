@@ -302,6 +302,20 @@ class InventoryLoader:
                 mfgpn=row.get("MFGPN", ""),
                 datasheet=row.get("Datasheet", ""),
                 package=row.get("Package", ""),
+                distributor=self._get_first_value(
+                    row, ["Distributor", "Supplier", "Vendor"]
+                ),
+                distributor_part_number=self._get_first_value(
+                    row,
+                    [
+                        "Distributor Part Number",
+                        "Distributor SKU",
+                        "SKU",
+                        "DigiKey Part Number",
+                        "Mouser Part Number",
+                        "Stock Code",
+                    ],
+                ),
                 uuid=row.get("UUID", ""),
                 priority=self._parse_priority(
                     row.get("Priority", str(DEFAULT_PRIORITY))
@@ -311,6 +325,13 @@ class InventoryLoader:
                 raw_data=row,
             )
             self.inventory.append(item)
+
+    def _get_first_value(self, row: Dict[str, str], keys: List[str]) -> str:
+        """Get the first non-empty value from row matching any of the keys"""
+        for key in keys:
+            if val := row.get(key):
+                return val
+        return ""
 
     def _parse_priority(self, priority_str: str) -> int:
         """Parse priority value from CSV, defaulting to DEFAULT_PRIORITY if invalid"""

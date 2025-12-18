@@ -188,13 +188,14 @@ FIELD_PRESETS = {
             "quantity",
             "value",
             "i:package",
-            "fabricator",
+            "mfgpn",
+            "manufacturer",
+            "description",
             "fabricator_part_number",
-            "smd",
         ],
         "description": (
-            "PCBWay requirements: Reference Designator, Quantity, Value, "
-            "Package, Fabricator (PCBWay), PCBWay Part Number"
+            "PCBWay requirements: Designator, Quantity, Value, Package, "
+            "Manufacturer, MPN, Description, Distributor/Fabricator PN"
         ),
     },
     "minimal": {

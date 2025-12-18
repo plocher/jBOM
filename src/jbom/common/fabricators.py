@@ -17,6 +17,15 @@ class Fabricator(ABC):
         """Get the part number for this fabricator from an inventory item."""
         pass
 
+    def get_bom_columns(self) -> Dict[str, str]:
+        """Get mapping of internal field names to fabricator-specific CSV headers.
+
+        Returns:
+            Dict mapping normalized field name to output header string.
+            If a field is not in the dict, default field_to_header() conversion is used.
+        """
+        return {}
+
     def get_name(self, item: InventoryItem) -> str:
         """Get the fabricator name. Can be dynamic based on item."""
         return self.name
@@ -71,18 +80,45 @@ class PCBWayFabricator(Fabricator):
     """PCBWay Fabricator logic."""
 
     name = "PCBWay"
-    part_number_header = "MFGPN"
+    part_number_header = "Distributor Part Number"
 
     PART_NUMBER_FIELDS = [
+        "distributor_part_number",  # Normalized from inventory loader
         "pcbway_part",
     ]
 
     def get_part_number(self, item: InventoryItem) -> str:
-        # PCBWay often uses MFGPN + Distributor info, but here we just return the PN
-        # The user instructions mention distributor, but for the BOM file we typically just need the PN
-        # or we might need a specific "Distributor" column.
-        # For now, let's return the best part number we can find.
-        return _find_value_in_raw_data(item, self.PART_NUMBER_FIELDS)
+        # PCBWay prefers Distributor SKU or their own PN
+        # If neither, we can fall back to MFGPN in the BOM column,
+        # but get_part_number specifically targets the "Fabricator Part Number" column.
+
+        # 1. Check explicit distributor part number (from data model)
+        if item.distributor_part_number:
+            return item.distributor_part_number
+
+        # 2. Check PCBWay specific field
+        val = _find_value_in_raw_data(item, self.PART_NUMBER_FIELDS)
+        if val:
+            return val
+
+        # 3. Fallback to MFGPN if nothing else, as PCBWay can source by MFGPN
+        # However, usually we want this in a separate column.
+        # For the "Fabricator Part Number" column specifically, we return the SKU.
+        return ""
+
+    def get_bom_columns(self) -> Dict[str, str]:
+        """PCBWay specific column headers."""
+        return {
+            "reference": "Designator",
+            "quantity": "Quantity",
+            "value": "Value",
+            "footprint": "Package",
+            "i:package": "Package",
+            "mfgpn": "Manufacturer Part Number",
+            "manufacturer": "Manufacturer",
+            "description": "Description",
+            "fabricator_part_number": "Distributor Part Number",
+        }
 
 
 def _find_value_in_raw_data(item: InventoryItem, field_candidates: List[str]) -> str:

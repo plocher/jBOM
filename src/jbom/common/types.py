@@ -43,6 +43,8 @@ class InventoryItem:
     mfgpn: str
     datasheet: str
     package: str = ""
+    distributor: str = ""
+    distributor_part_number: str = ""
     uuid: str = ""  # KiCad UUID for back-annotation
     fabricator: str = ""  # Specific fabricator for this item (e.g. "JLC", "Seeed")
     priority: int = (
@@ -68,6 +70,8 @@ class BOMEntry:
     description: str
     datasheet: str
     smd: str = ""
+    distributor: str = ""
+    distributor_part_number: str = ""
     match_quality: str = ""
     notes: str = ""
     # Fabricator specific fields

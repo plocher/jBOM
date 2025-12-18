@@ -23,6 +23,9 @@ pip install jbom[excel]
 # With Apple Numbers support
 pip install jbom[numbers]
 
+# With Mouser Search support
+pip install jbom[search]
+
 # Everything
 pip install jbom[all]
 ```
@@ -49,6 +52,9 @@ This new `my_new_inventory.csv` inventory is missing some fabrication details ne
 1.  Open the file in Excel, Numbers, or a text editor.
 2.  **Crucial**: If your schematic symbols were generic, fill in the missing **Value** and **Package** columns now.
 3.  Fill in the **LCSC** column (or **MFGPN**) for the parts you want to buy.
+    *   **Pro Tip**: You can export your existing JLC private library into a file and load it alongside your project inventory: `jbom bom ... -i project_inv.csv -i jlc_private_lib.xlsx`
+    *   **Export Instructions**: Login to JLCPCB -> User Center -> My Inventory -> My Parts Lib -> Click "Export".
+    *   **Search**: Use `jbom search "part description" --provider mouser` to find parts.
 4.  (Optional) Add your own parts from other sources (e.g., local stock).
 
 ### 3. Generate your BOM and Placement files

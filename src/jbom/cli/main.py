@@ -11,6 +11,7 @@ from jbom.cli.bom_command import BOMCommand
 from jbom.cli.pos_command import POSCommand
 from jbom.cli.inventory_command import InventoryCommand
 from jbom.cli.annotate_command import AnnotateCommand
+from jbom.cli.search_command import SearchCommand
 
 
 def main(argv: List[str] | None = None) -> int:
@@ -64,6 +65,7 @@ For detailed help on each command:
         "pos": POSCommand(),
         "inventory": InventoryCommand(),
         "annotate": AnnotateCommand(),
+        "search": SearchCommand(),
     }
 
     for cmd_name, cmd_instance in commands.items():

@@ -33,6 +33,7 @@ dependencies = [
 [project.optional-dependencies]
 excel = ["openpyxl>=3.0"]
 numbers = ["numbers-parser>=3.0"]
+search = ["requests>=2.28.0"]
 dev = [
     "build>=0.10.0",
     "twine>=4.0.0",
@@ -41,6 +42,7 @@ dev = [
 all = [
     "openpyxl>=3.0",
     "numbers-parser>=3.0",
+    "requests>=2.28.0",
 ]
 
 [project.urls]

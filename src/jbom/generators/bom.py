@@ -24,6 +24,7 @@ from jbom.common.fields import (
     normalize_field_name,
     field_to_header,
     parse_fields_argument,
+    FIELD_PRESETS,
 )
 from jbom.common.utils import find_best_schematic
 from jbom.loaders.schematic import SchematicLoader
@@ -185,8 +186,15 @@ class BOMGenerator(Generator):
         verbose = getattr(self.options, "verbose", False)
         any_notes = False  # Default to False if entries not available yet
 
+        # Select default preset based on fabricator
+        preset = "default"
+        if self.fabricator:
+            fab_preset = self.fabricator.name.lower()
+            if fab_preset in FIELD_PRESETS:
+                preset = fab_preset
+
         return parse_fields_argument(
-            "+default",
+            f"+{preset}",
             available_fields,
             include_verbose=verbose,
             any_notes=any_notes,
@@ -1033,6 +1041,10 @@ class BOMGenerator(Generator):
             # Process fields to handle ambiguous ones
             header = []
             normalized_fields = []  # Keep normalized versions for value retrieval
+
+            # Get custom column mapping from fabricator
+            column_map = self.fabricator.get_bom_columns() if self.fabricator else {}
+
             for field in fields:
                 # Check if this is an ambiguous field by testing with a sample entry
                 if bom_entries:
@@ -1075,7 +1087,9 @@ class BOMGenerator(Generator):
                             continue
 
                 # Regular field - convert to Title Case header
-                if field == "fabricator_part_number" and self.fabricator:
+                if field in column_map:
+                    header.append(column_map[field])
+                elif field == "fabricator_part_number" and self.fabricator:
                     header.append(self.fabricator.part_number_header)
                 else:
                     header.append(field_to_header(field))
