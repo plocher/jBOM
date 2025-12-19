@@ -4,6 +4,50 @@ All notable changes to jBOM are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.0] - 2025-12-18
+
+### Added
+- **Search Command**: New `jbom search` CLI for finding parts via Mouser API.
+  - Supports smart filtering: `In Stock > 0`, `Active` status, and parametric text matching.
+  - Returns curated results table sorted by availability and price.
+- **Fabrication Support**: Added dedicated support for **PCBWay**.
+  - `jbom bom ... --fabricator pcbway` generates BOMs with specific headers (`Manufacturer Part Number`, `Distributor Part Number`) required by PCBWay assembly service.
+  - Prioritizes distributor SKUs (DigiKey/Mouser) over MPNs when available.
+- **Federated Inventory**: Full support for loading multiple inventory sources simultaneously.
+  - `jbom bom ... -i local.csv -i jlc_export.xlsx` merges items.
+  - Conflict resolution prioritizes local user definitions over imported vendor files.
+- **Data Model Enhancements**: `InventoryItem` now tracks `source`, `distributor`, and `distributor_part_number`.
+
+### Changed
+- **Inventory Loader**: Now auto-maps common CSV columns (e.g., "DigiKey Part Number", "SKU") to standard internal fields.
+- **BOM Generation**: Refactored to delegate column mapping to `Fabricator` plugins, enabling per-vendor CSV layouts.
+
+## [3.1.0] - 2025-12-17
+
+### Added
+- **Back-Annotation**: New `jbom annotate` command to update KiCad schematics with data from inventory.
+  - Pushes `Value`, `Footprint`, `LCSC`, and other fields back to the schematic symbol.
+  - Uses UUID matching for reliability even if reference designators change.
+  - Includes a "Safety Shim" to abstract S-expression parsing, preparing for future KiCad Python API adoption.
+- **Placement Generation**: `jbom pos` command for pick-and-place files.
+  - Supports JLC-specific rotation corrections.
+  - customizable output formats.
+
+### Changed
+- **CLI Architecture**: Complete refactor to subcommand-based CLI (`jbom bom`, `jbom pos`, `jbom inventory`, `jbom annotate`).
+- **Python API**: Introduced `jbom.api` as the unified entry point for programmatic use.
+
+## [3.0.0] - 2025-12-16
+
+### Added
+- **Data-Flow Architecture**: Major refactoring into `loaders/`, `processors/`, and `generators/` modules.
+- **JLCPCB Private Library Support**: Native loader for JLC's Excel export format.
+- **Fabricator Abstraction**: Core `Fabricator` base class to support multiple vendors (JLC, Seeed, PCBWay, Generic).
+
+### Changed
+- **Breaking**: CLI arguments significantly changed to support subcommands.
+- **Breaking**: Python API imports moved to `jbom.api`.
+
 ## [1.0.2] - 2025-12-14
 
 ### Added
