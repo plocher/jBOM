@@ -41,7 +41,12 @@ This document outlines the investigation into bridging this gap, potentially evo
 - [ ] If `kicad-cli` is sufficient, Path C is very attractive (clean dependency).
 
 ### 3. Decision
-- Select path based on code complexity vs. integration value.
+- **Recommendation**: Path A (Co-existence) for now, evolving into Path C (Absorption) with a Dual-Backend Strategy.
+- **Dual-Backend Strategy**:
+    - The `jBOM` Foundation API must support both "In-Process" (pcbnew) and "Out-of-Process" (kicad-cli) execution.
+    - `FabricationBackend` interface with `PcbnewBackend` and `KicadCliBackend` implementations.
+    - This allows `jBOM` to be a "Universal Fab Tool" working in both CLI and Plugin contexts.
 
 ## Implications for Step 5 (Search DB)
-If Path C is chosen, the "Offline Search" becomes "Port `kicad-jlcpcb-tools` Library logic to jBOM". This confirms that Step 5 should wait until this investigation is complete.
+- **Catalog Integration**: Step 5 should implement the "Offline Search" by adopting the SQLite DB format used by `kicad-jlcpcb-tools`.
+- This database becomes a "Catalog Source" for `jBOM`'s federated inventory system.

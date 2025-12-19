@@ -7,25 +7,28 @@ class TestProjectInventoryLoader(unittest.TestCase):
     def test_load_inventory(self):
         components = [
             Component(
-                "R1",
-                "Device:R",
-                "10k",
-                "Resistor_SMD:R_0603_1608Metric",
-                {"Tolerance": "1%"},
+                reference="R1",
+                lib_id="Device:R",
+                value="10k",
+                footprint="Resistor_SMD:R_0603_1608Metric",
+                uuid="",
+                properties={"Tolerance": "1%"},
             ),
             Component(
-                "R2",
-                "Device:R",
-                "10k",
-                "Resistor_SMD:R_0603_1608Metric",
-                {"Tolerance": "1%"},
+                reference="R2",
+                lib_id="Device:R",
+                value="10k",
+                footprint="Resistor_SMD:R_0603_1608Metric",
+                uuid="",
+                properties={"Tolerance": "1%"},
             ),
             Component(
-                "C1",
-                "Device:C",
-                "100nF",
-                "Capacitor_SMD:C_0603_1608Metric",
-                {"Voltage": "50V"},
+                reference="C1",
+                lib_id="Device:C",
+                value="100nF",
+                footprint="Capacitor_SMD:C_0603_1608Metric",
+                uuid="",
+                properties={"Voltage": "50V"},
             ),
         ]
         loader = ProjectInventoryLoader(components)
@@ -57,8 +60,22 @@ class TestProjectInventoryLoader(unittest.TestCase):
 
     def test_grouping_different_values(self):
         components = [
-            Component("R1", "Device:R", "10k", "R_0603", {}),
-            Component("R2", "Device:R", "20k", "R_0603", {}),
+            Component(
+                reference="R1",
+                lib_id="Device:R",
+                value="10k",
+                footprint="R_0603",
+                uuid="",
+                properties={},
+            ),
+            Component(
+                reference="R2",
+                lib_id="Device:R",
+                value="20k",
+                footprint="R_0603",
+                uuid="",
+                properties={},
+            ),
         ]
         loader = ProjectInventoryLoader(components)
         inventory, _ = loader.load()
@@ -66,8 +83,22 @@ class TestProjectInventoryLoader(unittest.TestCase):
 
     def test_grouping_different_footprints(self):
         components = [
-            Component("R1", "Device:R", "10k", "R_0603", {}),
-            Component("R2", "Device:R", "10k", "R_0805", {}),
+            Component(
+                reference="R1",
+                lib_id="Device:R",
+                value="10k",
+                footprint="R_0603",
+                uuid="",
+                properties={},
+            ),
+            Component(
+                reference="R2",
+                lib_id="Device:R",
+                value="10k",
+                footprint="R_0805",
+                uuid="",
+                properties={},
+            ),
         ]
         loader = ProjectInventoryLoader(components)
         inventory, _ = loader.load()
@@ -76,8 +107,22 @@ class TestProjectInventoryLoader(unittest.TestCase):
     def test_grouping_different_properties(self):
         """Test that components with different key properties are not grouped."""
         components = [
-            Component("R1", "Device:R", "10k", "R_0603", {"Tolerance": "1%"}),
-            Component("R2", "Device:R", "10k", "R_0603", {"Tolerance": "5%"}),
+            Component(
+                reference="R1",
+                lib_id="Device:R",
+                value="10k",
+                footprint="R_0603",
+                uuid="",
+                properties={"Tolerance": "1%"},
+            ),
+            Component(
+                reference="R2",
+                lib_id="Device:R",
+                value="10k",
+                footprint="R_0603",
+                uuid="",
+                properties={"Tolerance": "5%"},
+            ),
         ]
         loader = ProjectInventoryLoader(components)
         inventory, _ = loader.load()

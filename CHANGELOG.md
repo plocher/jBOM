@@ -1,6 +1,35 @@
 # CHANGELOG
 
 
+## v3.4.0 (2025-12-20) - Unreleased
+
+### Features
+
+* **BREAKING**: feat: implement hierarchical configuration system with dynamic CLI flags
+
+**Configuration Revolution**: Replaced hardcoded fabricator logic with fully configurable system.
+
+Key Features:
+- **Package Defaults**: Built-in fabricator configs (JLC, PCBWay, Seeed) included in distribution
+- **Hierarchical Loading**: Package → User home → Project configs with proper precedence
+- **based_on Inheritance**: Simple copy-paste-edit customization pattern
+- **Dynamic CLI Flags**: Auto-generated from fabricator `id` field (no hardcoded `--jlc`)
+- **External File References**: Load fabricator configs from separate YAML files
+- **Self-Contained Configs**: Each fabricator definition is complete and immutable
+
+BREAKING CHANGES:
+- CLI flags now dynamically generated from configuration (still backward compatible)
+- Configuration schema updated to v3.0 with simplified structure
+- FabricatorConfig dataclass restructured with computed properties
+
+Migration:
+- Existing `--jlc`, `--pcbway` flags continue to work via built-in configs
+- Users can customize by copying package configs to `~/.config/jbom/`
+- No code changes needed for basic usage
+
+Co-Authored-By: Warp <agent@warp.dev>
+
+
 ## v3.3.0 (2025-12-18)
 
 ### Features
