@@ -1,4 +1,5 @@
 name: "JLC"
+id: "jlc"
 description: "JLCPCB Fabrication Definitions"
 pcb_manufacturing:
   website: "https://jlcpcb.com/help/article/Suggested-Naming-Patterns"

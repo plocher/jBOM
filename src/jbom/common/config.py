@@ -5,6 +5,7 @@ built-in → system → user → project
 """
 
 import yaml
+import platform
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
@@ -29,6 +30,10 @@ class FabricatorConfig:
 
     # BOM column mappings (fab_header: jbom_field)
     bom_columns: Dict[str, str] = field(default_factory=dict)
+
+    # Advanced configuration options
+    dynamic_name: bool = False  # Use dynamic names based on data
+    name_source: Optional[str] = None  # Source for dynamic names ("manufacturer")
 
     # Derived properties for backward compatibility
     @property
@@ -123,28 +128,55 @@ class ConfigLoader:
     def _get_config_paths(self) -> List[Path]:
         """Get ordered list of configuration file paths to check."""
         paths = []
+        system = platform.system()
 
-        # System-wide configs
-        system_paths = [
-            Path("/etc/jbom/config.yaml"),
-            Path("/usr/local/etc/jbom/config.yaml"),
-        ]
+        # System-wide configs (OS-specific)
+        if system == "Windows":
+            # Windows: %PROGRAMDATA%\jbom\config.yaml
+            import os
+
+            programdata = os.environ.get("PROGRAMDATA", "C:\\ProgramData")
+            system_paths = [Path(programdata) / "jbom" / "config.yaml"]
+        elif system == "Darwin":  # macOS
+            # macOS: /Library/Application Support/jbom/config.yaml
+            system_paths = [Path("/Library/Application Support/jbom/config.yaml")]
+        else:  # Linux and other Unix-like
+            # Linux: /etc/jbom/config.yaml, /usr/local/etc/jbom/config.yaml
+            system_paths = [
+                Path("/etc/jbom/config.yaml"),
+                Path("/usr/local/etc/jbom/config.yaml"),
+            ]
+
         for path in system_paths:
             if path.exists():
                 paths.append(path)
 
-        # User configs
+        # User configs (OS-specific)
         home = Path.home()
-        user_paths = [
-            home / ".config" / "jbom" / "config.yaml",
-            home / ".jbom" / "config.yaml",
-            home / "jbom.yaml",
-        ]
+        if system == "Windows":
+            # Windows: %APPDATA%\jbom\config.yaml
+            import os
+
+            appdata = os.environ.get("APPDATA", str(home / "AppData" / "Roaming"))
+            user_paths = [Path(appdata) / "jbom" / "config.yaml"]
+        elif system == "Darwin":  # macOS
+            # macOS: ~/Library/Application Support/jbom/config.yaml
+            user_paths = [
+                home / "Library" / "Application Support" / "jbom" / "config.yaml",
+                home / ".config" / "jbom" / "config.yaml",  # XDG fallback
+            ]
+        else:  # Linux and other Unix-like
+            # Linux: ~/.config/jbom/config.yaml (XDG), ~/.jbom/config.yaml (legacy)
+            user_paths = [
+                home / ".config" / "jbom" / "config.yaml",
+                home / ".jbom" / "config.yaml",
+            ]
+
         for path in user_paths:
             if path.exists():
                 paths.append(path)
 
-        # Project configs (relative to current working directory)
+        # Project configs (same across all OS)
         cwd = Path.cwd()
         project_paths = [
             cwd / ".jbom" / "config.yaml",
@@ -274,21 +306,6 @@ class ConfigLoader:
             fabricator = self._load_fabricator(fab_data)
             if fabricator:
                 config.fabricators.append(fabricator)
-            fabricator.presets = fab_data.get("presets", {})
-
-            # CLI aliases
-            cli_aliases = fab_data.get("cli_aliases", {})
-            fabricator.cli_flags = cli_aliases.get("flags", [])
-            fabricator.cli_presets = cli_aliases.get("presets", [])
-
-            # Advanced features
-            fabricator.dynamic_name = fab_data.get("dynamic_name", False)
-            fabricator.name_source = fab_data.get("name_source")
-            fabricator.capabilities = fab_data.get("capabilities", [])
-            fabricator.placement = fab_data.get("placement", {})
-            fabricator.gerber_files = fab_data.get("gerber_files", {})
-
-            config.fabricators.append(fabricator)
 
         # Distributors
         distributors_data = data.get("distributors", [])
@@ -365,32 +382,18 @@ class ConfigLoader:
             merged.name = overlay.name
         if overlay.description:
             merged.description = overlay.description
-        if overlay.website:
-            merged.website = overlay.website
-        if overlay.part_number_header:
-            merged.part_number_header = overlay.part_number_header
-
-        # List merging
-        if overlay.part_number_fields:
-            merged.part_number_fields = overlay.part_number_fields
-        if overlay.cli_flags:
-            merged.cli_flags = overlay.cli_flags
-        if overlay.cli_presets:
-            merged.cli_presets = overlay.cli_presets
-        if overlay.capabilities:
-            merged.capabilities = overlay.capabilities
+        if overlay.based_on:
+            merged.based_on = overlay.based_on
 
         # Dictionary merging
-        merged.bom_columns.update(overlay.bom_columns)
-        merged.presets.update(overlay.presets)
-        merged.placement.update(overlay.placement)
-        merged.gerber_files.update(overlay.gerber_files)
-
-        # Boolean/special fields
-        if overlay.dynamic_name is not None:
-            merged.dynamic_name = overlay.dynamic_name
-        if overlay.name_source:
-            merged.name_source = overlay.name_source
+        if overlay.pcb_manufacturing:
+            merged.pcb_manufacturing.update(overlay.pcb_manufacturing)
+        if overlay.pcb_assembly:
+            merged.pcb_assembly.update(overlay.pcb_assembly)
+        if overlay.part_number:
+            merged.part_number.update(overlay.part_number)
+        if overlay.bom_columns:
+            merged.bom_columns.update(overlay.bom_columns)
 
         return merged
 

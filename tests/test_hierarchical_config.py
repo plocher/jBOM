@@ -76,7 +76,7 @@ class TestHierarchicalConfiguration(unittest.TestCase):
         # Create config that references external file
         config_data = {
             "version": "3.0.0",
-            "fabricators": [{"name": "custom", "file": str(fab_file)}],
+            "fabricators": [{"file": str(fab_file)}],
         }
 
         loader = ConfigLoader()
@@ -178,12 +178,11 @@ class TestHierarchicalConfiguration(unittest.TestCase):
         with open(project_config, "w") as f:
             yaml.dump(project_data, f)
 
-        # Mock config paths
-        with patch.object(
-            loader,
-            "_get_config_paths",
-            return_value=[package_config, user_config, project_config],
-        ):
+        # Mock config paths to control loading order - set the actual attribute used by load_config
+        loader.config_paths = [package_config, user_config, project_config]
+
+        # Mock get_builtin_config to return empty config for controlled test
+        with patch.object(loader, "_get_builtin_config", return_value=JBOMConfig()):
             config = loader.load_config()
 
             # Should have final project version

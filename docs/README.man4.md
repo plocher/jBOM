@@ -55,6 +55,10 @@ python3 /path/to/kicad_jbom_plugin.py SCHEMATIC -i INVENTORY -o OUTPUT [FLAGS]
 - `-v, --verbose` — Include Match_Quality and Priority columns
 - `-d, --debug` — Emit detailed diagnostics to stderr
 - `-f, --fields FIELDS` — Field selection: use presets (+standard, +jlc, +minimal, +all) or comma-separated field list
+- `--jlc` — Use JLCPCB fabricator configuration and field preset
+- `--pcbway` — Use PCBWay fabricator configuration and field preset
+- `--seeed` — Use Seeed Studio fabricator configuration and field preset
+- `--generic` — Use Generic fabricator configuration
 
 ## COMMON CONFIGURATIONS
 
@@ -63,13 +67,29 @@ python3 /path/to/kicad_jbom_plugin.py SCHEMATIC -i INVENTORY -o OUTPUT [FLAGS]
 python3 /path/to/kicad_jbom_plugin.py %I -i /path/to/inventory.csv -o %O
 ```
 
-**With JLC preset:**
+**With JLC fabricator (recommended for JLCPCB):**
 ```
-python3 /path/to/kicad_jbom_plugin.py %I -i /path/to/inventory.csv -o %O -f +jlc
+python3 /path/to/kicad_jbom_plugin.py %I -i /path/to/inventory.csv -o %O --jlc
 ```
 
-**With minimal preset:**
+**With PCBWay fabricator:**
 ```
+python3 /path/to/kicad_jbom_plugin.py %I -i /path/to/inventory.csv -o %O --pcbway
+```
+
+**With Seeed Studio fabricator:**
+```
+python3 /path/to/kicad_jbom_plugin.py %I -i /path/to/inventory.csv -o %O --seeed
+```
+
+**With generic fabricator (manufacturer-based):**
+```
+python3 /path/to/kicad_jbom_plugin.py %I -i /path/to/inventory.csv -o %O --generic
+```
+
+**Legacy field presets (still supported):**
+```
+python3 /path/to/kicad_jbom_plugin.py %I -i /path/to/inventory.csv -o %O -f +jlc
 python3 /path/to/kicad_jbom_plugin.py %I -i /path/to/inventory.csv -o %O -f +minimal
 ```
 
@@ -99,8 +119,11 @@ python3 /path/to/kicad_jbom_plugin.py %I -i /path/to/inventory.csv -o %O -f "Ref
 
 The plugin writes a CSV file to the location specified in the KiCad Generate BOM dialog. The file contains:
 
-- **Default columns** (standard preset): Reference, Quantity, Description, Value, Footprint, LCSC, Datasheet, SMD
-- **With `-f +jlc`**: Reference, Quantity, LCSC, Value, Footprint, Description, Datasheet, SMD
+- **Default columns** (no fabricator): Reference, Quantity, Description, Value, Footprint, LCSC, Datasheet, SMD
+- **With `--jlc`**: Reference, Quantity, Value, Package, Fabricator, LCSC, SMD (JLC-optimized format)
+- **With `--pcbway`**: Reference, Quantity, Value, Package, MFGPN, Manufacturer, Description, Distributor Part Number
+- **With `--seeed`**: Reference, Quantity, Value, Package, Fabricator, Seeed Part Number, SMD
+- **With `--generic`**: Reference, Quantity, Description, Value, Footprint, Manufacturer, MFGPN, Fabricator, Part Number, SMD
 - **With `-v`**: adds Match_Quality, Priority columns
 - **With `-d`**: Notes field contains debugging information
 
@@ -184,6 +207,43 @@ Optional columns for enhanced matching:
 - Manufacturer, MFGPN, Datasheet, SMD, Tolerance, V, A, W, Type, Frequency, etc.
 
 See [README.man1.md](README.man1.md) (INVENTORY FILE FORMAT section) for complete details.
+
+## FABRICATOR CONFIGURATION
+
+The fabricator flags (`--jlc`, `--pcbway`, `--seeed`, `--generic`) are dynamically generated from configuration files. This allows for easy customization and extension.
+
+### Built-in Fabricators
+
+- **--jlc**: JLCPCB fabrication with LCSC part number priority
+- **--pcbway**: PCBWay requirements with manufacturer focus
+- **--seeed**: Seeed Studio Fusion PCBA format
+- **--generic**: Generic format with dynamic manufacturer names
+
+### Custom Fabricators
+
+Create custom fabricator configurations by adding YAML files to your configuration directory:
+
+**macOS**: `~/Library/Application Support/jbom/config.yaml`
+**Windows**: `%APPDATA%\jbom\config.yaml`
+**Linux**: `~/.config/jbom/config.yaml`
+
+Example custom fabricator:
+
+```yaml
+fabricators:
+  - name: "My Fab"
+    id: "myfab"
+    description: "Custom fabricator configuration"
+    part_number:
+      header: "Custom Part Number"
+      priority_fields: ["CUSTOM_PN", "LCSC"]
+    bom_columns:
+      "Reference": "reference"
+      "Qty": "quantity"
+      "Custom Part Number": "fabricator_part_number"
+```
+
+This creates a new `--myfab` flag automatically available in KiCad.
 
 ## SEE ALSO
 

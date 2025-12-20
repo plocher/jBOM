@@ -300,17 +300,45 @@ class TestConfigLoader(unittest.TestCase):
         """Test configuration path resolution."""
         paths = self.loader._get_config_paths()
 
-        # Should return a list of Path objects
+        # Should return a list of Path objects (may be empty if no configs exist)
         self.assertIsInstance(paths, list)
         for path in paths:
             self.assertIsInstance(path, Path)
 
-        # Should include some standard locations (may not exist)
-        path_strings = [str(p) for p in paths]
+        # Test the path generation logic by creating a temp config file
+        # and ensuring it would be found
+        import platform
 
-        # Should have user home directory paths
-        home_paths = [p for p in path_strings if str(Path.home()) in p]
-        self.assertGreater(len(home_paths), 0)
+        home = Path.home()
+
+        # Create a temporary config file in the user's config directory
+        if platform.system() == "Darwin":
+            test_config_dir = home / "Library" / "Application Support" / "jbom"
+        elif platform.system() == "Windows":
+            test_config_dir = home / "AppData" / "Roaming" / "jbom"
+        else:  # Linux
+            test_config_dir = home / ".config" / "jbom"
+
+        test_config_dir.mkdir(parents=True, exist_ok=True)
+        test_config_file = test_config_dir / "config.yaml"
+
+        try:
+            # Create temporary config file
+            test_config_file.write_text("version: '3.0.0'\n")
+
+            # Now test that it gets found
+            new_loader = ConfigLoader()
+            new_paths = new_loader._get_config_paths()
+
+            # Should now include our test file
+            self.assertIn(test_config_file, new_paths)
+
+        finally:
+            # Clean up
+            if test_config_file.exists():
+                test_config_file.unlink()
+            if test_config_dir.exists() and not list(test_config_dir.iterdir()):
+                test_config_dir.rmdir()
 
     def test_builtin_config_fallback(self):
         """Test that builtin config fallback works when package files missing."""

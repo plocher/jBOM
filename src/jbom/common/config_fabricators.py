@@ -133,8 +133,10 @@ class FabricatorRegistry:
             name="Generic",
             id="generic",
             description="Fallback generic fabricator",
-            part_number_header="Manufacturer Part Number",
-            part_number_fields=["mfgpn", "mpn", "lcsc"],
+            part_number={
+                "header": "Manufacturer Part Number",
+                "priority_fields": ["mfgpn", "mpn", "lcsc"],
+            },
             dynamic_name=True,
             name_source="manufacturer",
         )

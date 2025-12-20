@@ -13,12 +13,14 @@ Configurations are loaded in order of precedence (later configs override earlier
    - Contains: JLC, PCBWay, Seeed, Generic fabricators
 
 2. **System Configs**: System-wide settings (rare)
-   - Linux: `/etc/jbom/config.yaml`
-   - macOS: `/usr/local/etc/jbom/config.yaml`
+   - macOS: `/Library/Application Support/jbom/config.yaml`
+   - Windows: `%PROGRAMDATA%\jbom\config.yaml` (e.g., `C:\ProgramData\jbom\config.yaml`)
+   - Linux: `/etc/jbom/config.yaml` or `/usr/local/etc/jbom/config.yaml`
 
 3. **User Home Configs**: Personal user settings
-   - Linux/macOS: `~/.config/jbom/config.yaml` or `~/.jbom/config.yaml`
-   - Windows: `%APPDATA%\jbom\config.yaml`
+   - macOS: `~/Library/Application Support/jbom/config.yaml`
+   - Windows: `%APPDATA%\jbom\config.yaml` (e.g., `C:\Users\{username}\AppData\Roaming\jbom\config.yaml`)
+   - Linux: `~/.config/jbom/config.yaml` (XDG) or `~/.jbom/config.yaml` (legacy)
 
 4. **Project Configs**: Project-specific overrides
    - Location: `.jbom/config.yaml` or `jbom.yaml` in project directory
@@ -247,6 +249,27 @@ fabricators:
 
 ### Recommended Structure
 
+**macOS:**
+```
+~/Library/Application Support/jbom/
+├── config.yaml              # Main config file
+└── fabricators/
+    ├── myjlc.fab.yaml       # Custom JLC config
+    ├── mypcbway.fab.yaml    # Custom PCBWay config
+    └── company.fab.yaml     # Company-specific config
+```
+
+**Windows:**
+```
+%APPDATA%\jbom\
+├── config.yaml              # Main config file
+└── fabricators\
+    ├── myjlc.fab.yaml       # Custom JLC config
+    ├── mypcbway.fab.yaml    # Custom PCBWay config
+    └── company.fab.yaml     # Company-specific config
+```
+
+**Linux:**
 ```
 ~/.config/jbom/
 ├── config.yaml              # Main config file

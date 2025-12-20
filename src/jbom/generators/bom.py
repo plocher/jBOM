@@ -31,7 +31,7 @@ from jbom.loaders.schematic import SchematicLoader
 from jbom.processors.component_types import get_component_type
 from jbom.processors.inventory_matcher import InventoryMatcher
 from jbom.loaders.project_inventory import ProjectInventoryLoader
-from jbom.common.fabricators import get_fabricator, Fabricator
+from jbom.common.config_fabricators import get_fabricator, ConfigurableFabricator
 
 
 class BOMGenerator(Generator):
@@ -54,12 +54,12 @@ class BOMGenerator(Generator):
         self.matcher = matcher
         self.components: List[Component] = []  # Set by load_input()
 
-        # Initialize fabricator
+        # Initialize fabricator using config-driven system
         fab_name = getattr(self.options, "fabricator", None)
         if fab_name:
-            self.fabricator: Optional[Fabricator] = get_fabricator(fab_name)
+            self.fabricator: Optional[ConfigurableFabricator] = get_fabricator(fab_name)
         else:
-            # If no fabricator specified, use GenericFabricator (matches all)
+            # If no fabricator specified, use generic fabricator (matches all)
             self.fabricator = get_fabricator("generic")
 
     # ---------------- Generator abstract methods ----------------
@@ -189,7 +189,8 @@ class BOMGenerator(Generator):
         # Select default preset based on fabricator
         preset = "default"
         if self.fabricator:
-            fab_preset = self.fabricator.name.lower()
+            # Use fabricator ID for preset lookup
+            fab_preset = self.fabricator.config.id.lower()
             if fab_preset in FIELD_PRESETS:
                 preset = fab_preset
 
@@ -1090,7 +1091,7 @@ class BOMGenerator(Generator):
                 if field in column_map:
                     header.append(column_map[field])
                 elif field == "fabricator_part_number" and self.fabricator:
-                    header.append(self.fabricator.part_number_header)
+                    header.append(self.fabricator.config.part_number_header)
                 else:
                     header.append(field_to_header(field))
                 normalized_fields.append(field)

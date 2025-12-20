@@ -57,6 +57,13 @@ jbom = "jbom.cli.main:main"
 [tool.setuptools]
 package-dir = {"" = "src"}
 
+[tool.setuptools.package-data]
+# Include configuration files in the package
+jbom = [
+    "config/*.yaml",
+    "config/fabricators/*.yaml",
+]
+
 # Python Semantic Release v9 configuration
 # See: https://python-semantic-release.readthedocs.io/
 [tool.semantic_release]
