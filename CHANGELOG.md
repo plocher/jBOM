@@ -1,33 +1,42 @@
 # CHANGELOG
 
 
-## v3.4.0 (2025-12-20) - Unreleased
+## v3.3.1 (2025-12-20)
 
-### Features
+### Bug Fixes
 
-* **BREAKING**: feat: implement hierarchical configuration system with dynamic CLI flags
+* fix: update CI workflow to install project dependencies from pyproject.toml
 
-**Configuration Revolution**: Replaced hardcoded fabricator logic with fully configurable system.
+The CI workflow was manually installing dependencies instead of using
+the project pyproject.toml file. This caused PyYAML to be missing since
+it was added to pyproject.toml but not to the manual install list.
 
-Key Features:
-- **Package Defaults**: Built-in fabricator configs (JLC, PCBWay, Seeed) included in distribution
-- **Hierarchical Loading**: Package → User home → Project configs with proper precedence
-- **based_on Inheritance**: Simple copy-paste-edit customization pattern
-- **Dynamic CLI Flags**: Auto-generated from fabricator `id` field (no hardcoded `--jlc`)
-- **External File References**: Load fabricator configs from separate YAML files
-- **Self-Contained Configs**: Each fabricator definition is complete and immutable
+Changed to use "pip install -e .[all]" which installs the project in
+development mode with all optional dependencies, ensuring all required
+dependencies from pyproject.toml are included.
 
-BREAKING CHANGES:
-- CLI flags now dynamically generated from configuration (still backward compatible)
-- Configuration schema updated to v3.0 with simplified structure
-- FabricatorConfig dataclass restructured with computed properties
+Co-Authored-By: Warp <agent@warp.dev> ([`6d82300`](https://github.com/plocher/jBOM/commit/6d823004d73d10f64539bfce07714b6cb58ffd78))
 
-Migration:
-- Existing `--jlc`, `--pcbway` flags continue to work via built-in configs
-- Users can customize by copying package configs to `~/.config/jbom/`
-- No code changes needed for basic usage
+* fix: add PyYAML as required dependency for configuration system
 
-Co-Authored-By: Warp <agent@warp.dev>
+The hierarchical configuration system requires PyYAML for loading YAML
+configuration files. This was missing from dependencies causing CI/CD
+pipeline failures.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`2caa3c5`](https://github.com/plocher/jBOM/commit/2caa3c583bd8b25221892e2c0627ad9d7a4ebe1c))
+
+* fix: remove unused import and apply code formatting
+
+- Fix flake8 linting issue with unused patch import
+- Apply pre-commit hook formatting (black, trailing whitespace, end-of-file)
+
+Co-Authored-By: Warp <agent@warp.dev> ([`ccac065`](https://github.com/plocher/jBOM/commit/ccac06592737a71d39fd4204243fcec3eb2e5eb5))
+
+### Unknown
+
+* Merge pull request #4 from plocher/refactor/api-kicad-config-integration
+
+feat: integrate config-driven fabricators across all usage patterns ([`62bdacd`](https://github.com/plocher/jBOM/commit/62bdacd27d12dd733a94663e939d771ceb7043f9))
 
 
 ## v3.3.0 (2025-12-18)
