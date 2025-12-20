@@ -1,0 +1,63 @@
+version: "3.0.0"
+schema_version: "2025.12.20"
+
+metadata:
+  description: "jBOM application default configuration"
+  source: "built-in"
+
+fabricators:
+  - name: "jlc"
+    file: "fabricators/jlc.fab.yaml"
+
+  - name: "pcbway"
+    file: "fabricators/pcbway.fab.yaml"
+
+  - name: "seeed"
+    file: "fabricators/seeed.fab.yaml"
+
+  # Generic fabricator for custom use
+  - name: "Generic"
+    id: "generic"
+    description: "Generic fabricator template"
+    dynamic_name: true
+    name_source: "manufacturer"
+    part_number:
+      header: "Part Number"
+      priority_fields:
+        - "Part Number"
+        - "P/N"
+        - "MPN"
+        - "MFGPN"
+    bom_columns:
+      "Reference": "reference"
+      "Quantity": "quantity"
+      "Description": "description"
+      "Part Number": "fabricator_part_number"
+    presets:
+      default:
+        description: "Generic BOM format"
+        fields:
+          - "reference"
+          - "quantity"
+          - "description"
+          - "fabricator_part_number"
+    cli_aliases:
+      flags: ["--generic"]
+      presets: ["+generic"]
+
+global_presets:
+  standard:
+    description: "Standard fields for most BOMs"
+    fields:
+      - "reference"
+      - "quantity"
+      - "description"
+      - "value"
+      - "footprint"
+
+  minimal:
+    description: "Minimal BOM fields"
+    fields:
+      - "reference"
+      - "quantity"
+      - "description"

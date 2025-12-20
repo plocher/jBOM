@@ -54,7 +54,7 @@ class POSCommand(Command):
   Available fields: reference, x, y, rotation, side, footprint, package, datasheet, version, smd
   Custom: Reference,X,Y,Rotation,SMD
   Mixed: +standard,datasheet,version"""
-        self.add_jlc_field_args(parser, field_help)
+        self.add_fabricator_field_args(parser, field_help)
 
         # Coordinate options
         parser.add_argument(

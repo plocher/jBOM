@@ -198,6 +198,21 @@ FIELD_PRESETS = {
             "Manufacturer, MPN, Description, Distributor/Fabricator PN"
         ),
     },
+    "generic": {
+        "fields": [
+            "reference",
+            "quantity",
+            "description",
+            "value",
+            "footprint",
+            "manufacturer",
+            "mfgpn",
+            "fabricator",
+            "fabricator_part_number",
+            "smd",
+        ],
+        "description": "Generic fabricator format with manufacturer information",
+    },
     "minimal": {
         "fields": ["reference", "quantity", "value", "lcsc"],
         "description": "Bare minimum: reference, qty, value, and LCSC part number",

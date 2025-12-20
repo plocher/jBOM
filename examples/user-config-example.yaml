@@ -1,0 +1,123 @@
+# Example user configuration file for jBOM
+# Place this file at ~/.config/jbom/config.yaml or ~/jbom.yaml
+
+version: "1.0.0"
+schema_version: "2025.12.20"
+
+metadata:
+  name: "User Custom Configuration"
+  description: "Customized fabricator settings for my projects"
+  author: "Your Name"
+
+# Add a custom fabricator
+fabricators:
+  # Override JLC settings for my preferences
+  - name: "JLCPCB (Custom)"
+    id: "jlc"  # Same ID to override built-in JLC
+    description: "JLCPCB with my custom column names"
+    website: "jlcpcb.com"
+
+    part_number:
+      header: "JLC Part Number"  # Custom header name
+      priority_fields:
+        - "lcsc"
+        - "jlc_part"
+        - "jlcpcb_part"
+
+    # Custom column mappings
+    bom_columns:
+      "Part": "reference"           # I prefer "Part" over "Designator"
+      "Qty": "quantity"
+      "Component Value": "value"    # More descriptive
+      "Footprint": "i:package"
+      "JLC Part Number": "fabricator_part_number"
+      "Surface Mount": "smd"
+
+    presets:
+      default:
+        description: "My standard JLCPCB format"
+        fields:
+          - "reference"
+          - "quantity"
+          - "value"
+          - "i:package"
+          - "fabricator_part_number"
+          - "smd"
+      extended:
+        description: "Extended JLCPCB with manufacturer info"
+        fields:
+          - "reference"
+          - "quantity"
+          - "value"
+          - "i:package"
+          - "manufacturer"
+          - "mfgpn"
+          - "fabricator_part_number"
+          - "datasheet"
+          - "smd"
+
+    cli_aliases:
+      flags: ["--jlc", "--jlcpcb", "--my-jlc"]  # Add custom flag
+      presets: ["+jlc", "+my-jlc"]              # Add custom preset
+
+  # Add a completely new fabricator
+  - name: "Local Fab Shop"
+    id: "local"
+    description: "My local PCB fabrication shop"
+    website: "localfabshop.com"
+
+    part_number:
+      header: "Local Part Number"
+      priority_fields:
+        - "local_pn"
+        - "mfgpn"
+        - "lcsc"
+
+    bom_columns:
+      "Component": "reference"
+      "Quantity": "quantity"
+      "Value": "value"
+      "Package": "i:package"
+      "Manufacturer": "manufacturer"
+      "Mfg Part Number": "mfgpn"
+      "Local Part Number": "fabricator_part_number"
+      "Notes": "description"
+
+    presets:
+      default:
+        description: "Standard format for Local Fab Shop"
+        fields:
+          - "reference"
+          - "quantity"
+          - "value"
+          - "i:package"
+          - "manufacturer"
+          - "mfgpn"
+          - "fabricator_part_number"
+          - "description"
+
+    cli_aliases:
+      flags: ["--local"]
+      presets: ["+local"]
+
+# Override global presets
+global_presets:
+  # Add a custom global preset
+  basic:
+    description: "Basic BOM for prototyping"
+    fields:
+      - "reference"
+      - "quantity"
+      - "value"
+      - "footprint"
+      - "manufacturer"
+
+  # Override the minimal preset
+  minimal:
+    description: "My minimal BOM fields"
+    fields:
+      - "reference"
+      - "quantity"
+      - "value"
+      - "lcsc"
+      - "mfgpn"  # I always want manufacturer part number

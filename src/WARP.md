@@ -17,6 +17,11 @@
 - Use dataclasses for structured data (`Component`, `InventoryItem`, `BOMEntry`)
 - Validation at data intake points
 - Single responsibility principle for functions
+- Coding practices to adhere to:
+    - See release-management/WARP.md
+- Agent behavior expectations
+    - When uncertain about alternate paths or solutions, ask for guidance
+
 
 ## Component Matching Logic
 **Tolerance Substitution:** Tighter tolerances can substitute looser (1% can replace 5%)

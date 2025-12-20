@@ -29,7 +29,7 @@ from jbom.loaders.inventory import InventoryLoader
 from jbom.processors.component_types import get_component_type, get_category_fields
 
 
-from jbom.common.fabricators import Fabricator
+from jbom.common.config_fabricators import ConfigurableFabricator
 
 
 class InventoryMatcher:
@@ -58,7 +58,7 @@ class InventoryMatcher:
         self,
         component: Component,
         debug: bool = False,
-        fabricator: Optional[Fabricator] = None,
+        fabricator: Optional[ConfigurableFabricator] = None,
     ) -> List[Tuple[InventoryItem, int, Optional[str]]]:
         """Find matching inventory items for a component using primary filtering first."""
         matches: List[Tuple[InventoryItem, int, Tuple[int, int], Optional[str]]] = []

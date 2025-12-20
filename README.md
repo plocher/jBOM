@@ -126,6 +126,87 @@ You can run jBOM directly from KiCad's **Generate BOM** dialog:
     ```
 3.  Click `Generate`.
 
+## Configuration
+
+jBOM uses a hierarchical configuration system that makes it easy to customize fabricator settings without hardcoding.
+
+### Built-in Fabricators
+
+jBOM includes built-in support for popular PCB fabricators:
+
+```bash
+# Use built-in fabricator configs
+jbom bom project/ --jlc        # JLCPCB format
+jbom bom project/ --pcbway     # PCBWay format
+jbom bom project/ --seeed      # Seeed Studio format
+```
+
+### Configuration Hierarchy
+
+Configurations load in order of precedence:
+
+1. **Package Defaults**: Built-in configs (JLC, PCBWay, Seeed)
+2. **System Configs**:
+   - macOS: `/Library/Application Support/jbom/config.yaml`
+   - Windows: `%PROGRAMDATA%\jbom\config.yaml`
+   - Linux: `/etc/jbom/config.yaml`
+3. **User Home**:
+   - macOS: `~/Library/Application Support/jbom/config.yaml`
+   - Windows: `%APPDATA%\jbom\config.yaml`
+   - Linux: `~/.config/jbom/config.yaml`
+4. **Project**: `.jbom/config.yaml` or `jbom.yaml` in project directory
+
+### Customization
+
+To customize a fabricator:
+
+1. **Copy a built-in config**:
+   ```bash
+   # macOS
+   mkdir -p "~/Library/Application Support/jbom/fabricators/"
+   cp $(python -c "import jbom; print(jbom.__path__[0])")/config/fabricators/jlc.fab.yaml \
+      "~/Library/Application Support/jbom/fabricators/myjlc.fab.yaml"
+
+   # Linux
+   mkdir -p ~/.config/jbom/fabricators/
+   cp $(python -c "import jbom; print(jbom.__path__[0])")/config/fabricators/jlc.fab.yaml \
+      ~/.config/jbom/fabricators/myjlc.fab.yaml
+
+   # Windows (PowerShell)
+   mkdir "$env:APPDATA\jbom\fabricators"
+   cp (python -c "import jbom; print(jbom.__path__[0])")\config\fabricators\jlc.fab.yaml \
+      "$env:APPDATA\jbom\fabricators\myjlc.fab.yaml"
+   ```
+
+2. **Edit your copy** (change BOM columns, part number priorities, etc.):
+   ```yaml
+   name: "My JLC Config"
+   based_on: "jlc"  # Optional: inherit from built-in
+   bom_columns:
+     "Designator": "reference"
+     "Comment": "value"        # Changed from "description"
+     "LCSC": "fabricator_part_number"
+   ```
+
+3. **Reference in your config**:
+   ```yaml
+   # In your OS-specific config file:
+   # macOS: ~/Library/Application Support/jbom/config.yaml
+   # Windows: %APPDATA%\jbom\config.yaml
+   # Linux: ~/.config/jbom/config.yaml
+
+   fabricators:
+     - name: "myjlc"
+       file: "fabricators/myjlc.fab.yaml"
+   ```
+
+4. **Use your custom config**:
+   ```bash
+   jbom bom project/ --myjlc
+   ```
+
+The `id` field in fabricator configs automatically generates CLI flags (`--{id}`) and presets (`+{id}`).
+
 ## Documentation
 
 Detailed documentation is available in the `docs/` directory:

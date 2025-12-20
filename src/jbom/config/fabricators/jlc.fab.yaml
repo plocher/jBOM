@@ -1,0 +1,31 @@
+name: "JLC"
+id: "jlc"
+description: "JLCPCB Fabrication Definitions"
+pcb_manufacturing:
+  website: "https://jlcpcb.com/help/article/Suggested-Naming-Patterns"
+  kicad_dru: "https://github.com/labtroll/KiCad-DesignRules/blob/main/JLCPCB/JLCPCB.kicad_dru"
+  gerbers: "kicad"
+pcb_assembly:
+  website: "https://jlcpcb.com/help/article/bill-of-materials-for-pcb-assembly"
+
+part_number:
+  header: "fabricator_part_number"
+  priority_fields:
+    - "LCSC"
+    - "LCSC Part"
+    - "LCSC Part #"
+    - "JLC"
+    - "JLC Part"
+    - "JLC Part #"
+    - "JLC PCB"
+    - "JLC PCB Part"
+    - "JLC_PCB Part #"
+    - "MPN"
+    - "MFGPN"
+
+bom_columns:
+  "Designator": "reference"
+  "Comment": "description"
+  "Footprint": "i:package"
+  "LCSC": "fabricator_part_number"
+  "Surface Mount": "smd"

@@ -1,0 +1,34 @@
+name: "PCBWay"
+id: "pcbway"
+description: "PCBWay Bill of Materials"
+website: "https://www.pcbway.com/helpcenter/assembly_help/How_to_place_an_assembly_order.html"
+
+part_number:
+  header: "Distributor Part Number"
+  priority_fields:
+    - "PCBWay"
+    - "PCBWay Part"
+    - "PCBWay Part #"
+    - "Distributor Part Number"
+    - "MPN"
+    - "MFGPN"
+
+bom_columns:
+  "Designator": "reference"
+  "Comment": "description"
+  "Package": "i:package"
+  "Distributor Part Number": "fabricator_part_number"
+
+presets:
+  default:
+    description: "Standard PCBWay format"
+    fields:
+      - "reference"
+      - "quantity"
+      - "description"
+      - "i:package"
+      - "fabricator_part_number"
+
+cli_aliases:
+  flags: ["--pcbway"]
+  presets: ["+pcbway"]

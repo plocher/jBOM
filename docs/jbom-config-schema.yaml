@@ -1,0 +1,273 @@
+# jBOM Configuration File Schema
+# This defines the structure for fabricator and distributor configuration
+# Supporting hierarchical overrides: built-in -> user -> project
+
+version: "1.0.0"
+schema_version: "2025.12.20"
+
+# Metadata about this configuration file
+metadata:
+  name: "jBOM Default Configuration"
+  description: "Default fabricator and distributor configurations for jBOM"
+  author: "jBOM Project"
+  date: "2025-12-20"
+  source_url: "https://github.com/plocher/jBOM"
+
+# Distributor/Search provider configurations
+distributors:
+  - name: "Mouser"
+    id: "mouser"
+    website: "mouser.com"
+    api_endpoint: "api.mouser.com"
+    api_token_env: "MOUSER_API_TOKEN"  # Environment variable name
+    search_capabilities:
+      - parametric_search
+      - availability_check
+      - pricing_tiers
+    rate_limits:
+      requests_per_minute: 100
+      requests_per_day: 10000
+
+  - name: "Digi-Key"
+    id: "digikey"
+    website: "digikey.com"
+    api_endpoint: "api.digikey.com"
+    api_token_env: "DIGIKEY_API_TOKEN"
+    search_capabilities:
+      - parametric_search
+      - availability_check
+      - pricing_tiers
+
+# Fabricator configurations
+fabricators:
+  - name: "JLCPCB"
+    id: "jlc"
+    website: "jlcpcb.com"
+    description: "Low-cost PCB fabrication and assembly service"
+
+    # Part number lookup configuration
+    part_number:
+      header: "LCSC"  # Column header name in BOM
+      priority_fields:  # Priority order for finding part numbers in inventory
+        - "lcsc"
+        - "jlc"
+        - "jlcpcb_part"
+        - "lcsc_part"
+        - "lcsc_part_#"
+        - "jlcpcb_part_#"
+
+    # BOM field mappings (fab_column_name: jbom_internal_field)
+    bom_columns:
+      "Designator": "reference"
+      "Qty": "quantity"
+      "Value": "value"
+      "Package": "i:package"
+      "Fabricator": "fabricator"
+      "LCSC": "fabricator_part_number"
+      "SMT": "smd"
+
+    # Field presets for this fabricator
+    presets:
+      default:
+        description: "Standard JLCPCB BOM format"
+        fields:
+          - "reference"
+          - "quantity"
+          - "value"
+          - "i:package"
+          - "fabricator"
+          - "fabricator_part_number"
+          - "smd"
+      minimal:
+        description: "Minimal JLCPCB BOM - just essentials"
+        fields:
+          - "reference"
+          - "quantity"
+          - "value"
+          - "fabricator_part_number"
+
+    # CLI flags and aliases that should auto-select this fabricator
+    cli_aliases:
+      flags: ["--jlc", "--jlcpcb"]
+      presets: ["+jlc", "+jlcpcb"]
+
+    # Placement/position file configuration
+    placement:
+      format: "csv"
+      header_mappings:
+        "Designator": "reference"
+        "Mid X": "x"
+        "Mid Y": "y"
+        "Rotation": "rotation"
+        "Layer": "side"
+      default_fields:
+        - "reference"
+        - "x"
+        - "y"
+        - "rotation"
+        - "side"
+
+    # Manufacturing capabilities
+    capabilities:
+      - name: "rigid"
+        description: "Standard rigid PCB fabrication"
+        max_layers: 10
+        min_trace_width: "0.1mm"
+        min_via_size: "0.2mm"
+        drc_file: "JLCPCB_rigid.kicad_dru"
+      - name: "flex"
+        description: "Flexible PCB fabrication"
+        max_layers: 4
+        min_trace_width: "0.15mm"
+        min_via_size: "0.3mm"
+        drc_file: "JLCPCB_flex.kicad_dru"
+
+    # Gerber file requirements
+    gerber_files:
+      format: "KiCad"
+      layers:
+        "*.GTL": "Top Copper"
+        "*.GBL": "Bottom Copper"
+        "*.G2": "Inner Layer 2 (4+ layer)"
+        "*.G3": "Inner Layer 3 (4+ layer)"
+        "*.GTS": "Top Soldermask"
+        "*.GBS": "Bottom Soldermask"
+        "*.GTO": "Top Silkscreen"
+        "*.GBO": "Bottom Silkscreen"
+        "*.GKO": "Board Outline"
+        "*.XLN": "Drill File"
+      optional:
+        - "drill_map"
+        - "pick_and_place"
+
+  - name: "PCBWay"
+    id: "pcbway"
+    website: "pcbway.com"
+    description: "PCB fabrication and assembly service"
+
+    part_number:
+      header: "Distributor Part Number"
+      priority_fields:
+        - "distributor_part_number"
+        - "pcbway_part"
+        - "mfgpn"  # Fallback to manufacturer PN
+
+    bom_columns:
+      "Designator": "reference"
+      "Quantity": "quantity"
+      "Value": "value"
+      "Package": "i:package"
+      "Manufacturer": "manufacturer"
+      "Manufacturer Part Number": "mfgpn"
+      "Description": "description"
+      "Distributor Part Number": "fabricator_part_number"
+
+    presets:
+      default:
+        description: "Standard PCBWay BOM format"
+        fields:
+          - "reference"
+          - "quantity"
+          - "value"
+          - "i:package"
+          - "manufacturer"
+          - "mfgpn"
+          - "description"
+          - "fabricator_part_number"
+
+    cli_aliases:
+      flags: ["--pcbway"]
+      presets: ["+pcbway"]
+
+  - name: "Seeed Studio"
+    id: "seeed"
+    website: "seeedstudio.com"
+    description: "Open source hardware fabrication"
+
+    part_number:
+      header: "Seeed SKU"
+      priority_fields:
+        - "seeed_sku"
+        - "seeed_part"
+
+    presets:
+      default:
+        description: "Standard Seeed Studio BOM format"
+        fields:
+          - "reference"
+          - "quantity"
+          - "value"
+          - "i:package"
+          - "fabricator"
+          - "fabricator_part_number"
+          - "smd"
+
+    cli_aliases:
+      flags: ["--seeed"]
+      presets: ["+seeed"]
+
+  # Generic fallback fabricator
+  - name: "Generic"
+    id: "generic"
+    description: "Generic fabricator using manufacturer data"
+
+    part_number:
+      header: "Manufacturer Part Number"
+      priority_fields:
+        - "mfgpn"
+        - "mpn"
+        - "lcsc"  # Fallback
+
+    # For generic, fabricator name comes from manufacturer field
+    dynamic_name: true
+    name_source: "manufacturer"
+
+    presets:
+      default:
+        description: "Generic BOM with manufacturer data"
+        fields:
+          - "reference"
+          - "quantity"
+          - "description"
+          - "value"
+          - "footprint"
+          - "manufacturer"
+          - "mfgpn"
+          - "datasheet"
+          - "smd"
+
+# Global field presets (not fabricator-specific)
+global_presets:
+  minimal:
+    description: "Absolute minimum BOM fields"
+    fields:
+      - "reference"
+      - "quantity"
+      - "value"
+      - "lcsc"
+
+  all:
+    description: "All available fields"
+    fields: null  # Special value meaning "include everything"
+
+  standard:
+    description: "Alias for default preset"
+    alias_for: "default"
+
+# Configuration file precedence and loading
+config_hierarchy:
+  - "built-in"      # Embedded defaults in jBOM code
+  - "system"        # /etc/jbom/config.yaml or /usr/local/etc/jbom/
+  - "user"          # ~/.config/jbom/config.yaml or ~/jbom.yaml
+  - "project"       # ./jbom.yaml or ./.jbom/config.yaml
+
+# Validation rules
+validation:
+  required_fabricator_fields:
+    - "name"
+    - "id"
+    - "part_number"
+  required_preset_fields:
+    - "description"
+    - "fields"
+  field_name_pattern: "^[a-z][a-z0-9_]*$"  # snake_case validation

@@ -100,13 +100,14 @@ def back_annotate(
 ```python
 from jbom.api import generate_bom, BOMOptions
 
-# Generate BOM
-opts = BOMOptions(verbose=True)
+# Generate BOM with JLC fabricator
+opts = BOMOptions(verbose=True, fabricator='jlc')
 result = generate_bom(input='MyProject/', inventory='inventory.xlsx', options=opts)
 
 if result['bom_entries']:
     for entry in result['bom_entries']:
         print(f"{entry.reference}: {entry.value} -> {entry.lcsc}")
+        print(f"  Fabricator: {entry.fabricator}, Part: {entry.fabricator_part_number}")
 ```
 
 ### Class: BOMOptions
@@ -127,7 +128,7 @@ class BOMOptions:
 : **debug** — Emit detailed matching diagnostics
 : **smd_only** — Filter to surface-mount components only
 : **fields** — List of output field names (None = use defaults)
-: **fabricator** — Target fabricator (e.g. "jlc") for part number lookup
+: **fabricator** — Target fabricator ID (e.g. "jlc", "pcbway", "seeed", "generic") for part number lookup
 
 ### Class: POSOptions
 
@@ -247,6 +248,57 @@ get_available_fields(components: List[Component]) -> Dict[str, str]
 ```
 : Returns available output field names and descriptions.
 
+## FABRICATOR CONFIGURATION
+
+The fabricator system is fully configurable via YAML files. Available fabricators are loaded from the configuration hierarchy:
+
+### Built-in Fabricators
+- **jlc** — JLCPCB fabrication and assembly
+- **pcbway** — PCBWay fabrication requirements
+- **seeed** — Seeed Studio Fusion PCBA
+- **generic** — Generic fabricator with dynamic manufacturer names
+
+### Configuration Hierarchy
+1. **Package defaults** — Built-in fabricator configurations
+2. **System configs** — OS-specific system-wide settings
+   - macOS: `/Library/Application Support/jbom/config.yaml`
+   - Windows: `%PROGRAMDATA%\jbom\config.yaml`
+   - Linux: `/etc/jbom/config.yaml`
+3. **User configs** — Per-user customizations
+   - macOS: `~/Library/Application Support/jbom/config.yaml`
+   - Windows: `%APPDATA%\jbom\config.yaml`
+   - Linux: `~/.config/jbom/config.yaml`
+4. **Project configs** — Project-specific overrides
+   - `.jbom/config.yaml` or `jbom.yaml` in project directory
+
+### Custom Fabricators
+
+Create custom fabricator configurations by copying and modifying existing ones:
+
+```yaml
+fabricators:
+  - name: "My Custom Fab"
+    id: "mycustom"
+    based_on: "jlc"  # Inherit from JLC configuration
+    description: "Custom fabricator based on JLC"
+    part_number:
+      header: "Custom Part Number"
+      priority_fields:
+        - "CUSTOM_PN"
+        - "LCSC"
+    bom_columns:
+      "Reference": "reference"
+      "Qty": "quantity"
+      "Custom Part Number": "fabricator_part_number"
+```
+
+Then use in Python API:
+
+```python
+opts = BOMOptions(fabricator='mycustom')
+result = generate_bom('MyProject/', options=opts)
+```
+
 ## WORKFLOW EXAMPLE
 
 ```python
@@ -257,11 +309,12 @@ from jbom import (
 from pathlib import Path
 
 # Option 1: High-level API (recommended for most use cases)
-opts = GenerateOptions(
+opts = BOMOptions(
     verbose=True,
-    fields=['Reference', 'Quantity', 'Value', 'LCSC', 'Manufacturer']
+    fabricator='pcbway',  # Use PCBWay fabricator
+    fields=['reference', 'quantity', 'value', 'lcsc', 'manufacturer']
 )
-result = generate_bom_api('MyProject/', 'inventory.xlsx', options=opts)
+result = generate_bom('MyProject/', 'inventory.xlsx', options=opts)
 
 if result['exit_code'] == 0:
     # Process BOM entries

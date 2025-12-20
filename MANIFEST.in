@@ -3,4 +3,5 @@ include LICENSE
 include kicad_jbom_plugin.py
 recursive-include tests *.py
 recursive-include docs *
+recursive-include src/jbom/config *.yaml
 global-exclude release-management/*

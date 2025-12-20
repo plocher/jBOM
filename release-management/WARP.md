@@ -15,6 +15,12 @@
 - `GITHUB_TOKEN` - Automatic repository access
 - Setup guide in `github-secrets-setup.md`
 
+## Development practices
+- Use Test Driven Development for all functionality, creating functional tests as needed in the tests folder
+- Create Unit tests for key internal abstractions and functions, deleting or updating them proactively as changes are made to the internal design and implementation
+- Use git branches, github PR creation and semantic versioning aware commits for changes
+- Update CHANGELOG.md to capture high level changes
+
 ## Release Process
 1. Make code changes with conventional commit messages
 2. Push to main branch

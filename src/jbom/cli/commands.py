@@ -3,10 +3,12 @@
 Provides common patterns for BOM and POS command implementations.
 """
 from __future__ import annotations
-import sys
 import argparse
-from pathlib import Path
 from abc import ABC, abstractmethod
+import sys
+from pathlib import Path
+
+from jbom.common.config import get_config
 
 __all__ = [
     "Command",
@@ -111,8 +113,10 @@ class Command(ABC):
         )
 
     @staticmethod
-    def add_jlc_field_args(parser: argparse.ArgumentParser, field_help: str) -> None:
-        """Add --jlc and --fields arguments.
+    def add_fabricator_field_args(
+        parser: argparse.ArgumentParser, field_help: str
+    ) -> None:
+        """Add --fields and dynamic fabricator flag arguments.
 
         Args:
             parser: Parser to add arguments to
@@ -124,8 +128,21 @@ class Command(ABC):
             metavar="FIELDS",
             help=field_help,
         )
-        parser.add_argument(
-            "--jlc",
-            action="store_true",
-            help="Use JLCPCB field preset (+jlc): optimized for JLCPCB assembly service",
-        )
+
+        # Dynamically add fabricator flags from configuration
+        try:
+            config = get_config()
+            for fabricator in config.fabricators:
+                for flag in fabricator.cli_flags:
+                    # Remove leading '--' to get the argument name
+                    flag_name = flag.lstrip("-")
+                    parser.add_argument(
+                        flag,
+                        action="store_true",
+                        help=f"Use {fabricator.name} preset: {fabricator.description or 'optimized for ' + fabricator.name}",
+                        dest=f"fabricator_{flag_name}",  # Store as fabricator_jlc, fabricator_pcbway, etc.
+                    )
+        except Exception:
+            # If config loading fails, just continue without fabricator flags
+            # This ensures jBOM still works even if configuration is broken
+            pass
