@@ -134,7 +134,7 @@ class TestInventoryGeneration(FunctionalTestBase):
         output = self.output_dir / "enriched_inventory.csv"
 
         # Mock the search provider to avoid real API calls
-        with patch("jbom.search.mouser.MouserProvider") as mock_provider_class:
+        with patch("jbom.api.MouserProvider") as mock_provider_class:
             mock_provider = Mock()
             mock_provider_class.return_value = mock_provider
             mock_provider.search.return_value = []  # No search results
@@ -179,7 +179,7 @@ class TestInventoryGeneration(FunctionalTestBase):
         mock_search_result.description = "Test Description"
         mock_search_result.distributor_part_number = "DPN123"
 
-        with patch("jbom.search.mouser.MouserProvider") as mock_provider_class:
+        with patch("jbom.api.MouserProvider") as mock_provider_class:
             mock_provider = Mock()
             mock_provider_class.return_value = mock_provider
             mock_provider.search.return_value = [
@@ -249,7 +249,7 @@ class TestInventoryGeneration(FunctionalTestBase):
 
         output = self.output_dir / "enriched_inventory_unlimited.csv"
 
-        with patch("jbom.search.mouser.MouserProvider") as mock_provider_class:
+        with patch("jbom.api.MouserProvider") as mock_provider_class:
             mock_provider = Mock()
             mock_provider_class.return_value = mock_provider
             mock_provider.search.return_value = []  # No search results for simplicity
