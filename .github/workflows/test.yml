@@ -30,11 +30,11 @@ jobs:
 
     - name: Run tests
       run: |
-        python -m unittest tests.test_jbom -v
+        python -m unittest discover -s tests -v
 
     - name: Test coverage
       if: matrix.python-version == '3.9'
       run: |
         pip install coverage
-        coverage run -m unittest tests.test_jbom
+        coverage run -m unittest discover -s tests
         coverage report -m

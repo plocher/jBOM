@@ -23,7 +23,7 @@ jobs:
 
     - name: Run tests
       run: |
-        python -m unittest tests.test_jbom -v
+        python -m unittest discover -s tests -v
 
     - name: Build distribution
       run: |
