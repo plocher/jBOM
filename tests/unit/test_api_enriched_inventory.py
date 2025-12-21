@@ -159,7 +159,7 @@ class TestGenerateEnrichedInventoryAPI(unittest.TestCase):
         result = generate_enriched_inventory(input="test_project", options=options)
 
         self.assertFalse(result["success"])
-        self.assertIn("Unknown search provider", result["error"])
+        self.assertIn("Unsupported search provider", result["error"])
 
     @patch("jbom.api._write_inventory_output")
     @patch("jbom.api.BOMGenerator")

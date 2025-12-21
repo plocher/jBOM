@@ -170,7 +170,11 @@ def search_parts(
     if provider == "mouser":
         prov = MouserProvider(api_key=api_key)
     else:
-        raise ValueError(f"Unknown provider: {provider}")
+        raise ValueError(
+            f"Unsupported search provider: '{provider}'. "
+            f"Currently supported providers: 'mouser'. "
+            f"Additional providers (e.g., DigiKey) are planned for future releases."
+        )
 
     results = prov.search(query, limit=limit)
 
@@ -436,7 +440,11 @@ def generate_enriched_inventory(
         else:
             return {
                 "success": False,
-                "error": f"Unknown search provider: {opts.provider}",
+                "error": (
+                    f"Unsupported search provider: '{opts.provider}'. "
+                    f"Currently supported providers: 'mouser'. "
+                    f"Additional providers (e.g., DigiKey) are planned for future releases."
+                ),
                 "inventory_items": [],
                 "field_names": [],
                 "component_count": 0,
