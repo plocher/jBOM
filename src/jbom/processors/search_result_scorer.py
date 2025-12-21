@@ -158,7 +158,7 @@ class SearchResultScorer:
             return search_result.attributes["Package"]
 
         # Extract from description (look for common SMD packages)
-        desc = search_result.description.lower()
+        desc = (search_result.description or "").lower()
         common_packages = [
             "0603",
             "0805",
@@ -180,7 +180,7 @@ class SearchResultScorer:
 
     def _extract_category_from_result(self, search_result: SearchResult) -> str:
         """Extract component category from search result."""
-        desc = search_result.description.upper()
+        desc = (search_result.description or "").upper()
 
         if "RES" in desc or "RESISTOR" in desc:
             return "RES"
@@ -289,7 +289,7 @@ class SearchResultScorer:
         Returns:
             Score from 0-100 (higher is better)
         """
-        status = lifecycle_status.upper()
+        status = (lifecycle_status or "").upper()
 
         if status == "ACTIVE":
             return 100
