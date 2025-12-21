@@ -127,6 +127,153 @@ class TestInventoryGeneration(FunctionalTestBase):
         for score in scores:
             self.assertIn("Score:", score)
 
+    def test_generate_inventory_with_search_enabled(self):
+        """Test inventory generation with search enrichment (mocked)."""
+        from unittest.mock import patch, Mock
+
+        output = self.output_dir / "enriched_inventory.csv"
+
+        # Mock the search provider to avoid real API calls
+        with patch("jbom.search.mouser.MouserProvider") as mock_provider_class:
+            mock_provider = Mock()
+            mock_provider_class.return_value = mock_provider
+            mock_provider.search.return_value = []  # No search results
+
+            rc, stdout, stderr = self.run_jbom(
+                [
+                    "inventory",
+                    str(self.minimal_proj),
+                    "-o",
+                    str(output),
+                    "--search",
+                    "--provider",
+                    "mouser",
+                    "--limit",
+                    "1",
+                ]
+            )
+
+            self.assertEqual(rc, 0)
+            rows = self.assert_csv_valid(output)
+
+            # Should still have inventory data (even with no search results)
+            self.assertGreater(len(rows), 1, "Enriched inventory should have data rows")
+
+            # Check that search statistics were printed
+            self.assertIn("Search statistics:", stdout)
+            self.assertIn("Provider: mouser", stdout)
+
+    def test_generate_inventory_with_search_multiple_results(self):
+        """Test inventory generation with multiple search results per component."""
+        from unittest.mock import patch, Mock
+
+        output = self.output_dir / "enriched_inventory_multi.csv"
+
+        # Mock search results
+        mock_search_result = Mock()
+        mock_search_result.manufacturer = "Test Mfg"
+        mock_search_result.mpn = "TEST-PART-123"
+        mock_search_result.price = "0.10"
+        mock_search_result.stock_quantity = 1000
+        mock_search_result.lifecycle_status = "Active"
+        mock_search_result.description = "Test Description"
+        mock_search_result.distributor_part_number = "DPN123"
+
+        with patch("jbom.search.mouser.MouserProvider") as mock_provider_class:
+            mock_provider = Mock()
+            mock_provider_class.return_value = mock_provider
+            mock_provider.search.return_value = [
+                mock_search_result
+            ]  # One result per search
+
+            rc, stdout, stderr = self.run_jbom(
+                [
+                    "inventory",
+                    str(self.minimal_proj),
+                    "-o",
+                    str(output),
+                    "--search",
+                    "--provider",
+                    "mouser",
+                    "--limit",
+                    "3",  # Request multiple results
+                ]
+            )
+
+            self.assertEqual(rc, 0)
+            rows = self.assert_csv_valid(output)
+
+            # Should have inventory data enhanced with search results
+            self.assertGreater(len(rows), 1, "Enhanced inventory should have data rows")
+
+            # Look for search-enriched fields in header
+            header = rows[0]
+            self.assertIn("Manufacturer", header)
+            self.assertIn("MFGPN", header)
+
+            # Verify search statistics in output
+            self.assertIn("Search statistics:", stdout)
+            self.assertIn("Searches performed:", stdout)
+
+    def test_generate_inventory_search_api_error(self):
+        """Test handling of search provider API errors."""
+        from unittest.mock import patch
+
+        output = self.output_dir / "inventory_api_error.csv"
+
+        with patch("jbom.api.MouserProvider") as mock_provider_class:
+            # Mock provider initialization to fail
+            mock_provider_class.side_effect = ValueError("Invalid API key")
+
+            rc, stdout, stderr = self.run_jbom(
+                [
+                    "inventory",
+                    str(self.minimal_proj),
+                    "-o",
+                    str(output),
+                    "--search",
+                    "--provider",
+                    "mouser",
+                ],
+                expected_rc=1,  # Expect failure
+            )
+
+            # Should fail gracefully
+            self.assertEqual(rc, 1)
+            self.assertIn("Search provider error", stderr)
+            self.assertIn("Invalid API key", stderr)
+
+    def test_generate_inventory_search_limit_none(self):
+        """Test inventory generation with unlimited search results."""
+        from unittest.mock import patch, Mock
+
+        output = self.output_dir / "enriched_inventory_unlimited.csv"
+
+        with patch("jbom.search.mouser.MouserProvider") as mock_provider_class:
+            mock_provider = Mock()
+            mock_provider_class.return_value = mock_provider
+            mock_provider.search.return_value = []  # No search results for simplicity
+
+            rc, stdout, stderr = self.run_jbom(
+                [
+                    "inventory",
+                    str(self.minimal_proj),
+                    "-o",
+                    str(output),
+                    "--search",
+                    "--provider",
+                    "mouser",
+                    "--limit",
+                    "none",  # Unlimited results
+                ]
+            )
+
+            self.assertEqual(rc, 0)
+            self.assert_csv_valid(output)
+
+            # Should mention unlimited results in output
+            self.assertIn("Search statistics:", stdout)
+
 
 if __name__ == "__main__":
     import unittest

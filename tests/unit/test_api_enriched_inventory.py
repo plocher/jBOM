@@ -39,7 +39,7 @@ class TestGenerateEnrichedInventoryAPI(unittest.TestCase):
         mock_generator.discover_input.return_value = Path("test.kicad_sch")
         mock_generator.load_input.return_value = self.mock_components
 
-        result = generate_enriched_inventory("test_project")
+        result = generate_enriched_inventory(input="test_project")
 
         self.assertTrue(result["success"])
         self.assertEqual(result["component_count"], 2)
@@ -81,7 +81,7 @@ class TestGenerateEnrichedInventoryAPI(unittest.TestCase):
 
         # Test with search enabled
         options = InventoryOptions(search=True, provider="mouser", limit=1)
-        result = generate_enriched_inventory("test_project", options=options)
+        result = generate_enriched_inventory(input="test_project", options=options)
 
         self.assertTrue(result["success"])
         self.assertEqual(result["component_count"], 2)
@@ -105,7 +105,7 @@ class TestGenerateEnrichedInventoryAPI(unittest.TestCase):
             "Project not found"
         )
 
-        result = generate_enriched_inventory("nonexistent_project")
+        result = generate_enriched_inventory(input="nonexistent_project")
 
         self.assertFalse(result["success"])
         self.assertIn("Error loading project", result["error"])
@@ -120,7 +120,7 @@ class TestGenerateEnrichedInventoryAPI(unittest.TestCase):
         mock_generator.discover_input.return_value = Path("empty.kicad_sch")
         mock_generator.load_input.return_value = []  # Empty component list
 
-        result = generate_enriched_inventory("empty_project")
+        result = generate_enriched_inventory(input="empty_project")
 
         self.assertFalse(result["success"])
         self.assertIn("No components found", result["error"])
@@ -140,7 +140,7 @@ class TestGenerateEnrichedInventoryAPI(unittest.TestCase):
         mock_provider_class.side_effect = ValueError("Invalid API key")
 
         options = InventoryOptions(search=True, provider="mouser")
-        result = generate_enriched_inventory("test_project", options=options)
+        result = generate_enriched_inventory(input="test_project", options=options)
 
         self.assertFalse(result["success"])
         self.assertIn("Search provider error", result["error"])
@@ -156,7 +156,7 @@ class TestGenerateEnrichedInventoryAPI(unittest.TestCase):
         mock_generator.load_input.return_value = self.mock_components
 
         options = InventoryOptions(search=True, provider="invalid_provider")
-        result = generate_enriched_inventory("test_project", options=options)
+        result = generate_enriched_inventory(input="test_project", options=options)
 
         self.assertFalse(result["success"])
         self.assertIn("Unknown search provider", result["error"])
@@ -171,7 +171,7 @@ class TestGenerateEnrichedInventoryAPI(unittest.TestCase):
         mock_generator.discover_input.return_value = Path("test.kicad_sch")
         mock_generator.load_input.return_value = self.mock_components
 
-        result = generate_enriched_inventory("test_project", output="output.csv")
+        result = generate_enriched_inventory(input="test_project", output="output.csv")
 
         self.assertTrue(result["success"])
         mock_write_output.assert_called_once()
@@ -189,7 +189,9 @@ class TestGenerateEnrichedInventoryAPI(unittest.TestCase):
         # Mock output writing to fail
         mock_write_output.side_effect = IOError("Cannot write file")
 
-        result = generate_enriched_inventory("test_project", output="readonly.csv")
+        result = generate_enriched_inventory(
+            input="test_project", output="readonly.csv"
+        )
 
         self.assertFalse(result["success"])
         self.assertIn("Error writing output", result["error"])

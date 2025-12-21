@@ -346,6 +346,7 @@ def generate_pos(
 
 
 def generate_enriched_inventory(
+    *,
     input: Union[str, Path],
     output: Optional[Union[str, Path]] = None,
     options: Optional[InventoryOptions] = None,
@@ -368,7 +369,7 @@ def generate_enriched_inventory(
 
     Examples:
         >>> # Basic inventory generation (no search)
-        >>> result = generate_enriched_inventory("MyProject/")
+        >>> result = generate_enriched_inventory(input="MyProject/")
 
         >>> # With search enrichment
         >>> opts = InventoryOptions(search=True, provider="mouser", limit=1)
@@ -385,7 +386,7 @@ def generate_enriched_inventory(
         ...     limit=3,
         ...     api_key="your_key"
         ... )
-        >>> result = generate_enriched_inventory("MyProject/", options=opts)
+        >>> result = generate_enriched_inventory(input="MyProject/", options=opts)
     """
     opts = options or InventoryOptions()
 
