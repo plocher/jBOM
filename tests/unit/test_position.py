@@ -10,7 +10,7 @@ from pathlib import Path
 # Ensure src is on path (mirrors pattern in existing tests)
 import sys
 
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 from jbom.loaders.pcb import load_board
 from jbom.generators.pos import POSGenerator, PlacementOptions

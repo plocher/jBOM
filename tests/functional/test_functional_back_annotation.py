@@ -9,7 +9,7 @@ from pathlib import Path
 # Ensure tests directory is on path for imports
 sys.path.insert(0, str(Path(__file__).parent))
 
-from test_functional_base import FunctionalTestBase
+from .test_functional_base import FunctionalTestBase
 from jbom.processors.annotator import SchematicAnnotator
 
 # Minimal schematic with one component

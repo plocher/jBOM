@@ -10,7 +10,7 @@ import os
 
 import sys
 
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 # Get inventory path from environment (None if not set)
 _inventory_env = os.environ.get("INVENTORY", "").strip()
