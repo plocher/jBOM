@@ -7,13 +7,13 @@ jbom — Python library for KiCad bill of materials generation
 ## SYNOPSIS
 
 ```python
-from jbom.api import generate_bom, generate_pos, back_annotate, BOMOptions, POSOptions
+from jbom.api import generate_bom, generate_pos, back_annotate, search_parts, BOMOptions, POSOptions
 from pathlib import Path
 ```
 
 ## DESCRIPTION
 
-The jBOM library provides programmatic access to bill-of-materials generation, placement file generation, and schematic back-annotation.
+The jBOM library provides programmatic access to bill-of-materials generation, placement file generation, schematic back-annotation, and part searching.
 
 ## PUBLIC API
 
@@ -110,6 +110,32 @@ if result['bom_entries']:
         print(f"  Fabricator: {entry.fabricator}, Part: {entry.fabricator_part_number}")
 ```
 
+### Function: search_parts()
+
+**Signature**
+```python
+def search_parts(
+    query: str,
+    provider: str = "mouser",
+    limit: int = 10,
+    api_key: Optional[str] = None,
+    filter_parametric: bool = True
+) -> List[SearchResult]
+```
+
+**Description**
+: Search for parts from external distributors (e.g., Mouser).
+
+**Parameters**
+: **query** — Search query string (keyword, MPN, etc.)
+: **provider** — Provider name (default: "mouser")
+: **limit** — Maximum results to return
+: **api_key** — Optional API key (overrides environment)
+: **filter_parametric** — Enable smart parametric filtering
+
+**Return value** (list)
+: List of **SearchResult** objects
+
 ### Class: BOMOptions
 
 **Signature**
@@ -141,6 +167,31 @@ class POSOptions:
     smd_only: bool = True
     layer_filter: Optional[str] = None
     fields: Optional[List[str]] = None
+    fabricator: Optional[str] = None
+```
+
+**Attributes**
+: **units** — Coordinate units ("mm" or "inch")
+: **origin** — Coordinate origin ("board" or "aux")
+: **smd_only** — Filter to surface-mount components only
+: **layer_filter** — Filter by side ("TOP" or "BOTTOM")
+: **fields** — List of output field names
+: **fabricator** — Target fabricator ID (e.g. "jlc") for default presets
+
+### Class: SearchResult
+
+Represents a part search result.
+
+**Attributes**
+```python
+manufacturer: str            # Manufacturer name
+mpn: str                    # Manufacturer part number
+description: str            # Part description
+price: Optional[float]      # Unit price
+availability: str           # Availability string (e.g., "In Stock")
+distributor_part_number: str # Distributor SKU
+datasheet: Optional[str]    # Datasheet URL
+attributes: Dict[str, str]  # Technical attributes (Value, Tolerance, etc.)
 ```
 
 ### Class: Component

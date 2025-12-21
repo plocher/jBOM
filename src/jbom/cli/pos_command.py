@@ -44,6 +44,12 @@ class POSCommand(Command):
             help="Output directory for generated files (only used if -o not specified)",
         )
 
+        parser.add_argument(
+            "--fabricator",
+            metavar="NAME",
+            help="Target fabricator for output format (e.g., jlc)",
+        )
+
         # Field selection
         field_help = """Field selection: comma-separated list of fields or presets.
   Presets (use + prefix):
@@ -107,6 +113,7 @@ class POSCommand(Command):
             smd_only=args.smd_only,
             layer_filter=args.layer,
             loader_mode=args.loader,
+            fabricator=args.fabricator,
         )
 
         # Process fields
@@ -123,11 +130,11 @@ class POSCommand(Command):
         if output_mode == OutputMode.CONSOLE:
             # Need to run first to load data
             gen.run(input=args.board)
-            fields = opts.fields or gen.parse_fields_argument("+standard")
+            fields = opts.fields or gen.parse_fields_argument(None)
             print_pos_table(gen, fields)
         elif output_mode == OutputMode.STDOUT:
             # Run with stdout output
-            fields = opts.fields or gen.parse_fields_argument("+standard")
+            fields = opts.fields or gen.parse_fields_argument(None)
             opts.fields = fields
             gen.options = opts  # Update options
             gen.run(input=args.board, output="-")
@@ -139,7 +146,7 @@ class POSCommand(Command):
                 out = resolve_output_path(
                     board_path_input, args.output, args.outdir, "_pos.csv"
                 )
-            fields = opts.fields or gen.parse_fields_argument("+standard")
+            fields = opts.fields or gen.parse_fields_argument(None)
             opts.fields = fields
             gen.options = opts  # Update options
             gen.run(input=args.board, output=out)

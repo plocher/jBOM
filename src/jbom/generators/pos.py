@@ -12,6 +12,7 @@ from jbom.common.generator import Generator, GeneratorOptions
 from jbom.common.fields import normalize_field_name, field_to_header
 from jbom.common.packages import PackageType
 from jbom.common.utils import find_best_pcb
+from jbom.common.config_fabricators import get_fabricator, ConfigurableFabricator
 
 Layer = Literal["TOP", "BOTTOM"]
 Units = Literal["mm", "inch"]
@@ -59,6 +60,7 @@ class PlacementOptions(GeneratorOptions):
     smd_only: bool = True
     layer_filter: Optional[Layer] = None
     loader_mode: str = "auto"  # PCB loading method
+    fabricator: Optional[str] = None
 
 
 class POSGenerator(Generator):
@@ -76,6 +78,13 @@ class POSGenerator(Generator):
         """
         super().__init__(options or PlacementOptions())
         self.board: Optional[BoardModel] = None  # Set by load_input()
+
+        # Initialize fabricator
+        fab_name = getattr(self.options, "fabricator", None)
+        if fab_name:
+            self.fabricator: Optional[ConfigurableFabricator] = get_fabricator(fab_name)
+        else:
+            self.fabricator = None
 
     # ---------------- Generator abstract methods ----------------
 
@@ -195,6 +204,12 @@ class POSGenerator(Generator):
 
     def default_preset(self) -> str:
         """Return default field preset name."""
+        if self.fabricator:
+            # Try to match fabricator ID to a preset
+            fab_id = self.fabricator.config.id.lower()
+            if fab_id in PLACEMENT_PRESETS:
+                return fab_id
+
         return "standard"
 
     # ---------------- column system ----------------
@@ -214,7 +229,7 @@ class POSGenerator(Generator):
 
     def parse_fields_argument(self, fields_arg: Optional[str]) -> List[str]:
         if not fields_arg:
-            return self._preset_fields("standard")
+            return self._preset_fields(self.default_preset())
         tokens = [t.strip() for t in fields_arg.split(",") if t.strip()]
         result: List[str] = []
         presets = set(PLACEMENT_PRESETS.keys())

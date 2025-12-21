@@ -9,13 +9,19 @@ jbom — generate Bill of Materials (BOM) and Component Placement (CPL/POS)
 ```
 jbom bom PROJECT -i INVENTORY [-o OUTPUT] [BOM OPTIONS]
 jbom pos PROJECT [-o OUTPUT] [POS OPTIONS]
+jbom inventory PROJECT [-o OUTPUT] [INVENTORY OPTIONS]
+jbom search QUERY [SEARCH OPTIONS]
+jbom annotate PROJECT -i INVENTORY [ANNOTATE OPTIONS]
 ```
 
 ## DESCRIPTION
 
-jBOM provides two subcommands:
+jBOM provides five subcommands:
 - `bom` — generate a BOM from KiCad schematics by matching components against an inventory file
 - `pos` — generate component placement (CPL/POS) from KiCad PCB files for manufacturing
+- `inventory` — generate an initial inventory file from KiCad schematic components
+- `search` — search for parts from external distributors (e.g., Mouser)
+- `annotate` — back-annotate inventory data (Value, Footprint, LCSC) to KiCad schematics
 
 The BOM flow keeps designs supplier-neutral by matching at generation time rather than hardcoding part numbers in schematics.
 
@@ -78,6 +84,9 @@ Write a JSON report to FILE with statistics (entry count, unmatched count, forma
 **--jlc**
 Imply `+jlc` field preset for JLCPCB-compatible placement output. This preset includes: Designator, Mid X, Mid Y, Layer, Rotation columns in the order expected by JLCPCB's assembly service.
 
+**--fabricator NAME**
+: Target fabricator for output format (e.g., `jlc`, `pcbway`). Used to select default field presets and formatting.
+
 **-o, --output FILE**
 : Output CSV path. If omitted, generates `<PROJECT>_pos.csv` in the project directory. File will contain component placement data.
 
@@ -110,6 +119,54 @@ Imply `+jlc` field preset for JLCPCB-compatible placement output. This preset in
 - `auto`: Try pcbnew Python API first, fall back to S-expression parser (recommended)
 - `pcbnew`: Use KiCad's pcbnew Python API (requires KiCad Python environment)
 - `sexp`: Use built-in S-expression parser (works without KiCad installation)
+
+## INVENTORY ARGUMENTS
+
+**PROJECT**
+: KiCad project directory or a specific .kicad_sch file.
+
+## INVENTORY OPTIONS
+
+**-o, --output FILE**
+: Output CSV path. If omitted, generates `<PROJECT>_inventory.csv` in the project directory.
+
+**--outdir DIR**
+: Directory for output files when `-o` is not specified.
+
+## SEARCH ARGUMENTS
+
+**QUERY**
+: Search query (keyword, part number, description).
+
+## SEARCH OPTIONS
+
+**--provider {mouser}**
+: Search provider to use (default: mouser).
+
+**--limit N**
+: Maximum number of results to return (default: 10).
+
+**--api-key KEY**
+: API Key for the provider (overrides environment variables).
+
+**--all**
+: Disable all filters (show out of stock/obsolete).
+
+**--no-parametric**
+: Disable smart parametric filtering (e.g. strict value matching).
+
+## ANNOTATE ARGUMENTS
+
+**PROJECT**
+: KiCad project directory or a specific .kicad_sch file.
+
+## ANNOTATE OPTIONS
+
+**-i, --inventory FILE**
+: Inventory file containing updated component data (required).
+
+**-n, --dry-run**
+: Show what would be updated without modifying files.
 
 ## OUTPUT
 
@@ -192,6 +249,21 @@ jbom pos MyBoard.kicad_pcb -o MyBoard.csv -f "Reference,X,Y,Footprint,Side"
 POS (specific output location):
 ```
 jbom pos MyProject/ -o fabrication/placement.csv
+```
+
+Generate inventory:
+```
+jbom inventory MyProject/ -o inventory.csv
+```
+
+Search for parts:
+```
+jbom search "10k 0603 resistor" --limit 5
+```
+
+Back-annotate schematic from inventory:
+```
+jbom annotate MyProject/ -i inventory.csv --dry-run
 ```
 
 Verbose BOM scoring:

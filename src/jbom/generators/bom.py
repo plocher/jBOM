@@ -91,7 +91,7 @@ class BOMGenerator(Generator):
             List of Component objects
         """
         # Load schematic
-        loader = SchematicLoader(input_path)
+        loader = SchematicLoader(input_path, options=self.options)
         self.components = loader.parse()
 
         return self.components

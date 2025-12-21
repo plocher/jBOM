@@ -73,6 +73,18 @@ jbom bom --jlc MyProject/ -i my_new_inventory.csv
 jbom pos --jlc MyProject/
 ```
 
+**Generate Inventory:**
+```bash
+# Extract components to initial inventory
+jbom inventory MyProject/ -o my_new_inventory.csv
+```
+
+**Search for Parts:**
+```bash
+# Search Mouser for parts
+jbom search "10k 0603 resistor" --limit 5
+```
+
 ### 4. (Optional) Back-Annotate to KiCad
 
 If you updated component values or packages in your inventory CSV (Step 2), your schematic is now out of sync. You can push these changes back to KiCad to keep your schematic as the single source of truth.
@@ -110,6 +122,12 @@ anno_result = back_annotate(
     project='MyProject/',
     inventory='updated_inventory.csv',
     dry_run=True
+)
+
+# Search Parts
+parts = search_parts(
+    query="10k 0603 resistor",
+    limit=5
 )
 ```
 

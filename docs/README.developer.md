@@ -23,6 +23,9 @@ src/jbom/
 │   ├── commands.py      # Base Command class with OutputMode
 │   ├── bom_command.py   # BOM subcommand implementation
 │   ├── pos_command.py   # POS subcommand implementation
+│   ├── inventory_command.py # Inventory subcommand
+│   ├── search_command.py    # Search subcommand
+│   ├── annotate_command.py  # Annotate subcommand
 │   ├── common.py        # Shared CLI utilities
 │   └── formatting.py    # Console output formatting
 │
