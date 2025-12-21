@@ -1966,29 +1966,18 @@ class TestFieldArgumentParsing(unittest.TestCase):
 
     def test_parse_jlc_preset(self):
         """Test expanding +jlc preset"""
+        # +jlc is no longer a global preset, but we can verify that parse_fields_argument
+        # correctly raises ValueError for unknown presets now that JLC is config-driven
         from jbom.common.fields import parse_fields_argument as _parse_fields_argument
 
         available_fields = {
             "reference": "Standard BOM field",
             "quantity": "Standard BOM field",
-            "lcsc": "Standard BOM field",
-            "value": "Standard BOM field",
-            "footprint": "Standard BOM field",
-            "description": "Standard BOM field",
-            "datasheet": "Standard BOM field",
-            "smd": "Standard BOM field",
-            "i:package": "Inventory field",
-            "fabricator": "Standard BOM field",
-            "fabricator_part_number": "Standard BOM field",
         }
 
-        result = _parse_fields_argument("+jlc", available_fields, False, False)
-        self.assertIn("reference", result)
-        self.assertIn("quantity", result)
-        self.assertIn("value", result)
-        self.assertIn("i:package", result)
-        self.assertIn("fabricator", result)
-        self.assertIn("fabricator_part_number", result)
+        # This should fail because 'jlc' is now handled by BOMGenerator, not global fields.py
+        with self.assertRaises(ValueError):
+            _parse_fields_argument("+jlc", available_fields, False, False)
 
     def test_parse_standard_preset(self):
         """Test expanding +default preset"""
@@ -2080,12 +2069,14 @@ class TestFieldArgumentParsing(unittest.TestCase):
             "i:package": "Inventory",
         }
 
+        # Use +minimal instead of +jlc since minimal is a global preset
         result = _parse_fields_argument(
-            "+jlc,customfield", available_fields, False, False
+            "+minimal,customfield", available_fields, False, False
         )
         self.assertIn("reference", result)
         self.assertIn("customfield", result)
-        self.assertIn("fabricator_part_number", result)
+        # minimal has lcsc, check for it
+        self.assertIn("lcsc", result)
 
     def test_invalid_preset_name(self):
         """Test error when using invalid preset name"""
