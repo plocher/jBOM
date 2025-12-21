@@ -1,6 +1,29 @@
 # CHANGELOG
 
 
+## v3.4.0 (2025-12-21)
+
+### Features
+
+* feat: implement config-driven component classification
+
+- Refactored component classification to use a rule-based engine
+- Moved hardcoded classification logic to src/jbom/config/defaults.yaml
+- Added ClassificationEngine in src/jbom/processors/classifier.py
+- Updated JBOMConfig to support component_classifiers
+- Added support for debug_categories in options
+- Updated inventory generation to leave IPN blank for unknown types
+- Fixed schematic loader to ignore library definitions (ghost components)
+- Updated documentation with new configuration options
+- Added unit and functional tests for classification engine ([`12332b7`](https://github.com/plocher/jBOM/commit/12332b77baa4a8a30fa95dbbff2f8319f079023e))
+
+### Unknown
+
+* Merge pull request #5 from plocher/feat/config-driven-classification
+
+feat: config-driven component classification ([`c8b5b9d`](https://github.com/plocher/jBOM/commit/c8b5b9de0adf823a34bbec963541cf6c47a9c382))
+
+
 ## v3.3.1 (2025-12-20)
 
 ### Bug Fixes
