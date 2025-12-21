@@ -10,14 +10,24 @@ part_number:
     - "Seeed Part"
     - "Seeed Part #"
     - "Seeed Studio"
+    - "Seeed SKU"
     - "SKU"
     - "MPN"
     - "MFGPN"
 
 bom_columns:
   "Designator": "reference"
+  "Quantity": "quantity"
+  "Value": "value"
   "Package": "i:package"
   "Seeed Part Number": "fabricator_part_number"
+
+pos_columns:
+  "Designator": "reference"
+  "Mid X": "x"
+  "Mid Y": "y"
+  "Layer": "side"
+  "Rotation": "rotation"
 
 presets:
   default:

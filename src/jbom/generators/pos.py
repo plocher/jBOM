@@ -12,6 +12,7 @@ from jbom.common.generator import Generator, GeneratorOptions
 from jbom.common.fields import normalize_field_name, field_to_header
 from jbom.common.packages import PackageType
 from jbom.common.utils import find_best_pcb
+from jbom.common.config_fabricators import get_fabricator, ConfigurableFabricator
 
 Layer = Literal["TOP", "BOTTOM"]
 Units = Literal["mm", "inch"]
@@ -19,6 +20,7 @@ Origin = Literal["board", "aux"]
 
 PLACEMENT_FIELDS: Dict[str, str] = {
     "reference": "Component reference designator",
+    "value": "Component value (e.g. 10k, 0.1uF)",
     "x": "X coordinate in selected units",
     "y": "Y coordinate in selected units",
     "rotation": "Rotation in degrees (top-view convention)",
@@ -34,10 +36,6 @@ PLACEMENT_PRESETS: Dict[str, Dict[str, Optional[List[str]]]] = {
     "standard": {
         "fields": ["reference", "x", "y", "rotation", "side", "footprint", "smd"],
         "description": "Standard POS columns with SMD indicator",
-    },
-    "jlc": {
-        "fields": ["reference", "side", "x", "y", "rotation", "package", "smd"],
-        "description": "JLC-style CPL columns (headers not yet vendor-specific)",
     },
     "minimal": {
         "fields": ["reference", "x", "y", "side"],
@@ -59,6 +57,7 @@ class PlacementOptions(GeneratorOptions):
     smd_only: bool = True
     layer_filter: Optional[Layer] = None
     loader_mode: str = "auto"  # PCB loading method
+    fabricator: Optional[str] = None
 
 
 class POSGenerator(Generator):
@@ -76,6 +75,13 @@ class POSGenerator(Generator):
         """
         super().__init__(options or PlacementOptions())
         self.board: Optional[BoardModel] = None  # Set by load_input()
+
+        # Initialize fabricator
+        fab_name = getattr(self.options, "fabricator", None)
+        if fab_name:
+            self.fabricator: Optional[ConfigurableFabricator] = get_fabricator(fab_name)
+        else:
+            self.fabricator = None
 
     # ---------------- Generator abstract methods ----------------
 
@@ -147,7 +153,16 @@ class POSGenerator(Generator):
             fields: List of field names to include
         """
         norm_fields = [normalize_field_name(f) for f in fields]
-        headers = [field_to_header(f) for f in norm_fields]
+
+        # Determine headers
+        # If fabricator is active, use its column mapping for headers
+        if self.fabricator and self.fabricator.config.pos_columns:
+            # Create reverse map: internal_field -> Header Name
+            # Note: If multiple headers map to same field, last one wins (acceptable risk)
+            rev_map = {v: k for k, v in self.fabricator.config.pos_columns.items()}
+            headers = [rev_map.get(f, field_to_header(f)) for f in norm_fields]
+        else:
+            headers = [field_to_header(f) for f in norm_fields]
 
         # Check if output should go to stdout
         output_str = str(output_path)
@@ -168,6 +183,8 @@ class POSGenerator(Generator):
                 for fld in norm_fields:
                     if fld == "reference":
                         row.append(c.reference)
+                    elif fld == "value":
+                        row.append(c.attributes.get("value", ""))
                     elif fld == "x":
                         row.append(f"{x:.4f}")
                     elif fld == "y":
@@ -195,6 +212,14 @@ class POSGenerator(Generator):
 
     def default_preset(self) -> str:
         """Return default field preset name."""
+        if self.fabricator:
+            # Try to match fabricator ID to a preset
+            fab_id = self.fabricator.config.id.lower()
+            if self.fabricator.config.pos_columns:
+                return fab_id
+            if fab_id in PLACEMENT_PRESETS:
+                return fab_id
+
         return "standard"
 
     # ---------------- column system ----------------
@@ -203,10 +228,22 @@ class POSGenerator(Generator):
 
     def _preset_fields(self, preset: str) -> List[str]:
         p = (preset or "standard").lower()
+
+        # Check fabricator config first
+        if self.fabricator and self.fabricator.config.id.lower() == p:
+            if self.fabricator.config.pos_columns:
+                # Return the list of internal fields defined in config
+                return list(self.fabricator.config.pos_columns.values())
+
+            raise ValueError(f"Fabricator '{p}' has no POS columns configured")
+
         if p not in PLACEMENT_PRESETS:
-            raise ValueError(
-                f"Unknown preset: {preset} (valid: {', '.join(sorted(PLACEMENT_PRESETS))})"
-            )
+            # Collect valid presets from both hardcoded and fabricator
+            valids = sorted(list(PLACEMENT_PRESETS.keys()))
+            if self.fabricator:
+                valids.append(self.fabricator.config.id.lower())
+
+            raise ValueError(f"Unknown preset: {preset} (valid: {', '.join(valids)})")
         spec = PLACEMENT_PRESETS[p]
         if spec["fields"] is None:
             return list(PLACEMENT_FIELDS.keys())
@@ -214,10 +251,14 @@ class POSGenerator(Generator):
 
     def parse_fields_argument(self, fields_arg: Optional[str]) -> List[str]:
         if not fields_arg:
-            return self._preset_fields("standard")
+            return self._preset_fields(self.default_preset())
         tokens = [t.strip() for t in fields_arg.split(",") if t.strip()]
         result: List[str] = []
+        # Update valid presets list
         presets = set(PLACEMENT_PRESETS.keys())
+        if self.fabricator:
+            presets.add(self.fabricator.config.id.lower())
+
         for tok in tokens:
             if tok.startswith("+"):
                 name = tok[1:].lower()
@@ -298,6 +339,10 @@ def print_pos_table(gen: POSGenerator, fields: Optional[List[str]] = None) -> No
         for field in norm_fields:
             if field == "reference":
                 col_widths[field] = max(col_widths[field], len(comp.reference))
+            elif field == "value":
+                col_widths[field] = max(
+                    col_widths[field], len(comp.attributes.get("value", ""))
+                )
             elif field == "x":
                 col_widths[field] = max(col_widths[field], len(f"{x:.4f}"))
             elif field == "y":
@@ -330,6 +375,7 @@ def print_pos_table(gen: POSGenerator, fields: Optional[List[str]] = None) -> No
     # Cap maximum widths for readability
     max_widths = {
         "reference": 20,
+        "value": 15,
         "x": 12,
         "y": 12,
         "rotation": 10,
@@ -372,6 +418,8 @@ def print_pos_table(gen: POSGenerator, fields: Optional[List[str]] = None) -> No
 
             if field == "reference":
                 content = comp.reference[:width]
+            elif field == "value":
+                content = comp.attributes.get("value", "")[:width]
             elif field == "x":
                 content = f"{x:.4f}"
             elif field == "y":

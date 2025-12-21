@@ -31,6 +31,9 @@ class FabricatorConfig:
     # BOM column mappings (fab_header: jbom_field)
     bom_columns: Dict[str, str] = field(default_factory=dict)
 
+    # POS column mappings (fab_header: jbom_field)
+    pos_columns: Dict[str, str] = field(default_factory=dict)
+
     # Advanced configuration options
     dynamic_name: bool = False  # Use dynamic names based on data
     name_source: Optional[str] = None  # Source for dynamic names ("manufacturer")
@@ -53,6 +56,7 @@ class FabricatorConfig:
         pcb_assembly: Dict[str, Any] = None,
         part_number: Dict[str, Any] = None,
         bom_columns: Dict[str, str] = None,
+        pos_columns: Dict[str, str] = None,
         dynamic_name: bool = False,
         name_source: Optional[str] = None,
         presets: Dict[str, Any] = None,
@@ -71,6 +75,7 @@ class FabricatorConfig:
         self.pcb_assembly = pcb_assembly or {}
         self.part_number = part_number or {}
         self.bom_columns = bom_columns or {}
+        self.pos_columns = pos_columns or {}
         self.dynamic_name = dynamic_name
         self.name_source = name_source
         self.presets = presets or {}
@@ -121,19 +126,6 @@ class FabricatorConfig:
         # Auto-generate id from name if not provided
         if not self.id and self.name:
             self.id = self.name.lower().replace(" ", "").replace("-", "")
-
-        # Backward compatibility for kwargs
-        if hasattr(self, "part_number_header"):
-            self.part_number["header"] = self.part_number_header
-        if hasattr(self, "part_number_fields"):
-            self.part_number["priority_fields"] = self.part_number_fields
-        if hasattr(self, "cli_flags") and self.cli_flags:
-            # Note: cli_flags logic in property usually generates from ID
-            # but if manually provided, we might store it.
-            # However, the property implementation currently overrides it.
-            pass
-        if hasattr(self, "cli_presets"):
-            pass
 
 
 @dataclass
@@ -345,6 +337,7 @@ class ConfigLoader:
                 pcb_assembly=fab_data.get("pcb_assembly", {}),
                 part_number=fab_data.get("part_number", {}),
                 bom_columns=fab_data.get("bom_columns", {}),
+                pos_columns=fab_data.get("pos_columns", {}),
             )
 
             return fabricator
@@ -376,6 +369,7 @@ class ConfigLoader:
             "pcb_assembly": fabricator.pcb_assembly,
             "part_number": fabricator.part_number,
             "bom_columns": fabricator.bom_columns,
+            "pos_columns": fabricator.pos_columns,
         }
 
     def _load_config_file(self, path: Path) -> JBOMConfig:
@@ -516,15 +510,18 @@ class ConfigLoader:
         if overlay.based_on:
             merged.based_on = overlay.based_on
 
-        # Dictionary merging
+        # Dictionary merging (REPLACE strategy for critical configurations)
+        # Allows users to redefine columns/rules entirely (enables removing fields)
         if overlay.pcb_manufacturing:
-            merged.pcb_manufacturing.update(overlay.pcb_manufacturing)
+            merged.pcb_manufacturing = overlay.pcb_manufacturing
         if overlay.pcb_assembly:
-            merged.pcb_assembly.update(overlay.pcb_assembly)
+            merged.pcb_assembly = overlay.pcb_assembly
         if overlay.part_number:
-            merged.part_number.update(overlay.part_number)
+            merged.part_number = overlay.part_number
         if overlay.bom_columns:
-            merged.bom_columns.update(overlay.bom_columns)
+            merged.bom_columns = overlay.bom_columns
+        if overlay.pos_columns:
+            merged.pos_columns = overlay.pos_columns
 
         return merged
 

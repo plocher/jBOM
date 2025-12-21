@@ -1,0 +1,7 @@
+IPN,Category,Value,Package,Description,Keywords,Manufacturer,MFGPN,Datasheet,LCSC,Tolerance,Voltage,UUID,Capacitance,Sim.Device,Sim.Pins,Supplier,Temperature Coefficient,W,Wavelength,mcd
+RES_330Ω,RES,330Ω,0603,"Resistor, US symbol",,,,~,C12345,5%,,"09f7538d-941f-4fa9-8705-45fb695595ed,1f1c1ede-0380-498a-a0c4-d8bd0326fe1c,3f4e5499-a620-4987-9fdb-edee30c735c6,9f905d62-6eef-44c0-b6a3-2433759002cf",,,,,,100mW,,
+LED_WS2812B,LED,WS2812B,WS2812B,,,,,,,,,"118e2dc5-22a8-45df-b5d3-1d1c526d8231,6f179e85-189e-48a1-957f-bc57591f510a,a75f321f-6bd4-4e6a-b4d4-2ef495b288fe,ce37f4f2-24f5-4f4f-98f9-7b6f1f84ca71,e049eaad-dc84-4cef-a10b-19bd16a47205,f45e197f-e142-4aa9-9d26-71e77abed1f9",,,,,,,,
+RES_10k0Ω,RES,10k0Ω,0603,"Resistor, US symbol",,,,~,,5%,,593759d5-5376-4caf-96cf-2e3d169ec4b8,,,,,,100mW,,
+CAP_1.0uF,CAP,1.0uF,0603,Unpolarized capacitor,,,,,,C67890,,50V,8af8ed80-93c3-4036-b431-6c21ecba8003,,,,,X5R,,,
+DIO_BAT54A,DIO,BAT54A,sot-23,schottky barrier diode,,,,http://www.diodes.com/_files/datasheets/ds11005.pdf,,,,b0b0f065-5028-47a1-abf6-3b2449908820,,D,1=K 2=A,,,,,
+RES_22k0Ω,RES,22k0Ω,0603,"Resistor, US symbol",,,,~,,5%,,c7a4bc99-42e0-4509-aa47-20778238d5dd,,,,,,100mW,,

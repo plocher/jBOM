@@ -23,7 +23,6 @@ from jbom.common.packages import PackageType
 from jbom.common.fields import (
     normalize_field_name,
     field_to_header,
-    parse_fields_argument,
     FIELD_PRESETS,
 )
 from jbom.common.utils import find_best_schematic
@@ -91,7 +90,7 @@ class BOMGenerator(Generator):
             List of Component objects
         """
         # Load schematic
-        loader = SchematicLoader(input_path)
+        loader = SchematicLoader(input_path, options=self.options)
         self.components = loader.parse()
 
         return self.components
@@ -165,19 +164,7 @@ class BOMGenerator(Generator):
         """
         if not self.components:
             # Return default preset fields if no components loaded yet
-            return [
-                "reference",
-                "quantity",
-                "description",
-                "value",
-                "footprint",
-                "manufacturer",
-                "mfgpn",
-                "fabricator",
-                "fabricator_part_number",
-                "datasheet",
-                "smd",
-            ]
+            return self._preset_fields("default")
 
         # Get available fields from components
         available_fields = self.get_available_fields(self.components)
@@ -190,15 +177,161 @@ class BOMGenerator(Generator):
         preset = "default"
         if self.fabricator:
             # Use fabricator ID for preset lookup
-            fab_preset = self.fabricator.config.id.lower()
-            if fab_preset in FIELD_PRESETS:
-                preset = fab_preset
+            # This handles cases like --jlc -> +jlc preset
+            preset = self.fabricator.config.id.lower()
 
-        return parse_fields_argument(
+        return self.parse_fields_argument(
             f"+{preset}",
             available_fields,
             include_verbose=verbose,
             any_notes=any_notes,
+        )
+
+    def _preset_fields(
+        self, preset: str, include_verbose: bool = False, any_notes: bool = False
+    ) -> List[str]:
+        """Build a preset field list with optional verbose/notes fields.
+
+        Checks fabricator config first, then global presets.
+        """
+        from jbom.common.fields import preset_fields as global_preset_fields
+
+        preset = (preset or "default").lower()
+        result = []
+        found = False
+
+        # Check fabricator config first
+        if self.fabricator:
+            # 1. Check if preset matches fabricator ID (e.g. +jlc)
+            if self.fabricator.config.id.lower() == preset:
+                # Prefer explicit BOM columns if defined
+                cols = self.fabricator.get_bom_columns()
+                if cols:
+                    result = list(cols.values())
+                    found = True
+                else:
+                    # Fallback to 'default' preset in fabricator config
+                    fab_fields = self.fabricator.get_preset_fields("default")
+                    if fab_fields:
+                        result = list(fab_fields)
+                        found = True
+
+            # 2. Check if it's a specific preset in fabricator config
+            if not found:
+                fab_fields = self.fabricator.get_preset_fields(preset)
+                if fab_fields:
+                    result = list(fab_fields)
+                    found = True
+
+        # Fallback to global presets
+        if not found:
+            if preset in FIELD_PRESETS:
+                result = global_preset_fields(preset, include_verbose, any_notes)
+                # global_preset_fields already adds verbose/notes, so return immediately
+                return result
+
+        if not found:
+            # Build valid list for error message
+            valids = sorted(list(FIELD_PRESETS.keys()))
+            if self.fabricator:
+                valids.append(self.fabricator.config.id.lower())
+                valids.extend(self.fabricator.config.presets.keys())
+
+            valid_str = ", ".join(sorted(list(set(valids))))
+            raise ValueError(f"Unknown preset: {preset} (valid: {valid_str})")
+
+        # Append verbose/notes fields for fabricator presets
+        if include_verbose:
+            if "match_quality" not in result:
+                result.append("match_quality")
+        if any_notes:
+            if "notes" not in result:
+                result.append("notes")
+        if include_verbose:
+            if "priority" not in result:
+                result.append("priority")
+
+        return result
+
+    def parse_fields_argument(
+        self,
+        fields_arg: str,
+        available_fields: Dict[str, str],
+        include_verbose: bool,
+        any_notes: bool,
+    ) -> List[str]:
+        """Parse --fields argument with fabricator awareness.
+
+        Args:
+            fields_arg: Comma-separated list of fields or +presets
+            available_fields: Dictionary of available fields
+            include_verbose: Whether to include verbose fields
+            any_notes: Whether to include notes field
+
+        Returns:
+            List of normalized field names
+        """
+        if not fields_arg:
+            return self._get_default_fields()
+
+        tokens = [t.strip() for t in fields_arg.split(",") if t.strip()]
+        result = []
+
+        # Build set of known presets for error reporting
+        known_presets = set(FIELD_PRESETS.keys())
+        if self.fabricator:
+            known_presets.add(self.fabricator.config.id.lower())
+            known_presets.update(self.fabricator.config.presets.keys())
+
+        for token in tokens:
+            if token.startswith("+"):
+                # Preset expansion
+                preset_name = token[1:].lower()
+
+                # Special case: +all
+                if preset_name == "all":
+                    result.extend(sorted(available_fields.keys()))
+                else:
+                    try:
+                        preset_list = self._preset_fields(
+                            preset_name, include_verbose, any_notes
+                        )
+                        result.extend(preset_list)
+                    except ValueError:
+                        valid = ", ".join("+" + p for p in sorted(known_presets))
+                        raise ValueError(
+                            f"Unknown preset: +{preset_name} (valid: {valid})"
+                        )
+            else:
+                # Field name
+                normalized_token = normalize_field_name(token)
+                # We don't strict validate here because available_fields might be incomplete
+                # if we are just generating default list without components.
+                # But if available_fields is provided, we should check.
+                if available_fields and normalized_token not in available_fields:
+                    # Allow I: and C: prefixes even if not explicitly in available_fields?
+                    # available_fields usually contains all valid fields.
+                    # Exception: if available_fields is empty (early init), skip validation.
+
+                    # Strict validation to match CLI expectations
+                    raise ValueError(
+                        f"Unknown field: {token}. Use --list-fields to see available fields."
+                    )
+
+                result.append(normalized_token)
+
+        # Deduplicate
+        seen = set()
+        deduped = []
+        for f in result:
+            if f not in seen:
+                seen.add(f)
+                deduped.append(f)
+
+        return (
+            deduped
+            if deduped
+            else self._preset_fields("default", include_verbose, any_notes)
         )
 
     # ---------------- BOM generation logic ----------------
@@ -1044,7 +1177,12 @@ class BOMGenerator(Generator):
             normalized_fields = []  # Keep normalized versions for value retrieval
 
             # Get custom column mapping from fabricator
-            column_map = self.fabricator.get_bom_columns() if self.fabricator else {}
+            column_map = {}
+            if self.fabricator:
+                # Create reverse map: internal_field -> Header Name
+                # This matches POSGenerator logic
+                for fab_header, field in self.fabricator.get_bom_columns().items():
+                    column_map[field] = fab_header
 
             for field in fields:
                 # Check if this is an ambiguous field by testing with a sample entry

@@ -15,6 +15,7 @@ class ConfigurableFabricator:
 
     def __init__(self, config: FabricatorConfig):
         self.config = config
+        self._warned_c_fields = set()
 
     @property
     def name(self) -> str:
@@ -30,13 +31,34 @@ class ConfigurableFabricator:
         """Get the part number for this fabricator from an inventory item."""
         # Try each priority field in order
         for field_name in self.config.part_number_fields:
+            normalized_name = normalize_field_name(field_name)
+
+            # Check for C: prefix (Component properties) - not supported here
+            if normalized_name.startswith("c:"):
+                if field_name not in self._warned_c_fields:
+                    import sys
+
+                    print(
+                        f"Warning: Field '{field_name}' in fabricator '{self.name}' part number config uses 'C:' prefix. "
+                        "Part number lookup operates only on Inventory items, so Component properties are not available. "
+                        "Ignoring this field.",
+                        file=sys.stderr,
+                    )
+                    self._warned_c_fields.add(field_name)
+                continue
+
+            # Handle I: prefix (Inventory fields) - strip it for lookup
+            if normalized_name.startswith("i:"):
+                normalized_name = normalized_name[2:]
+
             # Check first-class InventoryItem attributes
-            if field_name == "lcsc" and item.lcsc:
+            if normalized_name == "lcsc" and item.lcsc:
                 return item.lcsc
-            elif field_name in ["mfgpn", "mpn"] and item.mfgpn:
+            elif normalized_name in ["mfgpn", "mpn"] and item.mfgpn:
                 return item.mfgpn
             elif (
-                field_name == "distributor_part_number" and item.distributor_part_number
+                normalized_name == "distributor_part_number"
+                and item.distributor_part_number
             ):
                 return item.distributor_part_number
 
@@ -44,9 +66,8 @@ class ConfigurableFabricator:
             for raw_key, value in item.raw_data.items():
                 if not value:
                     continue
-                if normalize_field_name(raw_key) == field_name:
+                if normalize_field_name(raw_key) == normalized_name:
                     return value
-
         return ""
 
     def get_name(self, item: InventoryItem) -> str:

@@ -6,13 +6,13 @@ metadata:
   source: "built-in"
 
 fabricators:
-  - name: "jlc"
+  - name: "JLC"
     file: "fabricators/jlc.fab.yaml"
 
-  - name: "pcbway"
+  - name: "PCBWay"
     file: "fabricators/pcbway.fab.yaml"
 
-  - name: "seeed"
+  - name: "Seeed"
     file: "fabricators/seeed.fab.yaml"
 
   # Generic fabricator for custom use

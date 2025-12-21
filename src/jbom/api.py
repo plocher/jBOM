@@ -16,6 +16,9 @@ from jbom.loaders.inventory import InventoryLoader
 from jbom.processors.annotator import SchematicAnnotator
 from jbom.common.generator import GeneratorOptions
 from jbom.processors.inventory_matcher import InventoryMatcher
+from jbom.search import SearchResult
+from jbom.search.mouser import MouserProvider
+from jbom.search.filter import SearchFilter
 
 
 @dataclass
@@ -52,6 +55,7 @@ class POSOptions:
     smd_only: bool = True
     layer_filter: Optional[str] = None  # "TOP" or "BOTTOM"
     fields: Optional[List[str]] = None
+    fabricator: Optional[str] = None
 
 
 def generate_bom(
@@ -126,6 +130,38 @@ def generate_bom(
     result = generator.run(input=input, output=output)
 
     return result
+
+
+def search_parts(
+    query: str,
+    provider: str = "mouser",
+    limit: int = 10,
+    api_key: Optional[str] = None,
+    filter_parametric: bool = True,
+) -> List[SearchResult]:
+    """Search for parts from external distributors.
+
+    Args:
+        query: Search query (keyword, part number, etc.)
+        provider: Provider name (default: "mouser")
+        limit: Maximum results to return
+        api_key: Optional API key (overrides environment)
+        filter_parametric: Enable smart parametric filtering
+
+    Returns:
+        List of SearchResult objects
+    """
+    if provider == "mouser":
+        prov = MouserProvider(api_key=api_key)
+    else:
+        raise ValueError(f"Unknown provider: {provider}")
+
+    results = prov.search(query, limit=limit)
+
+    if filter_parametric:
+        results = SearchFilter.filter_by_query(results, query)
+
+    return results
 
 
 def back_annotate(
