@@ -6,9 +6,9 @@ and to retrieve category-specific field mappings.
 """
 
 from typing import List, Optional
+from jbom.processors.classifier import get_engine
 
 from jbom.common.constants import (
-    ComponentType,
     CATEGORY_FIELDS,
     DEFAULT_CATEGORY_FIELDS,
     COMPONENT_TYPE_MAPPING,
@@ -50,6 +50,7 @@ def get_component_type(lib_id: str, footprint: str) -> Optional[str]:
     """Determine component type from lib_id or footprint.
 
     This is used by InventoryMatcher to ensure consistent component type detection.
+    Delegates to the configuration-driven ClassificationEngine.
 
     Args:
         lib_id: Component library identifier (e.g., "Device:R", "SPCoast:resistor")
@@ -58,32 +59,4 @@ def get_component_type(lib_id: str, footprint: str) -> Optional[str]:
     Returns:
         Component type string (RES, CAP, IND, etc.) or None if unrecognized
     """
-    lib_id = lib_id.lower()
-    footprint = footprint.lower()
-
-    if "resistor" in lib_id or "r" == lib_id.split(":")[-1] or "res" in footprint:
-        return ComponentType.RESISTOR
-    elif "capacitor" in lib_id or "c" == lib_id.split(":")[-1] or "cap" in footprint:
-        return ComponentType.CAPACITOR
-    elif "diode" in lib_id or "d" == lib_id.split(":")[-1] or "diode" in footprint:
-        return ComponentType.DIODE
-    elif "led" in lib_id or "led" in footprint:
-        return ComponentType.LED
-    elif "inductor" in lib_id or "l" == lib_id.split(":")[-1]:
-        return ComponentType.INDUCTOR
-    elif "connector" in lib_id or "conn" in lib_id:
-        return ComponentType.CONNECTOR
-    elif "switch" in lib_id or "sw" in lib_id:
-        return ComponentType.SWITCH
-    elif "transistor" in lib_id or lib_id.split(":")[-1].startswith("q"):
-        return ComponentType.TRANSISTOR
-    elif (
-        "ic" in lib_id
-        or "mcu" in lib_id
-        or "microcontroller" in lib_id
-        or lib_id.split(":")[-1].startswith("u")
-        or lib_id.split(":")[-1] == "ic"
-    ):
-        return ComponentType.INTEGRATED_CIRCUIT
-
-    return None
+    return get_engine().classify(lib_id, footprint)

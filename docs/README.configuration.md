@@ -66,6 +66,32 @@ global_presets:
       - "reference"
       - "quantity"
       - "description"
+
+component_classifiers:
+  - type: "RES"
+    rules:
+      - "lib_id contains resistor"
+      - "footprint contains res"
+  - type: "LED"
+    rules:
+      - "lib_id contains led"
+      - "lib_id contains ws2812"
+
+# User Overrides Examples
+
+## Classifying Custom Components
+If you use non-standard names for components (e.g., "WS2812" for LEDs), you can add a classifier rule in your project's `jbom.yaml`:
+
+```yaml
+# jbom.yaml in project directory
+component_classifiers:
+  - type: "LED"
+    rules:
+      - "lib_id contains ws2812"
+      - "footprint contains ws2812"
+```
+
+Because project configuration is merged with defaults, this rule will be added to the classification engine. Note that **first match wins**, so adding this rule will allow "WS2812" to be correctly identified as an LED.
 ```
 
 ### Fabricator Configuration File

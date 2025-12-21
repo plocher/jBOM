@@ -34,8 +34,65 @@ class FabricatorConfig:
     # Advanced configuration options
     dynamic_name: bool = False  # Use dynamic names based on data
     name_source: Optional[str] = None  # Source for dynamic names ("manufacturer")
+    presets: Dict[str, Any] = field(default_factory=dict)
+    cli_aliases: Dict[str, List[str]] = field(default_factory=dict)
 
-    # Derived properties for backward compatibility
+    # Legacy fields for test compatibility (will be migrated to dicts in post_init or properties)
+    _part_number_header: Optional[str] = None
+    _part_number_fields: Optional[List[str]] = None
+    _cli_flags: Optional[List[str]] = None
+    _cli_presets: Optional[List[str]] = None
+
+    def __init__(
+        self,
+        name: str,
+        id: str = "",
+        description: str = "",
+        based_on: str = "",
+        pcb_manufacturing: Dict[str, Any] = None,
+        pcb_assembly: Dict[str, Any] = None,
+        part_number: Dict[str, Any] = None,
+        bom_columns: Dict[str, str] = None,
+        dynamic_name: bool = False,
+        name_source: Optional[str] = None,
+        presets: Dict[str, Any] = None,
+        cli_aliases: Dict[str, List[str]] = None,
+        # Compatibility args
+        part_number_header: str = None,
+        part_number_fields: List[str] = None,
+        cli_flags: List[str] = None,
+        cli_presets: List[str] = None,
+    ):
+        self.name = name
+        self.id = id
+        self.description = description
+        self.based_on = based_on
+        self.pcb_manufacturing = pcb_manufacturing or {}
+        self.pcb_assembly = pcb_assembly or {}
+        self.part_number = part_number or {}
+        self.bom_columns = bom_columns or {}
+        self.dynamic_name = dynamic_name
+        self.name_source = name_source
+        self.presets = presets or {}
+        self.cli_aliases = cli_aliases or {}
+
+        # Handle compatibility args
+        if part_number_header:
+            self.part_number["header"] = part_number_header
+        if part_number_fields:
+            self.part_number["priority_fields"] = part_number_fields
+
+        # If cli_flags/presets provided, map to cli_aliases
+        if cli_flags or cli_presets:
+            if not self.cli_aliases:
+                self.cli_aliases = {}
+            if cli_flags:
+                self.cli_aliases["flags"] = cli_flags
+            if cli_presets:
+                self.cli_aliases["presets"] = cli_presets
+
+        self.__post_init__()
+
     @property
     def part_number_header(self) -> str:
         return self.part_number.get("header", "Fabricator Part Number")
@@ -46,12 +103,16 @@ class FabricatorConfig:
 
     @property
     def cli_flags(self) -> List[str]:
+        if self.cli_aliases and "flags" in self.cli_aliases:
+            return self.cli_aliases["flags"]
         if not self.id:
             return []
         return [f"--{self.id}"]
 
     @property
     def cli_presets(self) -> List[str]:
+        if self.cli_aliases and "presets" in self.cli_aliases:
+            return self.cli_aliases["presets"]
         if not self.id:
             return []
         return [f"+{self.id}"]
@@ -60,6 +121,19 @@ class FabricatorConfig:
         # Auto-generate id from name if not provided
         if not self.id and self.name:
             self.id = self.name.lower().replace(" ", "").replace("-", "")
+
+        # Backward compatibility for kwargs
+        if hasattr(self, "part_number_header"):
+            self.part_number["header"] = self.part_number_header
+        if hasattr(self, "part_number_fields"):
+            self.part_number["priority_fields"] = self.part_number_fields
+        if hasattr(self, "cli_flags") and self.cli_flags:
+            # Note: cli_flags logic in property usually generates from ID
+            # but if manually provided, we might store it.
+            # However, the property implementation currently overrides it.
+            pass
+        if hasattr(self, "cli_presets"):
+            pass
 
 
 @dataclass
@@ -76,6 +150,14 @@ class DistributorConfig:
 
 
 @dataclass
+class ClassifierConfig:
+    """Configuration for component classification rules."""
+
+    type: str
+    rules: List[str] = field(default_factory=list)
+
+
+@dataclass
 class JBOMConfig:
     """Complete jBOM configuration."""
 
@@ -86,6 +168,7 @@ class JBOMConfig:
     fabricators: List[FabricatorConfig] = field(default_factory=list)
     distributors: List[DistributorConfig] = field(default_factory=list)
     global_presets: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    component_classifiers: List[ClassifierConfig] = field(default_factory=list)
 
     # Configuration loading metadata
     config_sources: List[str] = field(default_factory=list)
@@ -241,10 +324,21 @@ class ConfigLoader:
                             merged_data[key] = value
                     fab_data = merged_data
 
+            # Auto-generate id from name if not provided
+            fab_name = fab_data.get("name", "")
+            fab_id = fab_data.get("id", "")
+
+            if not fab_id:
+                if fab_name:
+                    fab_id = fab_name.lower().replace(" ", "").replace("-", "")
+                else:
+                    # Only raise if both name and ID are missing
+                    raise KeyError("Fabricator config must have 'id' or 'name'")
+
             # Create fabricator config
             fabricator = FabricatorConfig(
-                name=fab_data.get("name", ""),
-                id=fab_data.get("id", ""),
+                name=fab_name,
+                id=fab_id,
                 description=fab_data.get("description", ""),
                 based_on=fab_data.get("based_on", ""),
                 pcb_manufacturing=fab_data.get("pcb_manufacturing", {}),
@@ -289,6 +383,10 @@ class ConfigLoader:
         with open(path, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
 
+        # Handle empty file (yaml.safe_load returns None)
+        if data is None:
+            data = {}
+
         return self._dict_to_config(data)
 
     def _dict_to_config(self, data: Dict[str, Any]) -> JBOMConfig:
@@ -323,6 +421,15 @@ class ConfigLoader:
 
         # Global presets
         config.global_presets = data.get("global_presets", {})
+
+        # Component classifiers
+        classifiers_data = data.get("component_classifiers", [])
+        for clf_data in classifiers_data:
+            classifier = ClassifierConfig(
+                type=clf_data["type"],
+                rules=clf_data.get("rules", []),
+            )
+            config.component_classifiers.append(classifier)
 
         return config
 
@@ -363,6 +470,30 @@ class ConfigLoader:
 
         # Merge global presets
         merged.global_presets.update(overlay.global_presets)
+
+        # Merge component classifiers (append/extend)
+        # For now, we simply extend the list. A more sophisticated approach might
+        # merge rules for the same type, but simple extension allows overrides
+        # because the first match wins in the classification engine.
+        # However, to allow users to override built-in rules effectively, we should
+        # prepend user rules or replace them.
+        # Let's replace by type if it exists in overlay, or append otherwise.
+        # Actually, since order matters (first match wins), we should insert overlay
+        # classifiers at the beginning if we want them to take precedence.
+        # But here we are merging into 'base', so 'overlay' overrides 'base'.
+        # We will reconstruct the list: overlay classifiers first, then base classifiers
+        # that are NOT in overlay (by type).
+        overlay_types = {c.type for c in overlay.component_classifiers}
+        merged_classifiers = list(overlay.component_classifiers)
+        for base_clf in base.component_classifiers:
+            if base_clf.type not in overlay_types:
+                merged_classifiers.append(base_clf)
+            else:
+                # If type exists in both, we might want to merge rules or just take overlay.
+                # Taking overlay is safer for full control.
+                # If we wanted to merge, we'd append base rules to overlay rules.
+                pass
+        merged.component_classifiers = merged_classifiers
 
         # Update metadata
         merged.version = overlay.version or merged.version
@@ -461,4 +592,14 @@ def reload_config() -> JBOMConfig:
     """Reload the global configuration (for testing or config changes)."""
     global _config_instance
     _config_instance = None
+
+    # Also reload classification engine if it exists
+    # This avoids circular imports by importing inside the function
+    try:
+        from jbom.processors.classifier import reload_engine
+
+        reload_engine()
+    except ImportError:
+        pass
+
     return get_config()

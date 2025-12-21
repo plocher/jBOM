@@ -101,19 +101,17 @@ class FabricatorRegistry:
         return self._fabricators.get(fab_id.lower())
 
     def get_fabricator_by_cli_flag(self, flag: str) -> Optional[ConfigurableFabricator]:
-        """Get fabricator by CLI flag (e.g., '--jlc')."""
-        config = get_config()
-        fab_config = config.get_fabricator_by_cli_flag(flag)
-        if fab_config:
-            return self._fabricators.get(fab_config.id.lower())
+        """Get fabricator by CLI flag (e.g. '--jlc')."""
+        for fab in self._fabricators.values():
+            if flag in fab.config.cli_flags:
+                return fab
         return None
 
     def get_fabricator_by_preset(self, preset: str) -> Optional[ConfigurableFabricator]:
-        """Get fabricator by preset name (e.g., '+jlc')."""
-        config = get_config()
-        fab_config = config.get_fabricator_by_preset(preset)
-        if fab_config:
-            return self._fabricators.get(fab_config.id.lower())
+        """Get fabricator by CLI preset (e.g. '+jlc')."""
+        for fab in self._fabricators.values():
+            if preset in fab.config.cli_presets:
+                return fab
         return None
 
     def list_fabricators(self) -> List[str]:

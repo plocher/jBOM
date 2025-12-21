@@ -399,80 +399,59 @@ Warnings:
 No inventory match found Component: C3 (Core-ESP32-eagle-import:CAP0603) is a 10uF 0603 Capacitor; Issue: Value '10uF' available in 1206 packages, but not 0603
 ```
 
-# Component Type Detection in jBOM
+# Component Classification Engine
 
-The script determines `comp_type` using the `_get_component_type()` method (lines 384-409). Here's how it works:
+jBOM uses a configuration-driven rule engine to determine the component type (RES, CAP, LED, etc.) from KiCad data. This allows users to customize classification logic without modifying source code.
 
-## Component Type Detection Logic
+## Classification Logic
 
-The method analyzes two key pieces of information from the KiCad component:
+The `ClassificationEngine` (`src/jbom/processors/classifier.py`) evaluates a list of classifiers defined in the configuration.
 
-1. **`lib_id`** - The component's library identifier (e.g., \"Device:R\", \"SPCoast:resistor\")
-2. **`footprint`** - The PCB footprint name (e.g., \"PCM_SPCoast:0603-RES\")
+1.  **Iterate**: The engine iterates through the configured `component_classifiers` list in order.
+2.  **Evaluate**: For each classifier, it checks its list of `rules`.
+3.  **Match**: If **ANY** rule in a classifier matches the component, that type is assigned (Boolean OR logic).
+4.  **First Win**: The first classifier to match determines the component type.
 
-## Detection Rules
+## Rule Format
 
-The method applies these rules in order:
+Rules are defined as simple strings in `config.yaml` with the format:
+`"<field> <operator> <value>"`
 
-### Resistors → `'RES'`
-- Contains `'resistor'` in lib_id
-- lib_id ends with `':r'` (e.g., \"Device:R\" → split(':') gives [\"Device\", \"R\"])
-- Contains `'res'` in footprint
+### Fields
+- `lib_id`: The component's library identifier (e.g., "Device:R", "MyLib:WS2812").
+- `footprint`: The component's footprint name (e.g., "R_0603", "LED_5050").
 
-### Capacitors → `'CAP'`
-- Contains `'capacitor'` in lib_id
-- lib_id ends with `':c'`
-- Contains `'cap'` in footprint
+### Operators
+All matching is **case-insensitive**.
 
-### Diodes → `'DIO'`
-- Contains `'diode'` in lib_id
-- lib_id ends with `':d'`
-- Contains `'diode'` in footprint
+| Operator | Description | Example |
+| :--- | :--- | :--- |
+| `contains` | Field contains substring | `"lib_id contains resistor"` |
+| `startswith` | Field starts with prefix | `"lib_id startswith device:"` |
+| `endswith` | Field ends with suffix | `"lib_id endswith :r"` |
+| `eq` | Field exactly equals value | `"lib_id eq device:r"` |
+| `matches` | Field matches Regex | `"lib_id matches :q.*$"` |
 
-### LEDs → `'LED'`
-- Contains `'led'` in lib_id or footprint
+## Configuration Example
 
-### Inductors → `'IND'`
-- Contains `'inductor'` in lib_id
-- lib_id ends with `':l'`
+```yaml
+component_classifiers:
+  - type: "RES"
+    rules:
+      - "lib_id contains resistor"
+      - "footprint contains res"
 
-### Connectors → `'CON'`
-- Contains `'connector'` or `'conn'` in lib_id
-
-### Switches → `'SWI'`
-- Contains `'switch'` or `'sw'` in lib_id
-
-### Transistors → `'Q'`
-- Contains `'transistor'` in lib_id
-- lib_id ends with something starting with `'q'`
-
-### ICs/Microcontrollers → `'IC'`
-- Contains `'ic'`, `'mcu'`, or `'microcontroller'` in lib_id
-- lib_id ends with something starting with `'u'`
-- lib_id ends with `':ic'`
-
-## Examples
-
-```python
-# Real examples from KiCad schematics:
-\"Device:R\"                    → 'RES'
-\"Device:C\"                    → 'CAP'
-\"Device:LED\"                  → 'LED'
-\"Connector:Conn_01x02\"        → 'CON'
-\"MCU:ESP32\"                   → 'IC'
-\"SPCoast:resistor\"            → 'RES'
-
-# With footprints:
-footprint=\"PCM_SPCoast:0603-RES\"  → 'RES' (from 'res' in footprint)
-footprint=\"Package_TO_SOT_SMD:SOT-23\"  → None (no clear indicator)
+  - type: "LED"
+    rules:
+      - "lib_id contains led"
+      - "lib_id contains ws2812"
 ```
 
-## Fallback Behavior
+# Component Type Detection in jBOM
 
-If none of the patterns match, the method returns None, which means:
-•  The component type is unknown
-•  Primary filtering will be less strict
-•  Matching will rely more on other factors (value, footprint, keywords)
+The script determines `comp_type` using the `get_component_type()` method in `src/jbom/processors/component_types.py`.
+
+This method now delegates entirely to the `ClassificationEngine`, which uses the rules defined in `defaults.yaml` (and any user overrides).
 
 This approach allows the system to work with both standard KiCad libraries and custom library naming conventions, making it quite flexible for different PCB design workflows.
 
