@@ -61,3 +61,77 @@ global_presets:
       - "reference"
       - "quantity"
       - "description"
+
+component_classifiers:
+  - type: "RES"
+    rules:
+      - "lib_id contains resistor"
+      - "lib_id endswith :r"
+      - "footprint contains res"
+
+  - type: "CAP"
+    rules:
+      - "lib_id contains capacitor"
+      - "lib_id endswith :c"
+      - "footprint contains cap"
+
+  - type: "DIO"
+    rules:
+      - "lib_id contains diode"
+      - "lib_id endswith :d"
+      - "footprint contains diode"
+
+  - type: "LED"
+    rules:
+      - "lib_id contains led"
+      - "footprint contains led"
+      - "lib_id contains ws2812"
+      - "footprint contains ws2812"
+
+  - type: "IND"
+    rules:
+      - "lib_id contains inductor"
+      - "lib_id endswith :l"
+
+  - type: "CON"
+    rules:
+      - "lib_id contains connector"
+      - "lib_id contains conn"
+      - "lib_id contains terminal"
+      - "lib_id contains jack"
+      - "lib_id contains socket"
+      - "lib_id contains header"
+      - "lib_id contains rj12"
+      - "lib_id contains rj45"
+
+  - type: "SWI"
+    rules:
+      - "lib_id contains switch"
+      - "lib_id contains sw"
+      - "lib_id contains button"
+
+  - type: "RLY"
+    rules:
+      - "lib_id contains relay"
+      - "lib_id contains rly"
+
+  - type: "Q"
+    rules:
+      - "lib_id contains transistor"
+      - "lib_id endswith :q"
+      # Regex to match library ID ending with something starting with q (e.g. Device:Q_NMOS)
+      - "lib_id matches :q.*$"
+
+  - type: "IC"
+    rules:
+      - "lib_id contains ic"
+      - "lib_id contains mcu"
+      - "lib_id contains microcontroller"
+      - "lib_id contains esp32"
+      - "lib_id contains module"
+      - "lib_id contains isolator"
+      - "lib_id contains optocoupler"
+      - "lib_id contains opto"
+      - "lib_id endswith :ic"
+      # Regex to match library ID ending with something starting with u (e.g. MCU_Module:U1)
+      - "lib_id matches :u.*$"

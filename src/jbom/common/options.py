@@ -3,8 +3,8 @@
 Provides typed configuration options for BOM and placement generators.
 """
 from __future__ import annotations
-from dataclasses import dataclass
-from typing import List, Literal, Optional
+from dataclasses import dataclass, field
+from typing import List, Literal, Optional, Set
 
 __all__ = [
     "GeneratorOptions",
@@ -19,6 +19,7 @@ class GeneratorOptions:
 
     verbose: bool = False
     debug: bool = False
+    debug_categories: Set[str] = field(default_factory=set)
     fields: Optional[List[str]] = None
 
 

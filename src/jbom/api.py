@@ -7,8 +7,8 @@ Provides simplified generate_bom() and generate_pos() functions with:
 """
 
 from pathlib import Path
-from typing import Optional, Union, List, Dict, Any
-from dataclasses import dataclass
+from typing import Optional, Union, List, Dict, Any, Set
+from dataclasses import dataclass, field
 
 from jbom.generators.bom import BOMGenerator
 from jbom.generators.pos import POSGenerator, PlacementOptions
@@ -24,6 +24,7 @@ class BOMOptions:
 
     verbose: bool = False
     debug: bool = False
+    debug_categories: Set[str] = field(default_factory=set)
     smd_only: bool = False
     fields: Optional[List[str]] = None
     fabricator: Optional[str] = None
@@ -35,6 +36,7 @@ class BOMOptions:
         opts = GeneratorOptions()
         opts.verbose = self.verbose
         opts.debug = self.debug
+        opts.debug_categories = self.debug_categories
         opts.fields = self.fields
         opts.smd_only = self.smd_only  # Add as attribute
         opts.fabricator = self.fabricator  # Add as attribute

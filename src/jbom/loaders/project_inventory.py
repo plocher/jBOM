@@ -94,11 +94,15 @@ class ProjectInventoryLoader:
         # Extract package from footprint
         package = self._extract_package(component.footprint)
 
-        # Generate a pseudo-IPN
-        # We can use the Value and Package as a base
-        ipn = f"{component.value}_{package}" if package else component.value
-        # Cleanup IPN
-        ipn = ipn.replace(" ", "_").upper()
+        # Generate a pseudo-IPN in format: <category>_<value>
+        # Only generate IPN if we have a valid category
+        if comp_type:
+            ipn = f"{category}_{component.value}" if component.value else category
+            # Cleanup IPN: replace spaces with underscores but preserve special characters like Ω
+            ipn = ipn.replace(" ", "_")
+        else:
+            # Leave IPN blank if category is unknown, allowing user to fix it
+            ipn = ""
 
         # Map properties to InventoryItem fields
         props = component.properties

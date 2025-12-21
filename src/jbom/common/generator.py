@@ -5,9 +5,9 @@ Implements Template Method pattern for consistent generation flow.
 """
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, Set
 
 __all__ = [
     "FieldProvider",
@@ -87,6 +87,7 @@ class GeneratorOptions:
 
     verbose: bool = False
     debug: bool = False
+    debug_categories: Set[str] = field(default_factory=set)
     fields: Optional[List[str]] = None
 
 
