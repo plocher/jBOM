@@ -19,6 +19,13 @@ bom_columns:
   "Package": "i:package"
   "Seeed Part Number": "fabricator_part_number"
 
+pos_columns:
+  "Designator": "reference"
+  "Mid X": "x"
+  "Mid Y": "y"
+  "Layer": "side"
+  "Rotation": "rotation"
+
 presets:
   default:
     description: "Standard Seeed format"

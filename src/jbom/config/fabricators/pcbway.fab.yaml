@@ -19,6 +19,15 @@ bom_columns:
   "Package": "i:package"
   "Distributor Part Number": "fabricator_part_number"
 
+pos_columns:
+  "Designator": "reference"
+  "Val": "value"
+  "Package": "package"
+  "Mid X": "x"
+  "Mid Y": "y"
+  "Rotation": "rotation"
+  "Layer": "side"
+
 presets:
   default:
     description: "Standard PCBWay format"
