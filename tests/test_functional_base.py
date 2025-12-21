@@ -31,6 +31,10 @@ class FunctionalTestBase(unittest.TestCase):
         cls.minimal_proj = cls.fixtures / "minimal_project"
         cls.inventory_csv = cls.fixtures / "inventory.csv"
 
+        # New modern fixture from real project
+        cls.modern_proj = cls.fixtures / "modern_project"
+        cls.modern_inventory = cls.modern_proj / "inventory.csv"
+
     def setUp(self):
         """Create temporary directory for test output."""
         # Ensure src is on path

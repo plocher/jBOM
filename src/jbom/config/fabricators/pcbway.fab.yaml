@@ -15,6 +15,8 @@ part_number:
 
 bom_columns:
   "Designator": "reference"
+  "Quantity": "quantity"
+  "Value": "value"
   "Comment": "description"
   "Package": "i:package"
   "Distributor Part Number": "fabricator_part_number"

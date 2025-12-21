@@ -523,17 +523,18 @@ class ConfigLoader:
         if overlay.based_on:
             merged.based_on = overlay.based_on
 
-        # Dictionary merging
+        # Dictionary merging (REPLACE strategy for critical configurations)
+        # Allows users to redefine columns/rules entirely (enables removing fields)
         if overlay.pcb_manufacturing:
-            merged.pcb_manufacturing.update(overlay.pcb_manufacturing)
+            merged.pcb_manufacturing = overlay.pcb_manufacturing
         if overlay.pcb_assembly:
-            merged.pcb_assembly.update(overlay.pcb_assembly)
+            merged.pcb_assembly = overlay.pcb_assembly
         if overlay.part_number:
-            merged.part_number.update(overlay.part_number)
+            merged.part_number = overlay.part_number
         if overlay.bom_columns:
-            merged.bom_columns.update(overlay.bom_columns)
+            merged.bom_columns = overlay.bom_columns
         if overlay.pos_columns:
-            merged.pos_columns.update(overlay.pos_columns)
+            merged.pos_columns = overlay.pos_columns
 
         return merged
 

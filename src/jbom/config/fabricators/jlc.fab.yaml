@@ -25,6 +25,8 @@ part_number:
 
 bom_columns:
   "Designator": "reference"
+  "Quantity": "quantity"
+  "Value": "value"
   "Comment": "description"
   "Footprint": "i:package"
   "LCSC": "fabricator_part_number"

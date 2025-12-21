@@ -5,13 +5,13 @@ from pathlib import Path
 from typing import Optional
 
 from jbom.api import generate_bom, BOMOptions
-from jbom.common.fields import parse_fields_argument
 from jbom.common.output import resolve_output_path
 from jbom.cli.commands import Command, OutputMode
 from jbom.cli.formatting import print_bom_table
 from jbom.common.config_fabricators import (
     get_fabricator_by_cli_flag,
     get_fabricator_by_preset,
+    get_fabricator_registry,
 )
 
 __all__ = ["BOMCommand"]
@@ -92,8 +92,8 @@ class BOMCommand(Command):
         )
         parser.add_argument(
             "--fabricator",
-            choices=["jlc", "seeed", "pcbway"],
-            help="Specify PCB fabricator for part number lookup (e.g. JLC, Seeed)",
+            choices=sorted(get_fabricator_registry().list_fabricators()),
+            help="Specify PCB fabricator for part number lookup (e.g. jlc, seeed)",
         )
         parser.add_argument(
             "--smd-only",
@@ -121,18 +121,36 @@ class BOMCommand(Command):
             input=args.project, inventory=args.inventory, options=opts
         )
 
+        # Print debug diagnostics if enabled
+        if args.debug and result.get("debug_diagnostics"):
+            import sys
+
+            print("\n--- Match Diagnostics ---", file=sys.stderr)
+            for diag in result["debug_diagnostics"]:
+                # Use generator to format if possible, else print raw
+                if "generator" in result and hasattr(
+                    result["generator"], "_generate_diagnostic_message"
+                ):
+                    msg = result["generator"]._generate_diagnostic_message(
+                        diag, "console"
+                    )
+                    print(msg, file=sys.stderr)
+                else:
+                    print(f"Diagnostic: {diag}", file=sys.stderr)
+
         # Process fields
         any_notes = any(((e.notes or "").strip()) for e in result["bom_entries"])
+        bom_gen = result["generator"]
 
         if fields_arg:
-            fields = parse_fields_argument(
+            fields = bom_gen.parse_fields_argument(
                 fields_arg,
                 result["available_fields"],
                 include_verbose=args.verbose,
                 any_notes=any_notes,
             )
         else:
-            fields = parse_fields_argument(
+            fields = bom_gen.parse_fields_argument(
                 "+default",
                 result["available_fields"],
                 include_verbose=args.verbose,

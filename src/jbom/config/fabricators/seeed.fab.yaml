@@ -10,12 +10,15 @@ part_number:
     - "Seeed Part"
     - "Seeed Part #"
     - "Seeed Studio"
+    - "Seeed SKU"
     - "SKU"
     - "MPN"
     - "MFGPN"
 
 bom_columns:
   "Designator": "reference"
+  "Quantity": "quantity"
+  "Value": "value"
   "Package": "i:package"
   "Seeed Part Number": "fabricator_part_number"
 

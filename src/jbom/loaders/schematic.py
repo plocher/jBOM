@@ -77,6 +77,7 @@ class SchematicLoader:
         dnp = False
         properties: Dict[str, str] = {}
         has_instances = False
+        has_position = False
 
         # Iterate fields inside symbol
         for item in node[1:]:
@@ -84,6 +85,8 @@ class SchematicLoader:
                 tag = item[0]
                 if tag == Symbol("lib_id") and len(item) >= 2:
                     lib_id = item[1]
+                elif tag == Symbol("at") and len(item) >= 2:
+                    has_position = True
                 elif tag == Symbol("uuid") and len(item) >= 2:
                     uuid = item[1]
                 elif tag == Symbol("in_bom") and len(item) >= 2:
@@ -108,14 +111,23 @@ class SchematicLoader:
                         if isinstance(key, str) and isinstance(val, str):
                             properties[key] = val
 
-        # Only return components that have instances (actual placed components, not library definitions)
-        if not reference or not has_instances:
-            # Debug logging for components without instances (often library definitions)
+        # Only return components that have instances (actual placed components)
+        # Note: Some older files or test fixtures might not have 'instances' block but are valid placed symbols
+        # if they have a fully defined reference (e.g. R1, not R?)
+        if not reference:
+            return None
+
+        # For KiCad 6+ hierarchical sheets, 'instances' block is standard.
+        # But for compatibility with simple/older files, we allow missing instances if reference is valid
+        # AND it has a position (placed on sheet).
+        if not has_instances and not has_position:
+            # Likely a library definition or unannotated symbol
             is_debug = self.options.debug
             is_sch_debug = "schematic" in self.options.debug_categories
             if (is_debug or is_sch_debug) and reference:
                 print(
-                    f"DEBUG[schematic]: Ignored symbol {reference} ({value}): No instances found (likely library definition)",
+                    f"DEBUG[schematic]: Ignored symbol {reference} ({value}): "
+                    f"No instances/position found (likely library definition)",
                     file=sys.stderr,
                 )
             return None

@@ -7,14 +7,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [3.4.0] - 2025-12-21
 
 ### Added
+- **Config-Driven Fabricators**: Both BOM and POS commands now fully use the configuration system for fabricator definitions.
+  - POS columns and header mapping now defined in YAML configuration.
+  - Fabricator flags (`--jlc`, `--seeed`, etc.) and presets are auto-generated from config.
+  - Config merging now uses **REPLACE** strategy for list/dict fields, allowing users to fully override default column sets.
+- **Prefix Handling**: Added robust handling for `I:` (Inventory) and `C:` (Component) prefixes in fabricator part number configuration.
+  - `I:` prefix is supported and stripped for lookup.
+  - `C:` prefix triggers a helpful warning (as component properties are not available during part number resolution).
 - **Config-Driven Classification**: Component classification now uses a rule-based engine defined in YAML configuration.
 - **Debug Categories**: Added support for granular debug control via `debug_categories`.
 - **POS Fabricator Support**: Added `--fabricator` option to `pos` command with presets for JLC, PCBWay, and Seeed.
 
 ### Changed
+- **POS Command Refactor**: Removed hardcoded field presets from `POSGenerator`; now driven entirely by fabricator config.
+- **BOM Command Refactor**: Updated to share common fabricator configuration logic with POS.
+- **Configuration Logic**: Changed config merging strategy to REPLACE for dictionary fields (`bom_columns`, `pos_columns`, `part_number`, etc.) to allow removing default fields.
 - Refactored `get_component_type` to use the new `ClassificationEngine`.
 - Moved hardcoded classification rules to `src/jbom/config/defaults.yaml`.
-- Updated `POSGenerator` to support fabricator-specific field presets.
+
+### Removed
+- Removed hardcoded fabricator presets (`jlc`, `seeed`, `pcbway`) from `src/jbom/common/fields.py`.
 
 ## [3.3.1] - 2025-12-20
 

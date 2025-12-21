@@ -155,49 +155,6 @@ FIELD_PRESETS = {
         ],
         "description": "Legacy alias for default preset",
     },
-    "jlc": {
-        "fields": [
-            "reference",
-            "quantity",
-            "value",
-            "i:package",
-            "fabricator",
-            "fabricator_part_number",
-            "smd",
-        ],
-        "description": "JLCPCB requirements: Reference Designator, Quantity, Value, Package, Fabricator (JLC), JLC Part Number",
-    },
-    "seeed": {
-        "fields": [
-            "reference",
-            "quantity",
-            "value",
-            "i:package",
-            "fabricator",
-            "fabricator_part_number",
-            "smd",
-        ],
-        "description": (
-            "Seeed Studio requirements: Reference Designator, Quantity, Value, "
-            "Package, Fabricator (Seeed), Seeed Part Number"
-        ),
-    },
-    "pcbway": {
-        "fields": [
-            "reference",
-            "quantity",
-            "value",
-            "i:package",
-            "mfgpn",
-            "manufacturer",
-            "description",
-            "fabricator_part_number",
-        ],
-        "description": (
-            "PCBWay requirements: Designator, Quantity, Value, Package, "
-            "Manufacturer, MPN, Description, Distributor/Fabricator PN"
-        ),
-    },
     "generic": {
         "fields": [
             "reference",

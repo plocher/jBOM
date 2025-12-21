@@ -26,6 +26,26 @@ Configurations are loaded in order of precedence (later configs override earlier
    - Location: `.jbom/config.yaml` or `jbom.yaml` in project directory
    - Use for: Project-specific fabricator preferences
 
+## Configuration Replacement Behavior
+
+jBOM uses a **REPLACE** strategy for dictionary fields and list items (like component classifiers) within a configuration. This is critical for allowing users to remove unwanted defaults.
+
+### Fabricator Configuration
+When you define an override for a fabricator (same `id`), the following fields are **fully replaced**, not merged key-by-key:
+- `bom_columns`
+- `pos_columns`
+- `part_number`
+- `pcb_manufacturing`
+- `pcb_assembly`
+
+**Example:**
+If the default JLC config has 10 columns, and you define a `bom_columns` section with just 2 columns in your override, the resulting BOM will have **only those 2 columns**. The default columns are discarded.
+
+### Component Classifiers
+When you define a component classifier with the same `type` as a built-in one (e.g., `type: "LED"`), your definition **fully replaces** the built-in one.
+
+This means you must include *all* rules you want to apply for that type, including the default ones if you still want them.
+
 ## Configuration File Format
 
 ### Main Configuration File
@@ -75,23 +95,8 @@ component_classifiers:
   - type: "LED"
     rules:
       - "lib_id contains led"
+      # Add custom rule for WS2812 which might not match "led"
       - "lib_id contains ws2812"
-
-# User Overrides Examples
-
-## Classifying Custom Components
-If you use non-standard names for components (e.g., "WS2812" for LEDs), you can add a classifier rule in your project's `jbom.yaml`:
-
-```yaml
-# jbom.yaml in project directory
-component_classifiers:
-  - type: "LED"
-    rules:
-      - "lib_id contains ws2812"
-      - "footprint contains ws2812"
-```
-
-Because project configuration is merged with defaults, this rule will be added to the classification engine. Note that **first match wins**, so adding this rule will allow "WS2812" to be correctly identified as an LED.
 ```
 
 ### Fabricator Configuration File
@@ -207,6 +212,10 @@ part_number:
     - "MPN"         # Then manufacturer part number
     - "MFGPN"       # Finally generic manufacturer P/N
 ```
+
+**Note:** Part number lookup operates exclusively on the matched **Inventory Item**. It does not have access to the schematic Component, so it cannot retrieve `C:` (Component) properties.
+- **Do not use `C:` prefix** in `priority_fields` (it will be ignored with a warning).
+- **`I:` prefix is supported** but optional (e.g., `I:LCSC` works same as `LCSC`).
 
 This flexibility allows your inventory to use different column names while still working with fabricator-specific BOM formats.
 

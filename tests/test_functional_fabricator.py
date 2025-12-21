@@ -77,20 +77,18 @@ class TestFabricatorSupport(FunctionalTestBase):
         self.assertEqual(rc, 0)
         rows = self.assert_csv_valid(output)
         header = rows[0]
-        self.assertIn("Fabricator", header)
+        # Fabricator column not in JLC default
         self.assertIn("LCSC", header)  # JLC header name
 
         # Check rows
         for row in rows[1:]:
-            fab = row[header.index("Fabricator")]
             fab_pn = row[header.index("LCSC")]
-            ref = row[header.index("Reference")]
+            ref = row[header.index("Designator")]
 
-            self.assertEqual(fab, "JLC")
             if "R1" in ref:
-                self.assertEqual(fab_pn, "C12345")
+                self.assertEqual(fab_pn, "C12345", f"R1 mismatch. Stderr:\n{stderr}")
             elif "C1" in ref:
-                self.assertEqual(fab_pn, "C67890")
+                self.assertEqual(fab_pn, "C67890", f"C1 mismatch. Stderr:\n{stderr}")
 
     def test_seeed_fabricator_flag(self):
         """Test --fabricator seeed populates fabricator_part_number correctly."""
@@ -114,15 +112,13 @@ class TestFabricatorSupport(FunctionalTestBase):
         self.assertEqual(rc, 0)
         rows = self.assert_csv_valid(output)
         header = rows[0]
-        self.assertIn("Seeed SKU", header)  # Seeed header name
+        self.assertIn("Seeed Part Number", header)  # Seeed header name
 
         # Check rows
         for row in rows[1:]:
-            fab = row[header.index("Fabricator")]
-            fab_pn = row[header.index("Seeed SKU")]
-            ref = row[header.index("Reference")]
+            fab_pn = row[header.index("Seeed Part Number")]
+            ref = row[header.index("Designator")]
 
-            self.assertEqual(fab, "Seeed")
             if "R1" in ref:
                 self.assertEqual(fab_pn, "10101010")  # Seeed SKU
             elif "C1" in ref:
@@ -155,10 +151,8 @@ class TestFabricatorSupport(FunctionalTestBase):
 
         # Check rows
         for row in rows[1:]:
-            fab = row[header.index("Fabricator")]
             fab_pn = row[header.index("LCSC")]
-
-            self.assertEqual(fab, "JLC")
+            # Check fabricator indirectly
             self.assertTrue(fab_pn.startswith("C"))
 
 

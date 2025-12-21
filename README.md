@@ -206,13 +206,15 @@ To customize a fabricator:
      "LCSC": "fabricator_part_number"
    ```
 
-3. **Reference in your config**:
+3. **Add to your configuration**:
    ```yaml
    # In your OS-specific config file:
    # macOS: ~/Library/Application Support/jbom/config.yaml
    # Windows: %APPDATA%\jbom\config.yaml
    # Linux: ~/.config/jbom/config.yaml
 
+   # Entries here are merged with the built-in defaults.
+   # New IDs are added; existing IDs override the default.
    fabricators:
      - name: "myjlc"
        file: "fabricators/myjlc.fab.yaml"

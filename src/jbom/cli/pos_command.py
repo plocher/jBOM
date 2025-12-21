@@ -2,11 +2,16 @@
 from __future__ import annotations
 import argparse
 from pathlib import Path
+from typing import Optional
 
+from jbom.common.config_fabricators import (
+    get_fabricator_by_cli_flag,
+    get_fabricator_by_preset,
+    get_fabricator_registry,
+)
 from jbom.generators.pos import POSGenerator, PlacementOptions, print_pos_table
-from jbom.common.output import resolve_output_path
 from jbom.cli.commands import Command, OutputMode
-from jbom.cli.common import apply_jlc_flag
+from jbom.common.output import resolve_output_path
 
 __all__ = ["POSCommand"]
 
@@ -47,6 +52,7 @@ class POSCommand(Command):
         parser.add_argument(
             "--fabricator",
             metavar="NAME",
+            choices=sorted(get_fabricator_registry().list_fabricators()),
             help="Target fabricator for output format (e.g., jlc)",
         )
 
@@ -106,6 +112,12 @@ class POSCommand(Command):
 
     def execute(self, args: argparse.Namespace) -> int:
         """Execute POS generation"""
+        # Apply fabricator flags to fields first
+        fields_arg = self._apply_fabricator_flags_to_fields(args)
+
+        # Determine fabricator using config-driven approach
+        fabricator = self._determine_fabricator(args, fields_arg)
+
         # Create placement options
         opts = PlacementOptions(
             units=args.units,
@@ -113,11 +125,10 @@ class POSCommand(Command):
             smd_only=args.smd_only,
             layer_filter=args.layer,
             loader_mode=args.loader,
-            fabricator=args.fabricator,
+            fabricator=fabricator,
         )
 
         # Process fields
-        fields_arg = apply_jlc_flag(args.fields, args.jlc)
         if fields_arg:
             opts.fields = POSGenerator(opts).parse_fields_argument(fields_arg)
 
@@ -152,3 +163,77 @@ class POSCommand(Command):
             gen.run(input=args.board, output=out)
 
         return 0
+
+    def _determine_fabricator(
+        self, args: argparse.Namespace, fields_arg: str
+    ) -> Optional[str]:
+        """Determine fabricator ID using config-driven approach."""
+        # 1. Explicit --fabricator argument takes precedence
+        if args.fabricator:
+            return args.fabricator
+
+        # 2. Check for dynamic fabricator flags (fabricator_jlc, fabricator_pcbway, etc.)
+        for attr_name in dir(args):
+            if attr_name.startswith("fabricator_") and getattr(args, attr_name):
+                # Convert fabricator_jlc -> --jlc
+                flag_name = attr_name.replace("fabricator_", "--")
+                fab = get_fabricator_by_cli_flag(flag_name)
+                if fab:
+                    return fab.config.id
+
+        # 3. Check for fabricator-specific presets in fields_arg
+        if fields_arg:
+            for preset in fields_arg.split(","):
+                preset = preset.strip()
+                if preset.startswith("+"):
+                    fab = get_fabricator_by_preset(preset)
+                    if fab:
+                        return fab.config.id
+
+        # 4. Legacy: check for hardcoded jlc flag if present
+        if getattr(args, "jlc", False):
+            # Try to resolve +jlc preset to fabricator
+            fab = get_fabricator_by_preset("+jlc")
+            if fab:
+                return fab.config.id
+            return "jlc"  # Fallback to ID string
+
+        # 5. No fabricator specified
+        return None
+
+    def _apply_fabricator_flags_to_fields(
+        self, args: argparse.Namespace
+    ) -> Optional[str]:
+        """Apply fabricator flags to fields argument.
+
+        Converts fabricator flags (fabricator_jlc, etc.) into field presets.
+
+        Args:
+            args: Parsed command-line arguments
+
+        Returns:
+            Modified fields argument with fabricator presets prepended if needed
+        """
+        fields_arg = args.fields
+
+        # Handle legacy --jlc flag (deprecated but supported for now)
+        if getattr(args, "jlc", False):
+            if not fields_arg:
+                fields_arg = "+jlc"
+            elif "+jlc" not in fields_arg.split(","):
+                fields_arg = f"+jlc,{fields_arg}"
+
+        # Find any active dynamic fabricator flags
+        for attr_name in dir(args):
+            if attr_name.startswith("fabricator_") and getattr(args, attr_name):
+                # Convert fabricator_jlc -> +jlc
+                preset_name = attr_name.replace("fabricator_", "+")
+
+                # If no fields specified, just use the preset
+                if not fields_arg:
+                    fields_arg = preset_name
+                elif preset_name not in fields_arg.split(","):
+                    # Prepend preset to existing fields
+                    fields_arg = f"{preset_name},{fields_arg}"
+
+        return fields_arg

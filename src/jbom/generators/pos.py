@@ -215,6 +215,8 @@ class POSGenerator(Generator):
         if self.fabricator:
             # Try to match fabricator ID to a preset
             fab_id = self.fabricator.config.id.lower()
+            if self.fabricator.config.pos_columns:
+                return fab_id
             if fab_id in PLACEMENT_PRESETS:
                 return fab_id
 
@@ -226,6 +228,15 @@ class POSGenerator(Generator):
 
     def _preset_fields(self, preset: str) -> List[str]:
         p = (preset or "standard").lower()
+
+        # Check fabricator config first
+        if self.fabricator and self.fabricator.config.id.lower() == p:
+            if self.fabricator.config.pos_columns:
+                # Return the list of internal fields defined in config
+                return list(self.fabricator.config.pos_columns.values())
+
+            raise ValueError(f"Fabricator '{p}' has no POS columns configured")
+
         if p not in PLACEMENT_PRESETS:
             # Collect valid presets from both hardcoded and fabricator
             valids = sorted(list(PLACEMENT_PRESETS.keys()))
