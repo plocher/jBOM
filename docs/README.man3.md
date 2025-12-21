@@ -143,22 +143,31 @@ def generate_enriched_inventory(
 
 **Example**
 ```python
+import os
 from jbom.api import generate_enriched_inventory, InventoryOptions
 
 # Generate basic inventory
 result = generate_enriched_inventory(input='MyProject/')
 
-# Generate inventory with search enrichment
+# Generate inventory with search enrichment (using environment variable)
+os.environ['MOUSER_API_KEY'] = 'your_mouser_api_key'
 opts = InventoryOptions(
     search=True,
     provider='mouser',
-    limit=3,
-    api_key='your_key'
+    limit=3
 )
 result = generate_enriched_inventory(
     input='MyProject/',
     output='enriched_inventory.csv',
     options=opts
+)
+
+# Alternative: explicit API key (overrides environment variable)
+opts = InventoryOptions(
+    search=True,
+    provider='mouser',
+    limit=3,
+    api_key='your_mouser_api_key'
 )
 
 if result['success']:
@@ -253,7 +262,7 @@ class InventoryOptions:
 **Attributes**
 : **search** — Enable automated part searching from distributors
 : **provider** — Search provider to use (default: "mouser")
-: **api_key** — API key for search provider (overrides environment)
+: **api_key** — API key for search provider (overrides MOUSER_API_KEY environment variable)
 : **limit** — Maximum search results per component (1=single result, None=unlimited)
 : **interactive** — Enable interactive candidate selection
 : **fields** — List of output field names for inventory

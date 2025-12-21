@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 - **Inventory Search Automation**: Enhanced `inventory` command with automated part search capabilities.
   - New `--search` flag enables automatic part searching from distributors during inventory generation.
-  - Search options: `--provider` (mouser), `--api-key`, `--limit` (including 'none' for unlimited), `--interactive`.
+  - Search options: `--provider` (mouser), `--api-key` (or MOUSER_API_KEY env var), `--limit` (including 'none' for unlimited), `--interactive`.
   - Priority-based ranking combines technical matching with supplier quality metrics (stock, lifecycle, price).
   - Search statistics reporting shows provider, searches performed, success/failure counts.
 - **Enhanced Inventory API**: New `generate_enriched_inventory()` API function with search integration.
