@@ -195,7 +195,7 @@ def search_parts(
 
 **Parameters**
 : **query** — Search query string (keyword, MPN, etc.)
-: **provider** — Provider name (default: "mouser"). Currently supports "mouser", with additional providers planned.
+: **provider** — Provider name (default: "mouser"). Currently supports "mouser".
 : **limit** — Maximum results to return
 : **api_key** — Optional API key (overrides provider-specific environment variables)
 : **filter_parametric** — Enable smart parametric filtering
@@ -261,7 +261,7 @@ class InventoryOptions:
 
 **Attributes**
 : **search** — Enable automated part searching from distributors
-: **provider** — Search provider to use (default: "mouser"). Currently supports "mouser", with additional providers planned.
+: **provider** — Search provider to use (default: "mouser"). Currently supports "mouser".
 : **api_key** — API key for search provider (overrides provider-specific environment variables like MOUSER_API_KEY)
 : **limit** — Maximum search results per component (1=single result, None=unlimited)
 : **interactive** — Enable interactive candidate selection

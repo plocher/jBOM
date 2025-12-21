@@ -139,7 +139,7 @@ Imply `+jlc` field preset for JLCPCB-compatible placement output. This preset in
 : Enable automated part searching from distributors during inventory generation. When enabled, jBOM will automatically search for each component and add matching part information to the inventory.
 
 **--provider {mouser}**
-: Search provider to use (default: mouser). Currently supports Mouser Electronics, with additional providers (e.g., DigiKey) planned for future releases.
+: Search provider to use (default: mouser). Currently supports Mouser Electronics.
 
 **--api-key KEY**
 : API key for search provider (overrides environment variables). Required for search functionality. For Mouser, either set the MOUSER_API_KEY environment variable or provide the key with this option.

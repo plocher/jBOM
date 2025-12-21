@@ -172,8 +172,7 @@ def search_parts(
     else:
         raise ValueError(
             f"Unsupported search provider: '{provider}'. "
-            f"Currently supported providers: 'mouser'. "
-            f"Additional providers (e.g., DigiKey) are planned for future releases."
+            f"Currently supported providers: 'mouser'."
         )
 
     results = prov.search(query, limit=limit)
@@ -442,8 +441,7 @@ def generate_enriched_inventory(
                 "success": False,
                 "error": (
                     f"Unsupported search provider: '{opts.provider}'. "
-                    f"Currently supported providers: 'mouser'. "
-                    f"Additional providers (e.g., DigiKey) are planned for future releases."
+                    f"Currently supported providers: 'mouser'."
                 ),
                 "inventory_items": [],
                 "field_names": [],
