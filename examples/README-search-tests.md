@@ -1,13 +1,14 @@
 # jBOM Search Functionality Test Workflows
 
-This directory contains comprehensive test workflows to validate and evaluate jBOM's search automation capabilities before merging the inventory search automation feature.
+These test workflows validate jBOM's search capabilities by finding the "3 best" Mouser parts for every item in the example inventory. This comprehensive testing approach exposes both inventory data quality issues and search algorithm limitations.
 
 ## Overview
 
-These tests serve two critical purposes:
+These tests serve three critical purposes:
 
-1. **Validation**: Verify that the search functionality works correctly with real-world components
-2. **Quality Assessment**: Identify areas where search algorithms or inventory data could be improved
+1. **Search Validation**: Verify search functionality works with real inventory data
+2. **Failure Mode Analysis**: Expose inventory data quality vs. search algorithm issues
+3. **Implementation Consistency**: Ensure CLI and Python API produce consistent results
 
 ## Prerequisites
 
@@ -30,20 +31,21 @@ pip install -e .[dev,search,all]
 
 ## Test Workflows
 
-### 1. Python API Workflow (`test_search_workflow.py`)
+### 1. Python API Test (`test_inventory_search.py`)
 
-**Purpose**: Tests the `search_parts()` API function with real inventory components.
+**Purpose**: Tests `search_parts()` API with every inventory item.
 
 **What it does**:
-- Loads components from `example-INVENTORY.numbers`
-- Focuses on searchable categories: RES, CAP, LED, IC, Q, DIO
-- Searches for the "3 best" Mouser parts for each component
-- Provides detailed analysis of search success rates and result quality
+- Loads ALL items from `example-INVENTORY.numbers` (96 components)
+- For each item, builds a search query from available data
+- Uses `search_parts(limit=3)` to find 3 best Mouser parts
+- Tracks success rates, data quality issues, and algorithm limitations
+- Provides category-by-category analysis
 
 **Run it**:
 ```bash
 cd examples/
-python test_search_workflow.py
+python test_inventory_search.py
 ```
 
 **Expected Output**:
@@ -52,19 +54,21 @@ python test_search_workflow.py
 - Recommendations for improvements
 - Identification of problematic inventory entries
 
-### 2. CLI Workflow (`test_cli_search.sh`)
+### 2. CLI Test (`test_inventory_cli.sh`)
 
-**Purpose**: Tests the `jbom search` CLI command with representative queries.
+**Purpose**: Tests `jbom search` CLI with every inventory item.
 
 **What it does**:
-- Tests common electronic component searches
-- Validates CLI argument handling and output formatting
-- Demonstrates typical user workflows
+- Loads ALL items from `example-INVENTORY.numbers` (same 96 components)
+- Uses identical search query logic as Python test
+- Runs `jbom search "query" --limit 3` for each item
+- Should produce consistent results with Python API test
+- Validates CLI and API implementation consistency
 
 **Run it**:
 ```bash
 cd examples/
-./test_cli_search.sh
+./test_inventory_cli.sh
 ```
 
 **Expected Output**:
