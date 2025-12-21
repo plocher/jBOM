@@ -20,6 +20,7 @@ Origin = Literal["board", "aux"]
 
 PLACEMENT_FIELDS: Dict[str, str] = {
     "reference": "Component reference designator",
+    "value": "Component value (e.g. 10k, 0.1uF)",
     "x": "X coordinate in selected units",
     "y": "Y coordinate in selected units",
     "rotation": "Rotation in degrees (top-view convention)",
@@ -39,6 +40,14 @@ PLACEMENT_PRESETS: Dict[str, Dict[str, Optional[List[str]]]] = {
     "jlc": {
         "fields": ["reference", "side", "x", "y", "rotation", "package", "smd"],
         "description": "JLC-style CPL columns (headers not yet vendor-specific)",
+    },
+    "pcbway": {
+        "fields": ["reference", "value", "package", "x", "y", "rotation", "side"],
+        "description": "PCBWay assembly format (Designator, Val, Package, X, Y, Rot, Layer)",
+    },
+    "seeed": {
+        "fields": ["reference", "x", "y", "side", "rotation"],
+        "description": "Seeed Studio format (Designator, Mid X, Mid Y, Layer, Rotation)",
     },
     "minimal": {
         "fields": ["reference", "x", "y", "side"],
@@ -177,6 +186,8 @@ class POSGenerator(Generator):
                 for fld in norm_fields:
                     if fld == "reference":
                         row.append(c.reference)
+                    elif fld == "value":
+                        row.append(c.attributes.get("value", ""))
                     elif fld == "x":
                         row.append(f"{x:.4f}")
                     elif fld == "y":
@@ -313,6 +324,10 @@ def print_pos_table(gen: POSGenerator, fields: Optional[List[str]] = None) -> No
         for field in norm_fields:
             if field == "reference":
                 col_widths[field] = max(col_widths[field], len(comp.reference))
+            elif field == "value":
+                col_widths[field] = max(
+                    col_widths[field], len(comp.attributes.get("value", ""))
+                )
             elif field == "x":
                 col_widths[field] = max(col_widths[field], len(f"{x:.4f}"))
             elif field == "y":
@@ -345,6 +360,7 @@ def print_pos_table(gen: POSGenerator, fields: Optional[List[str]] = None) -> No
     # Cap maximum widths for readability
     max_widths = {
         "reference": 20,
+        "value": 15,
         "x": 12,
         "y": 12,
         "rotation": 10,
@@ -387,6 +403,8 @@ def print_pos_table(gen: POSGenerator, fields: Optional[List[str]] = None) -> No
 
             if field == "reference":
                 content = comp.reference[:width]
+            elif field == "value":
+                content = comp.attributes.get("value", "")[:width]
             elif field == "x":
                 content = f"{x:.4f}"
             elif field == "y":

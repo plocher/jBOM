@@ -4,6 +4,32 @@ All notable changes to jBOM are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.4.0] - 2025-12-21
+
+### Added
+- **Config-Driven Classification**: Component classification now uses a rule-based engine defined in YAML configuration.
+- **Debug Categories**: Added support for granular debug control via `debug_categories`.
+- **POS Fabricator Support**: Added `--fabricator` option to `pos` command with presets for JLC, PCBWay, and Seeed.
+
+### Changed
+- Refactored `get_component_type` to use the new `ClassificationEngine`.
+- Moved hardcoded classification rules to `src/jbom/config/defaults.yaml`.
+- Updated `POSGenerator` to support fabricator-specific field presets.
+
+## [3.3.1] - 2025-12-20
+
+### Fixed
+- CI workflow dependency installation to include `pyproject.toml` dependencies.
+- Added missing `PyYAML` dependency.
+- Code formatting and linting fixes.
+
+## [3.3.0] - 2025-12-18
+
+### Added
+- **Search Command**: `jbom search` for parts via Mouser API with smart filtering.
+- **Federated Inventory**: Support for loading multiple inventory files.
+- **PCBWay Support**: Initial fabricator logic for PCBWay.
+
 ## [3.2.0] - 2025-12-18
 
 ### Added

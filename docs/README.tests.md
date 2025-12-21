@@ -1,115 +1,41 @@
 # Unit Tests for jBOM
 
-This document provides an overview of the unit test suite for jBOM and instructions for running the tests.
+This document provides an overview of the unit test suite for jBOM.
 
 ## Test Suite Overview
 
-The test suite (`test_kicad_bom_generator.py`) contains **46 tests** organized into **13 test classes** that comprehensively validate both the core functionality and enhanced features including hierarchical schematic support, SMD filtering, advanced debug system, field disambiguation, and custom output options.
+The test suite covers core functionality, edge cases, and integration scenarios. Tests are self-documenting; please refer to the docstrings in the test files for detailed behavior descriptions.
 
-### Test Classes
+### Core Functionality
+Tests in this category validate the fundamental logic of BOM generation:
+- **Value Parsing**: Parsing and formatting of Resistor, Capacitor, and Inductor values (EIA formats, precision handling).
+- **Component Classification**: Logic for detecting component types (RES, CAP, LED, etc.) from library IDs and footprints.
+- **Inventory Matching**: Algorithms for matching schematic components to inventory items, including priority ranking and tolerance substitution.
+- **BOM Generation**: Grouping, sorting, and CSV generation logic.
 
-#### Core Functionality Tests
-
-1. **`TestResistorParsing`** - Tests resistor value parsing and EIA formatting
-   - Parsing various formats: `330R`, `3R3`, `22K`, `2M2`, etc.
-   - EIA formatting with precision control: `10K` vs `10K0`
-   - Edge cases and invalid inputs
-
-2. **`TestCapacitorParsing`** - Tests capacitor value parsing and formatting
-   - Parsing formats: `100nF`, `1uF`, `220pF`, `1n0`, etc.
-   - EIA-style formatting: `100nF`, `2u2F`, `4n7F`
-
-3. **`TestInductorParsing`** - Tests inductor value parsing and formatting
-   - Parsing formats: `10uH`, `2m2H`, `100nH`, etc.
-   - EIA-style formatting: `10uH`, `2m2H`, `4u7H`
-
-4. **`TestComponentTypeDetection`** - Tests component type detection logic
-   - Detection from `lib_id`: `Device:R` → `RES`, `Device:C` → `CAP`
-   - Detection from footprint patterns
-   - Handling unknown component types
-
-5. **`TestPrecisionResistorDetection`** - Tests precision resistor detection and warnings
-   - Pattern detection for precision values: `10K0`, `47K5`, `2M7`
-   - BOM generation warnings when 1% parts are implied but unavailable
-   - Standard vs precision value handling
-
-6. **`TestInventoryMatching`** - Tests inventory matching algorithms
-   - Component to inventory matching by type, package, and value
-   - Priority-based ranking (lower Priority numbers rank higher)
-   - No-match scenarios
-
-7. **`TestBOMGeneration`** - Tests BOM generation and CSV output
-   - Component grouping by matching inventory items
-   - Basic and verbose CSV output formats
-   - Header validation and data integrity
-
-8. **`TestBOMSorting`** - Tests BOM sorting by category and component numbering
-   - Alphabetical category sorting: C, D, LED, R, U
-   - Natural number sorting within categories: R1, R2, R10
-   - Reference parsing and sort key generation
-
-#### Enhanced Functionality Tests
-
-9. **`TestCategorySpecificFields`** - Tests category-specific field mappings
-   - `get_category_fields()` function validation
-   - Value interpretation mapping: RES→Resistance, CAP→Capacitance
-   - Category field constants validation
-
-10. **`TestFieldPrefixSystem`** - Tests I:/C: prefix system for field disambiguation
-    - Field discovery from inventory and component properties
-    - Explicit field extraction with `I:` and `C:` prefixes
-    - Ambiguous field handling and combined value return
-
-11. **`TestDebugFunctionality`** - Tests debug mode and alternative match display
-    - Debug information in Notes column
-    - Alternative match formatting with IPN, scores, and part numbers
-    - Debug mode enabled/disabled behavior
-    - Method signature validation for 3-tuple returns
-
-12. **`TestHierarchicalSupport`** - Tests hierarchical schematic functionality
-    - Hierarchical schematic detection (`is_hierarchical_schematic()`)
-    - Sheet file reference extraction (`extract_sheet_files()`)
-    - Intelligent file selection (`find_best_schematic()`)
-    - Autosave file handling with appropriate warnings
-    - Multi-file processing (`process_hierarchical_schematic()`)
-    - Missing sub-sheet handling and error recovery
-    - Integration with simple (non-hierarchical) schematics
-
-13. **`TestSMDFiltering`** - Tests SMD (Surface Mount Device) component filtering
-    - SMD filtering enabled/disabled behavior
-    - SMD component detection logic (`_is_smd_component()`)
-    - Mixed SMD/PTH inventory handling
-    - Footprint-based SMD inference for unclear SMD field values
-
-14. **`TestCustomFieldOutput`** - Tests custom field selection in BOM output
-    - Custom field CSV output with prefixed fields
-    - Ambiguous field auto-expansion into separate columns
-    - Field validation and error handling
+### Enhanced Features
+Tests covering advanced capabilities:
+- **Category-Specific Fields**: Dynamic field mapping based on component type.
+- **Field System**: Case-insensitive handling, I:/C: prefix disambiguation, and preset expansion.
+- **Debug Functionality**: Validation of debug diagnostics and alternative match reporting.
+- **Hierarchical Schematics**: Detection and processing of multi-sheet designs.
+- **SMD Filtering**: Filtering logic for Surface Mount Devices.
 
 ## Running the Tests
 
 ### Prerequisites
-
 - Python 3.9+
-- Required dependencies: `sexpdata`
+- Dependencies: `sexpdata` (and others listed in `pyproject.toml`)
 
-### Basic Test Execution
-
+### Commands
 Run all tests:
 ```bash
-python -m unittest test_kicad_bom_generator
+python -m unittest discover -s tests -v
 ```
 
-Run with verbose output:
+Run a specific test module:
 ```bash
-python -m unittest test_kicad_bom_generator -v
-```
-
-### Running Specific Test Classes
-
-Run a specific test class:
-```bash
-python -m unittest test_kicad_bom_generator.TestResistorParsing -v
+python -m unittest tests.test_jbom -v
 ```
 
 Run multiple specific test classes:

@@ -38,7 +38,13 @@ from jbom import EXCEL_SUPPORT, NUMBERS_SUPPORT
 
 
 class TestResistorParsing(unittest.TestCase):
-    """Test resistor value parsing and EIA formatting"""
+    """Test resistor value parsing and EIA formatting.
+
+    Validates:
+    - Parsing various formats: 330R, 3R3, 22K, 2M2, etc.
+    - EIA formatting with precision control: 10K vs 10K0.
+    - Edge cases and invalid inputs.
+    """
 
     def setUp(self):
         # Create a temporary inventory file for matcher
@@ -116,7 +122,12 @@ class TestResistorParsing(unittest.TestCase):
 
 
 class TestCapacitorParsing(unittest.TestCase):
-    """Test capacitor value parsing and formatting"""
+    """Test capacitor value parsing and formatting.
+
+    Validates:
+    - Parsing formats: 100nF, 1uF, 220pF, 1n0, etc.
+    - EIA-style formatting: 100nF, 2u2F, 4n7F.
+    """
 
     def setUp(self):
         self.temp_inv = tempfile.NamedTemporaryFile(
@@ -171,7 +182,12 @@ class TestCapacitorParsing(unittest.TestCase):
 
 
 class TestInductorParsing(unittest.TestCase):
-    """Test inductor value parsing and formatting"""
+    """Test inductor value parsing and formatting.
+
+    Validates:
+    - Parsing formats: 10uH, 2m2H, 100nH, etc.
+    - EIA-style formatting: 10uH, 2m2H, 4u7H.
+    """
 
     def setUp(self):
         self.temp_inv = tempfile.NamedTemporaryFile(
@@ -284,7 +300,13 @@ class TestCategorySpecificFields(unittest.TestCase):
 
 
 class TestComponentTypeDetection(unittest.TestCase):
-    """Test component type detection from lib_id and footprint"""
+    """Test component type detection from lib_id and footprint.
+
+    Validates:
+    - Detection from lib_id: Device:R → RES, Device:C → CAP.
+    - Detection from footprint patterns.
+    - Handling unknown component types.
+    """
 
     def setUp(self):
         self.temp_inv = tempfile.NamedTemporaryFile(
@@ -324,7 +346,13 @@ class TestComponentTypeDetection(unittest.TestCase):
 
 
 class TestPrecisionResistorDetection(unittest.TestCase):
-    """Test precision resistor detection logic"""
+    """Test precision resistor detection logic.
+
+    Validates:
+    - Pattern detection for precision values: 10K0, 47K5, 2M7.
+    - BOM generation warnings when 1% parts are implied but unavailable.
+    - Standard vs precision value handling.
+    """
 
     def setUp(self):
         # Create comprehensive inventory with standard decade values
@@ -484,7 +512,13 @@ class TestPrecisionResistorDetection(unittest.TestCase):
 
 
 class TestInventoryMatching(unittest.TestCase):
-    """Test inventory matching logic"""
+    """Test inventory matching logic.
+
+    Validates:
+    - Component to inventory matching by type, package, and value.
+    - Priority-based ranking (lower Priority numbers rank higher).
+    - No-match scenarios.
+    """
 
     def setUp(self):
         # Create comprehensive test inventory with Priority column
