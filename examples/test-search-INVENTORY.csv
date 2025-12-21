@@ -1,0 +1,11 @@
+Family,assembly,link,QUOTED EA,V,Frequency,purchaseable,mcd,Tolerance,A,Type,Symbol,Reorder,Form,Load,Angle,SMD,total_in_stock,Generic,Datasheet,QUOTED TOTAL,Keywords,IPN,Footprint,Wavelength,LCSC,Stability,Priority,Value,Order Quantity,Pins,MFGPN,Pitch,W,Category,Package,Manufacturer,ACTIVE,Location,Name,Description
+,,,,,,,,,,Board Outline & Milling,,,,,,,,,,,SLK_BRD_80x100 BRD_80x100 SLK Board Outline & Milling,SLK_BRD_80x100,,,,,99,BRD_80x100,,,,,,SLK,,,,,,PCB Board outline with mounting holes - fits Tyco 3 mounting rail
+,,,,,,,,,,Board Outline & Milling,,,,,,,,,,,BRD_100x50 SLK Board Outline & Milling,SLK_BRD_100x50,,,,,99,BRD_100x50,,,,,,SLK,,,,,,PCB Board outline with mounting holes
+,,,,,,,,,,Board Outline & Milling,,,,,,,,,,,BRD_100x25x2 SLK Board Outline & Milling,SLK_BRD_100x25x2,,,,,99,BRD_100x25x2,,,,,,SLK,,,,,,PCB Board outline with mounting holes
+,,,,,,,,,,Board Outline & Milling,,,,,,,,,,,BRD_100x75 SLK Board Outline & Milling,SLK_BRD_100x75,,,,,99,BRD_100x75,,,,,,SLK,,,,,,PCB Board outline with mounting holes
+,,,,,,,,,,Board Outline & Milling,,,,,,,,,,,BRD_100x75 SLK Board Outline & Milling,SLK_BRD_100x75,,,,,99,BRD_100x75,,,,,,SLK,,,,,,PCB Board outline with mounting holes  large radius corners
+,,,,,,,,,,Board Outline & Milling,,,,,,,,,,,BRD_100x100 SLK Board Outline & Milling,SLK_BRD_100x100,,,,,99,BRD_100x100,,,,,,SLK,,,,,,PCB Board outline with mounting holes
+,,,,,,,,,,Board Outline & Milling,,,,,,,,,,,BRD_100x150 SLK Board Outline & Milling,SLK_BRD_100x150,,,,,99,BRD_100x150,,,,,,SLK,,,,,,PCB Board outline with mounting holes
+,,,,,,,,,,Board Outline & Milling,,,,,,,,,,,BRD_100x200 SLK Board Outline & Milling,SLK_BRD_100x200,,,,,99,BRD_100x200,,,,,,SLK,,,,,,PCB Board outline with mounting holes
+,,,,,,,,,,SilkScreen,,,,,,,,,,,DCPower+ SLK SilkScreen,SLK_DCPower+,,,,,99,DCPower+,,,,,,SLK,,,,,,DC Power Jack Label
+,,,,,,,,,,SilkScreen,,,,,,,,,,,DCPower- SLK SilkScreen,SLK_DCPower-,,,,,99,DCPower-,,,,,,SLK,,,,,,DC Power Jack Label
