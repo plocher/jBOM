@@ -37,18 +37,6 @@ PLACEMENT_PRESETS: Dict[str, Dict[str, Optional[List[str]]]] = {
         "fields": ["reference", "x", "y", "rotation", "side", "footprint", "smd"],
         "description": "Standard POS columns with SMD indicator",
     },
-    "jlc": {
-        "fields": ["reference", "side", "x", "y", "rotation", "package", "smd"],
-        "description": "JLC-style CPL columns (headers not yet vendor-specific)",
-    },
-    "pcbway": {
-        "fields": ["reference", "value", "package", "x", "y", "rotation", "side"],
-        "description": "PCBWay assembly format (Designator, Val, Package, X, Y, Rot, Layer)",
-    },
-    "seeed": {
-        "fields": ["reference", "x", "y", "side", "rotation"],
-        "description": "Seeed Studio format (Designator, Mid X, Mid Y, Layer, Rotation)",
-    },
     "minimal": {
         "fields": ["reference", "x", "y", "side"],
         "description": "Just enough to locate components",
@@ -165,7 +153,16 @@ class POSGenerator(Generator):
             fields: List of field names to include
         """
         norm_fields = [normalize_field_name(f) for f in fields]
-        headers = [field_to_header(f) for f in norm_fields]
+
+        # Determine headers
+        # If fabricator is active, use its column mapping for headers
+        if self.fabricator and self.fabricator.config.pos_columns:
+            # Create reverse map: internal_field -> Header Name
+            # Note: If multiple headers map to same field, last one wins (acceptable risk)
+            rev_map = {v: k for k, v in self.fabricator.config.pos_columns.items()}
+            headers = [rev_map.get(f, field_to_header(f)) for f in norm_fields]
+        else:
+            headers = [field_to_header(f) for f in norm_fields]
 
         # Check if output should go to stdout
         output_str = str(output_path)
@@ -230,9 +227,12 @@ class POSGenerator(Generator):
     def _preset_fields(self, preset: str) -> List[str]:
         p = (preset or "standard").lower()
         if p not in PLACEMENT_PRESETS:
-            raise ValueError(
-                f"Unknown preset: {preset} (valid: {', '.join(sorted(PLACEMENT_PRESETS))})"
-            )
+            # Collect valid presets from both hardcoded and fabricator
+            valids = sorted(list(PLACEMENT_PRESETS.keys()))
+            if self.fabricator:
+                valids.append(self.fabricator.config.id.lower())
+
+            raise ValueError(f"Unknown preset: {preset} (valid: {', '.join(valids)})")
         spec = PLACEMENT_PRESETS[p]
         if spec["fields"] is None:
             return list(PLACEMENT_FIELDS.keys())
@@ -243,7 +243,11 @@ class POSGenerator(Generator):
             return self._preset_fields(self.default_preset())
         tokens = [t.strip() for t in fields_arg.split(",") if t.strip()]
         result: List[str] = []
+        # Update valid presets list
         presets = set(PLACEMENT_PRESETS.keys())
+        if self.fabricator:
+            presets.add(self.fabricator.config.id.lower())
+
         for tok in tokens:
             if tok.startswith("+"):
                 name = tok[1:].lower()

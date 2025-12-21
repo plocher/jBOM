@@ -44,10 +44,6 @@ class TestPlacementFields(unittest.TestCase):
             pg.parse_fields_argument("+standard"),
             ["reference", "x", "y", "rotation", "side", "footprint", "smd"],
         )
-        self.assertEqual(
-            pg.parse_fields_argument("+jlc"),
-            ["reference", "side", "x", "y", "rotation", "package", "smd"],
-        )
         # Custom list
         self.assertEqual(
             pg.parse_fields_argument("Reference,X,Y,Side"),

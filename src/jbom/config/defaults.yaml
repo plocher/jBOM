@@ -8,12 +8,33 @@ metadata:
 fabricators:
   - name: "jlc"
     file: "fabricators/jlc.fab.yaml"
+    pos_columns:
+      "Designator": "reference"
+      "Mid X": "x"
+      "Mid Y": "y"
+      "Layer": "side"
+      "Rotation": "rotation"
+      "Package": "package"
 
   - name: "pcbway"
     file: "fabricators/pcbway.fab.yaml"
+    pos_columns:
+      "Designator": "reference"
+      "Val": "value"
+      "Package": "package"
+      "Mid X": "x"
+      "Mid Y": "y"
+      "Rotation": "rotation"
+      "Layer": "side"
 
   - name: "seeed"
     file: "fabricators/seeed.fab.yaml"
+    pos_columns:
+      "Designator": "reference"
+      "Mid X": "x"
+      "Mid Y": "y"
+      "Layer": "side"
+      "Rotation": "rotation"
 
   # Generic fabricator for custom use
   - name: "Generic"
