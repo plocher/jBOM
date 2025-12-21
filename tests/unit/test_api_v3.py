@@ -58,16 +58,18 @@ class TestGenerateBOMAPI(unittest.TestCase):
         self.assertIn("bom_entries", result)
         self.assertIn("inventory_count", result)
         self.assertEqual(result["inventory_count"], 2)
-        # Parser includes lib_symbol definitions, so expect 4 (2 libs + 2 instances)
-        self.assertEqual(len(result["components"]), 4)
+        # Parser used to include lib_symbol definitions, but now filters them
+        # So we expect 2 instances (R1, C1)
+        self.assertEqual(len(result["components"]), 2)
 
     def test_generate_bom_with_directory_input(self):
         """Test generate_bom with directory (auto-discovery)"""
         result = generate_bom(input=self.tmpdir, inventory=self.inventory)
 
         self.assertIn("components", result)
-        # Parser includes lib_symbol definitions, so expect 4 (2 libs + 2 instances)
-        self.assertEqual(len(result["components"]), 4)
+        # Parser used to include lib_symbol definitions, but now filters them
+        # So we expect 2 instances (R1, C1)
+        self.assertEqual(len(result["components"]), 2)
 
     def test_generate_bom_with_output_file(self):
         """Test generate_bom writes output file"""

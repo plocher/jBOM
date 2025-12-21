@@ -280,15 +280,22 @@ class TestConfigurationIntegration(unittest.TestCase):
         mock_config = JBOMConfig()
         mock_load.return_value = mock_config
 
-        # First call should load
-        config1 = get_config()
+        # Ensure we start fresh
+        reload_config()
+
+        # reload_config calls get_config which calls load_config
+        # So count should be 1 now
         self.assertEqual(mock_load.call_count, 1)
 
-        # Second call should use cache
+        # Call get_config again
         config2 = get_config()
-        self.assertEqual(mock_load.call_count, 1)  # Still 1
+        # Should be cached, so load_config NOT called again
+        self.assertEqual(mock_load.call_count, 1)
 
         # Same instance should be returned
+        # Note: reload_config returns the result of get_config(), so check against that
+        # config1 = get_config() which is what reload_config returned essentially
+        config1 = get_config()
         self.assertIs(config1, config2)
 
 

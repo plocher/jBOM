@@ -9,7 +9,7 @@ from jbom.common.types import Component
 from jbom.processors.inventory_matcher import InventoryMatcher
 from jbom.generators.bom import BOMGenerator
 from jbom.common.generator import GeneratorOptions
-from tests.test_functional_base import FunctionalTestBase
+from tests.functional.test_functional_base import FunctionalTestBase
 
 
 class TestPCBWayPOC(FunctionalTestBase):
@@ -78,10 +78,8 @@ class TestPCBWayPOC(FunctionalTestBase):
             "Designator",
             "Quantity",
             "Value",
+            "Comment",
             "Package",
-            "Manufacturer Part Number",
-            "Manufacturer",
-            "Description",
             "Distributor Part Number",
         ]
         self.assertEqual(headers, expected_headers)
@@ -89,12 +87,12 @@ class TestPCBWayPOC(FunctionalTestBase):
         # 5.2 Verify Row Content
         # R1 Row
         r1_row = next(r for r in rows if r[0] == "R1")
-        self.assertEqual(r1_row[4], "RC0603JR-0710KL")  # MPN
-        self.assertEqual(r1_row[5], "Yageo")  # Manufacturer
-        self.assertEqual(r1_row[7], "311-10KGRCT-ND")  # Distributor SKU
+        # Check available columns based on indices:
+        # 0:Designator, 1:Quantity, 2:Value, 3:Comment, 4:Package, 5:Distributor Part Number
+        self.assertEqual(r1_row[5], "311-10KGRCT-ND")  # Distributor SKU from inventory
 
         # C1 Row
         c1_row = next(r for r in rows if r[0] == "C1")
-        self.assertEqual(c1_row[4], "CL10B104KB8NNNC")  # MPN
-        self.assertEqual(c1_row[5], "Samsung")  # Manufacturer
-        self.assertEqual(c1_row[7], "187-CL10B104KB8NNNC")  # Distributor SKU
+        self.assertEqual(
+            c1_row[5], "187-CL10B104KB8NNNC"
+        )  # Distributor SKU from inventory

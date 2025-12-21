@@ -58,6 +58,7 @@ class TestPlacementFields(unittest.TestCase):
                 "y",
                 "rotation",
                 "side",
+                "value",
                 "footprint",
                 "package",
                 "datasheet",

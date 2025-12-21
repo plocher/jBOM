@@ -162,14 +162,14 @@ class TestConfigLoader(unittest.TestCase):
         with self.assertRaises(yaml.YAMLError):
             loader._load_config_file(invalid_config)
 
-    def test_missing_required_fields(self):
+    @patch("builtins.print")
+    def test_missing_required_fields(self, mock_print):
         """Test validation of required configuration fields."""
         # Create config missing required fields
         invalid_data = {
             "fabricators": [
                 {
-                    "name": "Test Fab",
-                    # Missing required "id" field
+                    # Missing BOTH "name" and "id" fields
                     "description": "Test fabricator",
                 }
             ]
@@ -181,9 +181,13 @@ class TestConfigLoader(unittest.TestCase):
 
         loader = ConfigLoader()
 
-        # Should handle missing required fields gracefully
-        with self.assertRaises(KeyError):
-            loader._load_config_file(config_file)
+        # Should handle missing required fields gracefully by logging warning and skipping
+        config = loader._load_config_file(config_file)
+        # Should have skipped the invalid fabricator
+        self.assertEqual(len(config.fabricators), 0)
+
+        # Verify warning was printed
+        mock_print.assert_called()
 
 
 class TestConfigurableFabricator(unittest.TestCase):

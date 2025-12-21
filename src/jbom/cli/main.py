@@ -30,15 +30,13 @@ def main(argv: List[str] | None = None) -> int:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""Examples:
   jbom bom project/ -i inventory.csv                    # Generate BOM
-  jbom bom project/ -i inventory.csv -o console         # Show formatted table
-  jbom bom project/ -i inventory.csv --jlc              # JLCPCB format
   jbom pos board.kicad_pcb                              # Generate placement file
-  jbom pos board.kicad_pcb -o console                   # Show formatted table
-  jbom pos board.kicad_pcb --outdir build/              # Custom output directory
+  jbom inventory project/                               # Generate inventory from project
+  jbom annotate project/ -i inventory.csv               # Back-annotate schema from inventory
+  jbom search "0603 10k"                                # Search distributors
 
-For detailed help on each command:
-  jbom bom --help
-  jbom pos --help""",
+For details, try
+  jbom <command> --help""",
     )
 
     # Add version flag

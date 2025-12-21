@@ -127,19 +127,6 @@ class FabricatorConfig:
         if not self.id and self.name:
             self.id = self.name.lower().replace(" ", "").replace("-", "")
 
-        # Backward compatibility for kwargs
-        if hasattr(self, "part_number_header"):
-            self.part_number["header"] = self.part_number_header
-        if hasattr(self, "part_number_fields"):
-            self.part_number["priority_fields"] = self.part_number_fields
-        if hasattr(self, "cli_flags") and self.cli_flags:
-            # Note: cli_flags logic in property usually generates from ID
-            # but if manually provided, we might store it.
-            # However, the property implementation currently overrides it.
-            pass
-        if hasattr(self, "cli_presets"):
-            pass
-
 
 @dataclass
 class DistributorConfig:

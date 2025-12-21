@@ -4,7 +4,7 @@ Covering: Smart Filtering, Stock Buffers, and Ranking.
 """
 from jbom.search import SearchResult
 from jbom.search.filter import SearchFilter
-from tests.test_functional_base import FunctionalTestBase
+from .test_functional_base import FunctionalTestBase
 
 
 class TestFunctionalSearch(FunctionalTestBase):

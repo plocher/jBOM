@@ -5,7 +5,7 @@ Covering: Multi-source loading, conflict resolution, and missing data handling.
 from jbom.loaders.inventory import InventoryLoader
 from jbom.processors.inventory_matcher import InventoryMatcher
 from jbom.common.types import Component
-from tests.test_functional_base import FunctionalTestBase
+from .test_functional_base import FunctionalTestBase
 
 
 class TestFunctionalFederation(FunctionalTestBase):

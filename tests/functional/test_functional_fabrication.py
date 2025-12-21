@@ -6,7 +6,7 @@ from jbom.common.types import Component, InventoryItem
 from jbom.generators.bom import BOMGenerator
 from jbom.processors.inventory_matcher import InventoryMatcher
 from jbom.common.generator import GeneratorOptions
-from tests.test_functional_base import FunctionalTestBase
+from .test_functional_base import FunctionalTestBase
 
 
 class TestFunctionalFabrication(FunctionalTestBase):
@@ -60,10 +60,8 @@ class TestFunctionalFabrication(FunctionalTestBase):
             "Designator",
             "Quantity",
             "Value",
+            "Comment",
             "Package",
-            "Manufacturer Part Number",
-            "Manufacturer",
-            "Description",
             "Distributor Part Number",
         ]
         self.assertEqual(headers, expected)

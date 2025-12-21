@@ -213,6 +213,7 @@ class TestConfigLoader(unittest.TestCase):
             "pcb_assembly": {},
             "part_number": {"header": "P/N"},
             "bom_columns": {"Part": "reference"},
+            "pos_columns": {},
         }
 
         self.assertEqual(result, expected)

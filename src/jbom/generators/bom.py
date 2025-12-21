@@ -311,9 +311,12 @@ class BOMGenerator(Generator):
                 if available_fields and normalized_token not in available_fields:
                     # Allow I: and C: prefixes even if not explicitly in available_fields?
                     # available_fields usually contains all valid fields.
-                    # But let's follow the global logic which validates.
                     # Exception: if available_fields is empty (early init), skip validation.
-                    pass
+
+                    # Strict validation to match CLI expectations
+                    raise ValueError(
+                        f"Unknown field: {token}. Use --list-fields to see available fields."
+                    )
 
                 result.append(normalized_token)
 

@@ -73,12 +73,13 @@ class TestCLIBehavior(unittest.TestCase):
             reader = csv.DictReader(f)
             headers = reader.fieldnames
             # JLC format should have these specific fields
-            self.assertIn("Reference", headers)
+            self.assertIn("Designator", headers)  # Renamed from Reference
             self.assertIn("Quantity", headers)
             self.assertIn("Value", headers)
             self.assertIn("LCSC", headers)  # JLC fabricator
             # Package comes from inventory (I:Package)
-            self.assertTrue(any("Package" in h for h in headers))
+            # JLC config maps 'Footprint' to 'i:package', so header is 'Footprint'
+            self.assertTrue("Footprint" in headers)
 
     def test_bom_with_custom_fields(self):
         """Custom field list should be respected"""
@@ -120,10 +121,10 @@ class TestCLIBehavior(unittest.TestCase):
             reader = csv.DictReader(f)
             headers = reader.fieldnames
             # JLC POS format
-            self.assertIn("Reference", headers)
-            self.assertIn("Side", headers)
-            self.assertIn("X", headers)
-            self.assertIn("Y", headers)
+            self.assertIn("Designator", headers)  # Renamed from Reference
+            self.assertIn("Layer", headers)
+            self.assertIn("Mid X", headers)  # Renamed from X
+            self.assertIn("Mid Y", headers)  # Renamed from Y
             self.assertIn("Rotation", headers)
 
     def test_pos_writes_csv_file(self):

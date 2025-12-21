@@ -16,7 +16,7 @@ class TestKiCadPlugin(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.tmpdir = Path(self.tmp.name)
-        self.plugin_path = Path(__file__).parent.parent / "kicad_jbom_plugin.py"
+        self.plugin_path = Path(__file__).parent.parent.parent / "kicad_jbom_plugin.py"
 
         # Create minimal inventory
         self.inv = self.tmpdir / "inv.csv"
@@ -162,7 +162,7 @@ class TestKiCadPlugin(unittest.TestCase):
 
         content = output.read_text(encoding="utf-8")
         # JLC format should have specific fields
-        self.assertIn("Reference", content)
+        self.assertIn("Designator", content)
         self.assertIn("Value", content)
         self.assertIn("LCSC", content)
 

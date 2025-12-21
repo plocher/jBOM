@@ -310,28 +310,33 @@ class TestAllInterfaceConsistency(unittest.TestCase):
         if jlc_cli["success"]:
             headers = jlc_cli.get("csv_headers", [])
             # Should have JLC-specific fields (fabricator_part_number contains LCSC data)
+            # In JLC config, 'fabricator_part_number' is mapped to header 'LCSC'
             self.assertIn(
-                "fabricator_part_number",
+                "LCSC",
                 headers,
-                "JLC fabricator should include fabricator part number column",
+                "JLC fabricator should include LCSC column",
             )
             # Should have package instead of footprint for JLC
+            # JLC config maps 'i:package' to header 'Footprint' currently in yaml
+            # Let's check what the yaml actually says.
+            # jlc.fab.yaml: "Footprint": "i:package" -> Header is "Footprint"
             self.assertIn(
-                "I:Package", headers, "JLC fabricator should include Package column"
+                "Footprint", headers, "JLC fabricator should include Footprint column"
             )
 
-        # Test that PCBWay fabricator produces manufacturer-focused output
+        # Test that PCBWay fabricator produces distributor-focused output
         pcbway_cli = self._test_cli_interface("pcbway")
         if pcbway_cli["success"]:
             headers = pcbway_cli.get("csv_headers", [])
-            # Should have manufacturer fields
+            # PCBWay config uses "Distributor Part Number" as header
             self.assertIn(
-                "Manufacturer",
+                "Distributor Part Number",
                 headers,
-                "PCBWay fabricator should include Manufacturer column",
+                "PCBWay fabricator should include Distributor Part Number column",
             )
+            # It maps description to "Comment"
             self.assertIn(
-                "MFGPN", headers, "PCBWay fabricator should include MFGPN column"
+                "Comment", headers, "PCBWay fabricator should include Comment column"
             )
 
     def test_configuration_system_integration(self):

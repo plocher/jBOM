@@ -20,6 +20,9 @@ class TestCLIFabricatorDetection(unittest.TestCase):
     def setUp(self):
         """Set up test environment."""
         self.bom_command = BOMCommand()
+        # Create dummy inventory file for validation
+        with open("test.csv", "w") as f:
+            f.write("dummy")
 
         # Create test fabricator configs - using generic names to avoid hardcoding
         self.fab1_config = FabricatorConfig(
@@ -35,6 +38,12 @@ class TestCLIFabricatorDetection(unittest.TestCase):
             cli_flags=["--fab2"],
             cli_presets=["+fab2"],
         )
+
+    def tearDown(self):
+        import os
+
+        if os.path.exists("test.csv"):
+            os.remove("test.csv")
 
     @patch("jbom.cli.bom_command.get_fabricator_by_cli_flag")
     def test_explicit_fabricator_flag_takes_precedence(self, mock_get_by_flag):
@@ -262,15 +271,17 @@ class TestConfigurationValidation(unittest.TestCase):
 
         fabricator = ConfigurableFabricator(config)
 
-        # Should not crash with empty aliases
-        self.assertEqual(len(fabricator.config.cli_flags), 0)
-        self.assertEqual(len(fabricator.config.cli_presets), 0)
+        # Should default to ID-based flag
+        self.assertEqual(len(fabricator.config.cli_flags), 1)
+        self.assertEqual(fabricator.config.cli_flags[0], "--test")
+        self.assertEqual(len(fabricator.config.cli_presets), 1)
+        self.assertEqual(fabricator.config.cli_presets[0], "+test")
 
 
 class TestEndToEndCLIScenarios(unittest.TestCase):
     """End-to-end scenarios testing complete CLI workflows."""
 
-    @patch("jbom.api.generate_bom")
+    @patch("jbom.cli.bom_command.generate_bom")
     @patch("jbom.cli.bom_command.get_fabricator_by_preset")
     def test_fabricator_preset_end_to_end(self, mock_get_by_preset, mock_generate_bom):
         """Test complete workflow: CLI with fabricator preset should use correct fabricator."""
