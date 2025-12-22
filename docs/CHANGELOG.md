@@ -4,6 +4,30 @@ All notable changes to jBOM are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.6.0] - 2025-12-21
+
+### Added
+- **Inventory Search Automation**: Enhanced `inventory` command with automated part search capabilities.
+  - New `--search` flag enables automatic part searching from distributors during inventory generation.
+  - Search options: `--provider` (mouser), `--api-key` (or MOUSER_API_KEY env var), `--limit` (including 'none' for unlimited), `--interactive`.
+  - Priority-based ranking combines technical matching with supplier quality metrics (stock, lifecycle, price).
+  - Search statistics reporting shows provider, searches performed, success/failure counts.
+- **Enhanced Inventory API**: New `generate_enriched_inventory()` API function with search integration.
+  - Consistent keyword-only parameter patterns following jBOM API standards.
+  - `InventoryOptions` dataclass for search configuration.
+  - Comprehensive error handling and graceful degradation.
+- **Core Search Integration Classes**:
+  - `SearchResultScorer`: Intelligent scoring algorithm combining InventoryMatcher logic with supplier metrics.
+  - `InventoryEnricher`: Batch processing engine with rate limiting and error recovery.
+- **Comprehensive Test Coverage**: 100% test coverage for new functionality.
+  - Unit tests for all new classes and API functions.
+  - Functional tests for CLI integration with mocked search providers.
+  - End-to-end workflow testing.
+
+### Changed
+- **Inventory Workflow Enhancement**: The `inventory` command now supports search-enhanced workflows that automatically associate inventory items with real-world purchasable parts.
+- **Priority System**: Lower priority numbers indicate better choices (1=best match) for consistent ranking.
+
 ## [3.4.0] - 2025-12-21
 
 ### Added

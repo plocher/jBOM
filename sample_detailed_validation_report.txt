@@ -1,0 +1,312 @@
+====================================================================================================
+DETAILED INVENTORY SEARCH VALIDATION REPORT
+====================================================================================================
+Inventory File: examples/example-INVENTORY.csv
+Search Limit: 3 results per item
+Generated: 2025-12-21 12:32:35
+
+Total inventory items loaded: 96
+Searchable electronic components: 61
+
+Search Provider: Mouser
+====================================================================================================
+LINE-BY-LINE SEARCH ANALYSIS
+====================================================================================================
+
+📂 CATEGORY: RES (21 items)
+--------------------------------------------------------------------------------
+
+[1] IPN: RES_5%_100mW_0603_200Ω
+    Original Value: '200Ω'
+    Package: 0603
+    Tolerance: 5%
+    Description: 200Ω 100mW 75V ±100ppm/℃ ±5% 0603
+    🔍 Search Query: '200 resistor 0603 5%'
+    ✅ Found 3 results
+        [1] Yageo RC0603FR-07200RL
+            Distributor PN: 603-RC0603FR-07200RL
+            Price: $0.10
+            Availability: 4536 In Stock
+            Description: Thick Film Resistors - SMD 200 OHM 1%
+            Priority Score: 8
+            Attributes: Resistance: 200 Ohms, Tolerance: 1%, Package: 0603
+        [2] ROHM MCR03EZPFX2000
+            Distributor PN: 511-MCR03EZPFX2000
+            Price: $0.08
+            Availability: 12000 In Stock
+            Description: Thick Film Resistors - SMD 200ohm 1% 0.1W
+            Priority Score: 10
+            Attributes: Resistance: 200 Ohms, Tolerance: 1%, Package: 0603
+        [3] Panasonic ERA-3AEB201V
+            Distributor PN: 667-ERA-3AEB201V
+            Price: $0.12
+            Availability: 8500 In Stock
+            Description: Thin Film Resistors - SMD 0.1W 200 ohm 0.1% 25ppm
+            Priority Score: 12
+            Attributes: Resistance: 200 Ohms, Tolerance: 0.1%, Package: 0603
+
+[2] IPN: RES_5%_100mW_0603_1kΩ
+    Original Value: '1kΩ'
+    Package: 0603
+    Tolerance: 5%
+    Description: 1kΩ 100mW 75V ±100ppm/℃ ±5% 0603
+    🔍 Search Query: '1k resistor 0603 5%'
+    ✅ Found 3 results
+        [1] Yageo RC0603FR-071KL
+            Distributor PN: 603-RC0603FR-071KL
+            Price: $0.10
+            Availability: 46893 In Stock
+            Description: Thick Film Resistors - SMD 1K OHM 1%
+            Priority Score: 5
+            Attributes: Resistance: 1 kOhms, Tolerance: 1%, Package: 0603
+        [2] ROHM MCR03EZPFX1001
+            Distributor PN: 511-MCR03EZPFX1001
+            Price: $0.08
+            Availability: 25000 In Stock
+            Description: Thick Film Resistors - SMD 1Kohm 1% 0.1W
+            Priority Score: 7
+            Attributes: Resistance: 1 kOhms, Tolerance: 1%, Package: 0603
+        [3] Stackpole RMCF0603FT1K00
+            Distributor PN: 660-RMCF0603FT1K00
+            Price: $0.09
+            Availability: 50000 In Stock
+            Description: Thick Film Resistors - SMD 1/10W 1K OHM 1%
+            Priority Score: 8
+            Attributes: Resistance: 1 kOhms, Tolerance: 1%, Package: 0603
+
+[3] IPN: RES_5%_100mW_0603_10kΩ
+    Original Value: '10kΩ'
+    Package: 0603
+    Tolerance: 5%
+    Description: 10kΩ 100mW 75V ±100ppm/℃ ±5% 0603
+    🔍 Search Query: '10k resistor 0603 5%'
+    ✅ Found 3 results
+        [1] Yageo RC0603FR-0710KL
+            Distributor PN: 603-RC0603FR-0710KL
+            Price: $0.10
+            Availability: 38964 In Stock
+            Description: Thick Film Resistors - SMD 10K OHM 1%
+            Priority Score: 5
+            Attributes: Resistance: 10 kOhms, Tolerance: 1%, Package: 0603
+        [2] ROHM MCR03EZPFX1002
+            Distributor PN: 511-MCR03EZPFX1002
+            Price: $0.08
+            Availability: 20000 In Stock
+            Description: Thick Film Resistors - SMD 10Kohm 1% 0.1W
+            Priority Score: 7
+            Attributes: Resistance: 10 kOhms, Tolerance: 1%, Package: 0603
+        [3] KOA Speer RK73H1JTTD1002F
+            Distributor PN: 660-RK73H1JTTD1002F
+            Price: $0.11
+            Availability: 15000 In Stock
+            Description: Thick Film Resistors - SMD 1/10W 10K OHM 1%
+            Priority Score: 9
+            Attributes: Resistance: 10 kOhms, Tolerance: 1%, Package: 0603
+
+📂 CATEGORY: CAP (9 items)
+--------------------------------------------------------------------------------
+
+[4] IPN: CAP_0.1uf_0603
+    Original Value: '0.1uf'
+    Package: 0603
+    Tolerance: 10%
+    Description: 100nF X7R 50V 0603 Capacitor
+    🔍 Search Query: '0.1uf capacitor 0603 10%'
+    ✅ Found 3 results
+        [1] KEMET C0603C104K4RAC7867
+            Distributor PN: 80-C0603C104K4RAC7867
+            Price: $0.14
+            Availability: 125000 In Stock
+            Description: Multilayer Ceramic Capacitors MLCC - SMD/SMT 16V 0.1uF X7R 0603 10%
+            Priority Score: 6
+            Attributes: Capacitance: 0.1 µF, Voltage: 16V, Tolerance: 10%, Package: 0603
+        [2] Samsung CL10B104KB8NNNC
+            Distributor PN: 187-CL10B104KB8NNNC
+            Price: $0.12
+            Availability: 98000 In Stock
+            Description: Multilayer Ceramic Capacitors MLCC - SMD/SMT 50V 0.1uF X7R 0603 10%
+            Priority Score: 4
+            Attributes: Capacitance: 0.1 µF, Voltage: 50V, Tolerance: 10%, Package: 0603
+        [3] Yageo CC0603KRX7R9BB104
+            Distributor PN: 603-CC0603KRX7R9BB104
+            Price: $0.10
+            Availability: 150000 In Stock
+            Description: Multilayer Ceramic Capacitors MLCC - SMD/SMT 50V 0.1uF X7R 0603 10%
+            Priority Score: 3
+            Attributes: Capacitance: 0.1 µF, Voltage: 50V, Tolerance: 10%, Package: 0603
+
+[5] IPN: CAP_10uF_1206
+    Original Value: '10uF'
+    Package: 1206
+    Tolerance: 10%
+    Description: 50V 10uF X5R ±10% 1206 Multilayer Ceramic Capacitors MLCC
+    🔍 Search Query: '10uF capacitor 1206 10%'
+    ✅ Found 3 results
+        [1] Samsung CL31A106KBHNNNE
+            Distributor PN: 187-CL31A106KBHNNNE
+            Price: $0.19
+            Availability: 78000 In Stock
+            Description: Multilayer Ceramic Capacitors MLCC - SMD/SMT 50V 10uF X5R 1206 10%
+            Priority Score: 3
+            Attributes: Capacitance: 10 µF, Voltage: 50V, Tolerance: 10%, Package: 1206
+        [2] KEMET C1206C106K5PACTU
+            Distributor PN: 80-C1206C106K5PACTU
+            Price: $0.22
+            Availability: 45000 In Stock
+            Description: Multilayer Ceramic Capacitors MLCC - SMD/SMT 50V 10uF X5R 1206 10%
+            Priority Score: 5
+            Attributes: Capacitance: 10 µF, Voltage: 50V, Tolerance: 10%, Package: 1206
+        [3] Murata GRM31CR61H106KA12L
+            Distributor PN: 81-GRM31CR61H106KA12L
+            Price: $0.25
+            Availability: 32000 In Stock
+            Description: Multilayer Ceramic Capacitors MLCC - SMD/SMT 50V 10uF X5R 1206 10%
+            Priority Score: 7
+            Attributes: Capacitance: 10 µF, Voltage: 50V, Tolerance: 10%, Package: 1206
+
+📂 CATEGORY: LED (12 items)
+--------------------------------------------------------------------------------
+
+[6] IPN: LED_Blue_0603
+    Original Value: 'Blue'
+    Package: 0603
+    Tolerance: N/A
+    Description: Blue LED clear 3.3V 20mA 240mcd
+    🔍 Search Query: 'Blue LED 0603'
+    ✅ Found 3 results
+        [1] LITEON LTST-C191TBKT
+            Distributor PN: 859-LTST-C191TBKT
+            Price: $0.21
+            Availability: 165593 In Stock
+            Description: Standard LEDs - SMD Blue 470nm 55mcd 0603
+            Priority Score: 8
+            Attributes: Color: Blue, Wavelength: 470nm, Package: 0603
+        [2] Kingbright APT1608PBC/A
+            Distributor PN: 604-APT1608PBC/A
+            Price: $0.15
+            Availability: 89000 In Stock
+            Description: Standard LEDs - SMD 0603 Blue Clear
+            Priority Score: 10
+            Attributes: Color: Blue, Package: 0603
+        [3] ROHM SML-D12U1WT86
+            Distributor PN: 511-SML-D12U1WT86
+            Price: $0.18
+            Availability: 65000 In Stock
+            Description: Standard LEDs - SMD BLUE 0603 SIDE VIEW
+            Priority Score: 12
+            Attributes: Color: Blue, Package: 0603
+
+[7] IPN: LED_Red_0603
+    Original Value: 'Red'
+    Package: 0603
+    Tolerance: N/A
+    Description: Red LED clear 2.4V 20mA 360mcd
+    🔍 Search Query: 'Red LED 0603'
+    ✅ Found 3 results
+        [1] LITEON LTST-C191KRKT
+            Distributor PN: 859-LTST-C191KRKT
+            Price: $0.17
+            Availability: 248592 In Stock
+            Description: Standard LEDs - SMD Red 632nm 104mcd 0603
+            Priority Score: 5
+            Attributes: Color: Red, Wavelength: 632nm, Package: 0603
+        [2] Kingbright APT1608SEC/A
+            Distributor PN: 604-APT1608SEC/A
+            Price: $0.12
+            Availability: 125000 In Stock
+            Description: Standard LEDs - SMD 0603 Red Clear
+            Priority Score: 7
+            Attributes: Color: Red, Package: 0603
+        [3] ROHM SML-D12Y1WT86
+            Distributor PN: 511-SML-D12Y1WT86
+            Price: $0.16
+            Availability: 78000 In Stock
+            Description: Standard LEDs - SMD RED 0603 SIDE VIEW
+            Priority Score: 9
+            Attributes: Color: Red, Package: 0603
+
+📂 CATEGORY: IC (4 items)
+--------------------------------------------------------------------------------
+
+[8] IPN: IC_LM358D_SOP-8
+    Original Value: 'LM358D'
+    Package: SOP-8
+    Tolerance: N/A
+    Description: SOP-8 Operational Amplifier
+    🔍 Search Query: 'LM358D IC SOP-8'
+    ✅ Found 3 results
+        [1] Texas Instruments LM358D
+            Distributor PN: 595-LM358D
+            Price: $0.89
+            Availability: 16540 In Stock
+            Description: Operational Amplifiers - Op Amps Dual Low Pwr JFET Input OpAmp
+            Priority Score: 3
+            Attributes: Package: SOIC-8
+        [2] STMicroelectronics LM358DT
+            Distributor PN: 511-LM358DT
+            Price: $0.76
+            Availability: 22000 In Stock
+            Description: Operational Amplifiers - Op Amps DUAL OPERATIONAL AMPLIFIER
+            Priority Score: 5
+            Attributes: Package: SOIC-8
+        [3] ON Semiconductor LM358D
+            Distributor PN: 863-LM358D
+            Price: $0.82
+            Availability: 8500 In Stock
+            Description: Operational Amplifiers - Op Amps Dual Operational Amplifiers
+            Priority Score: 7
+            Attributes: Package: SOIC-8
+
+[9] IPN: IC_Unusual_Part_123
+    Original Value: 'XYZ123ABC'
+    Package: N/A
+    Tolerance: N/A
+    Description: Custom IC for special application
+    🔍 Search Query: 'XYZ123ABC IC'
+    ❌ No results found
+    💡 Possible issues:
+        - Missing package information
+        - Search terms may be too specific or uncommon
+        - Component may not be available from this distributor
+
+====================================================================================================
+VALIDATION SUMMARY
+====================================================================================================
+Total searchable items: 61
+Successful searches: 60
+Failed searches: 1
+Success rate: 98.4%
+
+BY CATEGORY:
+  CAP: 9 items
+  DIO: 5 items
+  IC: 4 items
+  LED: 12 items
+  Q: 6 items
+  REG: 4 items
+  RES: 21 items
+
+METHODOLOGY OBSERVATIONS:
+✅ WORKING WELL:
+  - Unicode normalization (1kΩ → 1k) resolves API compatibility
+  - Package information (0603, SOP-8) improves search precision
+  - Component type keywords (resistor, capacitor, LED) help targeting
+  - Tolerance inclusion provides better matching
+
+⚠️  POTENTIAL IMPROVEMENTS:
+  - Some searches return parts with tighter tolerances (1% vs 5% requested)
+  - Priority scoring could weight exact tolerance matches higher  
+  - Package variations (SOP-8 vs SOIC-8) need normalization
+  - Missing package info significantly reduces search success
+
+🔍 SEARCH QUALITY ANALYSIS:
+  - Average 3+ results per successful search indicates good query construction
+  - Price ranges reasonable ($0.08-$0.25 for passives)
+  - Availability generally good (thousands to hundreds of thousands in stock)
+  - Multiple manufacturers represented in results
+
+RECOMMENDATIONS:
+- Items with 0 results may need more specific search terms
+- Items with many results indicate good search term quality 
+- Check Unicode characters in failed searches
+- Verify package and tolerance information completeness

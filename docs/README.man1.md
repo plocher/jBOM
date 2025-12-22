@@ -133,6 +133,23 @@ Imply `+jlc` field preset for JLCPCB-compatible placement output. This preset in
 **--outdir DIR**
 : Directory for output files when `-o` is not specified.
 
+### Search Enhancement
+
+**--search**
+: Enable automated part searching from distributors during inventory generation. When enabled, jBOM will automatically search for each component and add matching part information to the inventory.
+
+**--provider {mouser}**
+: Search provider to use (default: mouser). Currently supports Mouser Electronics.
+
+**--api-key KEY**
+: API key for search provider (overrides environment variables). Required for search functionality. For Mouser, either set the MOUSER_API_KEY environment variable or provide the key with this option.
+
+**--limit N**
+: Maximum search results per component (default: 1). Use 'none' for unlimited results. Multiple results are ranked by priority (1=best).
+
+**--interactive**
+: Enable interactive candidate selection when multiple results are found. Allows manual review and selection of preferred parts.
+
 ## SEARCH ARGUMENTS
 
 **QUERY**
@@ -254,6 +271,23 @@ jbom pos MyProject/ -o fabrication/placement.csv
 Generate inventory:
 ```
 jbom inventory MyProject/ -o inventory.csv
+```
+
+Generate inventory with automated part search (using MOUSER_API_KEY env var):
+```
+export MOUSER_API_KEY=your_mouser_api_key
+jbom inventory MyProject/ -o enriched_inventory.csv --search --provider mouser --limit 1
+```
+
+Generate inventory with multiple search results per component (explicit API key):
+```
+jbom inventory MyProject/ --search --limit 3 --api-key YOUR_MOUSER_KEY
+```
+
+Generate inventory with unlimited search results (using env var):
+```
+export MOUSER_API_KEY=your_mouser_api_key
+jbom inventory MyProject/ --search --limit none
 ```
 
 Search for parts:

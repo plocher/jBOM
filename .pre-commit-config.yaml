@@ -6,10 +6,12 @@ repos:
       - id: trailing-whitespace
         name: trim trailing whitespace
         description: Removes trailing whitespace from files
+        exclude: .*\.csv$
 
       - id: end-of-file-fixer
         name: fix end of file
         description: Ensures files end with newline
+        exclude: .*\.csv$
 
       - id: check-yaml
         name: check yaml
@@ -35,6 +37,7 @@ repos:
         name: fix mixed line endings
         description: Normalizes line endings (LF)
         args: ['--fix=lf']
+        exclude: .*\.csv$
 
   # Python code formatting and linting
   - repo: https://github.com/psf/black

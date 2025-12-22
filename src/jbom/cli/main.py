@@ -12,6 +12,7 @@ from jbom.cli.pos_command import POSCommand
 from jbom.cli.inventory_command import InventoryCommand
 from jbom.cli.annotate_command import AnnotateCommand
 from jbom.cli.search_command import SearchCommand
+from jbom.cli.inventory_search_command import InventorySearchCommand
 
 
 def main(argv: List[str] | None = None) -> int:
@@ -34,6 +35,7 @@ def main(argv: List[str] | None = None) -> int:
   jbom inventory project/                               # Generate inventory from project
   jbom annotate project/ -i inventory.csv               # Back-annotate schema from inventory
   jbom search "0603 10k"                                # Search distributors
+  jbom inventory-search inventory.csv --output enhanced.csv  # Enhance inventory with distributor search
 
 For details, try
   jbom <command> --help""",
@@ -64,6 +66,7 @@ For details, try
         "inventory": InventoryCommand(),
         "annotate": AnnotateCommand(),
         "search": SearchCommand(),
+        "inventory-search": InventorySearchCommand(),
     }
 
     for cmd_name, cmd_instance in commands.items():

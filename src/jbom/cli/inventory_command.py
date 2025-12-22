@@ -1,15 +1,12 @@
 """Inventory command implementation."""
 from __future__ import annotations
 import argparse
-import csv
 import sys
 from pathlib import Path
 
 from jbom.cli.commands import Command, OutputMode
 from jbom.common.output import resolve_output_path
-from jbom.generators.bom import BOMGenerator
-from jbom.processors.inventory_matcher import InventoryMatcher
-from jbom.loaders.project_inventory import ProjectInventoryLoader
+from jbom.api import generate_enriched_inventory, InventoryOptions
 
 
 class InventoryCommand(Command):
@@ -17,14 +14,15 @@ class InventoryCommand(Command):
 
     def setup_parser(self, parser: argparse.ArgumentParser) -> None:
         """Setup inventory-specific arguments"""
-        parser.description = (
-            "Generate an initial inventory file from KiCad schematic components"
-        )
+        parser.description = "Generate inventory file from KiCad schematic components with optional search enrichment"
         parser.formatter_class = argparse.RawDescriptionHelpFormatter
         parser.epilog = """Examples:
-  jbom inventory project/                               # Generate inventory to project/inventory.csv
+  jbom inventory project/                               # Generate basic inventory to project/inventory.csv
   jbom inventory project/ -o my_inventory.csv           # Generate to specific file
   jbom inventory project/ -o console                    # Show inventory in console
+  jbom inventory project/ --search                      # Search-enhanced inventory with best matches
+  jbom inventory project/ --search --limit=3            # Multiple candidates per component
+  jbom inventory project/ --search --provider=mouser --api-key=KEY  # Custom provider settings
 """
 
         # Positional arguments
@@ -40,121 +38,119 @@ class InventoryCommand(Command):
             help="Output directory for generated files (only used if -o not specified)",
         )
 
+        # Search enhancement arguments
+        search_group = parser.add_argument_group(
+            "Search Enhancement", "Options for automated part search integration"
+        )
+        search_group.add_argument(
+            "--search",
+            action="store_true",
+            help="Enable automatic part searching from distributors",
+        )
+        search_group.add_argument(
+            "--provider",
+            choices=["mouser"],
+            default="mouser",
+            help="Search provider to use (default: mouser)",
+        )
+        search_group.add_argument(
+            "--api-key",
+            metavar="KEY",
+            help="API key for search provider (overrides environment variables)",
+        )
+        search_group.add_argument(
+            "--limit",
+            type=str,
+            default="1",
+            help="Maximum search results per component (default: 1, use 'none' for all results)",
+        )
+        search_group.add_argument(
+            "--interactive",
+            action="store_true",
+            help="Enable interactive candidate selection (when multiple results found)",
+        )
+
     def execute(self, args: argparse.Namespace) -> int:
-        """Execute inventory generation"""
+        """Execute inventory generation with optional search enrichment"""
 
-        # We use BOMGenerator to handle input discovery and loading
-        # Pass None as matcher since we don't have an inventory yet
-        matcher = InventoryMatcher(None)
-        # Use a minimal options object
-        from jbom.common.generator import GeneratorOptions
+        # Parse limit argument (handle 'none' special case)
+        limit = args.limit
+        if limit.lower() == "none":
+            limit_value = None
+        else:
+            try:
+                limit_value = int(limit)
+                if limit_value < 1:
+                    print(
+                        "Error: --limit must be a positive integer or 'none'",
+                        file=sys.stderr,
+                    )
+                    return 1
+            except ValueError:
+                print(
+                    "Error: --limit must be a positive integer or 'none'",
+                    file=sys.stderr,
+                )
+                return 1
 
-        generator = BOMGenerator(matcher, GeneratorOptions())
+        # Create inventory options
+        options = InventoryOptions(
+            search=args.search,
+            provider=args.provider,
+            api_key=args.api_key,
+            limit=limit_value,
+            interactive=args.interactive,
+        )
 
-        # Load components
-        try:
-            input_path = generator.discover_input(Path(args.project))
-            components = generator.load_input(input_path)
-        except Exception as e:
-            print(f"Error loading project: {e}", file=sys.stderr)
-            return 1
-
-        if not components:
-            print("No components found in project.", file=sys.stderr)
-            return 1
-
-        # Generate inventory from components
-        loader = ProjectInventoryLoader(components)
-        items, fields = loader.load()
-
-        # Handle output
+        # Determine output path
         output_mode, output_path = self.determine_output_mode(args.output)
 
         if output_mode == OutputMode.CONSOLE:
-            # Print simple table
-            print(
-                f"Generated {len(items)} inventory items from {len(components)} components:"
-            )
-            print("-" * 80)
-            print(f"{'IPN':<20} | {'Value':<15} | {'Package':<15} | {'Category':<10}")
-            print("-" * 80)
-            for item in items:
-                print(
-                    f"{item.ipn:<20} | {item.value:<15} | {item.package:<15} | {item.category:<10}"
-                )
-            print("-" * 80)
-
+            api_output = "console"
+        elif output_mode == OutputMode.STDOUT:
+            api_output = "stdout"
         else:
-            # Determine file path
-            if output_mode == OutputMode.STDOUT:
-                f = sys.stdout
+            # File output - resolve path
+            if output_path:
+                api_output = output_path
             else:
-                if output_path:
-                    out = output_path
-                else:
-                    out = resolve_output_path(
-                        Path(args.project), args.output, args.outdir, "_inventory.csv"
-                    )
-                out.parent.mkdir(parents=True, exist_ok=True)
-                f = open(out, "w", newline="", encoding="utf-8")
+                api_output = resolve_output_path(
+                    Path(args.project), args.output, args.outdir, "_inventory.csv"
+                )
 
-            try:
-                writer = csv.writer(f)
+        # Call the API function
+        result = generate_enriched_inventory(
+            input=args.project, output=api_output, options=options
+        )
 
-                # Write header
-                # We want standard fields first, then any extra properties
-                standard_fields = [
-                    "IPN",
-                    "Category",
-                    "Value",
-                    "Package",
-                    "Description",
-                    "Keywords",
-                    "Manufacturer",
-                    "MFGPN",
-                    "Datasheet",
-                    "LCSC",
-                    "Tolerance",
-                    "Voltage",
-                    "Amperage",
-                    "Wattage",
-                    "Type",
-                    "SMD",
-                    "UUID",
-                ]
+        if not result["success"]:
+            print(f"Error: {result['error']}", file=sys.stderr)
+            return 1
 
-                # Filter fields to only those present in the generated items + standard ones
-                # fields list from loader contains all found fields
+        # Print summary information
+        if output_mode != OutputMode.CONSOLE:  # Console output already printed
+            component_count = result["component_count"]
+            inventory_count = len(result["inventory_items"])
 
-                # Combine standard fields with any extras found (properties)
-                # Avoid duplicates
-                header = [f for f in standard_fields if f in fields]
-                extra_fields = [f for f in fields if f not in standard_fields]
-                header.extend(sorted(extra_fields))
-
-                writer.writerow(header)
-
-                # Write rows
-                for item in items:
-                    row = []
-                    for field in header:
-                        # Get value from item attribute or raw_data
-                        val = ""
-                        field_lower = field.lower()
-                        if hasattr(item, field_lower):
-                            val = getattr(item, field_lower)
-                        elif field in item.raw_data:
-                            val = item.raw_data[field]
-                        elif field == "UUID":
-                            val = item.uuid
-                        row.append(val)
-                    writer.writerow(row)
-
+            if args.search:
+                search_stats = result["search_stats"]
+                print(
+                    f"Successfully generated {inventory_count} inventory items from {component_count} components"
+                )
+                print("Search statistics:")
+                print(f"  Provider: {search_stats.get('provider', 'N/A')}")
+                print(
+                    f"  Searches performed: {search_stats.get('searches_performed', 0)}"
+                )
+                print(f"  Successful: {search_stats.get('successful_searches', 0)}")
+                print(f"  Failed: {search_stats.get('failed_searches', 0)}")
                 if output_mode != OutputMode.STDOUT:
-                    print(f"Successfully wrote {len(items)} inventory items to {out}")
-
-            finally:
+                    print(f"  Output written to: {api_output}")
+            else:
+                print(
+                    f"Successfully generated {inventory_count} inventory items from {component_count} components"
+                )
                 if output_mode != OutputMode.STDOUT:
-                    f.close()
+                    print(f"Output written to: {api_output}")
 
         return 0

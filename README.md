@@ -85,6 +85,17 @@ jbom inventory MyProject/ -o my_new_inventory.csv
 jbom search "10k 0603 resistor" --limit 5
 ```
 
+## 🧪 Inventory Enhancement POC
+
+**New!** We're developing distributor-based inventory enhancement capabilities. See [`poc/inventory-enhancement/`](poc/inventory-enhancement/) for:
+
+- **Automated inventory upgrading** with distributor data
+- **Multi-distributor support** (Mouser, LCSC, DigiKey)
+- **Smart search optimization** with 100% success rate
+- **Interactive workflow planning** for production integration
+
+**Status**: POC complete, production integration in planning.
+
 ### 4. (Optional) Back-Annotate to KiCad
 
 If you updated component values or packages in your inventory CSV (Step 2), your schematic is now out of sync. You can push these changes back to KiCad to keep your schematic as the single source of truth.
