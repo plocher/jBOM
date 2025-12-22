@@ -375,43 +375,43 @@ class InventoryFixer:
             return False
 
     def _provide_manual_workflow(self) -> bool:
-        """Output markdown-style manual Numbers workflow instructions."""
+        """Output clean terminal-formatted manual Numbers workflow instructions."""
         excel_temp = f"{self.input_file.stem}.xlsx"
         excel_path = self.input_file.parent / excel_temp
         script_path = os.path.abspath(__file__)
         
         print(f"\nOpen the Numbers spreadsheet:")
-        print(f"\n```")
-        print(f"open {self.input_file}")
-        print(f"```")
-        print(f"\nUsing the Numbers app window that opens, choose `File->Export To->Excel...`, `[*] One per sheet`, `Save`,")
-        print(f"`{self.input_file.parent}/`, `{excel_temp}` and `Export`")
+        print(f"")
+        print(f"    open {self.input_file}")
+        print(f"")
+        print(f"Using the Numbers app window that opens, choose File->Export To->Excel..., [*] One per sheet, Save,")
+        print(f"{self.input_file.parent}/, {excel_temp} and Export")
         print(f"Dismiss the Numbers window and run the conversion program:")
-        print(f"\n```")
-        print(f"python '{script_path}' '{excel_path}' --apply")
-        print(f"```")
-        print(f"\nOpen the newly created Excel file in Numbers:")
-        print(f"\n```")
-        print(f"osascript <<HERE")
-        print(f'tell application "Numbers"')
-        print(f"    activate")
-        print(f'    set excelFilePath to "{excel_path}" ')
-        print(f"    open (excelFilePath as POSIX file)")
-        print(f"end tell")
-        print(f"HERE")
-        print(f"```")
+        print(f"")
+        print(f"    python '{script_path}' '{excel_path}' --apply")
+        print(f"")
+        print(f"Open the newly created Excel file in Numbers:")
+        print(f"")
+        print(f"    osascript <<HERE")
+        print(f'    tell application "Numbers"')
+        print(f"        activate")
+        print(f'        set excelFilePath to "{excel_path}" ')
+        print(f"        open (excelFilePath as POSIX file)")
+        print(f"    end tell")
+        print(f"    HERE")
+        print(f"")
         
         if self.in_place_mode:
-            print(f"\n... and choose `File->Save`, `{self.input_file.parent}`, `{self.input_file.name}`, `Save` and `Replace`")
+            print(f"... and choose File->Save, {self.input_file.parent}, {self.input_file.name}, Save and Replace")
             validation_file = self.input_file
         else:
-            print(f"\n... and choose `File->Save`, `{self.output_file.parent}`, `{self.output_file.name}`, `Save`")
+            print(f"... and choose File->Save, {self.output_file.parent}, {self.output_file.name}, Save")
             validation_file = self.output_file
             
         print(f"\nValidate the updated file with:")
-        print(f"\n```")
-        print(f"python -m jbom inventory-search {validation_file} --dry-run")
-        print(f"```")
+        print(f"")
+        print(f"    python -m jbom inventory-search {validation_file} --dry-run")
+        print(f"")
         
         return True
 
