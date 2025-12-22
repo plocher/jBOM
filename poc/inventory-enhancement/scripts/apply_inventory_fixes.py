@@ -361,77 +361,18 @@ class InventoryFixer:
         return self._provide_manual_workflow()
 
     def _provide_manual_workflow(self) -> bool:
-        """Output manual Numbers workflow commands to stdout."""
-        from datetime import datetime
-
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-
-        # Determine output paths
-        if self.in_place_mode:
-            excel_temp = f"{self.input_file.stem}_temp.xlsx"
-            numbers_output = self.input_file
-            backup_name = (
-                f"{self.input_file.stem}-backup-{timestamp}{self.input_file.suffix}"
-            )
-        else:
-            excel_temp = f"{self.output_file.stem}_temp.xlsx"
-            numbers_output = self.output_file
-            backup_name = None
-
-        print(f"\n📋 Manual Numbers workflow required:")
-        print(f"\n# Copy/paste these commands or run them individually:")
-        print(f"\necho '🔄 Numbers Inventory Fix Workflow'")
-        print(f"echo 'Input: {self.input_file}'")
-        print(f"echo 'Output: {numbers_output}'")
-        print(f"echo ''")
-        print(f"\necho '📤 Step 1: Export Numbers to Excel'")
-        print(f"echo 'Please: Open {self.input_file}'")
-        print(f"echo '       File -> Export To -> Excel...'")
-        print(f"echo '       Save as: {excel_temp}'")
-        print(f"read -p 'Press Enter when Excel export is complete...'")
-        print(f"\n# Verify Excel file exists")
-        print(f"if [ ! -f '{excel_temp}' ]; then")
-        print(f"    echo '❌ Excel file not found: {excel_temp}'")
-        print(f"    echo 'Please export the Numbers file first'")
-        print(f"    exit 1")
-        print(f"fi")
-        print(f"\necho '🔧 Step 2: Apply Unicode fixes to Excel file'")
-        print(f"python '{os.path.abspath(__file__)}' '{excel_temp}' --apply")
-
-        if not self.in_place_mode and excel_temp != str(numbers_output):
-            print(f"\necho '📥 Step 3: Convert Excel back to Numbers'")
-            print(f"echo 'Please: Open {excel_temp}'")
-            print(f"echo '       File -> Save As...'")
-            print(f"echo '       Format: Numbers'")
-            print(f"echo '       Save as: {numbers_output}'")
-            print(f"read -p 'Press Enter when Numbers save is complete...'")
-            print(f"\n# Verify Numbers file exists")
-            print(f"if [ ! -f '{numbers_output}' ]; then")
-            print(f"    echo '❌ Numbers file not found: {numbers_output}'")
-            print(f"    echo 'Fixed Excel file available at: {excel_temp}'")
-            print(f"    exit 1")
-            print(f"fi")
-
-        if self.in_place_mode:
-            print(f"\necho '💾 Step 4: Create timestamped backup'")
-            print(f"cp '{self.input_file}' '{backup_name}'")
-            print(f"echo 'Backup created: {backup_name}'")
-
-        print(f"\necho '🗑️  Cleaning up temporary files'")
-        print(f"rm -f '{excel_temp}'")
+        """Output simple Numbers workflow instructions."""
+        excel_temp = f"{self.input_file.stem}_temp.xlsx"
+        
+        print(f"\n📋 Numbers file requires manual workflow:")
+        print(f"\n1. Export {self.input_file.name} to Excel as: {excel_temp}")
+        print(f"2. Run: python '{os.path.abspath(__file__)}' '{excel_temp}' --apply")
         if not self.in_place_mode:
-            print(f"rm -f '{excel_temp.replace('.xlsx', '')}-backup.xlsx'")
-
-        print(f"\necho ''")
-        print(f"echo '✅ Workflow complete!'")
-        print(f"echo 'Fixed file: {numbers_output}'")
-        if self.in_place_mode:
-            print(f"echo 'Backup: {backup_name}'")
-        print(f"echo '• All formulas and formatting preserved'")
-        print(f"echo '• Unicode symbols fixed for distributor compatibility'")
-
-        print(f"\n💡 Tip: You can also save these commands to a script file and run it")
-
+            print(f"3. Open fixed Excel file and save as Numbers: {self.output_file.name}")
+        else:
+            print(f"3. Open fixed Excel file and save as Numbers (replace original)")
+        print(f"\n💡 Only the command in step 2 needs to be copy-pasted.")
+        
         return True
 
     def _numbers_csv_export_approach(self, dry_run: bool = True) -> bool:
