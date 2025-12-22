@@ -172,7 +172,7 @@ class InventoryFixer:
                         self.input_file.parent
                         / f"{self.input_file.stem}-backup-{timestamp}{self.input_file.suffix}"
                     )
-                    print(f"💾 Creating timestamped backup: {backup_file.name}")
+                    print(f"Creating timestamped backup: {backup_file.name}")
                     import shutil
 
                     shutil.copy2(self.input_file, backup_file)
@@ -183,11 +183,11 @@ class InventoryFixer:
                     writer.writerows(rows)
 
                 print(
-                    f"✅ CSV file saved with {fixes_applied} fixes applied to: {output_path}"
+                    f"CSV file saved with {fixes_applied} fixes applied to: {output_path}"
                 )
 
                 if self.in_place_mode:
-                    print(f"📁 Backup saved as: {backup_file.name}")
+                    print(f"Backup saved as: {backup_file.name}")
 
             except Exception as e:
                 print(f"Error saving CSV file: {e}")
@@ -322,18 +322,18 @@ class InventoryFixer:
                         self.input_file.parent
                         / f"{self.input_file.stem}-backup-{timestamp}{self.input_file.suffix}"
                     )
-                    print(f"💾 Creating timestamped backup: {backup_file.name}")
+                    print(f"Creating timestamped backup: {backup_file.name}")
                     import shutil
 
                     shutil.copy2(self.input_file, backup_file)
 
                 print(f"Saving modified Excel file to: {output_path}")
                 workbook.save(output_path)
-                print(f"✅ Excel file saved with {fixes_applied} fixes applied")
+                print(f"Excel file saved with {fixes_applied} fixes applied")
                 print(f"Original formulas, formatting, and structure preserved")
 
                 if self.in_place_mode:
-                    print(f"📁 Backup saved as: {backup_file.name}")
+                    print(f"Backup saved as: {backup_file.name}")
 
             except Exception as e:
                 print(f"Error saving Excel file: {e}")
@@ -671,7 +671,7 @@ Examples:
     print(f"Categories affected: {', '.join(analysis['categories_affected'])}")
 
     if analysis["fixes_count"] == 0:
-        print("\n✅ No fixes needed - inventory values are already normalized!")
+        print("\nNo fixes needed - inventory values are already normalized!")
         return 0
 
     print(f"\n=== FIXES TO BE APPLIED ===")
@@ -696,7 +696,6 @@ Examples:
     success = fixer.apply_fixes(dry_run=False)
 
     if success:
-        print(f"\n✅ Fixes applied successfully!")
         print(
             f"Validate with: python -m jbom inventory-search {fixer.output_file} --dry-run"
         )
