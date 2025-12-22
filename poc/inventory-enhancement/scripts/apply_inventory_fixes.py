@@ -15,12 +15,12 @@ import os
 import csv
 import argparse
 from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Dict, Any, Optional
 
 # Add jBOM to path
 sys.path.insert(0, "/Users/jplocher/Dropbox/KiCad/jBOM/src")
 
-from jbom.loaders.inventory import InventoryLoader
+from jbom.loaders.inventory import InventoryLoader  # noqa: E402
 
 
 class InventoryFixer:
