@@ -346,10 +346,7 @@ class InventoryFixer:
         return True
 
     def apply_fixes_numbers(self, dry_run: bool = True) -> bool:
-        """Handle Numbers files with safe manual workflow guidance.
-
-        AppleScript automation is unreliable and can crash Numbers.
-        Provides clear manual instructions instead.
+        """Handle Numbers files with manual workflow or AppleScript automation.
 
         Args:
             dry_run: If True, don't actually write changes
@@ -357,22 +354,175 @@ class InventoryFixer:
         Returns:
             True if successful
         """
-        print(f"\n📝 Numbers file processing: {self.input_file}")
-        return self._provide_manual_workflow()
+        print(f"\nNumbers file processing: {self.input_file}")
+        
+        if dry_run:
+            return self._provide_manual_workflow()
+            
+        # For --apply mode, offer both manual and automated options
+        print(f"\nChoose workflow:")
+        print(f"  1. Manual workflow (recommended)")
+        print(f"  2. AppleScript automation (experimental)")
+        
+        try:
+            choice = input("Enter choice (1 or 2): ").strip()
+            if choice == "2":
+                return self._apply_with_applescript()
+            else:
+                return self._provide_manual_workflow()
+        except (KeyboardInterrupt, EOFError):
+            print("\nAborted.")
+            return False
 
     def _provide_manual_workflow(self) -> bool:
-        """Output simple Numbers workflow instructions."""
-        excel_temp = f"{self.input_file.stem}_temp.xlsx"
+        """Output markdown-style manual Numbers workflow instructions."""
+        excel_temp = f"{self.input_file.stem}.xlsx"
+        excel_path = self.input_file.parent / excel_temp
+        script_path = os.path.abspath(__file__)
         
-        print(f"\n📋 Numbers file requires manual workflow:")
-        print(f"\n1. Export {self.input_file.name} to Excel as: {excel_temp}")
-        print(f"2. Run: python '{os.path.abspath(__file__)}' '{excel_temp}' --apply")
-        if not self.in_place_mode:
-            print(f"3. Open fixed Excel file and save as Numbers: {self.output_file.name}")
+        print(f"\nOpen the Numbers spreadsheet:")
+        print(f"\n```")
+        print(f"open {self.input_file}")
+        print(f"```")
+        print(f"\nUsing the Numbers app window that opens, choose `File->Export To->Excel...`, `[*] One per sheet`, `Save`,")
+        print(f"`{self.input_file.parent}/`, `{excel_temp}` and `Export`")
+        print(f"Dismiss the Numbers window and run the conversion program:")
+        print(f"\n```")
+        print(f"python '{script_path}' '{excel_path}' --apply")
+        print(f"```")
+        print(f"\nOpen the newly created Excel file in Numbers:")
+        print(f"\n```")
+        print(f"osascript <<HERE")
+        print(f'tell application "Numbers"')
+        print(f"    activate")
+        print(f'    set excelFilePath to "{excel_path}" ')
+        print(f"    open (excelFilePath as POSIX file)")
+        print(f"end tell")
+        print(f"HERE")
+        print(f"```")
+        
+        if self.in_place_mode:
+            print(f"\n... and choose `File->Save`, `{self.input_file.parent}`, `{self.input_file.name}`, `Save` and `Replace`")
+            validation_file = self.input_file
         else:
-            print(f"3. Open fixed Excel file and save as Numbers (replace original)")
-        print(f"\n💡 Only the command in step 2 needs to be copy-pasted.")
+            print(f"\n... and choose `File->Save`, `{self.output_file.parent}`, `{self.output_file.name}`, `Save`")
+            validation_file = self.output_file
+            
+        print(f"\nValidate the updated file with:")
+        print(f"\n```")
+        print(f"python -m jbom inventory-search {validation_file} --dry-run")
+        print(f"```")
         
+        return True
+
+    def _apply_with_applescript(self) -> bool:
+        """Apply fixes to Numbers file using AppleScript automation."""
+        import subprocess
+        import tempfile
+        from datetime import datetime
+        
+        excel_temp = f"{self.input_file.stem}.xlsx"
+        excel_path = self.input_file.parent / excel_temp
+        
+        print(f"\nAttempting AppleScript automation...")
+        
+        # Step 1: Export Numbers to Excel via AppleScript
+        export_script = f'''
+        tell application "Numbers"
+            activate
+            set numbersFilePath to "{self.input_file}" as POSIX file
+            open numbersFilePath
+            delay 2
+            
+            tell front document
+                export to file "{excel_path}" as Microsoft Excel
+            end tell
+            
+            close front document
+        end tell
+        '''
+        
+        try:
+            print(f"Exporting to Excel: {excel_temp}")
+            subprocess.run(["osascript", "-e", export_script], check=True, capture_output=True)
+            
+            if not excel_path.exists():
+                raise Exception(f"Excel export failed - file not created: {excel_path}")
+                
+        except subprocess.CalledProcessError as e:
+            print(f"AppleScript export failed: {e}")
+            print(f"Falling back to manual workflow...")
+            return self._provide_manual_workflow()
+        except Exception as e:
+            print(f"Export error: {e}")
+            print(f"Falling back to manual workflow...")
+            return self._provide_manual_workflow()
+            
+        # Step 2: Apply fixes to Excel file
+        print(f"Applying Unicode fixes to Excel file...")
+        excel_fixer = InventoryFixer(excel_path, excel_path)
+        if not excel_fixer.apply_fixes_excel(dry_run=False):
+            print(f"Failed to apply fixes to Excel file")
+            return False
+            
+        # Step 3: Import Excel back to Numbers via AppleScript
+        if self.in_place_mode:
+            # Create timestamped backup
+            timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            backup_file = (
+                self.input_file.parent
+                / f"{self.input_file.stem}-backup-{timestamp}{self.input_file.suffix}"
+            )
+            import shutil
+            shutil.copy2(self.input_file, backup_file)
+            print(f"Created backup: {backup_file.name}")
+            
+            output_path = self.input_file
+        else:
+            output_path = self.output_file
+            
+        import_script = f'''
+        tell application "Numbers"
+            activate
+            set excelFilePath to "{excel_path}" as POSIX file
+            open excelFilePath
+            delay 2
+            
+            tell front document
+                save as "{output_path}"
+            end tell
+            
+            close front document
+        end tell
+        '''
+        
+        try:
+            print(f"Converting back to Numbers: {output_path.name}")
+            subprocess.run(["osascript", "-e", import_script], check=True, capture_output=True)
+            
+            if not output_path.exists():
+                raise Exception(f"Numbers import failed - file not created: {output_path}")
+                
+        except subprocess.CalledProcessError as e:
+            print(f"AppleScript import failed: {e}")
+            print(f"Fixed Excel file available at: {excel_path}")
+            return False
+        except Exception as e:
+            print(f"Import error: {e}")
+            print(f"Fixed Excel file available at: {excel_path}")
+            return False
+            
+        # Clean up temporary Excel file
+        try:
+            excel_path.unlink()
+        except Exception as e:
+            print(f"Warning: Could not remove temporary file {excel_path}: {e}")
+            
+        print(f"\nAppleScript automation completed successfully!")
+        print(f"Fixed Numbers file: {output_path}")
+        if self.in_place_mode:
+            print(f"Backup saved as: {backup_file.name}")
+            
         return True
 
     def _numbers_csv_export_approach(self, dry_run: bool = True) -> bool:
