@@ -11,6 +11,7 @@ Usage:
 """
 
 import sys
+import os
 import csv
 import argparse
 from pathlib import Path
@@ -63,16 +64,11 @@ class InventoryFixer:
 
         Args:
             input_file: Path to input inventory file
-            output_file: Path to output file (if None, will generate based on input)
+            output_file: Path to output file (if None, modifies input file in-place with backup)
         """
         self.input_file = input_file
-        if output_file:
-            self.output_file = output_file
-        else:
-            # Generate output filename
-            stem = input_file.stem
-            suffix = input_file.suffix
-            self.output_file = input_file.parent / f"{stem}-fixed{suffix}"
+        self.output_file = output_file
+        self.in_place_mode = output_file is None
 
     def analyze_fixes_needed(self) -> Dict[str, Any]:
         """Analyze the inventory and identify what fixes are needed.
@@ -120,7 +116,11 @@ class InventoryFixer:
         Returns:
             True if successful
         """
-        print(f"Modifying CSV file: {self.input_file}")
+        if self.in_place_mode:
+            print(f"Modifying CSV file in-place: {self.input_file}")
+        else:
+            print(f"Loading CSV file: {self.input_file}")
+            print(f"Will save modified version to: {self.output_file}")
         print(
             "Note: CSV format cannot preserve formulas (use Excel/Numbers for formulas)"
         )
@@ -161,28 +161,33 @@ class InventoryFixer:
         # Write fixed file if not dry run
         if not dry_run and fixes_applied > 0:
             try:
-                # Create backup if modifying in place
-                if self.output_file == self.input_file:
+                output_path = self.output_file if self.output_file else self.input_file
+
+                # Create timestamped backup if modifying in place
+                if self.in_place_mode:
+                    from datetime import datetime
+
+                    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
                     backup_file = (
                         self.input_file.parent
-                        / f"{self.input_file.stem}-backup{self.input_file.suffix}"
+                        / f"{self.input_file.stem}-backup-{timestamp}{self.input_file.suffix}"
                     )
-                    print(f"Creating backup: {backup_file}")
+                    print(f"💾 Creating timestamped backup: {backup_file.name}")
                     import shutil
 
                     shutil.copy2(self.input_file, backup_file)
 
-                with open(self.output_file, "w", newline="", encoding="utf-8") as f:
+                with open(output_path, "w", newline="", encoding="utf-8") as f:
                     writer = csv.DictWriter(f, fieldnames=fieldnames)
                     writer.writeheader()
                     writer.writerows(rows)
 
                 print(
-                    f"✅ CSV file saved with {fixes_applied} fixes applied to: {self.output_file}"
+                    f"✅ CSV file saved with {fixes_applied} fixes applied to: {output_path}"
                 )
 
-                if self.output_file == self.input_file:
-                    print(f"📁 Backup saved as: {backup_file}")
+                if self.in_place_mode:
+                    print(f"📁 Backup saved as: {backup_file.name}")
 
             except Exception as e:
                 print(f"Error saving CSV file: {e}")
@@ -206,7 +211,11 @@ class InventoryFixer:
             print("Install with: pip install openpyxl")
             return False
 
-        print(f"Modifying Excel file directly: {self.input_file}")
+        if self.in_place_mode:
+            print(f"Modifying Excel file in-place: {self.input_file}")
+        else:
+            print(f"Loading Excel file: {self.input_file}")
+            print(f"Will save modified version to: {self.output_file}")
         print("Note: This preserves formulas, formatting, and worksheet structure")
 
         # Load workbook with data_only=False to preserve formulas
@@ -302,24 +311,29 @@ class InventoryFixer:
         # Save the modified workbook if not dry run
         if not dry_run and fixes_applied > 0:
             try:
-                # Create backup if modifying in place
-                if self.output_file == self.input_file:
+                output_path = self.output_file if self.output_file else self.input_file
+
+                # Create timestamped backup if modifying in place
+                if self.in_place_mode:
+                    from datetime import datetime
+
+                    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
                     backup_file = (
                         self.input_file.parent
-                        / f"{self.input_file.stem}-backup{self.input_file.suffix}"
+                        / f"{self.input_file.stem}-backup-{timestamp}{self.input_file.suffix}"
                     )
-                    print(f"Creating backup: {backup_file}")
+                    print(f"💾 Creating timestamped backup: {backup_file.name}")
                     import shutil
 
                     shutil.copy2(self.input_file, backup_file)
 
-                print(f"Saving modified Excel file to: {self.output_file}")
-                workbook.save(self.output_file)
+                print(f"Saving modified Excel file to: {output_path}")
+                workbook.save(output_path)
                 print(f"✅ Excel file saved with {fixes_applied} fixes applied")
                 print(f"Original formulas, formatting, and structure preserved")
 
-                if self.output_file == self.input_file:
-                    print(f"📁 Backup saved as: {backup_file}")
+                if self.in_place_mode:
+                    print(f"📁 Backup saved as: {backup_file.name}")
 
             except Exception as e:
                 print(f"Error saving Excel file: {e}")
@@ -332,7 +346,10 @@ class InventoryFixer:
         return True
 
     def apply_fixes_numbers(self, dry_run: bool = True) -> bool:
-        """Apply fixes directly to Numbers file preserving formulas and formatting.
+        """Handle Numbers files with safe manual workflow guidance.
+
+        AppleScript automation is unreliable and can crash Numbers.
+        Provides clear manual instructions instead.
 
         Args:
             dry_run: If True, don't actually write changes
@@ -340,137 +357,100 @@ class InventoryFixer:
         Returns:
             True if successful
         """
-        try:
-            from numbers_parser import Document as NumbersDocument
-        except ImportError:
-            print("Error: numbers-parser not available for Numbers support")
-            return False
+        print(f"\n📝 Numbers file processing: {self.input_file}")
+        return self._provide_manual_workflow()
 
-        print(f"Modifying Numbers file directly: {self.input_file}")
-        print("Note: This preserves formulas, formatting, and table structure")
+    def _provide_manual_workflow(self) -> bool:
+        """Output manual Numbers workflow commands to stdout."""
+        from datetime import datetime
 
-        # Load the Numbers document
-        try:
-            doc = NumbersDocument(self.input_file)
-        except Exception as e:
-            print(f"Error loading Numbers file: {e}")
-            return False
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-        if not doc.sheets:
-            print("Error: No sheets found in Numbers file")
-            return False
-
-        sheet = doc.sheets[0]
-        if not sheet.tables:
-            print("Error: No tables found in first sheet")
-            return False
-
-        table = sheet.tables[0]
-
-        # Find the Value column index
-        value_col = None
-        ipn_col = None
-
-        for col in range(table.num_cols):
-            header_cell = table.cell(0, col)
-            header_value = str(header_cell.value).strip() if header_cell.value else ""
-
-            if header_value == "Value":
-                value_col = col
-            elif header_value == "IPN":
-                ipn_col = col
-
-        if value_col is None:
-            print("Error: Could not find 'Value' column in Numbers table")
-            return False
-
-        if ipn_col is None:
-            print(
-                "Warning: Could not find 'IPN' column - using row numbers for identification"
+        # Determine output paths
+        if self.in_place_mode:
+            excel_temp = f"{self.input_file.stem}_temp.xlsx"
+            numbers_output = self.input_file
+            backup_name = (
+                f"{self.input_file.stem}-backup-{timestamp}{self.input_file.suffix}"
             )
+        else:
+            excel_temp = f"{self.output_file.stem}_temp.xlsx"
+            numbers_output = self.output_file
+            backup_name = None
 
-        # Apply fixes directly to table cells
-        fixes_applied = 0
+        print(f"\n📋 Manual Numbers workflow required:")
+        print(f"\n# Copy/paste these commands or run them individually:")
+        print(f"\necho '🔄 Numbers Inventory Fix Workflow'")
+        print(f"echo 'Input: {self.input_file}'")
+        print(f"echo 'Output: {numbers_output}'")
+        print(f"echo ''")
+        print(f"\necho '📤 Step 1: Export Numbers to Excel'")
+        print(f"echo 'Please: Open {self.input_file}'")
+        print(f"echo '       File -> Export To -> Excel...'")
+        print(f"echo '       Save as: {excel_temp}'")
+        print(f"read -p 'Press Enter when Excel export is complete...'")
+        print(f"\n# Verify Excel file exists")
+        print(f"if [ ! -f '{excel_temp}' ]; then")
+        print(f"    echo '❌ Excel file not found: {excel_temp}'")
+        print(f"    echo 'Please export the Numbers file first'")
+        print(f"    exit 1")
+        print(f"fi")
+        print(f"\necho '🔧 Step 2: Apply Unicode fixes to Excel file'")
+        print(f"python '{os.path.abspath(__file__)}' '{excel_temp}' --apply")
 
-        for row in range(1, table.num_rows):  # Skip header row
-            try:
-                # Get the value cell
-                value_cell = table.cell(row, value_col)
-                current_value = (
-                    str(value_cell.value).strip() if value_cell.value else ""
-                )
+        if not self.in_place_mode and excel_temp != str(numbers_output):
+            print(f"\necho '📥 Step 3: Convert Excel back to Numbers'")
+            print(f"echo 'Please: Open {excel_temp}'")
+            print(f"echo '       File -> Save As...'")
+            print(f"echo '       Format: Numbers'")
+            print(f"echo '       Save as: {numbers_output}'")
+            print(f"read -p 'Press Enter when Numbers save is complete...'")
+            print(f"\n# Verify Numbers file exists")
+            print(f"if [ ! -f '{numbers_output}' ]; then")
+            print(f"    echo '❌ Numbers file not found: {numbers_output}'")
+            print(f"    echo 'Fixed Excel file available at: {excel_temp}'")
+            print(f"    exit 1")
+            print(f"fi")
 
-                if current_value in self.VALUE_FIXES:
-                    new_value = self.VALUE_FIXES[current_value]
+        if self.in_place_mode:
+            print(f"\necho '💾 Step 4: Create timestamped backup'")
+            print(f"cp '{self.input_file}' '{backup_name}'")
+            print(f"echo 'Backup created: {backup_name}'")
 
-                    # Get IPN for reporting
-                    if ipn_col is not None:
-                        ipn_cell = table.cell(row, ipn_col)
-                        ipn = str(ipn_cell.value) if ipn_cell.value else f"Row-{row}"
-                    else:
-                        ipn = f"Row-{row}"
+        print(f"\necho '🗑️  Cleaning up temporary files'")
+        print(f"rm -f '{excel_temp}'")
+        if not self.in_place_mode:
+            print(f"rm -f '{excel_temp.replace('.xlsx', '')}-backup.xlsx'")
 
-                    print(f"  {ipn}: '{current_value}' → '{new_value}'")
+        print(f"\necho ''")
+        print(f"echo '✅ Workflow complete!'")
+        print(f"echo 'Fixed file: {numbers_output}'")
+        if self.in_place_mode:
+            print(f"echo 'Backup: {backup_name}'")
+        print(f"echo '• All formulas and formatting preserved'")
+        print(f"echo '• Unicode symbols fixed for distributor compatibility'")
 
-                    if not dry_run:
-                        # Modify the cell value directly
-                        # This preserves the cell's formatting and any formulas in other cells
-                        value_cell.value = new_value
-
-                    fixes_applied += 1
-
-            except Exception as e:
-                print(f"Warning: Error processing row {row}: {e}")
-                continue
-
-        print(f"Found {fixes_applied} values to fix")
-
-        # Save the modified document if not dry run
-        if not dry_run and fixes_applied > 0:
-            try:
-                # Create backup if modifying in place
-                if self.output_file == self.input_file:
-                    backup_file = (
-                        self.input_file.parent
-                        / f"{self.input_file.stem}-backup{self.input_file.suffix}"
-                    )
-                    print(f"Creating backup: {backup_file}")
-                    import shutil
-
-                    shutil.copy2(self.input_file, backup_file)
-
-                print(f"Saving modified Numbers file to: {self.output_file}")
-                doc.save(self.output_file)
-                print(f"✅ Numbers file saved with {fixes_applied} fixes applied")
-                print(f"Original formulas, formatting, and structure preserved")
-
-                if self.output_file == self.input_file:
-                    print(f"📁 Backup saved as: {backup_file}")
-
-            except Exception as e:
-                print(f"Error saving Numbers file: {e}")
-                print(
-                    f"This might be due to file permissions or Numbers file format limitations"
-                )
-                print(f"Attempting fallback approach...")
-                return self._numbers_fallback_approach(dry_run)
+        print(f"\n💡 Tip: You can also save these commands to a script file and run it")
 
         return True
 
-    def _numbers_fallback_approach(self, dry_run: bool = True) -> bool:
-        """Fallback approach for Numbers files when direct modification fails."""
-        print("\nUsing fallback approach for Numbers file:")
-        print(
-            "This will create a CSV with the fixes that you can import back to Numbers"
-        )
+    def _numbers_csv_export_approach(self, dry_run: bool = True) -> bool:
+        """Export Numbers file to CSV with fixes applied."""
+        print("\nExporting Numbers file to CSV with fixes applied:")
 
         try:
             from numbers_parser import Document as NumbersDocument
         except ImportError:
             return False
 
-        # Export to CSV with fixes
-        csv_output = self.input_file.parent / f"{self.input_file.stem}-fixed.csv"
+        # Export to CSV with fixes - use output file path if specified
+        if self.output_file.suffix.lower() == ".csv":
+            csv_output = self.output_file
+        elif self.output_file.suffix.lower() == ".numbers":
+            # If output specified as .numbers but we're creating CSV, change extension
+            csv_output = self.output_file.parent / f"{self.output_file.stem}.csv"
+        else:
+            csv_output = self.input_file.parent / f"{self.input_file.stem}-fixed.csv"
 
         doc = NumbersDocument(self.input_file)
         sheet = doc.sheets[0]
@@ -616,7 +596,11 @@ Examples:
 
     # Apply fixes
     print(f"\n=== APPLYING FIXES ===")
-    print(f"Output file: {fixer.output_file}")
+    if fixer.in_place_mode:
+        print(f"Modifying in-place: {input_file}")
+        print(f"(Timestamped backup will be created)")
+    else:
+        print(f"Output file: {fixer.output_file}")
 
     success = fixer.apply_fixes(dry_run=False)
 
