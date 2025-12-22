@@ -25,7 +25,7 @@ poc/inventory-enhancement/
 - **Multi-distributor support** (Mouser, LCSC, DigiKey-ready architecture)
 - **Intelligent caching** (37.5% hit rate, persistent storage)
 - **Multi-format inventory** (CSV, Excel, Numbers with formula preservation)
-- **Query optimization** (Unicode normalization, API error prevention)
+- **Query optimization** (API error prevention)
 - **Bulk pricing analysis** (fabrication-realistic cost data)
 
 ### 📋 Production Requirements Identified
@@ -41,7 +41,6 @@ poc/inventory-enhancement/
 | **`enhanced_search_validation.py`** | Main validation tool with MPN priority | `python enhanced_search_validation.py examples/inventory.csv --limit 3` |
 | **`cache_preloader.py`** | Pre-populate search cache | `python cache_preloader.py examples/inventory.csv --limit 10` |
 | **`api_inventory_search_test.py`** | Validate CLI/API equivalence | `python api_inventory_search_test.py` |
-| **`apply_inventory_fixes.py`** | Unicode normalization utility | `python apply_inventory_fixes.py inventory.csv` |
 | **`test_search_queries.py`** | Query building validation | `python test_search_queries.py` |
 | **`detailed_search_validation.py`** | Line-by-line analysis tool | `python detailed_search_validation.py inventory.csv` |
 
@@ -54,7 +53,6 @@ poc/inventory-enhancement/
 | **`multi_distributor_schema_proposal.md`** | Schema transformation design |
 | **`project_assessment_report.md`** | Progress against original goals |
 | **`inventory_enhancement_analysis.md`** | Technical analysis and findings |
-| **`README_inventory_fixes.md`** | Unicode normalization usage guide |
 
 ## Examples (`examples/`)
 
@@ -121,7 +119,6 @@ openpyxl
 2. **Interactive workflow** is critical - users have non-verbalized biases and constraints
 3. **Description-first search** works better for specialized components than part numbers
 4. **Persistent caching** significantly improves performance and reduces API usage
-5. **Unicode normalization** is mandatory for search API compatibility
 
 ## Production Path
 
