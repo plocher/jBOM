@@ -106,155 +106,40 @@ def step_when_run_jbom_command(context, command):
     context.last_command_exit_code = 0  # Mock success for now
 
 
-@when("I generate BOM using CLI")
-def step_when_generate_bom_using_cli(context):
-    """Generate BOM using CLI interface."""
-    # TODO: Implement CLI BOM generation in Phase 3
-    context.last_command_exit_code = 0
-    context.bom_output_file = Path("test_bom.csv")
-
-
-@when("I generate POS using CLI")
-def step_when_generate_pos_using_cli(context):
-    """Generate POS using CLI interface."""
-    # TODO: Implement CLI POS generation in Phase 3
-    context.last_command_exit_code = 0
-    context.pos_output_file = Path("test_pos.csv")
-
-
-@when("I generate inventory using CLI")
-def step_when_generate_inventory_using_cli(context):
-    """Generate inventory using CLI interface."""
-    # TODO: Implement CLI inventory generation in Phase 3
-    context.last_command_exit_code = 0
-    context.inventory_output_file = Path("test_inventory.csv")
-
-
-@when("I perform search using CLI")
-def step_when_perform_search_using_cli(context):
-    """Perform part search using CLI interface."""
-    # TODO: Implement CLI search in Phase 3
-    context.last_command_exit_code = 0
-    context.search_results = []
-
-
-@when("I perform annotation using CLI")
-def step_when_perform_annotation_using_cli(context):
-    """Perform back-annotation using CLI interface."""
-    # TODO: Implement CLI annotation in Phase 3
-    context.last_command_exit_code = 0
-    context.annotation_results = {}
-
-
-@when("I perform operation using CLI")
-def step_when_perform_operation_using_cli(context):
-    """Perform generic operation using CLI interface."""
-    # TODO: Implement generic CLI operation in Phase 3
+@when("I generate {operation} using {interface}")
+def step_when_generate_operation_using_interface(context, operation, interface):
+    """Generate output using parameterized operation and interface."""
+    # TODO: Implement parameterized operation generation in Phase 3
     context.last_command_exit_code = 0
 
-
-# =============================================================================
-# API Execution Steps
-# =============================================================================
-
-
-@when("I generate BOM using Python API")
-def step_when_generate_bom_using_api(context):
-    """Generate BOM using Python API."""
-    # TODO: Implement API BOM generation in Phase 3
-    context.last_command_exit_code = 0
-    context.bom_output_file = Path("api_bom.csv")
+    # Set appropriate output file based on operation type
+    interface_prefix = interface.lower().replace(" ", "_")
+    if operation.upper() == "BOM":
+        context.bom_output_file = Path(f"{interface_prefix}_bom.csv")
+    elif operation.upper() == "POS":
+        context.pos_output_file = Path(f"{interface_prefix}_pos.csv")
+    elif operation.lower() == "inventory":
+        context.inventory_output_file = Path(f"{interface_prefix}_inventory.csv")
 
 
-@when("I generate POS using Python API")
-def step_when_generate_pos_using_api(context):
-    """Generate POS using Python API."""
-    # TODO: Implement API POS generation in Phase 3
-    context.last_command_exit_code = 0
-    context.pos_output_file = Path("api_pos.csv")
-
-
-@when("I generate inventory using Python API")
-def step_when_generate_inventory_using_api(context):
-    """Generate inventory using Python API."""
-    # TODO: Implement API inventory generation in Phase 3
-    context.last_command_exit_code = 0
-    context.inventory_output_file = Path("api_inventory.csv")
-
-
-@when("I perform search using Python API")
-def step_when_perform_search_using_api(context):
-    """Perform part search using Python API."""
-    # TODO: Implement API search in Phase 3
-    context.last_command_exit_code = 0
-    context.search_results = []
-
-
-@when("I perform annotation using Python API")
-def step_when_perform_annotation_using_api(context):
-    """Perform back-annotation using Python API."""
-    # TODO: Implement API annotation in Phase 3
-    context.last_command_exit_code = 0
-    context.annotation_results = {}
-
-
-@when("I perform operation using Python API")
-def step_when_perform_operation_using_api(context):
-    """Perform generic operation using Python API."""
-    # TODO: Implement generic API operation in Phase 3
+@when("I perform {operation} using {interface}")
+def step_when_perform_operation_using_interface(context, operation, interface):
+    """Perform parameterized operation using specified interface."""
+    # TODO: Implement parameterized operation performance in Phase 3
     context.last_command_exit_code = 0
 
-
-# =============================================================================
-# Plugin Execution Steps
-# =============================================================================
-
-
-@when("I generate BOM using KiCad plugin")
-def step_when_generate_bom_using_plugin(context):
-    """Generate BOM using KiCad plugin."""
-    # TODO: Implement plugin BOM generation in Phase 3
-    context.last_command_exit_code = 0
-    context.bom_output_file = Path("plugin_bom.csv")
+    # Set appropriate results based on operation type
+    if operation == "search":
+        context.search_results = []
+    elif operation == "annotation":
+        context.annotation_results = {}
+    # Generic operation doesn't set specific results
 
 
-@when("I generate POS using KiCad plugin")
-def step_when_generate_pos_using_plugin(context):
-    """Generate POS using KiCad plugin."""
-    # TODO: Implement plugin POS generation in Phase 3
-    context.last_command_exit_code = 0
-    context.pos_output_file = Path("plugin_pos.csv")
-
-
-@when("I generate inventory using KiCad plugin")
-def step_when_generate_inventory_using_plugin(context):
-    """Generate inventory using KiCad plugin."""
-    # TODO: Implement plugin inventory generation in Phase 3
-    context.last_command_exit_code = 0
-    context.inventory_output_file = Path("plugin_inventory.csv")
-
-
-@when("I perform search using KiCad plugin")
-def step_when_perform_search_using_plugin(context):
-    """Perform part search using KiCad plugin."""
-    # TODO: Implement plugin search in Phase 3
-    context.last_command_exit_code = 0
-    context.search_results = []
-
-
-@when("I perform annotation using KiCad plugin")
-def step_when_perform_annotation_using_plugin(context):
-    """Perform back-annotation using KiCad plugin."""
-    # TODO: Implement plugin annotation in Phase 3
-    context.last_command_exit_code = 0
-    context.annotation_results = {}
-
-
-@when("I perform operation using KiCad plugin")
-def step_when_perform_operation_using_plugin(context):
-    """Perform generic operation using KiCad plugin."""
-    # TODO: Implement generic plugin operation in Phase 3
-    context.last_command_exit_code = 0
+# NOTE: API and Plugin execution steps removed per Axiom #16 (Step Parameterization)
+# The parameterized step @when("I generate {operation} using {interface}")
+# handles all interface-specific cases (CLI, Python API, KiCad plugin)
+# This eliminates code duplication and improves maintainability
 
 
 # =============================================================================
@@ -270,12 +155,14 @@ def step_when_generate_search_enhanced_inventory_generic(context):
     context.inventory_output_file = Path("search_enhanced_inventory.csv")
 
 
-@when("I search with --generic fabricator and result limit of 3")
-def step_when_search_with_generic_fabricator_limit_3(context):
-    """Search with generic fabricator and result limit."""
-    # TODO: Implement limited search in Phase 3
+@when("I search with --{fabricator} fabricator and result limit of {limit:d}")
+def step_when_search_with_fabricator_and_limit(context, fabricator, limit):
+    """Search with parameterized fabricator and result limit."""
+    # TODO: Implement parameterized limited search in Phase 3
     context.last_command_exit_code = 0
-    context.inventory_output_file = Path("limited_search_inventory.csv")
+    context.inventory_output_file = Path(
+        f"limited_search_{fabricator}_{limit}_inventory.csv"
+    )
 
 
 @when("I generate search-enhanced inventory with --generic fabricator the first time")
@@ -286,11 +173,12 @@ def step_when_generate_search_enhanced_inventory_first_time(context):
     context.inventory_output_file = Path("first_time_inventory.csv")
 
 
-@when("the MOUSER_API_KEY is set to NULL")
-def step_when_mouser_api_key_set_to_null(context):
-    """Set MOUSER_API_KEY to NULL for caching test."""
-    # TODO: Implement API key nullification in Phase 3
-    pass
+@when("the {provider}_API_KEY is set to {value}")
+def step_when_provider_api_key_set_to_value(context, provider, value):
+    """Set parameterized provider API key to specified value for testing."""
+    # TODO: Implement parameterized API key setting in Phase 3
+    context.api_key_settings = context.api_key_settings or {}
+    context.api_key_settings[f"{provider}_API_KEY"] = value
 
 
 @when("I generate search-enhanced inventory with --generic fabricator a second time")
@@ -315,102 +203,6 @@ def step_when_enable_interactive_selection_mode_generic(context):
     # TODO: Implement interactive selection in Phase 3
     context.last_command_exit_code = 0
     context.inventory_output_file = Path("interactive_inventory.csv")
-
-
-# =============================================================================
-# Parameterized Inventory and Search Step Definitions (Axiom #16)
-# =============================================================================
-
-
-@then(
-    "the inventory includes {provider} part numbers, pricing, and stock quantities for each component"
-)
-def step_then_inventory_includes_provider_data_for_components(context, provider):
-    """Verify search-enhanced inventory generation with parameterized provider across all usage models automatically."""
-    context.execute_steps(
-        "When I validate inventory extraction across all usage models"
-    )
-    for method, result in context.results.items():
-        assert (
-            result["output_file"] and result["output_file"].exists()
-        ), f"{method} did not produce {provider} enhanced inventory file"
-
-
-@then(
-    "the inventory contains {count:d} candidate parts for the {component} with priority ranking based on {criteria}"
-)
-def step_then_inventory_contains_candidate_parts_with_criteria(
-    context, count, component, criteria
-):
-    """Verify multi-candidate search results with parameterized component and criteria across all usage models automatically."""
-    context.execute_steps(
-        "When I validate inventory extraction across all usage models"
-    )
-    for method, result in context.results.items():
-        assert (
-            result["output_file"] and result["output_file"].exists()
-        ), f"{method} did not produce {count}-candidate inventory file for {component}"
-
-
-@then(
-    "the second run uses cached results, does not generate {error_source} errors and completes successfully"
-)
-def step_then_second_run_uses_cached_results_without_errors(context, error_source):
-    """Verify search caching optimization with parameterized error sources across all usage models automatically."""
-    context.execute_steps(
-        "When I validate inventory extraction across all usage models"
-    )
-    for method, result in context.results.items():
-        assert (
-            result["output_file"] and result["output_file"].exists()
-        ), f"{method} did not produce cached inventory file without {error_source} errors"
-
-
-@then("the search returns statistics showing {metric_types}")
-def step_then_search_returns_statistics_with_metrics(context, metric_types):
-    """Verify search statistics reporting with parameterized metrics across all usage models automatically."""
-    context.execute_steps(
-        "When I validate inventory extraction across all usage models"
-    )
-    for method, result in context.results.items():
-        assert (
-            result["output_file"] and result["output_file"].exists()
-        ), f"{method} did not produce inventory with {metric_types} statistics"
-
-
-@then(
-    'the inventory includes {provider} data for {component} and reports "{message}" for {problem_component} component'
-)
-def step_then_inventory_includes_data_and_reports_message(
-    context, provider, component, message, problem_component
-):
-    """Verify graceful search failure handling with parameterized components and messages.
-
-    Tests across all usage models automatically.
-    """
-    context.execute_steps(
-        "When I validate inventory extraction across all usage models"
-    )
-    for method, result in context.results.items():
-        assert (
-            result["output_file"] and result["output_file"].exists()
-        ), f"{method} did not produce partial {provider} inventory file"
-
-
-@then(
-    "the search presents multiple {item_type} with {detail_types} for user selection per component"
-)
-def step_then_search_presents_multiple_items_with_details(
-    context, item_type, detail_types
-):
-    """Verify interactive search selection with parameterized items and details across all usage models automatically."""
-    context.execute_steps(
-        "When I validate inventory extraction across all usage models"
-    )
-    for method, result in context.results.items():
-        assert (
-            result["output_file"] and result["output_file"].exists()
-        ), f"{method} did not produce interactive {item_type} inventory file"
 
 
 # =============================================================================
