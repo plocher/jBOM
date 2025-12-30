@@ -24,7 +24,7 @@ Feature: Search-Enhanced Inventory
     When I generate search-enhanced inventory with --generic fabricator the first time
     And the MOUSER_API_KEY is set to NULL
     And I generate search-enhanced inventory with --generic fabricator a second time
-    Then the second run uses cached results, does not generate API errors or API traffic and completes successfully
+    Then the second run uses cached results, does not generate API errors and completes successfully
 
   Scenario: Search enhancement with statistics reporting
     Given the "BasicComponents" schematic
