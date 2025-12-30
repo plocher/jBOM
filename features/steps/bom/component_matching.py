@@ -78,49 +78,10 @@ def step_given_schematic_contains_component(context, value, package, component_t
     }
 
 
-# Specific step patterns to match feature files exactly
-@given("the schematic contains a 10K 0603 resistor")
-def step_given_schematic_10k_0603_resistor(context):
-    """Set up schematic with 10K 0603 resistor."""
-    pass
-
-
-@given("the schematic contains a 100nF 0603 capacitor")
-def step_given_schematic_100nf_0603_capacitor(context):
-    """Set up schematic with 100nF 0603 capacitor."""
-    pass
-
-
-@given("the schematic contains a 47K 1206 resistor")
-def step_given_schematic_47k_1206_resistor(context):
-    """Set up schematic with 47K 1206 resistor."""
-    pass
-
-
-@then('the BOM contains the 10K 0603 resistor matched to "R001"')
-def step_then_bom_contains_10k_resistor_matched(context):
-    """Verify 10K resistor matching across all usage models automatically."""
-    # Auto-execute multi-modal validation
-    context.execute_steps("When I validate behavior across all usage models")
-
-    # Then verify the specific matching behavior
-    for method, result in context.results.items():
-        assert (
-            result["output_file"] and result["output_file"].exists()
-        ), f"{method} did not produce BOM file"
-
-
-@then('the BOM contains the 100nF 0603 capacitor matched to "C001"')
-def step_then_bom_contains_100nf_capacitor_matched(context):
-    """Verify 100nF capacitor matching across all usage models automatically."""
-    # Auto-execute multi-modal validation
-    context.execute_steps("When I validate behavior across all usage models")
-
-    # Then verify the specific matching behavior
-    for method, result in context.results.items():
-        assert (
-            result["output_file"] and result["output_file"].exists()
-        ), f"{method} did not produce BOM file"
+# NOTE: Hardcoded step definitions removed per Axiom #16 (Step Parameterization)
+# The parameterized step @given('the schematic contains a {value} {package} {component_type}')
+# handles all specific component cases (10K 0603 resistor, 100nF 0603 capacitor, etc.)
+# This eliminates code duplication and improves maintainability
 
 
 @given("the schematic contains diverse components")
@@ -130,15 +91,6 @@ def step_given_schematic_contains_diverse_components(context):
     pass
 
 
-@given(
-    "the schematic contains a {value} {package} {component_type} and a {value2} {package2} {component_type2}"
-)
-def step_given_schematic_contains_multiple_components(
-    context, value, package, component_type, value2, package2, component_type2
-):
-    """Set up schematic with multiple specific components."""
-    # TODO: Implement multiple component setup in Phase 3
-    context.test_components = [
-        {"value": value, "package": package, "type": component_type},
-        {"value": value2, "package": package2, "type": component_type2},
-    ]
+# NOTE: Over-parameterized step removed per Axiom #16 anti-pattern guidance
+# Multiple components should be handled with data tables or separate Given steps
+# This avoids ambiguous step conflicts and improves readability

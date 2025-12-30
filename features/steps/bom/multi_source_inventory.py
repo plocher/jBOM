@@ -109,11 +109,9 @@ def step_given_multiple_sources_with_component(context, component):
     pass
 
 
-@given("multiple inventory sources with standard components")
-def step_given_multiple_sources_with_standard_components(context):
-    """Set up multiple inventory sources with standard components."""
-    # TODO: Implement standard multi-source setup in Phase 3
-    pass
+# NOTE: Hardcoded step removed per Axiom #16 (Step Parameterization)
+# The parameterized step @given('multiple inventory sources with {component}')
+# handles 'standard components' and all other component specifications
 
 
 @given("conflicting inventory sources with same IPN but different specs")
