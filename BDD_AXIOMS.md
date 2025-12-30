@@ -178,6 +178,35 @@ When I generate a BOM with fields "Reference,Priority" for priority-only validat
 ### 12. Multi-Modal Testing Coverage
 **Axiom**: All core functionality MUST be tested across three execution contexts: CLI, API, and Embedded-KiCad.
 
+### 13. Generic Configuration as BDD Testing Foundation
+**Axiom**: BDD tests SHOULD depend on and use the `--generic` fabricator configuration as the primary testing foundation. The generic configuration CAN and SHOULD be updated as necessary to support axiom-adherent features and scenarios.
+
+**Principle**: The generic configuration serves as the **stable testing contract** between BDD scenarios and jBOM functionality.
+
+**Guidelines**:
+- **Primary Testing**: Use `--generic` for standard BDD testing unless fabricator-specific behavior is being tested
+- **Configuration Evolution**: Update `generic.fab.yaml` when BDD scenarios require new fields or capabilities
+- **Backward Compatibility**: Changes to generic config should be additive (new fields) rather than breaking (removing fields)
+- **Documentation**: Generic config changes should be documented and justified in commit messages
+
+**Rationale**:
+- **Single Source of Truth**: Eliminates field list duplication across scenarios
+- **Maintainable**: Changes to field requirements only need updates in one place
+- **Extensible**: New testing needs can be supported by enhancing the generic configuration
+- **Realistic**: Tests use actual jBOM configuration system rather than synthetic field lists
+
+**Examples**:
+```yaml
+# generic.fab.yaml evolution for BDD support
+bom_columns:
+  "Reference": "reference"     # Core field
+  "Value": "value"           # Component matching
+  "Package": "package"       # Added for BDD edge case testing
+  "Priority": "priority"     # Could be added for priority testing
+```
+
+**Anti-Pattern**: Creating synthetic field combinations that don't reflect real jBOM usage
+
 **Three Execution Contexts**:
 1. **CLI**: Command-line interface (`jbom bom --jlc`)
 2. **API**: Python API (`BackAnnotationAPI.update()`)
@@ -223,6 +252,7 @@ When reviewing/creating BDD scenarios, verify:
 - [ ] All dependencies visible (Axiom #10)
 - [ ] Explicit field specification for BOM output (Axiom #11)
 - [ ] Multi-modal coverage: CLI, API, Embedded-KiCad (Axiom #12)
+- [ ] Generic configuration as primary testing foundation (Axiom #13)
 
 ## Files Requiring Review
 
@@ -234,6 +264,18 @@ Apply these axioms to all remaining BDD feature files:
 
 ## Status
 
-**Completed**: multi_source_inventory.feature, component_matching.feature, priority_selection.feature, fabricator_formats.feature, partial back_annotation.feature
+**Foundation Established**: All 13 core BDD axioms defined and documented
 
-**Next**: Complete back_annotation.feature alignment, then systematic review of all remaining scenarios.
+**BOM Features**: Fully compliant with all axioms
+- component_matching.feature, fabricator_formats.feature, multi_source_inventory.feature, priority_selection.feature
+- All leverage --generic or appropriate fabricator configurations
+- DRY violations eliminated through generic.fab.yaml enhancement
+
+**Back-Annotation Features**: Transformed to use fixture-based, domain-specific step approach
+- back_annotation.feature fully refactored with automatic multi-modal testing
+
+**Generic Configuration**: Enhanced to support BDD testing requirements
+- Added Package field to generic.fab.yaml
+- Established as stable testing foundation per Axiom #13
+
+**Next**: Apply axioms to remaining feature areas (pos/, search/, inventory/, error_handling/)
