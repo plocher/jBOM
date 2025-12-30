@@ -132,6 +132,59 @@ def step_given_inventory_with_invalid_priority_data(context):
 
 
 # =============================================================================
+# Axiom #17: Complete Precondition Specification Steps
+# =============================================================================
+
+
+@given("the {fabricator:w} inventory contains a {value} {package} {component_type}")
+def step_given_inventory_contains_component(
+    context, fabricator, value, package, component_type
+):
+    """Explicitly specify inventory contains a specific component (Axiom #17)."""
+    # TODO: Implement explicit inventory content setup in Phase 3
+    if not hasattr(context, "explicit_inventory_contents"):
+        context.explicit_inventory_contents = {}
+    key = f"{fabricator}_{value}_{package}_{component_type}"
+    context.explicit_inventory_contents[key] = {"present": True}
+    pass
+
+
+@given("the inventory does not contain a {value} {package} {component_type}")
+def step_given_inventory_does_not_contain_component(
+    context, value, package, component_type
+):
+    """Explicitly specify inventory does NOT contain a specific component (Axiom #17)."""
+    # TODO: Implement explicit inventory absence setup in Phase 3
+    if not hasattr(context, "explicit_inventory_contents"):
+        context.explicit_inventory_contents = {}
+    key = f"absent_{value}_{package}_{component_type}"
+    context.explicit_inventory_contents[key] = {"present": False}
+    pass
+
+
+@given("the inventory does not contain any {value} {component_type}s")
+def step_given_inventory_does_not_contain_value_components(
+    context, value, component_type
+):
+    """Explicitly specify inventory lacks all components of specific value (Axiom #17)."""
+    # TODO: Implement value-wide absence setup in Phase 3
+    if not hasattr(context, "explicit_inventory_absences"):
+        context.explicit_inventory_absences = []
+    context.explicit_inventory_absences.append(f"no_{value}_{component_type}s")
+    pass
+
+
+@given("the inventory does not contain any {package} package components")
+def step_given_inventory_does_not_contain_package_components(context, package):
+    """Explicitly specify inventory lacks all components of specific package (Axiom #17)."""
+    # TODO: Implement package-wide absence setup in Phase 3
+    if not hasattr(context, "explicit_inventory_absences"):
+        context.explicit_inventory_absences = []
+    context.explicit_inventory_absences.append(f"no_{package}_packages")
+    pass
+
+
+# =============================================================================
 # Parameterized BOM Verification Then Steps (Axiom #16)
 # =============================================================================
 
