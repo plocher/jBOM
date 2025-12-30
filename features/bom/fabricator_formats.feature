@@ -32,7 +32,7 @@ Feature: Fabricator Formats
   Scenario: Generate generic format BOM
     Given the schematic contains standard components
     And I want to generate a generic format BOM
-    Then the BOM generates in the requested format with columns "Reference,Quantity,Description,Value,Footprint,Manufacturer,MPN"
+    Then the BOM generates in the requested format with columns "Reference,Quantity,Description,Value,Footprint,Manufacturer,Part Number"
 
   Scenario: Custom field selection overrides fabricator format
     Given the schematic contains standard components
