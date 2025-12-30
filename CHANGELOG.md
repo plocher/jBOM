@@ -1,6 +1,205 @@
 # CHANGELOG
 
 
+## v3.6.0 (2025-12-30)
+
+### Bug Fixes
+
+* fix: use proper terminal formatting instead of raw markdown
+
+- Remove literal backticks and markdown syntax from output
+- Use 4-space indentation to distinguish commands from instructions
+- Maintain markdown spirit with clean separation but terminal-appropriate
+- Remove backticks around UI elements for cleaner text flow
+- Commands now clearly distinguished through indentation
+
+Co-Authored-By: Warp <agent@warp.dev> ([`fb449b6`](https://github.com/plocher/jBOM/commit/fb449b663afa92385c6f6eecdf5feae47370e4bf))
+
+* fix: address pre-commit formatting and linting issues in POC
+
+- Auto-formatted by black (6 files)
+- Fixed trailing whitespace and end-of-file issues
+- Fixed mixed line endings in enhanced_resistors.csv
+- Flake8 issues remain (unused imports, f-string placeholders)
+
+POC functionality unchanged - organizational cleanup only
+
+Co-Authored-By: Warp <agent@warp.dev> ([`cec99bd`](https://github.com/plocher/jBOM/commit/cec99bdf5ee3ad0f7f71c05ad6ff5b57a8b2f557))
+
+* fix: clean up test files and linting issues
+
+- Remove old test_search_workflow.py with undefined variables
+- Fix f-string linting issue in test_inventory_search.py
+- Keep focused test_inventory_search.py and test_inventory_cli.sh
+- Both tests ready for real-world validation with MOUSER_API_KEY ([`e0db5cc`](https://github.com/plocher/jBOM/commit/e0db5cc2ab8d9f7b5ddf17de3f07b06aa97b12ff))
+
+* fix: correct mock patching in functional tests for CI compatibility
+
+- Change mock patches from jbom.search.mouser.MouserProvider to jbom.api.MouserProvider
+- Ensures mocks intercept the import location where MouserProvider is actually used
+- Fixes CI test failures caused by real API key validation during mocked tests
+- All functional inventory tests now pass in CI environment ([`b32eaa6`](https://github.com/plocher/jBOM/commit/b32eaa60bdf920a43501da27c382cca6658c865d))
+
+### Features
+
+* feat: add markdown-style CLI output and AppleScript automation
+
+- Replace icons with clean markdown-style code blocks
+- Separate instructions from copy-pastable commands
+- Add AppleScript automation option alongside manual workflow
+- Provide choice between manual (recommended) and automated approaches
+- Include proper error handling and fallback to manual mode
+
+Co-Authored-By: Warp <agent@warp.dev> ([`9a664fa`](https://github.com/plocher/jBOM/commit/9a664fa1a7c026e609ed1a40121d0bb9e1f9be3d))
+
+* feat: finalize Unicode normalization script with proper workflows
+
+- Add timestamped backup creation for safe in-place modification
+- Implement manual workflow for Numbers files via stdout commands
+- Update documentation to reflect actual implementation
+- Remove AppleScript automation due to reliability issues
+
+Co-Authored-By: Warp <agent@warp.dev> ([`a28e152`](https://github.com/plocher/jBOM/commit/a28e1525e5812341ee4195c4df1f07e44ee2022e))
+
+* feat: add comprehensive search functionality test workflows
+
+- test_search_workflow.py: Python API test with inventory components
+- test_cli_search.sh: CLI functionality test with representative queries
+- README-search-tests.md: Comprehensive testing guide and success criteria
+- Focus on real-world validation and quality assessment
+- Tests search_parts API with components from example inventory
+- Identifies areas for search algorithm and inventory data improvement
+- Provides clear success criteria and result interpretation guidelines ([`dcc1b8d`](https://github.com/plocher/jBOM/commit/dcc1b8d739b8a507dde58cdc9e0d6ed9a5e678bd))
+
+* feat: enhance error messages for unsupported search providers
+
+- Replace "Unknown provider" with more helpful "Unsupported search provider" messages
+- Include list of currently supported providers in error message
+- Mention future provider plans (e.g., DigiKey) to set user expectations
+- Update unit test to match new error message format
+- Maintain error behavior (not warning) for explicit provider selection ([`1a659de`](https://github.com/plocher/jBOM/commit/1a659dec46178eefd176f5b475bea85355cf62af))
+
+* feat: add inventory search automation with distributor integration
+
+- Enhanced inventory command with --search flag for automated part searching
+- Added SearchResultScorer for intelligent ranking combining technical and supplier metrics
+- Added InventoryEnricher for batch processing with rate limiting and error recovery
+- New generate_enriched_inventory() API function with InventoryOptions dataclass
+- Support for multiple search results per component with priority ranking
+- Comprehensive test coverage: unit tests, functional tests, and error handling
+- Updated CLI documentation and API reference with search enhancement options
+- Version bump to 3.6.0 for minor semantic release
+
+Co-Authored-By: Warp <agent@warp.dev> ([`f36a638`](https://github.com/plocher/jBOM/commit/f36a6382854a8c96d5fc3030fddbd16cc1e13ed7))
+
+* feat: add search enhancement to inventory command
+
+- New --search flag enables automated part association
+- Complete argument group with --provider, --api-key, --limit, --interactive
+- Comprehensive error handling and input validation
+- Clear search statistics reporting
+- Seamless integration with generate_enriched_inventory API
+- Backward compatible - existing usage unchanged
+- 16 comprehensive unit tests (100% passing)
+- Enhanced help with clear examples and documentation
+
+Usage examples:
+  jbom inventory project/ --search                    # Basic search enhancement
+  jbom inventory project/ --search --limit=3          # Multiple candidates
+  jbom inventory project/ --search --api-key=KEY      # Custom API configuration
+
+Co-Authored-By: Warp <agent@warp.dev> ([`ae263cc`](https://github.com/plocher/jBOM/commit/ae263cc2e109e154296e2b1744b94aad64f032db))
+
+* feat: add generate_enriched_inventory API function
+
+- New InventoryOptions dataclass with search configuration
+- Comprehensive generate_enriched_inventory function following jBOM patterns
+- Support for both basic and search-enhanced inventory generation
+- Complete output handling (CSV, console, stdout)
+- Robust error handling and comprehensive unit tests (9/9 passing)
+- Seamless integration with existing InventoryEnricher and search providers
+
+Co-Authored-By: Warp <agent@warp.dev> ([`43072e2`](https://github.com/plocher/jBOM/commit/43072e2082d388e87e6b6307042f222fb5919948))
+
+* feat: implement core search-enhanced inventory classes
+
+- Add SearchResultScorer for intelligent priority ranking
+- Add InventoryEnricher for automated part association
+- Combines InventoryMatcher logic with supplier quality metrics
+- Comprehensive unit tests with 100% pass rate
+- Supports batch processing and rate limiting
+
+Co-Authored-By: Warp <agent@warp.dev> ([`08e5b27`](https://github.com/plocher/jBOM/commit/08e5b27e7ef17fe4b28dbec66792696dc3ddf650))
+
+### Refactoring
+
+* refactor: remove experimental AppleScript automation
+
+- Remove failed AppleScript automation option
+- Simplify interface to use only manual workflow
+- Focus on reliable manual process rather than complex automation
+- Clean up unused code (~100 lines removed)
+
+Co-Authored-By: Warp <agent@warp.dev> ([`26d4f58`](https://github.com/plocher/jBOM/commit/26d4f58d0da42c806a6a4482da8f110c8a8b30fd))
+
+* refactor: remove superfluous emojis and success messages
+
+- Remove checkmark "Fixes applied successfully!" message
+- Clean up all emoji icons from CLI output (💾, 📁, ✅, etc.)
+- Keep only essential informational messages
+- More appropriate professional CLI output
+
+Co-Authored-By: Warp <agent@warp.dev> ([`35bc369`](https://github.com/plocher/jBOM/commit/35bc369e7fb7f2dd94e57b64a1f744d39db71a6f))
+
+* refactor: simplify Numbers workflow output
+
+- Remove verbose echo statements and shell commands
+- Output clean, concise manual instructions
+- Only essential Python command needs copy-pasting
+- Much more elegant and user-friendly
+
+Co-Authored-By: Warp <agent@warp.dev> ([`2ed603c`](https://github.com/plocher/jBOM/commit/2ed603c6768e2953978f58488973b1b9e29e6798))
+
+* refactor: move remaining POC test files from examples/ to poc/
+
+Moved POC-specific files to proper locations:
+- test_inventory_search.py, search_project_parts.py → scripts/
+- test_cli_search.sh, test_inventory_cli.sh → scripts/
+- test-search-INVENTORY.{csv,numbers} → examples/
+- README-search-tests.md → docs/
+- test_project/ → examples/
+
+examples/ folder now contains only production example files
+poc/inventory-enhancement/ contains complete self-contained POC
+
+Co-Authored-By: Warp <agent@warp.dev> ([`a65fe0b`](https://github.com/plocher/jBOM/commit/a65fe0be70997f3dc6f8caf339457cf15ed154fd))
+
+* refactor: remove unnecessary future plans text from error messages
+
+- Remove unhelpful "Additional providers (e.g., DigiKey) are planned" text
+- Keep error messages concise and focused on current functionality
+- Clean up documentation to remove speculative language
+- Maintain clear provider validation with actionable error messages ([`53e10a5`](https://github.com/plocher/jBOM/commit/53e10a5f073830fa4e74fc218e126bb06cd52cfb))
+
+### Unknown
+
+* Merge pull request #7 from plocher/feature/inventory-search-automation
+
+feat: add inventory search automation with distributor integration ([`fd3db76`](https://github.com/plocher/jBOM/commit/fd3db76381abe0d2a6ec993774532ba0568c9670))
+
+* cleanup: remove obsolete Unicode normalization script and docs
+
+- Unicode issues manually resolved in inventory files
+- Remove apply_inventory_fixes.py script (no longer needed)
+- Remove README_inventory_fixes.md documentation
+- Update main README to remove Unicode normalization references
+- Focus POC on core inventory enhancement capabilities
+
+Co-Authored-By: Warp <agent@warp.dev> ([`b04a05a`](https://github.com/plocher/jBOM/commit/b04a05aa40b019cae06c0c01fd4863fb16845dcd))
+
+* removed unicode omega ([`ef1421d`](https://github.com/plocher/jBOM/commit/ef1421dcf305a7c80ae672645c6e8136e57181ec))
+
+
 ## v3.5.0 (2025-12-21)
 
 ### Bug Fixes
