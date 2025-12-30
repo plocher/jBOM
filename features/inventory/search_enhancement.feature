@@ -21,8 +21,10 @@ Feature: Search-Enhanced Inventory
   Scenario: Search enhancement with caching optimization
     Given the "BasicComponents" schematic
     And the MOUSER_API_KEY environment variable is available for distributor search
-    When I generate search-enhanced inventory with --generic fabricator twice
-    Then the second run uses cached results and completes faster than the first run
+    When I generate search-enhanced inventory with --generic fabricator the first time
+    And the MOUSER_API_KEY is set to NULL
+    And I generate search-enhanced inventory with --generic fabricator a second time
+    Then the second run uses cached results, does not generate API errors or API traffic and completes successfully
 
   Scenario: Search enhancement via API with statistics
     Given the "BasicComponents" schematic
