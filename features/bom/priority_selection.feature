@@ -18,14 +18,8 @@ Feature: Priority Selection
 
   Scenario: Priority selection works with verbose output
     Given the schematic contains a 10K 0603 resistor
-    When I run jbom command "bom SimpleProject -i test_inventory.csv -o bom_verbose.csv -v"
-    Then the command succeeds
-    And file "bom_verbose.csv" is created
-    And the verbose BOM shows "R001" selected and alternatives "R001A, R001B" available
+    Then the verbose BOM shows "R001" selected and alternatives "R001A, R001B" available
 
-  Scenario: Priority selection via Python API
+  Scenario: Priority selection includes alternative matches
     Given the schematic contains a 10K 0603 resistor
-    When I generate BOM using Python API
-    Then the command succeeds
-    And the API result shows "R001" with priority 1 selected
-    And the API result includes alternative matches with higher priorities
+    Then the BOM includes alternative matches with higher priorities

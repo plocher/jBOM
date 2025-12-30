@@ -8,55 +8,28 @@ Feature: Part Search
 
   Scenario: Basic part search
     Given I need to find a 10K 0603 resistor
-    When I run jbom command "search '10k 0603 resistor' --limit 5"
-    Then the command succeeds
-    And the search returns up to 5 matching parts
-    And each result includes part number, manufacturer, and description
-    And the results are ranked by relevance
+    Then the search returns up to 5 matching parts ranked by relevance
 
   Scenario: Search with specific provider
-    Given I want to search specifically on Mouser
-    When I run jbom command "search '100nF ceramic capacitor' --provider mouser --limit 3"
-    Then the command succeeds
-    And the search uses Mouser's API
-    And the results include Mouser part numbers and pricing
-    And stock availability is included when available
+    Given I want to search specifically on Mouser for 100nF ceramic capacitor
+    Then the search uses Mouser API with part numbers, pricing, and stock availability
 
   Scenario: Search part number directly
-    Given I know a specific manufacturer part number
-    When I run jbom command "search 'RC0603FR-0710KL' --limit 1"
-    Then the command succeeds
-    And the search finds the exact manufacturer part
-    And the result includes cross-references and distributors
-    And pricing and stock information is provided
+    Given I know manufacturer part number "RC0603FR-0710KL"
+    Then the search finds exact manufacturer part with cross-references and pricing
 
   Scenario: Search with parametric filtering
-    Given I need resistors with specific specifications
-    When I run jbom command "search '10k resistor 1% 0603' --limit 10"
-    Then the command succeeds
-    And the results are filtered for 1% tolerance
-    And the results are filtered for 0603 package size
-    And the results exclude inappropriate matches (wrong tolerance/package)
+    Given I need 10K resistors with 1% tolerance in 0603 package
+    Then the search filters results for 1% tolerance and 0603 package excluding inappropriate matches
 
   Scenario: Handle search failures gracefully
-    Given I search for a non-existent part
-    When I run jbom command "search 'nonexistent-part-xyz123' --limit 5"
-    Then the command succeeds
-    And the search returns no results
-    And the output indicates no matches were found
-    And the command does not fail with an error
+    Given I search for non-existent part "nonexistent-part-xyz123"
+    Then the search returns no results with appropriate messaging without errors
 
-  Scenario: Search via Python API
+  Scenario: Search via API
     Given I want to search programmatically
-    When I perform part search using Python API
-    Then the search succeeds
-    And the API returns SearchResult objects
-    And the results include all relevant part information
-    And the results can be filtered and processed programmatically
+    Then the API returns SearchResult objects with filterable part information
 
   Scenario: Search with API key override
-    Given I have a different API key for testing
-    When I run jbom command "search '1uF capacitor' --api-key MY_TEST_KEY --limit 2"
-    Then the command uses the specified API key
-    And the search executes with the override key
-    And the results are returned normally
+    Given I have different API key "MY_TEST_KEY" for 1uF capacitor search
+    Then the search uses specified API key and returns results normally

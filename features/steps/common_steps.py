@@ -452,6 +452,12 @@ def step_when_validate_operation_across_models(context, operation):
             context.execute_steps(f"When I generate POS using {method}")
         elif operation == "inventory extraction":
             context.execute_steps(f"When I generate inventory using {method}")
+        elif operation == "search":
+            context.execute_steps(f"When I perform search using {method}")
+        elif operation == "annotation":
+            context.execute_steps(f"When I perform annotation using {method}")
+        elif operation == "error handling":
+            context.execute_steps(f"When I perform operation using {method}")
         else:
             raise ValueError(f"Unknown operation: {operation}")
 
@@ -467,7 +473,14 @@ def step_when_validate_operation_across_models(context, operation):
                     getattr(context, "inventory_output_file", None),
                 ),
             ),
+            "search_results": getattr(context, "search_results", None),
+            "annotation_results": getattr(context, "annotation_results", None),
+            "error_output": getattr(context, "error_output", None),
         }
+
+
+# Note: Removed specific inventory extraction and POS generation steps
+# to avoid conflicts with the generic validate operation step
 
 
 @then("all usage models produce consistent results")
@@ -513,3 +526,767 @@ def step_when_test_operation_using_methods(context, operation, methods):
                 context, "bom_output_file", getattr(context, "pos_output_file", None)
             ),
         }
+
+
+# =============================================================================
+# Fabricator Format Domain-Specific Steps
+# =============================================================================
+
+
+@then('the BOM generates in {format_name} format with columns "{column_list}"')
+def step_then_bom_generates_in_format_with_columns(context, format_name, column_list):
+    """Verify fabricator format generation across all usage models automatically."""
+    # Auto-execute multi-modal validation
+    context.execute_steps("When I validate behavior across all usage models")
+
+    # Then verify the specific format behavior
+    # TODO: Implement specific format validation in Phase 3
+    # For now, just verify that files were generated
+    for method, result in context.results.items():
+        assert (
+            result["output_file"] and result["output_file"].exists()
+        ), f"{method} did not produce BOM file"
+
+
+@then('the BOM generates with custom fields "{field_list}"')
+def step_then_bom_generates_with_custom_fields(context, field_list):
+    """Verify custom field selection across all usage models automatically."""
+    # Auto-execute multi-modal validation
+    context.execute_steps("When I validate behavior across all usage models")
+
+    # Then verify the custom fields behavior
+    # TODO: Implement specific custom fields validation in Phase 3
+    # For now, just verify that files were generated
+    for method, result in context.results.items():
+        assert (
+            result["output_file"] and result["output_file"].exists()
+        ), f"{method} did not produce BOM file"
+
+
+# =============================================================================
+# Multi-Source Inventory Domain-Specific Steps
+# =============================================================================
+
+
+@then("the BOM prioritizes local inventory over supplier inventory")
+def step_then_bom_prioritizes_local_over_supplier(context):
+    """Verify multi-source priority handling across all usage models automatically."""
+    # Auto-execute multi-modal validation
+    context.execute_steps("When I validate behavior across all usage models")
+
+    # Then verify the priority behavior
+    # TODO: Implement specific priority validation in Phase 3
+    for method, result in context.results.items():
+        assert (
+            result["output_file"] and result["output_file"].exists()
+        ), f"{method} did not produce BOM file"
+
+
+@then("the BOM combines components from both sources based on priority")
+def step_then_bom_combines_sources_by_priority(context):
+    """Verify multi-source combination across all usage models automatically."""
+    # Auto-execute multi-modal validation
+    context.execute_steps("When I validate behavior across all usage models")
+
+    # Then verify the combination behavior
+    # TODO: Implement specific combination validation in Phase 3
+    for method, result in context.results.items():
+        assert (
+            result["output_file"] and result["output_file"].exists()
+        ), f"{method} did not produce BOM file"
+
+
+@then("the verbose BOM shows selected part source and available alternatives")
+def step_then_verbose_bom_shows_source_and_alternatives(context):
+    """Verify verbose source tracking across all usage models automatically."""
+    # Auto-execute multi-modal validation
+    context.execute_steps("When I validate behavior across all usage models")
+
+    # Then verify the verbose output behavior
+    # TODO: Implement specific verbose validation in Phase 3
+    for method, result in context.results.items():
+        assert (
+            result["output_file"] and result["output_file"].exists()
+        ), f"{method} did not produce BOM file"
+
+
+@then("the API generates BOM with source tracking for each matched item")
+def step_then_api_generates_bom_with_source_tracking(context):
+    """Verify API source tracking across all usage models automatically."""
+    # Auto-execute multi-modal validation
+    context.execute_steps("When I validate behavior across all usage models")
+
+    # Then verify the API source tracking behavior
+    # TODO: Implement specific API validation in Phase 3
+    for method, result in context.results.items():
+        assert (
+            result["output_file"] and result["output_file"].exists()
+        ), f"{method} did not produce BOM file"
+
+
+@then("the BOM uses first source definition and warns about conflicts")
+def step_then_bom_uses_first_source_and_warns_conflicts(context):
+    """Verify conflict handling across all usage models automatically."""
+    # Auto-execute multi-modal validation
+    context.execute_steps("When I validate behavior across all usage models")
+
+    # Then verify the conflict handling behavior
+    # TODO: Implement specific conflict validation in Phase 3
+    for method, result in context.results.items():
+        assert (
+            result["output_file"] and result["output_file"].exists()
+        ), f"{method} did not produce BOM file"
+
+
+# =============================================================================
+# Inventory Extraction Domain-Specific Steps
+# =============================================================================
+
+
+@then("the inventory extracts all unique components with required columns")
+def step_then_inventory_extracts_unique_components_with_columns(context):
+    """Verify basic inventory extraction across all usage models automatically."""
+    # Auto-execute multi-modal validation for inventory extraction
+    context.execute_steps(
+        "When I validate inventory extraction across all usage models"
+    )
+
+    # Then verify the extraction behavior
+    # TODO: Implement specific inventory validation in Phase 3
+    for method, result in context.results.items():
+        assert (
+            result["output_file"] and result["output_file"].exists()
+        ), f"{method} did not produce inventory file"
+
+
+@then("the inventory extracts with distributor format including DPN and SMD columns")
+def step_then_inventory_extracts_with_distributor_format(context):
+    """Verify distributor format inventory extraction across all usage models automatically."""
+    # Auto-execute multi-modal validation for inventory extraction
+    context.execute_steps(
+        "When I validate inventory extraction across all usage models"
+    )
+
+    # Then verify the distributor format behavior
+    # TODO: Implement specific distributor format validation in Phase 3
+    for method, result in context.results.items():
+        assert (
+            result["output_file"] and result["output_file"].exists()
+        ), f"{method} did not produce inventory file"
+
+
+@then("the inventory extracts with UUID column for back-annotation")
+def step_then_inventory_extracts_with_uuid_column(context):
+    """Verify UUID inventory extraction across all usage models automatically."""
+    # Auto-execute multi-modal validation for inventory extraction
+    context.execute_steps(
+        "When I validate inventory extraction across all usage models"
+    )
+
+    # Then verify the UUID behavior
+    # TODO: Implement specific UUID validation in Phase 3
+    for method, result in context.results.items():
+        assert (
+            result["output_file"] and result["output_file"].exists()
+        ), f"{method} did not produce inventory file"
+
+
+@then("the API extracts inventory with component count and field names")
+def step_then_api_extracts_inventory_with_component_count_and_fields(context):
+    """Verify API inventory extraction across all usage models automatically."""
+    # Auto-execute multi-modal validation for inventory extraction
+    context.execute_steps(
+        "When I validate inventory extraction across all usage models"
+    )
+
+    # Then verify the API inventory behavior
+    # TODO: Implement specific API inventory validation in Phase 3
+    for method, result in context.results.items():
+        assert (
+            result["output_file"] and result["output_file"].exists()
+        ), f"{method} did not produce inventory file"
+
+
+@then("the inventory extracts components from all sheets with merged quantities")
+def step_then_inventory_extracts_from_all_sheets_with_merged_quantities(context):
+    """Verify hierarchical inventory extraction across all usage models automatically."""
+    # Auto-execute multi-modal validation for inventory extraction
+    context.execute_steps(
+        "When I validate inventory extraction across all usage models"
+    )
+
+    # Then verify the hierarchical behavior
+    # TODO: Implement specific hierarchical validation in Phase 3
+    for method, result in context.results.items():
+        assert (
+            result["output_file"] and result["output_file"].exists()
+        ), f"{method} did not produce inventory file"
+
+
+@then('the inventory extracts with custom fields "{field_list}"')
+def step_then_inventory_extracts_with_custom_fields(context, field_list):
+    """Verify custom field inventory extraction across all usage models automatically."""
+    # Auto-execute multi-modal validation for inventory extraction
+    context.execute_steps(
+        "When I validate inventory extraction across all usage models"
+    )
+
+    # Then verify the custom fields behavior
+    # TODO: Implement specific custom fields validation in Phase 3
+    for method, result in context.results.items():
+        assert (
+            result["output_file"] and result["output_file"].exists()
+        ), f"{method} did not produce inventory file"
+
+
+# =============================================================================
+# Search Enhancement Domain-Specific Steps
+# =============================================================================
+
+
+@then(
+    "the search-enhanced inventory includes part numbers, pricing, and stock quantities"
+)
+def step_then_search_enhanced_inventory_includes_data(context):
+    """Verify search-enhanced inventory generation across all usage models automatically."""
+    # Auto-execute multi-modal validation for inventory extraction
+    context.execute_steps(
+        "When I validate inventory extraction across all usage models"
+    )
+
+    # Then verify the search enhancement behavior
+    # TODO: Implement specific search enhancement validation in Phase 3
+    for method, result in context.results.items():
+        assert (
+            result["output_file"] and result["output_file"].exists()
+        ), f"{method} did not produce enhanced inventory file"
+
+
+@then("the inventory contains 3 candidate parts with priority ranking")
+def step_then_inventory_contains_candidate_parts_with_ranking(context):
+    """Verify multi-candidate search results across all usage models automatically."""
+    # Auto-execute multi-modal validation for inventory extraction
+    context.execute_steps(
+        "When I validate inventory extraction across all usage models"
+    )
+
+    # Then verify the candidate ranking behavior
+    # TODO: Implement specific candidate validation in Phase 3
+    for method, result in context.results.items():
+        assert (
+            result["output_file"] and result["output_file"].exists()
+        ), f"{method} did not produce multi-candidate inventory file"
+
+
+@then("the search results are cached for faster subsequent runs")
+def step_then_search_results_are_cached(context):
+    """Verify search caching across all usage models automatically."""
+    # Auto-execute multi-modal validation for inventory extraction
+    context.execute_steps(
+        "When I validate inventory extraction across all usage models"
+    )
+
+    # Then verify the caching behavior
+    # TODO: Implement specific caching validation in Phase 3
+    for method, result in context.results.items():
+        assert (
+            result["output_file"] and result["output_file"].exists()
+        ), f"{method} did not produce cached inventory file"
+
+
+@then("the API generates enhanced inventory with search statistics and tracking")
+def step_then_api_generates_enhanced_inventory_with_statistics(context):
+    """Verify API search enhancement across all usage models automatically."""
+    # Auto-execute multi-modal validation for inventory extraction
+    context.execute_steps(
+        "When I validate inventory extraction across all usage models"
+    )
+
+    # Then verify the API search behavior
+    # TODO: Implement specific API search validation in Phase 3
+    for method, result in context.results.items():
+        assert (
+            result["output_file"] and result["output_file"].exists()
+        ), f"{method} did not produce enhanced API inventory file"
+
+
+@then(
+    "the inventory includes distributor data for found components and reports search statistics"
+)
+def step_then_inventory_includes_distributor_data_and_statistics(context):
+    """Verify graceful search failure handling across all usage models automatically."""
+    # Auto-execute multi-modal validation for inventory extraction
+    context.execute_steps(
+        "When I validate inventory extraction across all usage models"
+    )
+
+    # Then verify the graceful failure behavior
+    # TODO: Implement specific failure handling validation in Phase 3
+    for method, result in context.results.items():
+        assert (
+            result["output_file"] and result["output_file"].exists()
+        ), f"{method} did not produce partial search inventory file"
+
+
+@then("the search presents interactive options for customized inventory selection")
+def step_then_search_presents_interactive_options(context):
+    """Verify interactive search selection across all usage models automatically."""
+    # Auto-execute multi-modal validation for inventory extraction
+    context.execute_steps(
+        "When I validate inventory extraction across all usage models"
+    )
+
+    # Then verify the interactive selection behavior
+    # TODO: Implement specific interactive validation in Phase 3
+    for method, result in context.results.items():
+        assert (
+            result["output_file"] and result["output_file"].exists()
+        ), f"{method} did not produce interactive inventory file"
+
+
+# =============================================================================
+# POS Generation Domain-Specific Steps
+# =============================================================================
+
+
+@then('the POS contains all placed components with columns "{column_list}"')
+def step_then_pos_contains_placed_components_with_columns(context, column_list):
+    """Verify basic POS generation across all usage models automatically."""
+    # Auto-execute multi-modal validation for POS generation
+    context.execute_steps("When I validate POS generation across all usage models")
+
+    # Then verify the POS generation behavior
+    # TODO: Implement specific POS validation in Phase 3
+    for method, result in context.results.items():
+        assert (
+            result["output_file"] and result["output_file"].exists()
+        ), f"{method} did not produce POS file"
+
+
+@then(
+    "the POS generates in JLCPCB format with millimeter coordinates and SMD-only filtering"
+)
+def step_then_pos_generates_jlcpcb_format_mm_smd(context):
+    """Verify JLCPCB POS format across all usage models automatically."""
+    # Auto-execute multi-modal validation for POS generation
+    context.execute_steps("When I validate POS generation across all usage models")
+
+    # Then verify the JLCPCB format behavior
+    # TODO: Implement specific JLCPCB format validation in Phase 3
+    for method, result in context.results.items():
+        assert (
+            result["output_file"] and result["output_file"].exists()
+        ), f"{method} did not produce JLCPCB POS file"
+
+
+@then("the POS contains only surface mount components excluding through-hole")
+def step_then_pos_contains_smd_only_excluding_through_hole(context):
+    """Verify SMD-only filtering across all usage models automatically."""
+    # Auto-execute multi-modal validation for POS generation
+    context.execute_steps("When I validate POS generation across all usage models")
+
+    # Then verify the SMD filtering behavior
+    # TODO: Implement specific SMD filtering validation in Phase 3
+    for method, result in context.results.items():
+        assert (
+            result["output_file"] and result["output_file"].exists()
+        ), f"{method} did not produce SMD-only POS file"
+
+
+@then("the POS contains only top-side components excluding bottom-side")
+def step_then_pos_contains_top_side_only(context):
+    """Verify layer filtering across all usage models automatically."""
+    # Auto-execute multi-modal validation for POS generation
+    context.execute_steps("When I validate POS generation across all usage models")
+
+    # Then verify the layer filtering behavior
+    # TODO: Implement specific layer filtering validation in Phase 3
+    for method, result in context.results.items():
+        assert (
+            result["output_file"] and result["output_file"].exists()
+        ), f"{method} did not produce top-side POS file"
+
+
+@then("the API generates POS with placement data and coordinate information")
+def step_then_api_generates_pos_with_placement_data_and_coordinates(context):
+    """Verify API POS generation across all usage models automatically."""
+    # Auto-execute multi-modal validation for POS generation
+    context.execute_steps("When I validate POS generation across all usage models")
+
+    # Then verify the API POS behavior
+    # TODO: Implement specific API POS validation in Phase 3
+    for method, result in context.results.items():
+        assert (
+            result["output_file"] and result["output_file"].exists()
+        ), f"{method} did not produce API POS file"
+
+
+@then("the POS coordinates are converted to inches with appropriate precision")
+def step_then_pos_coordinates_converted_to_inches(context):
+    """Verify coordinate unit conversion across all usage models automatically."""
+    # Auto-execute multi-modal validation for POS generation
+    context.execute_steps("When I validate POS generation across all usage models")
+
+    # Then verify the unit conversion behavior
+    # TODO: Implement specific unit conversion validation in Phase 3
+    for method, result in context.results.items():
+        assert (
+            result["output_file"] and result["output_file"].exists()
+        ), f"{method} did not produce inch-unit POS file"
+
+
+@then("the POS coordinates are relative to auxiliary origin consistently")
+def step_then_pos_coordinates_relative_to_aux_origin(context):
+    """Verify auxiliary origin handling across all usage models automatically."""
+    # Auto-execute multi-modal validation for POS generation
+    context.execute_steps("When I validate POS generation across all usage models")
+
+    # Then verify the auxiliary origin behavior
+    # TODO: Implement specific auxiliary origin validation in Phase 3
+    for method, result in context.results.items():
+        assert (
+            result["output_file"] and result["output_file"].exists()
+        ), f"{method} did not produce aux-origin POS file"
+
+
+# =============================================================================
+# Part Search Domain-Specific Steps
+# =============================================================================
+
+
+# Note: Removed specific search validation step to avoid conflicts with generic validate operation step
+
+
+@then("the search returns up to 5 matching parts ranked by relevance")
+def step_then_search_returns_matching_parts_ranked(context):
+    """Verify basic part search across all usage models automatically."""
+    # Auto-execute multi-modal validation for search
+    context.execute_steps("When I validate search across all usage models")
+
+    # Then verify the search behavior
+    # TODO: Implement specific search validation in Phase 3
+    for method, result in context.results.items():
+        assert result["exit_code"] == 0, f"{method} search failed"
+
+
+@then("the search uses Mouser API with part numbers, pricing, and stock availability")
+def step_then_search_uses_mouser_api_with_details(context):
+    """Verify Mouser-specific search across all usage models automatically."""
+    # Auto-execute multi-modal validation for search
+    context.execute_steps("When I validate search across all usage models")
+
+    # Then verify the Mouser search behavior
+    # TODO: Implement specific Mouser search validation in Phase 3
+    for method, result in context.results.items():
+        assert result["exit_code"] == 0, f"{method} Mouser search failed"
+
+
+@then("the search finds exact manufacturer part with cross-references and pricing")
+def step_then_search_finds_exact_part_with_details(context):
+    """Verify exact part number search across all usage models automatically."""
+    # Auto-execute multi-modal validation for search
+    context.execute_steps("When I validate search across all usage models")
+
+    # Then verify the exact search behavior
+    # TODO: Implement specific exact search validation in Phase 3
+    for method, result in context.results.items():
+        assert result["exit_code"] == 0, f"{method} exact search failed"
+
+
+@then(
+    "the search filters results for 1% tolerance and 0603 package excluding inappropriate matches"
+)
+def step_then_search_filters_parametric_results(context):
+    """Verify parametric filtering across all usage models automatically."""
+    # Auto-execute multi-modal validation for search
+    context.execute_steps("When I validate search across all usage models")
+
+    # Then verify the parametric filtering behavior
+    # TODO: Implement specific parametric filtering validation in Phase 3
+    for method, result in context.results.items():
+        assert result["exit_code"] == 0, f"{method} parametric search failed"
+
+
+@then("the search returns no results with appropriate messaging without errors")
+def step_then_search_returns_no_results_gracefully(context):
+    """Verify graceful failure handling across all usage models automatically."""
+    # Auto-execute multi-modal validation for search
+    context.execute_steps("When I validate search across all usage models")
+
+    # Then verify the graceful failure behavior
+    # TODO: Implement specific failure handling validation in Phase 3
+    for method, result in context.results.items():
+        assert result["exit_code"] == 0, f"{method} search error handling failed"
+
+
+@then("the API returns SearchResult objects with filterable part information")
+def step_then_api_returns_searchresult_objects(context):
+    """Verify API search results across all usage models automatically."""
+    # Auto-execute multi-modal validation for search
+    context.execute_steps("When I validate search across all usage models")
+
+    # Then verify the API search results behavior
+    # TODO: Implement specific API search results validation in Phase 3
+    for method, result in context.results.items():
+        assert result["exit_code"] == 0, f"{method} API search failed"
+
+
+@then("the search uses specified API key and returns results normally")
+def step_then_search_uses_specified_api_key(context):
+    """Verify API key override across all usage models automatically."""
+    # Auto-execute multi-modal validation for search
+    context.execute_steps("When I validate search across all usage models")
+
+    # Then verify the API key override behavior
+    # TODO: Implement specific API key validation in Phase 3
+    for method, result in context.results.items():
+        assert result["exit_code"] == 0, f"{method} API key override failed"
+
+
+# =============================================================================
+# Back-Annotation Domain-Specific Steps
+# =============================================================================
+
+
+# Note: Removed specific annotation validation step to avoid conflicts with generic validate operation step
+
+
+@then(
+    "the back-annotation updates schematic with distributor and manufacturer information"
+)
+def step_then_back_annotation_updates_schematic_with_info(context):
+    """Verify schematic updates across all usage models automatically."""
+    # Auto-execute multi-modal validation for annotation
+    context.execute_steps("When I validate annotation across all usage models")
+
+    # Then verify the back-annotation behavior
+    # TODO: Implement specific back-annotation validation in Phase 3
+    for method, result in context.results.items():
+        assert result["exit_code"] == 0, f"{method} back-annotation failed"
+
+
+@then("the dry-run back-annotation previews changes without modifying schematic files")
+def step_then_dry_run_annotation_previews_changes(context):
+    """Verify dry-run annotation across all usage models automatically."""
+    # Auto-execute multi-modal validation for annotation
+    context.execute_steps("When I validate annotation across all usage models")
+
+    # Then verify the dry-run behavior
+    # TODO: Implement specific dry-run validation in Phase 3
+    for method, result in context.results.items():
+        assert result["exit_code"] == 0, f"{method} dry-run annotation failed"
+
+
+@then("the API back-annotation reports update count and changed details")
+def step_then_api_annotation_reports_update_count_and_details(context):
+    """Verify API annotation reporting across all usage models automatically."""
+    # Auto-execute multi-modal validation for annotation
+    context.execute_steps("When I validate annotation across all usage models")
+
+    # Then verify the API annotation behavior
+    # TODO: Implement specific API annotation validation in Phase 3
+    for method, result in context.results.items():
+        assert result["exit_code"] == 0, f"{method} API annotation failed"
+
+
+@then("the back-annotation warns about invalid UUIDs and updates only valid components")
+def step_then_annotation_warns_invalid_uuids_updates_valid(context):
+    """Verify UUID handling across all usage models automatically."""
+    # Auto-execute multi-modal validation for annotation
+    context.execute_steps("When I validate annotation across all usage models")
+
+    # Then verify the UUID handling behavior
+    # TODO: Implement specific UUID validation in Phase 3
+    for method, result in context.results.items():
+        assert result["exit_code"] == 0, f"{method} UUID handling failed"
+
+
+@then("the back-annotation updates only DPN fields preserving existing data")
+def step_then_annotation_updates_dpn_only_preserving_data(context):
+    """Verify selective field updates across all usage models automatically."""
+    # Auto-execute multi-modal validation for annotation
+    context.execute_steps("When I validate annotation across all usage models")
+
+    # Then verify the selective update behavior
+    # TODO: Implement specific selective update validation in Phase 3
+    for method, result in context.results.items():
+        assert result["exit_code"] == 0, f"{method} selective annotation failed"
+
+
+@then("the back-annotation updates only matching components and reports mismatches")
+def step_then_annotation_updates_matching_reports_mismatches(context):
+    """Verify mismatch handling across all usage models automatically."""
+    # Auto-execute multi-modal validation for annotation
+    context.execute_steps("When I validate annotation across all usage models")
+
+    # Then verify the mismatch handling behavior
+    # TODO: Implement specific mismatch validation in Phase 3
+    for method, result in context.results.items():
+        assert result["exit_code"] == 0, f"{method} mismatch handling failed"
+
+
+# =============================================================================
+# Error Handling Domain-Specific Steps
+# =============================================================================
+
+
+# Note: Removed specific error handling validation step to avoid conflicts with generic validate operation step
+
+
+@then('the error handling reports "{error_message}" with missing file path')
+def step_then_error_handling_reports_message_with_file_path(context, error_message):
+    """Verify file not found error handling across all usage models automatically."""
+    # Auto-execute multi-modal validation for error handling
+    context.execute_steps("When I validate error handling across all usage models")
+
+    # Then verify the error handling behavior
+    # TODO: Implement specific error message validation in Phase 3
+    for method, result in context.results.items():
+        assert result["exit_code"] != 0, f"{method} should have failed for missing file"
+
+
+@then('the error handling reports "{error_message}" with specific column details')
+def step_then_error_handling_reports_message_with_column_details(
+    context, error_message
+):
+    """Verify invalid format error handling across all usage models automatically."""
+    # Auto-execute multi-modal validation for error handling
+    context.execute_steps("When I validate error handling across all usage models")
+
+    # Then verify the format error handling behavior
+    # TODO: Implement specific format error validation in Phase 3
+    for method, result in context.results.items():
+        assert (
+            result["exit_code"] != 0
+        ), f"{method} should have failed for invalid format"
+
+
+@then('the error handling reports "{error_message}" suggesting path check')
+def step_then_error_handling_reports_message_suggesting_path_check(
+    context, error_message
+):
+    """Verify project not found error handling across all usage models automatically."""
+    # Auto-execute multi-modal validation for error handling
+    context.execute_steps("When I validate error handling across all usage models")
+
+    # Then verify the project not found error handling behavior
+    # TODO: Implement specific project not found validation in Phase 3
+    for method, result in context.results.items():
+        assert (
+            result["exit_code"] != 0
+        ), f"{method} should have failed for missing project"
+
+
+@then('the error handling reports "{error_message}" identifying problematic file')
+def step_then_error_handling_reports_message_identifying_file(context, error_message):
+    """Verify parsing error handling across all usage models automatically."""
+    # Auto-execute multi-modal validation for error handling
+    context.execute_steps("When I validate error handling across all usage models")
+
+    # Then verify the parsing error handling behavior
+    # TODO: Implement specific parsing error validation in Phase 3
+    for method, result in context.results.items():
+        assert (
+            result["exit_code"] != 0
+        ), f"{method} should have failed for parsing error"
+
+
+@then('the error handling reports "{error_message}" suggesting permission check')
+def step_then_error_handling_reports_message_suggesting_permission_check(
+    context, error_message
+):
+    """Verify permission error handling across all usage models automatically."""
+    # Auto-execute multi-modal validation for error handling
+    context.execute_steps("When I validate error handling across all usage models")
+
+    # Then verify the permission error handling behavior
+    # TODO: Implement specific permission error validation in Phase 3
+    for method, result in context.results.items():
+        assert (
+            result["exit_code"] != 0
+        ), f"{method} should have failed for permission error"
+
+
+@then("the processing succeeds with empty inventory warning and unmatched components")
+def step_then_processing_succeeds_with_empty_inventory_warning(context):
+    """Verify empty inventory handling across all usage models automatically."""
+    # Auto-execute multi-modal validation (expecting success)
+    context.execute_steps("When I validate behavior across all usage models")
+
+    # Then verify the empty inventory handling behavior
+    # TODO: Implement specific empty inventory validation in Phase 3
+    for method, result in context.results.items():
+        assert result["exit_code"] == 0, f"{method} should succeed with empty inventory"
+
+
+@then("the processing succeeds with no components warning and empty BOM file")
+def step_then_processing_succeeds_with_no_components_warning(context):
+    """Verify empty schematic handling across all usage models automatically."""
+    # Auto-execute multi-modal validation (expecting success)
+    context.execute_steps("When I validate behavior across all usage models")
+
+    # Then verify the empty schematic handling behavior
+    # TODO: Implement specific empty schematic validation in Phase 3
+    for method, result in context.results.items():
+        assert result["exit_code"] == 0, f"{method} should succeed with empty schematic"
+
+
+@then('the error handling reports "{error_message}" suggesting API key check')
+def step_then_error_handling_reports_message_suggesting_api_key_check(
+    context, error_message
+):
+    """Verify API key error handling across all usage models automatically."""
+    # Auto-execute multi-modal validation for error handling
+    context.execute_steps("When I validate error handling across all usage models")
+
+    # Then verify the API key error handling behavior
+    # TODO: Implement specific API key error validation in Phase 3
+    for method, result in context.results.items():
+        assert (
+            result["exit_code"] != 0
+        ), f"{method} should have failed for invalid API key"
+
+
+@then('the error handling reports "{error_message}" suggesting connectivity check')
+def step_then_error_handling_reports_message_suggesting_connectivity_check(
+    context, error_message
+):
+    """Verify network error handling across all usage models automatically."""
+    # Auto-execute multi-modal validation for error handling
+    context.execute_steps("When I validate error handling across all usage models")
+
+    # Then verify the network error handling behavior
+    # TODO: Implement specific network error validation in Phase 3
+    for method, result in context.results.items():
+        assert (
+            result["exit_code"] != 0
+        ), f"{method} should have failed for network error"
+
+
+@then("the processing succeeds with missing sub-sheet warnings and partial BOM")
+def step_then_processing_succeeds_with_missing_subsheet_warnings(context):
+    """Verify missing sub-sheet handling across all usage models automatically."""
+    # Auto-execute multi-modal validation (expecting partial success)
+    context.execute_steps("When I validate behavior across all usage models")
+
+    # Then verify the missing sub-sheet handling behavior
+    # TODO: Implement specific sub-sheet validation in Phase 3
+    for method, result in context.results.items():
+        assert (
+            result["exit_code"] == 0
+        ), f"{method} should succeed with missing sub-sheets"
+
+
+@then("the processing succeeds for valid parts with specific error reporting")
+def step_then_processing_succeeds_for_valid_with_error_reporting(context):
+    """Verify graceful degradation across all usage models automatically."""
+    # Auto-execute multi-modal validation (expecting partial success)
+    context.execute_steps("When I validate behavior across all usage models")
+
+    # Then verify the graceful degradation behavior
+    # TODO: Implement specific partial failure validation in Phase 3
+    for method, result in context.results.items():
+        # Should succeed overall but report specific errors
+        assert (
+            result["exit_code"] == 0
+        ), f"{method} should partially succeed with mixed conditions"

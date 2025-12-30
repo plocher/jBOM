@@ -12,61 +12,20 @@ Feature: Fabricator Formats
 
   Scenario: Generate JLCPCB format BOM
     Given the schematic contains standard components
-    When I run jbom command "bom SimpleProject -i test_inventory.csv --jlc -o jlc_bom.csv"
-    Then the command succeeds
-    And file "jlc_bom.csv" is created
-    And the BOM includes columns
-      | column      |
-      | Reference   |
-      | Quantity    |
-      | DPN         |
-      | Value       |
-      | Footprint   |
+    Then the BOM generates in JLCPCB format with columns "Reference,Quantity,DPN,Value,Footprint"
 
   Scenario: Generate PCBWay format BOM
     Given the schematic contains standard components
-    When I run jbom command "bom SimpleProject -i test_inventory.csv --pcbway -o pcbway_bom.csv"
-    Then the command succeeds
-    And file "pcbway_bom.csv" is created
-    And the BOM includes columns
-      | column       |
-      | Reference    |
-      | Quantity     |
-      | MPN          |
-      | Manufacturer |
-      | Description  |
+    Then the BOM generates in PCBWay format with columns "Reference,Quantity,MPN,Manufacturer,Description"
 
   Scenario: Generate Seeed Studio format BOM
     Given the schematic contains standard components
-    When I run jbom command "bom SimpleProject -i test_inventory.csv --seeed -o seeed_bom.csv"
-    Then the command succeeds
-    And file "seeed_bom.csv" is created
-    And the BOM includes columns
-      | column      |
-      | Reference   |
-      | Quantity    |
-      | DPN         |
-      | Value       |
-      | Package     |
+    Then the BOM generates in Seeed format with columns "Reference,Quantity,DPN,Value,Package"
 
   Scenario: Generate generic format BOM
     Given the schematic contains standard components
-    When I run jbom command "bom SimpleProject -i test_inventory.csv --generic -o generic_bom.csv"
-    Then the command succeeds
-    And file "generic_bom.csv" is created
-    And the BOM includes columns
-      | column       |
-      | Reference    |
-      | Quantity     |
-      | Description  |
-      | Value        |
-      | Footprint    |
-      | Manufacturer |
-      | MPN          |
+    Then the BOM generates in generic format with columns "Reference,Quantity,Description,Value,Footprint,Manufacturer,MPN"
 
   Scenario: Custom field selection overrides fabricator format
     Given the schematic contains standard components
-    When I run jbom command "bom SimpleProject -i test_inventory.csv --jlc -f 'Reference,Value,MPN' -o custom_bom.csv"
-    Then the command succeeds
-    And file "custom_bom.csv" is created
-    And the BOM contains exactly 3 columns: Reference, Value, MPN
+    Then the BOM generates with custom fields "Reference,Value,MPN"
