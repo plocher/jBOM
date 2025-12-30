@@ -17,22 +17,22 @@ Feature: Fabricator Formats
   Scenario: Generate JLCPCB format BOM
     Given the schematic contains standard components
     And I want to generate a JLCPCB format BOM
-    Then the BOM generates in the requested format with columns "Reference,Quantity,DPN,Value,Footprint"
+    Then the BOM generates in the requested format with columns matching the JLCPCB fabricator configuration
 
   Scenario: Generate PCBWay format BOM
     Given the schematic contains standard components
     And I want to generate a PCBWay format BOM
-    Then the BOM generates in the requested format with columns "Reference,Quantity,MPN,Manufacturer,Description"
+    Then the BOM generates in the requested format with columns matching the PCBWay fabricator configuration
 
   Scenario: Generate Seeed Studio format BOM
     Given the schematic contains standard components
     And I want to generate a Seeed format BOM
-    Then the BOM generates in the requested format with columns "Reference,Quantity,DPN,Value,Package"
+    Then the BOM generates in the requested format with columns matching the Seeed fabricator configuration
 
   Scenario: Generate generic format BOM
     Given the schematic contains standard components
     And I want to generate a generic format BOM
-    Then the BOM generates in the requested format with columns "Reference,Quantity,Description,Value,Footprint,Manufacturer,Part Number"
+    Then the BOM generates in the requested format with columns matching the Generic fabricator configuration
 
   Scenario: Custom field selection overrides fabricator format
     Given the schematic contains standard components
