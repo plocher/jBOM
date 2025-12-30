@@ -17,7 +17,7 @@ Feature: Multi-Source Inventory
     Given the "BasicComponents" schematic
     And the "PriorityTest" inventory
     When I generate a JLC BOM
-    Then the BOM selects parts with priority 1 over parts with priority 2 and 3 for same fabricator
+    Then the BOM selects the part with the lowest priority value among all matching candidates for same fabricator
 
   Scenario: Source tracking in verbose mode
     Given the "BasicComponents" schematic
