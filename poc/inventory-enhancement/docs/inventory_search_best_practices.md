@@ -21,30 +21,9 @@ if hasattr(item, 'exclude_from_bom') and item.exclude_from_bom and str(item.excl
 - Future-proof: Works with any component type
 - Standards-compliant: Uses standard PCB industry terminology
 
-### 2. Expanded Searchable Component Categories
+### Component Categories
 
-**Current searchable categories:**
-- `RES` - Resistors
-- `CAP` - Capacitors
-- `IND` - Inductors
-- `LED` - LEDs
-- `DIO` - Diodes
-- `IC` - Integrated Circuits
-- `Q` - Transistors
-- `REG` - Regulators
-- `CON` - Connectors *(new)*
-- `MCU` - Microcontrollers *(new)*
-- `RLY` - Relays *(new)*
-- `SWI` - Switches *(new)*
-
-**Excluded categories:**
-- `SLK` - Silkscreen (rarely has distributors)
-- `BOARD` - Board outlines
-- `DOC` - Documentation symbols
-- `MECH` - Mechanical parts
-
-### 3. Search Term Mapping
-
+**Current searchable categories and Search Term Mapping:**
 Component categories map to distributor-friendly search terms:
 
 ```python
@@ -64,6 +43,14 @@ type_keywords = {
 }
 ```
 
+**Excluded categories:**
+There are some items that are not usually represented as inventory items:
+- `SLK` - Silkscreen- or copper-only printing and test pads
+- `BOARD` - Board outlines
+- `DOC` - Documentation symbols
+- `MECH` - Mechanical parts
+
+
 ## Integration with KiCad Workflow
 
 ### DNP Field Sources
@@ -80,12 +67,15 @@ The DNP information should ideally come from:
 
 ## Search Query Enhancement
 
-### 4. Description-First Search Strategy
+### Description-First Search Strategy
 
-**Problem**: Generic searches using internal part numbers return irrelevant results
-- Example: "EDG-104 switch" returned AC/DC converter ICs instead of switches
+**Problem**: Generic searches using only part numbers from the inventory file can return irrelevant results
+- Example: "EDG-104 switch" returned AC/DC converter ICs instead of quad DIP-8 SPST switches
 
-**Solution**: Use the Description field for specialized components
+**Solutions**:
+- Use the description field to provide targeted context
+- Good descriptions are often found on data sheets
+
 ```python
 # Use Description field for better search results
 if hasattr(item, 'description') and item.description:
@@ -101,30 +91,45 @@ if hasattr(item, 'description') and item.description:
 - "Round Button... Tactile Switch" → Returns tactile switches
 - "Tag Connect 6-pin programming cable" → Returns programming connectors
 
-### 5. Component-Specific Search Logic
+### Component-Specific Search Logic
 
 **Switches (SWI)**:
-- Use Type field or Description instead of cryptic Value field
-- Detect "DIP" and "Momentary" for specific switch types
+- Use Type field or Description instead of the ambiguous Value field
+- Detect "SPST/DPDT" patterns, "DIP", "ON-OFF-(ON)" and "Momentary" for specific switch types
 - "4 Position DIP Switch" is more specific than "DIP switch"
 
 **Connectors (CON)**:
-- Leverage detailed Description field for specialized connectors
-- Tag-Connect, programming headers need descriptive searches
+- Use Pitch and Pins fields to provide details: pitch:0.1", pins:2x3
+- Leverage detailed Description field to give more context
 
 **Traditional Components (RES, CAP, LED)**:
-- Continue using value-based approach ("1k resistor 0603")
-- Description often too verbose for simple components
+- Use good value-based descriptions ("1k resistor 0603")
+- Precision/tolerance can be derived or explicit ("1k0 resistor" or "1k resistor 5%")
+   - Resistors follow a "decade" pattern of values that are the same ecept for the magnitude.
+   - Resistors typically are available in 20%, 10%, 5%, 2% and 1% tolerances
+   - Specialty resistors are available in 0.5%, 0.1% and tighter.
+- The precision of a capacitor (its tolerance) is typically indicated by a letter code that follows the capacitance value marking. A smaller tolerance percentage means higher precision.
+   - The following letters are standardized codes used to indicate how much the actual capacitance value can vary from the marked value:
+      * B: ±0.1% or ±0.1 pF
+      * C: ±0.25% or ±0.25 pF
+      * D: ±0.5% or ±0.5 pF
+      * F: ±1% (High precision, common for film capacitors)
+      * G: ±2% (Precision grade)
+      * J: ±5% (Very common for film and ceramic capacitors)
+      * K: ±10% (Common for ceramic and tantalum capacitors)
+      * M: ±20% (Standard for general-purpose electrolytic capacitors)
+      * Z: +80% / -20% (Wide tolerance, usually for non-critical applications)
+- Unnecessarily verbose descriptions may be counterproductive
 
 ## Workflow Best Practices
 
-### 6. Inventory Validation and Enhancement Workflow
+### Inventory Validation and Enhancement Workflow
 
-When distributor search doesn't find the specified MPN:
+When distributor search doesn't find the specified manufacturer part number:
 
-1. **Assessment**: The inventory item may not be fabrication-ready
-2. **Action**: Add new line items from search results to inventory
-3. **Improvement**: Enhance descriptions in inventory file
+1. **Assessment**: The inventory item may not be fabrication-ready.  Important details may be missing, the item may be obsolete or otherwise unavailable.
+2. **Action**: Add new line items or update the existing ones with more information from search results
+3. **Improvement**: Enhance descriptions and detail fields in the inventory file
 4. **Validation**: Use Product Category and descriptions from results
 
 **Example Process**:

@@ -1,31 +1,5 @@
 # Multi-Distributor Inventory Schema Proposal
-
-## Current Problems with Single-Distributor Bias
-
-### Current Schema (LCSC-Biased)
-```
-IPN,Name,Keywords,link,Category,Generic,Description,SMD,Value,Type,Tolerance,V,A,W,Angle,Wavelength,mcd,Frequency,Stability,Load,Family,Form,Pins,Pitch,Package,LCSC,Manufacturer,MFGPN,assembly,purchaseable,Symbol,Footprint,Priority,ACTIVE,Reorder,Location,total_in_stock,"Order Quantity","QUOTED EA",QUOTED TOTAL,Datasheet
-```
-
-**Issues:**
-- `LCSC` column hardcodes single distributor part numbers
-- No distributor selection flexibility
-- `Location` field overloaded (combines distributor + assembly location)
-- Difficult to add Mouser, DigiKey, Newark, etc.
-
-## Proposed Enhanced Schema
-
-### New Column Structure
-```
-IPN,Name,Keywords,link,Category,Generic,Description,SMD,Value,Type,Tolerance,V,A,W,Angle,Wavelength,mcd,Frequency,Stability,Load,Family,Form,Pins,Pitch,Package,Distributor,DPN,Manufacturer,MFGPN,assembly,purchaseable,Symbol,Footprint,Priority,ACTIVE,Reorder,Location,total_in_stock,"Order Quantity","QUOTED EA",QUOTED TOTAL,Datasheet
-```
-
-**Key Changes:**
-- `LCSC` → `Distributor` (supplier name: "LCSC", "Mouser", "DigiKey", "Direct", etc.)
-- `Distributor` → `DPN` (Distributor Part Number: "C840579", "506-GDH04S04", etc.)
-- `Location` cleaned up (assembly location only: "JLC", "SPCoast", "GFL")
-
-### Example Transformations
+## Example Transformations
 
 **Before (LCSC-biased)**:
 ```csv
