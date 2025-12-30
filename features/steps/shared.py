@@ -7,7 +7,6 @@ test data setup.
 """
 
 import csv
-from pathlib import Path
 
 from behave import given, when, then
 
@@ -97,32 +96,13 @@ def step_given_mouser_api_key_set(context):
 
 
 # =============================================================================
-# CLI Execution Steps
+# Multi-Modal Operation Steps (Axiom #4 Compliant)
 # =============================================================================
 
 
-@when('I run jbom command "{command}"')
-def step_when_run_jbom_command(context, command):
-    """Execute a jBOM CLI command."""
-    # TODO: Implement CLI command execution in Phase 3
-    context.last_command = command
-    context.last_command_exit_code = 0  # Mock success for now
-
-
-@when("I generate {operation} using {interface}")
-def step_when_generate_operation_using_interface(context, operation, interface):
-    """Generate output using parameterized operation and interface."""
-    # TODO: Implement parameterized operation generation in Phase 3
-    context.last_command_exit_code = 0
-
-    # Set appropriate output file based on operation type
-    interface_prefix = interface.lower().replace(" ", "_")
-    if operation.upper() == "BOM":
-        context.bom_output_file = Path(f"{interface_prefix}_bom.csv")
-    elif operation.upper() == "POS":
-        context.pos_output_file = Path(f"{interface_prefix}_pos.csv")
-    elif operation.lower() == "inventory":
-        context.inventory_output_file = Path(f"{interface_prefix}_inventory.csv")
+# NOTE: CLI-specific steps removed per Axiom #4 (Multi-Modal Testing)
+# All operations must support CLI, API, and Plugin interfaces automatically
+# Domain-specific steps handle interface variations internally
 
 
 @when("I perform {operation} using {interface}")

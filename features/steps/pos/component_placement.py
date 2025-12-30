@@ -322,3 +322,17 @@ def step_then_pos_coordinates_show_components_relative_to_auxiliary_origin(conte
     context.execute_steps("When I validate POS behavior across all usage models")
     for method, result in context.results.items():
         assert result["exit_code"] == 0, f"{method} auxiliary origin coordinates failed"
+
+
+# =============================================================================
+# Additional POS Generation Steps
+# =============================================================================
+
+
+@when("I generate POS with --{fabricator} fabricator")
+def step_when_generate_pos_with_fabricator_flag(context, fabricator):
+    """Generate POS with specific fabricator flag across all usage models automatically."""
+    context.fabricator = fabricator
+    context.cli_command = f"jbom pos --{fabricator} --project {getattr(context, 'project_dir', 'test_project')}"
+    context.api_method = lambda: context.api_generate_pos(fabricator=fabricator)
+    context.plugin_method = lambda: context.plugin_generate_pos(fabricator=fabricator)

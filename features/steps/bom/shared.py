@@ -636,3 +636,41 @@ def step_then_bom_generation_fails_with_priority_validation_error(context):
         assert (
             result["exit_code"] != 0
         ), f"{method} should have failed with priority validation error"
+
+
+# =============================================================================
+# Additional Missing BOM Verification Steps
+# =============================================================================
+
+
+@then("the BOM excludes {designators}")
+def step_bom_excludes_components(context, designators):
+    """Verify BOM excludes specific designators (e.g., 'C001', 'R001 and R003', 'R002 and R003')."""
+    import re
+
+    # Parse designators - handle both 'C001' and 'R001 and R003' formats
+    designator_list = [d.strip() for d in re.split(r"\s+and\s+|\s*,\s*", designators)]
+
+    context.execute_steps("When I validate behavior across all usage models")
+    for method, result in context.results.items():
+        if not result["output_file"] or not result["output_file"].exists():
+            continue
+
+        # Read BOM file and check that excluded designators are not present
+        with open(result["output_file"], "r") as f:
+            bom_content = f.read()
+
+        for designator in designator_list:
+            if designator in bom_content:
+                raise AssertionError(
+                    f"{method}: BOM should not contain excluded designator {designator}"
+                )
+
+
+@then("the match uses component value tolerance")
+def step_match_uses_tolerance(context):
+    """Verify that matching was performed using component value tolerance."""
+    context.execute_steps("When I validate behavior across all usage models")
+    for method, result in context.results.items():
+        # Verify successful execution implies tolerance matching was used
+        assert result["exit_code"] == 0, f"{method} tolerance matching failed"

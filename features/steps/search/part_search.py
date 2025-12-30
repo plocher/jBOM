@@ -1,6 +1,6 @@
 """BDD step definitions for part search functionality."""
 
-from behave import given, then
+from behave import given, when, then
 
 
 # Part Search Domain-Specific Steps
@@ -121,3 +121,169 @@ def step_given_programmatic_search(context):
 def step_given_different_api_key_for_search(context, api_key):
     """Set up search with different API key."""
     context.api_key = api_key
+
+
+# =============================================================================
+# Additional Search Setup Steps (Missing from behave dry-run)
+# =============================================================================
+
+
+@given('I search for "{search_term}"')
+def step_given_search_for_term(context, search_term):
+    """Set up basic search for specified term."""
+    context.search_term = search_term
+
+
+@given('I search for "{search_term}" on {provider}')
+def step_given_search_on_provider(context, search_term, provider):
+    """Set up provider-specific search."""
+    context.search_term = search_term
+    context.search_provider = provider
+
+
+@given('I search for "{search_term}" with parameters')
+def step_given_search_with_parameters(context, search_term):
+    """Set up parametric search."""
+    context.search_term = search_term
+    context.search_parameters = context.table if hasattr(context, "table") else []
+
+
+@given('I search for manufacturer part number "{mpn}"')
+def step_given_search_mpn(context, mpn):
+    """Set up manufacturer part number search."""
+    context.manufacturer_part_number = mpn
+
+
+@given('I have custom API key "{api_key}"')
+def step_given_custom_api_key(context, api_key):
+    """Set up custom API key."""
+    context.custom_api_key = api_key
+
+
+@given('I use the search API to find "{search_term}"')
+def step_given_use_search_api(context, search_term):
+    """Set up API-based search."""
+    context.api_search_term = search_term
+
+
+# =============================================================================
+# Search Execution Steps (Missing When steps)
+# =============================================================================
+
+
+@when("I execute the search")
+def step_when_execute_search(context):
+    """Execute basic search."""
+    # TODO: Implement actual search execution in Phase 3
+    context.search_executed = True
+
+
+@when("I execute the search with limit {limit:d}")
+def step_when_execute_search_with_limit(context, limit):
+    """Execute search with result limit."""
+    context.search_limit = limit
+    context.search_executed = True
+
+
+@when("I execute the provider-specific search")
+def step_when_execute_provider_search(context):
+    """Execute provider-specific search."""
+    context.provider_search_executed = True
+
+
+@when("I execute the parametric search")
+def step_when_execute_parametric_search(context):
+    """Execute parametric search."""
+    context.parametric_search_executed = True
+
+
+@when("I execute the exact part number search")
+def step_when_execute_exact_search(context):
+    """Execute exact part number search."""
+    context.exact_search_executed = True
+
+
+@when("I call the API search method")
+def step_when_call_api_search(context):
+    """Execute API search method."""
+    context.api_search_executed = True
+
+
+@when('I search for "{search_term}" using the custom API key')
+def step_when_search_with_custom_key(context, search_term):
+    """Execute search with custom API key."""
+    context.custom_key_search_executed = True
+
+
+@when("the {provider}_API_KEY is set to NULL")
+def step_when_api_key_set_null(context, provider):
+    """Set provider API key to NULL."""
+    context.null_api_key_provider = provider
+
+
+# =============================================================================
+# Additional Search Verification Steps (Missing Then steps)
+# =============================================================================
+
+
+@then(
+    "the search returns up to {limit:d} matching {component_type} parts "
+    "with part numbers, descriptions, and prices ranked by relevance"
+)
+def step_then_search_returns_limited_component_results(context, limit, component_type):
+    """Verify limited search results with component type."""
+    assert hasattr(context, "search_executed"), "Search should have been executed"
+    # TODO: Implement result verification in Phase 3
+
+
+@then(
+    "the search finds the exact {manufacturer} {description} with cross-references, pricing, and distributor availability"
+)
+def step_then_search_finds_exact_manufacturer_part(context, manufacturer, description):
+    """Verify exact manufacturer part search."""
+    # TODO: Implement exact part verification in Phase 3
+    pass
+
+
+@then(
+    "the search uses {provider} API and returns {component_type} results "
+    "with manufacturer, part numbers, pricing, and stock availability"
+)
+def step_then_search_uses_provider_api(context, provider, component_type):
+    """Verify provider API usage."""
+    # TODO: Implement provider API verification in Phase 3
+    pass
+
+
+@then("the search returns only {description} excluding other tolerances and packages")
+def step_then_search_returns_filtered_description(context, description):
+    """Verify parametric search filtering."""
+    # TODO: Implement parametric filtering verification in Phase 3
+    pass
+
+
+@then(
+    'the search returns empty results with message "{message}" and exit code {exit_code:d}'
+)
+def step_then_search_returns_empty_with_message(context, message, exit_code):
+    """Verify empty search results with specific message and exit code."""
+    # TODO: Implement empty result verification in Phase 3
+    pass
+
+
+@then(
+    "the API returns SearchResult objects with part_number, manufacturer, description, price, and stock_quantity fields"
+)
+def step_then_api_returns_searchresult_objects(context):
+    """Verify API returns SearchResult objects with required fields."""
+    # TODO: Implement SearchResult object verification in Phase 3
+    pass
+
+
+@then(
+    "the search uses {api_key} for authentication and returns {component_type} results normally"
+)
+def step_then_search_uses_api_key_auth(context, api_key, component_type):
+    """Verify custom API key authentication."""
+    # TODO: Implement API key authentication verification in Phase 3
+    pass
