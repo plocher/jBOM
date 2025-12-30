@@ -262,39 +262,122 @@ bom_columns:
 
 **Anti-Pattern**: Creating synthetic field combinations that don't reflect real jBOM usage
 
-**Three Execution Contexts**:
-1. **CLI**: Command-line interface (`jbom bom --jlc`)
-2. **API**: Python API (`BackAnnotationAPI.update()`)
-3. **Embedded-KiCad**: Plugin/integration within KiCad environment
+## Best Practices for Gherkin and Step Definitions
 
-**Automatic Multi-Modal Pattern** (Domain-Specific Steps):
+### 14. Effective Gherkin Writing
+**Axiom**: Feature files MUST focus on behavior over implementation, using declarative language that describes business value.
+
+**Writing Effective Feature Files**:
+- **Focus on Behavior, Not Code**: Describe what happens ("user is logged in"), not how ("user clicks login button")
+- **Keep it Simple**: One feature per file, under 10 steps per scenario, focusing on single behavior
+- **Use Given-When-Then Structure**: Given (setup), When (action), Then (outcome) for clarity
+- **Be Declarative**: Use present tense and descriptive language ("links are shown")
+- **Be Consistent**: Use consistent terminology and perspective ("user" vs "administrator")
+- **Use And/But**: Extend steps without repeating keywords
+- **Use Background**: For common setup steps shared across scenarios in a feature
+- **Parameterize Data**: Move specific values into step definitions or data tables to keep scenarios clean
+
+**✅ Good Gherkin Examples**:
 ```gherkin
-Scenario: Back-annotation with JLC parts
+# Focuses on behavior, not implementation
+Scenario: Generate BOM with fabricator configuration
   Given the "BasicComponents" schematic
-  And the "JLC_Basic" inventory
-  When I run back-annotation with --jlc fabricator
-  Then component R1 has LCSC property set to "C25804"
+  When I generate a BOM with --jlc fabricator
+  Then the BOM contains components with JLC-specific fields
+
+# Declarative and consistent
+Scenario: Priority-based part selection
+  Given multiple inventory sources with overlapping parts
+  When I generate a BOM with --generic fabricator
+  Then the BOM selects parts with lowest priority values
+  And the BOM excludes parts with higher priority values
 ```
 
-**Step Definition Implementation**:
+**❌ Poor Gherkin Examples**:
+```gherkin
+# Too implementation-focused
+Scenario: Click BOM generation button
+  Given I open the application
+  When I click the "Generate BOM" button
+  Then a CSV file is created in /tmp/output
+
+# Too abstract
+Scenario: Handle various edge cases
+  Given some problematic data
+  When I process the inputs
+  Then appropriate results are produced
+```
+
+### 15. Step Definition Organization and Reusability
+**Axiom**: Step definitions MUST be organized logically, kept reusable, and separate domain logic from UI-specific interactions.
+
+**Organizing Step Definitions**:
+- **Group Logically**: Separate files for steps related to specific features (BOM, inventory, POS, search)
+- **Keep Steps Reusable**: Write generic steps instead of highly specific ones
+- **Separate Domain Logic**: Place business logic in step definitions, not UI-specific interactions
+- **Use Fixtures**: Leverage fixture-based approach for common test data and setups
+- **Multi-Modal Support**: Implement automatic CLI/API/Plugin testing in domain-specific steps
+
+**✅ Good Step Organization**:
+```
+features/steps/
+├── bom/
+│   ├── component_matching.py      # BOM matching logic
+│   ├── fabricator_formats.py      # Output format testing
+│   └── multi_source_inventory.py  # Multi-source logic
+├── inventory/
+│   ├── project_extraction.py      # Inventory extraction
+│   └── search_enhancement.py      # Search functionality
+├── pos/
+│   └── component_placement.py     # POS generation
+└── shared.py                       # Common steps, fixtures
+```
+
+**✅ Reusable Step Patterns**:
 ```python
-@then('component R1 has LCSC property set to "{value}"')
-def step_component_has_property(context, value):
+# Generic, reusable
+@given('the "{fixture_name}" schematic')
+def step_given_fixture_schematic(context, fixture_name):
+    context.fixture_name = fixture_name
+    # Setup logic for any fixture
+
+# Domain-focused, not implementation-focused
+@then('the BOM contains {component} with priority {priority:d}')
+def step_then_bom_contains_component_with_priority(context, component, priority):
     # Auto-execute multi-modal validation
     context.execute_steps("When I validate behavior across all usage models")
-    # Then verify the specific behavior across CLI, API, Embedded-KiCad
+    # Verify across CLI, API, Plugin automatically
 ```
 
-**Benefits**:
-- **Automatic**: No need for Scenario Outlines or manual repetition
-- **DRY**: Single scenario tests all three execution paths
-- **Transparent**: Step definitions handle multi-modal execution invisibly
-- **Complete Coverage**: Every assertion automatically validates all usage models
+**❌ Poor Step Patterns**:
+```python
+# Too specific, not reusable
+@given('I click the red login button on the main form')
+def step_click_red_login_button_main_form(context):
+    # Too UI-specific, not reusable
+
+# Implementation-focused, not domain-focused
+@when('I parse the CSV file and extract columns 1, 3, and 5')
+def step_parse_csv_extract_specific_columns(context):
+    # Too focused on implementation details
+```
+
+**Domain Logic Separation**:
+- **Step Definitions**: Contain business logic and domain concepts
+- **Implementation Layer**: Handle file I/O, parsing, API calls
+- **UI Layer**: Handle user interface interactions (if applicable)
+
+**Benefits of Good Organization**:
+- **Maintainable**: Easy to find and update related step definitions
+- **Reusable**: Generic steps work across multiple scenarios
+- **Testable**: Domain logic separated from implementation details
+- **Scalable**: New features can leverage existing step patterns
 
 ## Application Checklist
 
 When reviewing/creating BDD scenarios, verify:
 
+### Core BDD Axioms:
 - [ ] Fabricator dependencies in assertions (Axiom #1)
 - [ ] Concrete test vectors, no abstractions (Axiom #2)
 - [ ] Internal consistency between tables and assertions (Axiom #3)
@@ -309,6 +392,21 @@ When reviewing/creating BDD scenarios, verify:
 - [ ] Multi-modal coverage: NO explicit "via API", "via CLI", "through plugin" in scenarios (Axiom #12)
 - [ ] Generic configuration as primary testing foundation (Axiom #13)
 
+### Gherkin Best Practices:
+- [ ] Feature files focus on behavior over implementation (Axiom #14)
+- [ ] Scenarios are declarative, not procedural (Axiom #14)
+- [ ] Consistent terminology throughout feature files (Axiom #14)
+- [ ] One feature per file, under 10 steps per scenario (Axiom #14)
+- [ ] Background used for common setup steps (Axiom #14)
+- [ ] Data parameterized appropriately (Axiom #14)
+
+### Step Definition Quality:
+- [ ] Steps grouped logically by feature/domain (Axiom #15)
+- [ ] Steps are reusable, not overly specific (Axiom #15)
+- [ ] Domain logic separated from implementation details (Axiom #15)
+- [ ] Fixture-based approach leveraged appropriately (Axiom #15)
+- [ ] Multi-modal testing implemented automatically (Axiom #15)
+
 ## Files Requiring Review
 
 Apply these axioms to all remaining BDD feature files:
@@ -319,7 +417,7 @@ Apply these axioms to all remaining BDD feature files:
 
 ## Status
 
-**Foundation Established**: All 13 core BDD axioms defined and documented
+**Foundation Established**: All 15 BDD axioms defined and documented (13 core + 2 best practices)
 
 **BOM Features**: Fully compliant with all axioms
 - component_matching.feature, fabricator_formats.feature, multi_source_inventory.feature, priority_selection.feature
@@ -333,4 +431,16 @@ Apply these axioms to all remaining BDD feature files:
 - Added Package field to generic.fab.yaml
 - Established as stable testing foundation per Axiom #13
 
-**Next**: Apply axioms to remaining feature areas (pos/, search/, inventory/, error_handling/)
+**Step Definition Implementation Status**: Comprehensive audit completed (December 2024)
+- **Total undefined steps identified**: 202 across all feature files
+- **Search Enhancement**: 6 step definitions added, partial completion
+- **Remaining scope**: ~196 step definitions across BOM, POS, inventory, search, annotation, error handling
+- **Priority order**: BOM features → Inventory/Search → POS → Error handling
+- **Pattern established**: Domain-specific steps with automatic multi-modal testing
+
+**Best Practices Integration**: Gherkin and step definition guidelines codified
+- **Axiom #14**: Effective Gherkin writing standards (behavior over implementation)
+- **Axiom #15**: Step definition organization and reusability principles
+- **Quality gates**: 15-point application checklist for scenario review
+
+**Next**: Systematic step definition completion following established patterns and axiom compliance
