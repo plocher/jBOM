@@ -26,13 +26,13 @@ Feature: Back-Annotation
 
   Scenario: Back-annotation with PCBWay fabricator configuration
     Given the schematic has components with UUIDs
-      | Reference | UUID                                 | LCSC | PCBWay_PN |
-      | R1        | 12345678-1234-1234-1234-123456789012 | ""   | ""        |
+      | Reference | UUID                                 | LCSC | Distributor Part Number |
+      | R1        | 12345678-1234-1234-1234-123456789012 | ""   | ""                      |
     And a PCBWay inventory file with distributor data
       | UUID                                 | Distributor | DPN        | MPN            |
       | 12345678-1234-1234-1234-123456789012 | PCBWay      | PWR-10K603 | RC0603FR-0710K |
     When I run back-annotation with PCBWay fabricator configuration
-    Then component R1 has PCBWay_PN property set to "PWR-10K603" (from DPN field)
+    Then component R1 has "Distributor Part Number" property set to "PWR-10K603" (from DPN field)
     And component R1 has MPN property set to "RC0603FR-0710K"
     And component R1 still has empty LCSC property
 
