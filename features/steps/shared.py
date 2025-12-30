@@ -28,7 +28,12 @@ def step_given_kicad_project(context, project_name):
 def step_given_inventory_file_with_components(context):
     """Set up an inventory file with test components."""
     # TODO: Implement inventory file setup in Phase 3
+    # The inventory data table will be available in context.table if provided
     context.inventory_file = "test_inventory.csv"
+    if hasattr(context, "table") and context.table:
+        context.inventory_data = context.table
+    else:
+        context.inventory_data = None
 
 
 @given("the schematic contains standard components")
