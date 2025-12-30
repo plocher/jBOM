@@ -1,5 +1,5 @@
 """Annotation step definitions package."""
 
-# Import step definitions to ensure they are loaded by behave
-from . import shared  # noqa: F401 - Domain-specific shared steps per Axiom #15
+# Single-feature domain: Only back_annotation.py needed per YAGNI principle
+# When multiple annotation features exist, consider shared.py for common steps
 from . import back_annotation  # noqa: F401
