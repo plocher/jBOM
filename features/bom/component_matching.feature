@@ -14,19 +14,19 @@ Feature: Component Matching
 
   Scenario: Match resistor by value and package
     Given the schematic contains a 10K 0603 resistor
-    Then the BOM contains the 10K 0603 resistor matched to "R001"
+    Then the BOM contains a matched resistor with value "10K" and package "0603" from the inventory
 
   Scenario: Match capacitor by value and package
     Given the schematic contains a 100nF 0603 capacitor
-    Then the BOM contains the 100nF 0603 capacitor matched to "C001"
+    Then the BOM contains a matched capacitor with value "100nF" and package "0603" from the inventory
 
   Scenario: Match resistor by close value and package - tolerance ranges
     Given the schematic contains a 1K 0603 resistor
-    Then the BOM contains the 1K1 0603 resistor matched to "R002"
+    Then the BOM contains a matched resistor with value "1K1" and package "0603" using tolerance matching
 
   Scenario: Match resistor by exact value and package - tolerance normalizing
     Given the schematic contains a 1.1K 0603 resistor
-    Then the BOM contains the 1K1 0603 resistor matched to "R002"
+    Then the BOM contains a matched resistor with normalized value "1K1" and package "0603" from the inventory
 
   Scenario: No match for missing component - no fields match
     Given the schematic contains a 47K 1206 resistor

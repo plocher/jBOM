@@ -4,20 +4,29 @@ Feature: Error Handling and Edge Cases
   So that I can quickly identify and fix issues in my workflow
 
   Scenario: Missing inventory file
-    Given a KiCad project and nonexistent inventory file
-    Then the error handling reports "Inventory file not found" with missing file path
+    Given a KiCad project named "SimpleProject"
+    And I specify nonexistent inventory file "/path/to/missing.csv"
+    When I generate a BOM
+    Then the error message reports "Inventory file not found: /path/to/missing.csv" and exits with code 1
 
   Scenario: Invalid inventory file format
-    Given a KiCad project and inventory file with invalid format
-    Then the error handling reports "missing required columns" with specific column details
+    Given a KiCad project named "SimpleProject"
+    And an inventory file with invalid format
+      | InvalidColumn | AnotherBadColumn |
+      | data1         | data2            |
+    When I generate a BOM
+    Then the error message reports "Missing required columns: IPN, Category, Value, Package" and exits with code 1
 
   Scenario: Missing project files
-    Given nonexistent project files
-    Then the error handling reports "project not found" suggesting path check
+    Given I specify nonexistent project directory "/path/to/missing"
+    When I generate a BOM
+    Then the error message reports "Project directory not found: /path/to/missing" and suggests checking the path
 
   Scenario: Corrupted schematic file
-    Given a KiCad project with corrupted schematic syntax
-    Then the error handling reports "error parsing schematic" identifying problematic file
+    Given a KiCad project named "SimpleProject"
+    And the schematic file contains corrupted syntax "(invalid_s_expression_syntax"
+    When I generate a BOM
+    Then the error message reports "Error parsing schematic: SimpleProject.kicad_sch" with syntax error details
 
   Scenario: Permission denied for output file
     Given a KiCad project and forbidden output path

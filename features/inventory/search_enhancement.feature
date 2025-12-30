@@ -8,25 +8,48 @@ Feature: Search-Enhanced Inventory
     And the MOUSER_API_KEY environment variable is set
 
   Scenario: Basic search-enhanced inventory generation
-    Given the schematic contains standard components
-    Then the search-enhanced inventory includes part numbers, pricing, and stock quantities
+    Given the schematic contains components
+      | Reference | Value | Footprint     |
+      | R1        | 10K   | R_0603_1608   |
+      | C1        | 100nF | C_0603_1608   |
+    When I generate search-enhanced inventory
+    Then the inventory includes Mouser part numbers, pricing, and stock quantities for each component
 
   Scenario: Multiple search results per component
-    Given the schematic contains a 10K 0603 resistor
-    Then the inventory contains 3 candidate parts with priority ranking
+    Given the schematic contains components
+      | Reference | Value | Footprint   |
+      | R1        | 10K   | R_0603_1608 |
+    When I search with result limit of 3
+    Then the inventory contains 3 candidate parts for the 10K resistor with priority ranking based on price and availability
 
   Scenario: Search enhancement with caching
-    Given the schematic contains standard components
-    Then the search results are cached for faster subsequent runs
+    Given the schematic contains components
+      | Reference | Value | Footprint     |
+      | R1        | 10K   | R_0603_1608   |
+      | C1        | 100nF | C_0603_1608   |
+    When I generate search-enhanced inventory twice
+    Then the second run uses cached results and completes faster than the first run
 
   Scenario: Search enhancement via API
-    Given the schematic contains standard components
-    Then the API generates enhanced inventory with search statistics and tracking
+    Given the schematic contains components
+      | Reference | Value | Footprint     |
+      | R1        | 10K   | R_0603_1608   |
+      | C1        | 100nF | C_0603_1608   |
+    When I use the API to generate enhanced inventory
+    Then the API returns SearchEnhancedResult with search statistics showing queries made and success rate
 
   Scenario: Handle search failures gracefully
-    Given the schematic contains exotic components unlikely to be found
-    Then the inventory includes distributor data for found components and reports search statistics
+    Given the schematic contains components
+      | Reference | Value    | Footprint   |
+      | R1        | 10K      | R_0603_1608 |
+      | U1        | XYZ-9999 | QFN-64      |
+    When I generate search-enhanced inventory
+    Then the inventory includes Mouser data for R1 and reports "no results found" for exotic U1 component
 
   Scenario: Interactive search result selection
-    Given the schematic contains components with multiple good matches
-    Then the search presents interactive options for customized inventory selection
+    Given the schematic contains components
+      | Reference | Value | Footprint   |
+      | R1        | 10K   | R_0603_1608 |
+    And search returns multiple good matches for the resistor
+    When I enable interactive selection mode
+    Then the search presents multiple part options with prices for user selection per component

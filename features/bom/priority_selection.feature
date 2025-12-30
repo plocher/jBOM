@@ -14,12 +14,15 @@ Feature: Priority Selection
 
   Scenario: Select lowest priority when multiple parts match
     Given the schematic contains a 10K 0603 resistor
-    Then the BOM contains the 10K 0603 resistor matched to "R001" with priority 1
+    When I generate a BOM
+    Then the BOM contains the 10K 0603 resistor matched to inventory item with priority 1
 
   Scenario: Priority selection works with verbose output
     Given the schematic contains a 10K 0603 resistor
-    Then the verbose BOM shows "R001" selected and alternatives "R001A, R001B" available
+    When I generate a verbose BOM
+    Then the verbose BOM shows the priority 1 part selected with priority 2 and 3 alternatives listed
 
   Scenario: Priority selection includes alternative matches
     Given the schematic contains a 10K 0603 resistor
-    Then the BOM includes alternative matches with higher priorities
+    When I generate a BOM with alternatives
+    Then the BOM includes the selected priority 1 match and lists alternative matches with priorities 2 and 3
