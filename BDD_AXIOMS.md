@@ -221,6 +221,14 @@ And the "MultiSupplierInventory" inventory
 ### Axiom #19: The "Because" Test ⭐ EDITORIAL
 **Principle**: Any urge to write "THEN ... BECAUSE..." indicates incomplete GIVEN or vague WHEN statements.
 
+Gherkin's Then step should describe the outcome or result of the action in the When step, verifying a measurable change in the system's state. It should not include a justification, as the Then is purely about observation and validation.
+The best practices for writing effective Then steps emphasize clarity, focus, and conciseness:
+-  Focus on the Outcome: The primary role of the Then step is to confirm the expected outcome. It answers the question, "What changed as a result of the 'When' action?".
+- Avoid Implementation Details: The steps should be written in a business-readable language that describes what the system does, not how it does it.
+- Be Specific and Measurable: Instead of "Then the user should be happy," use "Then a confirmation email is sent to the user" or "Then the item is added to the shopping cart".
+- Use Declarative Language: The Then step declares the expected state of the system.
+Including a justification within the Then step can muddle its purpose. The justification for a specific behavior should be captured in the overarching Feature description or the Scenario title, which provide the business context for why a particular behavior is desired. The Given-When-Then structure is designed to separate context, action, and result for maximum readability and maintainability.
+
 **The Because Test**: When you feel compelled to justify an outcome, check:
 1. **GIVEN incomplete?** - Are all preconditions that make the outcome inevitable explicitly stated?
 2. **WHEN vague?** - Does the action clearly specify what behavior is being triggered?
