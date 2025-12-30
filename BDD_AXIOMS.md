@@ -2,39 +2,63 @@
 
 This document captures the established axioms and patterns that MUST be consistently applied across ALL BDD scenarios in the jBOM project.
 
-## Core Axioms
+## Axiom Organization
 
-### 1. Fabricator Configuration Dependencies
-**Pattern**: Configuration dependencies belong in the ASSERTION, not the scenario description.
+The 18 axioms are organized by priority:
+- **Foundational Axioms (1-6)**: Essential principles for all scenarios
+- **Quality Axioms (7-12)**: Ensuring robustness and reliability
+- **Advanced Patterns (13-18)**: Optimizing maintainability and reusability
 
-**✅ Correct Pattern** (from fabricator_formats.feature):
+---
+
+## Foundational Axioms (1-6)
+*Essential principles that must be applied to ALL scenarios*
+
+### Axiom #1: Behavior Over Implementation
+**Principle**: BDD scenarios must describe business behavior and outcomes, not technical implementation details.
+
+**✅ Behavior-Focused**:
 ```gherkin
-Then the BOM generates in the requested format with columns matching the [FABRICATOR] fabricator configuration
+When I generate a BOM with --jlc fabricator
+Then the BOM contains components with JLC-specific fields
 ```
 
-**✅ Apply to back_annotation**:
+**❌ Implementation-Focused**:
 ```gherkin
-Then component R1 has LCSC property set to "C25804" matching the JLC fabricator configuration
-Then component R1 has "Distributor Part Number" property set to "PWR-10K603" matching the PCBWay fabricator configuration
+When I click the "Generate BOM" button and parse CSV output
+Then a file is written to /tmp/output.csv
 ```
 
-**❌ Avoid**: Embedding configuration details in scenario descriptions or Given clauses.
+### Axiom #2: Concrete Test Vectors
+**Principle**: All scenarios MUST use specific, measurable test data instead of abstract placeholders.
 
-### 2. Concrete Test Vectors Over Abstract Concepts
-**Axiom**: All scenarios MUST use specific, measurable test data instead of abstract placeholders.
+**✅ Concrete**: Priority values: 0, 1, 5, 50, 100, 2147483647; Part numbers: C25804, RC0603FR-0710K
+**❌ Abstract**: "high priority parts", "component matches", "various values"
 
-**✅ Concrete**:
-- Priority values: 0, 1, 5, 50, 100, 2147483647, 4294967295
-- Specific part numbers: C25804, RC0603FR-0710K
-- Real field names: LCSC, MPN, "Distributor Part Number"
+### Axiom #3: Explicit Dependencies
+**Principle**: All external dependencies MUST be explicit in the scenario - no hidden assumptions.
 
-**❌ Abstract**:
-- "high priority parts"
-- "component matches"
-- "various values"
+**✅ Explicit**: "with JLC fabricator configuration", visible test data in tables
+**❌ Hidden**: Implicit configuration files, assumed field mappings
 
-### 3. Internal Consistency Rule
-**Axiom**: Table headers MUST exactly match assertion field names within each scenario.
+### Axiom #4: Multi-Modal Testing
+**Principle**: All core functionality MUST be tested across CLI, API, and Plugin execution contexts automatically.
+
+**✅ Automatic Multi-Modal**:
+```gherkin
+When I generate a BOM with --jlc fabricator
+# Tests CLI, API, and Plugin automatically in step definition
+```
+
+**❌ Explicit Context** (Violates DRY):
+```gherkin
+Scenario: Generate BOM via API
+Scenario: Generate BOM via CLI
+Scenario: Generate BOM via Plugin
+```
+
+### Axiom #5: Internal Consistency
+**Principle**: Table headers MUST exactly match assertion field names within each scenario.
 
 **✅ Consistent**:
 ```gherkin
@@ -44,517 +68,205 @@ Then component R1 has "Distributor Part Number" property set to "PWR-10K603" mat
 Then component has LCSC property set to "C25804"
 ```
 
-**❌ Inconsistent**:
-```gherkin
-| Current_LCSC | Current_MPN |
-| C25804       | RC0603FR-0  |
+### Axiom #6: Positive and Negative Assertions
+**Principle**: Scenarios testing selection logic MUST include both what IS selected AND what is EXCLUDED.
 
-Then component has LCSC property set to "C25804"
-```
-
-### 4. Edge Case Testing Pattern
-**Axiom**: Critical algorithms MUST include edge cases in test vectors.
-
-**Priority Edge Cases**:
-- Minimum valid: 0
-- Common values: 1, 5, 50, 100
-- System limits: 2147483647, 4294967295
-- Malformed: "high", "", "#DIV/0!"
-
-**UUID Edge Cases**:
-- Valid UUIDs
-- "invalid-uuid"
-- Empty strings ""
-
-### 5. Positive/Negative Test Assertion Pattern
-**Axiom**: Scenarios testing selection logic MUST include both positive (what is selected) AND negative (what is excluded) assertions.
-
-**✅ Complete Pattern**:
+**✅ Complete**:
 ```gherkin
 Then the BOM contains R1 matched to R001 with priority 0
 And the BOM excludes R002 and R003 due to higher priority values
 ```
 
-**❌ Incomplete**:
+---
+
+## Quality Axioms (7-12)
+*Ensuring robustness and reliability*
+
+### Axiom #7: Edge Case Coverage
+**Principle**: Critical algorithms MUST include boundary conditions and edge cases.
+
+**Examples**: Priority values (0, 1, 2147483647), Invalid data ("high", "", "#DIV/0!"), System limits
+
+### Axiom #8: Configuration Dependencies in Assertions
+**Principle**: Configuration dependencies belong in the ASSERTION, not the scenario description.
+
+**✅ Correct**:
 ```gherkin
-Then the BOM contains R1 matched to R001
+Then component R1 has LCSC property set to "C25804" matching the JLC fabricator configuration
 ```
 
-### 6. Fixture-Based Approach with Edge Case Visibility
-**Axiom**: Reusable test data SHOULD be organized in fixtures/ with clear subdirectories. HOWEVER, inline tables are acceptable when they provide critical visibility to specific edge cases being tested.
+### Axiom #9: Algorithmic Behavior Over Hardcoded Assumptions
+**Principle**: Scenarios MUST specify the algorithm, not hardcode specific outcomes.
+
+**✅ Algorithmic**: "the BOM selects parts with lowest priority value"
+**❌ Hardcoded**: "the BOM selects parts with priority 1 over priority 2"
+
+### Axiom #10: Fabricator Filtering Logic
+**Principle**: Multi-source inventory filtering is based on Distributor column VALUES, not filenames.
+
+### Axiom #11: Generic Configuration as Testing Foundation
+**Principle**: Use `--generic` fabricator configuration as the primary BDD testing foundation.
+
+### Axiom #12: File Format vs Data Logic Separation
+**Principle**: BDD scenarios test file format SUPPORT at workflow level, leaving parsing specifics to unit tests.
+
+---
+
+## Advanced Patterns (13-18)
+*Optimizing maintainability and reusability*
+
+### Axiom #13: Step Definition Organization
+**Principle**: Step definitions MUST be organized logically by domain, kept reusable, and separate business logic from implementation details.
 
 **Structure**:
 ```
-features/fixtures/
-├── schematics/
-├── inventories/
-└── pcbs/
+features/steps/
+├── bom/shared.py          # BOM domain steps
+├── inventory/shared.py    # Inventory domain steps
+├── pos/shared.py          # POS domain steps
+└── shared.py              # Cross-domain shared steps
 ```
 
-**Acceptable Inline Table Use Cases**:
-- **Edge case visibility**: When the scenario tests specific matching logic (e.g., 1.1K precision resistor matching 1K1 tolerance component)
-- **Algorithmic demonstration**: When the table data directly illustrates the algorithm being tested
-- **Priority edge cases**: When testing boundary conditions (0, max values, malformed data)
-- **Field comparison**: When contrasting fabricator-specific field mappings
+### Axiom #14: Step Parameterization
+**Principle**: Step definitions MUST use parameterization to eliminate hardcoded values.
 
-**Use Fixtures When**:
-- Standard component sets ("BasicComponents", "ComponentProperties")
-- Reusable inventory sets ("JLC_Basic", "LocalStock")
-- Common test scenarios across multiple features
-
-### 7. File Format vs Data Logic Separation
-**Axiom**: BDD scenarios test file format SUPPORT at workflow level, leaving parsing specifics to unit tests.
-
-**BDD Level**: "Excel inventory file", "Numbers inventory file"
-**Unit Test Level**: Specific Excel parsing errors, cell format validation
-
-### 8. Algorithmic Behavior Over Hardcoded Assumptions
-**Axiom**: Scenarios MUST specify the algorithm, not hardcode specific outcomes.
-
-**✅ Algorithmic**:
-```gherkin
-Then the BOM selects parts with lowest priority value regardless of actual numbers
+**✅ Parameterized**:
+```python
+@when('I generate a BOM with --{fabricator:w} fabricator')
+def step_generate_bom_with_fabricator(context, fabricator):
+    # Works with --generic, --jlc, --pcbway, etc.
 ```
 
 **❌ Hardcoded**:
-```gherkin
-Then the BOM selects parts with priority 1 over parts with priority 2 and 3
-```
-
-### 9. Fabricator Filtering Logic
-**Axiom**: Multi-source inventory filtering is based on Distributor column VALUES, not filenames.
-
-**Correct Logic**:
-- `--jlc` filters to parts where `Distributor == "JLC"`
-- All inventory files are processed
-- Non-matching distributor parts are filtered out (not ignored)
-
-### 10. Dependency Visibility Principle
-**Axiom**: All external dependencies MUST be explicit in the scenario.
-
-**Hidden Dependencies** (❌):
-- Implicit configuration files
-- Assumed field mappings
-- Unstated fabricator policies
-
-**Explicit Dependencies** (✅):
-- "with JLC fabricator configuration"
-- "matching the PCBWay fabricator configuration"
-- Visible test data in scenario tables
-
-### 11. Explicit Field Specification for BOM Testing
-**Axiom**: BOM scenarios MUST explicitly specify which fields are expected in the output to ensure assertions can be validated.
-
-**Preferred Pattern - Use Fabricator Configurations**:
-```gherkin
-When I generate a BOM with --generic fabricator
-Then the BOM contains R1 matched to R001 with priority 0
-```
-
-**Alternative Pattern - Explicit Fields** (use sparingly):
-```gherkin
-When I generate a BOM with fields "Value,Package,Priority"
-Then the BOM excludes R002 due to higher priority
-```
-
-**Rationale**:
-- **DRY Principle**: Leverage existing fabricator configurations instead of repeating field lists
-- **Generic Configuration**: Use `--generic` with standard fields (Reference, Quantity, Description, Value, Package, Footprint, Manufacturer, Part Number)
-- **Fabricator-Specific**: Use `--jlc`, `--pcbway`, etc. for fabricator-specific field sets
-- **Custom Fields**: Only specify explicit fields when testing edge cases requiring specific field combinations
-
-**Examples**:
-```gherkin
-# Standard testing - use fabricator configs
-When I generate a BOM with --generic fabricator
-
-# Priority testing - generic includes all needed fields
-When I generate a JLC BOM with --jlc fabricator
-
-# Edge case - only when specific field combination needed
-When I generate a BOM with fields "Reference,Priority" for priority-only validation
-```
-
-### 12. Multi-Modal Testing Coverage
-**Axiom**: All core functionality MUST be tested across three execution contexts: CLI, API, and Embedded-KiCad.
-
-**Three Execution Contexts**:
-1. **CLI**: Command-line interface (`jbom bom --jlc`)
-2. **API**: Python API (`BackAnnotationAPI.update()`)
-3. **Embedded-KiCad**: Plugin/integration within KiCad environment
-
-**Automatic Multi-Modal Pattern** (Domain-Specific Steps):
-```gherkin
-Scenario: Back-annotation with JLC parts
-  Given the "BasicComponents" schematic
-  And the "JLC_Basic" inventory
-  When I run back-annotation with --jlc fabricator
-  Then component R1 has LCSC property set to "C25804"
-```
-
-**Step Definition Implementation**:
 ```python
-@then('component R1 has LCSC property set to "{value}"')
-def step_component_has_property(context, value):
-    # Auto-execute multi-modal validation
-    context.execute_steps("When I validate behavior across all usage models")
-    # Then verify the specific behavior across CLI, API, Embedded-KiCad
+@when('I generate a BOM with JLC fabricator')
+def step_generate_bom_jlc_only(context):
+    # Only works for JLC
 ```
 
-**❌ ANTI-PATTERNS - Do NOT specify execution context in scenarios**:
+### Axiom #15: Fixture-Based Approach with Edge Case Visibility
+**Principle**: Use fixtures for common test data, BUT allow inline tables when they provide critical visibility to edge cases being tested.
+
+**Use Fixtures**: Standard component sets, reusable inventory
+**Use Inline Tables**: Edge case visibility, algorithmic demonstrations
+
+### Axiom #16: Explicit Field Specification
+**Principle**: BOM scenarios MUST explicitly specify which fields are expected in output.
+
+**Preferred**: Use fabricator configurations (`--generic`, `--jlc`)
+**Alternative**: Explicit fields only for edge cases
+
+### Axiom #17: Complete Precondition Specification ⭐ NEW
+**Principle**: All test preconditions must be explicitly stated in Given steps with no implicit assumptions about system state.
+
+**✅ Explicit Preconditions**:
 ```gherkin
-# WRONG - Violates Axiom #12
-Scenario: Generate BOM via API
-  When I use the API to generate BOM...
-
-Scenario: Search enhancement via CLI
-  When I use the CLI to search...
-
-Scenario: Back-annotation through plugin
-  When I use the KiCad plugin to annotate...
+Given the schematic contains a 1K 0603 resistor
+And the generic inventory contains a 1k1 0603 resistor
+And the inventory does not contain a 1k 0603 resistor
+When I generate a BOM with --generic fabricator
+Then the BOM contains a matched resistor with inventory value "1K1"
 ```
 
-**✅ CORRECT PATTERNS - Let domain-specific steps handle multi-modal testing**:
+**❌ Implicit Assumptions**:
 ```gherkin
-# CORRECT - Tests all execution contexts automatically
-Scenario: Generate BOM with fabricator configuration
-  When I generate BOM with --jlc fabricator...
+Given the schematic contains a 1K 0603 resistor
+# Missing: what's available in inventory?
+When I generate a BOM with --generic fabricator
+Then the BOM contains a matched resistor with inventory value "1K1"
+# How do we know 1K1 should be the match?
+```
 
-Scenario: Search enhancement with caching
-  When I generate search-enhanced inventory...
+**Key Requirements**:
+- Each scenario must be self-contained and reproducible
+- Negative preconditions must explicitly state what is missing
+- No assumptions about system state
+- Test data setup should establish complete context
 
-Scenario: Back-annotation with part updates
-  When I run back-annotation with --jlc fabricator...
+### Axiom #18: Dynamic Test Data Builder Pattern ⭐ NEW
+**Principle**: Balance explicit preconditions (Axiom #17) with DRY principle using Background + dynamic extensions.
+
+**Three-Tier Strategy**:
+
+1. **Background (Feature-wide Foundation)**:
+```gherkin
+Background: Base Test Data Foundation
+  Given a clean test environment
+  And a base inventory with standard components:
+    | IPN   | Category | Value | Package |
+    | R001  | RES      | 10K   | 0603    |
+    | R002  | RES      | 1K1   | 0603    |
+```
+
+2. **Dynamic Extensions (Scenario-specific)**:
+```gherkin
+Given the schematic is extended with component:
+  | Reference | Value | Package |
+  | R1        | 1K    | 0603    |
+And the inventory excludes exact match for "1K 0603 resistor"
+```
+
+3. **Named Fixtures (Complex scenarios)**:
+```gherkin
+Given the "HierarchicalDesign" schematic
+And the "MultiSupplierInventory" inventory
 ```
 
 **Benefits**:
-- **Automatic**: No need for Scenario Outlines or manual repetition
-- **DRY**: Single scenario tests all three execution paths
-- **Transparent**: Step definitions handle multi-modal execution invisibly
-- **Complete Coverage**: Every assertion automatically validates all usage models
+- ✅ Maintains explicit preconditions (Axiom #17)
+- ✅ Reduces duplication through base data + extensions
+- ✅ Enables complex scenarios with manageable syntax
+- ✅ Supports both static fixtures and dynamic mocking
 
-### 13. Generic Configuration as BDD Testing Foundation
-**Axiom**: BDD tests SHOULD depend on and use the `--generic` fabricator configuration as the primary testing foundation. The generic configuration CAN and SHOULD be updated as necessary to support axiom-adherent features and scenarios.
-
-**Principle**: The generic configuration serves as the **stable testing contract** between BDD scenarios and jBOM functionality.
-
-**Guidelines**:
-- **Primary Testing**: Use `--generic` for standard BDD testing unless fabricator-specific behavior is being tested
-- **Configuration Evolution**: Update `generic.fab.yaml` when BDD scenarios require new fields or capabilities
-- **Backward Compatibility**: Changes to generic config should be additive (new fields) rather than breaking (removing fields)
-- **Documentation**: Generic config changes should be documented and justified in commit messages
-
-**Rationale**:
-- **Single Source of Truth**: Eliminates field list duplication across scenarios
-- **Maintainable**: Changes to field requirements only need updates in one place
-- **Extensible**: New testing needs can be supported by enhancing the generic configuration
-- **Realistic**: Tests use actual jBOM configuration system rather than synthetic field lists
-
-**Examples**:
-```yaml
-# generic.fab.yaml evolution for BDD support
-bom_columns:
-  "Reference": "reference"     # Core field
-  "Value": "value"           # Component matching
-  "Package": "package"       # Added for BDD edge case testing
-  "Priority": "priority"     # Could be added for priority testing
-```
-
-**Anti-Pattern**: Creating synthetic field combinations that don't reflect real jBOM usage
-
-## Best Practices for Gherkin and Step Definitions
-
-### 14. Effective Gherkin Writing
-**Axiom**: Feature files MUST focus on behavior over implementation, using declarative language that describes business value.
-
-**Writing Effective Feature Files**:
-- **Focus on Behavior, Not Code**: Describe what happens ("user is logged in"), not how ("user clicks login button")
-- **Keep it Simple**: One feature per file, under 10 steps per scenario, focusing on single behavior
-- **Use Given-When-Then Structure**: Given (setup), When (action), Then (outcome) for clarity
-- **Be Declarative**: Use present tense and descriptive language ("links are shown")
-- **Be Consistent**: Use consistent terminology and perspective ("user" vs "administrator")
-- **Use And/But**: Extend steps without repeating keywords
-- **Use Background**: For common setup steps shared across scenarios in a feature
-- **Parameterize Data**: Move specific values into step definitions or data tables to keep scenarios clean
-
-**✅ Good Gherkin Examples**:
-```gherkin
-# Focuses on behavior, not implementation
-Scenario: Generate BOM with fabricator configuration
-  Given the "BasicComponents" schematic
-  When I generate a BOM with --jlc fabricator
-  Then the BOM contains components with JLC-specific fields
-
-# Declarative and consistent
-Scenario: Priority-based part selection
-  Given multiple inventory sources with overlapping parts
-  When I generate a BOM with --generic fabricator
-  Then the BOM selects parts with lowest priority values
-  And the BOM excludes parts with higher priority values
-```
-
-**❌ Poor Gherkin Examples**:
-```gherkin
-# Too implementation-focused
-Scenario: Click BOM generation button
-  Given I open the application
-  When I click the "Generate BOM" button
-  Then a CSV file is created in /tmp/output
-
-# Too abstract
-Scenario: Handle various edge cases
-  Given some problematic data
-  When I process the inputs
-  Then appropriate results are produced
-```
-
-### 15. Step Definition Organization and Reusability
-**Axiom**: Step definitions MUST be organized logically, kept reusable, and separate domain logic from UI-specific interactions.
-
-**Organizing Step Definitions**:
-- **Group Logically**: Separate files for steps related to specific features (BOM, inventory, POS, search)
-- **Keep Steps Reusable**: Write generic steps instead of highly specific ones
-- **Separate Domain Logic**: Place business logic in step definitions, not UI-specific interactions
-- **Use Fixtures**: Leverage fixture-based approach for common test data and setups
-- **Multi-Modal Support**: Implement automatic CLI/API/Plugin testing in domain-specific steps
-
-**✅ Good Step Organization**:
-```
-features/steps/
-├── bom/
-│   ├── component_matching.py      # BOM matching logic
-│   ├── fabricator_formats.py      # Output format testing
-│   └── multi_source_inventory.py  # Multi-source logic
-├── inventory/
-│   ├── project_extraction.py      # Inventory extraction
-│   └── search_enhancement.py      # Search functionality
-├── pos/
-│   └── component_placement.py     # POS generation
-└── shared.py                       # Common steps, fixtures
-```
-
-**✅ Reusable Step Patterns**:
-```python
-# Generic, reusable
-@given('the "{fixture_name}" schematic')
-def step_given_fixture_schematic(context, fixture_name):
-    context.fixture_name = fixture_name
-    # Setup logic for any fixture
-
-# Domain-focused, not implementation-focused
-@then('the BOM contains {component} with priority {priority:d}')
-def step_then_bom_contains_component_with_priority(context, component, priority):
-    # Auto-execute multi-modal validation
-    context.execute_steps("When I validate behavior across all usage models")
-    # Verify across CLI, API, Plugin automatically
-```
-
-**❌ Poor Step Patterns**:
-```python
-# Too specific, not reusable
-@given('I click the red login button on the main form')
-def step_click_red_login_button_main_form(context):
-    # Too UI-specific, not reusable
-
-# Implementation-focused, not domain-focused
-@when('I parse the CSV file and extract columns 1, 3, and 5')
-def step_parse_csv_extract_specific_columns(context):
-    # Too focused on implementation details
-```
-
-**Domain Logic Separation**:
-- **Step Definitions**: Contain business logic and domain concepts
-- **Implementation Layer**: Handle file I/O, parsing, API calls
-- **UI Layer**: Handle user interface interactions (if applicable)
-
-**Benefits of Good Organization**:
-- **Maintainable**: Easy to find and update related step definitions
-- **Reusable**: Generic steps work across multiple scenarios
-- **Testable**: Domain logic separated from implementation details
-- **Scalable**: New features can leverage existing step patterns
-
-### 16. Step Parameterization for Flexibility and Reusability
-**Axiom**: Step definitions MUST use parameterization to eliminate hardcoded values, making steps flexible and reusable across different scenarios.
-
-**Parameterization Principle**: Use placeholders for variable parts of steps to make them more flexible and reusable, reducing code duplication and maintenance overhead.
-
-**✅ Good Parameterization Examples**:
-```python
-# Parameterized component and value - highly reusable
-@then('component "{component}" has {field} property set to "{value}"')
-def step_component_has_property(context, component, field, value):
-    # Works for any component, any field, any value
-    # R1 LCSC C25804, U1 MPN LM324DR, C1 Voltage 50V, etc.
-
-# Parameterized fabricator configuration - flexible
-@when('I generate a BOM with --{fabricator} fabricator')
-def step_generate_bom_with_fabricator(context, fabricator):
-    # Works with --generic, --jlc, --pcbway, --custom, etc.
-
-# Parameterized priority values - handles edge cases
-@then('the BOM selects parts with priority {priority:d} over priority {higher_priority:d}')
-def step_bom_selects_priority_over_higher(context, priority, higher_priority):
-    # Handles any priority comparison: 0 over 1, 5 over 100, etc.
-
-# Parameterized field lists - DRY compliance
-@then('the BOM contains columns "{column_list}"')
-def step_bom_contains_columns(context, column_list):
-    columns = [col.strip() for col in column_list.split(',')]
-    # Works with any field combination
-```
-
-**❌ Poor Parameterization Examples (Hardcoded Values)**:
-```python
-# Hardcoded component - not reusable
-@then('component R1 has LCSC property set to C25804')
-def step_r1_has_lcsc_c25804(context):
-    # Only works for R1 and C25804 - requires duplicate steps for other components
-
-# Hardcoded fabricator - inflexible
-@when('I generate a BOM with JLC fabricator')
-def step_generate_bom_jlc_only(context):
-    # Only works for JLC - need separate steps for PCBWay, generic, etc.
-
-# Hardcoded priorities - limited edge case coverage
-@then('the BOM selects parts with priority 0 over priority 1')
-def step_bom_selects_0_over_1(context):
-    # Only tests one priority combination - misses edge cases
-```
-
-**Parameterization Patterns**:
-
-1. **String Parameters**: `"{component}"`, `"{value}"`, `"{fabricator}"`
-2. **Numeric Parameters**: `{priority:d}`, `{count:d}`, `{voltage:f}`
-3. **List Parameters**: `"{field_list}"` (split in implementation)
-4. **Boolean Logic**: `{include_exclude}` ("includes" vs "excludes")
-5. **Optional Parameters**: `{optional_param?}` (with default handling)
-
-**Data Table Integration**:
-```gherkin
-# Parameterized step with data table
-Scenario: Priority-based component selection with multiple edge cases
-  Given multiple inventory sources with priority components
-    | Component | Priority | Expected_Selection |
-    | R001      | 0        | Selected          |
-    | R002      | 1        | Excluded          |
-    | R003      | 100      | Excluded          |
-    | R004      | 2147483647 | Excluded        |
-  When I generate a BOM with --generic fabricator
-  Then the BOM applies priority selection logic correctly
-```
-
-**Implementation**:
-```python
-@then('the BOM applies priority selection logic correctly')
-def step_bom_applies_priority_logic(context):
-    # Process data table dynamically
-    for row in context.table:
-        component = row['Component']
-        expected = row['Expected_Selection']
-        if expected == 'Selected':
-            # Verify component is in BOM
-        else:
-            # Verify component is excluded
-```
-
-**Benefits of Proper Parameterization**:
-- **DRY Principle**: One parameterized step replaces dozens of hardcoded variants
-- **Edge Case Coverage**: Easy to test boundary conditions with different parameters
-- **Maintainability**: Changes to step logic only need updates in one place
-- **Flexibility**: New test cases can reuse existing steps with different parameters
-- **Readability**: Scenarios clearly show what varies between test cases
-
-**Common Parameterization Opportunities in jBOM**:
-- Component references (R1, U1, C1 → `{component}`)
-- Part numbers (C25804, RC0603FR-0710K → `{part_number}`)
-- Field names (LCSC, MPN, Value → `{field}`)
-- Fabricator configurations (--jlc, --generic → `--{fabricator}`)
-- Priority values (0, 1, 100 → `{priority:d}`)
-- File formats (CSV, Excel → `{format}`)
-- Quantities (1, 5, 100 → `{count:d}`)
-
-**Anti-Pattern: Over-Parameterization**
-Avoid parameterizing when it reduces readability without adding value:
-```python
-# Too much parameterization - hard to understand
-@given('the "{fixture}" {type} with {count:d} {items} having {property} values {values}')
-
-# Better - balanced parameterization
-@given('the "{fixture}" schematic with {count:d} components')
-@given('components have {property} values from test data table')
-```
+---
 
 ## Application Checklist
 
 When reviewing/creating BDD scenarios, verify:
 
-### Core BDD Axioms:
-- [ ] Fabricator dependencies in assertions (Axiom #1)
-- [ ] Concrete test vectors, no abstractions (Axiom #2)
-- [ ] Internal consistency between tables and assertions (Axiom #3)
-- [ ] Edge cases included for critical algorithms (Axiom #4)
-- [ ] Both positive AND negative test assertions (Axiom #5)
-- [ ] Fixtures OR edge case visibility inline tables (Axiom #6)
-- [ ] File format testing at workflow level (Axiom #7)
-- [ ] Algorithmic behavior specified (Axiom #8)
-- [ ] Distributor filtering logic correct (Axiom #9)
-- [ ] All dependencies visible (Axiom #10)
-- [ ] Explicit field specification for BOM output (Axiom #11)
-- [ ] Multi-modal coverage: NO explicit "via API", "via CLI", "through plugin" in scenarios (Axiom #12)
-- [ ] Generic configuration as primary testing foundation (Axiom #13)
+### Foundational (Required for ALL scenarios):
+- [ ] Describes behavior, not implementation (Axiom #1)
+- [ ] Uses concrete test vectors (Axiom #2)
+- [ ] All dependencies explicit (Axiom #3)
+- [ ] Multi-modal testing automatic (Axiom #4)
+- [ ] Table headers match assertions (Axiom #5)
+- [ ] Includes positive AND negative assertions (Axiom #6)
 
-### Gherkin Best Practices:
-- [ ] Feature files focus on behavior over implementation (Axiom #14)
-- [ ] Scenarios are declarative, not procedural (Axiom #14)
-- [ ] Consistent terminology throughout feature files (Axiom #14)
-- [ ] One feature per file, under 10 steps per scenario (Axiom #14)
-- [ ] Background used for common setup steps (Axiom #14)
-- [ ] Data parameterized appropriately (Axiom #14)
+### Quality (Essential for robustness):
+- [ ] Edge cases covered (Axiom #7)
+- [ ] Configuration dependencies in assertions (Axiom #8)
+- [ ] Algorithmic behavior specified (Axiom #9)
+- [ ] Correct fabricator filtering logic (Axiom #10)
+- [ ] Uses generic configuration foundation (Axiom #11)
+- [ ] File format testing at workflow level (Axiom #12)
 
-### Step Definition Quality:
-- [ ] Steps grouped logically by feature/domain (Axiom #15)
-- [ ] Steps are reusable, not overly specific (Axiom #15)
-- [ ] Domain logic separated from implementation details (Axiom #15)
-- [ ] Fixture-based approach leveraged appropriately (Axiom #15)
-- [ ] Multi-modal testing implemented automatically (Axiom #15)
-- [ ] Steps properly parameterized to eliminate hardcoded values (Axiom #16)
-- [ ] Parameterization balanced - not over-parameterized (Axiom #16)
+### Advanced (Optimizing maintainability):
+- [ ] Steps organized by domain (Axiom #13)
+- [ ] Steps properly parameterized (Axiom #14)
+- [ ] Fixtures used appropriately (Axiom #15)
+- [ ] Explicit field specification (Axiom #16)
+- [ ] Complete preconditions specified (Axiom #17)
+- [ ] Dynamic test data builder used (Axiom #18)
 
-## Files Requiring Review
+---
 
-Apply these axioms to all remaining BDD feature files:
-- `features/bom/*.feature` (remaining files)
-- `features/annotate/*.feature` (remaining scenarios in back_annotation.feature)
-- `features/pos/*.feature`
-- Any other feature files
+## Implementation Status
 
-## Status
+### Completed Domains:
+✅ **Back-annotation**: Complete (0 undefined steps)
+✅ **BOM**: Complete (0 undefined steps)
+✅ **Inventory**: Complete (0 undefined steps)
 
-**Foundation Established**: All 16 BDD axioms defined and documented (13 core + 3 best practices)
+### Remaining Work:
+🚧 **Error Handling**: ~27 step definitions needed
+🚧 **POS Component Placement**: ~40 step definitions needed
+🚧 **Search**: Integrated with inventory domain
 
-**BOM Features**: Fully compliant with all axioms
-- component_matching.feature, fabricator_formats.feature, multi_source_inventory.feature, priority_selection.feature
-- All leverage --generic or appropriate fabricator configurations
-- DRY violations eliminated through generic.fab.yaml enhancement
+### Architecture Established:
+- Automatic multi-modal testing across CLI, API, Plugin
+- Advanced parameterization with `{fabricator:w}` patterns
+- Domain-specific organization following Axiom #13
+- AmbiguousStep conflict resolution
+- Dynamic test data builder pattern (Axiom #18)
 
-**Back-Annotation Features**: Transformed to use fixture-based, domain-specific step approach
-- back_annotation.feature fully refactored with automatic multi-modal testing
-
-**Generic Configuration**: Enhanced to support BDD testing requirements
-- Added Package field to generic.fab.yaml
-- Established as stable testing foundation per Axiom #13
-
-**Step Definition Implementation Status**: Comprehensive audit completed (December 2024)
-- **Total undefined steps identified**: 202 across all feature files
-- **Search Enhancement**: 6 step definitions added, partial completion
-- **Remaining scope**: ~196 step definitions across BOM, POS, inventory, search, annotation, error handling
-- **Priority order**: BOM features → Inventory/Search → POS → Error handling
-- **Pattern established**: Domain-specific steps with automatic multi-modal testing
-
-**Best Practices Integration**: Gherkin and step definition guidelines codified
-- **Axiom #14**: Effective Gherkin writing standards (behavior over implementation)
-- **Axiom #15**: Step definition organization and reusability principles
-- **Axiom #16**: Step parameterization to eliminate hardcoded values and improve reusability
-- **Quality gates**: 17-point application checklist for scenario review
-
-**Next**: Systematic step definition completion following established patterns and axiom compliance
+**Definition of Done**: Solid foundation of TDD and BDD development patterns achieved for 3 of 6 major jBOM domains, with proven architecture for remaining domains.
