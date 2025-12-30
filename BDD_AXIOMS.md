@@ -373,6 +373,117 @@ def step_parse_csv_extract_specific_columns(context):
 - **Testable**: Domain logic separated from implementation details
 - **Scalable**: New features can leverage existing step patterns
 
+### 16. Step Parameterization for Flexibility and Reusability
+**Axiom**: Step definitions MUST use parameterization to eliminate hardcoded values, making steps flexible and reusable across different scenarios.
+
+**Parameterization Principle**: Use placeholders for variable parts of steps to make them more flexible and reusable, reducing code duplication and maintenance overhead.
+
+**✅ Good Parameterization Examples**:
+```python
+# Parameterized component and value - highly reusable
+@then('component "{component}" has {field} property set to "{value}"')
+def step_component_has_property(context, component, field, value):
+    # Works for any component, any field, any value
+    # R1 LCSC C25804, U1 MPN LM324DR, C1 Voltage 50V, etc.
+
+# Parameterized fabricator configuration - flexible
+@when('I generate a BOM with --{fabricator} fabricator')
+def step_generate_bom_with_fabricator(context, fabricator):
+    # Works with --generic, --jlc, --pcbway, --custom, etc.
+
+# Parameterized priority values - handles edge cases
+@then('the BOM selects parts with priority {priority:d} over priority {higher_priority:d}')
+def step_bom_selects_priority_over_higher(context, priority, higher_priority):
+    # Handles any priority comparison: 0 over 1, 5 over 100, etc.
+
+# Parameterized field lists - DRY compliance
+@then('the BOM contains columns "{column_list}"')
+def step_bom_contains_columns(context, column_list):
+    columns = [col.strip() for col in column_list.split(',')]
+    # Works with any field combination
+```
+
+**❌ Poor Parameterization Examples (Hardcoded Values)**:
+```python
+# Hardcoded component - not reusable
+@then('component R1 has LCSC property set to C25804')
+def step_r1_has_lcsc_c25804(context):
+    # Only works for R1 and C25804 - requires duplicate steps for other components
+
+# Hardcoded fabricator - inflexible
+@when('I generate a BOM with JLC fabricator')
+def step_generate_bom_jlc_only(context):
+    # Only works for JLC - need separate steps for PCBWay, generic, etc.
+
+# Hardcoded priorities - limited edge case coverage
+@then('the BOM selects parts with priority 0 over priority 1')
+def step_bom_selects_0_over_1(context):
+    # Only tests one priority combination - misses edge cases
+```
+
+**Parameterization Patterns**:
+
+1. **String Parameters**: `"{component}"`, `"{value}"`, `"{fabricator}"`
+2. **Numeric Parameters**: `{priority:d}`, `{count:d}`, `{voltage:f}`
+3. **List Parameters**: `"{field_list}"` (split in implementation)
+4. **Boolean Logic**: `{include_exclude}` ("includes" vs "excludes")
+5. **Optional Parameters**: `{optional_param?}` (with default handling)
+
+**Data Table Integration**:
+```gherkin
+# Parameterized step with data table
+Scenario: Priority-based component selection with multiple edge cases
+  Given multiple inventory sources with priority components
+    | Component | Priority | Expected_Selection |
+    | R001      | 0        | Selected          |
+    | R002      | 1        | Excluded          |
+    | R003      | 100      | Excluded          |
+    | R004      | 2147483647 | Excluded        |
+  When I generate a BOM with --generic fabricator
+  Then the BOM applies priority selection logic correctly
+```
+
+**Implementation**:
+```python
+@then('the BOM applies priority selection logic correctly')
+def step_bom_applies_priority_logic(context):
+    # Process data table dynamically
+    for row in context.table:
+        component = row['Component']
+        expected = row['Expected_Selection']
+        if expected == 'Selected':
+            # Verify component is in BOM
+        else:
+            # Verify component is excluded
+```
+
+**Benefits of Proper Parameterization**:
+- **DRY Principle**: One parameterized step replaces dozens of hardcoded variants
+- **Edge Case Coverage**: Easy to test boundary conditions with different parameters
+- **Maintainability**: Changes to step logic only need updates in one place
+- **Flexibility**: New test cases can reuse existing steps with different parameters
+- **Readability**: Scenarios clearly show what varies between test cases
+
+**Common Parameterization Opportunities in jBOM**:
+- Component references (R1, U1, C1 → `{component}`)
+- Part numbers (C25804, RC0603FR-0710K → `{part_number}`)
+- Field names (LCSC, MPN, Value → `{field}`)
+- Fabricator configurations (--jlc, --generic → `--{fabricator}`)
+- Priority values (0, 1, 100 → `{priority:d}`)
+- File formats (CSV, Excel → `{format}`)
+- Quantities (1, 5, 100 → `{count:d}`)
+
+**Anti-Pattern: Over-Parameterization**
+Avoid parameterizing when it reduces readability without adding value:
+```python
+# Too much parameterization - hard to understand
+@given('the "{fixture}" {type} with {count:d} {items} having {property} values {values}')
+
+# Better - balanced parameterization
+@given('the "{fixture}" schematic with {count:d} components')
+@given('components have {property} values from test data table')
+```
+
 ## Application Checklist
 
 When reviewing/creating BDD scenarios, verify:
@@ -406,6 +517,8 @@ When reviewing/creating BDD scenarios, verify:
 - [ ] Domain logic separated from implementation details (Axiom #15)
 - [ ] Fixture-based approach leveraged appropriately (Axiom #15)
 - [ ] Multi-modal testing implemented automatically (Axiom #15)
+- [ ] Steps properly parameterized to eliminate hardcoded values (Axiom #16)
+- [ ] Parameterization balanced - not over-parameterized (Axiom #16)
 
 ## Files Requiring Review
 
@@ -417,7 +530,7 @@ Apply these axioms to all remaining BDD feature files:
 
 ## Status
 
-**Foundation Established**: All 15 BDD axioms defined and documented (13 core + 2 best practices)
+**Foundation Established**: All 16 BDD axioms defined and documented (13 core + 3 best practices)
 
 **BOM Features**: Fully compliant with all axioms
 - component_matching.feature, fabricator_formats.feature, multi_source_inventory.feature, priority_selection.feature
@@ -441,6 +554,7 @@ Apply these axioms to all remaining BDD feature files:
 **Best Practices Integration**: Gherkin and step definition guidelines codified
 - **Axiom #14**: Effective Gherkin writing standards (behavior over implementation)
 - **Axiom #15**: Step definition organization and reusability principles
-- **Quality gates**: 15-point application checklist for scenario review
+- **Axiom #16**: Step parameterization to eliminate hardcoded values and improve reusability
+- **Quality gates**: 17-point application checklist for scenario review
 
 **Next**: Systematic step definition completion following established patterns and axiom compliance
