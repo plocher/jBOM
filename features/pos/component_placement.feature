@@ -18,10 +18,11 @@ Feature: Component Placement (POS/CPL) Generation
   # - JLCPCB defines rotation based on how the component sits in the tape/feeder
   # - This is intuitive but creates major challenges:
   #   * Passive components (R, C) typically consistent per footprint
-  #   * ICs have complex variations based on packaging format and supplier
-  #   * Same chip in different packages (SOIC vs DIP vs QFN) requires different rotations
-  #   * Multiple suppliers for same IC may use different tape orientations
+  #   * ICs have complex variations based on packaging format, not electrical specifications
+  #   * Same chip in different physical packages (SOIC vs MSOP vs DIP vs QFN) requires different rotations
+  #   * EIA-481 standard provides consistency within same package type
   #   * Through-hole vs surface-mount versions often have different orientations
+  #   * Package size variations (SOIC-14 vs MSOP-10) may require different tape orientations
   #
   # WHY THIS FEATURE IS "HARD":
   # - Cannot use simple mathematical rotation mapping (KiCad angle + offset)
@@ -80,11 +81,11 @@ Feature: Component Placement (POS/CPL) Generation
 
   Scenario: Handle JLCPCB per-part reel orientation complexity for IC packaging variations
     Given a PCB with ICs in different packaging formats requiring different reel orientations
-      | Reference | Footprint       | MPN             | DPN    | KiCad_Rotation | Expected_JLCPCB_Reel_Rotation | Notes                    |
-      | U1        | SOIC-24_7.5x15  | LM324DR         | C7950  | 0              | 0                             | Standard SOIC reel       |
-      | U2        | SOIC-24_7.5x15  | LM324ADR        | C7951  | 0              | 180                           | Alternate supplier reel  |
-      | U3        | DIP-32_15.24x39 | ATMega328P-PU   | C14877 | 90             | 90                            | Through-hole DIP         |
-      | U4        | QFN-32_5x5      | ATMega328PB-AU  | C14878 | 90             | 270                           | QFN surface mount        |
+      | Reference | Footprint       | MPN             | DPN    | KiCad_Rotation | Expected_JLCPCB_Reel_Rotation | Notes                         |
+      | U1        | SOIC-14_3.9x8.7 | LM324DR         | C7950  | 0              | 0                             | Standard SOIC-14 EIA-481     |
+      | U2        | MSOP-10_3x3     | LM324IPWR       | C7951  | 0              | 180                           | Different package format     |
+      | U3        | DIP-14_15.24x18 | LM324N          | C14877 | 90             | 90                            | Through-hole DIP-14          |
+      | U4        | QFN-16_3x3      | LM324QDRQ1      | C14878 | 90             | 270                           | Automotive QFN variant       |
     When I generate JLCPCB format POS with per-part reel corrections
     Then the POS contains part-specific rotation corrections based on MPN and DPN lookup
     And the POS shows different rotations for same chip in different packaging formats

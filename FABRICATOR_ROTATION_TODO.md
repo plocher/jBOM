@@ -33,8 +33,10 @@ Different PCB fabricators use different rotation standards for their pick-and-pl
 ### Key Insights from JLCKicadTools
 - Cannot use mathematical offset approach (KiCad angle + constant)
 - Requires extensive part-specific database maintenance
-- Must account for packaging variations within same part number
+- Must account for packaging format variations, not electrical specification differences
+- EIA-481 standard provides consistency within same package type (SOIC-14, MSOP-10, etc.)
 - Database needs regular updates as JLCPCB changes suppliers/packaging
+- Rotation differences are based on physical package geometry, not part grade/tolerance
 
 ## Implementation Requirements
 
@@ -72,8 +74,8 @@ rotation_correction:
 MPN,DPN,Footprint,Correction_Angle,Package_Type,Last_Updated,Source
 RC0603FR-0710K,C25804,R_0603_1608,0,Reel,2024-12-01,JLCPCB_Datasheet
 CC0603KRX7R9BB,C14663,C_0603_1608,0,Reel,2024-12-01,JLCPCB_Datasheet
-LM324DR,C7950,SOIC-24_7.5x15,0,Reel,2024-12-01,JLCPCB_Datasheet
-LM324ADR,C7951,SOIC-24_7.5x15,180,Reel,2024-12-01,JLCPCB_Datasheet
+LM324DR,C7950,SOIC-14_3.9x8.7,0,Reel,2024-12-01,JLCPCB_Datasheet
+LM324IPWR,C7951,MSOP-10_3x3,180,Reel,2024-12-01,JLCPCB_Datasheet
 ATMega328P-PU,C14877,DIP-32_15.24x39,90,Tray,2024-12-01,JLCPCB_Datasheet
 ATMega328PB-AU,C14878,QFN-32_5x5,270,Reel,2024-12-01,JLCPCB_Datasheet
 ```
