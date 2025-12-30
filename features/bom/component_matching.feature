@@ -7,10 +7,10 @@ Feature: Component Matching
     Given a KiCad project named "SimpleProject"
     And an inventory file with components
       | IPN   | Category | Value | Package | Distributor | DPN     | Priority |
-      | R001  | RES      | 10K   | 0603    | JLC         | C25804  | 1        |
-      | R002  | RES      | 1K1   | 0603    | JLC         | C11702  | 1        |
-      | C001  | CAP      | 100nF | 0603    | JLC         | C14663  | 1        |
-      | C002  | CAP      | 10uF  | 0805    | JLC         | C15850  | 1        |
+      | R001  | RES      | 10K   | 0603    | Generic     | G25804  | 1        |
+      | R002  | RES      | 1K1   | 0603    | Generic     | G11702  | 1        |
+      | C001  | CAP      | 100nF | 0603    | Generic     | G14663  | 1        |
+      | C002  | CAP      | 10uF  | 0805    | Generic     | G15850  | 1        |
 
   Scenario: Match resistor by value and package
     Given the schematic contains a 10K 0603 resistor
@@ -22,15 +22,17 @@ Feature: Component Matching
     When I generate a BOM with --generic fabricator
     Then the BOM contains a matched capacitor with value "100nF" and package "0603" from the inventory
 
-  Scenario: Match resistor by close value and package - tolerance ranges
+  Scenario: Match component by approximate value within tolerance range
     Given the schematic contains a 1K 0603 resistor
     When I generate a BOM with --generic fabricator
-    Then the BOM contains a matched resistor with value "1K1" and package "0603" using tolerance matching
+    Then the BOM contains a matched resistor with inventory value "1K1" and package "0603"
+    And the match is based on component value tolerance
 
-  Scenario: Match resistor by exact value and package - tolerance normalizing
+  Scenario: Match component by normalized value format
     Given the schematic contains a 1.1K 0603 resistor
     When I generate a BOM with --generic fabricator
-    Then the BOM contains a matched resistor with normalized value "1K1" and package "0603" from the inventory
+    Then the BOM contains a matched resistor with inventory value "1K1" and package "0603"
+    And the match uses value normalization
 
   Scenario: No match for missing component - no fields match
     Given the schematic contains a 47K 1206 resistor

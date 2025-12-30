@@ -7,44 +7,36 @@ Feature: Fabricator Formats
     Given a KiCad project named "SimpleProject"
     And an inventory file with components
       | IPN   | Category | Value | Package | Distributor | DPN        | MPN            | Manufacturer | Description      | Footprint    | Priority |
-      | R001  | RES      | 10K   | 0603    | JLC         | C25804     | RC0603FR-0710K | YAGEO        | 10K 0603 Resistor| R_0603_1608  | 1        |
-      | R002  | RES      | 10K   | 0603    | PCBWay      | PWR-10K603 | RC0603FR-0710K | YAGEO        | 10K 0603 Resistor| R_0603_1608  | 1        |
-      | R003  | RES      | 10K   | 0603    | Seeed       | SRR-10K603 | RC0603FR-0710K | YAGEO        | 10K 0603 Resistor| R_0603_1608  | 1        |
-      | C001  | CAP      | 100nF | 0603    | JLC         | C14663     | CC0603KRX7R9BB | YAGEO        | 100nF 0603 Cap  | C_0603_1608  | 1        |
-      | C002  | CAP      | 100nF | 0603    | PCBWay      | PWC-100N603| CC0603KRX7R9BB | YAGEO        | 100nF 0603 Cap  | C_0603_1608  | 1        |
-      | C003  | CAP      | 100nF | 0603    | Seeed       | SRC-100N603| CC0603KRX7R9BB | YAGEO        | 100nF 0603 Cap  | C_0603_1608  | 1        |
+      | R001  | RES      | 10K   | 0603    | Generic     | G25804     | RC0603FR-0710K | YAGEO        | 10K 0603 Resistor| R_0603_1608  | 1        |
+      | C001  | CAP      | 100nF | 0603    | Generic     | G14663     | CC0603KRX7R9BB | YAGEO        | 100nF 0603 Cap  | C_0603_1608  | 1        |
 
-  Scenario: Generate JLCPCB format BOM
+  Scenario: Generate BOM with default format
     Given the schematic contains standard components
-    When I generate a JLCPCB format BOM with fabricator-specific fields
-    Then the BOM generates in the requested format with columns matching the JLCPCB fabricator configuration
+    When I generate a BOM with --generic fabricator
+    Then the BOM contains required columns for component assembly
+    And the BOM includes component identifiers and quantities
 
-  Scenario: Generate PCBWay format BOM
+  Scenario: Test fabricator-specific column formats
     Given the schematic contains standard components
-    When I generate a PCBWay format BOM with fabricator-specific fields
-    Then the BOM generates in the requested format with columns matching the PCBWay fabricator configuration
+    When I generate a BOM with --jlcpcb fabricator
+    Then the BOM format matches the JLCPCB fabricator configuration
+    When I generate a BOM with --pcbway fabricator
+    Then the BOM format matches the PCBWay fabricator configuration
+    When I generate a BOM with --seeed fabricator
+    Then the BOM format matches the Seeed fabricator configuration
 
-  Scenario: Generate Seeed Studio format BOM
+  Scenario: Custom field selection overrides default format
     Given the schematic contains standard components
-    When I generate a Seeed format BOM with fabricator-specific fields
-    Then the BOM generates in the requested format with columns matching the Seeed fabricator configuration
+    When I generate a BOM with --generic fabricator and custom fields "Reference,Value,MPN"
+    Then the BOM contains only the specified custom fields
+    And the BOM ignores the default fabricator field configuration
 
-  Scenario: Generate generic format BOM
+  Scenario: Generate BOM with minimal fields for assembly
     Given the schematic contains standard components
-    When I generate a generic format BOM with fabricator-specific fields
-    Then the BOM generates in the requested format with columns matching the Generic fabricator configuration
+    When I generate a BOM with --generic fabricator and custom fields "Reference,MPN,Manufacturer"
+    Then the BOM contains only essential assembly information
 
-  Scenario: Custom field selection overrides fabricator format
+  Scenario: Generate BOM with detailed fields for procurement
     Given the schematic contains standard components
-    And I want custom BOM fields "Reference,Value,MPN"
-    Then the BOM generates with the specified custom fields
-
-  Scenario: Minimal custom fields for assembly
-    Given the schematic contains standard components
-    And I want custom BOM fields "Reference,MPN,Manufacturer"
-    Then the BOM generates with the specified custom fields
-
-  Scenario: Detailed custom fields for procurement
-    Given the schematic contains standard components
-    And I want custom BOM fields "Reference,Quantity,Value,Package,MPN,Manufacturer,DPN,Distributor"
-    Then the BOM generates with the specified custom fields
+    When I generate a BOM with --generic fabricator and custom fields "Reference,Quantity,Value,Package,MPN,Manufacturer,DPN,Distributor"
+    Then the BOM contains comprehensive procurement information
