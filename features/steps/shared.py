@@ -80,11 +80,9 @@ def step_given_excel_inventory_complete_distributor_data(context):
     pass
 
 
-@given("the MOUSER_API_KEY environment variable is available for distributor search")
-def step_given_mouser_api_key_available(context):
-    """Set up Mouser API key for distributor search."""
-    # TODO: Implement API key setup in Phase 3
-    pass
+# NOTE: MOUSER_API_KEY step removed - replaced by parameterized
+# @given("the {api_key} environment variable is available for distributor search")
+# in inventory/shared.py per Axiom #16 (Step Parameterization)
 
 
 @given("the MOUSER_API_KEY environment variable is set")
@@ -94,20 +92,12 @@ def step_given_mouser_api_key_set(context):
     pass
 
 
-@given("a schematic with mixed searchable and exotic components")
-def step_given_schematic_with_mixed_components(context):
-    """Set up a schematic with mixed component types using table data."""
-    # TODO: Implement mixed component schematic setup in Phase 3
-    if hasattr(context, "table") and context.table:
-        context.component_data = context.table
-    pass
+# NOTE: Mixed components step removed - replaced by parameterized version
+# in inventory/shared.py per Axiom #16 (Step Parameterization)
 
 
-@given("search returns multiple good matches for components")
-def step_given_search_returns_multiple_matches(context):
-    """Set up search context with multiple good matches."""
-    # TODO: Implement multi-match search setup in Phase 3
-    pass
+# NOTE: Search returns step removed - replaced by parameterized version
+# in inventory/shared.py per Axiom #16 (Step Parameterization)
 
 
 # =============================================================================
@@ -164,62 +154,22 @@ def step_when_perform_operation_using_interface(context, operation, interface):
 # =============================================================================
 
 
-@when("I generate search-enhanced inventory with --generic fabricator")
-def step_when_generate_search_enhanced_inventory_generic(context):
-    """Generate search-enhanced inventory using generic fabricator."""
-    # TODO: Implement search-enhanced inventory generation in Phase 3
-    context.last_command_exit_code = 0
-    context.inventory_output_file = Path("search_enhanced_inventory.csv")
+# NOTE: Search-enhanced inventory step removed - replaced by parameterized
+# @when("I generate search-enhanced inventory with --{fabricator:w} fabricator")
+# in inventory/shared.py per Axiom #16 (Step Parameterization)
 
 
-@when("I search with --{fabricator} fabricator and result limit of {limit:d}")
-def step_when_search_with_fabricator_and_limit(context, fabricator, limit):
-    """Search with parameterized fabricator and result limit."""
-    # TODO: Implement parameterized limited search in Phase 3
-    context.last_command_exit_code = 0
-    context.inventory_output_file = Path(
-        f"limited_search_{fabricator}_{limit}_inventory.csv"
-    )
+# NOTE: Search with fabricator/limit step removed - conflicts with
+# inventory/shared.py version using {fabricator:w} pattern per Axiom #16
 
 
-@when("I generate search-enhanced inventory with --generic fabricator the first time")
-def step_when_generate_search_enhanced_inventory_first_time(context):
-    """Generate search-enhanced inventory first time."""
-    # TODO: Implement first-time generation in Phase 3
-    context.last_command_exit_code = 0
-    context.inventory_output_file = Path("first_time_inventory.csv")
-
-
-@when("the {provider}_API_KEY is set to {value}")
-def step_when_provider_api_key_set_to_value(context, provider, value):
-    """Set parameterized provider API key to specified value for testing."""
-    # TODO: Implement parameterized API key setting in Phase 3
-    context.api_key_settings = context.api_key_settings or {}
-    context.api_key_settings[f"{provider}_API_KEY"] = value
-
-
-@when("I generate search-enhanced inventory with --generic fabricator a second time")
-def step_when_generate_search_enhanced_inventory_second_time(context):
-    """Generate search-enhanced inventory second time."""
-    # TODO: Implement second-time generation in Phase 3
-    context.last_command_exit_code = 0
-    context.inventory_output_file = Path("second_time_inventory.csv")
-
-
-@when("I generate enhanced inventory with --generic fabricator")
-def step_when_generate_enhanced_inventory_generic(context):
-    """Generate enhanced inventory using generic fabricator."""
-    # TODO: Implement enhanced inventory generation in Phase 3
-    context.last_command_exit_code = 0
-    context.inventory_output_file = Path("enhanced_inventory.csv")
-
-
-@when("I enable interactive selection mode with --generic fabricator")
-def step_when_enable_interactive_selection_mode_generic(context):
-    """Enable interactive selection mode with generic fabricator."""
-    # TODO: Implement interactive selection in Phase 3
-    context.last_command_exit_code = 0
-    context.inventory_output_file = Path("interactive_inventory.csv")
+# NOTE: All inventory-specific steps removed - replaced by parameterized versions
+# in inventory/shared.py per Axiom #16 (Step Parameterization):
+# - @when("I generate search-enhanced inventory with --{fabricator:w} fabricator the first time")
+# - @when("the {api_key} is set to NULL")
+# - @when("I generate search-enhanced inventory with --{fabricator:w} fabricator a second time")
+# - @when("I generate enhanced inventory with --{fabricator:w} fabricator")
+# - @when("I enable interactive selection mode with --{fabricator:w} fabricator")
 
 
 # =============================================================================
