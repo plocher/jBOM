@@ -80,8 +80,8 @@ And the BOM excludes R002 and R003 due to higher priority values
 Then the BOM contains R1 matched to R001
 ```
 
-### 6. Fixture-Based Approach
-**Axiom**: Reusable test data SHOULD be organized in fixtures/ with clear subdirectories.
+### 6. Fixture-Based Approach with Edge Case Visibility
+**Axiom**: Reusable test data SHOULD be organized in fixtures/ with clear subdirectories. HOWEVER, inline tables are acceptable when they provide critical visibility to specific edge cases being tested.
 
 **Structure**:
 ```
@@ -90,6 +90,17 @@ features/fixtures/
 ├── inventories/
 └── pcbs/
 ```
+
+**Acceptable Inline Table Use Cases**:
+- **Edge case visibility**: When the scenario tests specific matching logic (e.g., 1.1K precision resistor matching 1K1 tolerance component)
+- **Algorithmic demonstration**: When the table data directly illustrates the algorithm being tested
+- **Priority edge cases**: When testing boundary conditions (0, max values, malformed data)
+- **Field comparison**: When contrasting fabricator-specific field mappings
+
+**Use Fixtures When**:
+- Standard component sets ("BasicComponents", "ComponentProperties")
+- Reusable inventory sets ("JLC_Basic", "LocalStock")
+- Common test scenarios across multiple features
 
 ### 7. File Format vs Data Logic Separation
 **Axiom**: BDD scenarios test file format SUPPORT at workflow level, leaving parsing specifics to unit tests.
@@ -131,7 +142,33 @@ Then the BOM selects parts with priority 1 over parts with priority 2 and 3
 - "matching the PCBWay fabricator configuration"
 - Visible test data in scenario tables
 
-### 11. Multi-Modal Testing Coverage
+### 11. Explicit Field Specification for BOM Testing
+**Axiom**: BOM scenarios MUST explicitly specify which fields are expected in the output to ensure assertions can be validated.
+
+**Pattern**: Include field specification in WHEN clause:
+```gherkin
+When I generate a BOM with fields "Value,Package,DPN,Priority"
+Then the BOM contains R1 matched to R001 with priority 0
+```
+
+**Rationale**:
+- Assertions need specific fields to validate against
+- Different fabricators use different field sets
+- Explicit field specification makes scenario behavior predictable
+- Prevents assertions from failing due to missing expected columns
+
+**Examples**:
+```gherkin
+# Edge case testing with specific fields
+When I generate a BOM with fields "Reference,Value,Package,IPN,Priority"
+Then the BOM excludes R002 and R003 due to higher priority values
+
+# Fabricator-specific field sets
+When I generate a JLC BOM with fields "Reference,Value,LCSC,MPN"
+Then the BOM contains components with LCSC part numbers
+```
+
+### 12. Multi-Modal Testing Coverage
 **Axiom**: All core functionality MUST be tested across three execution contexts: CLI, API, and Embedded-KiCad.
 
 **Three Execution Contexts**:
@@ -172,12 +209,13 @@ When reviewing/creating BDD scenarios, verify:
 - [ ] Internal consistency between tables and assertions (Axiom #3)
 - [ ] Edge cases included for critical algorithms (Axiom #4)
 - [ ] Both positive AND negative test assertions (Axiom #5)
-- [ ] Reusable data organized in fixtures (Axiom #6)
+- [ ] Fixtures OR edge case visibility inline tables (Axiom #6)
 - [ ] File format testing at workflow level (Axiom #7)
 - [ ] Algorithmic behavior specified (Axiom #8)
 - [ ] Distributor filtering logic correct (Axiom #9)
 - [ ] All dependencies visible (Axiom #10)
-- [ ] Multi-modal coverage: CLI, API, Embedded-KiCad (Axiom #11)
+- [ ] Explicit field specification for BOM output (Axiom #11)
+- [ ] Multi-modal coverage: CLI, API, Embedded-KiCad (Axiom #12)
 
 ## Files Requiring Review
 
