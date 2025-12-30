@@ -12,12 +12,15 @@ Different PCB fabricators use different rotation standards for their pick-and-pl
 
 1. **KiCad Standard**: Follows IPC-7352 (Pin 1 in top-left, 0° reference)
 2. **JLCPCB "Reel Zero"**: Rotation based on tape/feeder orientation, not IPC standard
-3. **Per-Part Variations**: Same footprint may require different rotations based on:
-   - Manufacturer Part Number (MPN)
-   - Distributor Part Number (DPN)
-   - Packaging/tape orientation from datasheet
-   - Specific reel/tray configuration
-   - Multiple suppliers for same part
+3. **Per-Part Variations**: Rotation complexity varies by component type:
+   - **Passive Components (R, C)**: Generally consistent per footprint
+   - **ICs**: Complex variations based on:
+     * Packaging format (SOIC vs DIP vs QFN vs BGA)
+     * Supplier tape orientation differences
+     * Through-hole vs surface-mount versions
+     * Pin 1 indicator location variations
+   - **Connectors**: Highly variable based on keying and orientation
+   - **Specialty Components**: Case-by-case analysis required
 
 ## Existing Solutions Research
 
@@ -68,9 +71,11 @@ rotation_correction:
 ```csv
 MPN,DPN,Footprint,Correction_Angle,Package_Type,Last_Updated,Source
 RC0603FR-0710K,C25804,R_0603_1608,0,Reel,2024-12-01,JLCPCB_Datasheet
-RC0603JR-0710K,C25805,R_0603_1608,90,Reel,2024-12-01,JLCPCB_Datasheet
-CC0603KRX7R9BB,C14663,C_0603_1608,180,Reel,2024-12-01,JLCPCB_Datasheet
-CC0603MRX5R8BB,C14664,C_0603_1608,270,Reel,2024-12-01,JLCPCB_Datasheet
+CC0603KRX7R9BB,C14663,C_0603_1608,0,Reel,2024-12-01,JLCPCB_Datasheet
+LM324DR,C7950,SOIC-24_7.5x15,0,Reel,2024-12-01,JLCPCB_Datasheet
+LM324ADR,C7951,SOIC-24_7.5x15,180,Reel,2024-12-01,JLCPCB_Datasheet
+ATMega328P-PU,C14877,DIP-32_15.24x39,90,Tray,2024-12-01,JLCPCB_Datasheet
+ATMega328PB-AU,C14878,QFN-32_5x5,270,Reel,2024-12-01,JLCPCB_Datasheet
 ```
 
 #### Database Sources

@@ -17,10 +17,11 @@ Feature: Component Placement (POS/CPL) Generation
   # JLCPCB "REEL ZERO" PROBLEM:
   # - JLCPCB defines rotation based on how the component sits in the tape/feeder
   # - This is intuitive but creates major challenges:
-  #   * No consistent rotation can be automatically applied across parts
-  #   * Every part needs individual rotation correction per datasheet diagram
-  #   * Same package/footprint may have different orientations with different tape/reel options
-  #   * Multiple suppliers for same part may require different rotations
+  #   * Passive components (R, C) typically consistent per footprint
+  #   * ICs have complex variations based on packaging format and supplier
+  #   * Same chip in different packages (SOIC vs DIP vs QFN) requires different rotations
+  #   * Multiple suppliers for same IC may use different tape orientations
+  #   * Through-hole vs surface-mount versions often have different orientations
   #
   # WHY THIS FEATURE IS "HARD":
   # - Cannot use simple mathematical rotation mapping (KiCad angle + offset)
@@ -77,16 +78,17 @@ Feature: Component Placement (POS/CPL) Generation
     When I generate PCBWay format POS with fabricator-specific rotations
     Then the POS contains rotation corrections matching the PCBWay fabricator configuration
 
-  Scenario: Handle JLCPCB per-part reel orientation complexity
-    Given a PCB with same footprints but different reel orientations
-      | Reference | Footprint   | MPN            | DPN    | KiCad_Rotation | Expected_JLCPCB_Reel_Rotation |
-      | R1        | R_0603_1608 | RC0603FR-0710K | C25804 | 0              | 0                             |
-      | R2        | R_0603_1608 | RC0603JR-0710K | C25805 | 0              | 90                            |
-      | C1        | C_0603_1608 | CC0603KRX7R9BB | C14663 | 90             | 180                           |
-      | C2        | C_0603_1608 | CC0603MRX5R8BB | C14664 | 90             | 270                           |
+  Scenario: Handle JLCPCB per-part reel orientation complexity for IC packaging variations
+    Given a PCB with ICs in different packaging formats requiring different reel orientations
+      | Reference | Footprint       | MPN             | DPN    | KiCad_Rotation | Expected_JLCPCB_Reel_Rotation | Notes                    |
+      | U1        | SOIC-24_7.5x15  | LM324DR         | C7950  | 0              | 0                             | Standard SOIC reel       |
+      | U2        | SOIC-24_7.5x15  | LM324ADR        | C7951  | 0              | 180                           | Alternate supplier reel  |
+      | U3        | DIP-32_15.24x39 | ATMega328P-PU   | C14877 | 90             | 90                            | Through-hole DIP         |
+      | U4        | QFN-32_5x5      | ATMega328PB-AU  | C14878 | 90             | 270                           | QFN surface mount        |
     When I generate JLCPCB format POS with per-part reel corrections
     Then the POS contains part-specific rotation corrections based on MPN and DPN lookup
-    And the POS shows different rotations for same footprint with different reel orientations
+    And the POS shows different rotations for same chip in different packaging formats
+    And resistors and capacitors use consistent rotation corrections per footprint
 
   Scenario: Filter SMD components only
     Given the "MixedSMDTHT_PCB" PCB layout
