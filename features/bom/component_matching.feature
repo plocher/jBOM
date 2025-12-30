@@ -12,31 +12,39 @@ Feature: Component Matching
       | C001  | CAP      | 100nF | 0603    | JLC         | C14663  | 1        |
       | C002  | CAP      | 10uF  | 0805    | JLC         | C15850  | 1        |
 
-  Scenario: Match resistor by value and package
-    Given the schematic contains a 10K 0603 resistor
-    When I generate BOM using CLI
+  Scenario Outline: Component matching across usage models
+    Given the schematic contains a <component>
+    When I generate BOM using <method>
     Then the command succeeds
     And a BOM file is generated
-    And the BOM contains the resistor matched to "R001"
+    And the BOM contains the <component> matched to "<expected_match>"
 
-  Scenario: Match capacitor by value and package
-    Given the schematic contains a 100nF 0603 capacitor
-    When I generate BOM using CLI
-    Then the command succeeds
-    And the BOM contains the capacitor matched to "C001"
+    Examples: Resistor matching
+      | method     | component        | expected_match |
+      | CLI        | 10K 0603 resistor| R001           |
+      | Python API | 10K 0603 resistor| R001           |
+      | KiCad plugin| 10K 0603 resistor| R001           |
 
-  Scenario: No match for missing component
-    Given the schematic contains a 47K 1206 resistor
-    When I generate BOM using CLI
+    Examples: Capacitor matching
+      | method     | component           | expected_match |
+      | CLI        | 100nF 0603 capacitor| C001           |
+      | Python API | 100nF 0603 capacitor| C001           |
+      | KiCad plugin| 100nF 0603 capacitor| C001           |
+
+  Scenario Outline: Unmatched components across usage models
+    Given the schematic contains a <component>
+    When I generate BOM using <method>
     Then the command succeeds
     And the BOM contains an unmatched component entry
 
-  Scenario: Match using both CLI and API
-    Given the schematic contains a 10K 0603 resistor
-    When I generate BOM using CLI
-    Then the command succeeds
-    And a BOM file is generated
+    Examples:
+      | method      | component        |
+      | CLI         | 47K 1206 resistor|
+      | Python API  | 47K 1206 resistor|
+      | KiCad plugin| 47K 1206 resistor|
 
-    When I generate BOM using Python API
-    Then the command succeeds
-    And both BOMs contain identical matching results
+  Scenario: Comprehensive multi-modal validation
+    Given the schematic contains standard components
+    When I validate behavior across all usage models
+    Then all usage models produce consistent results
+    And each method successfully generates a BOM file

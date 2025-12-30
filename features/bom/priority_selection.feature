@@ -12,12 +12,18 @@ Feature: Priority Selection
       | R001B  | RES      | 10K   | 0603    | JLC         | C25806  | 3        |
       | C001   | CAP      | 100nF | 0603    | JLC         | C14663  | 1        |
 
-  Scenario: Select lowest priority when multiple parts match
+  Scenario Outline: Select lowest priority when multiple parts match
     Given the schematic contains a 10K 0603 resistor
-    When I generate BOM using CLI
+    When I generate BOM using <method>
     Then the command succeeds
     And a BOM file is generated
     And the BOM contains the resistor matched to "R001" with priority 1
+
+    Examples:
+      | method      |
+      | CLI         |
+      | Python API  |
+      | KiCad plugin|
 
   Scenario: Priority selection works with verbose output
     Given the schematic contains a 10K 0603 resistor

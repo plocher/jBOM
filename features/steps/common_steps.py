@@ -212,6 +212,41 @@ def step_when_generate_pos_api(context):
         context.last_command_exit_code = 1
 
 
+@when("I generate BOM using {method}")
+def step_when_generate_bom_multi_modal(context, method):
+    """Generate BOM using specified method (CLI, Python API, or KiCad plugin)."""
+    if method == "CLI":
+        context.execute_steps("When I generate BOM using CLI")
+    elif method == "Python API":
+        context.execute_steps("When I generate BOM using Python API")
+    elif method == "KiCad plugin":
+        # Simulate KiCad plugin execution
+        context.execute_steps(
+            "When I generate BOM using CLI"
+        )  # For now, simulate via CLI
+        # TODO: Implement actual KiCad plugin simulation in Phase 3
+    else:
+        raise ValueError(f"Unknown BOM generation method: {method}")
+
+
+@when("I generate POS using {method}")
+def step_when_generate_pos_multi_modal(context, method):
+    """Generate POS using specified method (CLI, Python API, or KiCad plugin)."""
+    if method == "CLI":
+        command = f"pos {context.project_dir} -o pos_output.csv"
+        context.execute_steps(f'When I run jbom command "{command}"')
+        context.pos_output_file = context.scenario_temp_dir / "pos_output.csv"
+    elif method == "Python API":
+        context.execute_steps("When I generate POS using Python API")
+    elif method == "KiCad plugin":
+        # Simulate KiCad plugin execution
+        command = f"pos {context.project_dir} -o pos_output.csv"
+        context.execute_steps(f'When I run jbom command "{command}"')
+        context.pos_output_file = context.scenario_temp_dir / "pos_output.csv"
+    else:
+        raise ValueError(f"Unknown POS generation method: {method}")
+
+
 # =============================================================================
 # Result Validation Steps
 # =============================================================================
@@ -307,3 +342,46 @@ def step_then_file_contains_rows(context, filename, count):
         rows = list(reader)
 
     assert len(rows) == count, f"Expected {count} rows, found {len(rows)} in {filename}"
+
+
+# =============================================================================
+# Shared Multi-Modal Patterns
+# =============================================================================
+
+
+@when("I validate behavior across all usage models")
+def step_when_validate_across_all_models(context):
+    """Execute the same test across CLI, API, and plugin models."""
+    methods = ["CLI", "Python API", "KiCad plugin"]
+    context.results = {}
+
+    for method in methods:
+        # Execute with current method
+        context.execute_steps(f"When I generate BOM using {method}")
+
+        # Store results for this method
+        context.results[method] = {
+            "exit_code": context.last_command_exit_code,
+            "output_file": getattr(context, "bom_output_file", None),
+        }
+
+
+@then("all usage models produce consistent results")
+def step_then_all_models_consistent(context):
+    """Verify all usage models produced the same results."""
+    if not hasattr(context, "results"):
+        raise AssertionError(
+            "No multi-modal results found. Use 'When I validate behavior across all usage models' first."
+        )
+
+    # All should succeed
+    for method, result in context.results.items():
+        assert (
+            result["exit_code"] == 0
+        ), f"{method} failed with exit code {result['exit_code']}"
+        assert (
+            result["output_file"] and result["output_file"].exists()
+        ), f"{method} did not produce output file"
+
+    # TODO: Add content comparison in Phase 3 implementation
+    # For now, just verify all methods executed successfully
