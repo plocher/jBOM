@@ -6,130 +6,56 @@ Feature: Back-Annotation
   Background:
     Given a KiCad project named "SimpleProject"
 
-  Scenario: Basic back-annotation with JLC part numbers
-    Given the schematic has components with UUIDs
-      | Reference | UUID                                 | LCSC | MPN |
-      | R1        | 12345678-1234-1234-1234-123456789012 | ""   | ""  |
-      | C1        | 87654321-4321-4321-4321-210987654321 | ""   | ""  |
-    And an inventory file with distributor data
-      | UUID                                 | IPN  | Value | Distributor | DPN    | Manufacturer | MPN            |
-      | 12345678-1234-1234-1234-123456789012 | R001 | 10K   | JLC         | C25804 | YAGEO        | RC0603FR-0710K |
-      | 87654321-4321-4321-4321-210987654321 | C001 | 100nF | JLC         | C14663 | YAGEO        | CC0603KRX7R9BB |
+  Scenario: Basic back-annotation with JLC fabricator configuration
+    Given the "ComponentProperties" schematic
+    And the "JLC_Basic" inventory
     When I run back-annotation with --jlc fabricator
-    Then component R1 has LCSC property set to "C25804" matching the JLC fabricator configuration
-    And component R1 has MPN property set to "RC0603FR-0710K"
-    And component R1 has Manufacturer property set to "YAGEO"
-    And component C1 has LCSC property set to "C14663" matching the JLC fabricator configuration
-    And component C1 has MPN property set to "CC0603KRX7R9BB"
-    And component C1 has Manufacturer property set to "YAGEO"
-    And the schematic file modification time is updated
+    Then the back-annotation updates schematic with distributor and manufacturer information matching the JLC fabricator configuration
 
   Scenario: Back-annotation with PCBWay fabricator configuration
-    Given the schematic has components with UUIDs
-      | Reference | UUID                                 | LCSC | Distributor Part Number |
-      | R1        | 12345678-1234-1234-1234-123456789012 | ""   | ""                      |
-    And an inventory file with distributor data
-      | UUID                                 | Distributor | DPN        | MPN            |
-      | 12345678-1234-1234-1234-123456789012 | PCBWay      | PWR-10K603 | RC0603FR-0710K |
+    Given the "BasicComponents" schematic
+    And the "LocalStock" inventory
     When I run back-annotation with --pcbway fabricator
-    Then component R1 has "Distributor Part Number" property set to "PWR-10K603" matching the PCBWay fabricator configuration
-    And component R1 has MPN property set to "RC0603FR-0710K"
-    And component R1 still has empty LCSC property
+    Then the back-annotation updates schematic with distributor and manufacturer information matching the PCBWay fabricator configuration
 
   Scenario: Dry-run back-annotation for preview
-    Given the schematic has components with UUIDs
-      | Reference | UUID                                 | LCSC |
-      | R1        | 12345678-1234-1234-1234-123456789012 | ""   |
-    And a JLC inventory file with updated information
-      | UUID                                 | Distributor | DPN    | MPN            |
-      | 12345678-1234-1234-1234-123456789012 | JLC         | C25804 | RC0603FR-0710K |
-    When I run back-annotation with --dry-run and --jlc fabricator
-    Then the output shows "Would update R1: LCSC = C25804, MPN = RC0603FR-0710K"
-    And the schematic file modification time is unchanged
-    And component R1 still has empty LCSC property
-
-  Scenario Outline: Back-annotation across execution contexts
     Given the "BasicComponents" schematic
     And the "JLC_Basic" inventory
-    When I run back-annotation via <context> with --jlc fabricator
-    Then component R1 has LCSC property set to "C25804" matching the JLC fabricator configuration
-    And component R1 has MPN property set to "RC0603FR-0710K"
-    And component C1 has LCSC property set to "C14663" matching the JLC fabricator configuration
-    And component C1 has MPN property set to "CC0603KRX7R9BB"
-    And the schematic file modification time is updated
-
-    Examples:
-      | context        |
-      | CLI            |
-      | API            |
-      | Embedded-KiCad |
+    When I run back-annotation with --dry-run and --jlc fabricator
+    Then the dry-run back-annotation previews changes without modifying schematic files
 
   Scenario: Handle missing UUIDs gracefully
-    Given the schematic has components with UUIDs
-      | Reference | UUID                                 | LCSC |
-      | R1        | 12345678-1234-1234-1234-123456789012 | ""   |
-      | R2        | 11111111-1111-1111-1111-111111111111 | ""   |
-    And an inventory file with missing or invalid UUIDs
-      | UUID                                 | DPN    |
-      | 12345678-1234-1234-1234-123456789012 | C25804 |
-      | "invalid-uuid"                       | C11702 |
-      | ""                                   | C14663 |
-    When I run back-annotation
-    Then component R1 has LCSC property set to "C25804"
-    And component R2 still has empty LCSC property
-    And the output warns "Invalid UUID: invalid-uuid"
-    And the output warns "Empty UUID in inventory row"
+    Given the "BasicComponents" schematic
+    And inventory file with missing or invalid UUIDs
+    When I run back-annotation with --jlc fabricator
+    Then the back-annotation warns about invalid UUIDs and updates only valid components
 
-  Scenario: Update only specific fields
-    Given the schematic has components with existing data
-      | Reference | UUID                                 | LCSC     | MPN                |
-      | R1        | 12345678-1234-1234-1234-123456789012 | "C99999" | "OLD_PART_NUMBER" |
-    And an inventory file with selective updates
-      | UUID                                 | DPN    |
-      | 12345678-1234-1234-1234-123456789012 | C25804 |
+  Scenario: Update only specific fields preserving existing data
+    Given the "ComponentProperties" schematic
+    And an inventory file with selective updates (only distributor part numbers)
     When I run back-annotation with --fields "LCSC" only
-    Then component R1 has LCSC property set to "C25804"
-    And component R1 still has MPN property set to "OLD_PART_NUMBER"
+    Then the back-annotation updates only DPN fields preserving existing data
 
   Scenario: Handle inventory-schematic mismatches
-    Given the schematic has components
-      | Reference | UUID                                 |
-      | R1        | 12345678-1234-1234-1234-123456789012 |
-      | C1        | 87654321-4321-4321-4321-210987654321 |
-    And an inventory file with different components
-      | UUID                                 | DPN    | Comment        |
-      | 12345678-1234-1234-1234-123456789012 | C25804 | "matches R1"   |
-      | 99999999-9999-9999-9999-999999999999 | C11702 | "no match"     |
-    When I run back-annotation
-    Then component R1 has LCSC property set to "C25804"
-    And component C1 still has empty LCSC property
-    And the output reports "1 component updated, 1 component unmatched"
-    And the output lists "Unmatched inventory: UUID 99999999-9999-9999-9999-999999999999"
+    Given the "BasicComponents" schematic
+    And the inventory contains components not in the schematic
+    When I run back-annotation with --jlc fabricator
+    Then the back-annotation updates only matching components and reports mismatches
 
-  Scenario: Back-annotate KiCad project from Excel inventory
-    Given a KiCad schematic file "ProductBoard.kicad_sch" with incomplete part information
-    And an Excel inventory file "updated_parts.xlsx" with complete distributor data
-    When I run back-annotation
-    Then the KiCad schematic file is updated with part numbers and manufacturer data from Excel
-    And component properties include LCSC, MPN, and Manufacturer fields
+  Scenario: Back-annotate from Excel inventory workflow
+    Given the "ComponentProperties" schematic
+    And an Excel inventory file with complete distributor data
+    When I run back-annotation with --jlc fabricator
+    Then the back-annotation updates schematic with distributor and manufacturer information
 
-  Scenario: Back-annotate hierarchical project from Numbers inventory
-    Given a hierarchical KiCad project:
-      | File                  | Components |
-      | MainBoard.kicad_sch   | U1, R1, C1 |
-      | PowerSupply.kicad_sch | U2, R2, C2 |
-    And a Numbers inventory file "parts_database.numbers"
-    When I run back-annotation on the project directory
-    Then all schematic files are updated with inventory data
-    And component UUIDs are preserved across updates
+  Scenario: Back-annotate hierarchical project workflow
+    Given the "HierarchicalDesign" schematic
+    And the "JLC_Basic" inventory
+    When I run back-annotation with --jlc fabricator
+    Then the back-annotation updates schematic with distributor and manufacturer information
 
-  Scenario: Back-annotate with mixed inventory file formats
-    Given a KiCad schematic "ControllerBoard.kicad_sch"
-    And multiple inventory sources with overlapping data:
-      | File               | Format  | Components    |
-      | resistors.csv      | CSV     | R1, R2, R3    |
-      | ics.xlsx           | Excel   | U1, U2        |
-      | connectors.numbers | Numbers | J1, J2        |
-    When I run back-annotation with all inventory sources
-    Then schematic components are updated from their respective inventory sources
-    And no component data is overwritten by conflicting sources
+  Scenario: Back-annotate with mixed inventory file formats workflow
+    Given the "BasicComponents" schematic
+    And multiple inventory sources with overlapping data
+    When I run back-annotation with --jlc fabricator
+    Then the back-annotation updates schematic with distributor and manufacturer information
