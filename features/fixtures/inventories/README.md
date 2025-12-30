@@ -60,16 +60,20 @@ This directory defines reusable inventory fixtures for BDD testing.
 **Use cases**: Error handling, empty inventory warnings
 
 ### PriorityTest
-**Purpose**: Multiple parts with same specs but different priorities
+**Purpose**: Multiple parts with same specs but different priorities including edge cases
 **Contents**:
 ```
 | IPN    | Category | Value | Package | Distributor | Priority |
-| R001   | RES      | 10K   | 0603    | JLC         | 1        |
-| R001A  | RES      | 10K   | 0603    | JLC         | 2        |
-| R001B  | RES      | 10K   | 0603    | JLC         | 3        |
+| R001   | RES      | 10K   | 0603    | JLC         | 0        |
+| R001A  | RES      | 10K   | 0603    | JLC         | 1        |
+| R001B  | RES      | 10K   | 0603    | JLC         | 5        |
+| R001C  | RES      | 10K   | 0603    | JLC         | 100      |
+| C001   | CAP      | 100nF | 0603    | JLC         | 2        |
+| C001A  | CAP      | 100nF | 0603    | JLC         | 0        |
+| C001B  | CAP      | 100nF | 0603    | JLC         | 50       |
 ```
 
-**Use cases**: Priority selection logic, verbose alternatives display
+**Use cases**: Priority selection logic with edge cases (0, large values), verbose alternatives display
 
 ## Usage in Scenarios:
 
