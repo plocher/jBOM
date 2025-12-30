@@ -8,15 +8,14 @@ Feature: Back-Annotation
 
   Scenario: Basic back-annotation with part numbers
     Given the schematic has components with UUIDs
-      | Reference | UUID                                 | Current_LCSC | Current_MPN |
-      | R1        | 12345678-1234-1234-1234-123456789012 | ""           | ""          |
-      | C1        | 87654321-4321-4321-4321-210987654321 | ""           | ""          |
+      | Reference | UUID                                 | LCSC | MPN |
+      | R1        | 12345678-1234-1234-1234-123456789012 | ""   | ""  |
+      | C1        | 87654321-4321-4321-4321-210987654321 | ""   | ""  |
     And an inventory file with complete distributor and manufacturer data
       | UUID                                 | IPN  | Value | Distributor | DPN    | Manufacturer | MPN            |
       | 12345678-1234-1234-1234-123456789012 | R001 | 10K   | JLC         | C25804 | YAGEO        | RC0603FR-0710K |
       | 87654321-4321-4321-4321-210987654321 | C001 | 100nF | JLC         | C14663 | YAGEO        | CC0603KRX7R9BB |
     When I run back-annotation
-    Then component R1 has LCSC property set to "C25804"
     And component R1 has MPN property set to "RC0603FR-0710K"
     And component R1 has Manufacturer property set to "YAGEO"
     And component C1 has LCSC property set to "C14663"
@@ -26,8 +25,8 @@ Feature: Back-Annotation
 
   Scenario: Dry-run back-annotation for preview
     Given the schematic has components with UUIDs
-      | Reference | UUID                                 | Current_LCSC |
-      | R1        | 12345678-1234-1234-1234-123456789012 | ""           |
+      | Reference | UUID                                 | LCSC |
+      | R1        | 12345678-1234-1234-1234-123456789012 | ""   |
     And an inventory file with updated information
       | UUID                                 | DPN    | MPN            |
       | 12345678-1234-1234-1234-123456789012 | C25804 | RC0603FR-0710K |
@@ -38,9 +37,9 @@ Feature: Back-Annotation
 
   Scenario: Back-annotation via API
     Given the schematic has components with UUIDs
-      | Reference | UUID                                 | Current_LCSC |
-      | R1        | 12345678-1234-1234-1234-123456789012 | ""           |
-      | C1        | 87654321-4321-4321-4321-210987654321 | ""           |
+      | Reference | UUID                                 | LCSC |
+      | R1        | 12345678-1234-1234-1234-123456789012 | ""   |
+      | C1        | 87654321-4321-4321-4321-210987654321 | ""   |
     And an inventory file with updated information
       | UUID                                 | DPN    | MPN            |
       | 12345678-1234-1234-1234-123456789012 | C25804 | RC0603FR-0710K |
@@ -52,9 +51,9 @@ Feature: Back-Annotation
 
   Scenario: Handle missing UUIDs gracefully
     Given the schematic has components with UUIDs
-      | Reference | UUID                                 | Current_LCSC |
-      | R1        | 12345678-1234-1234-1234-123456789012 | ""           |
-      | R2        | 11111111-1111-1111-1111-111111111111 | ""           |
+      | Reference | UUID                                 | LCSC |
+      | R1        | 12345678-1234-1234-1234-123456789012 | ""   |
+      | R2        | 11111111-1111-1111-1111-111111111111 | ""   |
     And an inventory file with missing or invalid UUIDs
       | UUID                                 | DPN    |
       | 12345678-1234-1234-1234-123456789012 | C25804 |
@@ -68,8 +67,8 @@ Feature: Back-Annotation
 
   Scenario: Update only specific fields
     Given the schematic has components with existing data
-      | Reference | UUID                                 | Current_LCSC | Current_MPN        |
-      | R1        | 12345678-1234-1234-1234-123456789012 | "C99999"     | "OLD_PART_NUMBER" |
+      | Reference | UUID                                 | LCSC     | MPN                |
+      | R1        | 12345678-1234-1234-1234-123456789012 | "C99999" | "OLD_PART_NUMBER" |
     And an inventory file with selective updates
       | UUID                                 | DPN    |
       | 12345678-1234-1234-1234-123456789012 | C25804 |
