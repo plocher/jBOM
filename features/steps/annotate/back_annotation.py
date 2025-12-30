@@ -3,15 +3,16 @@
 from behave import given, then
 
 
-# Back-Annotation Domain-Specific Steps
-@then(
-    "the back-annotation updates schematic with distributor and manufacturer information"
-)
-def step_then_back_annotation_updates_schematic_with_info(context):
-    """Verify schematic updates across all usage models automatically."""
-    context.execute_steps("When I validate annotation across all usage models")
-    for method, result in context.results.items():
-        assert result["exit_code"] == 0, f"{method} back-annotation failed"
+# NOTE: Hardcoded step definitions moved to shared.py with parameterization per Axiom #16
+# This eliminates code duplication and provides flexible, reusable step definitions:
+# - @then('the back-annotation updates schematic with {information_types}')
+# - @then('the updates match the {fabricator} fabricator configuration')
+# - @then('the back-annotation warns about invalid {issue_type}')
+# - @then('the back-annotation updates only valid components')
+# - @then('the back-annotation updates only {field_type} fields preserving existing data')
+# - @then('the back-annotation updates only matching components and reports mismatches')
+#
+# Remaining steps are specific to back-annotation and don't benefit from parameterization
 
 
 @then("the dry-run back-annotation previews changes without modifying schematic files")
@@ -28,30 +29,6 @@ def step_then_annotation_reports_update_count_and_details(context):
     context.execute_steps("When I validate annotation across all usage models")
     for method, result in context.results.items():
         assert result["exit_code"] == 0, f"{method} annotation reporting failed"
-
-
-@then("the back-annotation warns about invalid UUIDs and updates only valid components")
-def step_then_annotation_warns_invalid_uuids_updates_valid(context):
-    """Verify UUID handling across all usage models automatically."""
-    context.execute_steps("When I validate annotation across all usage models")
-    for method, result in context.results.items():
-        assert result["exit_code"] == 0, f"{method} UUID handling failed"
-
-
-@then("the back-annotation updates only DPN fields preserving existing data")
-def step_then_annotation_updates_dpn_only_preserving_data(context):
-    """Verify selective field updates across all usage models automatically."""
-    context.execute_steps("When I validate annotation across all usage models")
-    for method, result in context.results.items():
-        assert result["exit_code"] == 0, f"{method} selective annotation failed"
-
-
-@then("the back-annotation updates only matching components and reports mismatches")
-def step_then_annotation_updates_matching_reports_mismatches(context):
-    """Verify mismatch handling across all usage models automatically."""
-    context.execute_steps("When I validate annotation across all usage models")
-    for method, result in context.results.items():
-        assert result["exit_code"] == 0, f"{method} mismatch handling failed"
 
 
 # Test data setup
