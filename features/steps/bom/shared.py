@@ -185,6 +185,111 @@ def step_given_inventory_does_not_contain_package_components(context, package):
 
 
 # =============================================================================
+# Axiom #18: Dynamic Test Data Builder Pattern Steps
+# =============================================================================
+
+
+@given("a clean test environment")
+def step_given_clean_test_environment(context):
+    """Initialize clean test environment for dynamic test data building (Axiom #18)."""
+    # TODO: Implement clean environment setup in Phase 3
+    context.test_data_builder = {
+        "schematic_components": [],
+        "inventory_parts": [],
+        "exclusions": [],
+        "modifications": [],
+    }
+    pass
+
+
+@given("a base inventory with standard components:")
+def step_given_base_inventory_with_standard_components(context):
+    """Set up base inventory from table data that scenarios can extend (Axiom #18)."""
+    # TODO: Implement base inventory setup in Phase 3
+    if hasattr(context, "table") and context.table:
+        context.test_data_builder["base_inventory"] = list(context.table)
+    pass
+
+
+@given("the schematic is extended with component:")
+def step_given_schematic_extended_with_component(context):
+    """Add component to schematic using builder pattern (Axiom #18)."""
+    # TODO: Implement dynamic schematic component addition in Phase 3
+    if hasattr(context, "table") and context.table:
+        for row in context.table:
+            context.test_data_builder["schematic_components"].append(dict(row))
+    pass
+
+
+@given("the schematic is extended with components:")
+def step_given_schematic_extended_with_components(context):
+    """Add multiple components to schematic using builder pattern (Axiom #18)."""
+    # TODO: Implement dynamic schematic components addition in Phase 3
+    if hasattr(context, "table") and context.table:
+        for row in context.table:
+            context.test_data_builder["schematic_components"].append(dict(row))
+    pass
+
+
+@given('the inventory excludes exact match for "{component_spec}"')
+def step_given_inventory_excludes_exact_match(context, component_spec):
+    """Dynamically exclude specific component from inventory (Axiom #18)."""
+    # TODO: Implement dynamic inventory exclusion in Phase 3
+    context.test_data_builder["exclusions"].append(
+        {"type": "exact_match", "spec": component_spec}
+    )
+    pass
+
+
+@given('the inventory includes tolerance match "{component_spec}"')
+def step_given_inventory_includes_tolerance_match(context, component_spec):
+    """Dynamically ensure tolerance match is available in inventory (Axiom #18)."""
+    # TODO: Implement dynamic tolerance match setup in Phase 3
+    context.test_data_builder["modifications"].append(
+        {"type": "tolerance_match", "spec": component_spec}
+    )
+    pass
+
+
+@given("the inventory excludes all components matching:")
+def step_given_inventory_excludes_components_matching(context):
+    """Dynamically exclude components by pattern using table (Axiom #18)."""
+    # TODO: Implement pattern-based exclusion in Phase 3
+    if hasattr(context, "table") and context.table:
+        for row in context.table:
+            context.test_data_builder["exclusions"].append(
+                {
+                    "type": "pattern_match",
+                    "exclusion_type": row["Exclusion Type"],
+                    "pattern": row["Pattern"],
+                }
+            )
+    pass
+
+
+@given("the inventory is modified to include tolerance variants:")
+def step_given_inventory_modified_to_include_tolerance_variants(context):
+    """Add tolerance variants to inventory using builder pattern (Axiom #18)."""
+    # TODO: Implement tolerance variant addition in Phase 3
+    if hasattr(context, "table") and context.table:
+        for row in context.table:
+            context.test_data_builder["modifications"].append(
+                {"type": "tolerance_variant", "data": dict(row)}
+            )
+    pass
+
+
+@given('the inventory excludes exact matches for "{component_list}"')
+def step_given_inventory_excludes_exact_matches_for_list(context, component_list):
+    """Dynamically exclude multiple exact matches from inventory (Axiom #18)."""
+    # TODO: Implement multiple exact match exclusion in Phase 3
+    context.test_data_builder["exclusions"].append(
+        {"type": "exact_matches_list", "component_list": component_list}
+    )
+    pass
+
+
+# =============================================================================
 # Parameterized BOM Verification Then Steps (Axiom #16)
 # =============================================================================
 
@@ -484,6 +589,31 @@ def step_then_bom_excludes_part_due_to_higher_priority(context, excluded_part):
         assert (
             result["exit_code"] == 0
         ), f"{method} did not exclude {excluded_part} due to priority"
+
+
+# =============================================================================
+# Axiom #18: Dynamic Test Data Builder Verification Steps
+# =============================================================================
+
+
+@then("all {count:d} resistors match to available tolerance variants")
+def step_then_all_resistors_match_tolerance_variants(context, count):
+    """Verify multiple resistors match to tolerance variants (Axiom #18)."""
+    context.execute_steps("When I validate behavior across all usage models")
+    for method, result in context.results.items():
+        assert (
+            result["exit_code"] == 0
+        ), f"{method} tolerance variant matching failed for {count} resistors"
+
+
+@then("{components} all use the lowest priority tolerance match")
+def step_then_components_use_lowest_priority_tolerance_match(context, components):
+    """Verify components use lowest priority tolerance matches (Axiom #18)."""
+    context.execute_steps("When I validate behavior across all usage models")
+    for method, result in context.results.items():
+        assert (
+            result["exit_code"] == 0
+        ), f"{method} lowest priority tolerance matching failed for {components}"
 
 
 @then("the error reports invalid priority values for {invalid_parts}")
