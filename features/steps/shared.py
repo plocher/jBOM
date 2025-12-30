@@ -43,6 +43,57 @@ def step_given_schematic_contains_standard_components(context):
 
 
 # =============================================================================
+# Fixture-Based Test Setup Steps
+# =============================================================================
+
+
+@given('the "{fixture_name}" schematic')
+def step_given_fixture_schematic(context, fixture_name):
+    """Set up a schematic using a named fixture."""
+    # TODO: Implement fixture-based schematic setup in Phase 3
+    context.fixture_name = fixture_name
+    pass
+
+
+@given('the "{fixture_name}" PCB layout')
+def step_given_fixture_pcb_layout(context, fixture_name):
+    """Set up a PCB layout using a named fixture."""
+    # TODO: Implement fixture-based PCB setup in Phase 3
+    context.fixture_name = fixture_name
+    pass
+
+
+@given("the MOUSER_API_KEY environment variable is available for distributor search")
+def step_given_mouser_api_key_available(context):
+    """Set up Mouser API key for distributor search."""
+    # TODO: Implement API key setup in Phase 3
+    pass
+
+
+@given("the MOUSER_API_KEY environment variable is set")
+def step_given_mouser_api_key_set(context):
+    """Set up Mouser API key environment variable."""
+    # TODO: Implement API key environment setup in Phase 3
+    pass
+
+
+@given("a schematic with mixed searchable and exotic components")
+def step_given_schematic_with_mixed_components(context):
+    """Set up a schematic with mixed component types using table data."""
+    # TODO: Implement mixed component schematic setup in Phase 3
+    if hasattr(context, "table") and context.table:
+        context.component_data = context.table
+    pass
+
+
+@given("search returns multiple good matches for components")
+def step_given_search_returns_multiple_matches(context):
+    """Set up search context with multiple good matches."""
+    # TODO: Implement multi-match search setup in Phase 3
+    pass
+
+
+# =============================================================================
 # CLI Execution Steps
 # =============================================================================
 
@@ -204,6 +255,66 @@ def step_when_perform_operation_using_plugin(context):
     """Perform generic operation using KiCad plugin."""
     # TODO: Implement generic plugin operation in Phase 3
     context.last_command_exit_code = 0
+
+
+# =============================================================================
+# Search-Enhanced Inventory When Steps
+# =============================================================================
+
+
+@when("I generate search-enhanced inventory with --generic fabricator")
+def step_when_generate_search_enhanced_inventory_generic(context):
+    """Generate search-enhanced inventory using generic fabricator."""
+    # TODO: Implement search-enhanced inventory generation in Phase 3
+    context.last_command_exit_code = 0
+    context.inventory_output_file = Path("search_enhanced_inventory.csv")
+
+
+@when("I search with --generic fabricator and result limit of 3")
+def step_when_search_with_generic_fabricator_limit_3(context):
+    """Search with generic fabricator and result limit."""
+    # TODO: Implement limited search in Phase 3
+    context.last_command_exit_code = 0
+    context.inventory_output_file = Path("limited_search_inventory.csv")
+
+
+@when("I generate search-enhanced inventory with --generic fabricator the first time")
+def step_when_generate_search_enhanced_inventory_first_time(context):
+    """Generate search-enhanced inventory first time."""
+    # TODO: Implement first-time generation in Phase 3
+    context.last_command_exit_code = 0
+    context.inventory_output_file = Path("first_time_inventory.csv")
+
+
+@when("the MOUSER_API_KEY is set to NULL")
+def step_when_mouser_api_key_set_to_null(context):
+    """Set MOUSER_API_KEY to NULL for caching test."""
+    # TODO: Implement API key nullification in Phase 3
+    pass
+
+
+@when("I generate search-enhanced inventory with --generic fabricator a second time")
+def step_when_generate_search_enhanced_inventory_second_time(context):
+    """Generate search-enhanced inventory second time."""
+    # TODO: Implement second-time generation in Phase 3
+    context.last_command_exit_code = 0
+    context.inventory_output_file = Path("second_time_inventory.csv")
+
+
+@when("I generate enhanced inventory with --generic fabricator")
+def step_when_generate_enhanced_inventory_generic(context):
+    """Generate enhanced inventory using generic fabricator."""
+    # TODO: Implement enhanced inventory generation in Phase 3
+    context.last_command_exit_code = 0
+    context.inventory_output_file = Path("enhanced_inventory.csv")
+
+
+@when("I enable interactive selection mode with --generic fabricator")
+def step_when_enable_interactive_selection_mode_generic(context):
+    """Enable interactive selection mode with generic fabricator."""
+    # TODO: Implement interactive selection in Phase 3
+    context.last_command_exit_code = 0
+    context.inventory_output_file = Path("interactive_inventory.csv")
 
 
 # =============================================================================
