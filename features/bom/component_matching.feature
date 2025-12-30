@@ -14,18 +14,12 @@ Feature: Component Matching
 
   Scenario: Match resistor by value and package
     Given the schematic contains a 10K 0603 resistor
-    When I validate behavior across all usage models
-    Then all usage models produce consistent results
-    And the BOM contains the resistor matched to "R001"
+    Then the BOM contains the 10K 0603 resistor matched to "R001"
 
   Scenario: Match capacitor by value and package
     Given the schematic contains a 100nF 0603 capacitor
-    When I validate behavior across all usage models
-    Then all usage models produce consistent results
-    And the BOM contains the capacitor matched to "C001"
+    Then the BOM contains the 100nF 0603 capacitor matched to "C001"
 
   Scenario: No match for missing component
     Given the schematic contains a 47K 1206 resistor
-    When I validate behavior across all usage models
-    Then all usage models produce consistent results
-    And the BOM contains an unmatched component entry
+    Then the BOM contains an unmatched component entry

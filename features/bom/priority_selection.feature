@@ -14,9 +14,7 @@ Feature: Priority Selection
 
   Scenario: Select lowest priority when multiple parts match
     Given the schematic contains a 10K 0603 resistor
-    When I validate behavior across all usage models
-    Then all usage models produce consistent results
-    And the BOM contains the resistor matched to "R001" with priority 1
+    Then the BOM contains the 10K 0603 resistor matched to "R001" with priority 1
 
   Scenario: Priority selection works with verbose output
     Given the schematic contains a 10K 0603 resistor

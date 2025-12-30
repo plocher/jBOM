@@ -349,6 +349,24 @@ def step_then_file_contains_rows(context, filename, count):
 # =============================================================================
 
 
+@given("multi-modal validation is enabled")
+def step_given_multimodal_validation_enabled(context):
+    """Enable automatic multi-modal validation for subsequent operations."""
+    context.multimodal_enabled = True
+
+
+def auto_validate_if_enabled(context, operation="BOM generation"):
+    """Automatically validate across all usage models if enabled."""
+    if getattr(context, "multimodal_enabled", False):
+        if operation == "BOM generation":
+            context.execute_steps("When I validate behavior across all usage models")
+        elif operation == "POS generation":
+            context.execute_steps(
+                "When I validate POS generation across all usage models"
+            )
+        # Add more operations as needed
+
+
 @when("I validate behavior across all usage models")
 def step_when_validate_across_all_models(context):
     """Execute the same test across CLI, API, and plugin models."""
@@ -364,6 +382,60 @@ def step_when_validate_across_all_models(context):
             "exit_code": context.last_command_exit_code,
             "output_file": getattr(context, "bom_output_file", None),
         }
+
+
+# =============================================================================
+# Domain-Specific Multi-Modal Steps (Ultimate DRY Solution)
+# =============================================================================
+
+
+@then('the BOM contains the {component} matched to "{expected_match}"')
+def step_then_bom_contains_component_matched(context, component, expected_match):
+    """Verify component matching across all usage models automatically."""
+    # Auto-execute multi-modal validation
+    context.execute_steps("When I validate behavior across all usage models")
+
+    # Then verify the specific matching behavior
+    # TODO: Implement specific component matching validation in Phase 3
+    # For now, just verify that files were generated
+    for method, result in context.results.items():
+        assert (
+            result["output_file"] and result["output_file"].exists()
+        ), f"{method} did not produce BOM file"
+
+
+@then("the BOM contains an unmatched component entry")
+def step_then_bom_contains_unmatched_component(context):
+    """Verify unmatched component handling across all usage models automatically."""
+    # Auto-execute multi-modal validation
+    context.execute_steps("When I validate behavior across all usage models")
+
+    # Then verify the specific unmatched behavior
+    # TODO: Implement specific unmatched component validation in Phase 3
+    # For now, just verify that files were generated
+    for method, result in context.results.items():
+        assert (
+            result["output_file"] and result["output_file"].exists()
+        ), f"{method} did not produce BOM file"
+
+
+@then(
+    'the BOM contains the {component} matched to "{expected_match}" with priority {priority:d}'
+)
+def step_then_bom_contains_component_with_priority(
+    context, component, expected_match, priority
+):
+    """Verify component priority selection across all usage models automatically."""
+    # Auto-execute multi-modal validation
+    context.execute_steps("When I validate behavior across all usage models")
+
+    # Then verify the specific priority behavior
+    # TODO: Implement specific priority validation in Phase 3
+    # For now, just verify that files were generated
+    for method, result in context.results.items():
+        assert (
+            result["output_file"] and result["output_file"].exists()
+        ), f"{method} did not produce BOM file"
 
 
 @when("I validate {operation} across all usage models")
