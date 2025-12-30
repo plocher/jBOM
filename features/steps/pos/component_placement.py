@@ -46,14 +46,14 @@ def step_then_pos_contains_top_side_only(context):
         ), f"{method} did not produce top-side POS file"
 
 
-@then("the API generates POS with placement data and coordinate information")
-def step_then_api_generates_pos_with_placement_data_and_coordinates(context):
-    """Verify API POS generation across all usage models automatically."""
+@then("the POS generates with placement data and coordinate information")
+def step_then_pos_generates_with_placement_data_and_coordinates(context):
+    """Verify POS generation with placement data across all usage models automatically."""
     context.execute_steps("When I validate POS generation across all usage models")
     for method, result in context.results.items():
         assert (
             result["output_file"] and result["output_file"].exists()
-        ), f"{method} did not produce API POS file"
+        ), f"{method} did not produce POS file with placement data"
 
 
 @then("the POS coordinates are converted to inches with appropriate precision")

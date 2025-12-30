@@ -41,16 +41,16 @@ def step_then_search_results_are_cached(context):
         ), f"{method} did not produce cached inventory file"
 
 
-@then("the API generates enhanced inventory with search statistics and tracking")
-def step_then_api_generates_enhanced_inventory_with_statistics(context):
-    """Verify API search enhancement across all usage models automatically."""
+@then("the inventory generates with search statistics and tracking")
+def step_then_inventory_generates_with_statistics_and_tracking(context):
+    """Verify search statistics and tracking across all usage models automatically."""
     context.execute_steps(
         "When I validate inventory extraction across all usage models"
     )
     for method, result in context.results.items():
         assert (
             result["output_file"] and result["output_file"].exists()
-        ), f"{method} did not produce enhanced API inventory file"
+        ), f"{method} did not produce enhanced inventory file with statistics"
 
 
 @then(

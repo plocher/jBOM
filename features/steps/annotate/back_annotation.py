@@ -22,12 +22,12 @@ def step_then_dry_run_annotation_previews_changes(context):
         assert result["exit_code"] == 0, f"{method} dry-run annotation failed"
 
 
-@then("the API back-annotation reports update count and changed details")
-def step_then_api_annotation_reports_update_count_and_details(context):
-    """Verify API annotation reporting across all usage models automatically."""
+@then("the back-annotation reports update count and changed details")
+def step_then_annotation_reports_update_count_and_details(context):
+    """Verify annotation reporting across all usage models automatically."""
     context.execute_steps("When I validate annotation across all usage models")
     for method, result in context.results.items():
-        assert result["exit_code"] == 0, f"{method} API annotation failed"
+        assert result["exit_code"] == 0, f"{method} annotation reporting failed"
 
 
 @then("the back-annotation warns about invalid UUIDs and updates only valid components")

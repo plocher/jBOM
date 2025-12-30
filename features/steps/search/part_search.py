@@ -12,8 +12,8 @@ def step_then_search_returns_matching_parts_ranked(context):
         assert result["exit_code"] == 0, f"{method} search failed"
 
 
-@then("the search uses Mouser API with part numbers, pricing, and stock availability")
-def step_then_search_uses_mouser_api_with_details(context):
+@then("the search uses Mouser with part numbers, pricing, and stock availability")
+def step_then_search_uses_mouser_with_details(context):
     """Verify Mouser-specific search across all usage models automatically."""
     context.execute_steps("When I validate search across all usage models")
     for method, result in context.results.items():
@@ -46,20 +46,20 @@ def step_then_search_returns_no_results_gracefully(context):
         assert result["exit_code"] == 0, f"{method} search error handling failed"
 
 
-@then("the API returns SearchResult objects with filterable part information")
-def step_then_api_returns_searchresult_objects(context):
-    """Verify API search results across all usage models automatically."""
+@then("the search returns SearchResult objects with filterable part information")
+def step_then_search_returns_searchresult_objects(context):
+    """Verify search results across all usage models automatically."""
     context.execute_steps("When I validate search across all usage models")
     for method, result in context.results.items():
-        assert result["exit_code"] == 0, f"{method} API search failed"
+        assert result["exit_code"] == 0, f"{method} search failed"
 
 
-@then("the search uses specified API key and returns results normally")
-def step_then_search_uses_specified_api_key(context):
-    """Verify API key override across all usage models automatically."""
+@then("the search uses specified authentication and returns results normally")
+def step_then_search_uses_specified_authentication(context):
+    """Verify authentication override across all usage models automatically."""
     context.execute_steps("When I validate search across all usage models")
     for method, result in context.results.items():
-        assert result["exit_code"] == 0, f"{method} API key override failed"
+        assert result["exit_code"] == 0, f"{method} authentication override failed"
 
 
 # Test data setup

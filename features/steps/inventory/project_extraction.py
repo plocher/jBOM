@@ -61,16 +61,16 @@ def step_then_inventory_extracts_with_uuid_column(context):
         ), f"{method} did not produce inventory file"
 
 
-@then("the API extracts inventory with component count and field names")
-def step_then_api_extracts_inventory_with_component_count_and_fields(context):
-    """Verify API inventory extraction across all usage models automatically."""
+@then("the inventory extraction includes component count and field names")
+def step_then_inventory_extraction_includes_component_count_and_fields(context):
+    """Verify inventory extraction with component count and field names across all usage models automatically."""
     # Auto-execute multi-modal validation for inventory extraction
     context.execute_steps(
         "When I validate inventory extraction across all usage models"
     )
 
-    # Then verify the API inventory behavior
-    # TODO: Implement specific API inventory validation in Phase 3
+    # Then verify the inventory extraction behavior
+    # TODO: Implement specific inventory extraction validation in Phase 3
     for method, result in context.results.items():
         assert (
             result["output_file"] and result["output_file"].exists()

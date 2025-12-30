@@ -55,14 +55,14 @@ def step_then_verbose_bom_shows_source_and_alternatives(context):
         ), f"{method} did not produce BOM file"
 
 
-@then("the API generates BOM with source tracking for each matched item")
-def step_then_api_generates_bom_with_source_tracking(context):
-    """Verify API source tracking across all usage models automatically."""
+@then("the BOM generates with source tracking for each matched item")
+def step_then_bom_generates_with_source_tracking(context):
+    """Verify source tracking across all usage models automatically."""
     # Auto-execute multi-modal validation
     context.execute_steps("When I validate behavior across all usage models")
 
-    # Then verify the API source tracking behavior
-    # TODO: Implement specific API validation in Phase 3
+    # Then verify the source tracking behavior
+    # TODO: Implement specific source tracking validation in Phase 3
     for method, result in context.results.items():
         assert (
             result["output_file"] and result["output_file"].exists()
