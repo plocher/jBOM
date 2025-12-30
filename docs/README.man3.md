@@ -7,7 +7,10 @@ jbom — Python library for KiCad bill of materials generation
 ## SYNOPSIS
 
 ```python
-from jbom.api import generate_bom, generate_pos, back_annotate, search_parts, BOMOptions, POSOptions
+from jbom.api import (
+    generate_bom, generate_pos, generate_enriched_inventory,
+    back_annotate, search_parts, BOMOptions, POSOptions, InventoryOptions
+)
 from pathlib import Path
 ```
 
@@ -110,6 +113,70 @@ if result['bom_entries']:
         print(f"  Fabricator: {entry.fabricator}, Part: {entry.fabricator_part_number}")
 ```
 
+### Function: generate_enriched_inventory()
+
+**Signature**
+```python
+def generate_enriched_inventory(
+    *,
+    input: Union[str, Path],
+    output: Optional[Union[str, Path]] = None,
+    options: Optional[InventoryOptions] = None,
+) -> Dict[str, Any]
+```
+
+**Description**
+: Generates an enriched inventory with optional automated search integration. Creates an inventory from project components and optionally searches for matching parts from distributors.
+
+**Parameters**
+: **input** — Path to KiCad project directory or .kicad_sch file
+: **output** — Optional output path. Special values: "-"/"stdout" for stdout, "console" for formatted table
+: **options** — InventoryOptions instance for search configuration
+
+**Return value** (dict)
+: **success** — Boolean indicating operation success
+: **inventory_items** — List of InventoryItem objects (including search results)
+: **field_names** — List of field names in the inventory
+: **component_count** — Number of components processed
+: **search_stats** — Search statistics (if search enabled)
+: **components** — Original Component objects from schematics
+
+**Example**
+```python
+import os
+from jbom.api import generate_enriched_inventory, InventoryOptions
+
+# Generate basic inventory
+result = generate_enriched_inventory(input='MyProject/')
+
+# Generate inventory with search enrichment (using environment variable)
+os.environ['MOUSER_API_KEY'] = 'your_mouser_api_key'
+opts = InventoryOptions(
+    search=True,
+    provider='mouser',
+    limit=3
+)
+result = generate_enriched_inventory(
+    input='MyProject/',
+    output='enriched_inventory.csv',
+    options=opts
+)
+
+# Alternative: explicit API key (overrides environment variable)
+opts = InventoryOptions(
+    search=True,
+    provider='mouser',
+    limit=3,
+    api_key='your_mouser_api_key'
+)
+
+if result['success']:
+    print(f"Generated {len(result['inventory_items'])} inventory items")
+    if opts.search:
+        stats = result['search_stats']
+        print(f"Performed {stats['searches_performed']} searches")
+```
+
 ### Function: search_parts()
 
 **Signature**
@@ -128,9 +195,9 @@ def search_parts(
 
 **Parameters**
 : **query** — Search query string (keyword, MPN, etc.)
-: **provider** — Provider name (default: "mouser")
+: **provider** — Provider name (default: "mouser"). Currently supports "mouser".
 : **limit** — Maximum results to return
-: **api_key** — Optional API key (overrides environment)
+: **api_key** — Optional API key (overrides provider-specific environment variables)
 : **filter_parametric** — Enable smart parametric filtering
 
 **Return value** (list)
@@ -177,6 +244,28 @@ class POSOptions:
 : **layer_filter** — Filter by side ("TOP" or "BOTTOM")
 : **fields** — List of output field names
 : **fabricator** — Target fabricator ID (e.g. "jlc") for default presets
+
+### Class: InventoryOptions
+
+**Signature**
+```python
+@dataclass
+class InventoryOptions:
+    search: bool = False
+    provider: str = "mouser"
+    api_key: Optional[str] = None
+    limit: int = 1
+    interactive: bool = False
+    fields: Optional[List[str]] = None
+```
+
+**Attributes**
+: **search** — Enable automated part searching from distributors
+: **provider** — Search provider to use (default: "mouser"). Currently supports "mouser".
+: **api_key** — API key for search provider (overrides provider-specific environment variables like MOUSER_API_KEY)
+: **limit** — Maximum search results per component (1=single result, None=unlimited)
+: **interactive** — Enable interactive candidate selection
+: **fields** — List of output field names for inventory
 
 ### Class: SearchResult
 
