@@ -26,11 +26,11 @@ Feature: Search-Enhanced Inventory
     And I generate search-enhanced inventory with --generic fabricator a second time
     Then the second run uses cached results, does not generate API errors or API traffic and completes successfully
 
-  Scenario: Search enhancement via API with statistics
+  Scenario: Search enhancement with statistics reporting
     Given the "BasicComponents" schematic
     And the MOUSER_API_KEY environment variable is available for distributor search
-    When I use the API to generate enhanced inventory with --generic fabricator
-    Then the API returns SearchEnhancedResult with search statistics showing queries made and success rate
+    When I generate enhanced inventory with --generic fabricator
+    Then the search returns statistics showing queries made and success rate
 
   Scenario: Handle search failures gracefully with edge cases
     Given a schematic with mixed searchable and exotic components
