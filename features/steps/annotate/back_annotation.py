@@ -85,3 +85,65 @@ def step_given_schematic_partial_info_selective_inventory(context):
 def step_given_schematic_different_from_inventory(context):
     """Set up mismatched schematic and inventory."""
     pass
+
+
+# New step definitions for improved scenarios
+@given("the schematic has components with missing part information")
+def step_given_schematic_missing_part_info(context):
+    """Set up schematic with components missing part information."""
+    pass
+
+
+@given("an inventory file with complete distributor and manufacturer data")
+def step_given_inventory_complete_distributor_manufacturer_data(context):
+    """Set up inventory file with complete distributor and manufacturer data."""
+    # TODO: Process inventory table from feature file in Phase 3
+    pass
+
+
+@given("the schematic has components needing updates")
+def step_given_schematic_needs_updates(context):
+    """Set up schematic with components needing updates."""
+    pass
+
+
+@given("an inventory file with updated information")
+def step_given_inventory_with_updated_info(context):
+    """Set up inventory file with updated information."""
+    pass
+
+
+@given("the schematic has components with valid UUIDs")
+def step_given_schematic_with_valid_uuids(context):
+    """Set up schematic with components that have valid UUIDs."""
+    pass
+
+
+@given("an inventory file with missing or invalid UUIDs")
+def step_given_inventory_with_missing_invalid_uuids(context):
+    """Set up inventory file with UUID issues."""
+    pass
+
+
+@given("the schematic has components with partial information")
+def step_given_schematic_with_partial_info(context):
+    """Set up schematic with components having partial information."""
+    pass
+
+
+@given("an inventory file with selective updates (only distributor part numbers)")
+def step_given_inventory_selective_dpn_updates(context):
+    """Set up inventory file with only DPN updates."""
+    pass
+
+
+@given("the schematic has different components than the inventory")
+def step_given_schematic_different_components_than_inventory(context):
+    """Set up schematic with different components than inventory."""
+    pass
+
+
+@given("the inventory contains components not in the schematic")
+def step_given_inventory_contains_extra_components(context):
+    """Set up inventory with components not present in schematic."""
+    pass
