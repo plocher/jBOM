@@ -39,3 +39,29 @@ Feature: Component Matching
   Scenario: No match for missing component - package matches, value doesn't
     Given the schematic contains a 100K 0603 resistor
     Then the BOM contains an unmatched component entry
+
+  Scenario: Generate BOM from actual KiCad project with Excel inventory
+    Given a KiCad project file "TestBoard.kicad_sch"
+    And an Excel inventory file "parts_database.xlsx"
+    When I generate a BOM
+    Then the BOM contains components extracted from the KiCad schematic
+    And components are matched against parts loaded from Excel file
+
+  Scenario: Process hierarchical KiCad schematic with CSV inventory
+    Given a KiCad project with main sheet "MainBoard.kicad_sch"
+    And sub-sheet "PowerSupply.kicad_sch"
+    And a CSV inventory file "inventory.csv"
+    When I generate a BOM
+    Then the BOM includes components from both main sheet and sub-sheet
+    And component quantities are merged correctly across sheets
+
+  Scenario: Handle mixed file formats in workflow
+    Given a KiCad project file "Controller.kicad_sch"
+    And multiple inventory sources:
+      | File                | Format  |
+      | resistors.xlsx      | Excel   |
+      | capacitors.csv      | CSV     |
+      | ics.numbers         | Numbers |
+    When I generate a BOM with all inventory sources
+    Then the BOM combines parts data from all file formats
+    And components are matched across all inventory sources

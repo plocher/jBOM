@@ -50,5 +50,40 @@ These fault testing scenarios should be integrated across ALL existing BDD featu
 - fabricator_formats.feature
 - All other feature files
 
+## Critical Gap: File Processing vs Logic Testing
+
+### Current BDD Scenarios Only Test Logic
+Existing BDD scenarios test business logic (priority selection, fabricator filtering, component matching) but **NOT actual file parsing** that feeds data into that logic.
+
+### Missing File Processing Coverage
+**KiCad File Parsing:**
+- `.kicad_sch` S-expression parsing with real KiCad projects
+- Hierarchical schematic handling (sub-sheets)
+- Component extraction from actual KiCad files
+
+**Inventory File Parsing:**
+- **Excel (.xlsx/.xls)**: Real Excel exports with formulas, multiple sheets
+- **Numbers**: Actual Apple Numbers file format
+- **CSV**: Real CSV exports with various delimiters and encoding
+
+### BDD vs Unit Test Boundaries
+
+**BDD Scenarios Should Test (User Workflows):**
+```gherkin
+Scenario: Generate BOM using Excel inventory file
+  Given a KiCad project "MyBoard"
+  And an Excel inventory file "parts_database.xlsx"
+  When I generate a BOM
+  Then the BOM contains matched components from Excel data
+```
+
+**Unit Tests Should Test (Implementation Details):**
+- CSV delimiter detection, quoted fields, encoding
+- Excel formula evaluation, merged cells
+- S-expression parsing edge cases
+- Column header mapping variations
+
+**Integration Point:** Add end-to-end file processing scenarios to `annotate/` and `bom/` features that test real file format workflows.
+
 ## Future Task
 Create comprehensive fault testing scenarios that force policy decisions to be documented explicitly, ensuring jBOM behavior is unambiguous for all edge cases and malformed input data.

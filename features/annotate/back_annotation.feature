@@ -38,3 +38,31 @@ Feature: Back-Annotation
     Given the schematic has different components than the inventory
     And the inventory contains components not in the schematic
     Then the back-annotation updates only matching components and reports mismatches
+
+  Scenario: Back-annotate KiCad project from Excel inventory
+    Given a KiCad schematic file "ProductBoard.kicad_sch" with incomplete part information
+    And an Excel inventory file "updated_parts.xlsx" with complete distributor data
+    When I run back-annotation
+    Then the KiCad schematic file is updated with part numbers and manufacturer data from Excel
+    And component properties include LCSC, MPN, and Manufacturer fields
+
+  Scenario: Back-annotate hierarchical project from Numbers inventory
+    Given a hierarchical KiCad project:
+      | File                  | Components |
+      | MainBoard.kicad_sch   | U1, R1, C1 |
+      | PowerSupply.kicad_sch | U2, R2, C2 |
+    And a Numbers inventory file "parts_database.numbers"
+    When I run back-annotation on the project directory
+    Then all schematic files are updated with inventory data
+    And component UUIDs are preserved across updates
+
+  Scenario: Back-annotate with mixed inventory file formats
+    Given a KiCad schematic "ControllerBoard.kicad_sch"
+    And multiple inventory sources with overlapping data:
+      | File               | Format  | Components    |
+      | resistors.csv      | CSV     | R1, R2, R3    |
+      | ics.xlsx           | Excel   | U1, U2        |
+      | connectors.numbers | Numbers | J1, J2        |
+    When I run back-annotation with all inventory sources
+    Then schematic components are updated from their respective inventory sources
+    And no component data is overwritten by conflicting sources
