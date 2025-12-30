@@ -28,7 +28,7 @@ Feature: Component Matching (Axiom #18 Enhanced)
     And the inventory includes tolerance match "1K1 0603 resistor"
     When I generate a BOM with --generic fabricator
     Then the BOM contains a matched resistor with inventory value "1K1" and package "0603"
-    And the match is based on component value tolerance
+    And the match uses component value tolerance
 
   Scenario: No match with dynamic negative inventory
     Given the schematic is extended with component:

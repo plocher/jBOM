@@ -4,10 +4,10 @@ This document captures the established axioms and patterns that MUST be consiste
 
 ## Axiom Organization
 
-The 18 axioms are organized by priority:
+The 19 axioms are organized by priority:
 - **Foundational Axioms (1-6)**: Essential principles for all scenarios
 - **Quality Axioms (7-12)**: Ensuring robustness and reliability
-- **Advanced Patterns (13-18)**: Optimizing maintainability and reusability
+- **Advanced Patterns (13-19)**: Optimizing maintainability and reusability
 
 ---
 
@@ -74,7 +74,7 @@ Then component has LCSC property set to "C25804"
 **✅ Complete**:
 ```gherkin
 Then the BOM contains R1 matched to R001 with priority 0
-And the BOM excludes R002 and R003 due to higher priority values
+And the BOM excludes R002 and R003
 ```
 
 ---
@@ -112,7 +112,7 @@ Then component R1 has LCSC property set to "C25804" matching the JLC fabricator 
 
 ---
 
-## Advanced Patterns (13-18)
+## Advanced Patterns (13-19)
 *Optimizing maintainability and reusability*
 
 ### Axiom #13: Step Definition Organization
@@ -218,6 +218,36 @@ And the "MultiSupplierInventory" inventory
 - ✅ Enables complex scenarios with manageable syntax
 - ✅ Supports both static fixtures and dynamic mocking
 
+### Axiom #19: The "Because" Test ⭐ EDITORIAL
+**Principle**: Any urge to write "THEN ... BECAUSE..." indicates incomplete GIVEN or vague WHEN statements.
+
+**The Because Test**: When you feel compelled to justify an outcome, check:
+1. **GIVEN incomplete?** - Are all preconditions that make the outcome inevitable explicitly stated?
+2. **WHEN vague?** - Does the action clearly specify what behavior is being triggered?
+3. **THEN over-explaining?** - Is the assertion trying to justify instead of just stating the outcome?
+
+**✅ Properly Structured**:
+```gherkin
+Given a schematic with R1 (10K, 0603)
+And inventory contains R001 (10K, 0603, priority=0) and R002 (10K, 0603, priority=1)
+When I generate a BOM with priority-based selection
+Then the BOM contains R1 matched to R001
+And the BOM excludes R002
+```
+
+**❌ "Because" Code Smell**:
+```gherkin
+Given a schematic with R1 (10K, 0603)
+# Missing: what's available in inventory? What selection algorithm?
+When I generate a BOM
+# Vague: what type of BOM generation?
+Then the BOM contains R1 matched to R001
+And the BOM excludes R002 due to higher priority values
+# Over-explaining: why justify the exclusion?
+```
+
+**Application**: If you need "because", "due to", or "based on" in THEN, improve GIVEN and WHEN instead.
+
 ---
 
 ## Application Checklist
@@ -247,6 +277,7 @@ When reviewing/creating BDD scenarios, verify:
 - [ ] Explicit field specification (Axiom #16)
 - [ ] Complete preconditions specified (Axiom #17)
 - [ ] Dynamic test data builder used (Axiom #18)
+- [ ] No "because" justifications in THEN statements (Axiom #19)
 
 ---
 

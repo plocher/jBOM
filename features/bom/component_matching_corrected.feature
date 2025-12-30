@@ -24,7 +24,7 @@ Feature: Component Matching (Axiom #17 Corrected)
     And the inventory does not contain a 1k 0603 resistor
     When I generate a BOM with --generic fabricator
     Then the BOM contains a matched resistor with inventory value "1K1" and package "0603"
-    And the match is based on component value tolerance
+    And the match uses component value tolerance
 
   Scenario: Match component by normalized value format (CORRECTED per Axiom #17)
     Given the schematic contains a 1.1K 0603 resistor
