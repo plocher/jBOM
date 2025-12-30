@@ -15,7 +15,7 @@ Feature: Priority Selection
       | R001  | RES      | 10K   | 0603    | JLC         | 0        |
       | R002  | RES      | 10K   | 0603    | JLC         | 1        |
       | R003  | RES      | 10K   | 0603    | JLC         | 5        |
-    When I generate a BOM
+    When I generate a BOM with fields "Reference,Value,Package,IPN,Priority"
     Then the BOM contains R1 matched to R001 with priority 0
     And the BOM excludes R002 and R003 due to higher priority values
 
@@ -28,7 +28,7 @@ Feature: Priority Selection
       | R001  | RES      | 10K   | 0603    | 1           |
       | R002  | RES      | 10K   | 0603    | 2147483647  |
       | R003  | RES      | 10K   | 0603    | 4294967295  |
-    When I generate a BOM
+    When I generate a BOM with fields "Reference,Value,Package,IPN,Priority"
     Then the BOM contains R1 matched to R001 with priority 1
     And the BOM excludes R002 and R003 due to higher priority values
 
@@ -44,7 +44,7 @@ Feature: Priority Selection
       | R003  | RES      | 10K   | 0603    | 100      |
       | C001  | CAP      | 100nF | 0603    | 2        |
       | C002  | CAP      | 100nF | 0603    | 0        |
-    When I generate a BOM
+    When I generate a BOM with fields "Reference,Value,Package,IPN,Priority"
     Then the BOM contains R1 matched to R002 with priority 1
     And the BOM excludes R001 and R003 due to higher priority values
     And the BOM contains C1 matched to C002 with priority 0
@@ -59,6 +59,6 @@ Feature: Priority Selection
       | R001  | RES      | 10K   | 0603    | "high"   |
       | R002  | RES      | 10K   | 0603    | ""       |
       | R003  | RES      | 10K   | 0603    | "#DIV/0!" |
-    When I generate a BOM
+    When I generate a BOM with fields "Reference,Value,Package,IPN,Priority"
     Then the error reports invalid priority values for R001, R002, R003
     And the BOM generation fails with priority validation error
