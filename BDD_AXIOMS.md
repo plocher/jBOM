@@ -131,6 +131,38 @@ Then the BOM selects parts with priority 1 over parts with priority 2 and 3
 - "matching the PCBWay fabricator configuration"
 - Visible test data in scenario tables
 
+### 11. Multi-Modal Testing Coverage
+**Axiom**: All core functionality MUST be tested across three execution contexts: CLI, API, and Embedded-KiCad.
+
+**Three Execution Contexts**:
+1. **CLI**: Command-line interface (`jbom bom --jlc`)
+2. **API**: Python API (`BackAnnotationAPI.update()`)
+3. **Embedded-KiCad**: Plugin/integration within KiCad environment
+
+**Automatic Multi-Modal Pattern** (Domain-Specific Steps):
+```gherkin
+Scenario: Back-annotation with JLC parts
+  Given the "BasicComponents" schematic
+  And the "JLC_Basic" inventory
+  When I run back-annotation with --jlc fabricator
+  Then component R1 has LCSC property set to "C25804"
+```
+
+**Step Definition Implementation**:
+```python
+@then('component R1 has LCSC property set to "{value}"')
+def step_component_has_property(context, value):
+    # Auto-execute multi-modal validation
+    context.execute_steps("When I validate behavior across all usage models")
+    # Then verify the specific behavior across CLI, API, Embedded-KiCad
+```
+
+**Benefits**:
+- **Automatic**: No need for Scenario Outlines or manual repetition
+- **DRY**: Single scenario tests all three execution paths
+- **Transparent**: Step definitions handle multi-modal execution invisibly
+- **Complete Coverage**: Every assertion automatically validates all usage models
+
 ## Application Checklist
 
 When reviewing/creating BDD scenarios, verify:
@@ -145,6 +177,7 @@ When reviewing/creating BDD scenarios, verify:
 - [ ] Algorithmic behavior specified (Axiom #8)
 - [ ] Distributor filtering logic correct (Axiom #9)
 - [ ] All dependencies visible (Axiom #10)
+- [ ] Multi-modal coverage: CLI, API, Embedded-KiCad (Axiom #11)
 
 ## Files Requiring Review
 

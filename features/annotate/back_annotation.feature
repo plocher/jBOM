@@ -48,19 +48,21 @@ Feature: Back-Annotation
     And the schematic file modification time is unchanged
     And component R1 still has empty LCSC property
 
-  Scenario: Back-annotation via API
-    Given the schematic has components with UUIDs
-      | Reference | UUID                                 | LCSC |
-      | R1        | 12345678-1234-1234-1234-123456789012 | ""   |
-      | C1        | 87654321-4321-4321-4321-210987654321 | ""   |
-    And an inventory file with updated information
-      | UUID                                 | DPN    | MPN            |
-      | 12345678-1234-1234-1234-123456789012 | C25804 | RC0603FR-0710K |
-      | 87654321-4321-4321-4321-210987654321 | C14663 | CC0603KRX7R9BB |
-    When I run back-annotation via API
-    Then the API returns BackAnnotationResult with update_count = 2
-    And the API result includes changed_components = ["R1", "C1"]
-    And the API result includes updated_fields = ["LCSC", "MPN"]
+  Scenario Outline: Back-annotation across execution contexts
+    Given the "BasicComponents" schematic
+    And the "JLC_Basic" inventory
+    When I run back-annotation via <context> with --jlc fabricator
+    Then component R1 has LCSC property set to "C25804" matching the JLC fabricator configuration
+    And component R1 has MPN property set to "RC0603FR-0710K"
+    And component C1 has LCSC property set to "C14663" matching the JLC fabricator configuration
+    And component C1 has MPN property set to "CC0603KRX7R9BB"
+    And the schematic file modification time is updated
+
+    Examples:
+      | context        |
+      | CLI            |
+      | API            |
+      | Embedded-KiCad |
 
   Scenario: Handle missing UUIDs gracefully
     Given the schematic has components with UUIDs
