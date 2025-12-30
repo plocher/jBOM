@@ -36,10 +36,17 @@ Feature: Component Placement (POS/CPL) Generation
   # - JLCPCB: Per-part "Reel Zero" corrections (requires part-specific lookup)
   # - PCBWay: Equipment-specific mathematical offset corrections
   #
+  # EXISTING SOLUTIONS:
+  # - JLCKicadTools project: https://github.com/matthewlai/JLCKicadTools/tree/master/jlc_kicad_tools
+  #   * Provides CSV database of JLCPCB part-specific rotation corrections
+  #   * Demonstrates real-world approach to per-part rotation lookup
+  #   * Shows complexity of maintaining part-specific rotation database
+  #
   # TESTING REQUIREMENTS:
   # - Test cardinal points (0°, 90°, 180°, 270°) for mathematical corrections
   # - Test specific parts with known problematic reel orientations
   # - Test same footprint with different packaging orientations
+  # - Test integration with external rotation correction databases
 
   Background:
     Given a KiCad project named "SimpleProject" with a PCB file
