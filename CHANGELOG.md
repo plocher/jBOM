@@ -1,7 +1,41 @@
 # CHANGELOG
 
 
+## v4.0.0 (2025-12-30)
+
+### Unknown
+
+* Merge pull request #8 from plocher/feature/bdd-foundation
+
+feat: implement BDD foundation ([`0aa856d`](https://github.com/plocher/jBOM/commit/0aa856d384e62bfd9d38493fc8c234fd8f8afd7a))
+
+
 ## v3.6.0 (2025-12-30)
+
+### Breaking
+
+* feat: comprehensive BDD scenario improvements across all features
+
+BREAKING CHANGE: Establishes new BDD patterns for jBOM evolution foundation
+
+- Replace vague steps with concrete data tables and measurable assertions
+- Remove hardcoded values (IPNs, part numbers) that create maintenance burden
+- Add specific inventory/component/PCB data to all scenarios
+- Make all Given/When/Then steps testable with clear success criteria
+- Establish consistent patterns for: inventory data, component matching, error handling
+- Fix multi_source_inventory: Add concrete priority/source tracking data
+- Fix component_matching: Remove hardcoded IPNs, make matching criteria explicit
+- Fix project_extraction: Add component data tables, make extraction testable
+- Fix search_enhancement: Add concrete search data and expected results
+- Fix pos/component_placement: Add PCB data with coordinates and measurable outputs
+- Fix part_search: Add specific queries and expected result structures
+- Fix priority_selection: Remove hardcoded IPNs, make priority logic testable
+- Fix error_handling: Define specific error conditions and expected messages
+
+This creates a solid foundation for test-driven and behavior-driven development
+that supports continued jBOM evolution with maintainable, reliable scenarios.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`47b0d84`](https://github.com/plocher/jBOM/commit/47b0d840bb5623cc73ee6fe3dd1075a16a10bc07))
 
 ### Bug Fixes
 
@@ -39,6 +73,264 @@ Co-Authored-By: Warp <agent@warp.dev> ([`cec99bd`](https://github.com/plocher/jB
 - Ensures mocks intercept the import location where MouserProvider is actually used
 - Fixes CI test failures caused by real API key validation during mocked tests
 - All functional inventory tests now pass in CI environment ([`b32eaa6`](https://github.com/plocher/jBOM/commit/b32eaa60bdf920a43501da27c382cca6658c865d))
+
+* fix: eliminate Axiom #12 violations in step definitions
+
+Remove explicit execution mode references from step definitions to maintain
+domain-specific step pattern with automatic multi-modal testing coverage.
+
+Changes:
+- POS: "the API generates POS" → "the POS generates with placement data"
+- Search: "the API returns SearchResult" → "the search returns SearchResult"
+- Search: "uses Mouser API" → "uses Mouser"
+- Search: "uses specified API key" → "uses specified authentication"
+- Back-annotation: "the API back-annotation" → "the back-annotation"
+- Multi-source: "the API generates BOM" → "the BOM generates"
+- Search enhancement: "the API generates enhanced" → "the inventory generates"
+- Project extraction: "the API extracts" → "the inventory extraction includes"
+
+All modified steps maintain automatic CLI/API/Plugin testing via
+context.execute_steps() while eliminating Axiom #12 violations.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`e648df8`](https://github.com/plocher/jBOM/commit/e648df85c327723e16c2a5915d92d3e6ca8c2f04))
+
+* fix: remove UTF-8 degree symbols and rely on column headers for units
+
+Issue: Introduced UTF-8 degree symbols (°) after significant project effort to eliminate them
+Solution: Remove all UTF-8 symbols and rely on column headers to indicate units
+
+Changes:
+- Remove ° symbols from technical context comments
+- Replace "0°" with "0 degrees" in text descriptions
+- Replace "(0°, 90°, 180°, 270°)" with "(0, 90, 180, 270)" in testing notes
+- Rely on existing column headers for units indication:
+  * KiCad_Rotation (implicitly degrees)
+  * Expected_JLCPCB_Rotation (implicitly degrees)
+  * Expected_PCBWay_Rotation (implicitly degrees)
+  * Expected_JLCPCB_Reel_Rotation (implicitly degrees)
+
+Engineering Practice:
+- Column headers indicate units, data values remain clean numeric
+- Follows standard CSV/spreadsheet conventions
+- Maintains ASCII-only content throughout project
+- Eliminates encoding issues and display inconsistencies
+
+Respects the significant effort invested in UTF-8 symbol elimination (Ω, µ, °).
+
+Co-Authored-By: Warp <agent@warp.dev> ([`f7ff5ef`](https://github.com/plocher/jBOM/commit/f7ff5efb1731dad7c34807edc05ab3f614bc88d8))
+
+* fix: correct LM324DR vs LM324ADR example to reflect EIA-481 standard consistency
+
+CRITICAL DOMAIN KNOWLEDGE CORRECTION:
+
+Issue Fixed:
+- LM324DR vs LM324ADR differ only in electrical specifications (tolerance grades)
+- Both use identical SOIC-14 package with standard EIA-481 tape orientation
+- Previous example incorrectly showed rotation differences for same physical package
+
+Corrected Scenario:
+- LM324DR (SOIC-14): Standard SOIC-14 with EIA-481 orientation
+- LM324IPWR (MSOP-10): Different physical package requiring different orientation
+- LM324N (DIP-14): Through-hole version with different orientation
+- LM324QDRQ1 (QFN-16): Automotive QFN variant with different orientation
+
+Technical Context Updates:
+- ICs have variations based on packaging format, NOT electrical specifications
+- EIA-481 standard provides consistency within same package type
+- Package size variations (SOIC-14 vs MSOP-10) require different tape orientations
+- Rotation differences based on physical package geometry, not part grade/tolerance
+
+Database Schema Correction:
+- Replace impossible LM324DR vs LM324ADR difference
+- Show realistic LM324 family package variations:
+  * SOIC-14 (standard SMT)
+  * MSOP-10 (smaller SMT package)
+  * DIP-14 (through-hole)
+  * QFN-16 (automotive variant)
+
+Lesson Learned:
+- Electrical specification differences (A-grade vs standard) do not affect physical packaging
+- EIA-481 standard ensures consistent tape orientation within package types
+- Rotation complexity comes from package geometry, not component performance grades
+
+This correction aligns examples with actual EIA standards and packaging realities.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`4d6456d`](https://github.com/plocher/jBOM/commit/4d6456d54dbd7540afbc3c67eceefb9ef04649b6))
+
+* fix: correct JLCPCB rotation scenario to reflect realistic IC packaging complexity
+
+DOMAIN KNOWLEDGE CORRECTION:
+
+Issue Identified:
+- Previous scenario showed impossible resistor rotation differences
+- "Dandruff" components (R, C) are typically consistent per footprint
+- Rotation complexity primarily affects ICs, not passive components
+
+Realistic Scenario Update:
+- Focus on IC packaging variations: SOIC vs DIP vs QFN
+- Same chip (ATMega328) in different packages requiring different rotations
+- LM324 with alternate supplier (LM324DR vs LM324ADR) showing reel differences
+- Through-hole DIP vs surface-mount QFN orientation differences
+
+Technical Context Clarification:
+- Passive components (R, C) typically consistent per footprint
+- ICs have complex variations based on packaging format and supplier
+- Same chip in different packages requires different rotations
+- Multiple suppliers for same IC may use different tape orientations
+
+Database Schema Update:
+- Replace unrealistic resistor variations with realistic IC examples
+- Show LM324DR vs LM324ADR supplier differences (0° vs 180°)
+- Include DIP vs QFN packaging differences (90° vs 270°)
+- Maintain passive component consistency (all 0603 resistors = 0°)
+
+Accurate Test Coverage:
+- Tests real-world complexity patterns
+- Validates IC packaging variation handling
+- Confirms passive component consistency
+- Provides realistic implementation targets
+
+This correction aligns BDD scenarios with actual fabrication complexity.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`eba8324`](https://github.com/plocher/jBOM/commit/eba8324d8bb450debf1e424e8323be27c13e184b))
+
+* fix: correct Axiom #12 violation in search enhancement scenario
+
+Issue: "Search enhancement via API with statistics" explicitly specified API usage
+- Violated Axiom #12 (Multi-Modal Testing Coverage)
+- Domain-specific steps should automatically test CLI, API, and Embedded-KiCad
+- Scenarios should not specify execution context
+
+Fix:
+- Change title: "via API with statistics" → "with statistics reporting"
+- Remove explicit API reference: "When I use the API to generate..." → "When I generate..."
+- Update assertion: "Then the API returns..." → "Then the search returns..."
+
+Result:
+- Domain-specific steps now automatically execute multi-modal testing
+- Single scenario tests CLI, API, and Embedded-KiCad transparently
+- Maintains statistics reporting functionality across all execution contexts
+- Full compliance with Axiom #12
+
+Co-Authored-By: Warp <agent@warp.dev> ([`33fa428`](https://github.com/plocher/jBOM/commit/33fa428abc57953e3d1802c4c3333bf0a243c3d0))
+
+* fix: correct Multi-Modal Testing Axiom to reflect automatic execution pattern
+
+- Update BDD_AXIOMS.md to document existing automatic multi-modal testing
+- Domain-specific steps automatically execute CLI, API, and Embedded-KiCad validation
+- Single scenario tests all three execution contexts transparently
+- Step definitions use context.execute_steps("When I validate behavior across all usage models")
+- No need for Scenario Outlines or manual repetition
+- Reflects the actual established architecture in features/steps/
+
+Corrects understanding to match existing sophisticated implementation.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`562764f`](https://github.com/plocher/jBOM/commit/562764fd791ac6f35c4351f18ddb611daff10faa))
+
+* fix: correct PCBWay scenario to match actual pcbway.fab.yaml configuration
+
+- Change property name from "PCBWay_PN" to "Distributor Part Number"
+- Use actual header from pcbway.fab.yaml configuration file
+- Fix table column header to match real property name
+- Ensure scenario tests actual PCBWay fabricator behavior, not assumptions
+
+Scenario now accurately reflects the real PCBWay fabricator configuration.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`98c8cca`](https://github.com/plocher/jBOM/commit/98c8cca2e224b46249b988f60165bd8e3423a44b))
+
+* fix: ensure internal consistency in back_annotation field naming
+
+- Replace "Current_LCSC" with "LCSC" in all table headers
+- Replace "Current_MPN" with "MPN" in all table headers
+- Now table headers match THEN assertion field names consistently
+- Eliminates confusion between table headers and property references
+- Scenarios are now internally consistent and self-documenting
+
+Next step: align with actual KiCad property names used by jBOM.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`bbfd49b`](https://github.com/plocher/jBOM/commit/bbfd49bf92356eed2bec5398916cd95e62c47553))
+
+* fix: replace vague THEN assertions with specific measurable outcomes in back_annotation
+
+- Replace "updates schematic with information" with specific property assertions
+- Replace "previews changes without modifying" with file modification time checks
+- Replace "reports update count" with exact API return value specifications
+- Add specific component property assertions: "R1 has LCSC property set to C25804"
+- Add measurable file system checks: "schematic file modification time is unchanged"
+- Add exact API result validation: "update_count = 2", "changed_components = [R1, C1]"
+- Add specific warning message validation for error cases
+- Include negative tests: what should NOT be updated or changed
+
+All back-annotation scenarios now have concrete, testable assertions.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`a84e405`](https://github.com/plocher/jBOM/commit/a84e405afefe98f8076815eb65fdf2ab687a1fd1))
+
+* fix: rewrite priority_selection.feature with explicit test vectors
+
+- Remove fixture abstraction that hid edge case test vectors
+- Add explicit priority values in scenarios: 0, 1, 5, 50, 100, 2147483647, 4294967295
+- Include malformed data edge cases: "high", "", "#DIV/0!"
+- Show exact expected outcomes: specific IPNs selected, validation errors
+- Make scenarios self-documenting with visible test vectors
+- Define policy for malformed priority data (validation errors, BOM fails)
+
+Scenarios now clearly specify priority selection behavior for all edge cases
+without requiring lookup in fixture documentation.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`2287e2a`](https://github.com/plocher/jBOM/commit/2287e2a93eeba637d7ab19d333959a98674dd749))
+
+* fix: correct priority selection assertion to reflect lowest-value-wins algorithm
+
+- Change from hardcoded "priority 1 over priority 2 and 3" assumption
+- Use algorithm-based assertion "lowest priority value among matching candidates"
+- Makes test independent of actual priority values in fixtures
+- Correctly describes jBOM priority selection behavior
+
+Co-Authored-By: Warp <agent@warp.dev> ([`c11634f`](https://github.com/plocher/jBOM/commit/c11634f7b447ebdb8e0c5083322a89ceb794028a))
+
+* fix: make fabricator format scenarios explicit and configurable
+
+- Enhanced inventory data to support all fabricators (JLC, PCBWay, Seeed)
+- Added Description and Footprint columns to inventory for complete format support
+- Made format selection explicit in scenarios with "And I want to generate a {format} format BOM"
+- Made custom fields configurable in scenarios with "And I want custom BOM fields {field_list}"
+- Added multiple custom field scenarios to demonstrate flexibility
+- Updated step definitions to use scenario-provided parameters instead of hardcoded values
+- All format requests now clearly specified in scenario steps, not hidden in implementations
+
+Co-Authored-By: Warp <agent@warp.dev> ([`ac2b343`](https://github.com/plocher/jBOM/commit/ac2b3432238a032794fbad40dddfeb7c63e5e38d))
+
+* fix: improve back-annotation scenarios with proper inventory data setup
+
+- Added inventory data table to basic back-annotation scenario with UUIDs, IPNs, and part info
+- Split compound Given steps into separate, more specific steps
+- Added proper inventory file setup steps for each scenario
+- Improved scenario readability and data setup clarity
+- Added corresponding step definitions for all new Given steps
+- Maintained ultimate DRY pattern while making scenarios more explicit
+
+Co-Authored-By: Warp <agent@warp.dev> ([`55adca3`](https://github.com/plocher/jBOM/commit/55adca32ffe9c7c8417b300b8c648425a540b6a4))
+
+* fix: apply formatting to ultimate DRY pattern
+
+Co-Authored-By: Warp <agent@warp.dev> ([`f93b0a1`](https://github.com/plocher/jBOM/commit/f93b0a15bd199efa045bee66d8309629f8168058))
+
+* fix: apply pre-commit formatting fixes for multi-modal patterns
+
+Co-Authored-By: Warp <agent@warp.dev> ([`77cf2f1`](https://github.com/plocher/jBOM/commit/77cf2f15bf48c5f93f397f0f9b88831606864fe5))
+
+* fix: remove unused variables in multi-modal validation
+
+- Clean up unused prev_exit_code and prev_output_file variables
+- Improve code formatting consistency
+
+Co-Authored-By: Warp <agent@warp.dev> ([`28eaf0b`](https://github.com/plocher/jBOM/commit/28eaf0b8f205463b62b46c3b7b118f6f8f701f1b))
+
+* fix: remove final f-string placeholder issue
+
+- Convert f-string to plain string where no placeholders are used
+
+Co-Authored-By: Warp <agent@warp.dev> ([`6882e19`](https://github.com/plocher/jBOM/commit/6882e19f88e64f173f0f42146131c1290888e5e9))
 
 ### Features
 
@@ -131,6 +423,442 @@ Co-Authored-By: Warp <agent@warp.dev> ([`43072e2`](https://github.com/plocher/jB
 
 Co-Authored-By: Warp <agent@warp.dev> ([`08e5b27`](https://github.com/plocher/jBOM/commit/08e5b27e7ef17fe4b28dbec66792696dc3ddf650))
 
+* feat: achieve 0 undefined steps - complete BDD foundation
+
+DEFINITION OF DONE ACHIEVED: A solid foundation of test driven- (TDD) and behavioral driven- (BDD) development patterns that will form the basis for continued jBOM evolution.
+
+Final Missing Step Implementations:
+• BOM Domain: Added exclusion verification steps (the BOM excludes R001 and R003, etc)
+• BOM Domain: Added tolerance matching verification (the match uses component value tolerance)
+• POS Domain: Added generic fabricator generation step (When I generate POS with --generic fabricator)
+• Search Domain: Added comprehensive step definitions for all search functionality patterns
+• Global Cleanup: Removed Axiom #4 violations (CLI-specific steps moved from global to domain-specific)
+
+Architecture Compliance Final State:
+• All 6 major domains have complete step definitions: Back-Annotation, BOM, Inventory, Error Handling, POS, Search
+• Domain separation maintained with proper abstraction boundaries per Axiom #13
+• Multi-modal testing applied consistently across all domains per Axiom #4
+• Step parameterization patterns established per Axiom #16
+• YAGNI principle applied: single-feature domains use feature-specific files
+
+BDD Foundation Statistics:
+✅ 0 undefined steps (down from 30)
+✅ 424 total steps implemented
+✅ 82 scenarios across 12 features
+✅ 19 BDD Axioms documented and implemented
+✅ 6 domain-specific step definition packages
+✅ Comprehensive multi-modal testing infrastructure
+
+The established patterns (parameterization, multi-modal testing, domain organization, precondition specification, dynamic test data builders) provide a robust foundation for continued jBOM evolution using BDD principles.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`27a5241`](https://github.com/plocher/jBOM/commit/27a524137d925464ff190da0ce862a35ddd483c0))
+
+* feat: complete Error Handling and POS domains, fix abstraction violations
+
+Major Domain Completion:
+• Error Handling domain: Complete step definitions in error_handling/edge_cases.py
+• POS domain: Complete step definitions in pos/component_placement.py
+• Applied YAGNI principle: Single-feature domains use feature-specific files, not shared.py
+
+Abstraction & Architecture Fixes:
+• Fixed Axiom #13 violation: Moved POS-specific PCB layout step from global shared.py to POS domain
+• Resolved all AmbiguousStep conflicts by removing duplicate/conflicting step definitions
+• Applied proper domain separation per established BDD architecture
+
+AmbiguousStep Conflicts Resolved:
+✅ Inventory package component conflicts (BOM vs Inventory domains)
+✅ KiCad project with PCB file duplicates
+✅ PCB layout fixture conflicts (global vs POS-specific)
+✅ Error handling step pattern conflicts
+
+Architecture Compliance:
+• YAGNI principle: error_handling/shared.py → error_handling/edge_cases.py
+• YAGNI principle: pos/shared.py → pos/component_placement.py
+• Domain separation: POS-specific concepts moved from global to POS domain
+• Step organization follows Axiom #13 with proper domain boundaries
+
+Status: 5 of 6 major domains have step definitions implemented
+Remaining: ~30 undefined steps primarily from Search domain and missing BOM verification steps
+
+Co-Authored-By: Warp <agent@warp.dev> ([`e768894`](https://github.com/plocher/jBOM/commit/e76889427146cc5db42007ab7049e9f8a9e8e875))
+
+* feat: implement Axiom #18 - Dynamic Test Data Builder Pattern
+
+Hybrid Solution for DRY vs. Explicit Preconditions:
+• Background provides base test data foundation that scenarios extend
+• Builder pattern enables dynamic modification/extension of base data
+• Explicit preconditions override or extend Background data as needed
+• Maintains DRY while preserving Axiom #17 explicit precondition benefits
+
+Key Implementation Patterns:
+• Base inventory in Background with standard components
+• Dynamic schematic extension: \"the schematic is extended with component:\"
+• Dynamic inventory modification: \"the inventory is modified to include:\"
+• Dynamic exclusions: \"the inventory excludes exact match for\"
+• Pattern-based exclusions using tables for complex scenarios
+
+Benefits:
+✅ Maintains explicit preconditions (Axiom #17)
+✅ Reduces duplication through base data + extensions
+✅ Enables complex test scenarios with manageable syntax
+✅ Supports both static fixtures and dynamic mocking
+✅ Clear separation between common data and scenario-specific modifications
+
+This resolves the tension between explicit preconditions and DRY principles
+while enabling on-the-fly schematic and inventory mock creation.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`4613f00`](https://github.com/plocher/jBOM/commit/4613f000605d361a84681a335f8186aec32dee94))
+
+* feat: implement Axiom #17 - Complete Precondition Specification
+
+Problem Identified:
+• Original BDD scenarios contained implicit preconditions and assumptions
+• Test scenarios like tolerance matching assumed inventory contents without explicitly setting them
+• Negative test cases did not specify what was absent from inventory
+• This made tests unreliable and hard to debug
+
+Axiom #17 - Complete Precondition Specification:
+• All test preconditions must be explicitly stated in Given steps
+• No implicit assumptions about system state
+• Each scenario must be self-contained and reproducible
+• Negative preconditions must explicitly state what is missing
+• Named fixtures must have documented, predictable contents
+
+Implementation:
+• Added explicit inventory content specification steps with parameterization
+• Created corrected component_matching_corrected.feature demonstrating proper precondition setup
+• Applied parameterization patterns consistent with established BDD architecture
+
+Example Correction:
+BEFORE (implicit): Given schematic contains 1K 0603 resistor → expect 1K1 match
+AFTER (explicit): Given schematic contains 1K 0603 resistor + inventory contains 1k1 0603 + inventory does not contain 1k 0603
+
+This addresses widespread implicit precondition issues across BDD test scenarios
+and establishes clear patterns for explicit test state management.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`01daa36`](https://github.com/plocher/jBOM/commit/01daa36c78289e451b2c1ae7f2276bdf2f78ca5d))
+
+* feat: complete inventory domain BDD step definitions
+
+Major Inventory Domain Implementation:
+• Created comprehensive inventory/shared.py with 60+ parameterized step definitions
+• Added automatic multi-modal testing across CLI, API, and Plugin interfaces
+• Implemented project extraction and search enhancement step patterns
+• Applied Axiom #16 parameterization using {fabricator:w} and {api_key} patterns
+• Resolved AmbiguousStep conflicts by removing hardcoded inventory steps from global shared.py
+
+Architecture & Quality:
+• Applied YAGNI principle - consolidated all inventory steps in shared.py
+• Used {fabricator:w} pattern to prevent AmbiguousStep conflicts
+• Implemented automatic multi-modal validation pattern established in BOM domain
+• Maintained proper domain separation per Axiom #15
+
+BDD Foundation Progress:
+• Back-annotation domain: ✅ Complete (0 undefined steps)
+• BOM domain: ✅ Complete (0 undefined steps)
+• Inventory domain: ✅ Complete (0 undefined steps)
+• Remaining: Error Handling, POS, Search domains
+
+This establishes solid BDD patterns for 3 of 6 major jBOM domains with proven
+parameterization and multi-modal testing architecture.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`925d178`](https://github.com/plocher/jBOM/commit/925d17898100df7d8f1433e073171d9c2d5c8713))
+
+* feat: complete back-annotation step definitions with advanced parameterization
+
+- Add parameterized When steps for all back-annotation commands per Axiom #16
+- Implement fixture-based Given steps for inventory sources
+- Resolve AmbiguousStep conflicts using word boundary constraints ({fabricator:w})
+- Apply proper step ordering (specific patterns before general patterns)
+- Achieve 0 undefined steps for back_annotation.feature (15 → 0)
+- Establish proven parameterization patterns for other domains
+
+Key learnings applied:
+- Use {param:w} for single-word parameters to avoid pattern conflicts
+- Order step definitions from most specific to most general
+- Leverage automatic multi-modal testing across CLI/API/Plugin interfaces
+
+Co-Authored-By: Warp <agent@warp.dev> ([`1b9ef5f`](https://github.com/plocher/jBOM/commit/1b9ef5f9ec763acf1d777654ac145bf53b5e559d))
+
+* feat: enhance BOM feature files for Axiom #13, #14, and #16 compliance
+
+- Update component_matching.feature with behavior-focused scenarios
+- Restructure fabricator_formats.feature to use --generic for primary testing
+- Refactor multi_source_inventory.feature with clear behavioral language
+- Fix priority_selection.feature to follow --generic fabricator pattern
+- Replace hardcoded values with generic test data where appropriate
+- Improve scenario clarity and maintainability per Axiom #14
+- Establish consistent BDD patterns across all BOM functionality
+
+Completes comprehensive BDD foundation for BOM feature testing.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`eca06cd`](https://github.com/plocher/jBOM/commit/eca06cd8dc31686a248b54082fcb42da9a2b3ae7))
+
+* feat: update feature files for Axiom #13 and #14 compliance
+
+- Fix back_annotation.feature to use --generic for standard testing per Axiom #13
+- Consolidate fabricator-specific testing into focused scenarios
+- Update search_enhancement.feature to use parameterized steps
+- Apply behavior-focused language improvements per Axiom #14
+- Remove hardcoded fabricator references in favor of generic testing
+- Maintain fabricator-specific tests only for configuration differences
+
+Establishes proper BDD testing patterns with generic-first approach.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`49519ce`](https://github.com/plocher/jBOM/commit/49519ce3cf75697a58e96ea05c2bab70d9c332b0))
+
+* feat: apply comprehensive parameterization to search step definitions
+
+- Parameterize result counts: "up to 5 parts" → "up to {count:d} parts"
+- Parameterize providers: "Mouser" → "{provider}" for flexible search providers
+- Parameterize component specifications: "{value} {package} {component_type}"
+- Parameterize tolerances and packages for precise parametric search
+- Consolidate hardcoded Given steps into flexible parameterized versions
+- Apply Axiom #16 systematically across all search functionality
+
+Enables flexible search testing across different providers and component types.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`459d544`](https://github.com/plocher/jBOM/commit/459d5445369998829a34524988882ea53a0c0dce))
+
+* feat: add domain-specific parameterized step definitions per Axiom #15 and #16
+
+- Create features/steps/inventory/shared.py with parameterized inventory steps
+- Create features/steps/annotate/shared.py with parameterized annotation steps
+- Apply proper domain organization following Axiom #15 (logical grouping)
+- Implement step parameterization following Axiom #16 (eliminate hardcoded values)
+- Support automatic multi-modal testing across CLI, API, and plugin interfaces
+
+Co-Authored-By: Warp <agent@warp.dev> ([`c0c2a69`](https://github.com/plocher/jBOM/commit/c0c2a6918bc15879cb6dcfcff01ad2bc59709523))
+
+* feat: complete Phase 1 BDD foundation with dynamic step discovery and parameterization
+
+MAJOR BREAKTHROUGH: Establish solid foundation for continued jBOM BDD evolution
+
+Key Achievements (202 → 156 undefined steps, 23% improvement):
+
+## Step Discovery Architecture Fixed
+- Added features/steps/__init__.py with pkgutil dynamic import mechanism
+- Resolves critical subdirectory step definition recognition issue
+- All subdirectory step definitions now properly loaded by behave
+- search_enhancement.feature: 27 → 0 undefined steps (complete success)
+
+## Axiom #16 Parameterization Applied
+- Eliminated hardcoded step duplicates causing AmbiguousStep conflicts
+- component_matching.py: Removed hardcoded "10K 0603 resistor" patterns
+- multi_source_inventory.py: Removed "standard components" duplicate
+- Systematic parameterization: {component}, {provider}, {count:d}, {criteria}
+- Single parameterized step replaces multiple hardcoded variants
+
+## Foundation Quality (All 16 Axioms Applied)
+- Axiom #14: Features focus on behavior over implementation ✅
+- Axiom #16: Systematic hardcoded value elimination ✅
+- Multi-modal testing: Automatic CLI/API/Plugin coverage ✅
+- Fixture-based approach with domain-specific steps ✅
+
+## Technical Infrastructure
+- Proper behave step discovery with dynamic imports
+- Parameterized inventory steps in shared.py (provider, component, criteria)
+- Anti-pattern compliance: Avoided over-parameterization
+- 46 step definitions resolved through architectural improvements
+
+IMPACT: Delivers on original goal - "solid foundation of BDD patterns
+that will form the basis for continued jBOM evolution." Architecture
+now supports systematic completion of remaining 156 undefined steps.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`3a21017`](https://github.com/plocher/jBOM/commit/3a21017d791c7f9b2416f4cfdb0ab5099cdbbd72))
+
+* feat: add initial step definitions for search enhancement
+
+Add partial step definitions to resolve Axiom #12 violations and begin
+comprehensive BDD step definition completion process.
+
+Progress:
+- Added 6 missing @then step definitions for search_enhancement.feature
+- Added fixture-based @given steps to shared.py (BasicComponents, PCB layouts)
+- Added MOUSER_API_KEY environment setup steps
+- Added search-enhanced inventory @when execution steps
+- Added mixed component schematic setup steps
+
+Audit Results:
+- 202 total undefined steps identified across all feature files
+- Search enhancement: 6 of ~12 steps resolved
+- Massive scope requires systematic batch completion approach
+
+Next: Complete step definitions for remaining features in priority order:
+1. Core BOM generation (highest priority)
+2. Inventory and search features
+3. POS and component placement
+4. Error handling and edge cases
+
+Co-Authored-By: Warp <agent@warp.dev> ([`c3baefa`](https://github.com/plocher/jBOM/commit/c3baefa16cc95fe4621ec40e59c3f82b12fdebfa))
+
+* feat: add Axiom #13 - Generic Configuration as BDD Testing Foundation
+
+New Axiom #13 - Generic Configuration as BDD Testing Foundation:
+- Establishes --generic fabricator configuration as primary BDD testing foundation
+- Defines generic.fab.yaml as the stable testing contract between BDD scenarios and jBOM functionality
+- Allows configuration evolution to support new testing requirements
+- Eliminates synthetic field combinations in favor of realistic jBOM usage patterns
+
+Key Principles:
+- Primary Testing: Use --generic unless testing fabricator-specific behavior
+- Configuration Evolution: Update generic.fab.yaml when BDD scenarios need new capabilities
+- Backward Compatibility: Additive changes (new fields) rather than breaking changes
+- Single Source of Truth: Eliminates field duplication across scenarios
+
+Architectural Impact:
+- BDD tests depend on actual jBOM configuration system
+- Changes to testing needs drive configuration evolution
+- Maintains realistic testing that reflects real-world usage
+- Supports maintainable and extensible test architecture
+
+This axiom codifies the architectural insight that emerged from eliminating DRY violations.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`aee346f`](https://github.com/plocher/jBOM/commit/aee346f1527b655aae6d0f47fdaec3b2ee78a6d9))
+
+* feat: update BOM features to comply with Axiom #11 - Explicit Field Specification
+
+component_matching.feature:
+- Add explicit field specification to all scenarios
+- Fields chosen based on scenario purpose (tolerance matching uses Value,Package,IPN,Category)
+- File format scenarios include appropriate fields (MPN,Manufacturer for Excel workflow)
+
+multi_source_inventory.feature:
+- Add field specification appropriate for multi-source testing
+- Distributor filtering scenarios include Distributor,DPN fields
+- Source tracking scenarios include Source field
+- Priority scenarios include Priority field
+
+priority_selection.feature:
+- Add "Reference,Value,Package,IPN,Priority" fields to all priority scenarios
+- Ensures assertions can validate priority selection behavior
+- Edge case scenarios include Priority field for validation
+
+fabricator_formats.feature:
+- Update to use "fabricator-specific fields" pattern
+- Maintains existing excellent fabricator configuration compliance
+- Field specification handled by fabricator configuration system
+
+All BOM scenarios now explicitly specify expected output fields per Axiom #11.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`5aa386f`](https://github.com/plocher/jBOM/commit/5aa386f29640636d3ad6fd6720d8049193231e0b))
+
+* feat: make fabricator configuration dependencies explicit in back_annotation
+
+- Rename first scenario to "Basic back-annotation with JLC part numbers"
+- Add explicit "with JLC fabricator configuration" to When steps
+- Add "(from DPN field)" annotations to show field mapping
+- Add new PCBWay fabricator configuration scenario for contrast
+- Show different property mapping: JLC DPN → LCSC vs PCBWay DPN → PCBWay_PN
+- Include negative test: PCBWay scenario leaves LCSC property empty
+- Update dry-run scenario to specify JLC fabricator configuration
+
+Scenarios now explicitly show fabricator config dependencies instead of hidden assumptions.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`ac22597`](https://github.com/plocher/jBOM/commit/ac22597308dc152c5798f7d27af4af028e6992d6))
+
+* feat: add end-to-end file format workflow scenarios
+
+- Add BDD vs Unit Test distinction to FAULT_TESTING_TODO for proper test architecture
+- Add file format workflow scenarios to component_matching.feature:
+  * KiCad .kicad_sch parsing with Excel inventory
+  * Hierarchical schematic processing with CSV inventory
+  * Mixed file format support (Excel/CSV/Numbers)
+- Add file format workflow scenarios to back_annotation.feature:
+  * KiCad schematic updates from Excel inventory
+  * Hierarchical project back-annotation from Numbers
+  * Mixed inventory sources with conflict resolution
+
+These scenarios test user workflows with real file formats at the BDD level,
+leaving parsing implementation details to unit tests.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`1971044`](https://github.com/plocher/jBOM/commit/19710449731ccffc45bbd51ad00a239ac18604d1))
+
+* feat: add negative test checks to complete priority selection validation
+
+- Ensure all scenarios test both positive (what should be selected) and negative (what should be excluded) cases
+- Add explicit exclusion checks for R002, R003 in 32-bit boundary scenario
+- Add explicit exclusion checks for R001, R003, C001 in non-sequential values scenario
+- Maintain consistent pattern across all priority selection scenarios
+- Prevent false positives by validating correct exclusion behavior
+
+All priority scenarios now comprehensively specify selection and exclusion behavior.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`007cd61`](https://github.com/plocher/jBOM/commit/007cd616443b98fa5c67a81c0593df86d67744f8))
+
+* feat: update priority_selection.feature to use fixture-based approach with edge cases
+
+- Replace inline inventory data with PriorityTest fixture
+- Add explicit scenario for priority 0 edge case validation
+- Use algorithmic assertions for lowest-value-wins behavior
+- Test comprehensive priority ranges: 0, 1, 5, 50, 100
+- Ensure priority 0 is correctly handled as highest priority
+- Remove hardcoded priority value assumptions from assertions
+
+Now tests realistic priority selection with edge cases including valid priority 0.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`0674015`](https://github.com/plocher/jBOM/commit/0674015e465d31ad1e8f94ba2b1fd260b4730d32))
+
+* feat: enhance PriorityTest fixture with edge case priority values
+
+- Add priority 0 as valid minimum priority value (highest priority)
+- Include non-sequential priority values: 0, 1, 5, 50, 100
+- Test both resistor and capacitor components with different priority ranges
+- Ensure comprehensive testing of lowest-value-wins algorithm
+- Cover edge cases that could break priority selection logic
+
+This validates that priority 0 is correctly handled and algorithm works
+with realistic priority value distributions.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`d482f60`](https://github.com/plocher/jBOM/commit/d482f60a50db8822327e105b11d13ab6deac146e))
+
+* feat: establish DRY fixture-based approach for BDD scenarios
+
+- Create comprehensive fixtures system with standard test data
+- Define reusable schematics: BasicComponents, MixedSMDTHT, HierarchicalDesign, EmptySchematic, ComponentProperties
+- Define reusable inventories: JLC_Basic, LocalStock, MixedFabricators, ConflictingIPNs, PriorityTest
+- Define reusable PCBs: BasicPCB, MixedSMDTHT_PCB, DoubleSided_PCB, AuxiliaryOrigin_PCB
+- Update multi_source_inventory.feature to use fixtures instead of inline data tables
+- Establish fixture relationships and usage patterns
+- Document fixture loading approach for step definitions
+
+Benefits:
+- Eliminates DRY violations from duplicate test data across scenarios
+- Single point of maintenance for each test fixture
+- Clear, well-named fixtures that explain test intent
+- Mix-and-match fixtures for different test scenarios
+- Reduces scenario complexity and improves readability
+
+This creates the foundation for maintainable, consistent BDD testing across all jBOM features.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`5a324b5`](https://github.com/plocher/jBOM/commit/5a324b56570691298debce68de537dfdf6e297f1))
+
+* feat: replace hardcoded BOM columns with fabricator config references
+
+- Update fabricator format scenarios to reference config files instead of hardcoded column lists
+- Replace "columns \"Reference,Quantity,DPN...\"" with "columns matching the JLCPCB fabricator configuration"
+- Eliminates maintenance burden of keeping scenarios in sync with config changes
+- Tests now focus on format selection mechanism rather than specific column lists
+- Single source of truth: fabricator configurations define actual columns
+- Add new step definition for config-based column validation
+- Remove obsolete step definition that caused conflicts
+
+This approach makes tests more maintainable and eliminates config-test drift.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`3045df7`](https://github.com/plocher/jBOM/commit/3045df749a51fc24717bf30d6222412c58160f6a))
+
+* feat: complete ultimate DRY multi-modal BDD pattern implementation
+
+- Applied ultimate DRY pattern to all remaining feature files (59 scenarios total)
+- Reduced all scenarios from 6+ lines to 2 lines while maintaining comprehensive coverage
+- Created domain-specific step definitions that automatically test CLI, Python API, and KiCad plugin
+- Achieved zero duplication across entire BDD suite
+- Fixed ambiguous step definition conflicts
+- Feature files now compressed from original verbose format to concise behavioral requirements
+- All scenarios automatically include multi-modal validation without explicit specification
+
+Co-Authored-By: Warp <agent@warp.dev> ([`25e2bdc`](https://github.com/plocher/jBOM/commit/25e2bdc2e5fa52ff674aab1e57da02e097c4da95))
+
 ### Refactoring
 
 * refactor: remove experimental AppleScript automation
@@ -181,6 +909,190 @@ Co-Authored-By: Warp <agent@warp.dev> ([`a65fe0b`](https://github.com/plocher/jB
 - Clean up documentation to remove speculative language
 - Maintain clear provider validation with actionable error messages ([`53e10a5`](https://github.com/plocher/jBOM/commit/53e10a5f073830fa4e74fc218e126bb06cd52cfb))
 
+* refactor: eliminate "because" justifications and add Axiom #19
+
+Editorial Improvements Based on Key Insight:
+• Any urge to write "THEN ... BECAUSE..." indicates incomplete GIVEN or vague WHEN statements
+• Removed unnecessary "due to", "based on", "because" justifications from all BDD scenarios
+• Added Axiom #19: The "Because" Test as core editorial principle
+
+Files Updated:
+✅ BDD_AXIOMS.md - Added Axiom #19 with clear examples
+✅ priority_selection.feature - Cleaned "due to higher priority values"
+✅ component_matching*.feature - Cleaned "based on component value tolerance"
+✅ Updated axiom count from 18 to 19 and expanded checklist
+
+Axiom #19: The "Because" Test
+• Principle: "Because" justifications indicate incomplete preconditions
+• Solution: Improve GIVEN (complete preconditions) and WHEN (clear actions)
+• Application: If you need "because", "due to", or "based on" in THEN, fix GIVEN/WHEN
+
+This creates cleaner, more focused BDD scenarios that rely on proper precondition
+setup rather than outcome justification.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`7962a18`](https://github.com/plocher/jBOM/commit/7962a185274c4ca50695080d1cd493340b77ce11))
+
+* refactor: shorten docstring to improve code readability
+
+• Reduced overly verbose docstring for multi-source BOM step
+• Maintains semantic clarity while improving readability
+• Follows established BDD pattern documentation standards
+
+Co-Authored-By: Warp <agent@warp.dev> ([`ccf5938`](https://github.com/plocher/jBOM/commit/ccf593823f9f45d2168bc40dce6c91fe908d3e83))
+
+* refactor: eliminate over-engineering in annotate domain per YAGNI principle
+
+- Consolidate all steps from annotate/shared.py into annotate/back_annotation.py
+- Remove unnecessary abstraction layer for single-feature domain
+- Apply YAGNI: "You Aren't Gonna Need It" - no sharing needed with only one feature
+- Maintain all parameterization and functionality while simplifying structure
+- Update import paths to reflect consolidated architecture
+
+Rationale: With only back_annotation.feature, shared.py was premature abstraction.
+When multiple annotation features exist, shared.py can be reintroduced for actual sharing.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`fa7456b`](https://github.com/plocher/jBOM/commit/fa7456b9c0e40c4afd21808a6656ccf18860e3c1))
+
+* refactor: resolve step organization anti-patterns and eliminate AmbiguousStep conflicts
+
+- Remove duplicate inventory and annotation steps from global shared.py
+- Consolidate interface-specific steps using parameterization per Axiom #16
+- Eliminate hardcoded steps in favor of parameterized versions
+- Update domain package imports to include shared step modules
+- Apply systematic parameterization to reduce code duplication by ~85 lines
+- Resolve all AmbiguousStep errors through proper domain separation
+
+Fixes step discovery issues and establishes clean domain-specific architecture.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`2f4d280`](https://github.com/plocher/jBOM/commit/2f4d280d4af8bc7f4ac7ca542971589f453402a7))
+
+* refactor: transform POS feature with fabricator-specific rotation testing and technical context
+
+MAJOR ENHANCEMENTS:
+
+1. Technical Context Documentation:
+   - Add comprehensive IPC-7352 rotation standard explanation
+   - Document counter-clockwise rotation direction convention
+   - Explain fabricator-specific rotation correction requirements
+   - Preserve critical domain knowledge about pick-and-place equipment variations
+
+2. Fabricator-Specific Rotation Testing (NEW FEATURE COVERAGE):
+   - JLCPCB rotation corrections: Test 4 cardinal points (0°, 90°, 180°, 270°)
+   - PCBWay rotation corrections: Different mapping (90° → 270°, 270° → 90°)
+   - Edge case visibility for rotation correction algorithms
+   - Prepares for future *.fab.yaml rotation correction configuration
+
+3. BDD Axiom Compliance Fixes:
+   - Replace inline tables with fixture-based approach (Axiom #6)
+     - Use "BasicPCB", "MixedSMDTHT_PCB" PCB layout fixtures
+   - Add --generic fabricator configuration usage (Axiom #13)
+   - Remove "Generate POS via API" violation (Axiom #12)
+   - Add fabricator config in assertions (Axiom #1)
+
+4. Domain-Specific Scenarios:
+   - SMD/THT filtering with fabricator policies
+   - Coordinate system handling (inch/mm, auxiliary origin)
+   - Layer-specific component placement
+
+Key Innovation: Rotation correction tables provide critical edge case visibility
+for the complex fabricator-equipment coordination requirements, while maintaining
+full BDD axiom compliance and preserving essential domain knowledge.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`19d376f`](https://github.com/plocher/jBOM/commit/19d376f0bfe0f4c9b4d93bddf89d9b11f2295d91))
+
+* refactor: transform inventory features to comply with all 13 BDD axioms
+
+project_extraction.feature - Comprehensive fixes:
+- Replace inline tables with fixture-based approach (Axiom #6)
+  - Use "BasicComponents", "ComponentProperties", "HierarchicalDesign" fixtures
+- Add --generic fabricator configuration usage (Axiom #13)
+- Add explicit field specification patterns (Axiom #11)
+- Maintain fabricator config in assertions for distributor scenarios (Axiom #1)
+- Convert to domain-specific steps with automatic multi-modal testing (Axiom #12)
+
+search_enhancement.feature - Systematic improvements:
+- Replace inline tables with fixture-based approach (Axiom #6)
+- Make MOUSER_API_KEY dependency explicit in each scenario (Axiom #10)
+- Add --generic fabricator usage throughout (Axiom #13)
+- Preserve edge case visibility for search failure testing (Axiom #6)
+- Enhance scenario titles for better clarity (Axiom #2)
+- Apply domain-specific steps with multi-modal testing (Axiom #12)
+
+Key transformations:
+- Eliminated DRY violations through fixture usage and generic configuration
+- Made hidden dependencies (API keys) visible in scenario context
+- Leveraged established fabricator configuration system
+- Maintained edge case testing where algorithmically relevant
+- Applied consistent patterns established in BOM features
+
+Both inventory features now fully compliant with all 13 BDD axioms.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`60ec750`](https://github.com/plocher/jBOM/commit/60ec75003d401d3d60100c92541039673784ef83))
+
+* refactor: eliminate DRY violation by using fabricator configurations instead of explicit field lists
+
+generic.fab.yaml updates:
+- Add "Package" field to bom_columns and default preset
+- Now includes all fields needed for testing: Reference, Quantity, Description, Value, Package, Footprint, Manufacturer, Part Number
+
+BDD_AXIOMS.md refinement:
+- Update Axiom #11 to prefer fabricator configurations over explicit field lists
+- Recommend --generic, --jlc, --pcbway etc. instead of manual field specification
+- Reserve explicit fields only for edge cases requiring specific field combinations
+- Follows DRY principle by leveraging existing configuration system
+
+BOM features updated:
+- component_matching.feature: Use --generic fabricator (contains all needed fields)
+- multi_source_inventory.feature: Use --jlc fabricator (tests fabricator filtering)
+- priority_selection.feature: Use minimal "Reference,IPN,Priority" for priority-specific testing
+- fabricator_formats.feature: Already optimal with fabricator-specific fields
+
+Result: Eliminates field list duplication while maintaining test coverage and readability.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`310a6d1`](https://github.com/plocher/jBOM/commit/310a6d18bdea8b3a6e464ead78dc09b883158df0))
+
+* refactor: transform back_annotation.feature to use fixture-based domain-specific steps
+
+- Replace inline data tables with fixture-based approach using established fixtures
+- Use "ComponentProperties", "BasicComponents", "HierarchicalDesign" schematics
+- Use "JLC_Basic", "LocalStock" inventories from fixtures
+- Replace verbose scenario outlines with single scenarios (multi-modal automatic)
+- Apply domain-specific steps that auto-execute CLI, API, Embedded-KiCad validation
+- Follow established BDD axioms: fixtures, fabricator config in assertions, concrete patterns
+- Align with workflow-level file format testing (Excel, Numbers, CSV support)
+- Remove UUID edge case inline tables in favor of reusable step definitions
+
+Scenarios now leverage the sophisticated automatic multi-modal testing architecture.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`d042034`](https://github.com/plocher/jBOM/commit/d0420341dbc5752a8f0179219fa5c762f397c81c))
+
+* refactor: move generic fabricator to standalone config file
+
+- Extract generic fabricator from defaults.yaml to fabricators/generic.fab.yaml
+- Ensures consistent fabricator definition pattern across all fabricators
+- Fix BDD scenario to match actual generic format columns
+- All fabricators now follow same file-based configuration approach
+
+Co-Authored-By: Warp <agent@warp.dev> ([`fb89a69`](https://github.com/plocher/jBOM/commit/fb89a6997b8fe2d562149c351638920ae0f7c3d5))
+
+* refactor: organize BDD steps into structured subdirectories
+
+- Split monolithic 1,232-line common_steps.py into organized modules
+- Created subdirectory structure mirroring features/ organization:
+  * bom/ - Component matching, fabricator formats, multi-source inventory
+  * inventory/ - Project extraction, search enhancement
+  * pos/ - Component placement functionality
+  * search/ - Part search capabilities
+  * annotate/ - Back-annotation features
+  * shared.py - Core multi-modal validation engine and common operations
+  * error_handling.py - Edge cases and error scenarios
+- Each module focuses on domain-specific step definitions
+- Maintained ultimate DRY multi-modal testing pattern
+- Improved maintainability and code organization
+- Ready for Phase 3 step-by-step implementation
+
+Co-Authored-By: Warp <agent@warp.dev> ([`4d2bee0`](https://github.com/plocher/jBOM/commit/4d2bee043063c8476bec87aab9a9733595a5800c))
+
 ### Unknown
 
 * Merge pull request #7 from plocher/feature/inventory-search-automation
@@ -198,6 +1110,115 @@ feat: add inventory search automation with distributor integration ([`fd3db76`](
 Co-Authored-By: Warp <agent@warp.dev> ([`b04a05a`](https://github.com/plocher/jBOM/commit/b04a05aa40b019cae06c0c01fd4863fb16845dcd))
 
 * removed unicode omega ([`ef1421d`](https://github.com/plocher/jBOM/commit/ef1421dcf305a7c80ae672645c6e8136e57181ec))
+
+* enhance: add JLCPCB Reel Zero complexity and per-part rotation requirements
+
+CRITICAL DOMAIN KNOWLEDGE ADDITION:
+
+Technical Context Enhancement:
+- Document KiCad IPC-7352 standard (Pin 1 top-left = 0°)
+- Explain JLCPCB "Reel Zero" problem in detail
+- Clarify why rotation correction is "hard" - not mathematical offset
+
+JLCPCB Reel Zero Challenges:
+- Rotation based on tape/feeder orientation, not IPC standard
+- No consistent rotation offset can be applied across parts
+- Every part requires individual correction per datasheet diagram
+- Same footprint may have different orientations with different reel options
+- Multiple suppliers for same part may require different rotations
+
+Why This Feature Is Complex:
+- Cannot use simple mathematical mapping (KiCad angle + offset)
+- Requires per-part lookup table based on:
+  * Manufacturer Part Number (MPN)
+  * Distributor Part Number (DPN)
+  * Packaging/tape orientation from datasheet
+  * Specific reel/tray configuration
+
+New Test Scenario - Per-Part Complexity:
+- Test same footprints (R_0603_1608) with different MPNs requiring different rotations
+- Demonstrate R1 (MPN: RC0603FR-0710K) vs R2 (MPN: RC0603JR-0710K) rotation differences
+- Show capacitors with same footprint requiring 180° vs 270° corrections
+- Edge case visibility for the most challenging aspect of rotation handling
+
+This enhancement captures the true complexity of fabricator rotation corrections.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`5180a3e`](https://github.com/plocher/jBOM/commit/5180a3e90b2071cb0d8c5a50136a101ab692b0de))
+
+* enhance: add explicit anti-patterns to Axiom #12 to prevent future violations
+
+Added comprehensive violation detection guidance:
+
+Anti-Patterns (❌ WRONG):
+- "Scenario: Generate BOM via API"
+- "When I use the API to generate..."
+- "When I use the CLI to search..."
+- "When I use the KiCad plugin to annotate..."
+
+Correct Patterns (✅ RIGHT):
+- "Scenario: Generate BOM with fabricator configuration"
+- "When I generate BOM with --jlc fabricator..."
+- "When I generate search-enhanced inventory..."
+- "When I run back-annotation with --jlc fabricator..."
+
+Detection Enhancement:
+- Updated checklist item to explicit warning: "NO explicit \"via API\", \"via CLI\", \"through plugin\""
+- Added detailed examples of violations and correct patterns
+- Included step definition implementation context
+- Clear benefits explanation
+
+Prevention Strategy:
+- Explicit red flags to watch for during scenario review
+- Concrete examples of what NOT to do
+- Pattern matching guidance for reviewers
+- Self-documenting anti-pattern detection
+
+This enhancement helps prevent Axiom #12 violations before they occur.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`902187d`](https://github.com/plocher/jBOM/commit/902187ddebcf089b4adde130aba0531e6b614ab8))
+
+* improve: enhance caching scenario with concrete API call verification
+
+Replace timing-based caching test with robust API traffic verification:
+
+Before - Timing-based (unreliable):
+- "Then the second run uses cached results and completes faster than the first run"
+- Depends on timing measurements which can be inconsistent
+
+After - API Traffic-based (concrete):
+- Set MOUSER_API_KEY to NULL after first run to prevent API access
+- Verify cache works by confirming no API errors when key unavailable
+- "Then the second run uses cached results, does not generate API errors or API traffic and completes successfully"
+
+Benefits:
+- Concrete, verifiable behavior rather than timing comparison
+- Tests actual caching mechanism vs API dependency
+- Eliminates timing-based test flakiness
+- Provides clear pass/fail criteria for cache functionality
+- Aligns with testable, concrete behavior patterns (Axiom #2)
+
+Co-Authored-By: Warp <agent@warp.dev> ([`7e40fee`](https://github.com/plocher/jBOM/commit/7e40fee30f40d98a166c9ac3fdf9d63a75a9b8a7))
+
+* refine: update BDD axioms for edge case visibility and explicit field specification
+
+Axiom #6 Refinement - Fixture-Based Approach with Edge Case Visibility:
+- Inline tables acceptable for edge case visibility (1.1K → 1K1 tolerance matching)
+- Inline tables acceptable for algorithmic demonstration and priority edge cases
+- Fixtures remain preferred for reusable standard component/inventory sets
+- Clarifies when each approach is appropriate
+
+New Axiom #11 - Explicit Field Specification for BOM Testing:
+- BOM scenarios MUST specify expected output fields in WHEN clause
+- Pattern: "When I generate a BOM with fields \"Value,Package,DPN,Priority\""
+- Ensures assertions can validate against specific columns
+- Prevents test failures from missing expected fields
+- Supports fabricator-specific field sets
+
+Renumbers Multi-Modal Testing to Axiom #12 and updates checklist accordingly.
+
+These refinements address real-world BDD needs while maintaining axiom integrity.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`3564db8`](https://github.com/plocher/jBOM/commit/3564db80eb1cfbf45ef8c0abda20a618d0183993))
 
 
 ## v3.5.0 (2025-12-21)
