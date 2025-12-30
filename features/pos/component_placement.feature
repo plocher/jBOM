@@ -34,7 +34,7 @@ Feature: Component Placement (POS/CPL) Generation
   #
   # FABRICATOR-SPECIFIC ROTATION CORRECTIONS:
   # These corrections must be defined in *.fab.yaml configuration files:
-  # - Generic: Standard IPC-7352 reference (Pin 1 top-left = 0°)
+  # - Generic: Standard IPC-7352 reference (Pin 1 top-left = 0 degrees)
   # - JLCPCB: Per-part "Reel Zero" corrections (requires part-specific lookup)
   # - PCBWay: Equipment-specific mathematical offset corrections
   #
@@ -45,7 +45,7 @@ Feature: Component Placement (POS/CPL) Generation
   #   * Shows complexity of maintaining part-specific rotation database
   #
   # TESTING REQUIREMENTS:
-  # - Test cardinal points (0°, 90°, 180°, 270°) for mathematical corrections
+  # - Test cardinal points (0, 90, 180, 270) for mathematical corrections
   # - Test specific parts with known problematic reel orientations
   # - Test same footprint with different packaging orientations
   # - Test integration with external rotation correction databases

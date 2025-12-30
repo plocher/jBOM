@@ -10,7 +10,7 @@ Different PCB fabricators use different rotation standards for their pick-and-pl
 
 ### Technical Complexity
 
-1. **KiCad Standard**: Follows IPC-7352 (Pin 1 in top-left, 0° reference)
+1. **KiCad Standard**: Follows IPC-7352 (Pin 1 in top-left, 0 degrees reference)
 2. **JLCPCB "Reel Zero"**: Rotation based on tape/feeder orientation, not IPC standard
 3. **Per-Part Variations**: Rotation complexity varies by component type:
    - **Passive Components (R, C)**: Generally consistent per footprint
@@ -139,7 +139,7 @@ class RotationCorrector:
 ## Testing Requirements
 
 ### BDD Scenarios (Already Implemented)
-- ✅ Cardinal rotation testing (0°, 90°, 180°, 270°)
+- ✅ Cardinal rotation testing (0, 90, 180, 270 degrees)
 - ✅ Fabricator-specific rotation corrections (JLCPCB vs PCBWay)
 - ✅ Per-part complexity with same footprint, different rotations
 
