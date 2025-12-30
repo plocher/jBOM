@@ -6,31 +6,44 @@ Feature: Back-Annotation
   Background:
     Given a KiCad project named "SimpleProject"
 
-  Scenario: Basic back-annotation with part numbers
+  Scenario: Basic back-annotation with JLC part numbers
     Given the schematic has components with UUIDs
       | Reference | UUID                                 | LCSC | MPN |
       | R1        | 12345678-1234-1234-1234-123456789012 | ""   | ""  |
       | C1        | 87654321-4321-4321-4321-210987654321 | ""   | ""  |
-    And an inventory file with complete distributor and manufacturer data
+    And a JLC inventory file with distributor data
       | UUID                                 | IPN  | Value | Distributor | DPN    | Manufacturer | MPN            |
       | 12345678-1234-1234-1234-123456789012 | R001 | 10K   | JLC         | C25804 | YAGEO        | RC0603FR-0710K |
       | 87654321-4321-4321-4321-210987654321 | C001 | 100nF | JLC         | C14663 | YAGEO        | CC0603KRX7R9BB |
-    When I run back-annotation
+    When I run back-annotation with JLC fabricator configuration
+    Then component R1 has LCSC property set to "C25804" (from DPN field)
     And component R1 has MPN property set to "RC0603FR-0710K"
     And component R1 has Manufacturer property set to "YAGEO"
-    And component C1 has LCSC property set to "C14663"
+    And component C1 has LCSC property set to "C14663" (from DPN field)
     And component C1 has MPN property set to "CC0603KRX7R9BB"
     And component C1 has Manufacturer property set to "YAGEO"
     And the schematic file modification time is updated
+
+  Scenario: Back-annotation with PCBWay fabricator configuration
+    Given the schematic has components with UUIDs
+      | Reference | UUID                                 | LCSC | PCBWay_PN |
+      | R1        | 12345678-1234-1234-1234-123456789012 | ""   | ""        |
+    And a PCBWay inventory file with distributor data
+      | UUID                                 | Distributor | DPN        | MPN            |
+      | 12345678-1234-1234-1234-123456789012 | PCBWay      | PWR-10K603 | RC0603FR-0710K |
+    When I run back-annotation with PCBWay fabricator configuration
+    Then component R1 has PCBWay_PN property set to "PWR-10K603" (from DPN field)
+    And component R1 has MPN property set to "RC0603FR-0710K"
+    And component R1 still has empty LCSC property
 
   Scenario: Dry-run back-annotation for preview
     Given the schematic has components with UUIDs
       | Reference | UUID                                 | LCSC |
       | R1        | 12345678-1234-1234-1234-123456789012 | ""   |
-    And an inventory file with updated information
-      | UUID                                 | DPN    | MPN            |
-      | 12345678-1234-1234-1234-123456789012 | C25804 | RC0603FR-0710K |
-    When I run back-annotation with --dry-run flag
+    And a JLC inventory file with updated information
+      | UUID                                 | Distributor | DPN    | MPN            |
+      | 12345678-1234-1234-1234-123456789012 | JLC         | C25804 | RC0603FR-0710K |
+    When I run back-annotation with --dry-run flag and JLC fabricator configuration
     Then the output shows "Would update R1: LCSC = C25804, MPN = RC0603FR-0710K"
     And the schematic file modification time is unchanged
     And component R1 still has empty LCSC property
