@@ -29,7 +29,8 @@ Feature: Priority Selection
       | R002  | RES      | 10K   | 0603    | 2147483647  |
       | R003  | RES      | 10K   | 0603    | 4294967295  |
     When I generate a BOM
-    Then the BOM selects R001 with priority 1 over large integer priorities
+    Then the BOM contains R1 matched to R001 with priority 1
+    And the BOM excludes R002 and R003 due to higher priority values
 
   Scenario: Priority selection with non-sequential values
     Given a schematic with components
@@ -45,7 +46,9 @@ Feature: Priority Selection
       | C002  | CAP      | 100nF | 0603    | 0        |
     When I generate a BOM
     Then the BOM contains R1 matched to R002 with priority 1
+    And the BOM excludes R001 and R003 due to higher priority values
     And the BOM contains C1 matched to C002 with priority 0
+    And the BOM excludes C001 due to higher priority value
 
   Scenario: Priority rejects malformed spreadsheet data
     Given a schematic with components
