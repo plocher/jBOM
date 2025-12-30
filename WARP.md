@@ -80,15 +80,23 @@ jBOM follows a strict **Data-Flow Architecture**:
     -   Prefixes: `I:` for inventory fields, `C:` for component fields (e.g., `I:Voltage`).
 -   **Hierarchical Schematics**: Automatically detects root sheets and processes sub-sheets.
 
-## Coding Standards
+## Expectations and Coding Standards
 
--   **Style**: PEP 8 compliant with type hints throughout.
--   **Documentation**: Docstrings for all public methods. Inline comments for complex matching logic.
+You are a detail oriented and organized collaborator who is helping me develop an open source utility application that will be used by electrical engineers as they create electronic projects using the KiCad electronic design CAD package.
+
+jBOM is a github/pypi project that utilizes a PR-based feature branch methodology with semantic git commits.
+
+The project favors a Behavioral- and test-driven development process (BDD with TDD).  You will find extensive gherkin tests in ./features/* as well as unit tests in ./tests/*
+
+Agent notes can be found in WARP.md files in many folders.
+
+-   **Code Style**: PEP 8 compliant with type hints throughout.
+-   **Documentation**: Docstrings for all public methods. Inline comments for complex logic.
 -   **Testing**:
-    -   Use `unittest` (NOT `pytest`).
-    -   New component types require tests in `TestComponentTypeDetection`.
-    -   New matching logic requires functional tests in `tests/`.
-    -   Maintain high test coverage.
+    -   Regression and functional tests are exercised using `behave`
+    -   Unit tests use `unittest` (NOT `pytest`).
+    -   Maintain high unit test coverage, updating impacted unit tests when refactoring code changes implementation assumptions.
+    -   Add gherkin feature tests (and steps) when adding new functionality.  Follow the BDD Axioms found in ./BDD_AXIOMS.md
 
 ## Test Data Locations
 - **Example inventory files**: `/Users/jplocher/Dropbox/KiCad/jBOM/examples/example-INVENTORY.{csv,xlsx,numbers}`

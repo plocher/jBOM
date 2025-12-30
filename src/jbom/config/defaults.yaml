@@ -15,35 +15,8 @@ fabricators:
   - name: "Seeed"
     file: "fabricators/seeed.fab.yaml"
 
-  # Generic fabricator for custom use
   - name: "Generic"
-    id: "generic"
-    description: "Generic fabricator template"
-    dynamic_name: true
-    name_source: "manufacturer"
-    part_number:
-      header: "Part Number"
-      priority_fields:
-        - "Part Number"
-        - "P/N"
-        - "MPN"
-        - "MFGPN"
-    bom_columns:
-      "Reference": "reference"
-      "Quantity": "quantity"
-      "Description": "description"
-      "Part Number": "fabricator_part_number"
-    presets:
-      default:
-        description: "Generic BOM format"
-        fields:
-          - "reference"
-          - "quantity"
-          - "description"
-          - "fabricator_part_number"
-    cli_aliases:
-      flags: ["--generic"]
-      presets: ["+generic"]
+    file: "fabricators/generic.fab.yaml"
 
 global_presets:
   standard:
