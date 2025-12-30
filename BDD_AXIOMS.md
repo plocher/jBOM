@@ -145,27 +145,34 @@ Then the BOM selects parts with priority 1 over parts with priority 2 and 3
 ### 11. Explicit Field Specification for BOM Testing
 **Axiom**: BOM scenarios MUST explicitly specify which fields are expected in the output to ensure assertions can be validated.
 
-**Pattern**: Include field specification in WHEN clause:
+**Preferred Pattern - Use Fabricator Configurations**:
 ```gherkin
-When I generate a BOM with fields "Value,Package,DPN,Priority"
+When I generate a BOM with --generic fabricator
 Then the BOM contains R1 matched to R001 with priority 0
 ```
 
+**Alternative Pattern - Explicit Fields** (use sparingly):
+```gherkin
+When I generate a BOM with fields "Value,Package,Priority"
+Then the BOM excludes R002 due to higher priority
+```
+
 **Rationale**:
-- Assertions need specific fields to validate against
-- Different fabricators use different field sets
-- Explicit field specification makes scenario behavior predictable
-- Prevents assertions from failing due to missing expected columns
+- **DRY Principle**: Leverage existing fabricator configurations instead of repeating field lists
+- **Generic Configuration**: Use `--generic` with standard fields (Reference, Quantity, Description, Value, Package, Footprint, Manufacturer, Part Number)
+- **Fabricator-Specific**: Use `--jlc`, `--pcbway`, etc. for fabricator-specific field sets
+- **Custom Fields**: Only specify explicit fields when testing edge cases requiring specific field combinations
 
 **Examples**:
 ```gherkin
-# Edge case testing with specific fields
-When I generate a BOM with fields "Reference,Value,Package,IPN,Priority"
-Then the BOM excludes R002 and R003 due to higher priority values
+# Standard testing - use fabricator configs
+When I generate a BOM with --generic fabricator
 
-# Fabricator-specific field sets
-When I generate a JLC BOM with fields "Reference,Value,LCSC,MPN"
-Then the BOM contains components with LCSC part numbers
+# Priority testing - generic includes all needed fields
+When I generate a JLC BOM with --jlc fabricator
+
+# Edge case - only when specific field combination needed
+When I generate a BOM with fields "Reference,Priority" for priority-only validation
 ```
 
 ### 12. Multi-Modal Testing Coverage
