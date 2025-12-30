@@ -68,18 +68,6 @@ def step_then_back_annotation_updates_schematic_with_fields(context, field_list)
         ), f"{method} back-annotation with {field_list} failed"
 
 
-@then("the back-annotation updates schematic with {information_types}")
-def step_then_back_annotation_updates_schematic_with_info_types(
-    context, information_types
-):
-    """Verify schematic updates with parameterized information types across all usage models automatically."""
-    context.execute_steps("When I validate annotation across all usage models")
-    for method, result in context.results.items():
-        assert (
-            result["exit_code"] == 0
-        ), f"{method} back-annotation with {information_types} failed"
-
-
 @then("the updates match the {fabricator} fabricator configuration")
 def step_then_updates_match_fabricator_configuration(context, fabricator):
     """Verify updates match parameterized fabricator configuration across all usage models automatically."""
