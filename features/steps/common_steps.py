@@ -366,6 +366,38 @@ def step_when_validate_across_all_models(context):
         }
 
 
+@when("I validate {operation} across all usage models")
+def step_when_validate_operation_across_models(context, operation):
+    """Execute any operation across CLI, API, and plugin models."""
+    methods = ["CLI", "Python API", "KiCad plugin"]
+    context.results = {}
+
+    for method in methods:
+        # Execute the specified operation with current method
+        if operation == "BOM generation":
+            context.execute_steps(f"When I generate BOM using {method}")
+        elif operation == "POS generation":
+            context.execute_steps(f"When I generate POS using {method}")
+        elif operation == "inventory extraction":
+            context.execute_steps(f"When I generate inventory using {method}")
+        else:
+            raise ValueError(f"Unknown operation: {operation}")
+
+        # Store results
+        context.results[method] = {
+            "exit_code": context.last_command_exit_code,
+            "output_file": getattr(
+                context,
+                "bom_output_file",
+                getattr(
+                    context,
+                    "pos_output_file",
+                    getattr(context, "inventory_output_file", None),
+                ),
+            ),
+        }
+
+
 @then("all usage models produce consistent results")
 def step_then_all_models_consistent(context):
     """Verify all usage models produced the same results."""
@@ -385,3 +417,27 @@ def step_then_all_models_consistent(context):
 
     # TODO: Add content comparison in Phase 3 implementation
     # For now, just verify all methods executed successfully
+
+
+# Convenience step for when you only need to test specific modes
+@when("I test {operation} using {methods}")
+def step_when_test_operation_using_methods(context, operation, methods):
+    """Test operation using specified methods (comma-separated)."""
+    method_list = [method.strip() for method in methods.split(",")]
+    context.results = {}
+
+    for method in method_list:
+        if operation == "BOM generation":
+            context.execute_steps(f"When I generate BOM using {method}")
+        elif operation == "POS generation":
+            context.execute_steps(f"When I generate POS using {method}")
+        else:
+            raise ValueError(f"Unknown operation: {operation}")
+
+        # Store results
+        context.results[method] = {
+            "exit_code": context.last_command_exit_code,
+            "output_file": getattr(
+                context, "bom_output_file", getattr(context, "pos_output_file", None)
+            ),
+        }
