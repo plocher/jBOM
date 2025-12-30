@@ -55,12 +55,8 @@ def step_given_fixture_schematic(context, fixture_name):
     pass
 
 
-@given('the "{fixture_name}" PCB layout')
-def step_given_fixture_pcb_layout(context, fixture_name):
-    """Set up a PCB layout using a named fixture."""
-    # TODO: Implement fixture-based PCB setup in Phase 3
-    context.fixture_name = fixture_name
-    pass
+# NOTE: PCB layout step moved to POS domain per Axiom #13
+# PCB layouts are POS-domain specific, not cross-domain
 
 
 @given('the "{fixture_name}" inventory')

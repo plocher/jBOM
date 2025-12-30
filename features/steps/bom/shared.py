@@ -174,8 +174,8 @@ def step_given_inventory_does_not_contain_value_components(
     pass
 
 
-@given("the inventory does not contain any {package} package components")
-def step_given_inventory_does_not_contain_package_components(context, package):
+@given("the inventory does not contain any components with {package:w} package")
+def step_given_inventory_does_not_contain_components_with_package(context, package):
     """Explicitly specify inventory lacks all components of specific package (Axiom #17)."""
     # TODO: Implement package-wide absence setup in Phase 3
     if not hasattr(context, "explicit_inventory_absences"):
