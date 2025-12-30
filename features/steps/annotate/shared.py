@@ -6,11 +6,53 @@ annotation features following Axiom #15 (logical grouping by domain)
 and Axiom #16 (parameterization).
 """
 
-from behave import then
+from behave import when, then
 
 
 # =============================================================================
-# Parameterized Back-Annotation Step Definitions (Axiom #16)
+# Parameterized Back-Annotation When Steps (Axiom #16)
+# =============================================================================
+
+
+# Order matters: More specific patterns must come before general ones to avoid AmbiguousStep
+@when("I run back-annotation with --dry-run and --{fabricator} fabricator")
+def step_when_run_back_annotation_dry_run_with_fabricator(context, fabricator):
+    """Run dry-run back-annotation with parameterized fabricator across all usage models automatically.
+
+    This step MUST be defined before the general fabricator step to avoid AmbiguousStep conflicts.
+    """
+    context.execute_steps("When I validate annotation across all usage models")
+    # Store dry-run and fabricator for verification in Then steps
+    context.annotation_mode = "dry-run"
+    context.annotation_fabricator = fabricator
+
+
+@when("I run back-annotation with --{fabricator:w} fabricator")
+def step_when_run_back_annotation_with_fabricator(context, fabricator):
+    """Run back-annotation with parameterized fabricator (single word) across all usage models automatically.
+
+    Uses {fabricator:w} to match single words only, avoiding conflicts with multi-word patterns.
+    """
+    context.execute_steps("When I validate annotation across all usage models")
+    # Store the fabricator for verification in Then steps
+    context.annotation_fabricator = fabricator
+
+
+@when(
+    'I run back-annotation with --fields "{field_list}" only and --{fabricator} fabricator'
+)
+def step_when_run_back_annotation_with_fields_and_fabricator(
+    context, field_list, fabricator
+):
+    """Run back-annotation with parameterized field list and fabricator across all usage models automatically."""
+    context.execute_steps("When I validate annotation across all usage models")
+    # Store field list and fabricator for verification in Then steps
+    context.annotation_field_list = field_list
+    context.annotation_fabricator = fabricator
+
+
+# =============================================================================
+# Parameterized Back-Annotation Then Steps (Axiom #16)
 # =============================================================================
 
 

@@ -63,6 +63,23 @@ def step_given_fixture_pcb_layout(context, fixture_name):
     pass
 
 
+@given('the "{fixture_name}" inventory')
+def step_given_fixture_inventory(context, fixture_name):
+    """Set up an inventory using a named fixture."""
+    # TODO: Implement fixture-based inventory setup in Phase 3
+    context.inventory_fixture = fixture_name
+    pass
+
+
+@given("an Excel inventory file with complete distributor data")
+def step_given_excel_inventory_complete_distributor_data(context):
+    """Set up Excel inventory file with complete distributor data."""
+    # TODO: Implement Excel inventory setup in Phase 3
+    context.inventory_file_type = "Excel"
+    context.inventory_completeness = "complete_distributor_data"
+    pass
+
+
 @given("the MOUSER_API_KEY environment variable is available for distributor search")
 def step_given_mouser_api_key_available(context):
     """Set up Mouser API key for distributor search."""
