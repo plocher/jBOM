@@ -178,6 +178,61 @@ When I generate a BOM with fields "Reference,Priority" for priority-only validat
 ### 12. Multi-Modal Testing Coverage
 **Axiom**: All core functionality MUST be tested across three execution contexts: CLI, API, and Embedded-KiCad.
 
+**Three Execution Contexts**:
+1. **CLI**: Command-line interface (`jbom bom --jlc`)
+2. **API**: Python API (`BackAnnotationAPI.update()`)
+3. **Embedded-KiCad**: Plugin/integration within KiCad environment
+
+**Automatic Multi-Modal Pattern** (Domain-Specific Steps):
+```gherkin
+Scenario: Back-annotation with JLC parts
+  Given the "BasicComponents" schematic
+  And the "JLC_Basic" inventory
+  When I run back-annotation with --jlc fabricator
+  Then component R1 has LCSC property set to "C25804"
+```
+
+**Step Definition Implementation**:
+```python
+@then('component R1 has LCSC property set to "{value}"')
+def step_component_has_property(context, value):
+    # Auto-execute multi-modal validation
+    context.execute_steps("When I validate behavior across all usage models")
+    # Then verify the specific behavior across CLI, API, Embedded-KiCad
+```
+
+**❌ ANTI-PATTERNS - Do NOT specify execution context in scenarios**:
+```gherkin
+# WRONG - Violates Axiom #12
+Scenario: Generate BOM via API
+  When I use the API to generate BOM...
+
+Scenario: Search enhancement via CLI
+  When I use the CLI to search...
+
+Scenario: Back-annotation through plugin
+  When I use the KiCad plugin to annotate...
+```
+
+**✅ CORRECT PATTERNS - Let domain-specific steps handle multi-modal testing**:
+```gherkin
+# CORRECT - Tests all execution contexts automatically
+Scenario: Generate BOM with fabricator configuration
+  When I generate BOM with --jlc fabricator...
+
+Scenario: Search enhancement with caching
+  When I generate search-enhanced inventory...
+
+Scenario: Back-annotation with part updates
+  When I run back-annotation with --jlc fabricator...
+```
+
+**Benefits**:
+- **Automatic**: No need for Scenario Outlines or manual repetition
+- **DRY**: Single scenario tests all three execution paths
+- **Transparent**: Step definitions handle multi-modal execution invisibly
+- **Complete Coverage**: Every assertion automatically validates all usage models
+
 ### 13. Generic Configuration as BDD Testing Foundation
 **Axiom**: BDD tests SHOULD depend on and use the `--generic` fabricator configuration as the primary testing foundation. The generic configuration CAN and SHOULD be updated as necessary to support axiom-adherent features and scenarios.
 
@@ -251,7 +306,7 @@ When reviewing/creating BDD scenarios, verify:
 - [ ] Distributor filtering logic correct (Axiom #9)
 - [ ] All dependencies visible (Axiom #10)
 - [ ] Explicit field specification for BOM output (Axiom #11)
-- [ ] Multi-modal coverage: CLI, API, Embedded-KiCad (Axiom #12)
+- [ ] Multi-modal coverage: NO explicit "via API", "via CLI", "through plugin" in scenarios (Axiom #12)
 - [ ] Generic configuration as primary testing foundation (Axiom #13)
 
 ## Files Requiring Review
