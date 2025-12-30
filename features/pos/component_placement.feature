@@ -5,26 +5,41 @@ Feature: Component Placement (POS/CPL) Generation
 
   # TECHNICAL CONTEXT - Component Rotation Standards:
   #
-  # IPC-7352 defines the standard for zero degrees orientation, specifying where Pin 1 should be located.
-  # Rotation == 0 represents the position of the part when picked up by the pick-and-place machine
-  # from the distributor's bulk delivery media (reel or tray).
+  # IPC-7352 STANDARD:
+  # - Defines zero degrees orientation with Pin 1 in top-left position
+  # - KiCad libraries follow this standard (pin 1 in top left)
+  # - Rotation == 0 represents standard IPC component orientation
   #
   # Component rotation angles generally increase in a counter-clockwise direction.
   #
-  # CRITICAL: Different manufacturing equipment uses proprietary or slightly different internal
-  # rotation standards. It is essential to provide comprehensive documentation and coordinate
-  # with your assembly house. The pick-and-place machine's program will use your design's
-  # centroid file and adjust rotations as needed to match its physical setup.
+  # FABRICATOR ROTATION COMPLEXITY:
+  #
+  # JLCPCB "REEL ZERO" PROBLEM:
+  # - JLCPCB defines rotation based on how the component sits in the tape/feeder
+  # - This is intuitive but creates major challenges:
+  #   * No consistent rotation can be automatically applied across parts
+  #   * Every part needs individual rotation correction per datasheet diagram
+  #   * Same package/footprint may have different orientations with different tape/reel options
+  #   * Multiple suppliers for same part may require different rotations
+  #
+  # WHY THIS FEATURE IS "HARD":
+  # - Cannot use simple mathematical rotation mapping (KiCad angle + offset)
+  # - Requires per-part lookup table based on:
+  #   * Manufacturer Part Number (MPN)
+  #   * Supplier/Distributor Part Number (DPN)
+  #   * Packaging/tape orientation from datasheet
+  #   * Specific reel/tray configuration
   #
   # FABRICATOR-SPECIFIC ROTATION CORRECTIONS:
-  # Each fabricator may require different rotation mappings from KiCad's internal rotation
-  # to their pick-and-place equipment. These corrections are defined in the *.fab.yaml
-  # configuration files and must be tested for the 4 cardinal points: 0°, 90°, 180°, 270°.
+  # These corrections must be defined in *.fab.yaml configuration files:
+  # - Generic: Standard IPC-7352 reference (Pin 1 top-left = 0°)
+  # - JLCPCB: Per-part "Reel Zero" corrections (requires part-specific lookup)
+  # - PCBWay: Equipment-specific mathematical offset corrections
   #
-  # Example rotation corrections:
-  # - JLCPCB: May use 1:1 mapping (KiCad 90° → JLCPCB 90°)
-  # - PCBWay: May use different mapping (KiCad 90° → PCBWay 270°)
-  # - Generic: Standard IPC-7352 reference orientation
+  # TESTING REQUIREMENTS:
+  # - Test cardinal points (0°, 90°, 180°, 270°) for mathematical corrections
+  # - Test specific parts with known problematic reel orientations
+  # - Test same footprint with different packaging orientations
 
   Background:
     Given a KiCad project named "SimpleProject" with a PCB file
@@ -54,6 +69,17 @@ Feature: Component Placement (POS/CPL) Generation
       | R2        | 270            | 90                       | R_0603_1608 |
     When I generate PCBWay format POS with fabricator-specific rotations
     Then the POS contains rotation corrections matching the PCBWay fabricator configuration
+
+  Scenario: Handle JLCPCB per-part reel orientation complexity
+    Given a PCB with same footprints but different reel orientations
+      | Reference | Footprint   | MPN            | DPN    | KiCad_Rotation | Expected_JLCPCB_Reel_Rotation |
+      | R1        | R_0603_1608 | RC0603FR-0710K | C25804 | 0              | 0                             |
+      | R2        | R_0603_1608 | RC0603JR-0710K | C25805 | 0              | 90                            |
+      | C1        | C_0603_1608 | CC0603KRX7R9BB | C14663 | 90             | 180                           |
+      | C2        | C_0603_1608 | CC0603MRX5R8BB | C14664 | 90             | 270                           |
+    When I generate JLCPCB format POS with per-part reel corrections
+    Then the POS contains part-specific rotation corrections based on MPN and DPN lookup
+    And the POS shows different rotations for same footprint with different reel orientations
 
   Scenario: Filter SMD components only
     Given the "MixedSMDTHT_PCB" PCB layout
