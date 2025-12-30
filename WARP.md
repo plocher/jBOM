@@ -4,19 +4,49 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 
 # jBOM Project Guidance
 
-jBOM is a sophisticated KiCad Bill of Materials generator in Python. It matches schematic components against inventory files (CSV, Excel, Numbers) to produce fabrication-ready BOMs with supplier-neutral designs and flexible output customization.
+jBOM is a sophisticated KiCad Bill of Materials generator in Python. It matches schematic components against inventory files (CSV, Excel, Numbers) to produce fabrication-ready BOMs and CPLs with supplier-neutral designs and flexible output customization.
 
-## Common Commands
+## Expectations for agents
 
-### Development & Testing
-- **Run all unit tests**: `make unit` or `python -m unittest discover -s tests -v`
+### Feature based development & testing
+- Utilize a plan + task list based workflow with explicit review and approval before embarking on any implementation work.
+- Follow a Behavior-Driven Development pattern to gather and validate functional requirements, then use them to create functional tests that will be used for Test Driven Development.
+- Functional tests are used to validate and verify that the project behaves according to its requirements.
+    - Functional tests are only allowed to change when functional requirements change.
+- Unit tests are used to validate and verify proper implementation behaviors.
+    - Unit tests must be updated, deleted and created as necessary whenever refactoring or feature additions causes changes to the implementation code base.
+- The repo's main branch is expected to be production quality at all times. To ensure all work begins on a solid foundation, run all tests on newly created branchs.
+    - If any tests fail, some previous activity wasn't performed according to these rules, the code base is not in a deterministic state, and new work can not start. Report all failed tests and stop.
+- The development of a new feature (or mofification of an existing one) is not complete until all  all functional and unit tests pass.
+
+#### Adding new features
+- Use Gherkin Behavior-Driven Development (BDD) framework to capture Feature requirements as a set of Scenarios using nouns and verbs from the project's functional vocabulary.
+- Use Cucumber to create step definitions that support the Gherkin Scenarios
+- Keep Gherkin Scenerios and Cucubmer step definitions high-level and focused on requirements
+- Unit tests are the place where implementation details are tested.
+- Present a review of, and obtain approval for any new features or changes to an existing feature.
+- Once a Feature's Scenerios and Step Definitions have been reviewed and approved
+    - Use them to create a suite of functional tests.
+    - Proceeed with the plan's task list
+
+#### Refactoring or Modifying an existing feature
+- Review and understand all the requirements and behavior of the project before attempting to modify it.
+- Existing requirements and functional tests may not be changed; unit tests impacted by implementation changes must be updated to match.
+- **Run all unit tests when changes are made**: `make unit` or `python -m unittest discover -s tests -v`
+      - Fix all issues detected: In general, presume the unit tests are correct
 - **Run full test suite (including integration)**: `make test`
 - **Run a specific test module**: `python -m unittest tests.test_jbom -v`
 - **Run a specific test class**: `python -m unittest tests.test_jbom.TestBOMGenerator -v`
 - **Install for development**: `pip install -e .[dev,all]`
 - **Clean artifacts**: `make clean`
 
-### Version Control & Release
+
+
+### Development expectations
+
+- All project development activities shall use git branching, semantic commits, github Pull Request and ci/cd release flow best practices.
+
+#### Version Control & Release
 - **Commit Messages**: MUST follow **Conventional Commits** (`feat:`, `fix:`, `chore:`, `docs:`, etc.) to trigger automated semantic versioning.
   - Example: `git commit -m 'feat: add support for new inventory format'`
   - **Important**: Use **single quotes** for commit messages to avoid shell expansion issues (especially with `!`).

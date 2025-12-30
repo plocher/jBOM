@@ -16,6 +16,7 @@ from jbom.loaders.inventory import InventoryLoader
 from jbom.processors.annotator import SchematicAnnotator
 from jbom.common.generator import GeneratorOptions
 from jbom.processors.inventory_matcher import InventoryMatcher
+from jbom.processors.inventory_enricher import InventoryEnricher
 from jbom.search import SearchResult
 from jbom.search.mouser import MouserProvider
 from jbom.search.filter import SearchFilter
@@ -56,6 +57,21 @@ class POSOptions:
     layer_filter: Optional[str] = None  # "TOP" or "BOTTOM"
     fields: Optional[List[str]] = None
     fabricator: Optional[str] = None
+
+
+@dataclass
+class InventoryOptions:
+    """Options for inventory generation with search enrichment"""
+
+    # Search options
+    search: bool = False
+    provider: str = "mouser"
+    api_key: Optional[str] = None
+    limit: int = 1
+    interactive: bool = False
+
+    # Output options
+    fields: Optional[List[str]] = None
 
 
 def generate_bom(
@@ -154,7 +170,10 @@ def search_parts(
     if provider == "mouser":
         prov = MouserProvider(api_key=api_key)
     else:
-        raise ValueError(f"Unknown provider: {provider}")
+        raise ValueError(
+            f"Unsupported search provider: '{provider}'. "
+            f"Currently supported providers: 'mouser'."
+        )
 
     results = prov.search(query, limit=limit)
 
@@ -327,3 +346,269 @@ def generate_pos(
     result = generator.run(input=input, output=output)
 
     return result
+
+
+def generate_enriched_inventory(
+    *,
+    input: Union[str, Path],
+    output: Optional[Union[str, Path]] = None,
+    options: Optional[InventoryOptions] = None,
+) -> Dict[str, Any]:
+    """Generate enriched inventory with automated search integration.
+
+    Args:
+        input: Path to KiCad project directory or .kicad_sch file
+        output: Optional output path. If None, returns data without writing file.
+                Special values: "-" or "stdout" for stdout, "console" for formatted table
+        options: Optional InventoryOptions for customization
+
+    Returns:
+        Dictionary containing:
+        - inventory_items: List of InventoryItem objects
+        - field_names: List of field names
+        - component_count: Number of components processed
+        - search_stats: Search statistics (if search enabled)
+        - components: Original Component objects
+
+    Examples:
+        >>> # Basic inventory generation (no search)
+        >>> result = generate_enriched_inventory(input="MyProject/")
+
+        >>> # With search enrichment
+        >>> opts = InventoryOptions(search=True, provider="mouser", limit=1)
+        >>> result = generate_enriched_inventory(
+        ...     input="MyProject/",
+        ...     output="enriched_inventory.csv",
+        ...     options=opts
+        ... )
+
+        >>> # Multiple candidates per component
+        >>> opts = InventoryOptions(
+        ...     search=True,
+        ...     provider="mouser",
+        ...     limit=3,
+        ...     api_key="your_key"
+        ... )
+        >>> result = generate_enriched_inventory(input="MyProject/", options=opts)
+    """
+    opts = options or InventoryOptions()
+
+    # 1. Load components from project
+    # Use BOMGenerator's input discovery logic
+    matcher = InventoryMatcher(None)
+    generator = BOMGenerator(matcher, GeneratorOptions())
+
+    try:
+        input_path = generator.discover_input(Path(input))
+        components = generator.load_input(input_path)
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Error loading project: {e}",
+            "inventory_items": [],
+            "field_names": [],
+            "component_count": 0,
+            "search_stats": {},
+        }
+
+    if not components:
+        return {
+            "success": False,
+            "error": "No components found in project.",
+            "inventory_items": [],
+            "field_names": [],
+            "component_count": 0,
+            "search_stats": {},
+        }
+
+    # 2. Generate inventory (with or without search enrichment)
+    if opts.search:
+        # Create search provider
+        if opts.provider == "mouser":
+            try:
+                search_provider = MouserProvider(api_key=opts.api_key)
+            except ValueError as e:
+                return {
+                    "success": False,
+                    "error": f"Search provider error: {e}",
+                    "inventory_items": [],
+                    "field_names": [],
+                    "component_count": 0,
+                    "search_stats": {},
+                }
+        else:
+            return {
+                "success": False,
+                "error": (
+                    f"Unsupported search provider: '{opts.provider}'. "
+                    f"Currently supported providers: 'mouser'."
+                ),
+                "inventory_items": [],
+                "field_names": [],
+                "component_count": 0,
+                "search_stats": {},
+            }
+
+        # Use InventoryEnricher for search-enhanced generation
+        enricher = InventoryEnricher(
+            components=components,
+            search_provider=search_provider,
+            limit=opts.limit,
+            interactive=opts.interactive,
+        )
+
+        try:
+            inventory_items, field_names = enricher.enrich()
+
+            search_stats = {
+                "searches_performed": enricher.search_count,
+                "successful_searches": enricher.successful_searches,
+                "failed_searches": enricher.failed_searches,
+                "provider": opts.provider,
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"Error during search enrichment: {e}",
+                "inventory_items": [],
+                "field_names": [],
+                "component_count": 0,
+                "search_stats": {},
+            }
+    else:
+        # Use ProjectInventoryLoader for basic inventory generation
+        from jbom.loaders.project_inventory import ProjectInventoryLoader
+
+        loader = ProjectInventoryLoader(components)
+        inventory_items, field_names = loader.load()
+
+        search_stats = {"search_enabled": False}
+
+    # 3. Handle output
+    if output:
+        try:
+            _write_inventory_output(inventory_items, field_names, output)
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"Error writing output: {e}",
+                "inventory_items": inventory_items,
+                "field_names": field_names,
+                "component_count": len(components),
+                "search_stats": search_stats,
+            }
+
+    return {
+        "success": True,
+        "inventory_items": inventory_items,
+        "field_names": field_names,
+        "component_count": len(components),
+        "search_stats": search_stats,
+        "components": components,
+    }
+
+
+def _write_inventory_output(
+    inventory_items: List[Any], field_names: List[str], output: Union[str, Path]
+) -> None:
+    """Write inventory items to specified output format."""
+    import sys
+
+    output_str = str(output)
+
+    if output_str in ["-", "stdout"]:
+        # Write to stdout
+        _write_inventory_csv(inventory_items, field_names, sys.stdout)
+    elif output_str == "console":
+        # Print formatted table to console
+        _print_inventory_table(inventory_items, field_names)
+    else:
+        # Write to file
+        output_path = Path(output)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        with open(output_path, "w", newline="", encoding="utf-8") as f:
+            _write_inventory_csv(inventory_items, field_names, f)
+
+
+def _write_inventory_csv(
+    inventory_items: List[Any], field_names: List[str], file
+) -> None:
+    """Write inventory items as CSV."""
+    import csv
+
+    writer = csv.writer(file)
+    writer.writerow(field_names)
+
+    for item in inventory_items:
+        row = []
+        for field_name in field_names:
+            # Get value from item attribute or raw_data
+            val = ""
+            field_lower = field_name.lower()
+            if hasattr(item, field_lower):
+                val = getattr(item, field_lower)
+            elif (
+                hasattr(item, "raw_data")
+                and item.raw_data
+                and field_name in item.raw_data
+            ):
+                val = item.raw_data[field_name]
+            elif field_name == "UUID":
+                val = getattr(item, "uuid", "")
+            elif field_name == "Distributor_Part_Number":
+                val = getattr(item, "distributor_part_number", "")
+            row.append(str(val) if val is not None else "")
+        writer.writerow(row)
+
+
+def _print_inventory_table(inventory_items: List[Any], field_names: List[str]) -> None:
+    """Print inventory items as formatted table."""
+    if not inventory_items:
+        print("No inventory items found.")
+        return
+
+    # Select key fields for console display
+    display_fields = [
+        "IPN",
+        "Value",
+        "Package",
+        "Category",
+        "Manufacturer",
+        "MFGPN",
+        "Priority",
+    ]
+    available_fields = [f for f in display_fields if f in field_names]
+
+    if not available_fields:
+        available_fields = field_names[:6]  # Show first 6 fields
+
+    print(f"Generated {len(inventory_items)} inventory items:")
+    print("-" * 100)
+
+    # Print header
+    header = " | ".join(f"{field:<15}" for field in available_fields)
+    print(header)
+    print("-" * len(header))
+
+    # Print rows
+    for item in inventory_items[:20]:  # Limit to 20 rows for console
+        values = []
+        for field_name in available_fields:
+            field_lower = field_name.lower()
+            if hasattr(item, field_lower):
+                val = getattr(item, field_lower)
+            else:
+                val = ""
+            # Truncate long values
+            val_str = str(val) if val else ""
+            if len(val_str) > 14:
+                val_str = val_str[:12] + ".."
+            values.append(val_str)
+
+        row = " | ".join(f"{val:<15}" for val in values)
+        print(row)
+
+    if len(inventory_items) > 20:
+        print(f"... and {len(inventory_items) - 20} more items")
+    print("-" * 100)

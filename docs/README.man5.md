@@ -97,6 +97,67 @@ Each row represents one stocked component. Columns define the component's attrib
 **Description**
 : Human-readable description (330Ω 5% 0603 resistor, 100nF X7R ceramic capacitor, etc.).
 
+
+### Desired Schema
+These are the core inventory fields used by jBOM
+- general
+    - `IPN` Inventory Part Number - a user-provided value used for individual inventory management.  While an IPN can be used in a Component's IPN field, jBOM exists to decouple the schematic's electronics design from the practical beancounter work of actually producing the product.
+    - `Name` (Optional) A concise and useful way to identify an inventory item.  Often derived via a formula from other item details
+    - `Category` Component categories refer to an item's functional category (like Resistor, Capacitor, IC), also indicated by a standard reference designator prefix (R, C, U) and its schematic symbol.  In jBOM, they are used as search terms:
+    ```python
+    type_keywords = {
+        "RES": "resistor",
+        "CAP": "capacitor",
+        "IND": "inductor",
+        "LED": "LED",
+        "DIO": "diode",
+        "IC": "IC",
+        "Q": "transistor",
+        "REG": "regulator",
+        "CON": "connector",
+        "MCU": "microcontroller",
+        "RLY": "relay",
+        "SWI": "switch",
+    }
+    ```
+    - `SMD` - Is this item a surface mount device?  Values of 'TRUE', '1', 'YES', 'SMD' are affirmative, while 'FALSE', '0', 'NO', and 'PTH' are negative.
+    - `Value` The core electrical property (like 10kΩ for a resistor or 10µF for a capacitor) or its specific part number (for ICs), defining what the component does
+    - `Type` Many items are available in multiple types - capacitors are X75, X5R, Electrolytic, while resistors may be thin or thick film, wirewound. Diodes may be silicon, germanium, schottkey or zener.
+    - `Description` a detailed account, using words to paint a picture of an item, that collects the electrical details to help the reader (or search engine) uniquely identify it.  Good descriptions are often found on data sheets
+    - `Symbol` The KiCad symbol associated with this item
+    - `Footprint` The KiCad Foortprint associated with this item
+    - `Priority` Inventories often contain multiple items that can be used for a particular component.  Older -vs- newer batches, different locations, cost basis or availability.  When multiple items satisfy a component match, the one with the lowest priority is used.
+    - `Manufacturer` The manufacturing source for this item
+    - `MPN` (Optional) a manufacturer part number
+    - `MPNLink` (Optional) a URL for a manufacturer-provided product information page
+    - `Datasheet` (Optional) a URL for a manufacturer-provided data sheet
+
+- manufacturer- and distributor-specific
+    - `Distributer` Where the item is purchased from
+    - `DPN` The part number used by that distributer
+    - `DPNLink` A URL for a distributer-provided product information page
+
+- optional details, not all will be applicable for every item.  These are often attributes (5v regulator) or limits (25v capacitor) associated with the item
+    - `Tolerance` - usually a percentage, color-band or letter indicating the precision required
+    - `V` Voltage associated with this item
+    - `A` Amperage or Current
+    - `W` Watts or Power
+    - `Angle` LED beam angles are measured in degrees
+    - `Wavelength` LED wavelengths are measured in nanometers (nm), covering Ultraviolet (<400nm), Visible (400-780nm), and Infrared (>780nm), with specific colors like red (620-750nm), green (500-570nm) and blue (450-495nm)
+    - `mcd` Mcd measures the intensity of light in a focused beam or specific direction, typically straight ahead from the LED.  Many LEDs provide a mcd value instead of lumens
+    - `lumens`  LED brightness is measured in lumens (lm), indicating total light output (more lumens = brighter)
+    - `Frequency` Associated with crystals and resonators
+    - `Stability` - thermal drift, RF stability to avoid self-oscillation
+    - `Form` Connector shape, switch configuration, size
+    - `Pins` pin count for connectors and switches
+    - `Pitch` lead spacing
+    - `Package` physical size - 0603, 0402 for SMT components, SOIC-24 or DIP-16 for ICs or SOT-23 and TO-220 for transistor
+
+
+
+
+
+
 ## FIELD NAMING CONVENTIONS
 
 Column names are case-insensitive and flexible:
