@@ -754,7 +754,7 @@ def step_then_error_message_suggests(context, suggestion):
 
 
 @given(
-    'a KiCad project named "{project_name}" with root schematic referencing sub-sheet "{subsheet_name}"'
+    'a hierarchical KiCad project named "{project_name}" with root schematic referencing sub-sheet "{subsheet_name}"'
 )
 def step_given_hierarchical_kicad_project(context, project_name, subsheet_name):
     """Create a hierarchical KiCad project with root schematic referencing a sub-sheet."""

@@ -93,7 +93,7 @@ Feature: Error Handling and Edge Cases
     And the error message suggests "Please check your internet connection and try again"
 
   Scenario: Hierarchical schematic with missing sub-sheet file
-    Given a KiCad project named "HierarchicalProject" with root schematic referencing sub-sheet "PowerSupply.kicad_sch"
+    Given a hierarchical KiCad project named "HierarchicalProject" with root schematic referencing sub-sheet "PowerSupply.kicad_sch"
     And the root schematic contains components:
       | Reference | Value | Footprint |
       | R1        | 10k   | R_0805    |
