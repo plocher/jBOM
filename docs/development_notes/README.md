@@ -9,16 +9,20 @@ This directory contains internal development notes, TODOs, and design documents 
 - **BEHAVE_SUBDIRECTORY_LOADING.md** - Technical solution for behave step definition loading from subdirectories
 
 ### Development TODOs and Planning
-- **TODO** - Current development tasks and priorities
-- **FABRICATOR_ROTATION_TODO.md** - Fabricator rotation feature planning
-- **FAULT_TESTING_TODO.md** - Fault testing implementation notes
+- **development_tasks.md** - Master task list and BDD implementation roadmap (was TODO)
 
 ### Requirements Documentation
-- **requirements.inventory.md** - Inventory system requirements
-- **requirements.step3.5.md** - Step 3.5 development requirements
-- **requirements.step4.md** - Step 4 development requirements
-- **requirements.fab_integration.md** - Fabricator integration requirements
-- **requirements.step6_fab_integration.md** - Step 6 fabricator integration requirements
+
+#### Completed Requirements (`completed/`)
+- **inventory_management_requirements.md** - Inventory system requirements (✅ Completed - Steps 1-3.5)
+- **federated_inventory_requirements.md** - Multi-source inventory support (✅ Completed)
+
+#### Active Requirements (`active/`)
+- **back_annotation_requirements.md** - Back-annotation to KiCad schematics (Step 4)
+- **fabrication_platform_requirements.md** - Complete fabrication automation platform
+- **fabricator_integration_requirements.md** - Multi-fabricator support (Step 6)
+- **component_rotation_correction_requirements.md** - Pick-and-place rotation corrections per fabricator
+- **comprehensive_fault_testing_requirements.md** - Edge case and fault tolerance testing strategy
 
 ### Testing and Validation
 - **sample_detailed_validation_report.txt** - Sample validation report format
@@ -27,6 +31,11 @@ This directory contains internal development notes, TODOs, and design documents 
 ## Organization
 
 These files are organized here to keep the project root directory clean while maintaining easy access for developers. Most of these documents are working notes and planning materials that support the development process but are not needed by end users.
+
+### Structure
+- **`completed/`** - Historical requirements documents for features that have been fully implemented
+- **`active/`** - Current requirements and planning documents for features under development
+- **Root level** - Development infrastructure, TODOs, and cross-cutting concerns
 
 ## Moving Forward
 
