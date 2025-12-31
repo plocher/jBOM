@@ -9,6 +9,32 @@ from behave import given, then
 
 
 # =============================================================================
+# Fundamental BDD Step Definitions (Missing from shared.py)
+# =============================================================================
+
+
+@given('a KiCad project named "{project_name}"')
+def step_given_kicad_project_named(context, project_name):
+    """Create a KiCad project with the specified name."""
+    context.project_name = project_name
+    context.project_dir = context.scenario_temp_dir / project_name
+    context.project_dir.mkdir(parents=True, exist_ok=True)
+
+    # Create a basic KiCad project file
+    project_file = context.project_dir / f"{project_name}.kicad_pro"
+    project_file.write_text('{\n  "board": {\n    "design_rules": {}\n  }\n}')
+
+    context.project_path = str(project_file)
+
+
+# NOTE: Inventory file creation step is defined in shared.py to avoid domain conflicts
+
+
+# NOTE: Generic BOM generation step is defined in bom/shared.py to avoid conflicts
+# The shared step uses parameters {project} and {inventory} instead of {project_name} and {inventory_file}
+
+
+# =============================================================================
 # Component Matching Domain-Specific Steps (Ultimate DRY Solution)
 # =============================================================================
 

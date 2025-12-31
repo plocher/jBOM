@@ -145,6 +145,23 @@ def step_given_inventory_file_with_components(context):
         context.inventory_data = None
 
 
+@given('an inventory file "{filename}" containing components')
+def step_given_inventory_file_containing_components(context, filename):
+    """Create an inventory file with the specified components (shared across domains)."""
+    inventory_path = context.scenario_temp_dir / filename
+
+    # Write CSV inventory file
+    with open(inventory_path, "w", newline="") as csvfile:
+        if context.table:
+            fieldnames = context.table.headings
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+            for row in context.table:
+                writer.writerow(row.as_dict())
+
+    context.inventory_path = str(inventory_path)
+
+
 @given("the schematic contains standard components")
 def step_given_schematic_contains_standard_components(context):
     """Set up a schematic with standard components."""

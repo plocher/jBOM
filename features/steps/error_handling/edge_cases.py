@@ -633,25 +633,8 @@ def step_given_empty_kicad_project(context, project_name):
     context.test_schematic_file = schematic_file
 
 
-@given('an inventory file "{filename}" containing components')
-def step_given_inventory_file_with_components_table(context, filename):
-    """Create an inventory CSV file with components from the table."""
-    # Extract headers and data from the table
-    headers = [cell for cell in context.table.headings]
-
-    # Create CSV with headers and data rows
-    inventory_path = context.scenario_temp_dir / filename
-    with open(inventory_path, "w", newline="") as csvfile:
-        import csv
-
-        writer = csv.writer(csvfile)
-        writer.writerow(headers)
-
-        # Write data rows
-        for row in context.table:
-            writer.writerow([row[header] for header in headers])
-
-    context.inventory_file = inventory_path
+# NOTE: Inventory file creation step moved to shared.py to avoid conflicts
+# This step is now available from the shared module for all domains
 
 
 @then("the BOM file contains header row but no data rows")
