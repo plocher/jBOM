@@ -4,10 +4,11 @@ This document captures the established axioms and patterns that MUST be consiste
 
 ## Axiom Organization
 
-The 19 axioms are organized by priority:
+The 23 axioms are organized by priority:
 - **Foundational Axioms (1-6)**: Essential principles for all scenarios
 - **Quality Axioms (7-12)**: Ensuring robustness and reliability
 - **Advanced Patterns (13-19)**: Optimizing maintainability and reusability
+- **Precision Patterns (20-23)**: Eliminating ambiguity and value judgments
 
 ---
 
@@ -258,6 +259,152 @@ And the BOM excludes R002 due to higher priority values
 
 ---
 
+## Precision Patterns (20-23) ⭐ NEW
+*Eliminating ambiguity and value judgments discovered during Error Handling domain implementation*
+
+### Axiom #20: Named References Over Implicit Context
+**Principle**: Use explicit named references for test artifacts to eliminate ambiguity about which inputs are being used.
+
+**✅ Explicit Named References**:
+```gherkin
+Given a KiCad project named "SimpleProject"
+And an inventory named "InvalidInventory"
+And the inventory contains:
+  | InvalidColumn | AnotherBadColumn |
+  | data1         | data2            |
+When I generate a generic BOM with SimpleProject and InvalidInventory
+```
+
+**❌ Implicit Context** (Violates Axiom #17):
+```gherkin
+Given a KiCad project named "SimpleProject"
+And an inventory file with invalid format
+When I generate a BOM with --generic fabricator
+# Which project? Which inventory? Ambiguous!
+```
+
+**Benefits**:
+- ✅ No ambiguity about inputs
+- ✅ Explicit binding between Given and When steps
+- ✅ Supports multiple projects/inventories in complex scenarios
+- ✅ Makes test maintenance easier
+
+### Axiom #21: Descriptive Content Over Value Judgments
+**Principle**: Describe what data contains rather than labeling it as "valid" or "invalid" - avoid value judgments in test specifications.
+
+**✅ Descriptive Content**:
+```gherkin
+And an inventory file contains:
+  | InvalidColumn | AnotherBadColumn |
+  | data1         | data2            |
+```
+
+**❌ Value Judgments**:
+```gherkin
+And an inventory file with invalid format
+# "Invalid" according to whom? For what purpose?
+```
+
+**Key Insight**: There's no universal "valid format" - validity depends on context and use case. What's "invalid" for one fabricator might be perfectly valid for another.
+
+**Benefits**:
+- ✅ Eliminates assumptions about correctness
+- ✅ Focuses on concrete data rather than judgments
+- ✅ More maintainable when requirements change
+- ✅ Reduces cognitive bias in test design
+
+### Axiom #22: Complete Expected Output Specification
+**Principle**: When testing data transformation, specify the complete expected output structure, including empty fields, to validate graceful handling of missing data.
+
+**✅ Complete Output Specification**:
+```gherkin
+Then the BOM contains:
+  | Reference | Quantity | Description | Value | Package | Footprint | Manufacturer | Part Number |
+  | R1        | 1        |             | 10k   |         |           |              |             |
+  | C1        | 1        |             | 100nF |         |           |              |             |
+```
+
+### Axiom #23: KiCad Project/Schematic Architecture Distinction ⭐ NEW
+**Principle**: Respect the actual KiCad architecture where projects contain schematics, not components. Use proper project/schematic separation in test specifications.
+
+**✅ Correct KiCad Architecture**:
+```gherkin
+Given a KiCad project named "PowerSupply"
+And the project uses a schematic named "MainBoard"
+And the "MainBoard" schematic contains components:
+  | Reference | Value | Footprint   | LibID |
+  | R1        | 10K   | R_0603_1608 | Device:R |
+```
+
+**❌ Incorrect Architecture**:
+```gherkin
+Given a KiCad project named "PowerSupply" containing components:
+  | Reference | Value | Footprint   | LibID |
+  | R1        | 10K   | R_0603_1608 | Device:R |
+# Projects don't contain components - schematics do!
+```
+
+**Actual File Structure**:
+```
+some_directory/
+└── PowerSupply/
+    ├── PowerSupply.kicad_pro     # Project file
+    ├── PowerSupply.kicad_pcb     # PCB layout (optional)
+    └── MainBoard.kicad_sch       # Schematic file
+```
+
+**Hierarchical Project Benefits**:
+```gherkin
+Given a KiCad project named "ComplexBoard"
+And the project uses a schematic named "MainBoard"
+And the project uses a schematic named "PowerSupply"
+And the project uses a schematic named "AnalogSection"
+And the "MainBoard" schematic contains components:
+  | Reference | Value | Footprint |
+  | U1        | MCU   | QFP64     |
+And the "PowerSupply" schematic contains components:
+  | Reference | Value | Footprint |
+  | U2        | VREG  | SOT23     |
+And the "AnalogSection" schematic contains components:
+  | Reference | Value | Footprint |
+  | U3        | OPAMP | SOIC8     |
+When I generate a generic BOM for ComplexBoard using inventory.csv
+Then the BOM file contains components from all schematic files
+And component quantities are correctly aggregated across all schematics
+```
+
+**Key Benefits**:
+- ✅ Accurate representation of KiCad architecture
+- ✅ Enables testing hierarchical designs with explicit component placement
+- ✅ Supports multiple schematics per project testing
+- ✅ Allows testing edge cases like missing sub-schematics
+- ✅ Reflects real-world KiCad project organization
+
+**❌ Partial Output Specification**:
+```gherkin
+Then the BOM contains components from the schematic:
+  | Reference | Quantity | Value |
+  | R1        | 1        | 10k   |
+  | C1        | 1        | 100nF |
+# What about the other fields? Are they empty? Default values?
+```
+
+**Benefits**:
+- ✅ Tests graceful degradation behavior
+- ✅ Validates complete output structure
+- ✅ Makes empty field handling explicit
+- ✅ Documents expected behavior for missing data
+- ✅ Matches fabricator configuration exactly
+
+**Application Example**:
+When inventory lacks required columns, the BOM should still be generated with:
+- ✅ Data from schematic (Reference, Value)
+- ✅ Calculated fields (Quantity)
+- ✅ Empty cells for unavailable data (Manufacturer, Part Number)
+- ✅ All expected columns present (per fabricator config)
+
+---
+
 ## Application Checklist
 
 When reviewing/creating BDD scenarios, verify:
@@ -287,6 +434,11 @@ When reviewing/creating BDD scenarios, verify:
 - [ ] Dynamic test data builder used (Axiom #18)
 - [ ] No "because" justifications in THEN statements (Axiom #19)
 
+### Precision (Eliminating ambiguity):
+- [ ] Named references used over implicit context (Axiom #20)
+- [ ] Descriptive content over value judgments (Axiom #21)
+- [ ] Complete expected output specification (Axiom #22)
+
 ---
 
 ## Implementation Status
@@ -297,7 +449,7 @@ When reviewing/creating BDD scenarios, verify:
 ✅ **Inventory**: Complete (0 undefined steps)
 
 ### Remaining Work:
-🚧 **Error Handling**: ~27 step definitions needed
+✅ **Error Handling**: Infrastructure complete, behavior review needed (10 discrepancies documented)
 🚧 **POS Component Placement**: ~40 step definitions needed
 🚧 **Search**: Integrated with inventory domain
 
@@ -307,5 +459,14 @@ When reviewing/creating BDD scenarios, verify:
 - Domain-specific organization following Axiom #13
 - AmbiguousStep conflict resolution
 - Dynamic test data builder pattern (Axiom #18)
+- Named reference system (Axiom #20)
+- Concrete test vector implementation (Axiom #2, #21, #22)
+- Behavior vs infrastructure separation methodology
 
-**Definition of Done**: Solid foundation of TDD and BDD development patterns achieved for 3 of 6 major jBOM domains, with proven architecture for remaining domains.
+### Key Discoveries:
+- **Precision Patterns (Axioms 20-22)**: Eliminate ambiguity and value judgments
+- **Behavior Discovery Process**: Systematic identification of expected vs actual behavior
+- **Multi-Modal Success Criteria**: Different success indicators for CLI/API/Plugin
+- **Graceful Degradation vs Fail Fast**: Design philosophy implications for user experience
+
+**Definition of Done**: Solid foundation of TDD and BDD development patterns achieved for 4 of 6 major jBOM domains, with proven architecture and enhanced axioms for remaining domains.
