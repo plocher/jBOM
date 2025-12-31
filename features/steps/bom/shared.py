@@ -138,7 +138,7 @@ def step_given_multiple_inventory_sources(context):
     pass
 
 
-@given("a schematic with components")
+@given("a schematic with components:")
 def step_given_schematic_with_components(context):
     """Set up schematic with components from table data."""
     # TODO: Implement schematic component setup in Phase 3

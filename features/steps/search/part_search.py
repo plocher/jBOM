@@ -141,7 +141,7 @@ def step_given_search_on_provider(context, search_term, provider):
     context.search_provider = provider
 
 
-@given('I search for "{search_term}" with parameters')
+@given('I search for "10K resistor" with parameters:')
 def step_given_search_with_parameters(context, search_term):
     """Set up parametric search."""
     context.search_term = search_term

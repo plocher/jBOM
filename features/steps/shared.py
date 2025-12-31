@@ -145,7 +145,7 @@ def step_given_inventory_file_with_components(context):
         context.inventory_data = None
 
 
-@given('an inventory file "{filename}" containing components')
+@given('an inventory file "{filename}" containing components:')
 def step_given_inventory_file_containing_components(context, filename):
     """Create an inventory file with the specified components (shared across domains)."""
     inventory_path = context.scenario_temp_dir / filename
@@ -357,6 +357,29 @@ def step_when_validate_across_all_models(context):
         }
 
 
+@when("I validate annotation across all usage models")
+def step_when_validate_annotation_across_models(context):
+    """Execute annotation validation across CLI, API, and plugin models."""
+    methods = ["CLI", "Python API", "KiCad plugin"]
+    context.results = {}
+
+    for method in methods:
+        # Execute annotation using each method
+        context.execute_steps(f"When I perform annotation using {method}")
+
+        # Store results for this method
+        context.results[method] = {
+            "exit_code": getattr(context, "last_command_exit_code", 0),
+            "output_file": getattr(context, "annotation_output_file", None),
+            "annotation_results": getattr(context, "annotation_results", None),
+        }
+
+
+# Annotation-specific method steps are handled by the generic pattern:
+# @when("I perform {operation} using {interface}") at line 235
+# This avoids AmbiguousStep conflicts while providing the same functionality
+
+
 @when("I validate {operation} across all usage models")
 def step_when_validate_operation_across_models(context, operation):
     """Execute any operation across CLI, API, and plugin models."""
@@ -449,7 +472,7 @@ def step_when_test_operation_using_methods(context, operation, methods):
 # =============================================================================
 
 
-@given("I test with existing inventory files in all formats")
+@given("I test with existing inventory files in all formats:")
 def step_given_test_with_inventory_files_all_formats(context):
     """Set up testing with all supported inventory formats (shared by BOM and ANNOTATE domains)."""
     import shutil
@@ -479,7 +502,7 @@ def step_given_test_with_inventory_files_all_formats(context):
         )
 
 
-@given("I use multiple existing inventory files")
+@given("I use multiple existing inventory files:")
 def step_given_use_multiple_existing_inventory_files(context):
     """Set up multiple existing inventory files for multi-format workflows."""
     import shutil
