@@ -1,20 +1,19 @@
 """
 BDD step definitions package for jBOM.
 
-This module dynamically imports all step definitions from subdirectories
-to make them available to behave's step discovery mechanism.
+This module imports all step definitions from subdirectories using
+explicit imports to ensure behave can find them.
 """
 
-import os
-import pkgutil
+# Import all step definitions explicitly using * imports
+# This is the recommended approach for behave with subdirectories
 
-__all__ = []
+# Import shared step definitions
+from .shared import *  # noqa: F403,F401
 
-# Define the path to search within the current directory
-PATH = [os.path.dirname(__file__)]
+# Import BOM domain step definitions
+from .bom.component_matching import *  # noqa: F403,F401
+from .bom.multi_format_support import *  # noqa: F403,F401
 
-# Dynamically import all modules found in subdirectories
-for loader, module_name, is_pkg in pkgutil.walk_packages(PATH):
-    __all__.append(module_name)
-    _module = loader.find_module(module_name).load_module(module_name)
-    globals()[module_name] = _module
+# Import error handling domain step definitions
+from .error_handling.edge_cases import *  # noqa: F403,F401

@@ -10,7 +10,10 @@ jBOM is a sophisticated KiCad Bill of Materials generator in Python. It matches 
 
 ### Feature based development & testing
 - Utilize a plan + task list based workflow with explicit review and approval before embarking on any implementation work.
-- Follow a Behavior-Driven Development pattern to gather and validate functional requirements, then use them to create functional tests that will be used for Test Driven Development.
+- When adding new features and capabilities to jBOM,
+    - we use a Behavior-Driven Development pattern to gather and validate functional requirements, then
+    - we use these requirements to create gherkin feature tests and associated step definitions that will be used for Test Driven Development.
+    - Use the axioms found in ./BDD_AXIOMS.md for guidance.
 - Functional tests are used to validate and verify that the project behaves according to its requirements.
     - Functional tests are only allowed to change when functional requirements change.
 - Unit tests are used to validate and verify proper implementation behaviors.
@@ -40,20 +43,6 @@ jBOM is a sophisticated KiCad Bill of Materials generator in Python. It matches 
 - **Install for development**: `pip install -e .[dev,all]`
 - **Clean artifacts**: `make clean`
 
-
-
-### Development expectations
-
-- All project development activities shall use git branching, semantic commits, github Pull Request and ci/cd release flow best practices.
-
-#### Version Control & Release
-- **Commit Messages**: MUST follow **Conventional Commits** (`feat:`, `fix:`, `chore:`, `docs:`, etc.) to trigger automated semantic versioning.
-  - Example: `git commit -m 'feat: add support for new inventory format'`
-  - **Important**: Use **single quotes** for commit messages to avoid shell expansion issues (especially with `!`).
-  - **Breaking Changes**: Use `feat!:` or include `BREAKING CHANGE:` in the footer.
-- **Pre-commit Hooks**: This repo uses pre-commit hooks (flake8, etc.). If a hook modifies a file, you must `git add` the file again and retry the commit.
-- **File Operations**: Use `git mv`, `git rm`, `git add` to track changes properly.
-
 ## Architecture Overview
 
 jBOM follows a strict **Data-Flow Architecture**:
@@ -80,16 +69,7 @@ jBOM follows a strict **Data-Flow Architecture**:
     -   Prefixes: `I:` for inventory fields, `C:` for component fields (e.g., `I:Voltage`).
 -   **Hierarchical Schematics**: Automatically detects root sheets and processes sub-sheets.
 
-## Expectations and Coding Standards
-
-You are a detail oriented and organized collaborator who is helping me develop an open source utility application that will be used by electrical engineers as they create electronic projects using the KiCad electronic design CAD package.
-
-jBOM is a github/pypi project that utilizes a PR-based feature branch methodology with semantic git commits.
-
-The project favors a Behavioral- and test-driven development process (BDD with TDD).  You will find extensive gherkin tests in ./features/* as well as unit tests in ./tests/*
-
-Agent notes can be found in WARP.md files in many folders.
-
+## Coding Standards
 -   **Code Style**: PEP 8 compliant with type hints throughout.
 -   **Documentation**: Docstrings for all public methods. Inline comments for complex logic.
 -   **Testing**:

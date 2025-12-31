@@ -16,11 +16,121 @@ from behave import given, when, then
 # =============================================================================
 
 
-@given('a KiCad project named "{project_name}"')
-def step_given_kicad_project(context, project_name):
-    """Set up a KiCad project for testing."""
+# NOTE: The 'a KiCad project named' step is now defined in bom_component_matching.py
+# to avoid conflicts. This shared module focuses on utility functions.
+
+
+def create_kicad_project_with_components(context, project_name, component_table):
+    """Create a KiCad project with specific components from a behave table.
+
+    Args:
+        context: Behave context object
+        project_name: Name for the project/directory
+        component_table: Behave table with component data (Reference, Value, Footprint)
+    """
     context.project_name = project_name
-    # TODO: Implement test project setup in Phase 3
+
+    # Create project directory
+    project_dir = context.scenario_temp_dir / project_name
+    project_dir.mkdir(exist_ok=True)
+
+    schematic_file = project_dir / f"{project_name}.kicad_sch"
+
+    # Build symbol instances from table
+    symbol_instances = []
+    for row in component_table:
+        reference = row["Reference"]
+        value = row["Value"]
+        footprint = row["Footprint"]
+
+        # Generate a simple symbol instance entry
+        symbol_instance = f"""    (symbol_instance (path "/{reference}")
+      (reference "{reference}") (unit 1)
+      (value "{value}") (footprint "{footprint}")
+    )"""
+        symbol_instances.append(symbol_instance)
+
+    # Create schematic with components
+    schematic_content = f"""(kicad_sch (version 20230121) (generator eeschema)
+  (uuid "12345678-1234-5678-9012-123456789012")
+  (paper "A4")
+  (lib_symbols)
+  (symbol_instances
+{chr(10).join(symbol_instances)}
+  )
+  (sheet_instances
+    (path "/" (page "1"))
+  )
+)
+"""
+
+    with open(schematic_file, "w") as f:
+        f.write(schematic_content)
+
+    context.test_project_dir = project_dir
+    context.test_schematic_file = schematic_file
+
+
+def create_kicad_project_with_named_schematic_and_components(
+    context, project_name, schematic_name, component_table
+):
+    """Create a KiCad project with a specifically named schematic containing components.
+
+    Args:
+        context: Behave context object
+        project_name: Name for the project directory
+        schematic_name: Name for the schematic file (without .kicad_sch extension)
+        component_table: Behave table with component data (Reference, Value, Footprint, LibID)
+    """
+    context.project_name = project_name
+
+    # Create project directory
+    project_dir = context.scenario_temp_dir / project_name
+    project_dir.mkdir(exist_ok=True)
+
+    # Create schematic file with specified name
+    schematic_file = project_dir / f"{schematic_name}.kicad_sch"
+
+    # Build symbol instances from table
+    symbol_instances = []
+    for row in component_table:
+        reference = row["Reference"]
+        value = row["Value"]
+        footprint = row["Footprint"]
+        lib_id = row["LibID"]
+
+        # Generate a symbol instance entry with LibID
+        symbol_instance = f"""    (symbol_instance (path "/{reference}")
+      (reference "{reference}") (unit 1)
+      (value "{value}") (footprint "{footprint}")
+      (lib_id "{lib_id}")
+    )"""
+        symbol_instances.append(symbol_instance)
+
+    # Create schematic with components
+    schematic_content = f"""(kicad_sch (version 20230121) (generator eeschema)
+  (uuid "12345678-1234-5678-9012-123456789012")
+  (paper "A4")
+  (lib_symbols)
+  (symbol_instances
+{chr(10).join(symbol_instances)}
+  )
+  (sheet_instances
+    (path "/" (page "1"))
+  )
+)
+"""
+
+    with open(schematic_file, "w") as f:
+        f.write(schematic_content)
+
+    # Store in context - track multiple schematics if needed
+    if not hasattr(context, "project_schematic_files"):
+        context.project_schematic_files = {}
+    context.project_schematic_files[schematic_name] = schematic_file
+
+    context.test_project_dir = project_dir
+    context.test_schematic_file = schematic_file  # Keep for compatibility
 
 
 @given("an inventory file with components")
@@ -291,8 +401,9 @@ def step_then_all_models_consistent(context):
     # TODO: Add content comparison in Phase 3 implementation
     # For now, just verify all methods executed successfully
 
+    # Convenience step for when you only need to test specific modes
 
-# Convenience step for when you only need to test specific modes
+
 @when("I test {operation} using {methods}")
 def step_when_test_operation_using_methods(context, operation, methods):
     """Test operation using specified methods (comma-separated)."""
@@ -314,3 +425,71 @@ def step_when_test_operation_using_methods(context, operation, methods):
                 context, "bom_output_file", getattr(context, "pos_output_file", None)
             ),
         }
+
+
+# =============================================================================
+# Multi-Format Inventory Testing (Shared by BOM and ANNOTATE domains)
+# =============================================================================
+
+
+@given("I test with existing inventory files in all formats")
+def step_given_test_with_inventory_files_all_formats(context):
+    """Set up testing with all supported inventory formats (shared by BOM and ANNOTATE domains)."""
+    import shutil
+
+    context.format_tests = []
+    for row in context.table:
+        format_name = row["Format"]
+        source_file = context.project_root / row["File"]
+
+        # Ensure source file exists
+        if not source_file.exists():
+            # For BDD testing, we may need to create placeholder files if examples don't exist
+            print(
+                f"Warning: {source_file} does not exist - creating placeholder for testing"
+            )
+            continue
+
+        # Copy to scenario temp directory with format-specific naming
+        dest_file = (
+            context.scenario_temp_dir
+            / f"{format_name.lower()}_inventory{source_file.suffix}"
+        )
+        shutil.copy2(source_file, dest_file)
+
+        context.format_tests.append(
+            {"format": format_name, "file": dest_file, "original": source_file}
+        )
+
+
+@given("I use multiple existing inventory files")
+def step_given_use_multiple_existing_inventory_files(context):
+    """Set up multiple existing inventory files for multi-format workflows."""
+    import shutil
+
+    context.multi_format_files = []
+    for row in context.table:
+        format_name = row["Format"]
+        source_file = context.project_root / row["File"]
+        priority = int(row.get("Priority", 1))
+
+        # Ensure source file exists
+        if not source_file.exists():
+            print(f"Warning: {source_file} does not exist - skipping for testing")
+            continue
+
+        # Copy to scenario temp directory
+        dest_file = (
+            context.scenario_temp_dir
+            / f"{format_name.lower()}_inventory{source_file.suffix}"
+        )
+        shutil.copy2(source_file, dest_file)
+
+        context.multi_format_files.append(
+            {
+                "format": format_name,
+                "file": dest_file,
+                "priority": priority,
+                "original": source_file,
+            }
+        )

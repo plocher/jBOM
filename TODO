@@ -1,7 +1,19 @@
+## Expectations
+
+You are a detail oriented and organized collaborator who is helping me develop an open source utility application that will be used by electrical engineers as they create electronic projects using the KiCad electronic design CAD package.
+
+jBOM is a github/pypi project that utilizes a PR-based feature branch methodology with semantic git commits.
+
+The project favors a Behavioral- and test-driven development process (BDD with TDD).  You will find extensive gherkin tests in ./features/* as well as unit tests in ./tests/*
+
+Agent notes can be found in WARP.md files in many folders.
+
 ## Problem
-- jBOM has evolved somewhat organically and haphazardly, and has not followed Behavioral- and test-based development practices consistently.  I wish to discover the existing functional behaviors and use that information to create a solid functional test environment.
+- jBOM has evolved somewhat organically and haphazardly, and has not followed Behavioral- and test-based development practices consistently.
+- We have created a solid functional test environment using gherkin and behave to capture an initial set of requirements.
+- Those functional tests now exist, but all of them are placeholders whose step definitions don't actually do anything.
 ## Goal
-- `Definition of Done`: A solid foundation of test driven- (TDD) and behavioral driven- (BDD) development patterns that will form the basis for continued jBOM evolution
+- `Definition of Done`: each feature in ./features/(domain)/* successfully executes its corresponding step definitions found in ./features/steps/(domain)/*
 
 ## Tasks
 ### 1. Review the jBOM artifacts
@@ -15,22 +27,16 @@ Gain a deep and broad understanding of the jBOM project by
 - notice the poc/* exploration into adding an extended inventory search for distributors as an example of future directions
 When complete, continue on to task 2
 ### 2. Develop a plan to achieve the above goal
-- review the rest of this document as an initial task list suggestion.
-- offer suggestions on ways to improve it, steps that were missed, better ways of solving this problem.
+- This effort involves the evolution of each step definition into a working artifact
+- we may find that these of these initial placeholder feature tests are incomplete, misguided or even wrong.  We will fix them.
+- This project will require a balance of step logic creation and iterative test refinement
+- offer suggestions on ways to improve this plan if you identify better ways of solving this problem.
 - present a plan of action with sufficiently detailed task list to show that the scope of work is well understood.
-#### Example plan for discussion
-- Extract actual functional requirements
-    - the new feature tests should live under a folder named "features"
-    - for each of jBOM's modular commands (bom, pos, inventory...):
-        - Create a folder for it under "features/" (features/bom, features/pos, ...)
-        - Under each of those, create gherkin Features and Scenerios
-        - For each Feature, develop a reasonably complete set of use case gherkin "GIVEN/WHEN/THEN" style scenerios.
-
-- Review
-    - This will be my task
-    - I will extend and update those scenerios
-    - Once I have reviewed the Features and Scenerios, we will review them together and determine whether we have sufficiently solved the initial problem.
-
-- Make these use case scenerios into actionable functional tests
-    - create runnable gherkin and cucumber functional tests that interact with jBOM through step definitions
-    - use a test-design pattern that minimizes the replication needed to exercise each of the three usage models
+- do not embark on executing the plan until after I have reviewed your plan.
+### 3. execute the plan
+- Development expectations
+    - All project development activities shall use git branching, semantic commits, github Pull Request and ci/cd release flow best practices.
+    - Commit Messages MUST follow **Conventional Commits** (`feat:`, `fix:`, `chore:`, `docs:`, etc.) to trigger automated semantic versioning.
+    - Use **single quotes** for commit messages to avoid shell expansion issues (especially with `!`).
+    - This repo uses pre-commit hooks (flake8, etc.). If a hook modifies a file, you must `git add` the file again and retry the commit.
+    - Use `git mv`, `git rm`, `git add` to track changes properly.
