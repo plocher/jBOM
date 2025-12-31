@@ -295,7 +295,7 @@ METHODOLOGY OBSERVATIONS:
 
 ⚠️  POTENTIAL IMPROVEMENTS:
   - Some searches return parts with tighter tolerances (1% vs 5% requested)
-  - Priority scoring could weight exact tolerance matches higher  
+  - Priority scoring could weight exact tolerance matches higher
   - Package variations (SOP-8 vs SOIC-8) need normalization
   - Missing package info significantly reduces search success
 
@@ -307,6 +307,6 @@ METHODOLOGY OBSERVATIONS:
 
 RECOMMENDATIONS:
 - Items with 0 results may need more specific search terms
-- Items with many results indicate good search term quality 
+- Items with many results indicate good search term quality
 - Check Unicode characters in failed searches
 - Verify package and tolerance information completeness
