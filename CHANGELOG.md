@@ -1,6 +1,173 @@
 # CHANGELOG
 
 
+## v4.1.0 (2026-01-02)
+
+### Bug Fixes
+
+* fix: implement systemic context variable normalizer for BDD infrastructure
+
+PROBLEM: "We use shared steps, but have no defined pattern for the context those shared steps require"
+
+- Different setup steps set inconsistent context variable names:
+  * component_matching.py: context.project_dir
+  * bom/shared.py: context.kicad_project_file
+  * shared.py: context.test_project_dir
+  * error_handling: various patterns
+
+- Shared steps (CLI/API) expect specific context variables causing AttributeError at runtime
+- No contract/interface defining what context variables shared steps require
+
+SOLUTION: Systemic context variable normalizer
+
+- Add get_project_path(context) and get_inventory_path(context) functions
+- Handle all known context variable naming patterns transparently
+- Provide clear error messages when context contracts are violated
+- Update all CLI/API/POS shared steps to use normalizer functions
+- Support complex patterns like inventory_sources tables
+
+This creates a foundation for standardizing context variable contracts across the BDD infrastructure.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`c01b248`](https://github.com/plocher/jBOM/commit/c01b248d7456a8423ad1697f69756020998d0fb4))
+
+* fix: restore missing CLI/API step implementations from backup
+
+- Add missing @when("I generate BOM using CLI") step implementation
+- Add missing @when("I generate BOM using Python API") step implementation
+- Add missing @when("I generate POS using Python API") step implementation
+- Add missing multi-modal @when("I generate BOM using {method}") step
+- Add missing multi-modal @when("I generate POS using {method}") step
+- Add BOM validation steps: "a BOM file is generated", "the BOM contains N entries", "the BOM includes columns"
+- Import subprocess module for CLI command execution
+
+These were present in common_steps.py.bak but missing from shared.py, causing StepNotImplementedError
+for CLI execution steps used by multi-modal validation patterns.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`e0c5360`](https://github.com/plocher/jBOM/commit/e0c5360ec9d3738da2e3a5a62d2c5c7d0062eaa7))
+
+* fix: implement actual QC Analytics pkgutil.walk_packages solution for behave step discovery
+
+- Replace empty __init__.py files with proper pkgutil.walk_packages implementation
+- Fix critical issue where behave was not discovering step files in subdirectories
+- Steps now properly loaded from features/steps/ subdirectories (bom/, inventory/, etc.)
+- Verified with dry-run: 496 steps across 87 scenarios in 14 features discovered
+- Test discovery confirmed: both main directory and subdirectory steps work
+
+Resolves step loading conflicts with systematic QC Analytics approach from:
+https://qc-analytics.com/2019/10/importing-behave-python-steps-from-subdirectories/
+
+Co-Authored-By: Warp <agent@warp.dev> ([`3b04616`](https://github.com/plocher/jBOM/commit/3b04616e3505cf600f7074389cc3e0e44f0518d7))
+
+* fix: Apply black formatting to component_matching.py
+
+Co-Authored-By: Warp <agent@warp.dev> ([`6975e74`](https://github.com/plocher/jBOM/commit/6975e740cf07667683b2c8cd3b50dbacb3ed316b))
+
+* fix: resolve AmbiguousStep conflict in hierarchical project patterns
+
+- Change hierarchical project step pattern from "a KiCad project named" to "a hierarchical KiCad project named"
+- Update corresponding feature file to match new step pattern
+- Eliminates behave AmbiguousStep conflict between simple and hierarchical project patterns
+- BDD step loading infrastructure now fully operational
+
+Co-Authored-By: Warp <agent@warp.dev> ([`bd4fd5b`](https://github.com/plocher/jBOM/commit/bd4fd5bcfa40218c54a243a09e9a8389a3db6189))
+
+* fix: resolve remaining linting issues
+
+- Fix Path import scope issue in error handling steps
+- Remove unused os and Path imports from read-only directory function
+- Fix import placement to match usage scope
+- All linting checks now pass
+
+Co-Authored-By: Warp <agent@warp.dev> ([`43b9cf5`](https://github.com/plocher/jBOM/commit/43b9cf5c8c34cfee05f63ae5159c7cce33179e83))
+
+### Features
+
+* feat: successfully implement behave subdirectory step loading
+
+MAJOR BREAKTHROUGH: Fixed BDD step definition loading using QC Analytics solution
+
+✅ COMPLETED:
+- Implement proper behave subdirectory loading using pkgutil.walk_packages
+- Fix KeyError: __name__ not in globals by using correct import approach
+- Resolve AmbiguousStep conflicts by moving common steps to shared.py
+- Create persistent documentation in BEHAVE_SUBDIRECTORY_LOADING.md
+- Successfully load step definitions from organized domain subdirectories
+- Progress from KeyError to AmbiguousStep to step discovery working
+- Fix linting issues and unused imports
+
+REMAINING: Minor step pattern conflicts to resolve, but core loading infrastructure is working!
+
+Co-Authored-By: Warp <agent@warp.dev> ([`88eb4f9`](https://github.com/plocher/jBOM/commit/88eb4f9f7c86e7e584a778de9709444ead546917))
+
+### Refactoring
+
+* refactor: complete TODO documentation reorganization with meaningful names
+
+RENAME AND ORGANIZE ALL TODO FILES:
+
+📋 RENAMED FOR CLARITY:
+- TODO → development_tasks.md (master task list, cross-cutting)
+
+🚧 MOVED TO ACTIVE REQUIREMENTS (docs/development_notes/active/):
+- FABRICATOR_ROTATION_TODO.md → component_rotation_correction_requirements.md
+  → Pick-and-place rotation corrections per fabricator (comprehensive spec)
+- FAULT_TESTING_TODO.md → comprehensive_fault_testing_requirements.md
+  → Edge case and fault tolerance testing strategy
+
+📁 FINAL STRUCTURE:
+docs/development_notes/
+├── completed/ (✅ implemented features)
+│   ├── inventory_management_requirements.md
+│   └── federated_inventory_requirements.md
+├── active/ (🚧 under development)
+│   ├── back_annotation_requirements.md
+│   ├── fabrication_platform_requirements.md
+│   ├── fabricator_integration_requirements.md
+│   ├── component_rotation_correction_requirements.md
+│   └── comprehensive_fault_testing_requirements.md
+└── development_tasks.md (master task list)
+
+BENEFITS:
++ Replace cryptic ALL_CAPS names with descriptive names
++ Clear separation of completed vs active work
++ Consistent naming pattern across all requirement docs
++ Maintain git history with git mv operations
++ Updated README with complete organization overview
+
+Co-Authored-By: Warp <agent@warp.dev> ([`35be728`](https://github.com/plocher/jBOM/commit/35be728fbd8d85fdb076211d0fe768c6db750d9e))
+
+* refactor: organize development documentation into docs/development_notes
+
+Clean up project root directory by moving development files to proper location:
+
+MOVED TO docs/development_notes/:
+- BDD_AXIOMS.md - BDD testing best practices
+- BEHAVE_SUBDIRECTORY_LOADING.md - Technical solutions for behave
+- TODO - Current development tasks
+- FABRICATOR_ROTATION_TODO.md - Feature planning
+- FAULT_TESTING_TODO.md - Implementation notes
+- requirements.*.md - All requirements documents
+- sample_detailed_validation_report.txt - Validation samples
+- PROJECT_INPUT_RESOLUTION_TESTS.feature - Development test scenarios
+
+REMAINING IN ROOT (user-facing):
+- README.md - Main project documentation
+- CHANGELOG.md - Release history
+- WARP.md - Agent instructions
+
++ Add comprehensive README.md for development_notes directory
++ Maintain git history with git mv commands
++ Keep project root clean and organized
+
+Co-Authored-By: Warp <agent@warp.dev> ([`e7bb0e1`](https://github.com/plocher/jBOM/commit/e7bb0e1fe6b42fdbf95fc51a9960530788263c6f))
+
+### Unknown
+
+* Merge pull request #9 from plocher/fix/bdd-step-definition-loading
+
+feat: Complete BDD component matching step definitions ([`ec3f70f`](https://github.com/plocher/jBOM/commit/ec3f70f103c73f52c063119d2e69cf6f997f88de))
+
+
 ## v4.0.0 (2025-12-30)
 
 ### Unknown

@@ -1,6 +1,6 @@
 """Version information for jBOM"""
 
-__version__ = "4.0.0"
+__version__ = "4.1.0"
 __version_info__ = (3, 6, 0)
 
 __title__ = "jbom"
