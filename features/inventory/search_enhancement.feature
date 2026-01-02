@@ -33,7 +33,7 @@ Feature: Search-Enhanced Inventory
     Then the search returns statistics showing queries made and success rate
 
   Scenario: Handle search failures gracefully with edge cases
-    Given a schematic with mixed searchable and exotic components
+    Given a schematic with mixed searchable and exotic components:
       | Reference | Value    | Footprint   | Searchability |
       | R1        | 10K      | R_0603_1608 | Common        |
       | U1        | XYZ-9999 | QFN-64      | Exotic        |

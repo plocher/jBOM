@@ -22,7 +22,7 @@ Feature: Part Search
     Then the search finds the exact YAGEO 10K resistor with cross-references, pricing, and distributor availability
 
   Scenario: Search with parametric filtering
-    Given I search for "10K resistor" with parameters
+    Given I search for "10K resistor" with parameters:
       | Parameter | Value |
       | Tolerance | 1%    |
       | Package   | 0603  |

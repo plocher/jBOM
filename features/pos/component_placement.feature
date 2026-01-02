@@ -59,7 +59,7 @@ Feature: Component Placement (POS/CPL) Generation
     Then the POS contains components with columns matching the Generic fabricator configuration
 
   Scenario: Generate JLCPCB format POS with fabricator-specific rotation corrections
-    Given a PCB with components at cardinal rotation angles
+    Given a PCB with components at cardinal rotation angles:
       | Reference | KiCad_Rotation | Expected_JLCPCB_Rotation | Footprint   |
       | R1        | 0              | 0                        | R_0603_1608 |
       | C1        | 90             | 90                       | C_0603_1608 |
@@ -70,7 +70,7 @@ Feature: Component Placement (POS/CPL) Generation
     And the POS excludes THT components per JLCPCB SMD-only policy
 
   Scenario: Generate PCBWay format POS with different rotation corrections
-    Given a PCB with components at cardinal rotation angles
+    Given a PCB with components at cardinal rotation angles:
       | Reference | KiCad_Rotation | Expected_PCBWay_Rotation | Footprint   |
       | R1        | 0              | 0                        | R_0603_1608 |
       | C1        | 90             | 270                      | C_0603_1608 |
@@ -80,7 +80,7 @@ Feature: Component Placement (POS/CPL) Generation
     Then the POS contains rotation corrections matching the PCBWay fabricator configuration
 
   Scenario: Handle JLCPCB per-part reel orientation complexity for IC packaging variations
-    Given a PCB with ICs in different packaging formats requiring different reel orientations
+    Given a PCB with ICs in different packaging formats requiring different reel orientations:
       | Reference | Footprint       | MPN             | DPN    | KiCad_Rotation | Expected_JLCPCB_Reel_Rotation | Notes                         |
       | U1        | SOIC-14_3.9x8.7 | LM324DR         | C7950  | 0              | 0                             | Standard SOIC-14 EIA-481     |
       | U2        | MSOP-10_3x3     | LM324IPWR       | C7951  | 0              | 180                           | Different package format     |

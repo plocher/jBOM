@@ -4,14 +4,15 @@ This document captures the established axioms and patterns that MUST be consiste
 
 ## Axiom Organization
 
-The 19 axioms are organized by priority:
-- **Foundational Axioms (1-6)**: Essential principles for all scenarios
-- **Quality Axioms (7-12)**: Ensuring robustness and reliability
-- **Advanced Patterns (13-19)**: Optimizing maintainability and reusability
+The 24 axioms are organized by priority:
+- **Foundational Axioms (1-7)**: Essential principles for all scenarios
+- **Quality Axioms (8-13)**: Ensuring robustness and reliability
+- **Advanced Patterns (14-20)**: Optimizing maintainability and reusability
+- **Precision Patterns (21-24)**: Eliminating ambiguity and value judgments
 
 ---
 
-## Foundational Axioms (1-6)
+## Foundational Axioms (1-7)
 *Essential principles that must be applied to ALL scenarios*
 
 ### Axiom #1: Behavior Over Implementation
@@ -77,17 +78,49 @@ Then the BOM contains R1 matched to R001 with priority 0
 And the BOM excludes R002 and R003
 ```
 
+### Axiom #7: Gherkin Colon Consistency ⭐ NEW
+**Principle**: Step definitions MUST consistently follow Gherkin colon conventions for table/docstring data.
+
+**Standard Gherkin Convention**:
+- **Steps with table/docstring data → USE colon (`:`)**
+- **Simple statement steps → NO colon**
+
+**✅ Correct Usage**:
+```gherkin
+Given the "TestBoard" schematic contains components:
+  | Reference | Value | Footprint   |
+  | R1        | 10K   | R_0603_1608 |
+And a KiCad project named "ComponentTest"
+```
+
+**❌ Inconsistent Usage**:
+```gherkin
+Given a schematic with components
+  | Reference | Value | Footprint   |
+  | R1        | 10K   | R_0603_1608 |
+# Missing colon before table data
+
+Given a KiCad project named "ComponentTest":
+# Unnecessary colon for simple statement
+```
+
+**Benefits**:
+- ✅ Eliminates undefined step errors due to pattern mismatches
+- ✅ Improves code readability and consistency
+- ✅ Follows standard Gherkin/Cucumber conventions
+- ✅ Prevents maintenance issues from mixed patterns
+
 ---
 
-## Quality Axioms (7-12)
+## Quality Axioms (8-13)
 *Ensuring robustness and reliability*
 
-### Axiom #7: Edge Case Coverage
+### Axiom #8: Edge Case Coverage
 **Principle**: Critical algorithms MUST include boundary conditions and edge cases.
 
 **Examples**: Priority values (0, 1, 2147483647), Invalid data ("high", "", "#DIV/0!"), System limits
 
-### Axiom #8: Configuration Dependencies in Assertions
+### Axiom #9: Configuration Dependencies in Assertions
 **Principle**: Configuration dependencies belong in the ASSERTION, not the scenario description.
 
 **✅ Correct**:
@@ -95,27 +128,27 @@ And the BOM excludes R002 and R003
 Then component R1 has LCSC property set to "C25804" matching the JLC fabricator configuration
 ```
 
-### Axiom #9: Algorithmic Behavior Over Hardcoded Assumptions
+### Axiom #10: Algorithmic Behavior Over Hardcoded Assumptions
 **Principle**: Scenarios MUST specify the algorithm, not hardcode specific outcomes.
 
 **✅ Algorithmic**: "the BOM selects parts with lowest priority value"
 **❌ Hardcoded**: "the BOM selects parts with priority 1 over priority 2"
 
-### Axiom #10: Fabricator Filtering Logic
+### Axiom #11: Fabricator Filtering Logic
 **Principle**: Multi-source inventory filtering is based on Distributor column VALUES, not filenames.
 
-### Axiom #11: Generic Configuration as Testing Foundation
+### Axiom #12: Generic Configuration as Testing Foundation
 **Principle**: Use `--generic` fabricator configuration as the primary BDD testing foundation.
 
-### Axiom #12: File Format vs Data Logic Separation
+### Axiom #13: File Format vs Data Logic Separation
 **Principle**: BDD scenarios test file format SUPPORT at workflow level, leaving parsing specifics to unit tests.
 
 ---
 
-## Advanced Patterns (13-19)
+## Advanced Patterns (14-20)
 *Optimizing maintainability and reusability*
 
-### Axiom #13: Step Definition Organization
+### Axiom #14: Step Definition Organization
 **Principle**: Step definitions MUST be organized logically by domain, kept reusable, and separate business logic from implementation details.
 
 **Structure**:
@@ -127,7 +160,7 @@ features/steps/
 └── shared.py              # Cross-domain shared steps
 ```
 
-### Axiom #14: Step Parameterization
+### Axiom #15: Step Parameterization
 **Principle**: Step definitions MUST use parameterization to eliminate hardcoded values.
 
 **✅ Parameterized**:
@@ -144,19 +177,19 @@ def step_generate_bom_jlc_only(context):
     # Only works for JLC
 ```
 
-### Axiom #15: Fixture-Based Approach with Edge Case Visibility
+### Axiom #16: Fixture-Based Approach with Edge Case Visibility
 **Principle**: Use fixtures for common test data, BUT allow inline tables when they provide critical visibility to edge cases being tested.
 
 **Use Fixtures**: Standard component sets, reusable inventory
 **Use Inline Tables**: Edge case visibility, algorithmic demonstrations
 
-### Axiom #16: Explicit Field Specification
+### Axiom #17: Explicit Field Specification
 **Principle**: BOM scenarios MUST explicitly specify which fields are expected in output.
 
 **Preferred**: Use fabricator configurations (`--generic`, `--jlc`)
 **Alternative**: Explicit fields only for edge cases
 
-### Axiom #17: Complete Precondition Specification ⭐ NEW
+### Axiom #18: Complete Precondition Specification ⭐ NEW
 **Principle**: All test preconditions must be explicitly stated in Given steps with no implicit assumptions about system state.
 
 **✅ Explicit Preconditions**:
@@ -183,7 +216,7 @@ Then the BOM contains a matched resistor with inventory value "1K1"
 - No assumptions about system state
 - Test data setup should establish complete context
 
-### Axiom #18: Dynamic Test Data Builder Pattern ⭐ NEW
+### Axiom #19: Dynamic Test Data Builder Pattern ⭐ NEW
 **Principle**: Balance explicit preconditions (Axiom #17) with DRY principle using Background + dynamic extensions.
 
 **Three-Tier Strategy**:
@@ -218,7 +251,7 @@ And the "MultiSupplierInventory" inventory
 - ✅ Enables complex scenarios with manageable syntax
 - ✅ Supports both static fixtures and dynamic mocking
 
-### Axiom #19: The "Because" Test ⭐ EDITORIAL
+### Axiom #20: The "Because" Test ⭐ EDITORIAL
 **Principle**: Any urge to write "THEN ... BECAUSE..." indicates incomplete GIVEN or vague WHEN statements.
 
 Gherkin's Then step should describe the outcome or result of the action in the When step, verifying a measurable change in the system's state. It should not include a justification, as the Then is purely about observation and validation.
@@ -258,6 +291,152 @@ And the BOM excludes R002 due to higher priority values
 
 ---
 
+## Precision Patterns (21-24)
+*Eliminating ambiguity and value judgments discovered during Error Handling domain implementation*
+
+### Axiom #21: Named References Over Implicit Context
+**Principle**: Use explicit named references for test artifacts to eliminate ambiguity about which inputs are being used.
+
+**✅ Explicit Named References**:
+```gherkin
+Given a KiCad project named "SimpleProject"
+And an inventory named "InvalidInventory"
+And the inventory contains:
+  | InvalidColumn | AnotherBadColumn |
+  | data1         | data2            |
+When I generate a generic BOM with SimpleProject and InvalidInventory
+```
+
+**❌ Implicit Context** (Violates Axiom #17):
+```gherkin
+Given a KiCad project named "SimpleProject"
+And an inventory file with invalid format
+When I generate a BOM with --generic fabricator
+# Which project? Which inventory? Ambiguous!
+```
+
+**Benefits**:
+- ✅ No ambiguity about inputs
+- ✅ Explicit binding between Given and When steps
+- ✅ Supports multiple projects/inventories in complex scenarios
+- ✅ Makes test maintenance easier
+
+### Axiom #22: Descriptive Content Over Value Judgments
+**Principle**: Describe what data contains rather than labeling it as "valid" or "invalid" - avoid value judgments in test specifications.
+
+**✅ Descriptive Content**:
+```gherkin
+And an inventory file contains:
+  | InvalidColumn | AnotherBadColumn |
+  | data1         | data2            |
+```
+
+**❌ Value Judgments**:
+```gherkin
+And an inventory file with invalid format
+# "Invalid" according to whom? For what purpose?
+```
+
+**Key Insight**: There's no universal "valid format" - validity depends on context and use case. What's "invalid" for one fabricator might be perfectly valid for another.
+
+**Benefits**:
+- ✅ Eliminates assumptions about correctness
+- ✅ Focuses on concrete data rather than judgments
+- ✅ More maintainable when requirements change
+- ✅ Reduces cognitive bias in test design
+
+### Axiom #23: Complete Expected Output Specification
+**Principle**: When testing data transformation, specify the complete expected output structure, including empty fields, to validate graceful handling of missing data.
+
+**✅ Complete Output Specification**:
+```gherkin
+Then the BOM contains:
+  | Reference | Quantity | Description | Value | Package | Footprint | Manufacturer | Part Number |
+  | R1        | 1        |             | 10k   |         |           |              |             |
+  | C1        | 1        |             | 100nF |         |           |              |             |
+```
+
+### Axiom #24: KiCad Project/Schematic Architecture Distinction ⭐ NEW
+**Principle**: Respect the actual KiCad architecture where projects contain schematics, not components. Use proper project/schematic separation in test specifications.
+
+**✅ Correct KiCad Architecture**:
+```gherkin
+Given a KiCad project named "PowerSupply"
+And the project uses a schematic named "MainBoard"
+And the "MainBoard" schematic contains components:
+  | Reference | Value | Footprint   | LibID |
+  | R1        | 10K   | R_0603_1608 | Device:R |
+```
+
+**❌ Incorrect Architecture**:
+```gherkin
+Given a KiCad project named "PowerSupply" containing components:
+  | Reference | Value | Footprint   | LibID |
+  | R1        | 10K   | R_0603_1608 | Device:R |
+# Projects don't contain components - schematics do!
+```
+
+**Actual File Structure**:
+```
+some_directory/
+└── PowerSupply/
+    ├── PowerSupply.kicad_pro     # Project file
+    ├── PowerSupply.kicad_pcb     # PCB layout (optional)
+    └── MainBoard.kicad_sch       # Schematic file
+```
+
+**Hierarchical Project Benefits**:
+```gherkin
+Given a KiCad project named "ComplexBoard"
+And the project uses a schematic named "MainBoard"
+And the project uses a schematic named "PowerSupply"
+And the project uses a schematic named "AnalogSection"
+And the "MainBoard" schematic contains components:
+  | Reference | Value | Footprint |
+  | U1        | MCU   | QFP64     |
+And the "PowerSupply" schematic contains components:
+  | Reference | Value | Footprint |
+  | U2        | VREG  | SOT23     |
+And the "AnalogSection" schematic contains components:
+  | Reference | Value | Footprint |
+  | U3        | OPAMP | SOIC8     |
+When I generate a generic BOM for ComplexBoard using inventory.csv
+Then the BOM file contains components from all schematic files
+And component quantities are correctly aggregated across all schematics
+```
+
+**Key Benefits**:
+- ✅ Accurate representation of KiCad architecture
+- ✅ Enables testing hierarchical designs with explicit component placement
+- ✅ Supports multiple schematics per project testing
+- ✅ Allows testing edge cases like missing sub-schematics
+- ✅ Reflects real-world KiCad project organization
+
+**❌ Partial Output Specification**:
+```gherkin
+Then the BOM contains components from the schematic:
+  | Reference | Quantity | Value |
+  | R1        | 1        | 10k   |
+  | C1        | 1        | 100nF |
+# What about the other fields? Are they empty? Default values?
+```
+
+**Benefits**:
+- ✅ Tests graceful degradation behavior
+- ✅ Validates complete output structure
+- ✅ Makes empty field handling explicit
+- ✅ Documents expected behavior for missing data
+- ✅ Matches fabricator configuration exactly
+
+**Application Example**:
+When inventory lacks required columns, the BOM should still be generated with:
+- ✅ Data from schematic (Reference, Value)
+- ✅ Calculated fields (Quantity)
+- ✅ Empty cells for unavailable data (Manufacturer, Part Number)
+- ✅ All expected columns present (per fabricator config)
+
+---
+
 ## Application Checklist
 
 When reviewing/creating BDD scenarios, verify:
@@ -269,23 +448,30 @@ When reviewing/creating BDD scenarios, verify:
 - [ ] Multi-modal testing automatic (Axiom #4)
 - [ ] Table headers match assertions (Axiom #5)
 - [ ] Includes positive AND negative assertions (Axiom #6)
+- [ ] Consistent colon usage for table/docstring data (Axiom #7)
 
 ### Quality (Essential for robustness):
-- [ ] Edge cases covered (Axiom #7)
-- [ ] Configuration dependencies in assertions (Axiom #8)
-- [ ] Algorithmic behavior specified (Axiom #9)
-- [ ] Correct fabricator filtering logic (Axiom #10)
-- [ ] Uses generic configuration foundation (Axiom #11)
-- [ ] File format testing at workflow level (Axiom #12)
+- [ ] Edge cases covered (Axiom #8)
+- [ ] Configuration dependencies in assertions (Axiom #9)
+- [ ] Algorithmic behavior specified (Axiom #10)
+- [ ] Correct fabricator filtering logic (Axiom #11)
+- [ ] Uses generic configuration foundation (Axiom #12)
+- [ ] File format testing at workflow level (Axiom #13)
 
 ### Advanced (Optimizing maintainability):
-- [ ] Steps organized by domain (Axiom #13)
-- [ ] Steps properly parameterized (Axiom #14)
-- [ ] Fixtures used appropriately (Axiom #15)
-- [ ] Explicit field specification (Axiom #16)
-- [ ] Complete preconditions specified (Axiom #17)
-- [ ] Dynamic test data builder used (Axiom #18)
-- [ ] No "because" justifications in THEN statements (Axiom #19)
+- [ ] Steps organized by domain (Axiom #14)
+- [ ] Steps properly parameterized (Axiom #15)
+- [ ] Fixtures used appropriately (Axiom #16)
+- [ ] Explicit field specification (Axiom #17)
+- [ ] Complete preconditions specified (Axiom #18)
+- [ ] Dynamic test data builder used (Axiom #19)
+- [ ] No "because" justifications in THEN statements (Axiom #20)
+
+### Precision (Eliminating ambiguity):
+- [ ] Named references used over implicit context (Axiom #21)
+- [ ] Descriptive content over value judgments (Axiom #22)
+- [ ] Complete expected output specification (Axiom #23)
+- [ ] Correct KiCad project/schematic architecture (Axiom #24)
 
 ---
 
@@ -297,7 +483,7 @@ When reviewing/creating BDD scenarios, verify:
 ✅ **Inventory**: Complete (0 undefined steps)
 
 ### Remaining Work:
-🚧 **Error Handling**: ~27 step definitions needed
+✅ **Error Handling**: Infrastructure complete, behavior review needed (10 discrepancies documented)
 🚧 **POS Component Placement**: ~40 step definitions needed
 🚧 **Search**: Integrated with inventory domain
 
@@ -307,5 +493,14 @@ When reviewing/creating BDD scenarios, verify:
 - Domain-specific organization following Axiom #13
 - AmbiguousStep conflict resolution
 - Dynamic test data builder pattern (Axiom #18)
+- Named reference system (Axiom #20)
+- Concrete test vector implementation (Axiom #2, #21, #22)
+- Behavior vs infrastructure separation methodology
 
-**Definition of Done**: Solid foundation of TDD and BDD development patterns achieved for 3 of 6 major jBOM domains, with proven architecture for remaining domains.
+### Key Discoveries:
+- **Precision Patterns (Axioms 20-22)**: Eliminate ambiguity and value judgments
+- **Behavior Discovery Process**: Systematic identification of expected vs actual behavior
+- **Multi-Modal Success Criteria**: Different success indicators for CLI/API/Plugin
+- **Graceful Degradation vs Fail Fast**: Design philosophy implications for user experience
+
+**Definition of Done**: Solid foundation of TDD and BDD development patterns achieved for 4 of 6 major jBOM domains, with proven architecture and enhanced axioms for remaining domains.

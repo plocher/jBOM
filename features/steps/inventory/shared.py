@@ -182,7 +182,7 @@ def step_given_api_key_set_to_null(context, api_key):
     os.environ[api_key] = ""
 
 
-@given("a schematic with mixed searchable and exotic components")
+@given("a schematic with mixed searchable and exotic components:")
 def step_given_mixed_components_schematic(context):
     """Set up schematic with mixed component searchability."""
     context.component_mix = "exotic"

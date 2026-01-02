@@ -43,6 +43,42 @@ def step_when_generate_bom_with_fabricator_and_fields(context, fabricator, field
     context.bom_field_list = field_list
 
 
+@when("I generate a generic BOM for {project} using {inventory}")
+def step_when_generate_generic_bom_for_project_using_inventory(
+    context, project, inventory
+):
+    """Generate BOM for specific project using specific inventory file."""
+    # Execute BOM generation using the context methods from environment.py
+    project_path = (
+        context.scenario_temp_dir / project
+        if not (context.scenario_temp_dir / project).is_dir()
+        else context.scenario_temp_dir / project / f"{project}.kicad_sch"
+    )
+    inventory_path = context.scenario_temp_dir / inventory
+    output_path = context.scenario_temp_dir / "output.csv"
+
+    # Build and execute CLI command
+    cmd_parts = [
+        "python",
+        "-m",
+        "jbom.cli",
+        "bom",
+        f"--project={project_path}",
+        f"--inventory={inventory_path}",
+        f"--output={output_path}",
+        "--fabricator=generic",
+    ]
+
+    command = " ".join(cmd_parts)
+    result = context.execute_shell(command)
+
+    # Store result for verification
+    context.last_command_exit_code = result["exit_code"]
+    context.last_command_output = result["output"]
+    context.last_command_error = result["stderr"]
+    context.bom_output_file = output_path
+
+
 # =============================================================================
 # File-Based Given Steps for BOM Testing
 # =============================================================================
@@ -102,7 +138,7 @@ def step_given_multiple_inventory_sources(context):
     pass
 
 
-@given("a schematic with components")
+@given("a schematic with components:")
 def step_given_schematic_with_components(context):
     """Set up schematic with components from table data."""
     # TODO: Implement schematic component setup in Phase 3
@@ -637,6 +673,13 @@ def step_then_bom_generation_fails_with_priority_validation_error(context):
             result["exit_code"] != 0
         ), f"{method} should have failed with priority validation error"
 
+
+# =============================================================================
+# BOM-Specific Inventory File Creation Steps
+# =============================================================================
+
+# NOTE: Inventory file creation steps are shared with error handling domain
+# and implemented in features/steps/error_handling/edge_cases.py
 
 # =============================================================================
 # Additional Missing BOM Verification Steps

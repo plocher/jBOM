@@ -7,7 +7,7 @@ Feature: Priority Selection
     Given a KiCad project named "SimpleProject"
 
   Scenario: Priority zero wins over all other priority values
-    Given a schematic with components
+Given a schematic with components:
       | Reference | Value | Package |
       | R1        | 10K   | 0603    |
     And an inventory with parts
@@ -20,7 +20,7 @@ Feature: Priority Selection
     And the BOM excludes R002 and R003
 
   Scenario: Priority handles very large integer values
-    Given a schematic with components
+    Given a schematic with components:
       | Reference | Value | Package |
       | R1        | 10K   | 0603    |
     And an inventory with parts
@@ -33,7 +33,7 @@ Feature: Priority Selection
     And the BOM excludes R002 and R003
 
   Scenario: Priority selection with non-sequential values
-    Given a schematic with components
+    Given a schematic with components:
       | Reference | Value | Package |
       | R1        | 10K   | 0603    |
       | C1        | 100nF | 0603    |
@@ -51,7 +51,7 @@ Feature: Priority Selection
     And the BOM excludes C001
 
   Scenario: Handle invalid priority data gracefully
-    Given a schematic with components
+    Given a schematic with components:
       | Reference | Value | Package |
       | R1        | 10K   | 0603    |
     And an inventory with invalid priority data

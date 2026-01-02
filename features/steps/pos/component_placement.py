@@ -85,7 +85,7 @@ def step_given_pcb_layout_fixture(context, pcb_fixture):
     context.pcb_layout_loaded = True
 
 
-@given("a PCB with components at cardinal rotation angles")
+@given("a PCB with components at cardinal rotation angles:")
 def step_given_pcb_with_components_at_cardinal_rotation_angles(context):
     """Set up PCB with components at cardinal angles from table data."""
     context.cardinal_rotation_components = (
@@ -94,7 +94,7 @@ def step_given_pcb_with_components_at_cardinal_rotation_angles(context):
 
 
 @given(
-    "a PCB with ICs in different packaging formats requiring different reel orientations"
+    "a PCB with ICs in different packaging formats requiring different reel orientations:"
 )
 def step_given_pcb_with_ics_in_different_packaging_formats(context):
     """Set up PCB with ICs requiring per-part reel orientations from table data."""
