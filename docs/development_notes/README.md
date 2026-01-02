@@ -50,7 +50,7 @@ jBOM uses a systematic approach to organize behave step definitions in domain-sp
 ```
 features/
 ├── steps/
-│   ├── __init__.py         # Empty - lets behave discover subdirectories
+│   ├── __init__.py         # QC Analytics pkgutil.walk_packages implementation
 │   ├── shared.py          # Cross-domain shared steps
 │   ├── annotate/
 │   │   ├── __init__.py    # Domain package initialization
@@ -64,31 +64,36 @@ features/
 ```
 
 **Key Principles:**
-1. **Empty main `__init__.py`** - Avoids import conflicts with behave's execution model
-2. **Natural discovery** - Behave automatically finds `.py` files in subdirectories with `__init__.py`
+1. **QC Analytics main `__init__.py`** - Uses `pkgutil.walk_packages` to systematically load all step modules from subdirectories
+2. **Explicit step loading** - Behave does NOT automatically discover subdirectory step files; requires explicit loading
 3. **Domain separation** - Each domain (bom, pos, inventory, etc.) has its own subdirectory
 4. **Shared step hierarchy** - Cross-domain steps in root, domain-specific shared steps in subdirectories
 
 ### Technical Solution Details
 
-**Problem Solved:** Behave executes step files using `exec()` without providing `__name__` in globals, making relative imports fail with `KeyError: "'__name__' not in globals"`.
+**Problem Solved:** Behave only discovers `.py` files directly in the `steps/` directory, NOT in subdirectories, despite having `__init__.py` files. Step definitions in subdirectories appear as "None" and cause "step not implemented" errors during execution (but work in dry-run mode).
 
-**Solution:** Let behave handle step discovery naturally instead of complex import logic.
+**Root Cause:** Behave's step discovery mechanism does not recurse into subdirectories automatically.
 
-**Reference:** Based on [QC Analytics systematic approach](https://qc-analytics.com/2019/10/importing-behave-python-steps-from-subdirectories/) adapted for behave's execution constraints.
+**Solution:** Implement the QC Analytics systematic approach using `pkgutil.walk_packages` to explicitly load all step modules from subdirectories in the main `features/steps/__init__.py`.
+
+**Reference:** [QC Analytics systematic approach](https://qc-analytics.com/2019/10/importing-behave-python-steps-from-subdirectories/) - exact implementation with proper error handling.
 
 ### Implementation Files
 
 - **`features/steps/STEP_LOADING_SOLUTION.md`** - Complete technical documentation
-- **`features/steps/__init__.py`** - Empty file enabling natural discovery
+- **`features/steps/__init__.py`** - QC Analytics `pkgutil.walk_packages` implementation with error handling
 - **Domain `__init__.py` files** - Simple imports for subdirectory step files
+- **`features/test_discovery.feature`** - Validation test for step discovery across main and subdirectories
 
 ### Adding New Step Domains
 
 1. Create subdirectory under `features/steps/`
 2. Add empty `__init__.py` file
 3. Add step definition `.py` files
-4. Use `behave --dry-run` to validate discovery
+4. Test with `behave features/test_discovery.feature` to validate discovery
+5. Use `behave --dry-run` to verify all steps are discovered
+6. Run actual execution to ensure steps work beyond pattern matching
 
 ## Moving Forward
 
