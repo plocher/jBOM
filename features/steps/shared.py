@@ -13,6 +13,99 @@ from behave import given, when, then
 
 
 # =============================================================================
+# Context Variable Normalizer (Systemic BDD Infrastructure Fix)
+# =============================================================================
+
+
+def get_project_path(context):
+    """Get project path from context, handling multiple naming patterns.
+
+    Returns: Path to project file or directory
+    Raises: AttributeError if no project path found
+    """
+    # Try all known project path patterns
+    candidates = [
+        getattr(context, "project_dir", None),
+        getattr(context, "test_project_dir", None),
+        getattr(context, "kicad_project_file", None),
+        getattr(context, "project_path", None),
+    ]
+
+    for path in candidates:
+        if path:
+            return path
+
+    raise AttributeError(
+        "No project path found in context. "
+        "Expected one of: project_dir, test_project_dir, kicad_project_file, project_path"
+    )
+
+
+def get_inventory_path(context):
+    """Get inventory path from context, handling multiple naming patterns.
+
+    Returns: Path to inventory file or list of inventory sources
+    Raises: AttributeError if no inventory path found
+    """
+    # Try all known inventory path patterns
+    candidates = [
+        getattr(context, "inventory_file", None),
+        getattr(context, "inventory_path", None),
+        getattr(context, "invalid_inventory_file", None),
+        getattr(context, "empty_inventory_file", None),
+    ]
+
+    # Check single inventory file patterns first
+    for path in candidates:
+        if path:
+            return path
+
+    # Handle multiple inventory sources pattern
+    inventory_sources = getattr(context, "inventory_sources", None)
+    if inventory_sources:
+        # For CLI compatibility, return first source or concatenated list
+        # TODO: This needs proper multi-source CLI support
+        try:
+            # Handle behave Table objects
+            if hasattr(inventory_sources, "rows"):
+                # Behave Table object with rows
+                files = [
+                    row.get("File", "")
+                    for row in inventory_sources.rows
+                    if row.get("File")
+                ]
+                return ",".join(files) if files else None
+            elif hasattr(inventory_sources, "__iter__"):
+                # List or other iterable
+                if len(list(inventory_sources)) > 0:
+                    # Reset iterator and process
+                    inventory_list = (
+                        list(inventory_sources)
+                        if not isinstance(inventory_sources, list)
+                        else inventory_sources
+                    )
+                    if inventory_list and hasattr(inventory_list[0], "get"):
+                        # Dictionary-like objects with File column
+                        files = [
+                            row.get("File", "")
+                            for row in inventory_list
+                            if row.get("File")
+                        ]
+                        return ",".join(files) if files else None
+                    else:
+                        # Simple list format
+                        return ",".join(str(source) for source in inventory_list)
+        except (TypeError, AttributeError):
+            # Fallback - return string representation
+            return str(inventory_sources)
+
+    raise AttributeError(
+        "No inventory path found in context. "
+        "Expected one of: inventory_file, inventory_path, invalid_inventory_file, empty_inventory_file, inventory_sources"
+    )
+
+
+# =============================================================================
 # Test Data Setup Steps
 # =============================================================================
 
@@ -254,9 +347,16 @@ def step_when_run_jbom_command(context, command):
 @when("I generate BOM using CLI")
 def step_when_generate_bom_cli(context):
     """Generate BOM using CLI command."""
-    command = f"bom {context.project_dir} -i {context.inventory_file} -o bom_output.csv"
-    context.execute_steps(f'When I run jbom command "{command}"')
-    context.bom_output_file = context.scenario_temp_dir / "bom_output.csv"
+    try:
+        project_path = get_project_path(context)
+        inventory_path = get_inventory_path(context)
+
+        command = f"bom {project_path} -i {inventory_path} -o bom_output.csv"
+        context.execute_steps(f'When I run jbom command "{command}"')
+        context.bom_output_file = context.scenario_temp_dir / "bom_output.csv"
+    except AttributeError as e:
+        # Re-raise with more context about which step failed
+        raise AttributeError(f"CLI step failed: {e}")
 
 
 # =============================================================================
@@ -268,21 +368,25 @@ def step_when_generate_bom_cli(context):
 def step_when_generate_bom_api(context):
     """Generate BOM using Python API."""
     try:
+        project_path = get_project_path(context)
+        inventory_path = get_inventory_path(context)
+
         # TODO: Import actual jBOM API when available
         # from jbom.api import generate_bom
         # context.api_result = generate_bom(
-        #     input=context.project_dir,
-        #     inventory=context.inventory_file,
+        #     input=project_path,
+        #     inventory=inventory_path,
         #     output=context.scenario_temp_dir / "api_bom_output.csv",
         # )
 
         # For now, simulate API call via CLI
-        command = f"bom {context.project_dir} -i {context.inventory_file} -o api_bom_output.csv"
+        command = f"bom {project_path} -i {inventory_path} -o api_bom_output.csv"
         context.execute_steps(f'When I run jbom command "{command}"')
         context.bom_output_file = context.scenario_temp_dir / "api_bom_output.csv"
         context.last_command_exit_code = 0
     except Exception as e:
         context.last_command_error = str(e)
+        context.last_command_exit_code = 1
         context.last_command_exit_code = 1
 
 
@@ -290,15 +394,17 @@ def step_when_generate_bom_api(context):
 def step_when_generate_pos_api(context):
     """Generate POS using Python API."""
     try:
+        project_path = get_project_path(context)
+
         # TODO: Import actual jBOM API when available
         # from jbom.api import generate_pos
         # context.api_result = generate_pos(
-        #     input=context.project_dir,
+        #     input=project_path,
         #     output=context.scenario_temp_dir / "api_pos_output.csv",
         # )
 
         # For now, simulate API call via CLI
-        command = f"pos {context.project_dir} -o api_pos_output.csv"
+        command = f"pos {project_path} -o api_pos_output.csv"
         context.execute_steps(f'When I run jbom command "{command}"')
         context.pos_output_file = context.scenario_temp_dir / "api_pos_output.csv"
         context.last_command_exit_code = 0
@@ -327,19 +433,24 @@ def step_when_generate_bom_multi_modal(context, method):
 @when("I generate POS using {method}")
 def step_when_generate_pos_multi_modal(context, method):
     """Generate POS using specified method (CLI, Python API, or KiCad plugin)."""
-    if method == "CLI":
-        command = f"pos {context.project_dir} -o pos_output.csv"
-        context.execute_steps(f'When I run jbom command "{command}"')
-        context.pos_output_file = context.scenario_temp_dir / "pos_output.csv"
-    elif method == "Python API":
-        context.execute_steps("When I generate POS using Python API")
-    elif method == "KiCad plugin":
-        # Simulate KiCad plugin execution
-        command = f"pos {context.project_dir} -o pos_output.csv"
-        context.execute_steps(f'When I run jbom command "{command}"')
-        context.pos_output_file = context.scenario_temp_dir / "pos_output.csv"
-    else:
-        raise ValueError(f"Unknown POS generation method: {method}")
+    try:
+        if method == "CLI":
+            project_path = get_project_path(context)
+            command = f"pos {project_path} -o pos_output.csv"
+            context.execute_steps(f'When I run jbom command "{command}"')
+            context.pos_output_file = context.scenario_temp_dir / "pos_output.csv"
+        elif method == "Python API":
+            context.execute_steps("When I generate POS using Python API")
+        elif method == "KiCad plugin":
+            # Simulate KiCad plugin execution
+            project_path = get_project_path(context)
+            command = f"pos {project_path} -o pos_output.csv"
+            context.execute_steps(f'When I run jbom command "{command}"')
+            context.pos_output_file = context.scenario_temp_dir / "pos_output.csv"
+        else:
+            raise ValueError(f"Unknown POS generation method: {method}")
+    except AttributeError as e:
+        raise AttributeError(f"POS {method} step failed: {e}")
 
 
 # =============================================================================
