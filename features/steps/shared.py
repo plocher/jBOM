@@ -140,11 +140,15 @@ def create_inventory_from_table(context, filename, inventory_table):
 def add_component_to_schematic(context, reference, value, package):
     """Add a component to an existing KiCad schematic file.
 
+    TODO: TECHNICAL DEBT - Parameter name 'package' is misleading
+    This actually writes to the Footprint property, but receives package values like "0603".
+    Should be renamed to 'footprint' and callers should provide proper footprint strings.
+
     Args:
         context: Behave context object with kicad_project_file set
         reference: Component reference (e.g. "R1")
         value: Component value (e.g. "10K")
-        package: Component package/footprint (e.g. "0603")
+        package: Component package/footprint (e.g. "0603") - FIXME: should be footprint
     """
     # Find the schematic file
     if hasattr(context, "test_schematic_file"):
@@ -200,7 +204,11 @@ def create_kicad_project_with_components(context, project_name, component_table)
     for row in component_table:
         reference = row["Reference"]
         value = row["Value"]
-        # Handle both "Footprint" and "Package" column names
+        # TODO: TECHNICAL DEBT - This conflates Package and Footprint
+        # Package (e.g., "0603") is a component attribute
+        # Footprint (e.g., "Resistor_SMD:R_0603_1608Metric") is a KiCad PCB artifact
+        # Tests should provide both columns and this should handle them separately
+        # See: priority_selection.feature needs Footprint column added
         footprint = row.get("Footprint", row.get("Package", ""))
 
         # Generate a symbol entry in KiCad format (matching minimal.kicad_sch)
