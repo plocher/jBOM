@@ -19,7 +19,7 @@ def before_all(context):
     # Set up paths
     context.project_root = Path(__file__).parent.parent
     context.examples_dir = context.project_root / "examples"
-    
+
     # Add steps directory to Python path for diagnostic_utils imports
     steps_dir = Path(__file__).parent / "steps"
     if str(steps_dir) not in sys.path:
@@ -236,6 +236,7 @@ def _add_context_methods(context):
         except PermissionError as e:
             # Format permission errors consistently with CLI
             import re
+
             file_match = re.search(r"['\"]([^'\"]+)['\"]", str(e))
             file_path = file_match.group(1) if file_match else "unknown file"
             error_msg = (

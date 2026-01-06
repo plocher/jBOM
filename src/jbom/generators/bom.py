@@ -1165,7 +1165,7 @@ class BOMGenerator(Generator):
         else:
             output_str = output_path
             output_path = Path(output_path)
-        
+
         # Check if output should go to stdout
         use_stdout = output_str in ("-", "console", "stdout")
 
@@ -1177,13 +1177,17 @@ class BOMGenerator(Generator):
                 output_path.parent.mkdir(parents=True, exist_ok=True)
             except PermissionError as e:
                 # Re-raise with original output path for better error message
-                raise PermissionError(f"[Errno 13] Permission denied: '{output_str}'") from e
-            
+                raise PermissionError(
+                    f"[Errno 13] Permission denied: '{output_str}'"
+                ) from e
+
             try:
                 f = open(output_path, "w", newline="", encoding="utf-8")
             except PermissionError as e:
                 # Re-raise with original output path for better error message
-                raise PermissionError(f"[Errno 13] Permission denied: '{output_str}'") from e
+                raise PermissionError(
+                    f"[Errno 13] Permission denied: '{output_str}'"
+                ) from e
 
         try:
             writer = csv.writer(f)
