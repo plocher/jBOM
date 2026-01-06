@@ -170,7 +170,7 @@ def step_given_schematic_with_components(context):
         create_kicad_project_with_components(context, "ComponentTest", components)
 
 
-@given("an inventory with parts")
+@given("an inventory with parts:")
 def step_given_inventory_with_parts(context):
     """Set up inventory with parts from table data."""
     from shared import create_inventory_from_table
