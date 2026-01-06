@@ -137,18 +137,15 @@ def create_inventory_from_table(context, filename, inventory_table):
     return inventory_file
 
 
-def add_component_to_schematic(context, reference, value, package):
+def add_component_to_schematic(context, reference, value, footprint, package=None):
     """Add a component to an existing KiCad schematic file.
-
-    TODO: TECHNICAL DEBT - Parameter name 'package' is misleading
-    This actually writes to the Footprint property, but receives package values like "0603".
-    Should be renamed to 'footprint' and callers should provide proper footprint strings.
 
     Args:
         context: Behave context object with kicad_project_file set
         reference: Component reference (e.g. "R1")
         value: Component value (e.g. "10K")
-        package: Component package/footprint (e.g. "0603") - FIXME: should be footprint
+        footprint: KiCad footprint reference (e.g. "Resistor_SMD:R_0603_1608Metric")
+        package: Optional component package attribute (e.g. "0603")
     """
     # Find the schematic file
     if hasattr(context, "test_schematic_file"):
@@ -168,10 +165,22 @@ def add_component_to_schematic(context, reference, value, package):
 
     x_position = 50 + (random.randint(0, 10) * 20)
 
+    # Build properties list
+    properties = [
+        f'(property "Reference" "{reference}" (id 0) (at {x_position+2} 50 0))',
+        f'(property "Value" "{value}" (id 1) (at {x_position+2} 52 0))',
+        f'(property "Footprint" "{footprint}" (id 2) (at {x_position+2} 54 0))',
+    ]
+
+    # Add Package as a custom property if provided
+    if package:
+        properties.append(
+            f'(property "Package" "{package}" (id 3) (at {x_position+2} 56 0))'
+        )
+
+    properties_str = "\n    ".join(properties)
     new_symbol = f"""  (symbol (lib_id "Device:Generic") (at {x_position} 50 0) (unit 1)
-    (property "Reference" "{reference}" (id 0) (at {x_position+2} 50 0))
-    (property "Value" "{value}" (id 1) (at {x_position+2} 52 0))
-    (property "Footprint" "{package}" (id 2) (at {x_position+2} 54 0)))"""
+    {properties_str})"""
 
     # Insert before the closing parenthesis
     content = content.rstrip("\n)\n") + "\n" + new_symbol + "\n)\n"
@@ -204,18 +213,26 @@ def create_kicad_project_with_components(context, project_name, component_table)
     for row in component_table:
         reference = row["Reference"]
         value = row["Value"]
-        # TODO: TECHNICAL DEBT - This conflates Package and Footprint
-        # Package (e.g., "0603") is a component attribute
-        # Footprint (e.g., "Resistor_SMD:R_0603_1608Metric") is a KiCad PCB artifact
-        # Tests should provide both columns and this should handle them separately
-        # See: priority_selection.feature needs Footprint column added
-        footprint = row.get("Footprint", row.get("Package", ""))
+        footprint = row.get("Footprint", "")
+        package = row.get("Package", "")
+
+        # Build properties list - start with required ones
+        properties = [
+            f'(property "Reference" "{reference}" (id 0) (at {x_position+2} 50 0))',
+            f'(property "Value" "{value}" (id 1) (at {x_position+2} 52 0))',
+            f'(property "Footprint" "{footprint}" (id 2) (at {x_position+2} 54 0))',
+        ]
+
+        # Add Package as a custom property if provided
+        if package:
+            properties.append(
+                f'(property "Package" "{package}" (id 3) (at {x_position+2} 56 0))'
+            )
 
         # Generate a symbol entry in KiCad format (matching minimal.kicad_sch)
+        properties_str = "\n    ".join(properties)
         symbol = f"""  (symbol (lib_id "Device:Generic") (at {x_position} 50 0) (unit 1)
-    (property "Reference" "{reference}" (id 0) (at {x_position+2} 50 0))
-    (property "Value" "{value}" (id 1) (at {x_position+2} 52 0))
-    (property "Footprint" "{footprint}" (id 2) (at {x_position+2} 54 0)))"""
+    {properties_str})"""
         symbols.append(symbol)
         x_position += 20  # Space out components
 

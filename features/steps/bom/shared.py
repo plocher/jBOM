@@ -303,7 +303,8 @@ def step_given_schematic_extended_with_component(context):
                     context,
                     comp_dict["Reference"],
                     comp_dict["Value"],
-                    comp_dict.get("Package", ""),
+                    comp_dict.get("Footprint", ""),
+                    comp_dict.get("Package"),
                 )
 
 
@@ -323,7 +324,8 @@ def step_given_schematic_extended_with_components(context):
                     context,
                     comp_dict["Reference"],
                     comp_dict["Value"],
-                    comp_dict.get("Package", ""),
+                    comp_dict.get("Footprint", ""),
+                    comp_dict.get("Package"),
                 )
 
 
