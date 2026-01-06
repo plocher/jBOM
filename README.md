@@ -255,12 +255,10 @@ Contributions are welcome! jBOM is developed on GitHub at [github.com/plocher/jB
 To contribute:
 1. Fork the repository
 2. Create a feature branch
-3. Run tests: `python -m unittest discover -s tests -v`
+3. Run tests: behave feature --`python -m unittest discover -s tests -v` 
 4. Submit a pull request
 
 See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for details.
-
-**jBOM v3.0.0** — Major architectural refactoring with data-flow architecture, federated inventory support, and KiCad integration.
 
 **License**: AGPLv3 — See LICENSE file for full terms.
 Author: John Plocher

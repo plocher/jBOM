@@ -30,12 +30,12 @@ def step_when_generate_boms_using_each_format(context):
         cmd_parts = [
             "python",
             "-m",
-            "jbom.cli",
+            "jbom",
             "bom",
-            f"--project={project_path}",
-            f"--inventory={inventory_file}",
-            f"--output={output_file}",
-            "--fabricator=generic",
+            str(project_path),
+            "--inventory", str(inventory_file),
+            "--output", str(output_file),
+            "--generic",
         ]
 
         command = " ".join(cmd_parts)
@@ -59,11 +59,11 @@ def step_when_generate_bom_using_all_inventory_files(context, project):
     cmd_parts = [
         "python",
         "-m",
-        "jbom.cli",
+        "jbom",
         "bom",
-        f"--project={project_path}",
-        f"--output={output_file}",
-        "--fabricator=generic",
+        str(project_path),
+        "--output", str(output_file),
+        "--generic",
     ]
 
     # Add all inventory files

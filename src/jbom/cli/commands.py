@@ -65,6 +65,14 @@ class Command(ABC):
         except FileNotFoundError as e:
             print(f"Error: {e}", file=sys.stderr)
             return 1
+        except PermissionError as e:
+            # Extract the file path from the error message
+            import re
+            file_match = re.search(r"['\"]([^'\"]+)['\"]", str(e))
+            file_path = file_match.group(1) if file_match else "unknown file"
+            print(f"Error: Permission denied writing to: {file_path}", file=sys.stderr)
+            print("Please check that the directory is writable and you have sufficient permissions.", file=sys.stderr)
+            return 1
         except (ValueError, KeyError, ImportError) as e:
             print(f"Error: {e}", file=sys.stderr)
             return 1

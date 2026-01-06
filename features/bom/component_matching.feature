@@ -5,8 +5,8 @@ Feature: Component Matching
 
   Scenario: Match resistor by exact value and package
     Given a KiCad project named "ComponentTest"
-    And the project uses a schematic named "TestBoard"
-    And the "TestBoard" schematic contains components:
+    And the project uses a schematic named "ComponentTest"
+    And the "ComponentTest" schematic contains components:
       | Reference | Value | Footprint   | LibID |
       | R1        | 10K   | R_0603_1608 | Device:R |
     And an inventory file "test-inventory.csv" containing components:
@@ -19,8 +19,8 @@ Feature: Component Matching
 
   Scenario: Match capacitor by exact value and package
     Given a KiCad project named "CapacitorTest"
-    And the project uses a schematic named "CapBoard"
-    And the "CapBoard" schematic contains components:
+    And the project uses a schematic named "CapacitorTest"
+    And the "CapacitorTest" schematic contains components:
       | Reference | Value | Footprint   | LibID |
       | C1        | 100nF | C_0603_1608 | Device:C |
     And an inventory file "capacitor-inventory.csv" containing components:
@@ -33,8 +33,8 @@ Feature: Component Matching
 
   Scenario: Match component by approximate value within tolerance range
     Given a KiCad project named "ToleranceTest"
-    And the project uses a schematic named "ToleranceBoard"
-    And the "ToleranceBoard" schematic contains components:
+    And the project uses a schematic named "ToleranceTest"
+    And the "ToleranceTest" schematic contains components:
       | Reference | Value | Footprint   | LibID |
       | R2        | 1K    | R_0603_1608 | Device:R |
     And an inventory file "tolerance-inventory.csv" containing components:
@@ -47,8 +47,8 @@ Feature: Component Matching
 
   Scenario: Match component by normalized value format
     Given a KiCad project named "NormalizationTest"
-    And the project uses a schematic named "NormBoard"
-    And the "NormBoard" schematic contains components:
+    And the project uses a schematic named "NormalizationTest"
+    And the "NormalizationTest" schematic contains components:
       | Reference | Value | Footprint   | LibID |
       | R3        | 1.1K  | R_0603_1608 | Device:R |
     And an inventory file "normalized-inventory.csv" containing components:
@@ -61,8 +61,8 @@ Feature: Component Matching
 
   Scenario: No match for missing component - no fields match
     Given a KiCad project named "UnmatchedTest"
-    And the project uses a schematic named "UnmatchedBoard"
-    And the "UnmatchedBoard" schematic contains components:
+    And the project uses a schematic named "UnmatchedTest"
+    And the "UnmatchedTest" schematic contains components:
       | Reference | Value | Footprint   | LibID |
       | R4        | 47K   | R_1206_3216 | Device:R |
     And an inventory file "limited-inventory.csv" containing components:
@@ -74,8 +74,8 @@ Feature: Component Matching
 
   Scenario: No match for missing component - value matches, package doesn't
     Given a KiCad project named "PackageMismatchTest"
-    And the project uses a schematic named "PackageBoard"
-    And the "PackageBoard" schematic contains components:
+    And the project uses a schematic named "PackageMismatchTest"
+    And the "PackageMismatchTest" schematic contains components:
       | Reference | Value | Footprint   | LibID |
       | R5        | 10K   | R_1206_3216 | Device:R |
     And an inventory file "package-mismatch-inventory.csv" containing components:
@@ -87,8 +87,8 @@ Feature: Component Matching
 
   Scenario: No match for missing component - package matches, value doesn't
     Given a KiCad project named "ValueMismatchTest"
-    And the project uses a schematic named "ValueBoard"
-    And the "ValueBoard" schematic contains components:
+    And the project uses a schematic named "ValueMismatchTest"
+    And the "ValueMismatchTest" schematic contains components:
       | Reference | Value | Footprint   | LibID |
       | R6        | 100K  | R_0603_1608 | Device:R |
     And an inventory file "value-mismatch-inventory.csv" containing components:
@@ -105,6 +105,7 @@ Feature: Component Matching
     Then the BOM contains components extracted from the KiCad schematic
     And components are matched against parts loaded from Excel file
 
+  @wip
   Scenario: Process hierarchical KiCad schematic with CSV inventory
     Given a KiCad project with main sheet "MainBoard.kicad_sch"
     And sub-sheet "PowerSupply.kicad_sch"

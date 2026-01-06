@@ -1158,16 +1158,32 @@ class BOMGenerator(Generator):
         - "console"
         - "stdout"
         """
+        # Capture the original output string before any Path normalization
+        # This preserves relative path prefixes like "./" for error messages
+        if isinstance(output_path, Path):
+            output_str = str(output_path)
+        else:
+            output_str = output_path
+            output_path = Path(output_path)
+        
         # Check if output should go to stdout
-        output_str = str(output_path)
         use_stdout = output_str in ("-", "console", "stdout")
 
         if use_stdout:
             f = sys.stdout
         else:
             # Create parent directories if needed
-            output_path.parent.mkdir(parents=True, exist_ok=True)
-            f = open(output_path, "w", newline="", encoding="utf-8")
+            try:
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+            except PermissionError as e:
+                # Re-raise with original output path for better error message
+                raise PermissionError(f"[Errno 13] Permission denied: '{output_str}'") from e
+            
+            try:
+                f = open(output_path, "w", newline="", encoding="utf-8")
+            except PermissionError as e:
+                # Re-raise with original output path for better error message
+                raise PermissionError(f"[Errno 13] Permission denied: '{output_str}'") from e
 
         try:
             writer = csv.writer(f)
