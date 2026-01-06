@@ -19,6 +19,11 @@ def before_all(context):
     # Set up paths
     context.project_root = Path(__file__).parent.parent
     context.examples_dir = context.project_root / "examples"
+    
+    # Add steps directory to Python path for diagnostic_utils imports
+    steps_dir = Path(__file__).parent / "steps"
+    if str(steps_dir) not in sys.path:
+        sys.path.insert(0, str(steps_dir))
 
     # Create temporary directory for test outputs
     context.temp_dir = Path(tempfile.mkdtemp(prefix="jbom_functional_"))
@@ -217,8 +222,8 @@ def _add_context_methods(context):
                 project = context.scenario_temp_dir / project
             if inventory and not Path(inventory).is_absolute():
                 inventory = context.scenario_temp_dir / inventory
-            if output and not Path(output).is_absolute():
-                output = context.scenario_temp_dir / output
+            # Note: Don't resolve output path to preserve original format for error messages
+            # The generator will handle relative paths from the current working directory
 
             result = generate_bom(
                 input=project, inventory=inventory, output=output, options=options
@@ -228,6 +233,18 @@ def _add_context_methods(context):
             context.last_command_exit_code = 0
             return result
 
+        except PermissionError as e:
+            # Format permission errors consistently with CLI
+            import re
+            file_match = re.search(r"['\"]([^'\"]+)['\"]", str(e))
+            file_path = file_match.group(1) if file_match else "unknown file"
+            error_msg = (
+                f"Error: Permission denied writing to: {file_path}\n"
+                f"Please check that the directory is writable and you have sufficient permissions."
+            )
+            context.last_command_exit_code = 1
+            context.last_command_error = error_msg
+            raise PermissionError(error_msg) from e
         except Exception as e:
             # Store error state
             context.last_command_exit_code = 1

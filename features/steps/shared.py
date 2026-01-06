@@ -114,6 +114,69 @@ def get_inventory_path(context):
 # to avoid conflicts. This shared module focuses on utility functions.
 
 
+def create_inventory_from_table(context, filename, inventory_table):
+    """Create an inventory CSV file from a behave table.
+
+    Args:
+        context: Behave context object
+        filename: Name for the inventory file
+        inventory_table: Behave table with inventory data
+    """
+    import csv
+
+    inventory_file = context.scenario_temp_dir / filename
+
+    with open(inventory_file, "w", newline="") as f:
+        headers = inventory_table.headings
+        writer = csv.DictWriter(f, fieldnames=headers)
+        writer.writeheader()
+        for row in inventory_table:
+            writer.writerow(row.as_dict())
+
+    context.inventory_file = inventory_file
+    return inventory_file
+
+
+def add_component_to_schematic(context, reference, value, package):
+    """Add a component to an existing KiCad schematic file.
+
+    Args:
+        context: Behave context object with kicad_project_file set
+        reference: Component reference (e.g. "R1")
+        value: Component value (e.g. "10K")
+        package: Component package/footprint (e.g. "0603")
+    """
+    # Find the schematic file
+    if hasattr(context, "test_schematic_file"):
+        schematic_file = context.test_schematic_file
+    else:
+        # Derive from project file
+        project_file = context.kicad_project_file
+        schematic_file = project_file.parent / f"{project_file.stem}.kicad_sch"
+
+    # Read existing schematic
+    with open(schematic_file, "r") as f:
+        content = f.read()
+
+    # Find the last symbol and insert new one after it
+    # Generate new symbol entry
+    import random
+
+    x_position = 50 + (random.randint(0, 10) * 20)
+
+    new_symbol = f"""  (symbol (lib_id "Device:Generic") (at {x_position} 50 0) (unit 1)
+    (property "Reference" "{reference}" (id 0) (at {x_position+2} 50 0))
+    (property "Value" "{value}" (id 1) (at {x_position+2} 52 0))
+    (property "Footprint" "{package}" (id 2) (at {x_position+2} 54 0)))"""
+
+    # Insert before the closing parenthesis
+    content = content.rstrip("\n)\n") + "\n" + new_symbol + "\n)\n"
+
+    # Write back
+    with open(schematic_file, "w") as f:
+        f.write(content)
+
+
 def create_kicad_project_with_components(context, project_name, component_table):
     """Create a KiCad project with specific components from a behave table.
 
@@ -130,31 +193,30 @@ def create_kicad_project_with_components(context, project_name, component_table)
 
     schematic_file = project_dir / f"{project_name}.kicad_sch"
 
-    # Build symbol instances from table
-    symbol_instances = []
+    # Build symbol entries from table (not symbol_instances - those are for newer format)
+    # Use the format that jBOM actually parses successfully
+    symbols = []
+    x_position = 50  # Start position for component placement
     for row in component_table:
         reference = row["Reference"]
         value = row["Value"]
-        footprint = row["Footprint"]
+        # Handle both "Footprint" and "Package" column names
+        footprint = row.get("Footprint", row.get("Package", ""))
 
-        # Generate a simple symbol instance entry
-        symbol_instance = f"""    (symbol_instance (path "/{reference}")
-      (reference "{reference}") (unit 1)
-      (value "{value}") (footprint "{footprint}")
-    )"""
-        symbol_instances.append(symbol_instance)
+        # Generate a symbol entry in KiCad format (matching minimal.kicad_sch)
+        symbol = f"""  (symbol (lib_id "Device:Generic") (at {x_position} 50 0) (unit 1)
+    (property "Reference" "{reference}" (id 0) (at {x_position+2} 50 0))
+    (property "Value" "{value}" (id 1) (at {x_position+2} 52 0))
+    (property "Footprint" "{footprint}" (id 2) (at {x_position+2} 54 0)))"""
+        symbols.append(symbol)
+        x_position += 20  # Space out components
 
-    # Create schematic with components
-    schematic_content = f"""(kicad_sch (version 20230121) (generator eeschema)
-  (uuid "12345678-1234-5678-9012-123456789012")
+    # Create schematic with components using format jBOM can parse
+    schematic_content = f"""(kicad_sch (version 20211123) (generator eeschema)
+  (uuid 12345678-1234-5678-9012-123456789abc)
   (paper "A4")
   (lib_symbols)
-  (symbol_instances
-{chr(10).join(symbol_instances)}
-  )
-  (sheet_instances
-    (path "/" (page "1"))
-  )
+{chr(10).join(symbols)}
 )
 """
 
@@ -185,33 +247,31 @@ def create_kicad_project_with_named_schematic_and_components(
     # Create schematic file with specified name
     schematic_file = project_dir / f"{schematic_name}.kicad_sch"
 
-    # Build symbol instances from table
-    symbol_instances = []
+    # Build symbol entries from table using format jBOM can parse
+    symbols = []
+    x_position = 50  # Start position for component placement
     for row in component_table:
         reference = row["Reference"]
         value = row["Value"]
         footprint = row["Footprint"]
-        lib_id = row["LibID"]
+        lib_id = row.get(
+            "LibID", "Device:Generic"
+        )  # LibID optional, default to Generic
 
-        # Generate a symbol instance entry with LibID
-        symbol_instance = f"""    (symbol_instance (path "/{reference}")
-      (reference "{reference}") (unit 1)
-      (value "{value}") (footprint "{footprint}")
-      (lib_id "{lib_id}")
-    )"""
-        symbol_instances.append(symbol_instance)
+        # Generate a symbol entry in KiCad format (matching minimal.kicad_sch)
+        symbol = f"""  (symbol (lib_id "{lib_id}") (at {x_position} 50 0) (unit 1)
+    (property "Reference" "{reference}" (id 0) (at {x_position+2} 50 0))
+    (property "Value" "{value}" (id 1) (at {x_position+2} 52 0))
+    (property "Footprint" "{footprint}" (id 2) (at {x_position+2} 54 0)))"""
+        symbols.append(symbol)
+        x_position += 20  # Space out components
 
-    # Create schematic with components
-    schematic_content = f"""(kicad_sch (version 20230121) (generator eeschema)
-  (uuid "12345678-1234-5678-9012-123456789012")
+    # Create schematic with components using format jBOM can parse
+    schematic_content = f"""(kicad_sch (version 20211123) (generator eeschema)
+  (uuid 12345678-1234-5678-9012-123456789abc)
   (paper "A4")
   (lib_symbols)
-  (symbol_instances
-{chr(10).join(symbol_instances)}
-  )
-  (sheet_instances
-    (path "/" (page "1"))
-  )
+{chr(10).join(symbols)}
 )
 """
 
@@ -355,8 +415,31 @@ def step_when_generate_bom_cli(context):
         context.execute_steps(f'When I run jbom command "{command}"')
         context.bom_output_file = context.scenario_temp_dir / "bom_output.csv"
     except AttributeError as e:
-        # Re-raise with more context about which step failed
-        raise AttributeError(f"CLI step failed: {e}")
+        # Convert to user-friendly diagnostic message
+        import sys
+        import os
+
+        steps_dir = os.path.join(os.path.dirname(__file__), ".")
+        if steps_dir not in sys.path:
+            sys.path.insert(0, steps_dir)
+
+        try:
+            from diagnostic_utils import format_execution_context
+
+            diagnostic = (
+                f"\nCLI step setup failed - missing required context!\n"
+                f"  Error: {str(e)}\n"
+                f"\n  This usually means the Given steps didn't properly set up:"
+                f"\n  - Project path (project_dir, test_project_dir, kicad_project_file, or project_path)"
+                f"\n  - Inventory path (inventory_file, inventory_path, or inventory_sources)\n"
+                + format_execution_context(context, include_files=True)
+            )
+            raise AssertionError(diagnostic)
+        except ImportError:
+            # Fallback if diagnostic_utils not available
+            raise AssertionError(
+                f"CLI step failed: {e}. Check that Given steps properly set up project and inventory paths."
+            )
 
 
 # =============================================================================
@@ -618,14 +701,46 @@ def step_when_validate_across_all_models(context):
     context.results = {}
 
     for method in methods:
-        # Execute with current method
-        context.execute_steps(f"When I generate BOM using {method}")
+        try:
+            # Execute with current method
+            context.execute_steps(f"When I generate BOM using {method}")
 
-        # Store results for this method
-        context.results[method] = {
-            "exit_code": context.last_command_exit_code,
-            "output_file": getattr(context, "bom_output_file", None),
-        }
+            # Store results for this method
+            context.results[method] = {
+                "exit_code": context.last_command_exit_code,
+                "output_file": getattr(context, "bom_output_file", None),
+            }
+        except AttributeError as e:
+            # Provide diagnostic output for setup failures
+            import sys
+            import os
+
+            steps_dir = os.path.join(os.path.dirname(__file__), ".")
+            if steps_dir not in sys.path:
+                sys.path.insert(0, steps_dir)
+
+            try:
+                from diagnostic_utils import format_execution_context
+
+                diagnostic = (
+                    f"\n{'='*80}\n"
+                    f"MULTI-MODAL VALIDATION FAILED: {method} mode\n"
+                    f"{'='*80}\n"
+                    f"\nError: {str(e)}\n"
+                    f"\nThis means the Given steps didn't set up required context for {method} mode.\n"
+                    f"\nCommon causes:"
+                    f"\n  - Missing project path setup (project_dir, test_project_dir, kicad_project_file)"
+                    f"\n  - Missing inventory setup (inventory_file, inventory_path)"
+                    f"\n  - Given steps only set up CLI mode, not API/Plugin modes\n"
+                    + format_execution_context(context, include_files=True)
+                )
+                raise AssertionError(diagnostic)
+            except ImportError:
+                # Fallback if diagnostic_utils not available
+                raise AssertionError(
+                    f"Multi-modal validation failed for {method}: {e}\n"
+                    f"Check that Given steps set up context for all three modes (CLI, API, Plugin)."
+                )
 
 
 @when("I validate annotation across all usage models")
@@ -635,15 +750,47 @@ def step_when_validate_annotation_across_models(context):
     context.results = {}
 
     for method in methods:
-        # Execute annotation using each method
-        context.execute_steps(f"When I perform annotation using {method}")
+        try:
+            # Execute annotation using each method
+            context.execute_steps(f"When I perform annotation using {method}")
 
-        # Store results for this method
-        context.results[method] = {
-            "exit_code": getattr(context, "last_command_exit_code", 0),
-            "output_file": getattr(context, "annotation_output_file", None),
-            "annotation_results": getattr(context, "annotation_results", None),
-        }
+            # Store results for this method
+            context.results[method] = {
+                "exit_code": getattr(context, "last_command_exit_code", 0),
+                "output_file": getattr(context, "annotation_output_file", None),
+                "annotation_results": getattr(context, "annotation_results", None),
+            }
+        except AttributeError as e:
+            # Provide diagnostic output for setup failures
+            import sys
+            import os
+
+            steps_dir = os.path.join(os.path.dirname(__file__), ".")
+            if steps_dir not in sys.path:
+                sys.path.insert(0, steps_dir)
+
+            try:
+                from diagnostic_utils import format_execution_context
+
+                diagnostic = (
+                    f"\n{'='*80}\n"
+                    f"MULTI-MODAL ANNOTATION VALIDATION FAILED: {method} mode\n"
+                    f"{'='*80}\n"
+                    f"\nError: {str(e)}\n"
+                    f"\nThis means the Given steps didn't set up required context for {method} mode.\n"
+                    f"\nCommon causes:"
+                    f"\n  - Missing project path setup (project_dir, test_project_dir, kicad_project_file)"
+                    f"\n  - Missing inventory setup (inventory_file, inventory_path)"
+                    f"\n  - Given steps only set up CLI mode, not API/Plugin modes\n"
+                    + format_execution_context(context, include_files=True)
+                )
+                raise AssertionError(diagnostic)
+            except ImportError:
+                # Fallback if diagnostic_utils not available
+                raise AssertionError(
+                    f"Multi-modal annotation validation failed for {method}: {e}\n"
+                    f"Check that Given steps set up context for all three modes (CLI, API, Plugin)."
+                )
 
 
 # Annotation-specific method steps are handled by the generic pattern:
@@ -658,38 +805,70 @@ def step_when_validate_operation_across_models(context, operation):
     context.results = {}
 
     for method in methods:
-        # Execute the specified operation with current method
-        if operation == "BOM generation":
-            context.execute_steps(f"When I generate BOM using {method}")
-        elif operation == "POS generation":
-            context.execute_steps(f"When I generate POS using {method}")
-        elif operation == "inventory extraction":
-            context.execute_steps(f"When I generate inventory using {method}")
-        elif operation == "search":
-            context.execute_steps(f"When I perform search using {method}")
-        elif operation == "annotation":
-            context.execute_steps(f"When I perform annotation using {method}")
-        elif operation == "error handling":
-            context.execute_steps(f"When I perform operation using {method}")
-        else:
-            raise ValueError(f"Unknown operation: {operation}")
+        try:
+            # Execute the specified operation with current method
+            if operation == "BOM generation":
+                context.execute_steps(f"When I generate BOM using {method}")
+            elif operation == "POS generation":
+                context.execute_steps(f"When I generate POS using {method}")
+            elif operation == "inventory extraction":
+                context.execute_steps(f"When I generate inventory using {method}")
+            elif operation == "search":
+                context.execute_steps(f"When I perform search using {method}")
+            elif operation == "annotation":
+                context.execute_steps(f"When I perform annotation using {method}")
+            elif operation == "error handling":
+                context.execute_steps(f"When I perform operation using {method}")
+            else:
+                raise ValueError(f"Unknown operation: {operation}")
 
-        # Store results
-        context.results[method] = {
-            "exit_code": context.last_command_exit_code,
-            "output_file": getattr(
-                context,
-                "bom_output_file",
-                getattr(
+            # Store results
+            context.results[method] = {
+                "exit_code": context.last_command_exit_code,
+                "output_file": getattr(
                     context,
-                    "pos_output_file",
-                    getattr(context, "inventory_output_file", None),
+                    "bom_output_file",
+                    getattr(
+                        context,
+                        "pos_output_file",
+                        getattr(context, "inventory_output_file", None),
+                    ),
                 ),
-            ),
-            "search_results": getattr(context, "search_results", None),
-            "annotation_results": getattr(context, "annotation_results", None),
-            "error_output": getattr(context, "error_output", None),
-        }
+                "search_results": getattr(context, "search_results", None),
+                "annotation_results": getattr(context, "annotation_results", None),
+                "error_output": getattr(context, "error_output", None),
+            }
+        except AttributeError as e:
+            # Provide diagnostic output for setup failures
+            import sys
+            import os
+
+            steps_dir = os.path.join(os.path.dirname(__file__), ".")
+            if steps_dir not in sys.path:
+                sys.path.insert(0, steps_dir)
+
+            try:
+                from diagnostic_utils import format_execution_context
+
+                diagnostic = (
+                    f"\n{'='*80}\n"
+                    f"MULTI-MODAL VALIDATION FAILED: {operation} using {method}\n"
+                    f"{'='*80}\n"
+                    f"\nError: {str(e)}\n"
+                    f"\nThis means the Given steps didn't set up required context for {method} mode.\n"
+                    f"\nCommon causes:"
+                    f"\n  - Missing project path setup (project_dir, test_project_dir, kicad_project_file)"
+                    f"\n  - Missing inventory setup (inventory_file, inventory_path)"
+                    f"\n  - Given steps only set up CLI mode, not API/Plugin modes\n"
+                    + format_execution_context(context, include_files=True)
+                )
+                raise AssertionError(diagnostic)
+            except ImportError:
+                # Fallback if diagnostic_utils not available
+                raise AssertionError(
+                    f"Multi-modal validation failed for {operation} using {method}: {e}\n"
+                    f"Check that Given steps set up context for all three modes (CLI, API, Plugin)."
+                )
 
 
 @then("all usage models produce consistent results")

@@ -24,7 +24,22 @@ def step_given_kicad_project_named(context, project_name):
     project_file = context.project_dir / f"{project_name}.kicad_pro"
     project_file.write_text('{\n  "board": {\n    "design_rules": {}\n  }\n}')
 
+    # Create a minimal valid schematic file (required for BOM generation)
+    schematic_file = context.project_dir / f"{project_name}.kicad_sch"
+    schematic_content = """(kicad_sch (version 20230121) (generator eeschema)
+  (uuid "default-uuid-1234-5678-9012-123456789012")
+  (paper "A4")
+  (lib_symbols)
+  (symbol_instances)
+  (sheet_instances
+    (path "/" (page "1"))
+  )
+)
+"""
+    schematic_file.write_text(schematic_content)
+
     context.project_path = str(project_file)
+    context.schematic_path = str(schematic_file)
 
 
 # NOTE: Inventory file creation step is defined in shared.py to avoid domain conflicts
@@ -165,21 +180,37 @@ def step_given_named_schematic_contains_components(context, schematic_name):
 )
 def step_then_bom_contains_component_matched_with_part(context, component_ref, part_id):
     """Verify BOM contains component matched with specific inventory part."""
+    import sys
+    import os
+
+    steps_dir = os.path.join(os.path.dirname(__file__), "..")
+    if steps_dir not in sys.path:
+        sys.path.insert(0, steps_dir)
+    from diagnostic_utils import format_execution_context
+    from pathlib import Path
+    import csv
+
     # Find the output BOM file
     bom_file = None
-    for potential_name in ["output.csv", f"{context.project_name}_BOM.csv", "bom.csv"]:
+    search_names = ["output.csv", f"{context.project_name}_BOM.csv", "bom.csv"]
+    for potential_name in search_names:
         potential_path = context.scenario_temp_dir / potential_name
         if potential_path.exists():
             bom_file = potential_path
             break
 
-    assert (
-        bom_file and bom_file.exists()
-    ), f"BOM output file not found in {context.scenario_temp_dir}"
+    if not (bom_file and bom_file.exists()):
+        all_files = list(Path(context.scenario_temp_dir).rglob("*.csv"))
+        diagnostic = (
+            f"\nBOM output file not found!\n"
+            f"  Searched for: {', '.join(search_names)}\n"
+            f"  In directory: {context.scenario_temp_dir}\n"
+            f"  CSV files found: {[f.name for f in all_files] if all_files else '(none)'}\n"
+            + format_execution_context(context, include_files=True)
+        )
+        raise AssertionError(diagnostic)
 
     # Read CSV and verify component is matched with the expected inventory part
-    import csv
-
     with open(bom_file, "r") as f:
         reader = csv.DictReader(f)
         rows = list(reader)
@@ -193,13 +224,40 @@ def step_then_bom_contains_component_matched_with_part(context, component_ref, p
             component_row = row
             break
 
-    assert component_row, f"Component '{component_ref}' not found in BOM"
+    if not component_row:
+        # Show what components ARE in the BOM
+        available_refs = [
+            row.get("Reference", "(no ref)") for row in rows if row.get("Reference")
+        ]
+        bom_preview = "\n".join(
+            [
+                f"  {row.get('Reference', 'N/A'):10} | IPN: {row.get('IPN', '(none)'):10} | Value: {row.get('Value', 'N/A'):10} | Package: {row.get('Package', 'N/A')}"
+                for row in rows[:10]  # Show first 10 rows
+            ]
+        )
+        diagnostic = (
+            f"\nComponent not found in BOM!\n"
+            f"  Looking for: {component_ref}\n"
+            f"  BOM file: {bom_file}\n"
+            f"  Total rows: {len(rows)}\n"
+            f"  Components found: {available_refs if available_refs else '(no components)'}\n"
+            f"\nBOM Preview (first 10 rows):\n{bom_preview}\n"
+            + format_execution_context(context, include_files=False)
+        )
+        raise AssertionError(diagnostic)
 
     # Verify it's matched with the expected inventory part (IPN should match)
     ipn = component_row.get("IPN", "").strip()
-    assert (
-        ipn == part_id
-    ), f"Component '{component_ref}' matched with IPN '{ipn}', expected '{part_id}'"
+    if ipn != part_id:
+        diagnostic = (
+            f"\nComponent IPN mismatch!\n"
+            f"  Component: {component_ref}\n"
+            f"  Expected IPN: {part_id}\n"
+            f"  Actual IPN: '{ipn}' {('(not matched)' if not ipn else '')}\n"
+            f"  Component row: {dict(component_row)}\n"
+            + format_execution_context(context, include_files=False)
+        )
+        raise AssertionError(diagnostic)
 
 
 @then(

@@ -7,10 +7,10 @@ Feature: Priority Selection
     Given a KiCad project named "SimpleProject"
 
   Scenario: Priority zero wins over all other priority values
-Given a schematic with components:
+    Given a schematic with components:
       | Reference | Value | Package |
       | R1        | 10K   | 0603    |
-    And an inventory with parts
+    And an inventory with parts:
       | IPN   | Category | Value | Package | Distributor | Priority |
       | R001  | RES      | 10K   | 0603    | Generic     | 0        |
       | R002  | RES      | 10K   | 0603    | Generic     | 1        |
@@ -23,7 +23,7 @@ Given a schematic with components:
     Given a schematic with components:
       | Reference | Value | Package |
       | R1        | 10K   | 0603    |
-    And an inventory with parts
+    And an inventory with parts:
       | IPN   | Category | Value | Package | Priority    |
       | R001  | RES      | 10K   | 0603    | 1           |
       | R002  | RES      | 10K   | 0603    | 2147483647  |
@@ -37,7 +37,7 @@ Given a schematic with components:
       | Reference | Value | Package |
       | R1        | 10K   | 0603    |
       | C1        | 100nF | 0603    |
-    And an inventory with parts
+    And an inventory with parts:
       | IPN   | Category | Value | Package | Priority |
       | R001  | RES      | 10K   | 0603    | 50       |
       | R002  | RES      | 10K   | 0603    | 1        |

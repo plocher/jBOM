@@ -167,11 +167,12 @@ class BOMCommand(Command):
         elif output_mode == OutputMode.STDOUT:
             # Use generator from result dict
             bom_gen = result["generator"]
-            bom_gen.write_bom_csv(result["bom_entries"], Path("-"), fields)
+            bom_gen.write_bom_csv(result["bom_entries"], "-", fields)
         else:
             # File output
             if output_path:
-                out = output_path
+                # Pass original string to preserve path format (e.g., "./") for error messages
+                out = args.output
             else:
                 out = resolve_output_path(
                     Path(args.project), args.output, args.outdir, "_bom.csv"
