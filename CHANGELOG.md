@@ -1,6 +1,91 @@
 # CHANGELOG
 
 
+## v4.2.0 (2026-01-06)
+
+### Bug Fixes
+
+* fix(tests): add colons to table steps in priority_selection.feature
+
+Update all 'And an inventory with parts' steps to 'And an inventory with
+parts:' to match the corrected step pattern.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`556ac36`](https://github.com/plocher/jBOM/commit/556ac3676b55bc2e9d914767b8831719627dce65))
+
+* fix(tests): add colon to table-accepting step pattern
+
+Change 'an inventory with parts' to 'an inventory with parts:' to be
+consistent with other table-accepting Given steps like 'a base inventory
+with standard components:'.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`b51fca8`](https://github.com/plocher/jBOM/commit/b51fca85a0171c91d992751ef6a91c3b71704da8))
+
+### Features
+
+* feat(tests): add comprehensive test infrastructure improvements
+
+- Add schematic loading feature with 10 scenarios
+- Add step implementations for schematic loading tests (372 lines)
+- Enhance component matching with diagnostic assertions
+- Improve edge case error handling with diagnostics
+- Simplify component matching tests (consistent project/schematic naming)
+- Fix schematic format (use 'symbol' instead of 'symbol_instances')
+- Add Package/Footprint column name handling
+- Configure behave to skip @wip tests by default
+- Update README with diagnostic testing information
+- Reorganize test structure for clarity
+
+These changes eliminate Python tracebacks from test output and replace
+them with actionable diagnostic information.
+
+Note: Some linting issues remain in component_matching.py and
+edge_cases.py files - these will be addressed in a follow-up commit.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`833cefb`](https://github.com/plocher/jBOM/commit/833cefb0b322100be7ea14d2cacc2ee41be1d305))
+
+* feat(tests): implement builder pattern Given steps to create actual test files
+
+- Implement base inventory creation from table data
+- Implement schematic component addition to existing schematics
+- Implement schematic creation with components from tables
+- Implement inventory parts creation from tables
+- Fix table row parsing (use row.as_dict() instead of dict(row))
+
+These steps now create actual inventory CSV and KiCad schematic files
+instead of just storing data in context. Eliminates 'No inventory path
+found' errors in test execution.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`d5f871c`](https://github.com/plocher/jBOM/commit/d5f871c3e76392be15a0886a8bbaa414d9a6258c))
+
+* feat(tests): add diagnostic error handling to multi-modal validation
+
+- Wrap multi-modal execution in try/except blocks
+- Catch AttributeError from missing context setup
+- Provide diagnostic output showing which mode failed and why
+- Guide users on required context variables
+
+Replaces raw Python tracebacks with actionable error messages when
+Given steps don't set up required context for CLI/API/Plugin modes.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`ca72a7f`](https://github.com/plocher/jBOM/commit/ca72a7ff9188c70c979ed8f4348ff075b73251de))
+
+* feat(tests): add diagnostic utilities for enhanced test failure output
+
+- Add format_execution_context() for comprehensive context display
+- Add format_comparison() for expected vs actual formatting
+- Add assert_with_diagnostics() for enhanced assertion messages
+- Shows commands, exit codes, stdout/stderr, files, and working directory
+
+This provides developers with complete context when tests fail, replacing
+bare assertion messages with actionable diagnostic information. ([`54fbcb0`](https://github.com/plocher/jBOM/commit/54fbcb03b19fd458619fcd35d1b0bf40bf5c5dc3))
+
+### Unknown
+
+* Merge pull request #10 from plocher/feature/enhanced-test-diagnostics
+
+Enhanced Test Failure Diagnostics ([`7d80dbe`](https://github.com/plocher/jBOM/commit/7d80dbecf883a4b2fa1899ecb91932d5ba870dc1))
+
+
 ## v4.1.0 (2026-01-02)
 
 ### Bug Fixes
