@@ -48,12 +48,25 @@ def step_when_generate_generic_bom_for_project_using_inventory(
     context, project, inventory
 ):
     """Generate BOM for specific project using specific inventory file."""
-    # Execute BOM generation using the context methods from environment.py
-    project_path = (
-        context.scenario_temp_dir / project
-        if not (context.scenario_temp_dir / project).is_dir()
-        else context.scenario_temp_dir / project / f"{project}.kicad_sch"
-    )
+    # Determine which schematic to use:
+    # 1. If named schematics were created, use the first/current one
+    # 2. Otherwise, use the default project schematic
+    project_dir = context.scenario_temp_dir / project
+
+    if hasattr(context, "project_schematic_files") and context.project_schematic_files:
+        # Use the most recently created named schematic
+        schematic_name = list(context.project_schematic_files.keys())[-1]
+        project_path = context.project_schematic_files[schematic_name]
+    elif hasattr(context, "current_schematic"):
+        # A named schematic was specified, use it
+        project_path = project_dir / f"{context.current_schematic}.kicad_sch"
+    elif project_dir.is_dir():
+        # Use default project schematic
+        project_path = project_dir / f"{project}.kicad_sch"
+    else:
+        # Project path is the schematic file itself
+        project_path = context.scenario_temp_dir / project
+
     inventory_path = context.scenario_temp_dir / inventory
     output_path = context.scenario_temp_dir / "output.csv"
 
@@ -61,15 +74,21 @@ def step_when_generate_generic_bom_for_project_using_inventory(
     cmd_parts = [
         "python",
         "-m",
-        "jbom.cli",
+        "jbom",
         "bom",
-        f"--project={project_path}",
-        f"--inventory={inventory_path}",
-        f"--output={output_path}",
-        "--fabricator=generic",
+        str(project_path),
+        "--inventory",
+        str(inventory_path),
+        "--output",
+        str(output_path),
+        "--generic",
     ]
 
     command = " ".join(cmd_parts)
+
+    # Store command for diagnostics
+    context.cli_command = command
+
     result = context.execute_shell(command)
 
     # Store result for verification
@@ -141,19 +160,26 @@ def step_given_multiple_inventory_sources(context):
 @given("a schematic with components:")
 def step_given_schematic_with_components(context):
     """Set up schematic with components from table data."""
-    # TODO: Implement schematic component setup in Phase 3
-    # Table data will be available in context.table
-    context.schematic_components = context.table if hasattr(context, "table") else []
-    pass
+    from shared import create_kicad_project_with_components
+
+    if hasattr(context, "table") and context.table:
+        context.schematic_components = list(context.table)
+
+        # Create KiCad project with these components
+        components = [row.as_dict() for row in context.table]
+        create_kicad_project_with_components(context, "ComponentTest", components)
 
 
 @given("an inventory with parts")
 def step_given_inventory_with_parts(context):
     """Set up inventory with parts from table data."""
-    # TODO: Implement inventory parts setup in Phase 3
-    # Table data will be available in context.table
-    context.inventory_parts = context.table if hasattr(context, "table") else []
-    pass
+    from shared import create_inventory_from_table
+
+    if hasattr(context, "table") and context.table:
+        context.inventory_parts = list(context.table)
+
+        # Create inventory CSV file
+        create_inventory_from_table(context, "test-inventory.csv", context.table)
 
 
 @given("an inventory with invalid priority data")
@@ -241,30 +267,64 @@ def step_given_clean_test_environment(context):
 @given("a base inventory with standard components:")
 def step_given_base_inventory_with_standard_components(context):
     """Set up base inventory from table data that scenarios can extend (Axiom #18)."""
-    # TODO: Implement base inventory setup in Phase 3
+    import csv
+
     if hasattr(context, "table") and context.table:
         context.test_data_builder["base_inventory"] = list(context.table)
-    pass
+
+        # Actually create the inventory CSV file
+        inventory_file = context.scenario_temp_dir / "base-inventory.csv"
+        with open(inventory_file, "w", newline="") as f:
+            # Get headers from first row
+            headers = context.table.headings
+            writer = csv.DictWriter(f, fieldnames=headers)
+            writer.writeheader()
+            for row in context.table:
+                writer.writerow(row.as_dict())
+
+        # Set inventory path so When steps can find it
+        context.inventory_file = inventory_file
 
 
 @given("the schematic is extended with component:")
 def step_given_schematic_extended_with_component(context):
     """Add component to schematic using builder pattern (Axiom #18)."""
-    # TODO: Implement dynamic schematic component addition in Phase 3
     if hasattr(context, "table") and context.table:
         for row in context.table:
-            context.test_data_builder["schematic_components"].append(dict(row))
-    pass
+            comp_dict = row.as_dict()
+            context.test_data_builder["schematic_components"].append(comp_dict)
+
+            # Add component to existing schematic if one was created
+            # This extends the schematic created by "Given a KiCad project named"
+            if hasattr(context, "kicad_project_file"):
+                from shared import add_component_to_schematic
+
+                add_component_to_schematic(
+                    context,
+                    comp_dict["Reference"],
+                    comp_dict["Value"],
+                    comp_dict.get("Package", ""),
+                )
 
 
 @given("the schematic is extended with components:")
 def step_given_schematic_extended_with_components(context):
     """Add multiple components to schematic using builder pattern (Axiom #18)."""
-    # TODO: Implement dynamic schematic components addition in Phase 3
     if hasattr(context, "table") and context.table:
         for row in context.table:
-            context.test_data_builder["schematic_components"].append(dict(row))
-    pass
+            comp_dict = row.as_dict()
+            context.test_data_builder["schematic_components"].append(comp_dict)
+
+            # Add component to existing schematic if one was created
+            if hasattr(context, "kicad_project_file"):
+                from shared import add_component_to_schematic
+
+                add_component_to_schematic(
+                    context,
+                    comp_dict["Reference"],
+                    comp_dict["Value"],
+                    comp_dict.get("Package", ""),
+                )
 
 
 @given('the inventory excludes exact match for "{component_spec}"')
@@ -310,7 +370,7 @@ def step_given_inventory_modified_to_include_tolerance_variants(context):
     if hasattr(context, "table") and context.table:
         for row in context.table:
             context.test_data_builder["modifications"].append(
-                {"type": "tolerance_variant", "data": dict(row)}
+                {"type": "tolerance_variant", "data": row.as_dict()}
             )
     pass
 
