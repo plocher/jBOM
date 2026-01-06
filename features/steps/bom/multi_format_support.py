@@ -33,8 +33,10 @@ def step_when_generate_boms_using_each_format(context):
             "jbom",
             "bom",
             str(project_path),
-            "--inventory", str(inventory_file),
-            "--output", str(output_file),
+            "--inventory",
+            str(inventory_file),
+            "--output",
+            str(output_file),
             "--generic",
         ]
 
@@ -62,7 +64,8 @@ def step_when_generate_bom_using_all_inventory_files(context, project):
         "jbom",
         "bom",
         str(project_path),
-        "--output", str(output_file),
+        "--output",
+        str(output_file),
         "--generic",
     ]
 

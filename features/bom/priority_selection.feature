@@ -8,8 +8,8 @@ Feature: Priority Selection
 
   Scenario: Priority zero wins over all other priority values
     Given a schematic with components:
-      | Reference | Value | Package |
-      | R1        | 10K   | 0603    |
+      | Reference | Value | Package | Footprint                      |
+      | R1        | 10K   | 0603    | Resistor_SMD:R_0603_1608Metric |
     And an inventory with parts:
       | IPN   | Category | Value | Package | Distributor | Priority |
       | R001  | RES      | 10K   | 0603    | Generic     | 0        |
@@ -21,8 +21,8 @@ Feature: Priority Selection
 
   Scenario: Priority handles very large integer values
     Given a schematic with components:
-      | Reference | Value | Package |
-      | R1        | 10K   | 0603    |
+      | Reference | Value | Package | Footprint                      |
+      | R1        | 10K   | 0603    | Resistor_SMD:R_0603_1608Metric |
     And an inventory with parts:
       | IPN   | Category | Value | Package | Priority    |
       | R001  | RES      | 10K   | 0603    | 1           |
@@ -34,9 +34,9 @@ Feature: Priority Selection
 
   Scenario: Priority selection with non-sequential values
     Given a schematic with components:
-      | Reference | Value | Package |
-      | R1        | 10K   | 0603    |
-      | C1        | 100nF | 0603    |
+      | Reference | Value | Package | Footprint                         |
+      | R1        | 10K   | 0603    | Resistor_SMD:R_0603_1608Metric    |
+      | C1        | 100nF | 0603    | Capacitor_SMD:C_0603_1608Metric   |
     And an inventory with parts:
       | IPN   | Category | Value | Package | Priority |
       | R001  | RES      | 10K   | 0603    | 50       |
@@ -52,8 +52,8 @@ Feature: Priority Selection
 
   Scenario: Handle invalid priority data gracefully
     Given a schematic with components:
-      | Reference | Value | Package |
-      | R1        | 10K   | 0603    |
+      | Reference | Value | Package | Footprint                      |
+      | R1        | 10K   | 0603    | Resistor_SMD:R_0603_1608Metric |
     And an inventory with invalid priority data
       | IPN   | Category | Value | Package | Priority |
       | R001  | RES      | 10K   | 0603    | "high"   |
