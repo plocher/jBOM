@@ -106,6 +106,29 @@ class Command(ABC):
             return (OutputMode.FILE, Path(output_arg))
 
     @staticmethod
+    def add_project_argument(
+        parser: argparse.ArgumentParser,
+        arg_name: str = "project",
+        help_text: str = None,
+    ) -> None:
+        """Add optional project/board argument that defaults to current directory.
+
+        Args:
+            parser: Parser to add argument to
+            arg_name: Name of the argument (e.g., 'project', 'board')
+            help_text: Custom help text, or None to use default
+        """
+        default_help = (
+            "Path to KiCad project directory or file (default: current directory)"
+        )
+        parser.add_argument(
+            arg_name,
+            nargs="?",
+            default=".",
+            help=help_text or default_help,
+        )
+
+    @staticmethod
     def add_common_output_args(parser: argparse.ArgumentParser) -> None:
         """Add standard output-related arguments.
 

@@ -17,17 +17,20 @@ class InventoryCommand(Command):
         parser.description = "Generate inventory file from KiCad schematic components with optional search enrichment"
         parser.formatter_class = argparse.RawDescriptionHelpFormatter
         parser.epilog = """Examples:
-  jbom inventory project/                               # Generate basic inventory to project/inventory.csv
-  jbom inventory project/ -o my_inventory.csv           # Generate to specific file
-  jbom inventory project/ -o console                    # Show inventory in console
-  jbom inventory project/ --search                      # Search-enhanced inventory with best matches
-  jbom inventory project/ --search --limit=3            # Multiple candidates per component
-  jbom inventory project/ --search --provider=mouser --api-key=KEY  # Custom provider settings
+  jbom inventory                                        # Generate basic inventory (current dir)
+  jbom inventory project/                               # Generate from specific project
+  jbom inventory -o my_inventory.csv                    # Generate to specific file
+  jbom inventory -o console                             # Show inventory in console
+  jbom inventory --search                               # Search-enhanced inventory with best matches
+  jbom inventory --search --limit=3                     # Multiple candidates per component
+  jbom inventory --search --provider=mouser --api-key=KEY  # Custom provider settings
 """
 
         # Positional arguments
-        parser.add_argument(
-            "project", help="Path to KiCad project directory or .kicad_sch file"
+        self.add_project_argument(
+            parser,
+            arg_name="project",
+            help_text="Path to KiCad project directory or .kicad_sch file (default: current directory)",
         )
 
         # Output arguments

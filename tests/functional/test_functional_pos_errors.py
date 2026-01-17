@@ -204,6 +204,31 @@ class TestPOSErrorCases(FunctionalTestBase):
             "Should show valid loader choices",
         )
 
+    def test_pos_schematic_without_pcb(self):
+        """Passing schematic without matching PCB should show helpful error."""
+        # Create a schematic file without matching PCB
+        sch_file = self.output_dir / "test.kicad_sch"
+        sch_file.write_text("(kicad_sch (version 20211123))")
+
+        rc, stdout, stderr = self.run_jbom(
+            ["pos", str(sch_file), "-o", str(self.output_dir / "pos.csv")],
+            expected_rc=None,
+        )
+
+        # Should fail
+        self.assertNotEqual(rc, 0)
+
+        # Should mention that PCB is required and schematic was passed
+        combined_output = stdout + stderr
+        self.assertTrue(
+            "pcb" in combined_output.lower() and "schematic" in combined_output.lower(),
+            "Should mention PCB is required and schematic was passed",
+        )
+        self.assertTrue(
+            "test.kicad_pcb" in combined_output,
+            "Should mention expected PCB filename",
+        )
+
 
 if __name__ == "__main__":
     import unittest

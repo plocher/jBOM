@@ -27,7 +27,7 @@ def resolve_output_path(
     - File input: generate name in parent directory
 
     Args:
-        input_path: Input file or directory path
+        input_path: Input file or directory path (should be resolved/discovered file path)
         output_arg: Explicit output path from CLI (or None)
         outdir_arg: Output directory from CLI (or None)
         suffix: File suffix to append (e.g., '_bom.csv', '_pos.csv')
@@ -52,7 +52,11 @@ def resolve_output_path(
     # Determine output directory and base name
     if input_path.is_dir():
         # Input is a directory: use directory name as base
-        base_name = input_path.name
+        # Handle special case where directory is '.' (current directory)
+        if input_path.name in (".", ""):
+            base_name = Path.cwd().name
+        else:
+            base_name = input_path.name
         out_dir = Path(outdir_arg) if outdir_arg else input_path
     else:
         # Input is a file: use file stem as base

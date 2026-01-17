@@ -17,13 +17,16 @@ class AnnotateCommand(Command):
             "to KiCad schematic symbols using UUID matching."
         )
         parser.epilog = """Examples:
-  jbom annotate project/ -i updated_inventory.csv       # Update schematic from inventory
-  jbom annotate project/ -i updated_inventory.csv -n    # Dry run (show changes only)
+  jbom annotate -i updated_inventory.csv                # Update schematic (current dir)
+  jbom annotate project/ -i updated_inventory.csv       # Update specific project
+  jbom annotate -i updated_inventory.csv -n             # Dry run (show changes only)
 """
 
         # Positional arguments
-        parser.add_argument(
-            "project", help="Path to KiCad project directory or .kicad_sch file"
+        self.add_project_argument(
+            parser,
+            arg_name="project",
+            help_text="Path to KiCad project directory or .kicad_sch file (default: current directory)",
         )
         parser.add_argument(
             "-i",
