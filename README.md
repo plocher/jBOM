@@ -113,6 +113,10 @@ If you updated component values or packages in your inventory CSV (Step 2), your
 
 ```bash
 jbom annotate MyProject/ -i my_new_inventory.csv
+
+# Or from within the project directory
+cd MyProject
+jbom annotate -i my_new_inventory.csv
 ```
 
 This updates your `.kicad_sch` files with the correct Value, Footprint, and LCSC part numbers found in your inventory.

@@ -38,11 +38,10 @@ class BOMCommand(Command):
 """
 
         # Positional arguments
-        parser.add_argument(
-            "project",
-            nargs="?",
-            default=".",
-            help="Path to KiCad project directory or .kicad_sch file (default: current directory)",
+        self.add_project_argument(
+            parser,
+            arg_name="project",
+            help_text="Path to KiCad project directory or .kicad_sch file (default: current directory)",
         )
         parser.add_argument(
             "-i",
@@ -175,6 +174,14 @@ class BOMCommand(Command):
             # Use generator from result dict
             bom_gen = result["generator"]
             bom_gen.write_bom_csv(result["bom_entries"], "-", fields)
+            # Print success message to stderr (doesn't interfere with stdout CSV)
+            import sys
+
+            entry_count = len(result["bom_entries"])
+            print(
+                f"Successfully generated BOM with {entry_count} entries",
+                file=sys.stderr,
+            )
         else:
             # File output
             if output_path:
@@ -187,6 +194,15 @@ class BOMCommand(Command):
             # Use generator from result dict
             bom_gen = result["generator"]
             bom_gen.write_bom_csv(result["bom_entries"], out, fields)
+            # Print success message to stderr (doesn't interfere with stdout)
+            import sys
+
+            entry_count = len(result["bom_entries"])
+            print(
+                f"Successfully generated BOM with {entry_count} entries",
+                file=sys.stderr,
+            )
+            print(f"Output written to: {out}", file=sys.stderr)
 
         return 0
 

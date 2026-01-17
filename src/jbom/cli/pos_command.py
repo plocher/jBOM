@@ -38,11 +38,10 @@ class POSCommand(Command):
 """
 
         # Positional arguments
-        parser.add_argument(
-            "board",
-            nargs="?",
-            default=".",
-            help="Path to KiCad project directory or .kicad_pcb file (default: current directory)",
+        self.add_project_argument(
+            parser,
+            arg_name="board",
+            help_text="Path to KiCad project directory or .kicad_pcb file (default: current directory)",
         )
 
         # Common verbosity/debug flags
@@ -168,11 +167,19 @@ class POSCommand(Command):
                 board_path_input = pcb_path
                 args.board = str(pcb_path)  # Update args for downstream use
             else:
-                raise SystemExit(
-                    f"Error: POS requires a KiCad PCB (.kicad_pcb). You passed a schematic (.kicad_sch).\n"
-                    f"Hint: Expected to find {pcb_path.name} but it doesn't exist.\n"
-                    f"      Run 'jbom pos <project_dir>' to auto-discover, or use 'jbom bom' for BOM generation."
+                print(
+                    "Error: POS requires a KiCad PCB (.kicad_pcb). You passed a schematic (.kicad_sch).",
+                    file=sys.stderr,
                 )
+                print(
+                    f"Hint: Expected to find {pcb_path.name} but it doesn't exist.",
+                    file=sys.stderr,
+                )
+                print(
+                    "      Run 'jbom pos <project_dir>' to auto-discover, or use 'jbom bom' for BOM generation.",
+                    file=sys.stderr,
+                )
+                return 1
 
         # Handle output
         output_mode, output_path = self.determine_output_mode(args.output)
@@ -187,7 +194,15 @@ class POSCommand(Command):
             fields = opts.fields or gen.parse_fields_argument(None)
             opts.fields = fields
             gen.options = opts  # Update options
-            gen.run(input=args.board, output="-")
+            result = gen.run(input=args.board, output="-")
+            # Print success message to stderr (doesn't interfere with stdout CSV)
+            component_count = result.get(
+                "component_count", len(result.get("entries", []))
+            )
+            print(
+                f"Successfully generated POS with {component_count} components",
+                file=sys.stderr,
+            )
         else:
             # File output
             if output_path:
@@ -199,7 +214,16 @@ class POSCommand(Command):
             fields = opts.fields or gen.parse_fields_argument(None)
             opts.fields = fields
             gen.options = opts  # Update options
-            gen.run(input=args.board, output=out)
+            result = gen.run(input=args.board, output=out)
+            # Print success message to stderr (doesn't interfere with stdout)
+            component_count = result.get(
+                "component_count", len(result.get("entries", []))
+            )
+            print(
+                f"Successfully generated POS with {component_count} components",
+                file=sys.stderr,
+            )
+            print(f"Output written to: {out}", file=sys.stderr)
 
         return 0
 
