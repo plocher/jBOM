@@ -1,6 +1,67 @@
 # CHANGELOG
 
 
+## v4.5.0 (2026-01-17)
+
+### Bug Fixes
+
+* fix: resolve project name correctly for directory inputs
+
+Two related improvements:
+1. Fix output filename when input is '.' (current directory)
+   - Now uses actual directory name instead of creating '_bom.csv'
+   - Uses Path.cwd().name when input_path.name is '.' or empty
+
+2. Make project/board argument optional, default to current directory
+   - 'jbom bom' and 'jbom pos' now work without arguments
+   - Defaults to searching current directory for schematic/PCB
+
+Examples:
+  cd ProjectDir && jbom bom      # Creates ProjectDir_bom.csv
+  cd ProjectDir && jbom pos      # Creates ProjectDir_pos.csv
+  jbom bom .                     # Same as above
+  jbom pos .                     # Same as above
+
+Co-Authored-By: Warp <agent@warp.dev> ([`7e2fa9a`](https://github.com/plocher/jBOM/commit/7e2fa9a3acbe5ce3d7dce9290ed3fa798aba5fd1))
+
+### Features
+
+* feat: make project argument optional for inventory and annotate commands
+
+Inventory and annotate commands now follow the same pattern as bom/pos:
+- Project argument defaults to current directory when omitted
+- Updated examples to show working from within project directory
+- Consistent CLI behavior across all subcommands
+
+Examples:
+  cd MyProject
+  jbom inventory                    # Generates MyProject_inventory.csv
+  jbom annotate -i inventory.csv    # Updates schematic in current dir
+
+Co-Authored-By: Warp <agent@warp.dev> ([`757f37d`](https://github.com/plocher/jBOM/commit/757f37d7c04460a99f5607e0b3e8be748ec8b443))
+
+* feat(pos): add schematic-file validation and verbose/debug flags
+
+POS command improvements:
+- Auto-detect and swap .kicad_sch to .kicad_pcb when matching PCB exists
+- Show clear error with helpful hints when PCB not found
+- Add -v/--verbose and -d/--debug flags to pos subcommand
+- Propagate verbose/debug to PlacementOptions
+
+Examples:
+  jbom pos project.kicad_sch  # Auto-swaps to project.kicad_pcb if exists
+  jbom pos project.kicad_pcb -v  # Verbose output
+  jbom pos project.kicad_pcb -d  # Debug diagnostics
+
+Co-Authored-By: Warp <agent@warp.dev> ([`b19cfe2`](https://github.com/plocher/jBOM/commit/b19cfe291dd988d6bb1e43a56be213625f7232f8))
+
+### Unknown
+
+* Merge pull request #14 from plocher/feature/pos-validation-and-flags
+
+Feature/pos validation and flags ([`e7439a8`](https://github.com/plocher/jBOM/commit/e7439a8849bac71f3d28bd2c1db410d8c8f480ff))
+
+
 ## v4.4.0 (2026-01-17)
 
 ### Bug Fixes
