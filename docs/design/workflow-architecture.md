@@ -359,53 +359,81 @@ result = workflow.execute(args.project)
 
 **Compromise:** Balance between flexibility and simplicity.
 
-## Architectural Decisions Needed
+## Architectural Decisions
 
 ### 1. Workflow Definition Format
 
-**Question:** How are workflows defined and stored?
+**Decision:** Pipeline/Chain pattern (Option C)
 
-**Options:**
-- Python functions (current) - Flexible but not composable
-- YAML/JSON DSL - Composable but limited expressiveness
-- Hybrid - Common workflows in DSL, complex ones in Python
+**Rationale:** Maps well to Gherkin BDD methodology. Workflows are readable sequences of transformations that mirror test scenarios.
 
-**Recommendation:** Start with Python functions (lower risk), evolve to DSL as patterns emerge.
+```python
+workflow_bom = (
+    Pipeline()
+    .then(readProject)                    # GIVEN a KiCad project
+    .then(readSchematic)                  # WHEN I read the schematic
+    .then(lambda c: createBOM(c, []))     # AND generate a BOM
+    .then(lambda b: printBOMcsv(b, out))  # THEN output CSV
+)
+```
+
+Gherkin scenario structure directly informs workflow steps.
 
 ### 2. Service Discovery Mechanism
 
-**Question:** How do workflows find and call services?
+**Decision:** Service registry with late binding
 
-**Options:**
-- Direct imports - `from plugin.module import service`
-- Service registry - `registry.get("plugin.module.service")`
-- Dependency injection - Services injected into workflow context
+**Rationale:** Enables plugin discoverability, testing with mocks, and flexibility in service resolution.
 
-**Recommendation:** Service registry for discoverability and late binding.
+```python
+# Registry built at startup from filesystem scan
+service_registry = ServiceRegistry()
+service_registry.scan("src/jbom/plugins/")      # Core plugins
+service_registry.scan("~/.jbom/plugins/")       # User plugins
 
-**Registry built at startup from filesystem scan** - no runtime package discovery overhead.
+# Workflows resolve services from registry
+readProject = service_registry.get("kicad.readProject")
+```
+
+No runtime pip dependency - purely filesystem-based discovery.
 
 ### 3. Argument Mapping
 
-**Question:** How do CLI arguments map to service parameters?
+**Decision:** Start simple, evolve to hybrid
 
-**Options:**
-- Manual mapping in workflow code
-- Automatic mapping via naming convention (args.project → project parameter)
-- Explicit schema in workflow definition
+**Bootstrap:** Manual mapping in workflow code
+```python
+def execute_bom(args):
+    project = readProject(args.project)
+    # Explicit, clear, no magic
+```
 
-**Recommendation:** Hybrid - naming conventions with explicit overrides in workflow definition.
+**Future evolution:** Naming conventions with overrides (once patterns emerge)
+```python
+# Automatic: args.project → project parameter
+# Override: @arg("inventory", source="args.inventory_files")
+```
+
+**Rationale:** Don't get stuck in fiddly details during bootstrap. Encapsulate mapping logic for future evolution.
 
 ### 4. Error Handling Strategy
 
-**Question:** How do workflows handle service failures?
+**Decision:** Exception propagation with workflow-level handlers
 
-**Options:**
-- Exception propagation - Services throw, workflow catches
-- Result objects - Services return Result[value | error]
-- Continuation passing - Services take success/failure callbacks
+**Rationale:** Python-idiomatic, familiar, sufficient for needs.
 
-**Recommendation:** Exception propagation with workflow-level error handlers.
+```python
+try:
+    result = workflow.execute(args)
+except FileNotFoundError as e:
+    print(f"Error: {e}")
+    return 1
+except ValidationError as e:
+    print(f"Invalid input: {e}")
+    return 1
+```
+
+Workflows can add specific error handling for their domain.
 
 ## Key Architectural Relationships
 
@@ -429,28 +457,208 @@ result = workflow.execute(args.project)
 - Plugin groups related services into modules
 - Modules provide cohesive service sets
 
-## Evolution Path
+## Bootstrap Plan: Build New System in Parallel
 
-### Phase 1: Extract Service Modules
-- Identify current jBOM functions that are services
-- Group into logical modules (KiCadReader, InventoryService, etc.)
-- Define clean interfaces
+**Strategy:** Don't evolve existing jBOM - build new system from scratch using BDD/TDD.
 
-### Phase 2: Explicit Workflow Definitions
-- Extract current command logic into explicit workflows
-- Document service dependencies for each workflow
-- Create workflow registry
+**Approach:**
+1. **Gherkin features** define expected behavior
+2. **Functional tests** (step definitions) validate behavior
+3. **Implementation** makes tests pass
+4. **Unit tests** for core abstractions (after patterns emerge)
 
-### Phase 3: Plugin Architecture
-- Package service modules as plugins (filesystem-based)
-- Implement static plugin discovery (scan directories)
-- Build service registry from discovered plugins
-- Implement `jbom install` for user plugins
+**Parallel development:** Existing jBOM continues working while new system is built.
 
-### Phase 4: Workflow Composition
-- Enable users to define custom workflows
-- Provide workflow DSL (if needed)
-- Support third-party workflow contributions
+### Step 1: Minimal Viable Core (Week 1-2)
+
+**Goal:** Prove the pattern with simplest possible implementation
+
+**Features to implement:**
+```gherkin
+Feature: Read KiCad Project
+  Scenario: Read schematic components
+    Given a KiCad project at "test_project/"
+    When I read the schematic
+    Then I should get a list of components
+    And each component should have reference, value, footprint
+
+Feature: Simple BOM Generation
+  Scenario: Generate BOM without inventory
+    Given a KiCad project with components
+    When I generate a BOM
+    Then components should be grouped by value and footprint
+    And output should include reference, quantity, value, footprint
+```
+
+**Services to implement:**
+- `KiCadReader.readProject(path)` - Read .kicad_sch
+- `KiCadReader.readSchematic(project)` - Extract components
+- `BOMGenerator.createBOM(components)` - Group components
+- `OutputFormatter.printBOMcsv(bom, path)` - Write CSV
+- `OutputFormatter.printBOMtable(bom)` - Console table
+
+**Workflow to implement:**
+```python
+workflow_bom = (
+    Pipeline()
+    .then(KiCadReader.readProject)
+    .then(KiCadReader.readSchematic)
+    .then(BOMGenerator.createBOM)
+    .then(OutputFormatter.printBOMcsv)
+)
+```
+
+**Infrastructure:**
+- Basic plugin discovery (scan `src/jbom/plugins/`)
+- Service registry (dict of name → function)
+- Workflow registry (dict of name → Pipeline)
+- CLI parser (argparse, just `jbom bom <project>`)
+
+**Success criteria:**
+```bash
+$ jbom-new bom test_project/ -o bom.csv
+# Works! Generated minimal BOM
+```
+
+### Step 2: Add POS Workflow (Week 3)
+
+**Goal:** Prove plugin system works for second workflow
+
+**New features:**
+```gherkin
+Feature: Generate Placement File
+  Scenario: Extract component placement from PCB
+    Given a KiCad PCB file
+    When I generate placement data
+    Then output should include designator, x, y, rotation, side
+```
+
+**New services:**
+- `KiCadReader.readPCB(project)` - Read .kicad_pcb
+- `PlacementExtractor.extractPlacement(pcb)` - Get coordinates
+- `OutputFormatter.printPOScsv(placement, path)` - Write POS
+
+**New workflow:**
+```python
+workflow_pos = (
+    Pipeline()
+    .then(KiCadReader.readProject)
+    .then(KiCadReader.readPCB)
+    .then(PlacementExtractor.extractPlacement)
+    .then(OutputFormatter.printPOScsv)
+)
+```
+
+**Success criteria:**
+- Two workflows work independently
+- Share `KiCadReader` services (reusability proven)
+- Both discoverable via `jbom-new --help`
+
+### Step 3: Configuration System (Week 4)
+
+**Goal:** Prove configuration mechanism
+
+**Features:**
+```gherkin
+Feature: Configuration
+  Scenario: Load user configuration
+    Given a config file at "~/.jbom/config.yaml"
+    When jBOM starts
+    Then services should use configured defaults
+```
+
+**Config structure:**
+```yaml
+core:
+  default_output_format: csv
+
+plugins:
+  bom:
+    group_by: [value, footprint]
+```
+
+**Config access:**
+```python
+config = Config.load()  # Discovers and merges files
+plugin_config = config.plugins.bom
+```
+
+### Step 4: User Plugin Installation (Week 5)
+
+**Goal:** Prove extensibility with user plugins
+
+**Implement:**
+- `jbom-new install /path/to/plugin/` command
+- Copy plugin to `~/.jbom/plugins/`
+- Scan both core and user plugins at startup
+- Simple validation (required files exist)
+
+**Test with sample plugin:**
+```bash
+$ jbom-new install ./sample-validation-plugin/
+Installed validation v1.0.0
+
+$ jbom-new plugins list
+Core plugins:
+  bom v1.0.0
+  pos v1.0.0
+
+User plugins:
+  validation v1.0.0
+
+$ jbom-new validate project/
+# User plugin workflow executes!
+```
+
+### Step 5: Inventory Integration (Week 6+)
+
+**Goal:** Add back real-world complexity incrementally
+
+**Add services:**
+- `InventoryService.readInventoryCSV(path)`
+- `BOMGenerator.matchInventory(component, inventory)`
+- Enhanced `createBOM(components, inventory)`
+
+**Extend BOM workflow:**
+```python
+workflow_bom_with_inventory = (
+    Pipeline()
+    .then(KiCadReader.readProject)
+    .then(KiCadReader.readSchematic)
+    .then(lambda c: (c, InventoryService.readInventoryCSV(args.inventory)))
+    .then(lambda data: BOMGenerator.createBOM(*data))
+    .then(OutputFormatter.printBOMcsv)
+)
+```
+
+**Continue adding:**
+- Excel/Numbers inventory formats
+- Fabricator enrichment
+- Advanced filtering
+- Field customization
+
+**Each addition:**
+1. Write Gherkin scenario
+2. Implement step definitions
+3. Make tests pass
+4. Refine based on learnings
+
+### Success Metrics
+
+**After Step 4, we have:**
+- ✅ Proven pattern (services + workflows + plugins)
+- ✅ BDD/TDD foundation
+- ✅ Working CLI
+- ✅ Configuration system
+- ✅ Plugin extensibility
+- ✅ Clean, testable code
+- ✅ Foundation for expansion
+
+**Open questions answered by implementation:**
+- Service granularity → Emerges from use
+- Data contracts → Defined by what tests need
+- Execution context → Becomes clear in pipeline implementation
+- Many others → Solved when encountered, not prematurely
 
 ## Open Questions
 
