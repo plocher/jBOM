@@ -2,9 +2,11 @@
 
 ## Executive Summary
 
-This document outlines a comprehensive plugin architecture that transforms jBOM from a monolithic tool into an extensible platform. Unlike the current CLI command reorganization, this architecture enables plugins to bring entirely new capabilities to jBOM by building on top of core primitives.
+This document outlines a comprehensive plugin architecture that transforms jBOM from a monolithic tool into an extensible platform. The architecture embraces a simple principle: **everything is a plugin**, using the same mechanism throughout.
 
-**Core Vision**: jBOM provides foundational services (KiCad parsing, spreadsheet I/O, component modeling), while plugins implement domain-specific features (BOM generation, placement files, validation, analysis).
+**Core Vision**: jBOM consists of a lightweight plugin infrastructure plus coherent plugin modules. Foundation plugins (KiCad parsing, value parsing, spreadsheet I/O) provide evolvable primitives. Business logic plugins (BOM, POS, validation) build on these foundations. All plugins use the same architecture and can evolve independently via semantic versioning.
+
+**Key Insight**: Foundation plugins are bundled with jBOM but remain independently versionable and potentially extractable as standalone packages for the broader KiCad ecosystem.
 
 ## Current vs. Proposed Architecture
 
@@ -32,183 +34,258 @@ This document outlines a comprehensive plugin architecture that transforms jBOM 
 
 **Problem**: Business logic is hardcoded. Adding a new feature requires modifying core code.
 
-### Proposed Plugin Architecture (Layered)
+### Proposed Plugin Architecture
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│                    Presentation Layer                        │
-│                  (Multiple UI consumers)                     │
+│                 jBOM Plugin Infrastructure                   │
+│               (Minimal, focused core)                        │
 ├──────────────────────────────────────────────────────────────┤
-│  CLI              │  KiCad Plugin    │  Web UI    │  TUI     │
-│  - jbom bom       │  - Eeschema      │  - REST    │  - Curse │
-│  - jbom pos       │  - Pcbnew        │  - GraphQL │  - Prompt│
-│  - jbom validate  │  - GUI dialogs   │  - Browser │  - Rich  │
+│  • Plugin discovery & loading (entry points)                │
+│  • Version compatibility checking (semver)                  │
+│  • Dependency resolution                                    │
+│  • Lifecycle hooks (on_load, on_enable, on_disable)        │
 └──────────────────────────────────────────────────────────────┘
                               ▼
-                     (All consume same API)
-                              ▼
-┌──────────────────────────────────────────────────────────────┐
-│                   Business Logic Layer                       │
-│                      (Plugin APIs)                           │
-├──────────────────────────────────────────────────────────────┤
-│  BOM Plugin API      │  POS Plugin API     │  Validation API │
-│  • generate_bom()    │  • generate_pos()   │  • validate()   │
-│  • match_inventory() │  • extract_coords() │  • check_rules()│
-│  • format_bom()      │  • transform_coords()│ • report()     │
-├──────────────────────────────────────────────────────────────┤
-│  Cost Plugin API     │  Supply Chain API   │  Custom APIs    │
-│  • calculate_cost()  │  • check_stock()    │  • workflow()   │
-│  • optimize()        │  • get_lead_times() │  • transform()  │
-└──────────────────────────────────────────────────────────────┘
-                              ▼
-                    (Plugins use Core APIs)
-                              ▼
-┌──────────────────────────────────────────────────────────────┐
-│                   jBOM Core Platform                         │
-│                 (Stable, well-documented API)                │
-├──────────────────────────────────────────────────────────────┤
-│  Plugin Infrastructure                                       │
-│  ├─ Plugin discovery & loading (entry points)               │
-│  ├─ Capability registration (CLI, API, hooks)               │
-│  ├─ Lifecycle management (init, cleanup, dependencies)      │
-│  └─ Version compatibility checking                          │
-├──────────────────────────────────────────────────────────────┤
-│  Core Services (Foundation for Plugins)                     │
-│  ├─ KiCad Parsing                                           │
-│  │  ├─ Schematic loader (hierarchical support)             │
-│  │  ├─ PCB loader (dual-mode: pcbnew/sexp)                 │
-│  │  └─ S-expression parser                                 │
-│  ├─ Spreadsheet I/O                                         │
-│  │  ├─ CSV reader/writer                                   │
-│  │  ├─ Excel support (.xlsx, .xls)                         │
-│  │  └─ Numbers support (.numbers)                          │
-│  ├─ Component Model                                         │
-│  │  ├─ Component dataclass                                 │
-│  │  ├─ InventoryItem dataclass                             │
-│  │  ├─ Package/Footprint concepts                          │
-│  │  └─ Field system (I:/C: prefixes)                       │
-│  ├─ Value Parsing & Formatting                             │
-│  │  ├─ Resistor parsing (330R, 10K, 1M0)                   │
-│  │  ├─ Capacitor parsing (100nF, 1uF, 220pF)               │
-│  │  ├─ Inductor parsing (10uH, 2m2H)                       │
-│  │  └─ EIA formatting utilities                            │
-│  └─ Common Utilities                                        │
-│     ├─ Field normalization                                 │
-│     ├─ File discovery (hierarchical)                       │
-│     ├─ Output path resolution                              │
-│     └─ Configuration system                                │
-└──────────────────────────────────────────────────────────────┘
+              ┌───────────────┴───────────────┐
+              ▼                               ▼
+    Foundation Plugins                Business Logic Plugins
+    (Bundled with jBOM)              (Bundled with jBOM)
+
+┌─────────────────────────┐        ┌─────────────────────────┐
+│  kicad_parser v1.0      │        │  bom v2.0               │
+│  ├─ load_schematic()    │        │  ├─ generate_bom()      │
+│  ├─ load_pcb()          │◄───────┤  ├─ match_inventory()   │
+│  ├─ Component model     │        │  └─ CLI: jbom bom       │
+│  └─ S-expr parser       │        └─────────────────────────┘
+└─────────────────────────┘
+                                   ┌─────────────────────────┐
+┌─────────────────────────┐        │  pos v1.0               │
+│  value_parser v1.0      │        │  ├─ generate_pos()      │
+│  ├─ parse_resistor()    │◄───────┤  ├─ extract_coords()    │
+│  ├─ parse_capacitor()   │        │  └─ CLI: jbom pos       │
+│  ├─ parse_inductor()    │        └─────────────────────────┘
+│  └─ format_eia_value()  │
+└─────────────────────────┘        Third-Party Plugins
+                                   (Installed separately)
+┌─────────────────────────┐
+│  spreadsheet_io v1.0    │        ┌─────────────────────────┐
+│  ├─ CSVHandler          │        │  validation v1.0        │
+│  ├─ ExcelHandler        │◄───────┤  ├─ validate_rules()    │
+│  ├─ NumbersHandler      │        │  └─ CLI: jbom validate  │
+│  └─ InventoryItem model │        └─────────────────────────┘
+└─────────────────────────┘
+                                   External Consumers
+                                   (Separate packages)
+
+                                   ┌─────────────────────────┐
+                                   │  kicad-fabrication-     │
+                                   │  plugin (KiCad GUI)     │
+                                   │  └─ Uses: kicad_parser, │
+                                   │     bom, pos plugins    │
+                                   └─────────────────────────┘
 ```
 
-## Core Platform Responsibilities
+**Key Principles:**
+1. **Simple pattern, repeated**: All capabilities use the same plugin mechanism
+2. **Coherent modules**: Plugins group related functionality (not atomic singletons)
+3. **Evolvable via semver**: Plugins evolve independently with version constraints
+4. **Bundled but independent**: Foundation plugins ship with jBOM but remain separately versionable
+5. **Externally reusable**: Foundation plugins can be extracted as standalone packages
 
-The core platform provides **stable, versioned APIs** that plugins depend on:
+## Plugin Types and Responsibilities
 
-### 1. KiCad File Access
+### Foundation Plugins (Bundled, Evolvable Primitives)
+
+Foundation plugins provide **coherent modules** of related capabilities. They ship with jBOM but evolve independently via semantic versioning.
+
+#### `kicad_parser` Plugin
+Provides read-only access to KiCad project files.
+
 ```python
-# Core provides
-from jbom.core.loaders import SchematicLoader, PCBLoader
-from jbom.core.types import Component, PcbComponent
+# Direct import for external consumers
+from jbom.plugins.kicad_parser import load_schematic, load_pcb
+from jbom.plugins.kicad_parser.types import Component, PcbComponent
 
-# Plugin uses
-loader = SchematicLoader(project_path)
-components = loader.load()  # List[Component]
+# Usage
+components = load_schematic("project.kicad_sch")
+pcb_components = load_pcb("project.kicad_pcb")
 ```
 
-### 2. Spreadsheet Operations
+**Capabilities:**
+- Schematic loading (hierarchical sheet support)
+- PCB loading (dual-mode: pcbnew Python API or s-expression)
+- S-expression parser (fallback for all KiCad versions)
+- Component data model (reference, value, footprint, fields)
+
+**Evolution example:**
+- v1.0: S-expression parsing only
+- v1.1: Add support for KiCad 7 format changes (minor bump)
+- v2.0: Use official `kicad.sch` API when available (major bump, implementation change)
+
+**External reusability:** Could be extracted as standalone `kicad-data-api` package for broader KiCad ecosystem.
+
+#### `value_parser` Plugin
+Provides component value parsing and formatting.
+
 ```python
-# Core provides
-from jbom.core.loaders import SpreadsheetLoader
-from jbom.core.types import InventoryItem
+from jbom.plugins.value_parser import parse_value, format_value
 
-# Plugin uses
-loader = SpreadsheetLoader(inventory_path)
-items, field_names = loader.load()  # (List[InventoryItem], List[str])
+ohms = parse_value("10K", component_type="RES")  # 10000.0
+farads = parse_value("100nF", component_type="CAP")  # 1e-7
+display = format_value(10000, "RES", eia_format=True)  # "10K0"
 ```
 
-### 3. Component Model
+**Capabilities:**
+- Resistor parsing (330R, 10K, 1M0)
+- Capacitor parsing (100nF, 1uF, 220pF)
+- Inductor parsing (10uH, 2m2H)
+- EIA formatting utilities
+
+**Evolution example:**
+- v1.0: Resistor, capacitor parsing
+- v1.1: Add inductor parsing (minor bump)
+- v1.2: Add varistor/MOV parsing (minor bump)
+- v2.0: Change return type to include units metadata (major bump)
+
+**How to extend:** Update this plugin and bump version. Business logic plugins declare `requires = ["value_parser>=1.1"]` to use new parsers.
+
+#### `spreadsheet_io` Plugin
+Provides unified interface for multiple spreadsheet formats.
+
 ```python
-# Core provides
-from jbom.core.types import Component, InventoryItem, Package, Footprint
-from jbom.core.values import parse_resistor, format_eia_value
-from jbom.core.fields import normalize_field_name, FieldPrefix
+from jbom.plugins.spreadsheet_io import load_spreadsheet, write_spreadsheet
+from jbom.plugins.spreadsheet_io.types import InventoryItem
 
-# Plugin uses
-value_ohms = parse_resistor("10K")  # 10000.0
-display = format_eia_value(10000, "RES", precision=True)  # "10K0"
+inventory, field_names = load_spreadsheet("inventory.xlsx")
+write_spreadsheet(entries, "output.csv", field_names)
 ```
 
-### 4. Utility Functions
+**Capabilities:**
+- CSV reader/writer
+- Excel support (.xlsx, .xls)
+- Numbers support (.numbers)
+- InventoryItem data model
+- Field normalization
+
+**Evolution example:**
+- v1.0: CSV, Excel support
+- v1.1: Add Numbers format support (minor bump)
+- v1.2: Add Google Sheets API support (minor bump)
+- v2.0: Change field normalization rules (major bump)
+
+### Business Logic Plugins (Bundled, Domain Features)
+
+Business logic plugins implement specific workflows by composing foundation plugin capabilities.
+
+#### `bom` Plugin
+Bill of Materials generation with intelligent inventory matching.
+
 ```python
-# Core provides
-from jbom.core.utils import discover_project_files, resolve_output_path
-from jbom.core.fields import FieldSystem
+from jbom.plugins.bom import generate_bom, BOMOptions
 
-# Plugin uses
-schematic_files = discover_project_files(path, hierarchical=True)
-output = resolve_output_path(input_path, output_arg, outdir, suffix)
+# API usage
+result = generate_bom(components, inventory, options=BOMOptions(smd_only=True))
+
+# CLI integration
+$ jbom bom project/ -i inventory.xlsx -o bom.csv --smd-only
 ```
 
-## Plugin Interface Design (Layered Architecture)
+**Dependencies:**
+- `kicad_parser>=1.0` (for loading components)
+- `value_parser>=1.0` (for parsing values)
+- `spreadsheet_io>=1.0` (for inventory and output)
 
-### Core Principle: API-First Design
+**Capabilities:**
+- Component grouping algorithm
+- Inventory matching with scoring
+- Field selection and ordering
+- Multiple output formats
+- CLI command integration
 
-**Plugins provide business logic APIs**. The CLI, KiCad plugin, web UI, etc. are **consumers** of these APIs.
+#### `pos` Plugin
+Placement file generation for fabrication.
+
+```python
+from jbom.plugins.pos import generate_pos
+
+result = generate_pos(pcb_components, options)
+```
+
+**Dependencies:**
+- `kicad_parser>=1.0` (for loading PCB)
+- `spreadsheet_io>=1.0` (for output)
+
+### Third-Party Plugins (Optional, Community Extensions)
+
+Third-party plugins extend jBOM with new capabilities.
+
+```python
+# Example: validation plugin
+from jbom.plugins.validation import validate_design
+
+issues = validate_design(components, rules)
+```
+
+## Plugin Interface Design
+
+### Core Principle: Coherent, Evolvable Modules
+
+**A plugin is a cohesive module** that groups related capabilities. Plugins evolve via semantic versioning and declare dependencies on other plugins.
 
 ```
-Plugin = Business Logic API + Optional UI Integrations
+Plugin = Related Capabilities + Version + Dependencies
+```
+
+**For business logic plugins:**
+```
+Business Logic Plugin = API Functions + Optional CLI/UI Integrations
 ```
 
 ### Plugin Manifest
 
-Each plugin declares its **API** (required) and **optional UI integrations**:
+Each plugin declares its capabilities and dependencies:
 
 ```python
-# jbom_bom_plugin/__init__.py
+# jbom/plugins/bom/__init__.py
 
-from jbom.plugin import PluginManifest, APIExport, CLIIntegration, KiCadIntegration
+from jbom.plugin import PluginManifest
 
 manifest = PluginManifest(
     name="bom",
-    version="1.0.0",
-    description="Bill of Materials generation with intelligent matching",
+    version="2.0.0",
+    description="Bill of Materials generation with intelligent inventory matching",
     author="jBOM Contributors",
-    requires_core="4.0.0",
 
-    # Required: Business Logic API
-    api_exports=[
-        APIExport(
-            name="generate_bom",
-            handler="jbom_bom_plugin.api:generate_bom",
-            version="1.0.0",
-            description="Generate BOM from schematic and inventory",
-        ),
-        APIExport(
-            name="match_inventory",
-            handler="jbom_bom_plugin.api:match_inventory",
-            version="1.0.0",
-            description="Match components to inventory items",
-        ),
+    # Plugin dependencies (semver)
+    requires=[
+        "kicad_parser>=1.0.0,<2.0.0",
+        "value_parser>=1.0.0,<2.0.0",
+        "spreadsheet_io>=1.0.0,<2.0.0",
     ],
 
-    # Optional: CLI Integration
-    cli_integration=CLIIntegration(
-        commands=[
-            {"name": "bom", "handler": "jbom_bom_plugin.cli:BOMCommand"},
-        ],
-    ),
-
-    # Optional: KiCad Plugin Integration
-    kicad_integration=KiCadIntegration(
-        eeschema_plugin="jbom_bom_plugin.kicad:EeschemaPlugin",
-    ),
-
-    # Dependencies
-    plugin_dependencies=[],
+    # Python package dependencies
     dependencies=["pandas>=1.3.0"],
+
+    # Public API exports
+    exports=[
+        "generate_bom",
+        "match_inventory",
+        "BOMOptions",
+        "BOMResult",
+    ],
+
+    # Optional CLI integration
+    cli_commands=[
+        {"name": "bom", "handler": "jbom.plugins.bom.cli:BOMCommand"},
+    ],
 )
 ```
 
-**Key Insight**: A plugin can provide an API without any CLI/UI. Another plugin or UI can consume the API.
+**Key Insights:**
+- Foundation plugins declare no plugin dependencies (they're the foundation)
+- Business logic plugins declare dependencies on foundation plugins
+- Semver ranges ensure compatible versions are used
+- CLI commands are optional (plugins can be API-only)
 
 ### Plugin Lifecycle Hooks
 
@@ -398,11 +475,20 @@ class EeschemaPlugin(EeschemaIntegration):
 
 ### Entry Points (pyproject.toml)
 
+All plugins (bundled and third-party) use the same discovery mechanism:
+
 ```toml
+# jBOM's pyproject.toml (bundled plugins)
 [project.entry-points."jbom.plugins"]
-bom = "jbom_bom_plugin:manifest"
-pos = "jbom_pos_plugin:manifest"
-validate = "jbom_validate_plugin:manifest"
+kicad_parser = "jbom.plugins.kicad_parser:manifest"
+value_parser = "jbom.plugins.value_parser:manifest"
+spreadsheet_io = "jbom.plugins.spreadsheet_io:manifest"
+bom = "jbom.plugins.bom:manifest"
+pos = "jbom.plugins.pos:manifest"
+
+# Third-party plugin's pyproject.toml
+[project.entry-points."jbom.plugins"]
+validation = "jbom_validation_plugin:manifest"
 ```
 
 ### Plugin Loading Process
@@ -414,10 +500,10 @@ class PluginLoader:
     """Loads and manages jBOM plugins."""
 
     def discover_plugins(self):
-        """Discover all installed plugins."""
+        """Discover all installed plugins (bundled + third-party)."""
         plugins = []
 
-        # Load from entry points
+        # Same mechanism for all plugins
         for ep in entry_points(group='jbom.plugins'):
             try:
                 manifest = ep.load()
@@ -427,83 +513,98 @@ class PluginLoader:
 
         return plugins
 
+    def resolve_dependencies(self, plugins):
+        """Resolve plugin dependencies and determine load order."""
+        # Topological sort based on requires=[...]
+        pass
+
     def load_plugin(self, manifest):
         """Load a plugin and its capabilities."""
-        # Version compatibility check
-        if not self.is_compatible(manifest.requires_core):
-            raise PluginError(f"Incompatible core version")
+        # Check plugin dependencies (semver)
+        for dep in manifest.requires:
+            if not self.is_plugin_compatible(dep):
+                raise PluginError(f"Missing or incompatible dependency: {dep}")
 
-        # Load CLI commands
-        for cap in manifest.cli_capabilities:
-            self.register_command(cap.command, cap.handler)
-
-        # Load API functions
-        for cap in manifest.api_capabilities:
-            self.register_api(cap.function, cap.handler)
+        # Load CLI commands (if present)
+        for cmd in manifest.cli_commands:
+            self.register_command(cmd['name'], cmd['handler'])
 
         # Initialize plugin
         plugin = self.instantiate_plugin(manifest)
-        plugin.on_load(self.core_services)
+        plugin.on_load()
 
         return plugin
 ```
 
-## Core Services Interface
+## Plugin Evolution and Compatibility
 
-The core provides a stable API contract:
+### Adding Capabilities to Foundation Plugins
+
+Foundation plugins evolve to add new capabilities:
 
 ```python
-# jbom/core/__init__.py
+# value_parser v1.0.0
+def parse_resistor(value: str) -> float: ...
+def parse_capacitor(value: str) -> float: ...
 
-class CoreServices:
-    """Stable API surface for plugins."""
+# value_parser v1.1.0 (minor bump - backward compatible)
+def parse_resistor(value: str) -> float: ...
+def parse_capacitor(value: str) -> float: ...
+def parse_inductor(value: str) -> float: ...  # NEW
+def parse_varistor(value: str) -> float: ...  # NEW
 
-    @property
-    def version(self) -> str:
-        """Core platform version."""
-        return "4.0.0"
+# value_parser v2.0.0 (major bump - breaking change)
+from dataclasses import dataclass
 
-    # File loaders
-    def load_schematic(self, path: str) -> List[Component]:
-        """Load KiCad schematic."""
-        pass
+@dataclass
+class ParsedValue:
+    value: float
+    unit: str
+    confidence: float
 
-    def load_pcb(self, path: str, mode: str = "auto") -> List[PcbComponent]:
-        """Load KiCad PCB."""
-        pass
-
-    def load_spreadsheet(self, path: str) -> Tuple[List[InventoryItem], List[str]]:
-        """Load spreadsheet (CSV/Excel/Numbers)."""
-        pass
-
-    # Value parsing
-    def parse_component_value(self, value: str, component_type: str) -> float:
-        """Parse component value to base units."""
-        pass
-
-    def format_component_value(self, value: float, component_type: str) -> str:
-        """Format value for display (EIA format)."""
-        pass
-
-    # Field system
-    def normalize_field(self, field_name: str) -> str:
-        """Normalize field name (case-insensitive, snake_case)."""
-        pass
-
-    def split_field_prefix(self, field: str) -> Tuple[FieldPrefix, str]:
-        """Split I:/C: prefix from field name."""
-        pass
-
-    # Utilities
-    def discover_project(self, path: str) -> List[str]:
-        """Find all relevant files in project."""
-        pass
-
-    def resolve_output_path(self, input_path: str, output_arg: str,
-                           outdir: str, suffix: str) -> str:
-        """Resolve output file path."""
-        pass
+def parse_resistor(value: str) -> ParsedValue: ...  # Changed return type
 ```
+
+**How business logic adapts:**
+```python
+# bom plugin v2.0.0
+manifest = PluginManifest(
+    requires=[
+        "value_parser>=1.0.0,<2.0.0",  # Compatible with 1.x
+    ]
+)
+
+# bom plugin v3.0.0 (updated for new API)
+manifest = PluginManifest(
+    requires=[
+        "value_parser>=2.0.0,<3.0.0",  # Uses new return type
+    ]
+)
+```
+
+### Swapping Implementations
+
+When better implementations become available (e.g., official KiCad API):
+
+```python
+# kicad_parser v1.0.0 - Original implementation
+def load_schematic(path: str) -> List[Component]:
+    """Load via s-expression parsing."""
+    return parse_sexpr(path)
+
+# kicad_parser v2.0.0 - New implementation, same interface
+def load_schematic(path: str) -> List[Component]:
+    """Load via official KiCad API (if available) or s-expression fallback."""
+    try:
+        import kicad.sch
+        return load_via_official_api(path)
+    except ImportError:
+        return parse_sexpr(path)  # Fallback
+```
+
+**Impact on business logic plugins:** ✅ Zero changes
+
+They depend on the interface, not the implementation.
 
 ## Simplification: Remove KiCad Plugin Packaging (Recommended First Step)
 
@@ -608,34 +709,80 @@ class JBOMPlugin(pcbnew.ActionPlugin):
 3. TUI as separate package (optional)
 4. All consume the same Python API
 
-## Example: Custom Validation Plugin (Layered)
+## Example: External Consumer (KiCad Fabrication Plugin)
 
-A user wants to add design rule validation:
+A separate package that integrates jBOM into KiCad's GUI:
+
+```python
+# kicad_fabrication_plugin/plugin.py (separate PyPI package)
+
+import pcbnew
+from jbom.plugins.kicad_parser import load_schematic, load_pcb
+from jbom.plugins.spreadsheet_io import load_spreadsheet
+from jbom.plugins.bom import generate_bom, BOMOptions
+from jbom.plugins.pos import generate_pos
+
+class FabricationPlugin(pcbnew.ActionPlugin):
+    """KiCad GUI integration for jBOM (separate package)."""
+
+    def Run(self):
+        # Get current project from KiCad
+        board = pcbnew.GetBoard()
+        project_path = board.GetFileName().replace('.kicad_pcb', '')
+
+        # Use jBOM foundation plugins (direct import)
+        schematic_path = f"{project_path}.kicad_sch"
+        components = load_schematic(schematic_path)
+
+        # Show dialog for inventory file
+        inventory_path = self.show_file_dialog("Select Inventory File")
+        inventory, fields = load_spreadsheet(inventory_path)
+
+        # Use jBOM business logic (same as CLI)
+        options = BOMOptions(smd_only=False, verbose=True)
+        bom_result = generate_bom(components, inventory, options)
+
+        # Generate POS file
+        pcb_components = load_pcb(f"{project_path}.kicad_pcb")
+        pos_result = generate_pos(pcb_components)
+
+        # Display results in KiCad dialog
+        self.show_results_dialog(bom_result, pos_result)
+```
+
+**Key benefits:**
+- ✅ Reuses all jBOM parsing logic (no duplication)
+- ✅ Same BOM algorithm as CLI (consistency)
+- ✅ Thin UI adapter (< 100 lines)
+- ✅ Version pinning: `requires = ["jbom>=4.0.0,<5.0.0"]`
+- ✅ External package evolution independent of jBOM core
+
+## Example: Third-Party Validation Plugin
+
+Community member wants to add design rule validation:
 
 ```python
 # jbom_validation_plugin/__init__.py
 
-from jbom.plugin import PluginManifest, APIExport, CLIIntegration
+from jbom.plugin import PluginManifest
 
 manifest = PluginManifest(
     name="validation",
     version="1.0.0",
     description="KiCad schematic validation against design rules",
-    requires_core="4.0.0",
 
-    # API First: Business logic
-    api_exports=[
-        APIExport(
-            name="validate",
-            handler="jbom_validation_plugin.api:validate",
-            version="1.0.0",
-        ),
+    # Depends on foundation plugin
+    requires=[
+        "kicad_parser>=1.0.0,<2.0.0",
     ],
 
-    # Optional: CLI wrapper
-    cli_integration=CLIIntegration(
-        commands=[{"name": "validate", "handler": "jbom_validation_plugin.cli:ValidateCommand"}],
-    ),
+    # Public API
+    exports=["validate", "ValidationRule", "ValidationIssue"],
+
+    # Optional CLI
+    cli_commands=[
+        {"name": "validate", "handler": "jbom_validation_plugin.cli:ValidateCommand"},
+    ],
 )
 
 # jbom_validation_plugin/api.py - Business Logic
@@ -727,25 +874,27 @@ def validate_endpoint(project_id: str):
     return {"issues": [asdict(i) for i in issues]}
 ```
 
-## Benefits of True Plugin Architecture
+## Benefits of This Architecture
 
 ### For Users
-- **Extensibility**: Add features without modifying jBOM
-- **Flexibility**: Install only plugins you need
-- **Choice**: Multiple plugins can solve same problem differently
-- **Community**: Plugins from community extend capabilities
+- **Extensibility**: Community can add features without forking jBOM
+- **Flexibility**: Install only plugins needed for specific workflows
+- **Reliability**: Semver ensures compatible updates
+- **Ecosystem**: Foundation plugins (like `kicad_parser`) can benefit broader KiCad community
 
 ### For Developers
-- **Modularity**: Develop features independently
-- **Stability**: Core API provides stable foundation
-- **Testing**: Test plugins in isolation
-- **Distribution**: Publish plugins independently
+- **Simplicity**: Same plugin pattern used throughout (foundation and business logic)
+- **Modularity**: Develop features independently with clear dependencies
+- **Evolvability**: Add capabilities via minor versions, change interfaces via major versions
+- **Reusability**: Foundation plugins can be extracted as standalone packages
+- **Testing**: Test plugins in isolation from each other
 
 ### For Project
-- **Maintainability**: Core stays focused and stable
-- **Innovation**: Plugins can experiment freely
-- **Compatibility**: Semver ensures version compatibility
-- **Growth**: Ecosystem can grow without core bloat
+- **No artificial stability**: Acknowledge that "core" evolves, manage it via semver
+- **Fight bloat**: New parsers update `value_parser` plugin, don't add to monolith
+- **Enable innovation**: Plugins experiment freely while foundations remain stable
+- **External value**: Foundation plugins could become de facto KiCad data API
+- **Future-proof**: When official KiCad API ships, swap implementation without breaking dependents
 
 ## Technical Considerations
 
@@ -808,15 +957,20 @@ except Exception as e:
 
 ## Open Questions
 
-1. Should core ship with any plugins bundled, or all separate?
-2. How to handle plugin conflicts (two plugins register same command)?
-3. Plugin sandboxing/security model?
+1. ~~Should core ship with any plugins bundled, or all separate?~~ **Resolved**: Foundation + business logic plugins are bundled (required dependencies) but use same mechanism as third-party plugins.
+2. How to handle plugin conflicts (two plugins register same CLI command)?
+3. Plugin sandboxing/security model for third-party plugins?
 4. Hot-reloading of plugins during development?
-5. Plugin GUI/TUI for enable/disable/configure?
-6. Telemetry/analytics for plugin usage?
+5. Should foundation plugins be extractable to separate PyPI packages? Timeline?
+6. Plugin GUI/TUI for enable/disable/configure?
+7. Deprecation strategy when major versions change (e.g., `kicad_parser` v1 → v2)?
 
 ## Conclusion
 
-This true plugin architecture transforms jBOM from a tool into a **platform**. The core provides stable, well-documented primitives for KiCad file access, spreadsheet operations, and component modeling. Plugins bring domain expertise in BOM generation, placement files, validation, analysis, and custom workflows.
+This plugin architecture transforms jBOM from a monolithic tool into an **extensible platform** while embracing simplicity: **one pattern, repeated throughout**.
 
-Users benefit from extensibility without complexity. Developers benefit from modularity and stability. The project benefits from focused core development while enabling ecosystem growth.
+**Foundation plugins** (kicad_parser, value_parser, spreadsheet_io) provide evolvable primitives that could benefit the broader KiCad ecosystem. **Business logic plugins** (bom, pos, validation) compose these foundations into complete workflows. **External consumers** (kicad-fabrication-plugin) reuse jBOM's capabilities without duplication.
+
+All plugins—bundled and third-party—use the same discovery, versioning, and dependency mechanisms. Evolution happens via semantic versioning, not by pretending the "core" is immutable. When better implementations emerge (like official KiCad APIs), plugins swap internally without breaking dependents.
+
+Users benefit from extensibility. Developers benefit from coherent, evolvable modules. The project benefits from controlled evolution that fights bloat while enabling growth.
