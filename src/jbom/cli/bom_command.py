@@ -162,7 +162,11 @@ class BOMCommand(Command):
 
         if output_mode == OutputMode.CONSOLE:
             print_bom_table(
-                result["bom_entries"], verbose=args.verbose, include_mfg=False
+                result["bom_entries"],
+                fields=fields,
+                generator=bom_gen,
+                verbose=args.verbose,
+                include_mfg=False,
             )
         elif output_mode == OutputMode.STDOUT:
             # Use generator from result dict
