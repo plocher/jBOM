@@ -1,6 +1,45 @@
 # CHANGELOG
 
 
+## v4.3.0 (2026-01-17)
+
+### Bug Fixes
+
+* fix(bom): support inventory item attributes in field lookups
+
+- Add first-class InventoryItem attribute checks to _get_inventory_field_value()
+- Add first-class attribute checks to _has_inventory_field()
+- Fixes empty Footprint column when using i:package in fabricator configs
+- Ensures package, lcsc, manufacturer, and other attributes are properly retrieved
+
+Co-Authored-By: Warp <agent@warp.dev> ([`15f9c2d`](https://github.com/plocher/jBOM/commit/15f9c2d6bdf3a661b7997ca5b1f13c7e8c139c38))
+
+* fix(cli): correct match_quality formatting in console output
+
+- Remove float formatting (.1f) from match_quality field
+- Field is already a formatted string (e.g., 'Score: 106')
+- Fixes TypeError when outputting to console
+
+Co-Authored-By: Warp <agent@warp.dev> ([`9cc7d6c`](https://github.com/plocher/jBOM/commit/9cc7d6c5196b401dd953b159a2cd694b47c6e739))
+
+### Features
+
+* feat(fabricators): add DPN field support for JLCPCB/LCSC parts
+
+- Add DPN (Distributor Part Number) to JLC fabricator priority fields
+- Add LCSC field aliases (LCSC, LCSC Part, LCSC Part #, DPN) in inventory loader
+- Enables proper LCSC part number lookup from inventories using DPN column
+- Fixes empty LCSC column in JLC BOM output
+
+Co-Authored-By: Warp <agent@warp.dev> ([`cc685c8`](https://github.com/plocher/jBOM/commit/cc685c875beb3fcadb8d32204beff6674d750f48))
+
+### Unknown
+
+* Merge pull request #12 from plocher/feature/fix-bom-output-issues
+
+Fix BOM output issues: console formatting, debug messages, and JLC field mapping ([`ea459e3`](https://github.com/plocher/jBOM/commit/ea459e3d37732fd3a4b255ec85075795b78caf31))
+
+
 ## v4.2.1 (2026-01-17)
 
 ### Bug Fixes
