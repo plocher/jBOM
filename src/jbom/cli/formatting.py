@@ -3,6 +3,7 @@
 Provides functions to format BOM and POS data as console tables.
 """
 from __future__ import annotations
+import shutil
 from typing import List
 
 from jbom.common.types import BOMEntry
@@ -20,6 +21,9 @@ def print_bom_table(
         print("No BOM entries to display.")
         return
 
+    # Get terminal width for intelligent column sizing
+    terminal_width = shutil.get_terminal_size(fallback=(120, 24)).columns
+
     # Determine columns to display
     headers = ["Reference", "Qty", "Value", "Footprint", "LCSC"]
     if include_mfg:
@@ -33,8 +37,9 @@ def print_bom_table(
     if any_notes:
         headers.append("Notes")
 
-    # Set maximum column widths for better table layout
-    max_widths = {
+    # Set preferred column widths for wrapping guidance
+    # These will be adjusted based on terminal width
+    preferred_widths = {
         "Reference": 60,  # Allow long reference lists
         "Qty": 5,
         "Value": 12,
@@ -48,6 +53,37 @@ def print_bom_table(
         "Priority": 8,
         "Notes": 50,
     }
+
+    # Calculate total preferred width including separators (" | ")
+    separator_width = len(" | ") * (len(headers) - 1)
+    total_preferred = (
+        sum(preferred_widths.get(h, 20) for h in headers) + separator_width
+    )
+
+    # If preferred width exceeds terminal, scale down proportionally for flexible columns
+    max_widths = preferred_widths.copy()
+    if total_preferred > terminal_width:
+        # Fixed-width columns that shouldn't shrink
+        fixed_columns = {"Qty", "SMD", "LCSC", "Priority"}
+        fixed_total = sum(
+            preferred_widths.get(h, 20) for h in headers if h in fixed_columns
+        )
+
+        # Available width for flexible columns
+        available = (
+            terminal_width - fixed_total - separator_width - 10
+        )  # -10 for safety margin
+        flexible_total = sum(
+            preferred_widths.get(h, 20) for h in headers if h not in fixed_columns
+        )
+
+        if available > 0 and flexible_total > 0:
+            scale_factor = available / flexible_total
+            for h in headers:
+                if h not in fixed_columns:
+                    max_widths[h] = max(
+                        10, int(preferred_widths.get(h, 20) * scale_factor)
+                    )
 
     def wrap_text(text: str, width: int) -> List[str]:
         """Wrap text to fit within width, breaking on whitespace."""
