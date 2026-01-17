@@ -1009,12 +1009,35 @@ class BOMGenerator(Generator):
     def _get_inventory_field_value(
         self, field: str, inventory_item: Optional[InventoryItem]
     ) -> str:
-        """Get a value from inventory item's raw data, handling cleaned field names.
+        """Get a value from inventory item, checking both attributes and raw data.
 
         Field should be in normalized snake_case format.
         """
         if not inventory_item:
             return ""
+
+        # Check first-class InventoryItem attributes first
+        if field == "package" and inventory_item.package:
+            return inventory_item.package
+        elif field == "lcsc" and inventory_item.lcsc:
+            return inventory_item.lcsc
+        elif field == "manufacturer" and inventory_item.manufacturer:
+            return inventory_item.manufacturer
+        elif field in ["mfgpn", "mpn"] and inventory_item.mfgpn:
+            return inventory_item.mfgpn
+        elif field == "distributor" and inventory_item.distributor:
+            return inventory_item.distributor
+        elif (
+            field == "distributor_part_number"
+            and inventory_item.distributor_part_number
+        ):
+            return inventory_item.distributor_part_number
+        elif field == "smd" and inventory_item.smd:
+            return inventory_item.smd
+        elif field == "datasheet" and inventory_item.datasheet:
+            return inventory_item.datasheet
+        elif field == "description" and inventory_item.description:
+            return inventory_item.description
 
         # Try to find a raw field that matches when normalized
         for raw_field, value in inventory_item.raw_data.items():
@@ -1037,6 +1060,26 @@ class BOMGenerator(Generator):
         """
         if not inventory_item:
             return False
+
+        # Check first-class InventoryItem attributes
+        first_class_fields = [
+            "package",
+            "lcsc",
+            "manufacturer",
+            "mfgpn",
+            "mpn",
+            "distributor",
+            "distributor_part_number",
+            "smd",
+            "datasheet",
+            "description",
+        ]
+        if field in first_class_fields:
+            # Check if the attribute exists and has a value
+            attr_value = getattr(
+                inventory_item, field if field != "mpn" else "mfgpn", None
+            )
+            return bool(attr_value)
 
         # Check if a raw field matches when normalized
         for raw_field in inventory_item.raw_data.keys():
