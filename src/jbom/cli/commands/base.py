@@ -1,10 +1,11 @@
 """Base classes and utilities for CLI commands.
 
-Provides common patterns for BOM and POS command implementations.
+Provides common patterns for command implementations with plugin auto-registration.
 """
 from __future__ import annotations
 import argparse
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 import sys
 from pathlib import Path
 
@@ -12,8 +13,18 @@ from jbom.common.config import get_config
 
 __all__ = [
     "Command",
+    "CommandMetadata",
     "OutputMode",
 ]
+
+
+@dataclass
+class CommandMetadata:
+    """Metadata describing a command plugin."""
+
+    name: str  # CLI command name (e.g., "bom")
+    help_text: str = ""  # Short help for command list
+    category: str = "general"  # For grouping commands
 
 
 class OutputMode:
@@ -25,7 +36,20 @@ class OutputMode:
 
 
 class Command(ABC):
-    """Base class for CLI subcommands (bom, pos)"""
+    """Base class for CLI subcommands with auto-registration."""
+
+    # Subclasses should override this class variable
+    metadata: CommandMetadata | None = None
+
+    def __init_subclass__(cls, **kwargs):
+        """Auto-register command subclasses when they are defined."""
+        super().__init_subclass__(**kwargs)
+        # Only register commands that have metadata defined
+        if cls.metadata is not None:
+            # Import here to avoid circular dependency
+            from jbom.cli.commands import CommandRegistry
+
+            CommandRegistry.register(cls)
 
     def __init__(self):
         self.parser: argparse.ArgumentParser | None = None

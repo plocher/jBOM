@@ -6,7 +6,7 @@ from typing import Optional
 
 from jbom.api import generate_bom, BOMOptions
 from jbom.common.output import resolve_output_path
-from jbom.cli.commands import Command, OutputMode
+from jbom.cli.commands.base import Command, CommandMetadata, OutputMode
 from jbom.cli.formatting import print_bom_table
 from jbom.common.config_fabricators import (
     get_fabricator_by_cli_flag,
@@ -19,6 +19,12 @@ __all__ = ["BOMCommand"]
 
 class BOMCommand(Command):
     """Generate Bill of Materials from KiCad schematic"""
+
+    metadata = CommandMetadata(
+        name="bom",
+        help_text="Generate Bill of Materials (BOM) from KiCad schematic",
+        category="core",
+    )
 
     def setup_parser(self, parser: argparse.ArgumentParser) -> None:
         """Setup BOM-specific arguments"""

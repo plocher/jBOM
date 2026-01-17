@@ -1,18 +1,13 @@
 """jBOM CLI with argparse subparsers.
 
-Refactored v3.0 CLI using Command pattern for cleaner architecture.
+Refactored v3.0 CLI using Command pattern with plugin auto-discovery.
 """
 from __future__ import annotations
 import sys
 import argparse
 from typing import List
 
-from jbom.cli.bom_command import BOMCommand
-from jbom.cli.pos_command import POSCommand
-from jbom.cli.inventory_command import InventoryCommand
-from jbom.cli.annotate_command import AnnotateCommand
-from jbom.cli.search_command import SearchCommand
-from jbom.cli.inventory_search_command import InventorySearchCommand
+from jbom.cli.commands import CommandRegistry, discover_commands
 
 
 def main(argv: List[str] | None = None) -> int:
@@ -24,6 +19,9 @@ def main(argv: List[str] | None = None) -> int:
     Returns:
         Exit code (0 for success, non-zero for error)
     """
+    # Discover and register built-in command plugins
+    discover_commands("jbom.cli.commands.builtin")
+
     # Create main parser
     parser = argparse.ArgumentParser(
         prog="jbom",
@@ -59,20 +57,17 @@ For details, try
         help="Command to execute",
     )
 
-    # Register commands
-    commands = {
-        "bom": BOMCommand(),
-        "pos": POSCommand(),
-        "inventory": InventoryCommand(),
-        "annotate": AnnotateCommand(),
-        "search": SearchCommand(),
-        "inventory-search": InventorySearchCommand(),
-    }
+    # Register all discovered commands from the registry
+    for cmd_name in CommandRegistry.list_commands():
+        cmd_class = CommandRegistry.get(cmd_name)
+        cmd_instance = cmd_class()
 
-    for cmd_name, cmd_instance in commands.items():
+        # Use metadata for help text, fallback to docstring
+        help_text = cmd_class.metadata.help_text or cmd_class.__doc__
+
         cmd_parser = subparsers.add_parser(
             cmd_name,
-            help=cmd_instance.__doc__,
+            help=help_text,
         )
         cmd_instance.setup_parser(cmd_parser)
         # Store command instance for later execution

@@ -4,13 +4,19 @@ import argparse
 import sys
 from pathlib import Path
 
-from jbom.cli.commands import Command, OutputMode
+from jbom.cli.commands.base import Command, CommandMetadata, OutputMode
 from jbom.common.output import resolve_output_path
 from jbom.api import generate_enriched_inventory, InventoryOptions
 
 
 class InventoryCommand(Command):
     """Generate inventory file from KiCad project components"""
+
+    metadata = CommandMetadata(
+        name="inventory",
+        help_text="Generate inventory file from KiCad project components",
+        category="core",
+    )
 
     def setup_parser(self, parser: argparse.ArgumentParser) -> None:
         """Setup inventory-specific arguments"""

@@ -3,12 +3,18 @@ from __future__ import annotations
 import argparse
 import sys
 
-from jbom.cli.commands import Command
+from jbom.cli.commands.base import Command, CommandMetadata
 from jbom.api import back_annotate
 
 
 class AnnotateCommand(Command):
     """Back-annotate inventory data to KiCad schematic."""
+
+    metadata = CommandMetadata(
+        name="annotate",
+        help_text="Back-annotate inventory data to KiCad schematic",
+        category="core",
+    )
 
     def setup_parser(self, parser: argparse.ArgumentParser) -> None:
         """Setup annotate-specific arguments"""
