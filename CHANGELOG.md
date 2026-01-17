@@ -1,6 +1,57 @@
 # CHANGELOG
 
 
+## v4.4.0 (2026-01-17)
+
+### Bug Fixes
+
+* fix: make console output use fabricator-specific field names
+
+Console output now respects fabricator column mappings (e.g., JLC's
+'Designator' instead of 'Reference'). This aligns console and CSV
+outputs to display the same field names.
+
+- Updated print_bom_table to accept fields and generator parameters
+- Uses generator's field extraction and fabricator column mappings
+- Falls back to legacy behavior when fields/generator not provided
+- Fixed notes field handling to avoid duplication
+
+Co-Authored-By: Warp <agent@warp.dev> ([`28c3a01`](https://github.com/plocher/jBOM/commit/28c3a01bb68eb8c683400183f8695d3cdb67ce9c))
+
+* fix(cli): use actual content width for console table columns
+
+- Remove arbitrary max_width cap on column widths
+- Columns now expand to fit content even if longer than max_widths suggestion
+- Fixes alignment issues when content like footprints exceed wrap width
+- max_widths now serves as wrapping guidance, not hard column width limit
+
+Fixes alignment issues with rows like D1 where 'Package_TO_SOT_SMD:SOT-23'
+exceeded the 20-char footprint width cap, causing column misalignment.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`f738c78`](https://github.com/plocher/jBOM/commit/f738c78413313d5ae3f61dea6717f27af754a6c0))
+
+### Features
+
+* feat(cli): add terminal width awareness to console table formatting
+
+- Detect terminal width using shutil.get_terminal_size()
+- Scale flexible column widths proportionally when total width exceeds terminal
+- Keep fixed-width columns (Qty, SMD, LCSC, Priority) at preferred size
+- Intelligently distribute available width among flexible columns
+- Falls back to 120 columns if terminal size can't be detected
+
+This ensures the table output adapts to different terminal sizes and prevents
+horizontal scrolling while maintaining readability.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`accda53`](https://github.com/plocher/jBOM/commit/accda53e125c96a9a6120075953e0af728a35b8c))
+
+### Unknown
+
+* Merge pull request #13 from plocher/feature/fix-console-table-alignment
+
+Fix console table alignment and field name consistency ([`580682c`](https://github.com/plocher/jBOM/commit/580682c3aa94a03e99a126a50e9bf5a856868804))
+
+
 ## v4.3.0 (2026-01-17)
 
 ### Bug Fixes
