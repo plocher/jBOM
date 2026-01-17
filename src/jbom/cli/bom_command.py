@@ -39,7 +39,10 @@ class BOMCommand(Command):
 
         # Positional arguments
         parser.add_argument(
-            "project", help="Path to KiCad project directory or .kicad_sch file"
+            "project",
+            nargs="?",
+            default=".",
+            help="Path to KiCad project directory or .kicad_sch file (default: current directory)",
         )
         parser.add_argument(
             "-i",

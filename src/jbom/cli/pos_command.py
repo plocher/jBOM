@@ -39,7 +39,10 @@ class POSCommand(Command):
 
         # Positional arguments
         parser.add_argument(
-            "board", help="Path to KiCad project directory or .kicad_pcb file"
+            "board",
+            nargs="?",
+            default=".",
+            help="Path to KiCad project directory or .kicad_pcb file (default: current directory)",
         )
 
         # Common verbosity/debug flags
