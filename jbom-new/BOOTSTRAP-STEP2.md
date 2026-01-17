@@ -85,6 +85,7 @@ Plugin features use core step definitions:
 - Core tests: `jbom-new/features/` directory
 - Plugin tests: `jbom-new/src/jbom/plugins/*/features/` directories
 - Step definitions: `jbom-new/features/steps/` (shared by all)
+- Subdirectory loading: See `docs/development_notes/BEHAVE_SUBDIRECTORY_LOADING.md`
 - Run from jbom-new/: `behave` (all) or `behave src/jbom/plugins/pos/features/` (specific plugin)
 
 ### Pytest (Unit Tests)
