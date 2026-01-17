@@ -12,7 +12,10 @@ Build minimal viable core: CLI basics + plugin discovery infrastructure
 - [ ] CLI handles unknown commands gracefully
 - [ ] Plugin discovery scans src/jbom_new/plugins/
 - [ ] Service and workflow registries built at startup
-- [ ] `jbom-new plugins list` shows discovered plugins
+- [ ] `jbom plugins list` shows discovered plugins
+
+## Note
+Directory is `jbom-new/` but command remains `jbom` to avoid tech debt.
 
 ## Not in Step 1
 - KiCad reading (moved to future/)

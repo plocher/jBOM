@@ -11,7 +11,7 @@ Feature: Plugin Discovery
     And it should build a workflow registry
 
   Scenario: List core plugins
-    When I run "jbom-new plugins list"
+    When I run "jbom plugins list"
     Then I should see "Core plugins:"
     And I should see the bom plugin listed
     And I should see plugin versions
