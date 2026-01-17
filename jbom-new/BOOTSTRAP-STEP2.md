@@ -12,8 +12,9 @@ Add first real workflow (POS generation) to prove the plugin system works
 ## Features to Implement
 
 ### 1. Define Success Criteria (Gherkin Scenarios)
-Review and finalize scenarios in `features/simple_pos.feature`:
-- [ ] Scenario: Generate POS from PCB file
+Scenarios in `src/jbom/plugins/pos/features/pos_generation.feature`:
+- [ ] Background: Clean test environment with KiCad project
+- [ ] Scenario: Generate basic POS file with components (data table)
 - [ ] Scenario: Generate POS to stdout
 - [ ] Scenario: Handle missing PCB file
 
