@@ -122,14 +122,16 @@ def print_bom_table(
         table_rows.append((row_data, max_lines))
 
     # Calculate actual column widths based on content
+    # Use actual content width even if it exceeds max_widths suggestion
+    # (max_widths is for wrapping guidance, not hard caps on column width)
     col_widths = {}
     for header in headers:
         max_width = len(header)  # At least as wide as header
         for row_data, _ in table_rows:
             for line in row_data[header]:
                 max_width = max(max_width, len(line))
-        # Respect maximum width constraints
-        col_widths[header] = min(max_width, max_widths.get(header, 20))
+        # Use actual max width (don't cap if content can't be wrapped smaller)
+        col_widths[header] = max_width
 
     # Print header
     header_line = " | ".join(h.ljust(col_widths[h]) for h in headers)
