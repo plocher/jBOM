@@ -19,14 +19,17 @@ src/jbom/
 ├── api.py               # High-level API (generate_bom, BOMOptions)
 │
 ├── cli/                 # Command-line interface
-│   ├── main.py          # Argparse dispatcher with subcommands
-│   ├── commands.py      # Base Command class with OutputMode
-│   ├── bom_command.py   # BOM subcommand implementation
-│   ├── pos_command.py   # POS subcommand implementation
-│   ├── inventory_command.py # Inventory subcommand
-│   ├── search_command.py    # Search subcommand
-│   ├── annotate_command.py  # Annotate subcommand
-│   ├── common.py        # Shared CLI utilities
+│   ├── main.py          # Argparse dispatcher with plugin discovery
+│   ├── commands/        # Plugin command infrastructure
+│   │   ├── __init__.py  # CommandRegistry and discover_commands()
+│   │   ├── base.py      # Base Command class, CommandMetadata, OutputMode
+│   │   └── builtin/     # Built-in command plugins
+│   │       ├── bom.py   # BOM command plugin
+│   │       ├── pos.py   # POS command plugin
+│   │       ├── inventory.py    # Inventory command plugin
+│   │       ├── search.py       # Search command plugin
+│   │       ├── annotate.py     # Annotate command plugin
+│   │       └── inventory_search.py # Inventory search command plugin
 │   └── formatting.py    # Console output formatting
 │
 ├── common/              # Shared utilities and data types
@@ -61,7 +64,8 @@ src/jbom/
 - **Data-Flow Architecture**: Input (loaders) → Processing (processors) → Output (generators)
 - **Separation by Function**: CLI, loaders, processors, generators are independent
 - **Type Safety**: Extensive use of type hints and dataclasses throughout
-- **Command Pattern**: CLI uses subcommands with shared base class
+- **Plugin Architecture**: CLI commands auto-register via plugin discovery
+- **Command Pattern**: CLI uses subcommands with shared base class and metadata
 - **No Circular Dependencies**: Clean import hierarchy from common → loaders → processors → generators
 - **Consistent Naming**: Loaders parse files, Processors transform data, Generators write output
 
@@ -548,6 +552,292 @@ The tool supports multiple inventory file formats through a unified architecture
 - Consistent field name cleaning and normalization
 - Identical component matching logic regardless of input format
 
+## Creating Command Plugins
+
+jBOM uses a plugin architecture for CLI commands that enables automatic discovery and registration. New commands can be added without modifying `main.py`.
+
+### Plugin Architecture Overview
+
+**Key Components:**
+- `Command` base class: Abstract base for all commands
+- `CommandMetadata`: Declarative metadata (name, help text, category)
+- `CommandRegistry`: Central registry with auto-registration
+- `discover_commands()`: Package scanning for automatic plugin loading
+
+**Auto-Registration**: Commands register themselves via `__init_subclass__()` hook when the class is defined.
+
+### Creating a New Command Plugin
+
+**Step 1: Create the command file**
+
+Create a new file in `src/jbom/cli/commands/builtin/` (e.g., `validate.py`):
+
+```python
+"""Validate command implementation."""
+from __future__ import annotations
+import argparse
+import sys
+
+from jbom.cli.commands.base import Command, CommandMetadata
+
+
+class ValidateCommand(Command):
+    """Validate KiCad schematic against design rules."""
+
+    # Metadata for auto-registration and CLI help
+    metadata = CommandMetadata(
+        name="validate",
+        help_text="Validate KiCad schematic against design rules",
+        category="utility",
+    )
+
+    def setup_parser(self, parser: argparse.ArgumentParser) -> None:
+        """Configure command-specific arguments.
+
+        Args:
+            parser: Subparser for this command
+        """
+        # Use helper methods from base class
+        self.add_project_argument(parser)
+
+        # Add command-specific arguments
+        parser.add_argument(
+            "-r", "--rules",
+            metavar="FILE",
+            help="Path to rules file (default: use built-in rules)",
+        )
+        parser.add_argument(
+            "--strict",
+            action="store_true",
+            help="Enable strict validation mode",
+        )
+
+    def execute(self, args: argparse.Namespace) -> int:
+        """Execute the validation command.
+
+        Args:
+            args: Parsed command-line arguments
+
+        Returns:
+            Exit code (0 for success, non-zero for error)
+        """
+        # Implementation here
+        print(f"Validating project: {args.project}")
+
+        # Use jBOM loaders and utilities
+        from jbom.loaders.schematic import SchematicLoader
+        from pathlib import Path
+
+        loader = SchematicLoader(Path(args.project))
+        components = loader.load()
+
+        # Validation logic...
+        issues = []
+        for comp in components:
+            # Check rules...
+            pass
+
+        if issues:
+            for issue in issues:
+                print(f"Error: {issue}", file=sys.stderr)
+            return 1
+
+        print(f"Validation passed: {len(components)} components checked")
+        return 0
+```
+
+**Step 2: That's it!**
+
+The command is automatically discovered and registered when jBOM starts. No changes to `main.py` needed.
+
+### Command Base Class API
+
+The `Command` base class provides helper methods:
+
+**Argument Helpers:**
+```python
+# Add optional project argument (defaults to current directory)
+self.add_project_argument(parser, arg_name="project", help_text=None)
+
+# Add standard output arguments (-o/--output)
+self.add_common_output_args(parser)
+
+# Add fabricator field arguments (-f/--fields with dynamic flags)
+self.add_fabricator_field_args(parser, field_help="...")
+```
+
+**Output Handling:**
+```python
+# Determine output mode from -o argument
+output_mode, output_path = self.determine_output_mode(args.output)
+
+# Output modes: OutputMode.FILE, OutputMode.CONSOLE, OutputMode.STDOUT
+if output_mode == OutputMode.CONSOLE:
+    # Print to console
+    pass
+elif output_mode == OutputMode.STDOUT:
+    # Write to stdout (for piping)
+    pass
+else:
+    # Write to file
+    pass
+```
+
+**Error Handling:**
+```python
+# The handle_errors() wrapper catches common exceptions automatically
+# Just raise exceptions in execute() and they'll be handled properly
+raise FileNotFoundError(f"Project not found: {path}")
+raise ValueError(f"Invalid configuration: {msg}")
+```
+
+### CommandMetadata Fields
+
+```python
+@dataclass
+class CommandMetadata:
+    name: str          # CLI command name (e.g., "validate")
+    help_text: str     # Short description for --help
+    category: str      # Grouping (e.g., "core", "utility", "analysis")
+```
+
+**Categories:**
+- `"core"`: Essential commands (bom, pos, inventory)
+- `"utility"`: Helper commands (search, annotate, validate)
+- `"analysis"`: Analysis commands (inventory-search)
+- `"export"`: Export/conversion commands
+
+### Common Patterns
+
+**Pattern 1: Load schematic and inventory**
+```python
+from jbom.loaders.schematic import SchematicLoader
+from jbom.loaders.inventory import InventoryLoader
+from pathlib import Path
+
+schematic_loader = SchematicLoader(Path(args.project))
+components = schematic_loader.load()
+
+inventory_loader = InventoryLoader(Path(args.inventory))
+inventory_items, field_names = inventory_loader.load()
+```
+
+**Pattern 2: Use the high-level API**
+```python
+from jbom.api import generate_bom, BOMOptions
+
+opts = BOMOptions(
+    verbose=args.verbose,
+    debug=args.debug,
+    smd_only=args.smd_only,
+)
+result = generate_bom(input=args.project, inventory=args.inventory, options=opts)
+```
+
+**Pattern 3: Output handling with success messages**
+```python
+import sys
+
+# Determine output mode
+output_mode, output_path = self.determine_output_mode(args.output)
+
+if output_mode == OutputMode.STDOUT:
+    # Write data to stdout
+    write_data_to_stdout(data)
+    # Success message to stderr (doesn't interfere with piping)
+    print(f"Successfully processed {count} items", file=sys.stderr)
+else:
+    # Write to file
+    write_data_to_file(data, output_path)
+    print(f"Output written to: {output_path}", file=sys.stderr)
+```
+
+### Testing Your Command
+
+**Unit tests** in `tests/unit/test_cli_YOURCOMMAND.py`:
+```python
+import unittest
+from unittest.mock import patch
+import argparse
+
+from jbom.cli.commands.builtin.validate import ValidateCommand
+
+class TestValidateCommand(unittest.TestCase):
+    def setUp(self):
+        self.command = ValidateCommand()
+        self.parser = argparse.ArgumentParser()
+        self.command.setup_parser(self.parser)
+
+    def test_setup_parser(self):
+        args = self.parser.parse_args(["project/"])
+        self.assertEqual(args.project, "project/")
+
+    @patch("jbom.cli.commands.builtin.validate.SchematicLoader")
+    def test_execute_success(self, mock_loader):
+        # Mock loader behavior
+        mock_loader.return_value.load.return_value = []
+
+        args = self.parser.parse_args(["project/"])
+        result = self.command.execute(args)
+        self.assertEqual(result, 0)
+```
+
+**Functional tests** in `tests/functional/test_functional_validate.py`:
+```python
+import unittest
+from jbom.cli.main import main
+
+class TestValidateCommandFunctional(unittest.TestCase):
+    def test_validate_help(self):
+        with self.assertRaises(SystemExit) as cm:
+            main(["validate", "--help"])
+        self.assertEqual(cm.exception.code, 0)
+
+    def test_validate_with_project(self):
+        result = main(["validate", "tests/fixtures/simple_project"])
+        self.assertEqual(result, 0)
+```
+
+### Command Discovery Process
+
+1. **`main.py` calls**: `discover_commands("jbom.cli.commands.builtin")`
+2. **Package scanning**: Imports all `.py` files in `builtin/` directory
+3. **Class definition**: When `ValidateCommand` is defined, `__init_subclass__()` runs
+4. **Auto-registration**: `CommandRegistry.register(ValidateCommand)` is called automatically
+5. **CLI setup**: `main.py` iterates registered commands to create subparsers
+
+**Debug registration**:
+```python
+from jbom.cli.commands import CommandRegistry
+
+print(CommandRegistry.list_commands())
+# Output: ['annotate', 'bom', 'inventory', 'inventory-search', 'pos', 'search', 'validate']
+
+cmd_class = CommandRegistry.get('validate')
+print(cmd_class.metadata.help_text)
+# Output: 'Validate KiCad schematic against design rules'
+```
+
+### Best Practices
+
+1. **Use descriptive names**: Command name should be a verb (validate, export, analyze)
+2. **Provide good help text**: Users rely on `--help` for guidance
+3. **Follow output conventions**: Success messages to stderr, data to stdout for piping
+4. **Reuse base class helpers**: Don't duplicate argument handling
+5. **Write tests**: Both unit and functional tests
+6. **Handle errors gracefully**: Let base class `handle_errors()` catch common exceptions
+7. **Document your command**: Add docstring and examples in epilog
+
+### Example: Complete Command with All Features
+
+See `src/jbom/cli/commands/builtin/bom.py` for a comprehensive example showing:
+- Complex argument parsing
+- Fabricator flag handling
+- Multiple output modes
+- Error handling
+- Success messages
+- Verbose and debug modes
+
 ## Extension Points
 
 ### Adding New File Formats
@@ -604,12 +894,18 @@ SMD_PACKAGES = [..., 'wlcsp']
 src/jbom/
   ├── api.py               # High-level API (generate_bom, BOMOptions)
   ├── __init__.py          # Public re-exports
-  ├── cli/                 # CLI interface with Command pattern
-  │   ├── main.py          # Argparse dispatcher
-  │   ├── commands.py      # Base Command class
-  │   ├── bom_command.py   # BOM subcommand
-  │   ├── pos_command.py   # POS subcommand
-  │   ├── common.py        # Shared CLI utilities
+  ├── cli/                 # CLI interface with plugin architecture
+  │   ├── main.py          # Argparse dispatcher with plugin discovery
+  │   ├── commands/        # Command plugin infrastructure
+  │   │   ├── __init__.py  # CommandRegistry and discover_commands()
+  │   │   ├── base.py      # Base Command class, CommandMetadata, OutputMode
+  │   │   └── builtin/     # Built-in command plugins
+  │   │       ├── bom.py         # BOM command plugin
+  │   │       ├── pos.py         # POS command plugin
+  │   │       ├── inventory.py   # Inventory command plugin
+  │   │       ├── annotate.py    # Annotate command plugin
+  │   │       ├── search.py      # Search command plugin
+  │   │       └── inventory_search.py  # Inventory search plugin
   │   └── formatting.py    # Console output
   ├── common/              # Shared utilities and data types
   │   ├── types.py         # Data classes (Component, InventoryItem, BOMEntry)
