@@ -47,10 +47,10 @@ def step_given_root_schematic_contains_components(context):
         footprint = row["Footprint"]
 
         # Generate a symbol entry in KiCad format
-        symbol = f'''  (symbol (lib_id "Device:Generic") (at {x_position} 50 0) (unit 1)
+        symbol = f"""  (symbol (lib_id "Device:Generic") (at {x_position} 50 0) (unit 1)
     (property "Reference" "{reference}" (id 0) (at {x_position+2} 50 0))
     (property "Value" "{value}" (id 1) (at {x_position+2} 52 0))
-    (property "Footprint" "{footprint}" (id 2) (at {x_position+2} 54 0)))'''
+    (property "Footprint" "{footprint}" (id 2) (at {x_position+2} 54 0)))"""
         symbols.append(symbol)
         x_position += 20
 
@@ -106,10 +106,10 @@ def step_given_subsheet_contains_components(context, subsheet_name):
         footprint = row["Footprint"]
 
         # Generate a symbol entry in KiCad format
-        symbol = f'''  (symbol (lib_id "Device:Generic") (at {x_position} 50 0) (unit 1)
+        symbol = f"""  (symbol (lib_id "Device:Generic") (at {x_position} 50 0) (unit 1)
     (property "Reference" "{reference}" (id 0) (at {x_position+2} 50 0))
     (property "Value" "{value}" (id 1) (at {x_position+2} 52 0))
-    (property "Footprint" "{footprint}" (id 2) (at {x_position+2} 54 0)))'''
+    (property "Footprint" "{footprint}" (id 2) (at {x_position+2} 54 0)))"""
         symbols.append(symbol)
         x_position += 20
 
@@ -244,11 +244,11 @@ def step_when_generate_bom_from_schematic_file(context, schematic_file):
 @when('I generate a BOM from schematic "{schematic_path}"')
 def step_when_generate_bom_from_schematic_path(context, schematic_path):
     """Generate BOM from schematic at specific path."""
-    # TODO: Implement schematic path-based BOM generation  
+    # TODO: Implement schematic path-based BOM generation
     pass
 
 
-# NOTE: Removed conflicting step aliases for "I generate a BOM for {project}"  
+# NOTE: Removed conflicting step aliases for "I generate a BOM for {project}"
 # and "I attempt to generate a BOM for {project}" - they would conflict with
 # steps in bom/shared.py. Implement specific non-conflicting patterns as needed.
 
@@ -267,7 +267,7 @@ def step_given_standalone_schematic_file(context, filename):
     pass
 
 
-@given('the project has schematics:')
+@given("the project has schematics:")
 def step_given_project_has_schematics(context):
     """Create multiple schematics from table data."""
     # TODO: Implement multiple schematic creation from table
@@ -297,7 +297,7 @@ def step_given_project_directory_no_schematics(context, project):
     context.test_project_dir = project_dir
 
 
-@given('the project has multiple schematics but no default:')
+@given("the project has multiple schematics but no default:")
 def step_given_multiple_schematics_no_default(context):
     """Create multiple schematics with no clear default."""
     # TODO: Implement multiple schematics without default

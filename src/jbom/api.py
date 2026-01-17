@@ -526,19 +526,23 @@ def _write_inventory_output(
         # Write to file
         output_path = Path(output)
         output_str = str(output)
-        
+
         try:
             output_path.parent.mkdir(parents=True, exist_ok=True)
         except PermissionError as e:
             # Re-raise with original output path for better error message
-            raise PermissionError(f"[Errno 13] Permission denied: '{output_str}'") from e
-        
+            raise PermissionError(
+                f"[Errno 13] Permission denied: '{output_str}'"
+            ) from e
+
         try:
             with open(output_path, "w", newline="", encoding="utf-8") as f:
                 _write_inventory_csv(inventory_items, field_names, f)
         except PermissionError as e:
             # Re-raise with original output path for better error message
-            raise PermissionError(f"[Errno 13] Permission denied: '{output_str}'") from e
+            raise PermissionError(
+                f"[Errno 13] Permission denied: '{output_str}'"
+            ) from e
 
 
 def _write_inventory_csv(
