@@ -9,7 +9,7 @@ import unittest
 from unittest.mock import patch, MagicMock
 import argparse
 
-from jbom.cli.bom_command import BOMCommand
+from jbom.cli.commands.builtin.bom import BOMCommand
 from jbom.common.config import FabricatorConfig
 from jbom.common.config_fabricators import ConfigurableFabricator
 
@@ -45,7 +45,7 @@ class TestCLIFabricatorDetection(unittest.TestCase):
         if os.path.exists("test.csv"):
             os.remove("test.csv")
 
-    @patch("jbom.cli.bom_command.get_fabricator_by_cli_flag")
+    @patch("jbom.cli.commands.builtin.bom.get_fabricator_by_cli_flag")
     def test_explicit_fabricator_flag_takes_precedence(self, mock_get_by_flag):
         """Test that explicit --fabricator argument takes precedence over everything."""
         args = argparse.Namespace()
@@ -59,7 +59,7 @@ class TestCLIFabricatorDetection(unittest.TestCase):
         self.assertEqual(result, "explicit")
         mock_get_by_flag.assert_not_called()
 
-    @patch("jbom.cli.bom_command.get_fabricator_by_cli_flag")
+    @patch("jbom.cli.commands.builtin.bom.get_fabricator_by_cli_flag")
     def test_fab1_flag_detection(self, mock_get_by_flag):
         """Test that fabricator flag is detected and mapped to correct fabricator."""
         mock_fabricator = MagicMock()
@@ -76,7 +76,7 @@ class TestCLIFabricatorDetection(unittest.TestCase):
         self.assertEqual(result, "fab1")
         mock_get_by_flag.assert_called_once_with("--fab1")
 
-    @patch("jbom.cli.bom_command.get_fabricator_by_preset")
+    @patch("jbom.cli.commands.builtin.bom.get_fabricator_by_preset")
     def test_preset_detection_in_fields(self, mock_get_by_preset):
         """Test that fabricator presets in fields argument are detected."""
         mock_fabricator = MagicMock()
@@ -92,7 +92,7 @@ class TestCLIFabricatorDetection(unittest.TestCase):
         self.assertEqual(result, "fab2")
         mock_get_by_preset.assert_called_once_with("+fab2")
 
-    @patch("jbom.cli.bom_command.get_fabricator_by_preset")
+    @patch("jbom.cli.commands.builtin.bom.get_fabricator_by_preset")
     def test_multiple_presets_first_one_wins(self, mock_get_by_preset):
         """Test that when multiple presets are specified, first fabricator-specific one wins."""
         mock_fab1_fabricator = MagicMock()
@@ -127,8 +127,8 @@ class TestCLIFabricatorDetection(unittest.TestCase):
         # Should return None to use default
         self.assertIsNone(result)
 
-    @patch("jbom.cli.bom_command.get_fabricator_by_cli_flag")
-    @patch("jbom.cli.bom_command.get_fabricator_by_preset")
+    @patch("jbom.cli.commands.builtin.bom.get_fabricator_by_cli_flag")
+    @patch("jbom.cli.commands.builtin.bom.get_fabricator_by_preset")
     def test_flag_overrides_preset(self, mock_get_by_preset, mock_get_by_flag):
         """Test that CLI flag takes precedence over presets in fields."""
         mock_fab1_fabricator = MagicMock()
@@ -281,8 +281,8 @@ class TestConfigurationValidation(unittest.TestCase):
 class TestEndToEndCLIScenarios(unittest.TestCase):
     """End-to-end scenarios testing complete CLI workflows."""
 
-    @patch("jbom.cli.bom_command.generate_bom")
-    @patch("jbom.cli.bom_command.get_fabricator_by_preset")
+    @patch("jbom.cli.commands.builtin.bom.generate_bom")
+    @patch("jbom.cli.commands.builtin.bom.get_fabricator_by_preset")
     def test_fabricator_preset_end_to_end(self, mock_get_by_preset, mock_generate_bom):
         """Test complete workflow: CLI with fabricator preset should use correct fabricator."""
         # Mock test fabricator

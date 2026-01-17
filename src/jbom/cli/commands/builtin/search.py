@@ -4,7 +4,7 @@ Search command implementation.
 import sys
 import argparse
 from typing import List
-from jbom.cli.commands import Command
+from jbom.cli.commands.base import Command, CommandMetadata
 from jbom.search.mouser import MouserProvider
 from jbom.search import SearchResult
 from jbom.search.filter import SearchFilter
@@ -12,6 +12,12 @@ from jbom.search.filter import SearchFilter
 
 class SearchCommand(Command):
     """Search for parts from external distributors."""
+
+    metadata = CommandMetadata(
+        name="search",
+        help_text="Search for parts from external distributors",
+        category="utility",
+    )
 
     def setup_parser(self, parser: argparse.ArgumentParser) -> None:
         """Configure search command arguments."""

@@ -11,7 +11,7 @@ from jbom.common.config_fabricators import (
     get_fabricator_registry,
 )
 from jbom.generators.pos import POSGenerator, PlacementOptions, print_pos_table
-from jbom.cli.commands import Command, OutputMode
+from jbom.cli.commands.base import Command, CommandMetadata, OutputMode
 from jbom.common.output import resolve_output_path
 
 __all__ = ["POSCommand"]
@@ -19,6 +19,12 @@ __all__ = ["POSCommand"]
 
 class POSCommand(Command):
     """Generate component placement file from KiCad PCB"""
+
+    metadata = CommandMetadata(
+        name="pos",
+        help_text="Generate component placement (POS/CPL) file from KiCad PCB",
+        category="core",
+    )
 
     def setup_parser(self, parser: argparse.ArgumentParser) -> None:
         """Setup POS-specific arguments"""

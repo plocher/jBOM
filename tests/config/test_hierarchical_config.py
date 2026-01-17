@@ -243,7 +243,7 @@ class TestConfigurationIntegration(unittest.TestCase):
 
     def test_dynamic_cli_flag_generation_integration(self):
         """Test that dynamic CLI flags work with hierarchical config."""
-        from jbom.cli.bom_command import BOMCommand
+        from jbom.cli.commands.builtin.bom import BOMCommand
         import argparse
 
         # Should generate flags from loaded configuration

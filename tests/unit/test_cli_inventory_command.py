@@ -6,7 +6,7 @@ import argparse
 import io
 from pathlib import Path
 
-from jbom.cli.inventory_command import InventoryCommand
+from jbom.cli.commands.builtin.inventory import InventoryCommand
 from jbom.api import InventoryOptions
 
 
@@ -68,7 +68,7 @@ class TestInventoryCommand(unittest.TestCase):
         args = self.parser.parse_args(["test_project", "-o", "console"])
         self.assertEqual(args.output, "console")
 
-    @patch("jbom.cli.inventory_command.generate_enriched_inventory")
+    @patch("jbom.cli.commands.builtin.inventory.generate_enriched_inventory")
     def test_execute_basic_inventory(self, mock_generate):
         """Test basic inventory generation without search."""
         # Mock successful API response
@@ -91,7 +91,7 @@ class TestInventoryCommand(unittest.TestCase):
         self.assertIsInstance(call_args[1]["options"], InventoryOptions)
         self.assertFalse(call_args[1]["options"].search)
 
-    @patch("jbom.cli.inventory_command.generate_enriched_inventory")
+    @patch("jbom.cli.commands.builtin.inventory.generate_enriched_inventory")
     def test_execute_with_search(self, mock_generate):
         """Test inventory generation with search enabled."""
         mock_generate.return_value = {
@@ -132,7 +132,7 @@ class TestInventoryCommand(unittest.TestCase):
         self.assertIn("Provider: mouser", output)
         self.assertIn("Searches performed: 2", output)
 
-    @patch("jbom.cli.inventory_command.generate_enriched_inventory")
+    @patch("jbom.cli.commands.builtin.inventory.generate_enriched_inventory")
     def test_execute_limit_none(self, mock_generate):
         """Test executing with limit=none."""
         mock_generate.return_value = {
@@ -172,7 +172,7 @@ class TestInventoryCommand(unittest.TestCase):
         self.assertEqual(result, 1)
         self.assertIn("--limit must be a positive integer", captured_output.getvalue())
 
-    @patch("jbom.cli.inventory_command.generate_enriched_inventory")
+    @patch("jbom.cli.commands.builtin.inventory.generate_enriched_inventory")
     def test_execute_api_error(self, mock_generate):
         """Test handling of API errors."""
         mock_generate.return_value = {
@@ -192,8 +192,8 @@ class TestInventoryCommand(unittest.TestCase):
         self.assertEqual(result, 1)
         self.assertIn("Error: Project not found", captured_output.getvalue())
 
-    @patch("jbom.cli.inventory_command.resolve_output_path")
-    @patch("jbom.cli.inventory_command.generate_enriched_inventory")
+    @patch("jbom.cli.commands.builtin.inventory.resolve_output_path")
+    @patch("jbom.cli.commands.builtin.inventory.generate_enriched_inventory")
     def test_execute_with_output_file(self, mock_generate, mock_resolve_path):
         """Test execution with file output."""
         mock_generate.return_value = {
@@ -220,7 +220,7 @@ class TestInventoryCommand(unittest.TestCase):
         output = captured_output.getvalue()
         self.assertIn("Successfully generated 2 inventory items", output)
 
-    @patch("jbom.cli.inventory_command.generate_enriched_inventory")
+    @patch("jbom.cli.commands.builtin.inventory.generate_enriched_inventory")
     def test_execute_console_output(self, mock_generate):
         """Test execution with console output."""
         mock_generate.return_value = {
@@ -239,7 +239,7 @@ class TestInventoryCommand(unittest.TestCase):
         call_args = mock_generate.call_args
         self.assertEqual(call_args[1]["output"], "console")
 
-    @patch("jbom.cli.inventory_command.generate_enriched_inventory")
+    @patch("jbom.cli.commands.builtin.inventory.generate_enriched_inventory")
     def test_execute_stdout_output(self, mock_generate):
         """Test execution with stdout output."""
         mock_generate.return_value = {
@@ -258,7 +258,7 @@ class TestInventoryCommand(unittest.TestCase):
         call_args = mock_generate.call_args
         self.assertEqual(call_args[1]["output"], "stdout")
 
-    @patch("jbom.cli.inventory_command.generate_enriched_inventory")
+    @patch("jbom.cli.commands.builtin.inventory.generate_enriched_inventory")
     def test_execute_search_with_multiple_results(self, mock_generate):
         """Test search execution with multiple results and statistics."""
         mock_generate.return_value = {
