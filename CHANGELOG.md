@@ -1,6 +1,187 @@
 # CHANGELOG
 
 
+## v4.6.0 (2026-01-17)
+
+### Bug Fixes
+
+* fix: use consistent 2-level command pattern with flags
+
+All commands now 2-level for consistency:
+- jbom plugin --list, jbom plugin --show <name>
+- jbom config --set <key> <value>, jbom config --get <key>
+- jbom bom, jbom pos, jbom search
+
+Simpler and more uniform than mixing 2-level and 3-level patterns.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`4754281`](https://github.com/plocher/jBOM/commit/4754281880c543b51d52378f843195e754cc3c6a))
+
+* fix: use singular 'plugin' command with 3-level pattern
+
+Pattern distinction:
+- Tool management (3-level): jbom plugin list, jbom config set, jbom test
+- Workflow commands (2-level): jbom bom, jbom pos, jbom search
+
+This keeps meta-commands grouped while keeping workflows simple.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`6dea0e6`](https://github.com/plocher/jBOM/commit/6dea0e61c174c070e0e596a98a06638e7d8b4546))
+
+* fix: start with empty plugin list scenario
+
+Test simplest case first: no plugins installed.
+Then add scenario for when a plugin exists.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`354b726`](https://github.com/plocher/jBOM/commit/354b726e0b30b916f3b127307a62e89317d401d9))
+
+* fix: make plugin discovery scenario concrete and testable
+
+Replace vague 'plugin discovery at startup' with concrete 'plugins list'
+command that produces verifiable output. Step definitions need to be
+precise and measurable.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`40a1fc5`](https://github.com/plocher/jBOM/commit/40a1fc5234385a012f78742dfc230ec60004db24))
+
+* fix: use 'jbom' command name, not 'jbom-new'
+
+Directory is jbom-new/ for parallel development, but command remains 'jbom'
+to avoid technical debt in feature files and eventual migration.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`b23d1ae`](https://github.com/plocher/jBOM/commit/b23d1ae25643d64e2ff7ee8a8986714d4ee9b969))
+
+### Features
+
+* feat(test): add regression test infrastructure
+
+Create dedicated structure for regression tests:
+- features/regression/ directory for bug reproduction tests
+- README with guidelines, naming conventions, and template
+- Move diagnostic test to regression/ as it verifies test infrastructure
+- Tag with @regression for selective test runs
+
+Purpose:
+- Reproduce bugs before/after fixing
+- Prevent regressions when refactoring
+- Exercise code paths not hit by happy-path functional tests
+- Document historical issues and their fixes
+
+Run with: behave --tags=regression
+
+Co-Authored-By: Warp <agent@warp.dev> ([`72ec25e`](https://github.com/plocher/jBOM/commit/72ec25e740dd2332fffc56f8b33a919077f057d2))
+
+* feat(workflow): implement Step 1 - CLI basics and plugin discovery
+
+Implement minimal viable core with BDD/TDD approach:
+
+CLI Infrastructure:
+- src/jbom_new/cli/main.py: argparse-based CLI with --help, --version
+- Support for 2-level command pattern (jbom plugin --list)
+- Exit code handling for success/error cases
+
+Plugin Discovery:
+- src/jbom_new/core/plugin_loader.py: scans plugins/ directory
+- Discovers plugins via plugin.json metadata
+- Lists discovered plugins with name and version
+
+Testing Infrastructure:
+- Behave environment with PYTHONPATH setup
+- Common step definitions for CLI testing
+- Plugin-specific step definitions with test plugin creation
+- Diagnostic utilities for developer-friendly test output on failures
+- diagnostic_quality.feature: proves diagnostics work (intentional failures)
+
+All Step 1 tests passing:
+- cli_basics.feature: 3 scenarios (help, version, unknown command)
+- plugin_discovery.feature: 2 scenarios (empty list, populated list)
+- diagnostic_quality.feature: 2 scenarios (verified diagnostics work)
+
+Co-Authored-By: Warp <agent@warp.dev> ([`4712fbb`](https://github.com/plocher/jBOM/commit/4712fbb5c7bb4abc8f41844c4212b0d935d35a5b))
+
+* feat(workflow): implement Step 1 - CLI basics and plugin discovery
+
+Implement minimal viable core with BDD/TDD approach:
+
+CLI Infrastructure:
+- src/jbom_new/cli/main.py: argparse-based CLI with --help, --version
+- Support for 2-level command pattern (jbom plugin --list)
+- Exit code handling for success/error cases
+
+Plugin Discovery:
+- src/jbom_new/core/plugin_loader.py: scans plugins/ directory
+- Discovers plugins via plugin.json metadata
+- Lists discovered plugins with name and version
+
+Testing Infrastructure:
+- Behave environment with PYTHONPATH setup
+- Common step definitions for CLI testing
+- Plugin-specific step definitions with test plugin creation
+- Diagnostic utilities for developer-friendly test output on failures
+
+All Step 1 tests passing:
+- cli_basics.feature: 3 scenarios (help, version, unknown command)
+- plugin_discovery.feature: 2 scenarios (empty list, populated list)
+
+Co-Authored-By: Warp <agent@warp.dev> ([`f62c587`](https://github.com/plocher/jBOM/commit/f62c587398d071e5e5f5b6a82ad73cd5986c113b))
+
+* feat(workflow): create jbom-new/ with Step 1 foundation structure
+
+New parallel system in jbom-new/ directory:
+- src/jbom_new/ for new implementation
+- features/ for BDD tests
+- tests/ for unit tests
+
+Step 1 features (foundation only):
+- cli_basics.feature: --help, --version, error handling
+- plugin_discovery.feature: core plugin discovery and listing
+
+BOOTSTRAP.md tracks Step 1 progress and success criteria.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`9f786e7`](https://github.com/plocher/jBOM/commit/9f786e79b581deeeedaa49991423aa454b3c7def))
+
+### Unknown
+
+* Merge pull request #17 from plocher/feature/workflow-bootstrap-step1
+
+feat(workflow): Bootstrap Step 1 - CLI basics and plugin discovery ([`af0f1e8`](https://github.com/plocher/jBOM/commit/af0f1e89e88866c6b15e4fd61ec252feb4ed97fb))
+
+* Merge pull request #16 from plocher/feature/true-plugin-architecture-design
+
+Feature/true plugin architecture design ([`7f2819f`](https://github.com/plocher/jBOM/commit/7f2819fca7c7ca24958e6aeca8322309befe2870))
+
+* design: True plugin architecture proposal for jBOM platform
+
+Create comprehensive design document outlining transformation from
+monolithic tool to extensible platform with plugin ecosystem.
+
+Key Concepts:
+- Core provides stable APIs (KiCad parsing, spreadsheet I/O, component model)
+- Plugins provide domain features (BOM, POS, validation, analysis)
+- Entry point based discovery and loading
+- Plugin lifecycle management and dependencies
+- Version compatibility and semver
+
+Architecture:
+- CoreServices: Stable API contract for plugins
+- PluginManifest: Declarative capability registration
+- Plugin lifecycle hooks (on_load, on_enable, on_disable, on_unload)
+- CLI and API capability registration
+- Plugin configuration and error handling
+
+Migration Path:
+- Phase 1: Extract core services to jbom/core/
+- Phase 2: BOM as first reference plugin
+- Phase 3: Plugin infrastructure implementation
+- Phase 4: Separate distribution model
+
+Benefits:
+- Users: Extensibility, flexibility, community plugins
+- Developers: Modularity, stability, independent distribution
+- Project: Focused core, innovation in plugins, ecosystem growth
+
+Includes complete examples for BOM plugin and custom validation plugin.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`f0665d3`](https://github.com/plocher/jBOM/commit/f0665d3549d178c0931a7b8ec8f994fdb88b66c1))
+
+
 ## v4.5.1 (2026-01-17)
 
 ### Refactoring
