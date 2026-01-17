@@ -1,6 +1,38 @@
 # CHANGELOG
 
 
+## v4.2.1 (2026-01-17)
+
+### Bug Fixes
+
+* fix(tests): separate Package and Footprint in test fixtures
+
+Properly distinguish between Package (component attribute like '0603') and
+Footprint (KiCad PCB artifact like 'Resistor_SMD:R_0603_1608Metric').
+
+Changes:
+- Add Footprint column to priority_selection.feature component tables
+- Update create_kicad_project_with_components() to use Footprint for the
+  Footprint property and add Package as a custom KiCad property
+- Update add_component_to_schematic() signature: rename 'package' parameter
+  to 'footprint' and add optional 'package' parameter
+- Fix schematic extension steps to pass both Footprint and Package correctly
+- Remove fallback that conflated the two concepts
+
+This creates valid KiCad schematics for testing and properly tests jBOM's
+heuristic package extraction from Footprint names.
+
+Resolves technical debt documented in previous commit.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`0710594`](https://github.com/plocher/jBOM/commit/0710594c5fde5cfee5bbb1ead340509292aa68e5))
+
+### Unknown
+
+* Merge pull request #11 from plocher/feature/fix-package-footprint-separation
+
+Fix Package/Footprint Separation in Test Fixtures ([`b633103`](https://github.com/plocher/jBOM/commit/b6331035a8f498805e514a6b18e004f697f31866))
+
+
 ## v4.2.0 (2026-01-06)
 
 ### Bug Fixes
