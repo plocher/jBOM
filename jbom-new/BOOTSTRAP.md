@@ -8,11 +8,12 @@ Build minimal viable core: CLI basics + plugin discovery infrastructure
 2. `features/plugin_discovery.feature` - Core plugin discovery and listing
 
 ## Success Criteria
-- [ ] CLI responds to --help and --version
-- [ ] CLI handles unknown commands gracefully
-- [ ] Plugin discovery scans src/jbom_new/plugins/
-- [ ] Service and workflow registries built at startup
-- [ ] `jbom plugin --list` shows discovered plugins
+- [x] CLI responds to --help and --version
+- [x] CLI handles unknown commands gracefully
+- [x] Plugin discovery scans src/jbom_new/plugins/
+- [x] Service and workflow registries built at startup
+- [x] `jbom plugin --list` shows discovered plugins
+- [x] Diagnostic output verified working
 
 ## Note
 Directory is `jbom-new/` but command remains `jbom` to avoid tech debt.
