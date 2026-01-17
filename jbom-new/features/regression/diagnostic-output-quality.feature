@@ -1,4 +1,4 @@
-@diagnostic_test
+@regression @diagnostic_test
 Feature: Diagnostic Output Quality
   As a jBOM developer
   I want helpful diagnostic output when tests fail

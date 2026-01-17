@@ -32,6 +32,8 @@ jbom-new/
 │       ├── cli/              # CLI entry point
 │       ├── core/             # Plugin loader, registries
 │       └── plugins/          # Core plugins (empty for now)
-├── features/                 # BDD tests
+├── features/                 # BDD functional tests
+│   ├── regression/           # Bug reproduction & prevention
+│   └── steps/                # Step definitions
 └── tests/                    # Unit tests
 ```
