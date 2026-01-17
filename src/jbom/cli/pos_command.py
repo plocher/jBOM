@@ -1,6 +1,7 @@
 """POS command implementation."""
 from __future__ import annotations
 import argparse
+import sys
 from pathlib import Path
 from typing import Optional
 
@@ -39,6 +40,20 @@ class POSCommand(Command):
         # Positional arguments
         parser.add_argument(
             "board", help="Path to KiCad project directory or .kicad_pcb file"
+        )
+
+        # Common verbosity/debug flags
+        parser.add_argument(
+            "-v",
+            "--verbose",
+            action="store_true",
+            help="Enable verbose output and diagnostics in console mode",
+        )
+        parser.add_argument(
+            "-d",
+            "--debug",
+            action="store_true",
+            help="Enable debug diagnostics; include detailed loader fallbacks in output",
         )
 
         # Output arguments
@@ -127,6 +142,9 @@ class POSCommand(Command):
             loader_mode=args.loader,
             fabricator=fabricator,
         )
+        # Propagate verbosity/debug to generator options
+        opts.verbose = bool(getattr(args, "verbose", False))
+        opts.debug = bool(getattr(args, "debug", False))
 
         # Process fields
         if fields_arg:
@@ -134,9 +152,27 @@ class POSCommand(Command):
 
         gen = POSGenerator(opts)
 
+        # Validate input type early to provide helpful error when a schematic is passed
+        board_path_input = Path(args.board)
+        if board_path_input.is_file() and board_path_input.suffix == ".kicad_sch":
+            # Try to find a similarly named PCB file
+            pcb_path = board_path_input.with_suffix(".kicad_pcb")
+            if pcb_path.exists():
+                print(
+                    f"Note: Detected schematic file, using corresponding PCB: {pcb_path.name}",
+                    file=sys.stderr,
+                )
+                board_path_input = pcb_path
+                args.board = str(pcb_path)  # Update args for downstream use
+            else:
+                raise SystemExit(
+                    f"Error: POS requires a KiCad PCB (.kicad_pcb). You passed a schematic (.kicad_sch).\n"
+                    f"Hint: Expected to find {pcb_path.name} but it doesn't exist.\n"
+                    f"      Run 'jbom pos <project_dir>' to auto-discover, or use 'jbom bom' for BOM generation."
+                )
+
         # Handle output
         output_mode, output_path = self.determine_output_mode(args.output)
-        board_path_input = Path(args.board)
 
         if output_mode == OutputMode.CONSOLE:
             # Need to run first to load data
