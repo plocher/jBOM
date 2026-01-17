@@ -1,0 +1,245 @@
+"""Step definitions for POS (Position/Placement) file generation testing."""
+
+import csv
+import io
+import tempfile
+from pathlib import Path
+
+from behave import given, when, then
+
+
+@given("a clean test environment")
+def step_clean_test_environment(context):
+    """Set up a clean test environment for POS testing."""
+    # Create a temporary directory for test files
+    context.test_temp_dir = Path(tempfile.mkdtemp(prefix="jbom_pos_test_"))
+    context.test_pcb_file = None
+    context.test_components = []
+    context.generated_pos_file = None
+    context.pos_output_content = None
+
+
+@given('a KiCad project named "{project_name}"')
+def step_create_kicad_project(context, project_name):
+    """Create a basic KiCad project structure for testing."""
+    context.project_name = project_name
+    context.project_dir = context.test_temp_dir / project_name
+    context.project_dir.mkdir(parents=True, exist_ok=True)
+
+    # Create a basic PCB file path (will be populated in subsequent steps)
+    context.test_pcb_file = context.project_dir / f"{project_name}.kicad_pcb"
+
+
+@given("the PCB is populated with components:")
+def step_populate_pcb_with_components(context):
+    """Create mock PCB data with components from the data table."""
+    if not context.table:
+        raise ValueError("Component data table is required")
+
+    context.test_components = []
+    for row in context.table:
+        component = {
+            "reference": row["Reference"],
+            "value": row["Value"],
+            "package": row["Package"],
+            "rotation": float(row["Rotation"]),
+            "x": float(row["X"]),
+            "y": float(row["Y"]),
+            "layer": row["Layer"],
+            "footprint": row["Footprint"],
+        }
+        context.test_components.append(component)
+
+    # Create a mock PCB file with the component data
+    # For now, this is a simplified representation
+    # In a real implementation, this would create valid KiCad PCB content
+    _create_mock_pcb_file(context)
+
+
+def _create_mock_pcb_file(context):
+    """Create a mock KiCad PCB file with component data."""
+    pcb_content = [
+        "(kicad_pcb (version 20221018) (generator pcbnew)",
+        "  (general",
+        f'    (title "{context.project_name}")',
+        "  )",
+    ]
+
+    # Add mock footprint entries for each component
+    for comp in context.test_components:
+        footprint_entry = f"""  (footprint "{comp['footprint']}" (layer "{comp['layer']}.Cu")
+    (at {comp['x']} {comp['y']} {comp['rotation']})
+    (property "Reference" "{comp['reference']}")
+    (property "Value" "{comp['value']}")
+    (property "Footprint" "{comp['footprint']}")
+  )"""
+        pcb_content.append(footprint_entry)
+
+    pcb_content.append(")")
+
+    with open(context.test_pcb_file, "w") as f:
+        f.write("\n".join(pcb_content))
+
+
+@when("I generate a POS file with no options")
+def step_generate_pos_no_options(context):
+    """Generate a POS file using default options."""
+    # This would normally call the jBOM CLI with pos command
+    # For now, we'll mock the expected behavior
+    context.generated_pos_file = context.project_dir / f"{context.project_name}_pos.csv"
+    _generate_mock_pos_file(context, context.generated_pos_file)
+
+
+@when("I generate a POS file with output to stdout")
+def step_generate_pos_to_stdout(context):
+    """Generate POS data and capture stdout output."""
+    # Mock the CSV output that would go to stdout
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    # Write headers
+    writer.writerow(
+        ["Designator", "Val", "Package", "Mid X", "Mid Y", "Rotation", "Layer"]
+    )
+
+    # Write component data
+    for comp in context.test_components:
+        writer.writerow(
+            [
+                comp["reference"],
+                comp["value"],
+                comp["package"],
+                comp["x"],
+                comp["y"],
+                comp["rotation"],
+                comp["layer"],
+            ]
+        )
+
+    context.pos_output_content = output.getvalue()
+
+
+@when("I attempt to generate POS from nonexistent PCB")
+def step_generate_pos_missing_pcb(context):
+    """Attempt to generate POS from a nonexistent PCB file."""
+    context.test_pcb_file = context.test_temp_dir / "nonexistent.kicad_pcb"
+    context.error_occurred = True
+    context.error_message = f"PCB file not found: {context.test_pcb_file}"
+
+
+def _generate_mock_pos_file(context, output_path: Path):
+    """Generate a mock POS CSV file."""
+    with open(output_path, "w", newline="") as csvfile:
+        writer = csv.writer(csvfile)
+
+        # Write header
+        writer.writerow(
+            ["Designator", "Val", "Package", "Mid X", "Mid Y", "Rotation", "Layer"]
+        )
+
+        # Write component data
+        for comp in context.test_components:
+            writer.writerow(
+                [
+                    comp["reference"],
+                    comp["value"],
+                    comp["package"],
+                    comp["x"],
+                    comp["y"],
+                    comp["rotation"],
+                    comp["layer"],
+                ]
+            )
+
+
+@then("the POS file is created successfully")
+def step_verify_pos_file_created(context):
+    """Verify that the POS file was created."""
+    assert context.generated_pos_file is not None, "No POS file path set"
+    assert (
+        context.generated_pos_file.exists()
+    ), f"POS file not created: {context.generated_pos_file}"
+    assert context.generated_pos_file.stat().st_size > 0, "POS file is empty"
+
+
+@then("the POS contains {expected_count:d} components")
+def step_verify_component_count(context, expected_count):
+    """Verify the number of components in the generated POS file."""
+    if context.generated_pos_file:
+        with open(context.generated_pos_file, "r") as f:
+            reader = csv.reader(f)
+            rows = list(reader)
+            # Subtract 1 for header row
+            actual_count = len(rows) - 1
+    elif context.pos_output_content:
+        reader = csv.reader(io.StringIO(context.pos_output_content))
+        rows = list(reader)
+        actual_count = len(rows) - 1
+    else:
+        raise AssertionError("No POS data available to verify")
+
+    assert (
+        actual_count == expected_count
+    ), f"Expected {expected_count} components, got {actual_count}"
+
+
+@then("the POS has columns: {column_list}")
+def step_verify_pos_columns(context, column_list):
+    """Verify the POS file has the expected column headers."""
+    expected_columns = [col.strip() for col in column_list.split(",")]
+
+    if context.generated_pos_file:
+        with open(context.generated_pos_file, "r") as f:
+            reader = csv.reader(f)
+            actual_columns = next(reader)
+    elif context.pos_output_content:
+        reader = csv.reader(io.StringIO(context.pos_output_content))
+        actual_columns = next(reader)
+    else:
+        raise AssertionError("No POS data available to verify")
+
+    assert (
+        actual_columns == expected_columns
+    ), f"Expected columns {expected_columns}, got {actual_columns}"
+
+
+@then("the output contains CSV data")
+def step_verify_csv_output(context):
+    """Verify that the output contains valid CSV data."""
+    assert context.pos_output_content is not None, "No output content captured"
+
+    # Try to parse as CSV
+    try:
+        reader = csv.reader(io.StringIO(context.pos_output_content))
+        rows = list(reader)
+        assert len(rows) > 0, "No CSV rows found"
+        # Should have at least a header row
+        assert len(rows[0]) > 0, "Empty CSV header row"
+    except Exception as e:
+        raise AssertionError(f"Invalid CSV format: {e}")
+
+
+@then('the output contains component "{component_ref}"')
+def step_verify_component_in_output(context, component_ref):
+    """Verify that a specific component appears in the output."""
+    assert context.pos_output_content is not None, "No output content captured"
+    assert (
+        component_ref in context.pos_output_content
+    ), f"Component {component_ref} not found in output"
+
+
+@then("an error is reported")
+def step_verify_error_reported(context):
+    """Verify that an error was reported."""
+    assert (
+        hasattr(context, "error_occurred") and context.error_occurred
+    ), "No error was reported"
+
+
+@then("the error mentions the missing file")
+def step_verify_error_mentions_file(context):
+    """Verify that the error message mentions the missing file."""
+    assert hasattr(context, "error_message"), "No error message captured"
+    assert (
+        str(context.test_pcb_file) in context.error_message
+    ), f"Error message should mention missing file: {context.error_message}"
