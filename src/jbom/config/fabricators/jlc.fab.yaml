@@ -20,6 +20,8 @@ part_number:
     - "JLC PCB"
     - "JLC PCB Part"
     - "JLC_PCB Part #"
+    - "DPN"  # Distributor Part Number (common abbreviation)
+    - "Distributor Part Number"
     - "MPN"
     - "MFGPN"
 
