@@ -168,17 +168,96 @@ workflow "pos":
 
 ### 1. Plugin Discovery & Loading
 
-**Responsibility:** Find installed plugins, load their service modules
+**Responsibility:** Find and load plugin service modules
 
-**Startup sequence:**
-1. Scan for plugins (pip packages with `jbom.plugins` entry point)
-2. Load each plugin's module registry
-3. Build service catalog: `{plugin.module.service: function}`
-4. Build workflow catalog: `{workflow_name: composition}`
+**Two-tier approach:**
+
+#### Core Plugins (Bundled)
+Built into jBOM, always available:
+```
+src/jbom/plugins/
+├── inventory_aware_bom/
+│   ├── __init__.py          # Plugin metadata
+│   ├── kicad_reader.py      # Service module
+│   ├── inventory_service.py # Service module
+│   ├── bom_generator.py     # Service module
+│   └── workflows.yaml       # Workflow definitions
+└── placement/
+    ├── __init__.py
+    ├── pcb_reader.py
+    └── workflows.yaml
+```
+
+**Discovery:** Static filesystem scan at startup
+- Scan `src/jbom/plugins/` directory
+- Load each plugin's `__init__.py` for metadata
+- Import service modules
+- Load workflow definitions from `workflows.yaml`
+
+#### Extended Plugins (User-installed)
+Installed via `jbom install <plugin>`, stored locally:
+```
+~/.jbom/plugins/
+├── validation/
+│   ├── plugin.yaml         # Plugin metadata
+│   ├── rules_engine.py     # Service module
+│   └── workflows.yaml      # Workflow definitions
+└── cost_analysis/
+    ├── plugin.yaml
+    ├── pricing_service.py
+    └── workflows.yaml
+```
+
+**Installation mechanism:**
+```bash
+# Install plugin from git repo
+$ jbom install github:user/jbom-validation-plugin
+
+# Or from local directory
+$ jbom install /path/to/plugin/
+
+# List installed plugins
+$ jbom plugins list
+
+# Uninstall
+$ jbom uninstall validation
+```
+
+**What `jbom install` does:**
+1. Downloads/copies plugin to `~/.jbom/plugins/<name>/`
+2. Validates plugin structure (required files, metadata)
+3. Registers in `~/.jbom/plugins/registry.json`
+4. Available on next jBOM invocation
+
+**Discovery:** Static filesystem scan at startup
+- Scan `~/.jbom/plugins/` directory
+- Load each plugin's `plugin.yaml` for metadata
+- Import service modules (Python modules in plugin directory)
+- Load workflow definitions
+
+**Combined registry:**
+```python
+# At startup, jBOM builds:
+service_registry = {
+    'inventory_aware_bom.KiCadReader.readProject': <function>,
+    'inventory_aware_bom.BOMGenerator.createBOM': <function>,
+    'validation.RulesEngine.validateDesign': <function>,  # User plugin
+    # ...
+}
+
+workflow_registry = {
+    'bom': <workflow_definition>,
+    'pos': <workflow_definition>,
+    'validate': <workflow_definition>,  # From user plugin
+    # ...
+}
+```
+
+**No runtime pip dependency.** All discovery is filesystem-based, explicit installation.
 
 **Result:**
-- Service registry: All available service functions
-- Workflow registry: All available commands
+- Service registry: All available service functions (core + installed)
+- Workflow registry: All available commands (core + installed)
 
 ### 2. CLI Parser & Validator
 
@@ -304,6 +383,8 @@ result = workflow.execute(args.project)
 
 **Recommendation:** Service registry for discoverability and late binding.
 
+**Registry built at startup from filesystem scan** - no runtime package discovery overhead.
+
 ### 3. Argument Mapping
 
 **Question:** How do CLI arguments map to service parameters?
@@ -361,9 +442,10 @@ result = workflow.execute(args.project)
 - Create workflow registry
 
 ### Phase 3: Plugin Architecture
-- Package service modules as plugins
-- Implement plugin discovery and loading
-- Build service registry
+- Package service modules as plugins (filesystem-based)
+- Implement static plugin discovery (scan directories)
+- Build service registry from discovered plugins
+- Implement `jbom install` for user plugins
 
 ### Phase 4: Workflow Composition
 - Enable users to define custom workflows
@@ -376,7 +458,7 @@ result = workflow.execute(args.project)
 
 2. **State management:** Are services stateless functions, or can they maintain state?
 
-3. **Service versioning:** How do workflows specify required service versions?
+3. **Plugin compatibility:** How do we handle core vs. user plugins depending on each other?
 
 4. **Workflow testing:** How do we test workflow compositions without executing full pipeline?
 
@@ -385,6 +467,10 @@ result = workflow.execute(args.project)
 6. **Data contracts:** What are the types of KICAD_PROJECT, INVENTORY, BOM, etc.? How are they validated?
 
 7. **Execution context:** How do workflows share data between steps (context object, return values, global state)?
+
+8. **Plugin sandboxing:** Should user plugins run in restricted environment? Security model?
+
+9. **Plugin updates:** How does `jbom install` handle updates? Version pinning?
 
 ## Conclusion
 
