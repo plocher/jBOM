@@ -41,232 +41,235 @@ Third-Party Plugins (installed separately):
 
 **Key insight**: Plugins are just Python packages declared in jBOM's `dependencies = [...]`. No custom plugin loader needed - pip handles everything.
 
-## Core Infrastructure
+## Architectural Components
 
-### Minimal Core Components
+### System Structure
 
-The core provides **shared infrastructure** that all plugins can use:
+jBOM consists of four architectural layers with clear separation of concerns:
 
-1. **CLI Integration Framework** - Config-driven command registration
-2. **Configuration System** - Unified config file handling
-3. **Test Harness** - Common test patterns for plugins
-4. **API Introspection** - Automatic documentation generation
-
-### CLI Integration Framework
-
-Plugins declare CLI commands via **simple configuration**, not code:
-
-```yaml
-# Plugin's cli_config.yaml
-command:
-  name: bom
-  help: Generate Bill of Materials
-  arguments:
-    - name: project
-      type: path
-      default: "."
-      help: KiCad project directory
-    - name: --inventory
-      type: file
-      multiple: true
-      help: Inventory spreadsheet(s)
-    - name: --output
-      short: -o
-      type: output
-      help: Output destination (file, console, stdout)
+```
+┌─────────────────────────────────────────────────┐
+│     User Interface Layer                        │
+│  ├─ CLI Driver (Entry Point)                   │
+│  ├─ Configuration Loader                        │
+│  └─ Output Formatter                            │
+└─────────────────────────────────────────────────┘
+                    ↓ requests
+┌─────────────────────────────────────────────────┐
+│     Command Routing Layer                       │
+│  ├─ Command Registry                            │
+│  ├─ Argument Parser (Schema-driven)            │
+│  ├─ Validation Engine                           │
+│  └─ Plugin Dispatcher                           │
+└─────────────────────────────────────────────────┘
+                    ↓ invokes
+┌─────────────────────────────────────────────────┐
+│     Plugin Ecosystem                            │
+│  ├─ Foundation Plugins (Data Access)           │
+│  └─ Business Logic Plugins (Domain Workflows)  │
+└─────────────────────────────────────────────────┘
+                    ↓ uses
+┌─────────────────────────────────────────────────┐
+│     Shared Services                             │
+│  ├─ Configuration Manager                       │
+│  ├─ Test Harness                                │
+│  └─ Introspection Service                       │
+└─────────────────────────────────────────────────┘
 ```
 
-**Core provides:**
-- Automatic argparse setup from config
-- Standard argument types (path, file, output)
-- Common argument patterns (--verbose, --output, fabricator flags)
-- Error handling and output formatting
+### Component Responsibilities
 
-**Plugin provides:**
-- Just the business logic function: `def execute(args) -> Result`
+#### User Interface Layer
 
-**Benefit**: Plugin authors don't write CLI boilerplate. Core handles all UI concerns.
+**CLI Driver (Entry Point)**
+- Responsibility: Bootstrap application, initialize command routing
+- Collaborates with: Configuration Loader, Command Registry
+- Produces: Validated command request
 
-### Configuration System
+**Configuration Loader**
+- Responsibility: Discover and merge config files (env, project, user, system)
+- Collaborates with: Configuration Manager
+- Produces: Unified configuration object
 
-**Unified configuration** across all plugins:
+**Output Formatter**
+- Responsibility: Transform plugin results into user-facing formats (CSV, table, JSON)
+- Collaborates with: Plugin results
+- Consumes: Structured result objects
 
-```yaml
-# ~/.jbom/config.yaml
-core:
-  cache_dir: ~/.cache/jbom
-  log_level: INFO
+#### Command Routing Layer
 
-plugins:
-  kicad_parser:
-    hierarchical_refs: true
-  value_parser:
-    tolerance_matching: strict
-  bom:
-    default_fields: +standard
-    smd_filter: auto
+**Command Registry**
+- Responsibility: Maintain catalog of available commands and their schemas
+- Collaborates with: Plugin Dispatcher, CLI Driver
+- Data: Command metadata (name, plugin source, argument schema)
 
-fabricators:
-  - name: jlcpcb
-    cli_flags: [--jlc]
-    fields: [LCSC, Basic_Part]
-```
+**Argument Parser**
+- Responsibility: Parse raw CLI input against command schema
+- Collaborates with: Validation Engine, Command Registry
+- Produces: Structured argument object
+- Pattern: Schema-driven processing (not hardcoded flags)
 
-**Core provides:**
-- Config file discovery (~/.jbom/config.yaml, ./.jbom.yaml, env vars)
-- Validation and schema checking
-- Per-plugin config sections
-- Runtime config overrides
+**Validation Engine**
+- Responsibility: Validate parsed arguments against schema constraints
+- Collaborates with: Argument Parser
+- Checks: Required fields, type correctness, mutual exclusivity, value ranges
+- Produces: Valid arguments or detailed error messages
 
-**Plugins access:**
-```python
-from jbom.core.config import get_plugin_config
+**Plugin Dispatcher**
+- Responsibility: Route validated request to appropriate plugin
+- Collaborates with: Command Registry, Plugin Ecosystem
+- Manages: Plugin lifecycle (load, execute, cleanup)
 
-config = get_plugin_config("bom")
-default_fields = config.get("default_fields", "+standard")
-```
+#### Plugin Ecosystem
 
-### Common Test Harness
+**Foundation Plugins**
+- Responsibility: Provide primitive data access (KiCad files, spreadsheets, value parsing)
+- Collaborates with: Business Logic Plugins
+- Interface: Public API functions (no UI concerns)
+- Evolution: Semantic versioning enables independent evolution
 
-**Core provides test utilities** for all plugins:
+**Business Logic Plugins**
+- Responsibility: Implement domain workflows (BOM generation, validation, etc.)
+- Collaborates with: Foundation Plugins, Shared Services
+- Depends on: Foundation plugin APIs (declared via semver)
+- Interface: Public API + optional CLI registration
 
-```python
-# jbom/core/testing/__init__.py
+#### Shared Services
 
-class PluginTestBase:
-    """Base class for plugin tests."""
+**Configuration Manager**
+- Responsibility: Provide configuration access to all components
+- Pattern: Hierarchical namespaces (core, plugins.bom, fabricators)
+- Interface: `get_config(namespace)` → config object
 
-    @staticmethod
-    def load_fixture(name: str) -> Path:
-        """Load test fixture by name."""
-        pass
+**Test Harness**
+- Responsibility: Provide common test infrastructure to all plugins
+- Pattern: Reusable fixtures, assertions, Gherkin steps
+- Enables: Consistent testing across plugin ecosystem
 
-    @staticmethod
-    def create_temp_project() -> Path:
-        """Create temporary test project."""
-        pass
+**Introspection Service**
+- Responsibility: Discover and document plugin APIs at runtime
+- Pattern: Reflection over type hints and docstrings
+- Produces: API documentation, command help, validation schemas
 
-    def assert_valid_component(self, component):
-        """Assert component has required fields."""
-        assert hasattr(component, 'reference')
-        assert hasattr(component, 'value')
-```
+### Key Architectural Relationships
 
-**Gherkin step definitions** for functional tests:
+**CLI Driver → Command Registry**
+- Driver queries registry: "What commands are available?"
+- Registry responds with command catalog
+- Pattern: Service locator
 
-```python
-# jbom/core/testing/steps.py
+**Command Registry → Plugin Dispatcher**
+- Registry provides plugin reference for command
+- Dispatcher loads and invokes plugin
+- Pattern: Factory + dependency injection
 
-@given('a schematic with components')
-def schematic_with_components(context):
-    context.schematic = load_fixture('minimal_project')
+**Argument Parser → Validation Engine**
+- Parser produces structured arguments
+- Validator checks against schema
+- Pattern: Pipeline processing
 
-@when('I run "jbom {command} {args}"')
-def run_jbom_command(context, command, args):
-    context.result = run_cli(command, args.split())
+**Business Logic Plugin → Foundation Plugin**
+- Business logic declares dependency (e.g., "kicad_parser>=1.0")
+- Foundation provides stable API
+- Pattern: Dependency inversion (depend on interface, not implementation)
 
-@then('the output should contain {count:d} entries')
-def assert_entry_count(context, count):
-    assert len(context.result.entries) == count
-```
+**All Components → Configuration Manager**
+- Components request configuration by namespace
+- Manager provides merged, validated config
+- Pattern: Centralized configuration service
 
-**Plugin tests use common infrastructure:**
-```python
-# src/jbom/plugins/bom/tests/features/steps/bom_steps.py
-from jbom.core.testing.steps import *  # Import common steps
+**All Plugins → Test Harness**
+- Plugins inherit common test patterns
+- Harness provides fixtures and assertions
+- Pattern: Template method (abstract test structure, concrete implementations)
 
-# Add plugin-specific steps
-@then('entries should be grouped by value')
-def assert_grouped_by_value(context):
-    # Plugin-specific assertion
-    pass
-```
+### Architectural Qualities
 
-### API Introspection & Documentation
+**Modularity**
+- Components have clear boundaries and single responsibilities
+- Plugins are independently deployable Python packages
+- Foundation plugins can be extracted as standalone tools
 
-**Plugins declare their API** using docstrings and type hints:
+**Extensibility**
+- New plugins add commands without core modification
+- Foundation plugins add capabilities via minor version bumps
+- Third-party plugins extend ecosystem via pip install
 
-```python
-# jbom/plugins/bom/__init__.py
+**Testability**
+- Each layer tested in isolation
+- Shared test harness ensures consistency
+- Behavior-driven tests validate contracts
 
-def generate_bom(
-    components: List[Component],
-    inventory: List[InventoryItem],
-    options: BOMOptions = None
-) -> BOMResult:
-    """Generate Bill of Materials with intelligent matching.
+**Evolvability**
+- Semantic versioning enables compatible changes
+- Plugin dependencies isolate breaking changes
+- Interface stability allows implementation swapping
 
-    Args:
-        components: Parsed schematic components
-        inventory: Available inventory items
-        options: Generation options (filters, fields, etc.)
+**Discoverability**
+- Introspection service exposes available APIs
+- Command registry provides command catalog
+- Type hints and docstrings enable auto-documentation
 
-    Returns:
-        BOMResult containing grouped entries with matches
+### Collaboration Flows
 
-    Example:
-        >>> components = load_schematic("project.kicad_sch")
-        >>> inventory = load_spreadsheet("inventory.csv")
-        >>> result = generate_bom(components, inventory)
-        >>> print(f"Generated {len(result.entries)} BOM lines")
+**User Request Processing (Primary Flow)**
 
-    Raises:
-        ValueError: If components list is empty
-    """
-    pass
-```
+1. **User** invokes: `jbom bom project/ -i inventory.csv -o bom.csv`
 
-**Core provides introspection tools:**
+2. **CLI Driver**
+   - Parses command name ("bom")
+   - Queries Command Registry for "bom" schema
+   - Passes raw args + schema to Argument Parser
 
-```python
-# jbom/core/introspection.py
+3. **Argument Parser**
+   - Breaks input into structured arguments
+   - Sends to Validation Engine
 
-def discover_plugin_api(plugin_module) -> PluginAPI:
-    """Extract API information from plugin module.
+4. **Validation Engine**
+   - Checks against schema (required fields, types, constraints)
+   - Either: Returns validated args OR sends error to Output Formatter
 
-    Returns:
-        PluginAPI containing:
-        - Public functions (no leading underscore)
-        - Type signatures (from type hints)
-        - Documentation (from docstrings)
-        - Examples (from docstring examples)
-    """
-    pass
+5. **Plugin Dispatcher**
+   - Receives validated request
+   - Loads "bom" plugin
+   - Invokes plugin's execute function
 
-def generate_api_docs(plugin_name: str) -> str:
-    """Generate markdown documentation for plugin API."""
-    api = discover_plugin_api(plugin_name)
-    return render_template('api_docs.md.j2', api=api)
-```
+6. **BOM Plugin (Business Logic)**
+   - Requests config from Configuration Manager
+   - Calls Foundation Plugins (kicad_parser, spreadsheet_io)
+   - Performs BOM generation
+   - Returns structured result
 
-**Automatic documentation generation:**
-```bash
-# Generate docs for all plugins
-$ jbom docs --generate
+7. **Output Formatter**
+   - Transforms result to requested format (CSV)
+   - Writes to specified destination
+   - Returns success/failure to user
 
-# Generated files:
-# docs/api/kicad_parser.md
-# docs/api/value_parser.md
-# docs/api/bom.md
-```
+**Plugin Discovery (Secondary Flow)**
 
-**API discovery at runtime:**
-```bash
-# Introspect plugin API
-$ jbom api bom --show
+1. **CLI Driver** (at startup)
+   - Queries Introspection Service: "What plugins are available?"
 
-Plugin: bom v2.0.0
-Functions:
-  generate_bom(components, inventory, options) -> BOMResult
-    Generate Bill of Materials with intelligent matching
+2. **Introspection Service**
+   - Scans installed packages for jBOM plugins
+   - Reads plugin metadata (name, version, commands, API)
+   - Registers with Command Registry
 
-  match_inventory(component, inventory) -> List[Match]
-    Find matching inventory items for a component
+3. **Command Registry**
+   - Builds command catalog
+   - Provides to CLI Driver for help text
 
-Types:
-  BOMOptions(verbose, debug, smd_only, fields, fabricator)
-  BOMResult(entries, available_fields, metadata, warnings)
-```
+**Configuration Resolution (Cross-cutting)**
+
+1. **Component** needs config: `config = get_config("plugins.bom")`
+
+2. **Configuration Manager**
+   - Loads configs from hierarchy (system → user → project → env)
+   - Merges with precedence rules
+   - Validates against schema
+   - Caches and returns
+
+3. **Component** uses config values for behavior customization
 
 ## Design Patterns
 
