@@ -666,18 +666,306 @@ class JBOMPlugin(pcbnew.ActionPlugin):
 
 **Key insight**: KiCad plugin is just another **consumer** of the Python API, like CLI. No special packaging needed in core.
 
+## Testing Strategy for Plugin Architecture
+
+### Current Testing Landscape
+
+**Unit tests** (`tests/unit/`):
+- Component parsing (`test_loaders_schematic.py`, `test_processors_value_parsing.py`)
+- Business logic (`test_generators_bom.py`, `test_inventory_matching.py`)
+- CLI commands (`test_cli_inventory_command.py`, `test_cli.py`)
+- ~20 test files testing internal implementation details
+
+**Functional tests** (`tests/functional/`):
+- End-to-end CLI execution (`test_functional_bom.py`, `test_functional_pos.py`)
+- Format validation (`test_functional_inventory_formats.py`)
+- Error cases (`test_functional_bom_errors.py`)
+- **Problem**: `test_integration_all_interfaces.py` tests consistency between CLI, Python API, and KiCad plugin
+
+**Current problem**: Tests are tightly coupled to monolithic implementation, making refactoring difficult.
+
+### BDD/TDD Strategy for Plugin Refactoring
+
+#### Principle: Behavior Over Implementation
+
+**Test the contract, not the internals**. Each plugin exposes a public API—test that API's behavior, not how it's implemented.
+
+```python
+# BAD: Tests internal implementation
+def test_bom_generator_uses_specific_matching_algorithm():
+    generator = BOMGenerator()
+    assert generator.matcher.__class__.__name__ == "InventoryMatcher"
+
+# GOOD: Tests behavior (API contract)
+def test_bom_generation_matches_components_to_inventory():
+    components = [Component(ref="R1", value="10K")]
+    inventory = [InventoryItem(mpn="RC0805FR-0710KL", value="10K")]
+
+    result = generate_bom(components, inventory)
+
+    assert len(result.entries) == 1
+    assert result.entries[0].matched_item.mpn == "RC0805FR-0710KL"
+```
+
+#### Test Distribution Strategy
+
+**Foundation Plugin Tests** (`tests/plugins/foundation/`):
+
+```python
+# tests/plugins/foundation/test_kicad_parser.py
+class TestKiCadParserPlugin:
+    """Test kicad_parser plugin API contract."""
+
+    def test_load_schematic_returns_components():
+        components = load_schematic("project.kicad_sch")
+        assert all(hasattr(c, 'reference') for c in components)
+        assert all(hasattr(c, 'value') for c in components)
+
+    def test_hierarchical_schematic_flattens_components():
+        components = load_schematic("hierarchical.kicad_sch")
+        # Should include components from child sheets
+        refs = [c.reference for c in components]
+        assert any(ref.startswith("U1/") for ref in refs)
+
+# tests/plugins/foundation/test_value_parser.py
+class TestValueParserPlugin:
+    """Test value_parser plugin API contract."""
+
+    @pytest.mark.parametrize("input_val,expected", [
+        ("10K", 10000.0),
+        ("1M0", 1000000.0),
+        ("330R", 330.0),
+    ])
+    def test_parse_resistor_handles_formats(input_val, expected):
+        result = parse_value(input_val, component_type="RES")
+        assert result == expected
+```
+
+**Business Logic Plugin Tests** (`tests/plugins/business_logic/`):
+
+```python
+# tests/plugins/business_logic/test_bom.py
+class TestBOMPlugin:
+    """Test bom plugin API contract."""
+
+    def test_generate_bom_groups_identical_components():
+        components = [
+            Component(ref="R1", value="10K", footprint="0805"),
+            Component(ref="R2", value="10K", footprint="0805"),
+        ]
+
+        result = generate_bom(components, [])
+
+        assert len(result.entries) == 1  # Grouped
+        assert result.entries[0].quantity == 2
+        assert "R1" in result.entries[0].references
+        assert "R2" in result.entries[0].references
+
+    def test_generate_bom_respects_smd_only_filter():
+        components = [
+            Component(ref="R1", value="10K", footprint="0805"),
+            Component(ref="R2", value="10K", footprint="TH"),
+        ]
+
+        opts = BOMOptions(smd_only=True)
+        result = generate_bom(components, [], opts)
+
+        # Only SMD component should appear
+        assert len(result.entries) == 1
+        assert "R1" in result.entries[0].references
+        assert "R2" not in result.entries[0].references
+```
+
+**Functional Tests** (remain in `tests/functional/`):
+
+```python
+# tests/functional/test_functional_bom.py
+class TestBOMFunctional(FunctionalTestBase):
+    """Test BOM functionality end-to-end via CLI."""
+
+    def test_bom_command_produces_valid_csv():
+        """Test behavior: CLI produces valid CSV output."""
+        output = self.output_dir / "bom.csv"
+
+        rc, stdout, stderr = self.run_jbom([
+            'bom', str(self.minimal_proj),
+            '-i', str(self.inventory_csv),
+            '-o', str(output)
+        ])
+
+        # Behavior verification
+        assert rc == 0
+        rows = self.assert_csv_valid(output)
+        assert len(rows) > 1  # Header + data
+
+    def test_bom_matches_components_to_inventory():
+        """Test behavior: BOM includes matched inventory items."""
+        output = self.output_dir / "bom.csv"
+
+        self.run_jbom(['bom', str(self.minimal_proj),
+                       '-i', str(self.inventory_csv), '-o', str(output)])
+
+        rows = self.assert_csv_valid(output)
+        # Check that inventory fields appear in output
+        headers = rows[0]
+        assert 'MPN' in headers or 'Manufacturer Part Number' in headers
+```
+
+#### What to DELETE During Refactoring
+
+**Remove KiCad plugin packaging tests:**
+```python
+# DELETE: tests/functional/test_kicad_plugin.py
+# DELETE: tests/functional/test_integration_all_interfaces.py (lines testing KiCad plugin)
+```
+
+**Rationale**: The poorly-implemented KiCad plugin wrapper adds test complexity without value. KiCad integration will be reimplemented later as an external consumer.
+
+**Simplify multi-interface tests:**
+```python
+# BEFORE: Test CLI, Python API, and KiCad plugin produce same results
+def test_fabricator_consistency_across_interfaces():
+    python_result = test_python_api()
+    cli_result = test_cli_interface()
+    kicad_result = test_kicad_plugin()  # DELETE THIS
+    compare_results(python_result, cli_result, kicad_result)
+
+# AFTER: Test API behavior, then test CLI calls API correctly
+def test_bom_api_with_fabricator():
+    result = generate_bom(components, inventory, BOMOptions(fabricator="jlc"))
+    assert "LCSC" in result.entries[0].fields
+
+def test_cli_passes_fabricator_to_api():
+    # Just verify CLI → API integration, not duplicate behavior
+    output = run_jbom(['bom', 'project/', '--jlc', '-o', 'out.csv'])
+    rows = read_csv(output)
+    assert "LCSC" in rows[0]  # Header includes fabricator field
+```
+
+#### Unit Test Refactoring Strategy
+
+**Audit each unit test:**
+1. **Keep** if it tests a public plugin API
+2. **Update** if it tests internal implementation details (make it test behavior instead)
+3. **Delete** if it's redundant with functional tests
+
+**Example refactoring:**
+```python
+# tests/unit/test_generators_bom.py - BEFORE
+class TestBOMGenerator:
+    def test_bom_generator_initializes_with_inventory():
+        gen = BOMGenerator(inventory=[...])
+        assert gen.inventory_loaded == True
+        assert isinstance(gen.matcher, InventoryMatcher)
+
+# AFTER refactor to plugin - tests/plugins/business_logic/test_bom.py
+class TestBOMPlugin:
+    def test_generate_bom_with_inventory_produces_matches():
+        # Test behavior, not initialization
+        result = generate_bom(components, inventory)
+        assert all(e.matched_item is not None for e in result.entries)
+```
+
+### Migration Path: Test-First Refactoring
+
+#### Phase 0: Test Simplification (Before Plugin Work)
+1. **Remove KiCad plugin tests**
+   - Delete `test_kicad_plugin.py`
+   - Remove KiCad plugin sections from `test_integration_all_interfaces.py`
+   - **Run tests to ensure 0 failures** (these tests are likely skipped or broken anyway)
+
+2. **Document current behavior via functional tests**
+   - Ensure functional tests cover all user-facing behaviors
+   - These become the acceptance criteria for refactoring
+
+#### Phase 1: Foundation Plugin Extraction (TDD)
+1. **Create plugin API contract tests** (`tests/plugins/foundation/test_kicad_parser.py`)
+   - Write tests for desired `kicad_parser` plugin API
+   - Tests FAIL (plugin doesn't exist yet)
+
+2. **Extract foundation plugin**
+   - Move code to `src/jbom/plugins/kicad_parser/`
+   - Expose public API: `load_schematic()`, `load_pcb()`
+   - Tests PASS
+
+3. **Update unit tests**
+   - Change imports: `from jbom.loaders import ...` → `from jbom.plugins.kicad_parser import ...`
+   - Delete tests of internal implementation details
+   - **All functional tests still pass** (behavior unchanged)
+
+4. **Repeat for other foundation plugins** (value_parser, spreadsheet_io)
+
+#### Phase 2: Business Logic Plugin Extraction (BDD)
+1. **Write behavior tests** for BOM plugin
+   - `test_generate_bom_groups_components()`
+   - `test_generate_bom_matches_inventory()`
+   - `test_generate_bom_respects_filters()`
+
+2. **Extract BOM plugin**
+   - Move to `src/jbom/plugins/bom/`
+   - Declare dependencies on foundation plugins
+   - Tests PASS
+
+3. **Update CLI tests**
+   - CLI tests just verify: "CLI calls BOM plugin API correctly"
+   - Don't duplicate BOM behavior tests
+
+4. **Repeat for POS, inventory, etc.**
+
+#### Phase 3: Plugin Infrastructure
+1. **Write plugin loader tests**
+   - Test discovery via entry points
+   - Test dependency resolution
+   - Test version compatibility
+
+2. **Implement plugin infrastructure**
+   - Tests drive implementation
+
+### Test Organization After Refactoring
+
+```
+tests/
+├── plugins/
+│   ├── foundation/
+│   │   ├── test_kicad_parser.py      # API contract tests
+│   │   ├── test_value_parser.py      # Behavior tests
+│   │   └── test_spreadsheet_io.py    # Format support tests
+│   ├── business_logic/
+│   │   ├── test_bom.py               # BOM generation behavior
+│   │   ├── test_pos.py               # POS generation behavior
+│   │   └── test_inventory.py         # Inventory matching behavior
+│   └── infrastructure/
+│       ├── test_plugin_loader.py     # Discovery & loading
+│       ├── test_dependencies.py      # Dependency resolution
+│       └── test_versioning.py        # Semver compatibility
+├── functional/
+│   ├── test_functional_bom.py        # End-to-end CLI tests
+│   ├── test_functional_pos.py        # End-to-end CLI tests
+│   └── test_functional_base.py       # Shared utilities
+└── integration/
+    └── test_real_projects.py          # Real-world project validation
+```
+
+**Key principles:**
+- **Plugin tests** = Test public API contracts (behavior)
+- **Functional tests** = Test end-to-end CLI workflows
+- **Integration tests** = Test against real projects (regression prevention)
+- **No duplicate behavior tests** across layers
+
 ## Migration Path: API-First Refactoring
 
 ### Phase 0: Simplification (Immediate)
 1. **Remove KiCad plugin packaging code**
    - Delete `kicad_jbom_plugin.py` or mark as deprecated
-   - Remove KiCad-specific tests that test packaging (not functionality)
+   - Delete `tests/functional/test_kicad_plugin.py`
+   - Remove KiCad plugin sections from `test_integration_all_interfaces.py`
    - Keep KiCad file parsing (that's core functionality)
+   - **Verify**: All remaining tests pass
 
-2. **Clarify testing strategy**
-   - API tests: Test business logic directly
-   - CLI tests: Test that CLI correctly calls API and formats output
-   - No need for "meta-pattern" tests
+2. **Document behaviors via functional tests**
+   - Ensure functional tests cover all user-facing CLI behaviors
+   - These become acceptance criteria for refactoring
+   - Add tests for any uncovered behaviors
 
 ### Phase 1: Extract Core Services
 1. Move loaders, types, utils to `jbom/core/`
