@@ -64,13 +64,24 @@ Now run jBOM to verify your inventory and generate the manufacturing files.
 **Generate BOM:**
 ```bash
 # BOM with JLCPCB-optimized columns
-jbom bom --jlc MyProject/ -i my_new_inventory.csv
+jbom bom MyProject/ --jlc -i my_new_inventory.csv
+
+# Or from within the project directory (defaults to current directory)
+cd MyProject
+jbom bom --jlc -i my_new_inventory.csv
 ```
 
 **Generate Placement (CPL):**
 ```bash
 # Auto-detects PCB file in project directory
-jbom pos --jlc MyProject/
+jbom pos MyProject/ --jlc
+
+# Or from within the project directory
+cd MyProject
+jbom pos --jlc
+
+# Can also pass .kicad_sch - auto-swaps to matching .kicad_pcb
+jbom pos MyProject.kicad_sch --jlc
 ```
 
 **Generate Inventory:**

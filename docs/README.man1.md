@@ -7,9 +7,9 @@ jbom — generate Bill of Materials (BOM) and Component Placement (CPL/POS)
 ## SYNOPSIS
 
 ```
-jbom bom PROJECT -i INVENTORY [-o OUTPUT] [BOM OPTIONS]
-jbom pos PROJECT [-o OUTPUT] [POS OPTIONS]
-jbom inventory PROJECT [-o OUTPUT] [INVENTORY OPTIONS]
+jbom bom [PROJECT] -i INVENTORY [-o OUTPUT] [BOM OPTIONS]
+jbom pos [PROJECT] [-o OUTPUT] [POS OPTIONS]
+jbom inventory [PROJECT] [-o OUTPUT] [INVENTORY OPTIONS]
 jbom search QUERY [SEARCH OPTIONS]
 jbom annotate PROJECT -i INVENTORY [ANNOTATE OPTIONS]
 ```
@@ -27,8 +27,8 @@ The BOM flow keeps designs supplier-neutral by matching at generation time rathe
 
 ## BOM ARGUMENTS
 
-**PROJECT**
-: KiCad project directory or a specific .kicad_sch file. If a directory is given, jBOM auto-detects the root schematic and processes hierarchical sheets.
+**PROJECT** (optional, defaults to current directory)
+: KiCad project directory or a specific .kicad_sch file. If a directory is given, jBOM auto-detects the root schematic and processes hierarchical sheets. If omitted, uses the current directory.
 
 **-i, --inventory FILE**
 : Inventory file (required). Supported: .csv, .xlsx, .xls, .numbers.
@@ -76,8 +76,8 @@ Write a JSON report to FILE with statistics (entry count, unmatched count, forma
 
 ## POS ARGUMENTS
 
-**PROJECT**
-: KiCad project directory or a specific .kicad_pcb file. If a directory is given, jBOM auto-detects the PCB file (prefers files matching the directory name).
+**PROJECT** (optional, defaults to current directory)
+: KiCad project directory, a specific .kicad_pcb file, or a .kicad_sch file. If a directory is given, jBOM auto-detects the PCB file (prefers files matching the directory name). If a .kicad_sch file is passed, jBOM attempts to use the matching .kicad_pcb file (same base name). If omitted, uses the current directory.
 
 ## POS OPTIONS
 
@@ -120,10 +120,16 @@ Imply `+jlc` field preset for JLCPCB-compatible placement output. This preset in
 - `pcbnew`: Use KiCad's pcbnew Python API (requires KiCad Python environment)
 - `sexp`: Use built-in S-expression parser (works without KiCad installation)
 
+**-v, --verbose**
+: Enable verbose output and diagnostics in console mode.
+
+**-d, --debug**
+: Enable debug diagnostics; include detailed loader fallbacks in output.
+
 ## INVENTORY ARGUMENTS
 
-**PROJECT**
-: KiCad project directory or a specific .kicad_sch file.
+**PROJECT** (optional, defaults to current directory)
+: KiCad project directory or a specific .kicad_sch file. If omitted, uses the current directory.
 
 ## INVENTORY OPTIONS
 
