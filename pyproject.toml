@@ -105,7 +105,11 @@ upload_to_repository = true
 # Behave (BDD testing) configuration
 [tool.behave]
 default_tags = ["-wip"]
-paths = ["features"]
+paths = [
+    "features",                           # Core functional tests
+    "jbom-new/features",                  # New system core tests
+    "jbom-new/src/jbom/plugins/*/features",  # Plugin functional tests
+]
 default_format = "pretty"
 show_timings = true
 stdout_capture = false
@@ -115,7 +119,7 @@ stderr_capture = false
 [tool.pytest.ini_options]
 testpaths = [
     "jbom-new/tests",
-    "jbom-new/src/jbom_new/plugins",
+    "jbom-new/src/jbom/plugins",
 ]
 pythonpath = ["jbom-new/src"]
 addopts = [

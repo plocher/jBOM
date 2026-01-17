@@ -1,5 +1,6 @@
 """Behave environment configuration for jBOM testing."""
 
+import os
 import sys
 from pathlib import Path
 
@@ -10,7 +11,11 @@ def before_all(context):
     context.project_root = Path(__file__).parent.parent
     context.src_root = context.project_root / "src"
 
-    # Add src to Python path so we can import jbom_new
+    # Set BEHAVE_STEPS_DIR so plugin features can find core step definitions
+    steps_dir = Path(__file__).parent / "steps"
+    os.environ["BEHAVE_STEPS_DIR"] = str(steps_dir)
+
+    # Add src to Python path so we can import jbom
     sys.path.insert(0, str(context.src_root))
 
 

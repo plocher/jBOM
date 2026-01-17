@@ -8,7 +8,7 @@ from behave import given
 @given("no plugins have been installed")
 def step_no_plugins(context):
     """Ensure plugins directory is empty."""
-    plugins_dir = context.src_root / "jbom_new" / "plugins"
+    plugins_dir = context.src_root / "jbom" / "plugins"
 
     # Store the current state so we can verify it's empty
     if plugins_dir.exists():
@@ -26,7 +26,7 @@ def step_no_plugins(context):
 @given('a core plugin "{plugin_name}" exists with version "{version}"')
 def step_plugin_exists(context, plugin_name, version):
     """Create a minimal plugin directory structure for testing."""
-    plugins_dir = context.src_root / "jbom_new" / "plugins"
+    plugins_dir = context.src_root / "jbom" / "plugins"
     plugin_dir = plugins_dir / plugin_name
 
     # Create plugin directory

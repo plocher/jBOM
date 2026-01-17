@@ -5,8 +5,8 @@ import sys
 from pathlib import Path
 from typing import List, Optional
 
-from jbom_new import __version__
-from jbom_new.core.plugin_loader import PluginLoader
+from jbom import __version__
+from jbom.core.plugin_loader import PluginLoader
 
 
 def create_parser() -> argparse.ArgumentParser:

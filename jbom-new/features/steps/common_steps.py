@@ -12,7 +12,7 @@ def step_run_command(context, command):
     if command.startswith("jbom "):
         # Replace 'jbom' with python module invocation
         args = command.split()[1:]  # Remove 'jbom' prefix
-        cmd = ["python", "-m", "jbom_new.cli.main"] + args
+        cmd = ["python", "-m", "jbom.cli.main"] + args
     else:
         cmd = command.split()
 

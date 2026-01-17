@@ -57,7 +57,7 @@ Implement `plugins/pos/` with:
 
 ## Plugin Structure with Tests
 ```
-plugins/
+src/jbom/plugins/
 └── pos/
     ├── __init__.py
     ├── plugin.json              # Metadata
@@ -69,6 +69,8 @@ plugins/
     ├── workflows/
     │   ├── __init__.py
     │   └── generate_pos.py      # Compose services into workflow
+    ├── features/                # Plugin BDD tests
+    │   └── pos_generation.feature
     └── tests/                   # Plugin unit tests
         ├── __init__.py
         ├── test_kicad_reader.py
@@ -79,10 +81,11 @@ plugins/
 ## Test Discovery Configuration
 
 ### Behave (Functional Tests)
-Already configured in `features/environment.py`:
-- Scans `features/` directory
-- Loads step definitions from `features/steps/`
-- Run with: `behave` or `behave features/simple_pos.feature`
+Plugin features use core step definitions:
+- Core tests: `jbom-new/features/` directory
+- Plugin tests: `jbom-new/src/jbom/plugins/*/features/` directories
+- Step definitions: `jbom-new/features/steps/` (shared by all)
+- Run from jbom-new/: `behave` (all) or `behave src/jbom/plugins/pos/features/` (specific plugin)
 
 ### Pytest (Unit Tests)
 Need to configure in `pyproject.toml`:
@@ -90,14 +93,14 @@ Need to configure in `pyproject.toml`:
 [tool.pytest.ini_options]
 testpaths = [
     "jbom-new/tests",           # Core unit tests
-    "jbom-new/src/jbom_new/plugins/*/tests",  # Plugin unit tests
+    "jbom-new/src/jbom/plugins",  # Plugin unit tests
 ]
 pythonpath = ["jbom-new/src"]
 ```
 
 Run with:
 - `pytest jbom-new/` - all tests
-- `pytest jbom-new/src/jbom_new/plugins/pos/tests/` - just POS plugin
+- `pytest jbom-new/src/jbom/plugins/pos/tests/` - just POS plugin
 
 ## Service API Pattern
 Services provide methods that workflows compose:
