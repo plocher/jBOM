@@ -1,6 +1,37 @@
 # CHANGELOG
 
 
+## v4.5.1 (2026-01-17)
+
+### Refactoring
+
+* refactor: Convert CLI commands to plugin architecture
+
+- Implement plugin infrastructure with CommandRegistry and auto-discovery
+- Move command base class to commands/base.py with CommandMetadata
+- Reorganize commands into commands/builtin/ directory
+- Commands now auto-register via __init_subclass__ hook
+- Remove hardcoded command imports from main.py
+- Update all test imports and mocks to new paths
+
+Benefits:
+- No hardcoded command registration in main.py
+- Commands discovered automatically via package scanning
+- Better code organization with clear separation
+- Foundation for potential third-party extensions
+
+All tests pass (321 tests, 5 skipped)
+CLI functionality verified - all commands work as before
+
+Co-Authored-By: Warp <agent@warp.dev> ([`8a2aa17`](https://github.com/plocher/jBOM/commit/8a2aa17d8e4d738c823c1b89b9c0fcd66897f729))
+
+### Unknown
+
+* Merge pull request #15 from plocher/feature/plugin-architecture
+
+refactor: Extract CLI command infrastructure and auto-discovery ([`ed53b45`](https://github.com/plocher/jBOM/commit/ed53b455fad414c923e5741af01043bdc3b81580))
+
+
 ## v4.5.0 (2026-01-17)
 
 ### Bug Fixes
