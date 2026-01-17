@@ -110,3 +110,21 @@ default_format = "pretty"
 show_timings = true
 stdout_capture = false
 stderr_capture = false
+
+# Pytest configuration for jbom-new (new workflow system)
+[tool.pytest.ini_options]
+testpaths = [
+    "jbom-new/tests",
+    "jbom-new/src/jbom_new/plugins",
+]
+pythonpath = ["jbom-new/src"]
+addopts = [
+    "--verbose",
+    "--strict-markers",
+    "--tb=short",
+]
+markers = [
+    "unit: Unit tests for individual components",
+    "integration: Integration tests for component interactions",
+    "plugin: Plugin-specific tests",
+]
