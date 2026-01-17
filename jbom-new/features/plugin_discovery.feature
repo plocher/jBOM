@@ -3,6 +3,12 @@ Feature: Plugin Discovery
   I want jBOM to discover core plugins at startup
   So that workflows and services are available
 
+  Scenario: List plugins when none exist
+    Given no plugins have been installed
+    When I run "jbom plugins list"
+    Then I should see "No core plugins found"
+    And the exit code should be 0
+
   Scenario: List core plugins with versions
     Given a core plugin "bom" exists with version "1.0.0"
     When I run "jbom plugins list"
