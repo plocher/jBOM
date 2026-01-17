@@ -100,46 +100,41 @@ class DefaultPOSGenerator(POSGenerator):
         return position_data
 
     def _write_console_output(self, position_data: PositionData) -> None:
-        """Write POS data in human-readable format to stdout."""
-        print(f"\n{'=' * 70}")
-        print(
-            f"POSITION DATA FOR: {position_data.board_title or position_data.pcb_file.name}"
-        )
-        print(f"{'=' * 70}")
+        """Write POS data in human-readable format to stdout (matching existing jBOM format)."""
+        print("\nPlacement Table:")
+        print("=" * 90)
 
-        if position_data.kicad_version:
-            print(f"KiCad Version: {position_data.kicad_version}")
-        print(f"Total Components: {len(position_data.components)}")
+        # Table header
+        header = f"{'Reference':<10} | {'X':<8} | {'Y':<7} | {'Rotation':<8} | {'Side':<4} | {'Footprint':<25} | {'SMD':<3}"
+        print(header)
+        # Create table separator line with exact same spacing as header
+        separator = f"{'-'*10}+{'-'*10}+{'-'*9}+{'-'*10}+{'-'*6}+{'-'*27}+{'-'*4}"
+        print(separator)
 
-        # Group by layer
-        layers = {}
-        for comp in position_data.components:
-            if comp.layer not in layers:
-                layers[comp.layer] = []
-            layers[comp.layer].append(comp)
+        # Sort components by reference for consistent output
+        sorted_components = sorted(position_data.components, key=lambda c: c.reference)
 
-        for layer_name in sorted(layers.keys()):
-            components = layers[layer_name]
-            print(f"\n{'-' * 50}")
-            print(f"{layer_name.upper()} LAYER ({len(components)} components)")
-            print(f"{'-' * 50}")
+        for comp in sorted_components:
+            # Determine SMD type from attributes or assume SMD if not specified
+            smd_type = comp.attributes.get("mount_type", "smd").upper()
+            if smd_type == "SMD":
+                smd_display = "SMD"
+            elif smd_type == "THROUGH_HOLE":
+                smd_display = "THT"
+            else:
+                smd_display = "SMD"  # Default assumption
 
-            # Print table header
-            print(
-                f"{'Ref':<8} {'Value':<12} {'Package':<12} {'Position (mm)':<18} {'Rotation':<8}"
+            # Format side as TOP/BOT to match existing format
+            side = "TOP" if comp.layer.upper() == "TOP" else "BOT"
+
+            # Format the row (matching existing jBOM precision and spacing)
+            row = (
+                f"{comp.reference:<10} | {comp.x_mm:>8.4f} | {comp.y_mm:>7.4f} | "
+                f"{comp.rotation_deg:>8.1f} | {side:<4} | {comp.footprint:<25} | {smd_display:<3}"
             )
-            print(f"{'-' * 8} {'-' * 12} {'-' * 12} {'-' * 18} {'-' * 8}")
+            print(row)
 
-            # Sort components by reference
-            sorted_components = sorted(components, key=lambda c: c.reference)
-
-            for comp in sorted_components:
-                pos_str = f"({comp.x_mm:6.2f}, {comp.y_mm:6.2f})"
-                print(
-                    f"{comp.reference:<8} {comp.value:<12} {comp.package:<12} {pos_str:<18} {comp.rotation_deg:6.1f}°"
-                )
-
-        print(f"\n{'=' * 70}\n")
+        print(f"\nTotal: {len(position_data.components)} components\n")
 
     def _write_csv_to_stdout(self, position_data: PositionData) -> None:
         """Write POS data as CSV to stdout."""
