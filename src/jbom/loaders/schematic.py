@@ -52,9 +52,9 @@ class SchematicLoader:
                 exclude_reason = "Reference starts with #"
 
             # Debug logging if enabled
+            is_debug = self.options.debug
+            is_sch_debug = "schematic" in self.options.debug_categories
             if is_excluded:
-                is_debug = self.options.debug
-                is_sch_debug = "schematic" in self.options.debug_categories
                 if is_debug or is_sch_debug:
                     print(
                         f"DEBUG[schematic]: Excluded component {comp.reference} ({comp.value}): {exclude_reason}",
@@ -62,6 +62,20 @@ class SchematicLoader:
                     )
             else:
                 self.components.append(comp)
+                if is_debug or is_sch_debug:
+                    print(
+                        f"DEBUG[schematic]: Added component {comp.reference} ({comp.value}) - {comp.footprint}",
+                        file=sys.stderr,
+                    )
+
+        # Print summary if debug enabled
+        is_debug = self.options.debug
+        is_sch_debug = "schematic" in self.options.debug_categories
+        if is_debug or is_sch_debug:
+            print(
+                f"DEBUG[schematic]: Parsing complete - found {len(self.components)} components in BOM",
+                file=sys.stderr,
+            )
 
         return self.components
 
@@ -121,15 +135,8 @@ class SchematicLoader:
         # But for compatibility with simple/older files, we allow missing instances if reference is valid
         # AND it has a position (placed on sheet).
         if not has_instances and not has_position:
-            # Likely a library definition or unannotated symbol
-            is_debug = self.options.debug
-            is_sch_debug = "schematic" in self.options.debug_categories
-            if (is_debug or is_sch_debug) and reference:
-                print(
-                    f"DEBUG[schematic]: Ignored symbol {reference} ({value}): "
-                    f"No instances/position found (likely library definition)",
-                    file=sys.stderr,
-                )
+            # Likely a library definition or unannotated symbol - skip without debug noise
+            # These are template symbols, not actual placed components
             return None
 
         return Component(

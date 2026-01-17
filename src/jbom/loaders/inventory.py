@@ -297,7 +297,9 @@ class InventoryLoader:
                 voltage=row.get("V", ""),
                 amperage=row.get("A", ""),
                 wattage=row.get("W", ""),
-                lcsc=row.get("LCSC", ""),
+                lcsc=self._get_first_value(
+                    row, ["LCSC", "LCSC Part", "LCSC Part #", "DPN"]
+                ),
                 manufacturer=row.get("Manufacturer", ""),
                 mfgpn=row.get("MFGPN", ""),
                 datasheet=row.get("Datasheet", ""),

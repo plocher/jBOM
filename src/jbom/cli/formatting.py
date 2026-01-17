@@ -100,7 +100,7 @@ def print_bom_table(
         elif header == "SMD":
             return "Yes" if entry.smd else "No"
         elif header == "Match_Quality":
-            return f"{entry.match_quality:.1f}" if entry.match_quality else ""
+            return entry.match_quality if entry.match_quality else ""
         elif header == "Priority":
             return str(entry.priority) if entry.priority else ""
         elif header == "Notes":
