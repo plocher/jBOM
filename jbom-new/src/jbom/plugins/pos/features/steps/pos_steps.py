@@ -89,96 +89,56 @@ def _create_mock_pcb_file(context):
 @when("I generate a POS file with no options")
 def step_generate_pos_no_options(context):
     """Generate a POS file using default options."""
-    # TODO: This will call the actual POS plugin service once implemented
-    # For now, we simulate the expected behavior by reading the PCB and generating output
+    from jbom.plugins.pos.services.pos_generator import create_pos_generator
+
     context.generated_pos_file = context.project_dir / f"{context.project_name}_pos.csv"
 
-    # Temporarily simulate what the POS plugin will do:
-    # 1. Read PCB file, 2. Convert to POS data, 3. Generate CSV
-    _simulate_pos_plugin_behavior(context, context.generated_pos_file)
+    # Call the actual POS plugin service
+    pos_generator = create_pos_generator()
+    pos_generator.generate_pos_file(
+        pcb_file=context.test_pcb_file, output_file=context.generated_pos_file
+    )
 
 
 @when("I generate a POS file with output to stdout")
 def step_generate_pos_to_stdout(context):
     """Generate POS data and capture stdout output."""
-    # TODO: This will call the actual POS plugin service with stdout option
-    # For now, simulate the expected stdout output
-    _simulate_pos_plugin_stdout(context)
+    from jbom.plugins.pos.services.pos_generator import create_pos_generator
+    import io
+    from contextlib import redirect_stdout
+
+    # Call the actual POS plugin service with stdout output
+    pos_generator = create_pos_generator()
+
+    # Capture stdout output
+    output_buffer = io.StringIO()
+    with redirect_stdout(output_buffer):
+        pos_generator.generate_pos_file(
+            pcb_file=context.test_pcb_file,
+            output_file=None,  # None indicates stdout output
+        )
+
+    context.pos_output_content = output_buffer.getvalue()
 
 
 @when("I attempt to generate POS from nonexistent PCB")
 def step_generate_pos_missing_pcb(context):
     """Attempt to generate POS from a nonexistent PCB file."""
+    from jbom.plugins.pos.services.pos_generator import create_pos_generator
+
     context.test_pcb_file = context.test_temp_dir / "nonexistent.kicad_pcb"
 
-    # TODO: This will call the actual POS plugin service and expect an error
-    # For now, simulate the expected error behavior
-    context.error_occurred = True
-    context.error_message = f"PCB file not found: {context.test_pcb_file}"
-
-
-def _simulate_pos_plugin_behavior(context, output_path: Path):
-    """Temporary simulation of POS plugin behavior until actual service is implemented.
-
-    This simulates what the real POS plugin service will do:
-    1. Read the PCB file using KiCadReaderService
-    2. Convert board data to POS-specific format
-    3. Generate CSV output
-
-    TODO: Replace with actual POS plugin service call
-    """
-    # This is temporary test behavior - will be replaced by real plugin call
-    with open(output_path, "w", newline="") as csvfile:
-        writer = csv.writer(csvfile)
-
-        # Write header
-        writer.writerow(
-            ["Designator", "Val", "Package", "Mid X", "Mid Y", "Rotation", "Layer"]
+    # Call the actual POS plugin service and expect it to handle the error
+    try:
+        pos_generator = create_pos_generator()
+        pos_generator.generate_pos_file(
+            pcb_file=context.test_pcb_file,
+            output_file=context.project_dir / "output.csv",
         )
-
-        # Write component data (temporarily using test_components)
-        for comp in context.test_components:
-            writer.writerow(
-                [
-                    comp["reference"],
-                    comp["value"],
-                    comp["package"],
-                    comp["x"],
-                    comp["y"],
-                    comp["rotation"],
-                    comp["layer"],
-                ]
-            )
-
-
-def _simulate_pos_plugin_stdout(context):
-    """Temporary simulation of POS plugin stdout output.
-
-    TODO: Replace with actual POS plugin service call with stdout option
-    """
-    output = io.StringIO()
-    writer = csv.writer(output)
-
-    # Write headers
-    writer.writerow(
-        ["Designator", "Val", "Package", "Mid X", "Mid Y", "Rotation", "Layer"]
-    )
-
-    # Write component data (temporarily using test_components)
-    for comp in context.test_components:
-        writer.writerow(
-            [
-                comp["reference"],
-                comp["value"],
-                comp["package"],
-                comp["x"],
-                comp["y"],
-                comp["rotation"],
-                comp["layer"],
-            ]
-        )
-
-    context.pos_output_content = output.getvalue()
+        context.error_occurred = False
+    except Exception as e:
+        context.error_occurred = True
+        context.error_message = str(e)
 
 
 @then("the POS file is created successfully")
