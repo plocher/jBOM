@@ -32,23 +32,35 @@ This document outlines a comprehensive plugin architecture that transforms jBOM 
 
 **Problem**: Business logic is hardcoded. Adding a new feature requires modifying core code.
 
-### Proposed Plugin Architecture
+### Proposed Plugin Architecture (Layered)
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│                        jBOM Plugins                          │
-│  (Independently developed, versioned, and distributed)       │
+│                    Presentation Layer                        │
+│                  (Multiple UI consumers)                     │
 ├──────────────────────────────────────────────────────────────┤
-│  BOM Plugin          │  POS Plugin         │  Validation     │
-│  - Matching algo     │  - CPL generation   │  - Design rules │
-│  - BOM generation    │  - Coord systems    │  - Checks       │
-│  - CLI: bom          │  - CLI: pos         │  - CLI: validate│
-│  - API: generate_bom │  - API: generate_pos│  - API: validate│
-├──────────────────────────────────────────────────────────────┤
-│  Cost Analysis       │  Supply Chain       │  Custom...      │
-│  - Price lookup      │  - Availability     │  - User-defined │
-│  - Optimization      │  - Lead times       │  - Workflows    │
-│  - CLI: cost         │  - CLI: supply      │  - CLI: custom  │
+│  CLI              │  KiCad Plugin    │  Web UI    │  TUI     │
+│  - jbom bom       │  - Eeschema      │  - REST    │  - Curse │
+│  - jbom pos       │  - Pcbnew        │  - GraphQL │  - Prompt│
+│  - jbom validate  │  - GUI dialogs   │  - Browser │  - Rich  │
 └──────────────────────────────────────────────────────────────┘
+                              ▼
+                     (All consume same API)
+                              ▼
+┌──────────────────────────────────────────────────────────────┐
+│                   Business Logic Layer                       │
+│                      (Plugin APIs)                           │
+├──────────────────────────────────────────────────────────────┤
+│  BOM Plugin API      │  POS Plugin API     │  Validation API │
+│  • generate_bom()    │  • generate_pos()   │  • validate()   │
+│  • match_inventory() │  • extract_coords() │  • check_rules()│
+│  • format_bom()      │  • transform_coords()│ • report()     │
+├──────────────────────────────────────────────────────────────┤
+│  Cost Plugin API     │  Supply Chain API   │  Custom APIs    │
+│  • calculate_cost()  │  • check_stock()    │  • workflow()   │
+│  • optimize()        │  • get_lead_times() │  • transform()  │
+└──────────────────────────────────────────────────────────────┘
+                              ▼
+                    (Plugins use Core APIs)
                               ▼
 ┌──────────────────────────────────────────────────────────────┐
 │                   jBOM Core Platform                         │
@@ -136,46 +148,67 @@ schematic_files = discover_project_files(path, hierarchical=True)
 output = resolve_output_path(input_path, output_arg, outdir, suffix)
 ```
 
-## Plugin Interface Design
+## Plugin Interface Design (Layered Architecture)
+
+### Core Principle: API-First Design
+
+**Plugins provide business logic APIs**. The CLI, KiCad plugin, web UI, etc. are **consumers** of these APIs.
+
+```
+Plugin = Business Logic API + Optional UI Integrations
+```
 
 ### Plugin Manifest
 
-Each plugin declares its capabilities via metadata:
+Each plugin declares its **API** (required) and **optional UI integrations**:
 
 ```python
 # jbom_bom_plugin/__init__.py
 
-from jbom.plugin import PluginManifest, CLICapability, APICapability
+from jbom.plugin import PluginManifest, APIExport, CLIIntegration, KiCadIntegration
 
 manifest = PluginManifest(
     name="bom",
     version="1.0.0",
     description="Bill of Materials generation with intelligent matching",
     author="jBOM Contributors",
-
-    # Minimum core version required
     requires_core="4.0.0",
 
-    # What does this plugin provide?
-    capabilities=[
-        CLICapability(
-            command="bom",
-            help_text="Generate Bill of Materials from KiCad schematic",
-            handler="jbom_bom_plugin.cli:BOMCommand",
-        ),
-        APICapability(
-            function="generate_bom",
+    # Required: Business Logic API
+    api_exports=[
+        APIExport(
+            name="generate_bom",
             handler="jbom_bom_plugin.api:generate_bom",
+            version="1.0.0",
+            description="Generate BOM from schematic and inventory",
+        ),
+        APIExport(
+            name="match_inventory",
+            handler="jbom_bom_plugin.api:match_inventory",
+            version="1.0.0",
+            description="Match components to inventory items",
         ),
     ],
 
-    # Dependencies on other plugins (optional)
-    plugin_dependencies=[],
+    # Optional: CLI Integration
+    cli_integration=CLIIntegration(
+        commands=[
+            {"name": "bom", "handler": "jbom_bom_plugin.cli:BOMCommand"},
+        ],
+    ),
 
-    # Python package dependencies
+    # Optional: KiCad Plugin Integration
+    kicad_integration=KiCadIntegration(
+        eeschema_plugin="jbom_bom_plugin.kicad:EeschemaPlugin",
+    ),
+
+    # Dependencies
+    plugin_dependencies=[],
     dependencies=["pandas>=1.3.0"],
 )
 ```
+
+**Key Insight**: A plugin can provide an API without any CLI/UI. Another plugin or UI can consume the API.
 
 ### Plugin Lifecycle Hooks
 
@@ -210,72 +243,156 @@ class BOMPlugin(Plugin):
         pass
 ```
 
-### CLI Command Implementation
+### API Implementation (Business Logic Layer)
+
+**Primary interface** - all UIs consume this:
+
+```python
+# jbom_bom_plugin/api.py
+
+from typing import List, Dict, Optional
+from dataclasses import dataclass
+from jbom.core.types import Component, InventoryItem, BOMEntry
+from jbom.plugin.api import public_api
+
+@dataclass
+class BOMOptions:
+    """Configuration for BOM generation."""
+    verbose: bool = False
+    debug: bool = False
+    smd_only: bool = False
+    fields: Optional[List[str]] = None
+    fabricator: Optional[str] = None
+
+@dataclass
+class BOMResult:
+    """Result of BOM generation."""
+    entries: List[BOMEntry]
+    available_fields: Dict[str, str]
+    metadata: Dict[str, any]
+    warnings: List[str]
+
+@public_api(version="1.0.0")
+def generate_bom(
+    components: List[Component],
+    inventory: List[InventoryItem],
+    options: BOMOptions = None
+) -> BOMResult:
+    """Generate BOM from components and inventory.
+
+    Pure business logic - no I/O, no UI concerns.
+
+    Args:
+        components: Parsed schematic components
+        inventory: Parsed inventory items
+        options: Generation options
+
+    Returns:
+        BOMResult with entries and metadata
+    """
+    # Business logic implementation
+    matcher = InventoryMatcher(inventory)
+    grouped = group_components(components)
+    entries = []
+
+    for group in grouped:
+        matches = matcher.find_matches(group)
+        best = select_best_match(matches, options)
+        entry = create_bom_entry(group, best)
+        entries.append(entry)
+
+    return BOMResult(
+        entries=entries,
+        available_fields=discover_fields(components, inventory),
+        metadata={"version": "1.0.0"},
+        warnings=collect_warnings(entries),
+    )
+
+@public_api(version="1.0.0")
+def match_inventory(
+    component: Component,
+    inventory: List[InventoryItem],
+) -> List[Tuple[InventoryItem, float]]:
+    """Match single component to inventory.
+
+    Returns list of (item, score) tuples sorted by score.
+    """
+    # Implementation
+    pass
+```
+
+### CLI Integration (Presentation Layer)
+
+**CLI is a thin wrapper** that calls the API:
 
 ```python
 # jbom_bom_plugin/cli.py
 
-from jbom.plugin.cli import CommandPlugin
+from jbom.plugin.cli import CommandIntegration
 from jbom.core.loaders import SchematicLoader, SpreadsheetLoader
+from jbom_bom_plugin.api import generate_bom, BOMOptions
 
-class BOMCommand(CommandPlugin):
-    """CLI command for BOM generation."""
+class BOMCommand(CommandIntegration):
+    """CLI integration for BOM generation."""
 
     def setup_parser(self, parser):
         """Configure command arguments."""
         parser.add_argument("project")
         parser.add_argument("-i", "--inventory", required=True)
         parser.add_argument("-o", "--output")
-        # ... more arguments
+        parser.add_argument("--smd-only", action="store_true")
+        parser.add_argument("-v", "--verbose", action="store_true")
 
     def execute(self, args):
-        """Execute BOM generation."""
-        # Use core services
-        schematic = SchematicLoader(args.project)
-        components = schematic.load()
+        """Execute BOM generation via API."""
+        # I/O Layer: Load inputs using core services
+        components = self.core.load_schematic(args.project)
+        inventory, fields = self.core.load_spreadsheet(args.inventory)
 
-        inventory = SpreadsheetLoader(args.inventory)
-        items, fields = inventory.load()
+        # Business Logic Layer: Call plugin API
+        options = BOMOptions(
+            verbose=args.verbose,
+            smd_only=args.smd_only,
+        )
+        result = generate_bom(components, inventory, options)
 
-        # Plugin-specific business logic
-        bom = self.generate_bom(components, items)
-
-        # Write output
-        self.write_bom(bom, args.output)
+        # Presentation Layer: Format and output
+        if args.output == "console":
+            self.print_table(result.entries, fields)
+        else:
+            self.write_csv(result.entries, args.output, fields)
 
         return 0
 ```
 
-### API Implementation
+### KiCad Plugin Integration (Presentation Layer)
+
+**KiCad plugin also consumes the same API**:
 
 ```python
-# jbom_bom_plugin/api.py
+# jbom_bom_plugin/kicad.py
 
-from typing import List, Dict
-from jbom.core.types import Component, InventoryItem
-from jbom.plugin.api import APIFunction
+from jbom.plugin.kicad import EeschemaIntegration
+from jbom_bom_plugin.api import generate_bom, BOMOptions
 
-@APIFunction(version="1.0.0")
-def generate_bom(
-    project: str,
-    inventory: str,
-    options: Dict = None
-) -> Dict:
-    """Generate BOM from project and inventory.
+class EeschemaPlugin(EeschemaIntegration):
+    """KiCad Eeschema integration for BOM."""
 
-    This is the public API other plugins or scripts can call.
+    def run(self):
+        """Called by KiCad when user clicks button."""
+        # I/O: Get data from KiCad
+        components = self.get_components_from_kicad()
+        inventory_path = self.show_file_dialog("Select Inventory")
+        inventory, fields = self.core.load_spreadsheet(inventory_path)
 
-    Args:
-        project: Path to KiCad project
-        inventory: Path to inventory file
-        options: Configuration options
+        # Business Logic: Same API as CLI
+        options = self.get_options_from_dialog()
+        result = generate_bom(components, inventory, options)
 
-    Returns:
-        Dict with keys: bom_entries, available_fields, metadata
-    """
-    # Implementation here
-    pass
+        # Presentation: Show in KiCad dialog
+        self.show_results_dialog(result)
 ```
+
 
 ## Plugin Discovery and Loading
 
@@ -388,7 +505,78 @@ class CoreServices:
         pass
 ```
 
-## Migration Path: BOM as First Plugin
+## Simplification: Remove KiCad Plugin Packaging (Recommended First Step)
+
+### Current State Complexity
+
+The current codebase attempts to support three meta-patterns:
+1. **CLI** - Command-line interface
+2. **Python API** - Programmatic access
+3. **KiCad Plugin** - Poorly implemented packaging for KiCad integration
+
+**Problem**: This creates unnecessary complexity in tests and architecture without clear value. The KiCad plugin packaging is poorly implemented and complicates the layered design.
+
+### Recommended Simplification
+
+**Remove KiCad plugin packaging** and focus on:
+
+1. **Python API** (Business Logic Layer)
+   - Core functionality as clean, testable APIs
+   - Example: `jbom.api.generate_bom(components, inventory, options)`
+
+2. **CLI** (Presentation Layer)
+   - Thin wrapper that consumes the Python API
+   - Already refactored with clean command structure
+
+**Benefits**:
+- ✅ Simpler testing (test API, test CLI separately)
+- ✅ Clear layering (API → CLI, not intertwined)
+- ✅ Removes poorly-implemented KiCad integration
+- ✅ Foundation for true plugin architecture
+- ✅ KiCad integration can be reimplemented later as a proper consumer of the API
+
+### How KiCad Integration Would Work (Future)
+
+Once the API is solid, KiCad integration becomes trivial:
+
+```python
+# kicad_jbom_plugin.py (separate package)
+
+import pcbnew
+from jbom.api import generate_bom
+from jbom.core import CoreServices
+
+class JBOMPlugin(pcbnew.ActionPlugin):
+    def Run(self):
+        # Get components from KiCad
+        board = pcbnew.GetBoard()
+        schematic_path = board.GetFileName().replace('.kicad_pcb', '.kicad_sch')
+
+        # Use jBOM API (same as CLI uses)
+        core = CoreServices()
+        components = core.load_schematic(schematic_path)
+        inventory, _ = core.load_spreadsheet(self.get_inventory_path())
+
+        result = generate_bom(components, inventory)
+
+        # Display results in KiCad
+        self.show_dialog(result)
+```
+
+**Key insight**: KiCad plugin is just another **consumer** of the Python API, like CLI. No special packaging needed in core.
+
+## Migration Path: API-First Refactoring
+
+### Phase 0: Simplification (Immediate)
+1. **Remove KiCad plugin packaging code**
+   - Delete `kicad_jbom_plugin.py` or mark as deprecated
+   - Remove KiCad-specific tests that test packaging (not functionality)
+   - Keep KiCad file parsing (that's core functionality)
+
+2. **Clarify testing strategy**
+   - API tests: Test business logic directly
+   - CLI tests: Test that CLI correctly calls API and formats output
+   - No need for "meta-pattern" tests
 
 ### Phase 1: Extract Core Services
 1. Move loaders, types, utils to `jbom/core/`
@@ -396,73 +584,147 @@ class CoreServices:
 3. Version the core API (semver)
 4. No functional changes yet
 
-### Phase 2: Create BOM Plugin Package
-1. Extract BOM logic to `jbom_bom_plugin` package
-2. Implement plugin manifest and lifecycle
-3. BOM plugin uses `CoreServices` API
-4. Ship both core and BOM plugin together initially
+### Phase 2: Solidify Python API
+1. Define clean API surface in `jbom/api/`
+2. API functions should NOT do I/O directly (take parsed objects)
+3. Keep current `jbom.api.generate_bom()` but refactor internals
+4. Document API contract with types and examples
 
-### Phase 3: Plugin Infrastructure
-1. Implement `PluginLoader` and discovery
-2. Enable/disable plugins
-3. Plugin dependency resolution
+### Phase 3: Refactor CLI as API Consumer
+1. CLI commands become thin wrappers
+2. CLI does: I/O → Call API → Format output
+3. No business logic in CLI layer
+4. Already started with command reorganization
+
+### Phase 4: Plugin Infrastructure
+1. Extract business logic to plugin packages
+2. Implement `PluginLoader` and discovery
+3. Enable/disable plugins
 4. Version compatibility checking
 
-### Phase 4: Separate Distribution
-1. Distribute BOM plugin separately
-2. Core ships with "recommended plugins"
-3. Users can install/uninstall plugins
-4. Third-party plugins possible
+### Phase 5: Optional UI Integrations
+1. KiCad plugin as separate package (optional)
+2. Web UI as separate package (optional)
+3. TUI as separate package (optional)
+4. All consume the same Python API
 
-## Example: Custom Validation Plugin
+## Example: Custom Validation Plugin (Layered)
 
 A user wants to add design rule validation:
 
 ```python
 # jbom_validation_plugin/__init__.py
 
-from jbom.plugin import PluginManifest, CLICapability
+from jbom.plugin import PluginManifest, APIExport, CLIIntegration
 
 manifest = PluginManifest(
     name="validation",
     version="1.0.0",
     description="KiCad schematic validation against design rules",
     requires_core="4.0.0",
-    capabilities=[
-        CLICapability(
-            command="validate",
-            help_text="Validate schematic against rules",
-            handler="jbom_validation_plugin.cli:ValidateCommand",
+
+    # API First: Business logic
+    api_exports=[
+        APIExport(
+            name="validate",
+            handler="jbom_validation_plugin.api:validate",
+            version="1.0.0",
         ),
     ],
+
+    # Optional: CLI wrapper
+    cli_integration=CLIIntegration(
+        commands=[{"name": "validate", "handler": "jbom_validation_plugin.cli:ValidateCommand"}],
+    ),
 )
 
-# jbom_validation_plugin/cli.py
+# jbom_validation_plugin/api.py - Business Logic
 
-from jbom.plugin.cli import CommandPlugin
+from typing import List
+from dataclasses import dataclass
+from jbom.core.types import Component
+from jbom.plugin.api import public_api
 
-class ValidateCommand(CommandPlugin):
+@dataclass
+class ValidationRule:
+    name: str
+    check: callable
+    severity: str  # "error", "warning", "info"
+
+@dataclass
+class ValidationIssue:
+    rule: str
+    component: str
+    message: str
+    severity: str
+
+@public_api(version="1.0.0")
+def validate(
+    components: List[Component],
+    rules: List[ValidationRule],
+) -> List[ValidationIssue]:
+    """Validate components against rules.
+
+    Pure business logic - works in any context.
+    """
+    issues = []
+    for component in components:
+        for rule in rules:
+            if not rule.check(component):
+                issues.append(ValidationIssue(
+                    rule=rule.name,
+                    component=component.reference,
+                    message=f"Component {component.reference} violates {rule.name}",
+                    severity=rule.severity,
+                ))
+    return issues
+
+# jbom_validation_plugin/cli.py - Presentation Layer
+
+from jbom.plugin.cli import CommandIntegration
+from jbom_validation_plugin.api import validate
+
+class ValidateCommand(CommandIntegration):
     def setup_parser(self, parser):
         parser.add_argument("project")
         parser.add_argument("--rules", help="Path to rules file")
 
     def execute(self, args):
-        # Use core services
+        # I/O: Load inputs
         components = self.core.load_schematic(args.project)
+        rules = self.load_rules_file(args.rules)
 
-        # Plugin logic
-        rules = self.load_rules(args.rules)
-        issues = self.validate(components, rules)
+        # Business Logic: Call API
+        issues = validate(components, rules)
 
-        # Report
+        # Presentation: Format output
         for issue in issues:
-            print(f"Error: {issue}")
+            print(f"{issue.severity.upper()}: {issue.message}")
 
-        return 1 if issues else 0
+        return 1 if any(i.severity == "error" for i in issues) else 0
 
-# Install and use
+# Usage examples:
+
+# 1. CLI usage
 $ pip install jbom-validation-plugin
 $ jbom validate my_project/ --rules my_rules.yaml
+
+# 2. Python API usage (no CLI needed)
+from jbom.core import CoreServices
+from jbom_validation_plugin.api import validate
+
+core = CoreServices()
+components = core.load_schematic("project/")
+rules = load_my_rules()
+issues = validate(components, rules)
+
+# 3. Web UI usage (same API)
+@app.post("/api/validate")
+def validate_endpoint(project_id: str):
+    components = load_from_db(project_id)
+    rules = get_project_rules(project_id)
+    issues = validate(components, rules)
+    return {"issues": [asdict(i) for i in issues]}
 ```
 
 ## Benefits of True Plugin Architecture
