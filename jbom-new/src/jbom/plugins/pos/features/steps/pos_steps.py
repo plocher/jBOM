@@ -6,6 +6,48 @@ import tempfile
 from pathlib import Path
 
 from behave import given, when, then
+from jbom.loaders.kicad_reader import create_kicad_reader_service
+from jbom.plugins.pos.models import PositionData, ComponentPosition
+from jbom.loaders.pcb_model import BoardModel
+
+
+def _convert_board_to_position_data(board: BoardModel) -> PositionData:
+    """Convert BoardModel to PositionData for POS-specific processing."""
+    position_data = PositionData(
+        pcb_file=board.path, board_title=board.title, kicad_version=board.kicad_version
+    )
+
+    for footprint in board.footprints:
+        # Convert side designation from BoardModel format to POS format
+        layer = "Top" if footprint.side == "TOP" else "Bottom"
+
+        # Extract package from package_token or footprint name
+        package = footprint.package_token
+        if not package:
+            # Fallback to extracting from footprint name
+            if ":" in footprint.footprint_name:
+                package = footprint.footprint_name.split(":", 1)[1]
+            else:
+                package = footprint.footprint_name
+
+        # Get value from attributes
+        value = footprint.attributes.get("Value", "")
+
+        component_pos = ComponentPosition(
+            reference=footprint.reference,
+            value=value,
+            package=package,
+            footprint=footprint.footprint_name,
+            x_mm=footprint.center_x_mm,
+            y_mm=footprint.center_y_mm,
+            rotation_deg=footprint.rotation_deg,
+            layer=layer,
+            attributes=footprint.attributes.copy(),
+        )
+
+        position_data.components.append(component_pos)
+
+    return position_data
 
 
 @given("a clean test environment")
@@ -17,6 +59,10 @@ def step_clean_test_environment(context):
     context.test_components = []
     context.generated_pos_file = None
     context.pos_output_content = None
+
+    # Initialize KiCad reader service
+    context.kicad_reader = create_kicad_reader_service(mode="sexp")
+    context.position_data = None
 
 
 @given('a KiCad project named "{project_name}"')
@@ -32,7 +78,7 @@ def step_create_kicad_project(context, project_name):
 
 @given("the PCB is populated with components:")
 def step_populate_pcb_with_components(context):
-    """Create mock PCB data with components from the data table."""
+    """Create mock PCB data with components from the data table and read it with KiCadReaderService."""
     if not context.table:
         raise ValueError("Component data table is required")
 
@@ -51,9 +97,11 @@ def step_populate_pcb_with_components(context):
         context.test_components.append(component)
 
     # Create a mock PCB file with the component data
-    # For now, this is a simplified representation
-    # In a real implementation, this would create valid KiCad PCB content
     _create_mock_pcb_file(context)
+
+    # Now read the PCB file using KiCadReaderService to get real component data
+    board_model = context.kicad_reader.read_pcb_file(context.test_pcb_file)
+    context.position_data = _convert_board_to_position_data(board_model)
 
 
 def _create_mock_pcb_file(context):
@@ -67,11 +115,17 @@ def _create_mock_pcb_file(context):
 
     # Add mock footprint entries for each component
     for comp in context.test_components:
-        footprint_entry = f"""  (footprint "{comp['footprint']}" (layer "{comp['layer']}.Cu")
+        # Determine layer designation
+        layer_prefix = "F" if comp["layer"].lower() == "top" else "B"
+
+        footprint_entry = f"""  (footprint "{comp['footprint']}" (layer "{layer_prefix}.Cu")
     (at {comp['x']} {comp['y']} {comp['rotation']})
+    (fp_text reference "{comp['reference']}" (at 0 0) (layer "{layer_prefix}.SilkS"))
+    (fp_text value "{comp['value']}" (at 0 0) (layer "{layer_prefix}.Fab"))
     (property "Reference" "{comp['reference']}")
     (property "Value" "{comp['value']}")
     (property "Footprint" "{comp['footprint']}")
+    (attr smd)
   )"""
         pcb_content.append(footprint_entry)
 
@@ -85,15 +139,15 @@ def _create_mock_pcb_file(context):
 def step_generate_pos_no_options(context):
     """Generate a POS file using default options."""
     # This would normally call the jBOM CLI with pos command
-    # For now, we'll mock the expected behavior
+    # For now, we'll mock the expected behavior using the position data from KiCadReaderService
     context.generated_pos_file = context.project_dir / f"{context.project_name}_pos.csv"
-    _generate_mock_pos_file(context, context.generated_pos_file)
+    _generate_pos_file_from_position_data(context, context.generated_pos_file)
 
 
 @when("I generate a POS file with output to stdout")
 def step_generate_pos_to_stdout(context):
     """Generate POS data and capture stdout output."""
-    # Mock the CSV output that would go to stdout
+    # Mock the CSV output that would go to stdout using position data from KiCadReaderService
     output = io.StringIO()
     writer = csv.writer(output)
 
@@ -102,19 +156,20 @@ def step_generate_pos_to_stdout(context):
         ["Designator", "Val", "Package", "Mid X", "Mid Y", "Rotation", "Layer"]
     )
 
-    # Write component data
-    for comp in context.test_components:
-        writer.writerow(
-            [
-                comp["reference"],
-                comp["value"],
-                comp["package"],
-                comp["x"],
-                comp["y"],
-                comp["rotation"],
-                comp["layer"],
-            ]
-        )
+    # Write component data from position_data
+    if context.position_data:
+        for comp in context.position_data.components:
+            writer.writerow(
+                [
+                    comp.reference,
+                    comp.value,
+                    comp.package,
+                    comp.x_mm,
+                    comp.y_mm,
+                    comp.rotation_deg,
+                    comp.layer,
+                ]
+            )
 
     context.pos_output_content = output.getvalue()
 
@@ -123,12 +178,18 @@ def step_generate_pos_to_stdout(context):
 def step_generate_pos_missing_pcb(context):
     """Attempt to generate POS from a nonexistent PCB file."""
     context.test_pcb_file = context.test_temp_dir / "nonexistent.kicad_pcb"
-    context.error_occurred = True
-    context.error_message = f"PCB file not found: {context.test_pcb_file}"
+
+    # Try to read the nonexistent PCB file using KiCadReaderService
+    try:
+        context.kicad_reader.read_pcb_file(context.test_pcb_file)
+        context.error_occurred = False
+    except Exception as e:
+        context.error_occurred = True
+        context.error_message = str(e)
 
 
-def _generate_mock_pos_file(context, output_path: Path):
-    """Generate a mock POS CSV file."""
+def _generate_pos_file_from_position_data(context, output_path: Path):
+    """Generate a POS CSV file from position data obtained via KiCadReaderService."""
     with open(output_path, "w", newline="") as csvfile:
         writer = csv.writer(csvfile)
 
@@ -137,19 +198,20 @@ def _generate_mock_pos_file(context, output_path: Path):
             ["Designator", "Val", "Package", "Mid X", "Mid Y", "Rotation", "Layer"]
         )
 
-        # Write component data
-        for comp in context.test_components:
-            writer.writerow(
-                [
-                    comp["reference"],
-                    comp["value"],
-                    comp["package"],
-                    comp["x"],
-                    comp["y"],
-                    comp["rotation"],
-                    comp["layer"],
-                ]
-            )
+        # Write component data from position_data
+        if context.position_data:
+            for comp in context.position_data.components:
+                writer.writerow(
+                    [
+                        comp.reference,
+                        comp.value,
+                        comp.package,
+                        comp.x_mm,
+                        comp.y_mm,
+                        comp.rotation_deg,
+                        comp.layer,
+                    ]
+                )
 
 
 @then("the POS file is created successfully")
