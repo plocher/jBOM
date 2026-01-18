@@ -3,6 +3,8 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Optional, Union
+
+from jbom.cli.formatting import Column, print_table
 import csv
 import sys
 
@@ -100,41 +102,74 @@ class DefaultPOSGenerator(POSGenerator):
         return position_data
 
     def _write_console_output(self, position_data: PositionData) -> None:
-        """Write POS data in human-readable format to stdout (matching existing jBOM format)."""
-        print("\nPlacement Table:")
-        print("=" * 90)
-
-        # Table header
-        header = f"{'Reference':<10} | {'X':<8} | {'Y':<7} | {'Rotation':<8} | {'Side':<4} | {'Footprint':<25} | {'SMD':<3}"
-        print(header)
-        # Create table separator line with exact same spacing as header
-        separator = f"{'-'*10}+{'-'*10}+{'-'*9}+{'-'*10}+{'-'*6}+{'-'*27}+{'-'*4}"
-        print(separator)
-
-        # Sort components by reference for consistent output
+        """Write POS data in human-readable format using shared table formatter."""
+        # Prepare rows
         sorted_components = sorted(position_data.components, key=lambda c: c.reference)
-
+        rows = []
         for comp in sorted_components:
-            # Determine SMD type from attributes or assume SMD if not specified
+            # Determine SMD display
             smd_type = comp.attributes.get("mount_type", "smd").upper()
             if smd_type == "SMD":
                 smd_display = "SMD"
             elif smd_type == "THROUGH_HOLE":
                 smd_display = "THT"
             else:
-                smd_display = "SMD"  # Default assumption
+                smd_display = "SMD"
 
-            # Format side as TOP/BOT to match existing format
             side = "TOP" if comp.layer.upper() == "TOP" else "BOT"
-
-            # Format the row (matching existing jBOM precision and spacing)
-            row = (
-                f"{comp.reference:<10} | {comp.x_mm:>8.4f} | {comp.y_mm:>7.4f} | "
-                f"{comp.rotation_deg:>8.1f} | {side:<4} | {comp.footprint:<25} | {smd_display:<3}"
+            rows.append(
+                {
+                    "ref": comp.reference,
+                    "x": f"{comp.x_mm:.4f}",
+                    "y": f"{comp.y_mm:.4f}",
+                    "rot": f"{comp.rotation_deg:.1f}",
+                    "side": side,
+                    "footprint": comp.footprint,
+                    "smd": smd_display,
+                }
             )
-            print(row)
 
-        print(f"\nTotal: {len(position_data.components)} components\n")
+        # Define columns with wrapping and alignment similar to legacy output
+        columns = [
+            Column(
+                "Reference",
+                "ref",
+                wrap=True,
+                preferred_width=16,
+                fixed=False,
+                align="left",
+            ),
+            Column("X", "x", wrap=False, preferred_width=8, fixed=True, align="right"),
+            Column("Y", "y", wrap=False, preferred_width=7, fixed=True, align="right"),
+            Column(
+                "Rotation",
+                "rot",
+                wrap=False,
+                preferred_width=8,
+                fixed=True,
+                align="right",
+            ),
+            Column(
+                "Side", "side", wrap=False, preferred_width=4, fixed=True, align="left"
+            ),
+            Column(
+                "Footprint",
+                "footprint",
+                wrap=True,
+                preferred_width=25,
+                fixed=False,
+                align="left",
+            ),
+            Column(
+                "SMD", "smd", wrap=False, preferred_width=3, fixed=True, align="left"
+            ),
+        ]
+
+        # Title and table
+        print()
+        print_table(rows, columns, title="Placement Table:")
+        print()
+        print(f"Total: {len(position_data.components)} components")
 
     def _write_csv_to_stdout(self, position_data: PositionData) -> None:
         """Write POS data as CSV to stdout."""
