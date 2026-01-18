@@ -48,6 +48,20 @@ class TestDiscovery(unittest.TestCase):
         legacy.write_text("legacy\n")
         self.assertEqual(find_project(self.tmpdir), legacy)
 
+    def test_directory_matching_preferred(self):
+        # Create two pcb files, prefer one whose stem matches directory name
+        (self.tmpdir / f"{self.tmpdir.name}.kicad_pcb").write_text("(kicad_pcb)\n")
+        (self.tmpdir / "other.kicad_pcb").write_text("(kicad_pcb)\n")
+        found = find_pcb(self.tmpdir)
+        self.assertEqual(found.stem, self.tmpdir.name)
+
+    def test_autosave_only_warns_and_picks(self):
+        # Only autosave files available
+        (self.tmpdir / "_autosave-foo.kicad_pcb").write_text("(kicad_pcb)\n")
+        found = find_pcb(self.tmpdir)
+        self.assertIsNotNone(found)
+        self.assertTrue(found.name.startswith("_autosave-"))
+
 
 if __name__ == "__main__":
     unittest.main()

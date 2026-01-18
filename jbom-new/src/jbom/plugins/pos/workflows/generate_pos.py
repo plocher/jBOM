@@ -12,9 +12,13 @@ from jbom.workflows import registry
 from jbom.plugins.pos.services.pos_generator import create_pos_generator
 
 
-def _generate_pos(pcb_file: Path, output: Optional[Union[Path, str]] = None) -> None:
+def _generate_pos(
+    pcb_file: Path,
+    output: Optional[Union[Path, str]] = None,
+    layer: Optional[str] = None,
+) -> None:
     gen = create_pos_generator()
-    gen.generate_pos_file(pcb_file=pcb_file, output_file=output)
+    gen.generate_pos_file(pcb_file=pcb_file, output_file=output, layer=layer)
 
 
 # Register workflow at import time

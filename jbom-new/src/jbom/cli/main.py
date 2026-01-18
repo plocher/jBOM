@@ -57,6 +57,16 @@ def create_parser() -> argparse.ArgumentParser:
         help="Output target: 'console' or a file path (default: <project>.pos.csv)",
         default=None,
     )
+    pos_parser.add_argument(
+        "--stdout",
+        action="store_true",
+        help="Write CSV to stdout (equivalent to -o -)",
+    )
+    pos_parser.add_argument(
+        "--layer",
+        choices=["TOP", "BOTTOM"],
+        help="Filter to only components on specified layer",
+    )
 
     return parser
 
@@ -121,12 +131,14 @@ def main(argv: Optional[List[str]] = None) -> int:
                 return 2
         # Determine output
         output = args.output
+        if args.stdout:
+            output = "-"
         if output is None:
             output = str(default_output_name(cwd, project, pcb_path, "pos.csv"))
         # Call workflow
         try:
             wf = get_workflow("pos.generate")
-            wf(pcb_file=pcb_path, output=output)
+            wf(pcb_file=pcb_path, output=output, layer=args.layer)
             return 0
         except Exception as e:
             print(f"Error: {e}", file=sys.stderr)

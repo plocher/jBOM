@@ -41,17 +41,22 @@ class DefaultPOSGenerator(POSGenerator):
         self.kicad_reader = create_kicad_reader_service(mode="sexp")
 
     def generate_pos_file(
-        self, pcb_file: Path, output_file: Optional[Union[Path, str]] = None
+        self,
+        pcb_file: Path,
+        output_file: Optional[Union[Path, str]] = None,
+        layer: Optional[str] = None,
     ) -> None:
         """Generate a POS file from a KiCad PCB file."""
         # Step 1: Read the PCB file using KiCadReaderService
         board_model = self.kicad_reader.read_pcb_file(pcb_file)
 
         # Step 2: Convert BoardModel to PositionData
-        position_data = self._convert_board_to_position_data(board_model)
+        position_data = self._convert_board_to_position_data(
+            board_model, layer_filter=layer
+        )
 
         # Step 3: Generate output based on format
-        if output_file is None:
+        if output_file is None or output_file == "-":
             # Write CSV to stdout
             self._write_csv_to_stdout(position_data)
         elif isinstance(output_file, str) and output_file.lower() == "console":
@@ -61,7 +66,9 @@ class DefaultPOSGenerator(POSGenerator):
             # Write CSV to file
             self._write_csv_to_file(position_data, output_file)
 
-    def _convert_board_to_position_data(self, board_model) -> PositionData:
+    def _convert_board_to_position_data(
+        self, board_model, layer_filter: Optional[str] = None
+    ) -> PositionData:
         """Convert BoardModel to PositionData for POS-specific processing."""
         position_data = PositionData(
             pcb_file=board_model.path,
@@ -70,6 +77,9 @@ class DefaultPOSGenerator(POSGenerator):
         )
 
         for footprint in board_model.footprints:
+            # Filter by layer if requested (footprint.side is 'TOP' or 'BOTTOM')
+            if layer_filter and footprint.side != layer_filter:
+                continue
             # Convert side designation from BoardModel format to POS format
             layer = "Top" if footprint.side == "TOP" else "Bottom"
 

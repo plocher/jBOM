@@ -56,7 +56,7 @@ def step_populate_pcb_with_components(context):
     _create_mock_pcb_file(context)
 
 
-def _create_mock_pcb_file(context):
+def _create_mock_pcb_file(context, target_path: Path | None = None):
     """Create a mock KiCad PCB file with component data."""
     pcb_content = [
         "(kicad_pcb (version 20221018) (generator pcbnew)",
@@ -88,7 +88,8 @@ def _create_mock_pcb_file(context):
 
     pcb_content.append(")")
 
-    with open(context.test_pcb_file, "w") as f:
+    pcb_path = target_path or context.test_pcb_file
+    with open(pcb_path, "w") as f:
         f.write("\n".join(pcb_content))
 
 

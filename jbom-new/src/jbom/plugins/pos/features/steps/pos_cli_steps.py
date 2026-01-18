@@ -6,6 +6,7 @@ import subprocess
 from pathlib import Path
 
 from behave import given, when, then
+from jbom.plugins.pos.features.steps.pos_steps import _create_mock_pcb_file
 
 
 @given("I am in an empty project directory")
@@ -53,6 +54,23 @@ def step_run_cli(context, cmd):
     context.cli_stderr = proc.stderr
 
 
+@given('an extra PCB file named "{name}" exists (empty valid)')
+def step_extra_pcb(context, name):
+    # Create a minimal valid PCB file that won't be chosen by directory match
+    p = context.project_dir / name
+    p.write_text("(kicad_pcb)\n")
+
+
+@given("the PCB is saved only as autosave")
+def step_pcb_autosave_only(context):
+    # Move existing normal file to autosave name
+    autosave = context.project_dir / f"_autosave-{context.project_name}.kicad_pcb"
+    # Recreate PCB content into autosave file and remove normal
+    _create_mock_pcb_file(context, target_path=autosave)
+    if context.test_pcb_file.exists():
+        context.test_pcb_file.unlink()
+
+
 @then("the command exits with code {code:d}")
 def step_assert_exit_code(context, code):
     assert getattr(context, "cli_returncode", None) == code, (
@@ -64,6 +82,22 @@ def step_assert_exit_code(context, code):
 @then('stderr contains "{text}"')
 def step_stderr_contains(context, text):
     assert text in getattr(context, "cli_stderr", ""), context.cli_stderr
+
+
+@then('stdout contains "{text}"')
+def step_stdout_contains(context, text):
+    assert text in getattr(context, "cli_stdout", ""), context.cli_stdout
+
+
+@then('stdout does not contain "{text}"')
+def step_stdout_not_contains(context, text):
+    assert text not in getattr(context, "cli_stdout", ""), context.cli_stdout
+
+
+@then('stderr contains ""')
+def step_stderr_empty(context):
+    # Assert stderr exactly empty
+    assert getattr(context, "cli_stderr", "") == "", context.cli_stderr
 
 
 @then('a file named "{name}" exists in the project directory')
