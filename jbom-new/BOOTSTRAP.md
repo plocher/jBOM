@@ -28,12 +28,12 @@ Directory is `jbom-new/` but command remains `jbom` to avoid tech debt.
 ```
 jbom-new/
 ├── src/
-│   └── jbom_new/
+│   └── jbom/                 # Main jBOM package
 │       ├── cli/              # CLI entry point
 │       ├── core/             # Plugin loader, registries
 │       └── plugins/          # Core plugins (empty for now)
-├── features/                 # BDD functional tests
+├── features/                 # BDD functional tests (core)
 │   ├── regression/           # Bug reproduction & prevention
 │   └── steps/                # Step definitions
-└── tests/                    # Unit tests
+└── tests/                    # Unit tests (core)
 ```

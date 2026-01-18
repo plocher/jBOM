@@ -5,12 +5,16 @@ import sys
 from pathlib import Path
 from typing import List, Optional
 
-from jbom_new import __version__
-from jbom_new.core.plugin_loader import PluginLoader
+from jbom import __version__
+from jbom.cli.plugin_registry import get_registry
+from jbom.core.plugin_loader import PluginLoader
 
 
 def create_parser() -> argparse.ArgumentParser:
     """Create the main argument parser."""
+    # Load plugin commands before creating parser
+    from jbom.plugins.pos import cli_handler  # noqa: F401
+
     parser = argparse.ArgumentParser(
         prog="jbom",
         description="KiCad Bill of Materials and Placement File Generator",
@@ -41,6 +45,10 @@ def create_parser() -> argparse.ArgumentParser:
         help="list installed plugins",
     )
 
+    # Register plugin commands
+    plugin_registry = get_registry()
+    plugin_registry.configure_subparsers(subparsers)
+
     return parser
 
 
@@ -55,6 +63,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     """
     parser = create_parser()
     args = parser.parse_args(argv)
+
+    plugin_registry = get_registry()
 
     # Handle plugin command
     if args.command == "plugin":
@@ -77,6 +87,11 @@ def main(argv: Optional[List[str]] = None) -> int:
             # No action specified for plugin command
             parser.parse_args([args.command, "--help"])
             return 1
+
+    # Handle registered plugin commands
+    command = plugin_registry.get_command(args.command)
+    if command:
+        return command.handler(args)
 
     # No command specified
     if not args.command:

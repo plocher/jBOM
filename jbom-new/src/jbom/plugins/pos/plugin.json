@@ -1,0 +1,13 @@
+{
+  "name": "pos",
+  "version": "1.0.0",
+  "description": "Position (placement) file generation for PCB assembly",
+  "services": [
+    "KiCadReaderService",
+    "POSGeneratorService",
+    "OutputFormatterService"
+  ],
+  "workflows": [
+    "generate_pos"
+  ]
+}

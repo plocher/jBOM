@@ -41,7 +41,7 @@ def format_execution_context(context, include_files: bool = True) -> str:
         lines.append(f"\n--- WORKING DIRECTORY ---\n{context.project_root}")
 
     # Plugin directory
-    plugins_dir = context.src_root / "jbom_new" / "plugins"
+    plugins_dir = context.src_root / "jbom" / "plugins"
     if plugins_dir.exists():
         lines.append("\n--- PLUGINS DIRECTORY ---")
         try:
