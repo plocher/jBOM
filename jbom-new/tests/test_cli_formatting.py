@@ -80,6 +80,55 @@ class TestConsoleFormatting(unittest.TestCase):
         self.assertTrue(parts[1].endswith("4567"))
         self.assertTrue(parts[2].endswith("0000"))
 
+    def test_mixed_alignment(self):
+        cols = [
+            Column("Left", "l", wrap=False, preferred_width=6, align="left"),
+            Column("Right", "r", wrap=False, preferred_width=6, align="right"),
+        ]
+        rows = [{"l": "ab", "r": "12"}]
+        lines = self.render(rows, cols, width=20)
+        data = lines[2]
+        parts = data.split(" | ")
+        self.assertEqual(parts[0], "ab".ljust(len(parts[0])))
+        self.assertTrue(parts[1].endswith("12"))
+        self.assertEqual(parts[1].strip(), "12")
+
+    def test_unbreakable_string_wrapping(self):
+        cols = [Column("Blob", "b", wrap=True, preferred_width=8)]
+        long = "X" * 25
+        rows = [{"b": long}]
+        lines = self.render(rows, cols, width=10)
+        # header, separator, then multiple wrapped lines
+        data_lines = lines[2:]
+        # Expect 4 wrapped lines for 25 chars with width ~8
+        self.assertEqual(len(data_lines), 4)
+        # Ensure no line exceeds a reasonable bound (terminal width 10 here)
+        self.assertLessEqual(max(len(dl) for dl in data_lines), 10)
+        # Combined content (without spaces) equals original
+        content = "".join(dl.strip() for dl in data_lines)
+        self.assertEqual(content, long)
+
+    def test_missing_keys_render_as_blank(self):
+        cols = [
+            Column("A", "a", wrap=False, preferred_width=5),
+            Column("B", "b", wrap=False, preferred_width=5),
+        ]
+        rows = [{"a": "x"}]  # missing 'b'
+        lines = self.render(rows, cols, width=80)
+        parts = lines[2].split(" | ")
+        self.assertEqual(parts[0].strip(), "x")
+        self.assertEqual(parts[1].strip(), "")
+
+    def test_title_underline_length(self):
+        cols = [Column("A", "a", preferred_width=5)]
+        rows = [{"a": "val"}]
+        title = "This is a long title"
+        lines = self.render(rows, cols, width=15, title=title)
+        header = lines[2]
+        underline = lines[1]
+        expected_len = min(len(title), max(20, len(header)))
+        self.assertEqual(len(underline), expected_len)
+
 
 if __name__ == "__main__":
     unittest.main()

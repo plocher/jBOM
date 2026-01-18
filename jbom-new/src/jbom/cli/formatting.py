@@ -42,19 +42,35 @@ def _wrap_text(text: str, width: int) -> List[str]:
     t = text or ""
     if len(t) <= width:
         return [t]
-    words = t.split()
-    if not words:
-        # fallback for long unbroken strings
-        return [t[i : i + width] for i in range(0, len(t), width)]
+
+    # Tokenize on spaces but support tokens longer than width
+    tokens = t.split(" ")
     lines: List[str] = []
-    current = words[0]
-    for w in words[1:]:
-        if len(current) + 1 + len(w) <= width:
-            current += " " + w
-        else:
-            lines.append(current)
-            current = w
-    lines.append(current)
+    current = ""
+
+    for tok in tokens:
+        token = tok
+        while token:
+            if not current:
+                if len(token) <= width:
+                    current = token
+                    token = ""
+                else:
+                    # Break long unbreakable token into chunks
+                    lines.append(token[:width])
+                    token = token[width:]
+            else:
+                if len(current) + 1 + len(token) <= width:
+                    current = current + " " + token
+                    token = ""
+                else:
+                    # Emit current line and continue trying to place token
+                    lines.append(current)
+                    current = ""
+
+    if current:
+        lines.append(current)
+
     return lines
 
 
