@@ -21,3 +21,21 @@ Feature: POS main CLI flags
     Then the command exits with code 0
     And stdout contains "U1"
     And stdout does not contain "J1"
+
+  Scenario: --fabricator jlc uses JLCPCB column headers
+    When I run "python -m jbom.cli.main pos --stdout --fabricator jlc" in the project directory
+    Then the command exits with code 0
+    And stdout contains "Designator,Side,Mid X,Mid Y,Rotation,Package,Comment"
+    And stderr contains ""
+
+  Scenario: --jlc shorthand uses JLCPCB column headers
+    When I run "python -m jbom.cli.main pos --stdout --jlc" in the project directory
+    Then the command exits with code 0
+    And stdout contains "Designator,Side,Mid X,Mid Y,Rotation,Package,Comment"
+    And stderr contains ""
+
+  Scenario: --fields with --fabricator merges fields correctly
+    When I run "python -m jbom.cli.main pos --stdout --fabricator jlc --fields reference,footprint" in the project directory
+    Then the command exits with code 0
+    And stdout contains "Designator,Footprint,Side,Mid X,Mid Y,Rotation,Package,Comment"
+    And stderr contains ""

@@ -2,7 +2,7 @@ import io
 import unittest
 from contextlib import redirect_stdout
 
-from jbom.cli.formatting import Column, print_table
+from jbom.cli.formatting import Column, print_table, print_tabular_data
 
 
 class TestConsoleFormatting(unittest.TestCase):
@@ -128,6 +128,55 @@ class TestConsoleFormatting(unittest.TestCase):
         underline = lines[1]
         expected_len = min(len(title), max(20, len(header)))
         self.assertEqual(len(underline), expected_len)
+
+    def test_print_tabular_data_with_transformer(self):
+        """Test print_tabular_data with row transformation and sorting."""
+
+        class TestData:
+            def __init__(self, name, value):
+                self.name = name
+                self.value = value
+
+        def transformer(item):
+            return {"n": item.name, "v": str(item.value)}
+
+        data = [TestData("C", 3), TestData("A", 1), TestData("B", 2)]
+        cols = [Column("Name", "n"), Column("Value", "v")]
+
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            print_tabular_data(
+                data,
+                cols,
+                row_transformer=transformer,
+                sort_key=lambda x: x.name,
+                summary_line="Test summary",
+            )
+        lines = buf.getvalue().splitlines()
+
+        # Should have blank line, header, separator, 3 data lines, blank line, summary
+        self.assertGreaterEqual(len(lines), 7)
+        # Check sorting - first data item should be A
+        data_start_idx = next(i for i, line in enumerate(lines) if "A" in line)
+        self.assertIn("A", lines[data_start_idx])
+        # Check summary line at end
+        self.assertEqual(lines[-1], "Test summary")
+
+    def test_print_tabular_data_no_transformer(self):
+        """Test print_tabular_data with raw dict data."""
+        data = [{"name": "test", "val": "123"}]
+        cols = [Column("Name", "name"), Column("Value", "val")]
+
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            print_tabular_data(data, cols, title="Test Title")
+        lines = buf.getvalue().splitlines()
+
+        # Should have blank line, title, underline, header, separator, data, blank
+        self.assertGreaterEqual(len(lines), 7)
+        # Check title appears
+        title_idx = next(i for i, line in enumerate(lines) if "Test Title" in line)
+        self.assertEqual(lines[title_idx], "Test Title")
 
 
 if __name__ == "__main__":

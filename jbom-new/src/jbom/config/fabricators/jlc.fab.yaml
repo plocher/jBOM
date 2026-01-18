@@ -1,0 +1,10 @@
+id: jlc
+name: JLCPCB
+pos_columns:
+  Designator: reference
+  Side: side
+  Mid X: x
+  Mid Y: y
+  Rotation: rotation
+  Package: package
+  Comment: value

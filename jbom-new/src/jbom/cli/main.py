@@ -6,11 +6,15 @@ from pathlib import Path
 from typing import List, Optional
 
 from jbom import __version__
+from jbom.cli.plugin_registry import get_registry
 from jbom.core.plugin_loader import PluginLoader
 
 
 def create_parser() -> argparse.ArgumentParser:
     """Create the main argument parser."""
+    # Load plugin commands before creating parser
+    from jbom.plugins.pos import cli_handler  # noqa: F401
+
     parser = argparse.ArgumentParser(
         prog="jbom",
         description="KiCad Bill of Materials and Placement File Generator",
@@ -41,32 +45,9 @@ def create_parser() -> argparse.ArgumentParser:
         help="list installed plugins",
     )
 
-    # Add pos command
-    pos_parser = subparsers.add_parser(
-        "pos",
-        help="generate placement (POS/CPL) data",
-    )
-    pos_parser.add_argument(
-        "pcb",
-        nargs="?",
-        help="Path to .kicad_pcb (optional; if omitted, discover in current directory)",
-    )
-    pos_parser.add_argument(
-        "-o",
-        "--output",
-        help="Output target: 'console' or a file path (default: <project>.pos.csv)",
-        default=None,
-    )
-    pos_parser.add_argument(
-        "--stdout",
-        action="store_true",
-        help="Write CSV to stdout (equivalent to -o -)",
-    )
-    pos_parser.add_argument(
-        "--layer",
-        choices=["TOP", "BOTTOM"],
-        help="Filter to only components on specified layer",
-    )
+    # Register plugin commands
+    plugin_registry = get_registry()
+    plugin_registry.configure_subparsers(subparsers)
 
     return parser
 
@@ -83,11 +64,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser = create_parser()
     args = parser.parse_args(argv)
 
-    from jbom.cli.discovery import find_project_and_pcb, default_output_name
-    from jbom.workflows.registry import get as get_workflow
-
-    # Ensure POS workflow registered (side-effect import)
-    from jbom.plugins.pos.workflows import generate_pos  # noqa: F401
+    plugin_registry = get_registry()
 
     # Handle plugin command
     if args.command == "plugin":
@@ -111,38 +88,10 @@ def main(argv: Optional[List[str]] = None) -> int:
             parser.parse_args([args.command, "--help"])
             return 1
 
-    if args.command == "pos":
-        # Resolve PCB path or discover
-        if args.pcb:
-            pcb_path = Path(args.pcb)
-            if not pcb_path.exists():
-                print(f"Error: PCB file not found: {pcb_path}", file=sys.stderr)
-                return 2
-            project = None
-            cwd = pcb_path.parent
-        else:
-            cwd = Path.cwd()
-            project, pcb_path = find_project_and_pcb(cwd)
-            if not pcb_path:
-                print(
-                    "Error: No .kicad_pcb file found in current directory",
-                    file=sys.stderr,
-                )
-                return 2
-        # Determine output
-        output = args.output
-        if args.stdout:
-            output = "-"
-        if output is None:
-            output = str(default_output_name(cwd, project, pcb_path, "pos.csv"))
-        # Call workflow
-        try:
-            wf = get_workflow("pos.generate")
-            wf(pcb_file=pcb_path, output=output, layer=args.layer)
-            return 0
-        except Exception as e:
-            print(f"Error: {e}", file=sys.stderr)
-            return 1
+    # Handle registered plugin commands
+    command = plugin_registry.get_command(args.command)
+    if command:
+        return command.handler(args)
 
     # No command specified
     if not args.command:

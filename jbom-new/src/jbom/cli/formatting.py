@@ -12,7 +12,7 @@ render consistent human-readable tables without duplicating logic.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, Iterable, List, Mapping, Optional, Sequence
+from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence
 import shutil
 
 
@@ -198,3 +198,51 @@ def print_table(
                 else:
                     parts.append(s.ljust(target[c.key]))
             print(" | ".join(parts))
+
+
+def print_tabular_data(
+    data: Iterable[Any],
+    columns: Sequence[Column],
+    *,
+    row_transformer: Optional[Callable[[Any], Mapping[str, str]]] = None,
+    sort_key: Optional[Callable[[Any], Any]] = None,
+    title: Optional[str] = None,
+    summary_line: Optional[str] = None,
+    terminal_width: Optional[int] = None,
+) -> None:
+    """Print tabular data with configurable transformation and formatting.
+
+    This is a higher-level wrapper around print_table() that handles:
+    - Data transformation via row_transformer
+    - Optional sorting
+    - Summary line printing
+
+    Args:
+        data: Iterable of data objects to display
+        columns: Column definitions for the table
+        row_transformer: Function to convert data object to row mapping.
+                        If None, assumes data objects are already mappings.
+        sort_key: Optional function to sort data before display
+        title: Optional table title
+        summary_line: Optional summary line printed after the table
+        terminal_width: Optional terminal width constraint
+    """
+    # Convert to list and optionally sort
+    data_list = list(data)
+    if sort_key:
+        data_list.sort(key=sort_key)
+
+    # Transform data to row mappings
+    if row_transformer:
+        rows = [row_transformer(item) for item in data_list]
+    else:
+        rows = data_list  # Assume already mappings
+
+    # Print with spacing
+    print()
+    print_table(rows, columns, title=title, terminal_width=terminal_width)
+    print()
+
+    # Optional summary line
+    if summary_line:
+        print(summary_line)

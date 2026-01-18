@@ -5,6 +5,7 @@ directory so individual commands (POS, BOM, etc.) can share the logic.
 """
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Tuple
 import sys
@@ -85,6 +86,82 @@ def find_schematic(cwd: Path) -> Optional[Path]:
 def find_project_and_pcb(cwd: Path) -> Tuple[Optional[Path], Optional[Path]]:
     """Convenience wrapper returning (project, pcb)."""
     return (find_project(cwd), find_pcb(cwd))
+
+
+@dataclass
+class ProjectFiles:
+    """Represents a complete KiCad project with all relevant files."""
+
+    directory: Path  # Project directory
+    project_file: Optional[Path]  # .kicad_pro file
+    pcb_file: Optional[Path]  # .kicad_pcb file
+    schematic_files: list[Path]  # .kicad_sch files
+
+    @property
+    def base_name(self) -> str:
+        """Base name for output files (from project or directory)."""
+        if self.project_file:
+            return self.project_file.stem
+        return self.directory.name
+
+
+def resolve_project(project_arg: Optional[str]) -> ProjectFiles:
+    """Resolve a PROJECT argument to KiCad project files.
+
+    PROJECT can be:
+    - None: Use current directory
+    - Directory path: Use that directory
+    - .kicad_pro basename: Find matching project
+    - Specific .kicad_pcb or .kicad_sch file: Use file's directory
+
+    Returns:
+        ProjectFiles with resolved paths
+
+    Raises:
+        ValueError: If PROJECT cannot be resolved
+    """
+    if project_arg is None:
+        directory = Path.cwd()
+    else:
+        path = Path(project_arg)
+
+        if path.is_dir():
+            # Directory specified
+            directory = path
+        elif path.is_file():
+            # Specific file specified
+            if path.suffix in PCB_EXTS + SCHEMATIC_EXTS:
+                directory = path.parent
+            elif path.suffix in PROJECT_EXTS:
+                directory = path.parent
+            else:
+                raise ValueError(f"Unsupported file type: {path}")
+        else:
+            # Could be a basename - look for matching .kicad_pro
+            cwd = Path.cwd()
+            potential_project = cwd / f"{project_arg}.kicad_pro"
+            if potential_project.exists():
+                directory = cwd
+            else:
+                # Try as a path
+                if path.exists():
+                    directory = path if path.is_dir() else path.parent
+                else:
+                    raise ValueError(f"PROJECT not found: {project_arg}")
+
+    # Discover all files in the directory
+    project_file = find_project(directory)
+    pcb_file = find_pcb(directory)
+    schematic_files = [
+        p for p in directory.iterdir() if p.is_file() and p.suffix in SCHEMATIC_EXTS
+    ]
+
+    return ProjectFiles(
+        directory=directory,
+        project_file=project_file,
+        pcb_file=pcb_file,
+        schematic_files=sorted(schematic_files),
+    )
 
 
 def default_output_name(

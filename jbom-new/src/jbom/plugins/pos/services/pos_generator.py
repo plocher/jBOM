@@ -2,9 +2,9 @@
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional, Union, List, Dict, Any
 
-from jbom.cli.formatting import Column, print_table
+from jbom.cli.formatting import Column, print_tabular_data
 import csv
 import sys
 
@@ -45,29 +45,55 @@ class DefaultPOSGenerator(POSGenerator):
         pcb_file: Path,
         output_file: Optional[Union[Path, str]] = None,
         layer: Optional[str] = None,
+        fabricator_id: Optional[str] = None,
+        fields: Optional[List[str]] = None,
+        filters: Optional[Dict[str, Any]] = None,
     ) -> None:
         """Generate a POS file from a KiCad PCB file."""
         # Step 1: Read the PCB file using KiCadReaderService
         board_model = self.kicad_reader.read_pcb_file(pcb_file)
 
         # Step 2: Convert BoardModel to PositionData
+        all_filters = filters or {}
+        if layer:
+            all_filters["layer"] = layer
         position_data = self._convert_board_to_position_data(
-            board_model, layer_filter=layer
+            board_model, filters=all_filters
         )
+
+        # Build headers/fields based on fabricator/fields
+        from jbom.config.fabricators import load_fabricator, headers_for_fields
+
+        fab = None
+        if fabricator_id:
+            fab = load_fabricator(fabricator_id)
+        default_fields = ["reference", "value", "package", "x", "y", "rotation", "side"]
+        if fab and not fields:
+            fab_implied = list(dict.fromkeys(fab.pos_columns.values()))
+            eff_fields = fab_implied
+        elif fab and fields:
+            fab_implied = list(dict.fromkeys(fab.pos_columns.values()))
+            eff_fields = list(fields)
+            for f in fab_implied:
+                if f not in eff_fields:
+                    eff_fields.append(f)
+        else:
+            eff_fields = fields or default_fields
+        headers = headers_for_fields(fab, eff_fields)
 
         # Step 3: Generate output based on format
         if output_file is None or output_file == "-":
             # Write CSV to stdout
-            self._write_csv_to_stdout(position_data)
+            self._write_csv_to_stdout(position_data, headers, eff_fields)
         elif isinstance(output_file, str) and output_file.lower() == "console":
             # Write human-readable console output
             self._write_console_output(position_data)
         else:
             # Write CSV to file
-            self._write_csv_to_file(position_data, output_file)
+            self._write_csv_to_file(position_data, output_file, headers, eff_fields)
 
     def _convert_board_to_position_data(
-        self, board_model, layer_filter: Optional[str] = None
+        self, board_model, filters: Optional[Dict[str, Any]] = None
     ) -> PositionData:
         """Convert BoardModel to PositionData for POS-specific processing."""
         position_data = PositionData(
@@ -77,8 +103,8 @@ class DefaultPOSGenerator(POSGenerator):
         )
 
         for footprint in board_model.footprints:
-            # Filter by layer if requested (footprint.side is 'TOP' or 'BOTTOM')
-            if layer_filter and footprint.side != layer_filter:
+            # Apply all filters
+            if filters and not self._passes_filters(footprint, filters):
                 continue
             # Convert side designation from BoardModel format to POS format
             layer = "Top" if footprint.side == "TOP" else "Bottom"
@@ -111,12 +137,47 @@ class DefaultPOSGenerator(POSGenerator):
 
         return position_data
 
+    def _passes_filters(self, footprint, filters: Dict[str, Any]) -> bool:
+        """Check if a footprint passes all active filters."""
+        # Layer filter
+        if "layer" in filters:
+            layer_filter = filters["layer"]
+            if footprint.side != layer_filter:
+                return False
+
+        # SMD only filter
+        if filters.get("smd_only", False):
+            mount_type = footprint.attributes.get("mount_type", "SMD")
+            if mount_type.upper() != "SMD":
+                return False
+
+        # Exclude DNP (Do Not Populate) components
+        if filters.get("exclude_dnp", False):
+            # Check various DNP indicators
+            dnp_attrs = [
+                footprint.attributes.get("dnp", "").lower(),
+                footprint.attributes.get("do_not_populate", "").lower(),
+                footprint.attributes.get("Value", "").lower(),
+            ]
+            if any(
+                attr in ["true", "1", "yes", "dnp", "do not populate"]
+                for attr in dnp_attrs
+            ):
+                return False
+
+        # Exclude from POS filter
+        if filters.get("exclude_from_pos", False):
+            exclude_pos = footprint.attributes.get("exclude_from_pos", "").lower()
+            if exclude_pos in ["true", "1", "yes"]:
+                return False
+
+        return True
+
     def _write_console_output(self, position_data: PositionData) -> None:
         """Write POS data in human-readable format using shared table formatter."""
-        # Prepare rows
-        sorted_components = sorted(position_data.components, key=lambda c: c.reference)
-        rows = []
-        for comp in sorted_components:
+
+        def transform_component(comp):
+            """Transform ComponentPosition to row mapping for display."""
             # Determine SMD display
             smd_type = comp.attributes.get("mount_type", "smd").upper()
             if smd_type == "SMD":
@@ -127,17 +188,15 @@ class DefaultPOSGenerator(POSGenerator):
                 smd_display = "SMD"
 
             side = "TOP" if comp.layer.upper() == "TOP" else "BOT"
-            rows.append(
-                {
-                    "ref": comp.reference,
-                    "x": f"{comp.x_mm:.4f}",
-                    "y": f"{comp.y_mm:.4f}",
-                    "rot": f"{comp.rotation_deg:.1f}",
-                    "side": side,
-                    "footprint": comp.footprint,
-                    "smd": smd_display,
-                }
-            )
+            return {
+                "ref": comp.reference,
+                "x": f"{comp.x_mm:.4f}",
+                "y": f"{comp.y_mm:.4f}",
+                "rot": f"{comp.rotation_deg:.1f}",
+                "side": side,
+                "footprint": comp.footprint,
+                "smd": smd_display,
+            }
 
         # Define columns with wrapping and alignment similar to legacy output
         columns = [
@@ -175,45 +234,72 @@ class DefaultPOSGenerator(POSGenerator):
             ),
         ]
 
-        # Title and table
-        print()
-        print_table(rows, columns, title="Placement Table:")
-        print()
-        print(f"Total: {len(position_data.components)} components")
+        # Use general tabular data formatter
+        print_tabular_data(
+            data=position_data.components,
+            columns=columns,
+            row_transformer=transform_component,
+            sort_key=lambda c: c.reference,
+            title="Placement Table:",
+            summary_line=f"Total: {len(position_data.components)} components",
+        )
 
-    def _write_csv_to_stdout(self, position_data: PositionData) -> None:
+    def _write_csv_to_stdout(
+        self, position_data: PositionData, headers: List[str], fields: List[str]
+    ) -> None:
         """Write POS data as CSV to stdout."""
         writer = csv.writer(sys.stdout)
-        self._write_csv_data(writer, position_data)
+        self._write_csv_data(writer, position_data, headers, fields)
 
     def _write_csv_to_file(
-        self, position_data: PositionData, output_file: Path
+        self,
+        position_data: PositionData,
+        output_file: Path,
+        headers: List[str],
+        fields: List[str],
     ) -> None:
         """Write POS data as CSV to a file."""
         with open(output_file, "w", newline="") as csvfile:
             writer = csv.writer(csvfile)
-            self._write_csv_data(writer, position_data)
+            self._write_csv_data(writer, position_data, headers, fields)
 
-    def _write_csv_data(self, writer, position_data: PositionData) -> None:
-        """Write POS data using the provided CSV writer."""
+    def _write_csv_data(
+        self, writer, position_data: PositionData, headers: List[str], fields: List[str]
+    ) -> None:
+        """Write POS data using the provided CSV writer with given headers/fields."""
         # Write header
-        writer.writerow(
-            ["Designator", "Val", "Package", "Mid X", "Mid Y", "Rotation", "Layer"]
-        )
+        writer.writerow(headers)
 
         # Write component data
         for comp in position_data.components:
-            writer.writerow(
-                [
-                    comp.reference,
-                    comp.value,
-                    comp.package,
-                    comp.x_mm,
-                    comp.y_mm,
-                    comp.rotation_deg,
-                    comp.layer,
-                ]
-            )
+            row: List[Union[str, float]] = []
+            x_str = f"{comp.x_mm:.4f}"
+            y_str = f"{comp.y_mm:.4f}"
+            rot_str = f"{comp.rotation_deg:.1f}"
+            side_str = comp.layer.upper()
+            for fld in fields:
+                if fld == "reference":
+                    row.append(comp.reference)
+                elif fld == "value":
+                    row.append(comp.value)
+                elif fld == "package":
+                    row.append(comp.package)
+                elif fld == "footprint":
+                    row.append(comp.footprint)
+                elif fld == "x":
+                    row.append(x_str)
+                elif fld == "y":
+                    row.append(y_str)
+                elif fld == "rotation":
+                    row.append(rot_str)
+                elif fld == "side":
+                    row.append(side_str)
+                elif fld == "smd":
+                    mt = comp.attributes.get("mount_type", "SMD").upper()
+                    row.append("SMD" if mt == "SMD" else "THT")
+                else:
+                    row.append("")
+            writer.writerow(row)
 
 
 def create_pos_generator() -> POSGenerator:
