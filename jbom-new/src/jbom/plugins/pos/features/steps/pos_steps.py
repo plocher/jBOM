@@ -47,6 +47,7 @@ def step_populate_pcb_with_components(context):
             "y": float(row["Y"]),
             "layer": row["Layer"],
             "footprint": row["Footprint"],
+            "mount": row.get("Mount", "SMD"),
         }
         context.test_components.append(component)
 
@@ -69,6 +70,11 @@ def _create_mock_pcb_file(context):
         # Determine layer designation
         layer_prefix = "F" if comp["layer"].lower() == "top" else "B"
 
+        attr = (
+            "smd"
+            if str(comp.get("mount", "SMD")).lower() in ("smd", "sm")
+            else "through_hole"
+        )
         footprint_entry = f"""  (footprint "{comp['footprint']}" (layer "{layer_prefix}.Cu")
     (at {comp['x']} {comp['y']} {comp['rotation']})
     (fp_text reference "{comp['reference']}" (at 0 0) (layer "{layer_prefix}.SilkS"))
@@ -76,7 +82,7 @@ def _create_mock_pcb_file(context):
     (property "Reference" "{comp['reference']}")
     (property "Value" "{comp['value']}")
     (property "Footprint" "{comp['footprint']}")
-    (attr smd)
+    (attr {attr})
   )"""
         pcb_content.append(footprint_entry)
 
@@ -192,6 +198,23 @@ def step_verify_pos_columns(context, column_list):
     ), f"Expected columns {expected_columns}, got {actual_columns}"
 
 
+@when("I generate a POS file with output to console")
+def step_generate_pos_to_console(context):
+    """Generate POS data in human-readable console mode and capture output."""
+    from jbom.plugins.pos.services.pos_generator import create_pos_generator
+    from contextlib import redirect_stdout
+
+    pos_generator = create_pos_generator()
+
+    buf = io.StringIO()
+    with redirect_stdout(buf):
+        pos_generator.generate_pos_file(
+            pcb_file=context.test_pcb_file,
+            output_file="console",
+        )
+    context.console_output = buf.getvalue()
+
+
 @then("the output contains CSV data")
 def step_verify_csv_output(context):
     """Verify that the output contains valid CSV data."""
@@ -209,12 +232,32 @@ def step_verify_csv_output(context):
 
 
 @then('the output contains component "{component_ref}"')
+def step_output_contains_component_csv(context, component_ref):
+    assert context.pos_output_content is not None, "No CSV output captured"
+    assert component_ref in context.pos_output_content
+
+
+@then("the console output contains a placement table")
+def step_console_contains_table(context):
+    assert (
+        hasattr(context, "console_output") and context.console_output
+    ), "No console output captured"
+    assert "Placement Table:" in context.console_output
+
+
+@then('the console output mentions component "{component_ref}"')
 def step_verify_component_in_output(context, component_ref):
     """Verify that a specific component appears in the output."""
-    assert context.pos_output_content is not None, "No output content captured"
+    # Support both CSV stdout capture and console capture
+    output = None
+    if hasattr(context, "console_output") and context.console_output:
+        output = context.console_output
+    elif hasattr(context, "pos_output_content") and context.pos_output_content:
+        output = context.pos_output_content
+    assert output is not None, "No output content captured"
     assert (
-        component_ref in context.pos_output_content
-    ), f"Component {component_ref} not found in output"
+        component_ref in output
+    ), f"Component {component_ref} not found in console output"
 
 
 @then("an error is reported")
@@ -223,6 +266,40 @@ def step_verify_error_reported(context):
     assert (
         hasattr(context, "error_occurred") and context.error_occurred
     ), "No error was reported"
+
+
+@when("I run the POS tool with defaults")
+def step_run_pos_with_defaults(context):
+    """Simulate CLI default behavior: discover PCB and write default-named file, not stdout."""
+    from jbom.plugins.pos.services.pos_generator import create_pos_generator
+    from contextlib import redirect_stdout
+
+    # Default output filename: <project>.pos.csv (per requirement)
+    default_path = context.project_dir / f"{context.project_name}.pos.csv"
+
+    # Run while capturing stdout to ensure nothing is printed
+    buf = io.StringIO()
+    with redirect_stdout(buf):
+        pos_generator = create_pos_generator()
+        pos_generator.generate_pos_file(
+            pcb_file=context.test_pcb_file, output_file=default_path
+        )
+    context.default_output_path = default_path
+    context.captured_stdout = buf.getvalue()
+
+
+@then("a default POS file is created in the project directory")
+def step_default_file_created(context):
+    assert (
+        context.default_output_path.exists()
+    ), f"Default POS file not created: {context.default_output_path}"
+
+
+@then("no CSV was printed to stdout")
+def step_no_csv_on_stdout(context):
+    assert (
+        context.captured_stdout == ""
+    ), "CSV should not be printed to stdout when using defaults"
 
 
 @then("the error mentions the missing file")
