@@ -41,6 +41,23 @@ def create_parser() -> argparse.ArgumentParser:
         help="list installed plugins",
     )
 
+    # Add pos command
+    pos_parser = subparsers.add_parser(
+        "pos",
+        help="generate placement (POS/CPL) data",
+    )
+    pos_parser.add_argument(
+        "pcb",
+        nargs="?",
+        help="Path to .kicad_pcb (optional; if omitted, discover in current directory)",
+    )
+    pos_parser.add_argument(
+        "-o",
+        "--output",
+        help="Output target: 'console' or a file path (default: <project>.pos.csv)",
+        default=None,
+    )
+
     return parser
 
 
@@ -55,6 +72,12 @@ def main(argv: Optional[List[str]] = None) -> int:
     """
     parser = create_parser()
     args = parser.parse_args(argv)
+
+    from jbom.cli.discovery import find_project_and_pcb, default_output_name
+    from jbom.workflows.registry import get as get_workflow
+
+    # Ensure POS workflow registered (side-effect import)
+    from jbom.plugins.pos.workflows import generate_pos  # noqa: F401
 
     # Handle plugin command
     if args.command == "plugin":
@@ -76,6 +99,37 @@ def main(argv: Optional[List[str]] = None) -> int:
         else:
             # No action specified for plugin command
             parser.parse_args([args.command, "--help"])
+            return 1
+
+    if args.command == "pos":
+        # Resolve PCB path or discover
+        if args.pcb:
+            pcb_path = Path(args.pcb)
+            if not pcb_path.exists():
+                print(f"Error: PCB file not found: {pcb_path}", file=sys.stderr)
+                return 2
+            project = None
+            cwd = pcb_path.parent
+        else:
+            cwd = Path.cwd()
+            project, pcb_path = find_project_and_pcb(cwd)
+            if not pcb_path:
+                print(
+                    "Error: No .kicad_pcb file found in current directory",
+                    file=sys.stderr,
+                )
+                return 2
+        # Determine output
+        output = args.output
+        if output is None:
+            output = str(default_output_name(cwd, project, pcb_path, "pos.csv"))
+        # Call workflow
+        try:
+            wf = get_workflow("pos.generate")
+            wf(pcb_file=pcb_path, output=output)
+            return 0
+        except Exception as e:
+            print(f"Error: {e}", file=sys.stderr)
             return 1
 
     # No command specified
