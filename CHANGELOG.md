@@ -1,6 +1,259 @@
 # CHANGELOG
 
 
+## v4.7.0 (2026-01-18)
+
+### Bug Fixes
+
+* fix: Remove unused imports to pass flake8
+
+Co-Authored-By: Warp <agent@warp.dev> ([`dd62665`](https://github.com/plocher/jBOM/commit/dd626659734ab0d2d6fb966d038724adfff92ee6))
+
+* fix(pos): break long line to meet flake8 line length requirement
+
+Split long f-string formatting line into multiple lines to stay within
+130 character limit while maintaining functionality.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`c01e50c`](https://github.com/plocher/jBOM/commit/c01e50c16c7cbc917bc60140e15293edfc7691be))
+
+* fix(pos): remove redundant version number
+
+Remove __version__ from __init__.py - plugin.json is the single
+source of truth for plugin metadata including version.
+
+Avoids version sync issues and follows DRY principle.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`b0b41a0`](https://github.com/plocher/jBOM/commit/b0b41a074ecdc48fca7b767421efd5e0f81fff69))
+
+### Features
+
+* feat: add console output format to POS generator
+
+- Support output_file='Console' for human-readable pretty printed output
+- Organize components by layer (Top/Bottom) with component counts
+- Display formatted table with reference, value, package, position, rotation
+- Sort components by reference within each layer
+- Include board title and KiCad version information
+- Maintain backward compatibility with existing CSV functionality
+
+This makes the tool much more user-friendly for interactive use!
+
+Co-Authored-By: Warp <agent@warp.dev> ([`36475ae`](https://github.com/plocher/jBOM/commit/36475ae56389266b0fe3fa8a0e7a25371582f96a))
+
+* feat: implement POS generator service - completes TDD cycle
+
+- Create POSGenerator interface and DefaultPOSGenerator implementation
+- Integrate with KiCadReaderService for PCB file reading
+- Convert BoardModel to POS-specific PositionData models
+- Support both file output and stdout output modes
+- Handle CSV formatting with proper headers and data
+- All POS BDD scenarios now pass (18/18 steps)
+
+This completes the TDD cycle:
+✓ Red: Tests failed with ModuleNotFoundError
+✓ Green: Implemented service, all tests pass
+→ Ready for refactor phase
+
+Perfect example of TDD working with proper separation:
+- Step definitions call real plugin services
+- Plugin services implement actual functionality
+- Core services provide infrastructure (KiCadReaderService)
+
+Co-Authored-By: Warp <agent@warp.dev> ([`4188bed`](https://github.com/plocher/jBOM/commit/4188bed80958c358ec70a85fb6ea455181b973b6))
+
+* feat: integrate KiCadReaderService with POS step definitions
+
+- Replace mock component data with real KiCad PCB file parsing
+- Add utility function to convert BoardModel to POS-specific PositionData
+- Update all POS generation steps to use data from KiCadReaderService
+- Create more complete mock KiCad PCB files with proper layer designations
+- Improve error handling for missing PCB files using service validation
+- Demonstrate how plugins consume comprehensive component data
+- Test integration shows proper component extraction and conversion
+
+This integration shows how the core KiCadReaderService can be consumed
+by plugin-specific step definitions to provide real parsed data rather
+than mock data for testing.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`7bb1f6f`](https://github.com/plocher/jBOM/commit/7bb1f6fc05f1505475c4f094132fa30d9e7b7deb))
+
+* feat: create comprehensive KiCadReaderService as core service
+
+- Move KiCadReaderService from POS plugin to core loaders module
+- Create comprehensive PCB file reading with full component data
+- Add S-expression parsing capabilities from legacy codebase
+- Extract all component attributes, not just POS-specific data
+- Create proper data models with BoardModel and PcbComponent
+- Add comprehensive unit tests with real KiCad PCB parsing
+- Support board metadata extraction (title, version)
+- Handle multiple layers, rotation, and all component properties
+- Prepare foundation for additional readers (project, schematic)
+
+This core service can now be used by multiple plugins (POS, BOM, etc.)
+rather than being limited to position data only.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`cd7ae12`](https://github.com/plocher/jBOM/commit/cd7ae1243666886b7f6496f1a99dae94bc1a76fe))
+
+* feat: create POS plugin step definitions
+
+- Add comprehensive step definitions for POS generation BDD scenarios
+- Handle PCB population with component data tables using proper colon syntax
+- Implement POS file generation and validation steps
+- Add error handling for missing PCB files
+- Create environment.py for proper step discovery
+- Support both file output and stdout output modes
+- All 18 step definitions properly discovered by behave
+
+Co-Authored-By: Warp <agent@warp.dev> ([`e205f6f`](https://github.com/plocher/jBOM/commit/e205f6f6068c087f7eeecd60ec4c7da2d2fd01ae))
+
+* feat(pos): create POS plugin structure
+
+Create initial POS plugin directory structure:
+- plugin.json: metadata with services and workflows list
+- services/: for KiCadReader, POSGenerator, OutputFormatter
+- workflows/: for generate_pos workflow
+- features/: pos_generation.feature (already created)
+- tests/: for unit tests
+
+Plugin is now discoverable:
+$ jbom plugin --list
+Core plugins:
+  pos (1.0.0)
+    Position (placement) file generation for PCB assembly
+
+Next: implement services, workflow, and step definitions.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`c48652a`](https://github.com/plocher/jBOM/commit/c48652ae2feac59e02bca4409ec9ea2768c8a0d4))
+
+* feat(test): improve POS feature with proper Gherkin style
+
+Update pos_generation.feature to match existing jBOM style:
+- Add Background section for clean test environment
+- Use data tables for component specifications
+- Proper Given-When-Then structure
+- More descriptive step names (not raw CLI commands)
+
+Example improvements:
+- "the PCB is populated with components:" (data table)
+- "I generate a POS file with no options"
+- "the POS contains 4 components"
+- "the POS has columns: Designator, Val, Package..."
+
+This matches the pattern from existing jBOM functional tests and
+provides better documentation of expected behavior.
+
+Updated BOOTSTRAP-STEP2.md scenarios checklist to match.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`ba91677`](https://github.com/plocher/jBOM/commit/ba916779c79e048b30a8a7ecb77129129834f3b7))
+
+* feat(test): add behave step subdirectory loading support
+
+Add features/steps/__init__.py to enable step definition subdirectories:
+- Uses pkgutil.walk_packages to auto-discover step modules
+- Follows pattern from docs/development_notes/BEHAVE_SUBDIRECTORY_LOADING.md
+- Enables future organization of steps into domain subdirectories
+
+Updated BOOTSTRAP-STEP2.md to reference the documentation.
+
+This prepares for organizing plugin-specific step definitions if needed,
+though currently all plugins share core step definitions.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`08b7a75`](https://github.com/plocher/jBOM/commit/08b7a754b7be2bc4f5e0cdb06b035510266cb9d4))
+
+* feat(workflow): setup Step 2 with explicit test structure
+
+Create comprehensive Step 2 plan:
+- BOOTSTRAP-STEP2.md with explicit Gherkin scenario checklist
+- features/simple_pos.feature defining POS generation scenarios
+- Plugin structure includes tests/ subdirectory
+- pytest configuration for plugin unit test discovery
+
+Key improvements:
+- Features section explicitly lists Gherkin scenarios to verify
+- Plugin structure diagram shows where unit tests go
+- Test Discovery Configuration section explains behave and pytest
+- pytest configured to find plugin tests in plugins/*/tests/
+
+Test organization:
+- Behave (functional): features/ directory (already working)
+- Pytest (unit): jbom-new/tests/ and plugins/*/tests/ (configured)
+
+Run tests with:
+- behave: functional/BDD tests
+- pytest jbom-new/: all unit tests including plugin tests
+
+Co-Authored-By: Warp <agent@warp.dev> ([`1fef90e`](https://github.com/plocher/jBOM/commit/1fef90eb653e98dcc0b1fa2136819dbaf2ef24a0))
+
+### Refactoring
+
+* refactor: remove all simulation code from POS step definitions
+
+- Step definitions now call actual plugin services (not yet implemented)
+- Remove all _simulate_* functions that duplicated plugin logic
+- Tests properly fail with ModuleNotFoundError until services are implemented
+- This is the correct TDD approach:
+  1. Write test (step definitions) ✓
+  2. See it fail (missing plugin services) ✓
+  3. Implement minimum code to pass (next step)
+
+No more plugin logic in test code - step definitions are pure test setup
+and verification. The actual functionality belongs in plugin services.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`de64215`](https://github.com/plocher/jBOM/commit/de64215a0cf45c30a45ac9844f691f67e37bce3e))
+
+* refactor: separate test setup from plugin functionality in POS steps
+
+- Remove plugin logic (_convert_board_to_position_data) from step definitions
+- Step definitions should test plugin functionality, not implement it
+- Replace conversion logic with simulation placeholders
+- Add clear TODOs for where actual POS services will be called
+- Maintain proper separation of concerns:
+  * Step definitions = test setup + verification
+  * Plugin services = actual functionality being tested
+
+The conversion from BoardModel to PositionData belongs in the POS plugin
+services that the step definitions will call, not in the test code itself.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`cd1e8b7`](https://github.com/plocher/jBOM/commit/cd1e8b7058682d3649027b75b24cb613c02fa090))
+
+* refactor(workflow): fix directory naming and plugin feature location
+
+Major structural improvements:
+
+1. Directory Naming (src/jbom_new → src/jbom):
+   - Package is still 'jbom', not 'jbom_new'
+   - Updated all imports and references
+   - Fixed environment.py, step definitions, and CLI
+
+2. Plugin Features Organization:
+   - Move POS feature to src/jbom/plugins/pos/features/
+   - Plugins own their features, not top-level
+   - Created behave.ini to discover plugin features
+   - Updated BOOTSTRAP docs to show correct structure
+
+3. Test Discovery:
+   - behave.ini: lists core and plugin feature paths
+   - pytest in pyproject.toml: src/jbom/plugins
+   - Both configured to find plugin tests
+
+4. Documentation Updates:
+   - BOOTSTRAP.md: corrected directory structure
+   - BOOTSTRAP-STEP2.md: plugin structure includes features/
+   - Clarified where tests live and how to run them
+
+Run tests:
+- cd jbom-new && behave  (finds core + plugin features)
+- cd jbom-new && pytest  (finds core + plugin unit tests)
+
+Co-Authored-By: Warp <agent@warp.dev> ([`d9425c4`](https://github.com/plocher/jBOM/commit/d9425c4b862013d4cb7232975c492a6c57b067db))
+
+### Unknown
+
+* Merge pull request #18 from plocher/feature/workflow-bootstrap-step2
+
+Complete POS Plugin with Fabricator Support and Architectural Improvements ([`766e5f6`](https://github.com/plocher/jBOM/commit/766e5f6777ff19359b7b0b1fe4f4723b1747994e))
+
+
 ## v4.6.0 (2026-01-17)
 
 ### Bug Fixes
