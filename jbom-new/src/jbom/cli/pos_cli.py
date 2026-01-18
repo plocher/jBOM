@@ -14,8 +14,11 @@ import argparse
 import sys
 from pathlib import Path
 
-from jbom.plugins.pos.services.pos_generator import create_pos_generator
 from jbom.cli.discovery import find_project_and_pcb, default_output_name
+from jbom.workflows.registry import get as get_workflow
+
+# Ensure workflow is registered on import
+from jbom.plugins.pos.workflows import generate_pos  # noqa: F401
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -32,9 +35,9 @@ def main(argv: list[str] | None = None) -> int:
     # Determine default output file name: <project>.pos.csv if project exists, else pcb stem
     output = default_output_name(cwd, project, pcb, "pos.csv")
 
-    gen = create_pos_generator()
     try:
-        gen.generate_pos_file(pcb_file=pcb, output_file=output)
+        wf = get_workflow("pos.generate")
+        wf(pcb_file=pcb, output=output)
     except Exception as e:
         sys.stderr.write(f"Error: {e}\n")
         return 1
