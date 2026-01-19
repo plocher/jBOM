@@ -4,7 +4,7 @@ import pytest
 from pathlib import Path
 from unittest.mock import patch
 
-from jbom.services.readers.schematic_reader import SchematicReader
+from jbom.services.schematic_reader import SchematicReader
 from jbom.common.types import Component
 
 

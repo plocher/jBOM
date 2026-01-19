@@ -3,7 +3,7 @@
 from pathlib import Path
 from unittest.mock import patch
 
-from jbom.services.matchers.inventory_matcher import InventoryMatcher
+from jbom.services.inventory_matcher import InventoryMatcher
 from jbom.services.generators.bom_generator import BOMEntry, BOMData
 from jbom.common.types import InventoryItem, DEFAULT_PRIORITY
 

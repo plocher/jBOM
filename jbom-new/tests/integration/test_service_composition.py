@@ -3,8 +3,8 @@
 from pathlib import Path
 from unittest.mock import patch
 
-from jbom.services.readers.schematic_reader import SchematicReader
-from jbom.services.generators.bom_generator import BOMGenerator
+from jbom.services.schematic_reader import SchematicReader
+from jbom.services.bom_generator import BOMGenerator
 from jbom.common.types import Component
 from jbom.common.options import GeneratorOptions
 
@@ -184,7 +184,7 @@ class TestServiceComposition:
 
     def test_full_pipeline_three_services_composition(self):
         """Demonstrate the full pipeline: SchematicReader → BOMGenerator → InventoryMatcher."""
-        from jbom.services.matchers.inventory_matcher import InventoryMatcher
+        from jbom.services.inventory_matcher import InventoryMatcher
         from jbom.common.types import InventoryItem, DEFAULT_PRIORITY
 
         # Create all three services

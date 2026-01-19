@@ -1,6 +1,6 @@
 """Unit tests for BOMGenerator service."""
 
-from jbom.services.generators.bom_generator import BOMGenerator, BOMEntry, BOMData
+from jbom.services.bom_generator import BOMGenerator, BOMEntry, BOMData
 from jbom.common.types import Component
 
 
