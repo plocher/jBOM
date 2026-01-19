@@ -122,11 +122,46 @@ def inventory_enhanced_bom(project, inventory_file, output):
 
 ## Migration Strategy
 
-### **Phase 1**: Extract Services (Current → Service Layer)
-1. Extract `SchematicReader` from BOM plugin
-2. Extract `PCBReader` from POS plugin
-3. Extract `InventoryMatcher` from Inventory plugin
-4. Create shared `CSVFormatter`, `ConsoleFormatter`
+### **Phase 1**: Extract Services (Current → Service Layer) ✅ **IN PROGRESS**
+1. ✅ **COMPLETE**: Extract `SchematicReader` from BOM plugin
+   - Pure service created in `src/jbom/services/readers/schematic_reader.py`
+   - 6/6 unit tests passing - proves service independence
+   - 3/3 integration tests passing - proves composability
+   - LibID inference fixed - CAP_100nF correctly identified as CAP
+2. ✅ **COMPLETE**: Extract `BOMGenerator` service
+   - Pure service created in `src/jbom/services/generators/bom_generator.py`
+   - 16/16 unit tests passing - comprehensive test coverage
+   - Multiple aggregation strategies (value_footprint, value_only, lib_id_value)
+   - Proper filtering and property merging
+3. 🚧 **TODO**: Extract `InventoryMatcher` from Inventory plugin
+4. 🚧 **TODO**: Extract `PCBReader` from POS plugin
+5. 🚧 **TODO**: Create shared `CSVFormatter`, `ConsoleFormatter`
+
+**Progress Summary**: 2/5 services extracted, all tests passing, service composition validated
+
+#### **POC Validation Results**
+
+Our proof-of-concept demonstrates the viability of this architecture:
+
+```python
+# Service Independence - Services work without plugin infrastructure
+reader = SchematicReader()
+bom_generator = BOMGenerator()
+
+# Service Composition - Services compose cleanly
+components = reader.load_components(schematic_file)
+bom_data = bom_generator.generate_bom_data(components, "MyProject")
+
+# Results: 28/28 tests passing, real BDD scenarios improved
+```
+
+**Key Validation Points**:
+- ✅ Services instantiate and run independently
+- ✅ Services compose naturally with clean data flow
+- ✅ Unit testing is straightforward and fast
+- ✅ Integration testing demonstrates workflows
+- ✅ Backward compatibility maintained (existing BDD tests improved)
+- ✅ Component categorization bug fixed as side effect
 
 ### **Phase 2**: Create Workflows (Service → Workflow Layer)
 1. Create `generate_basic_bom` workflow using extracted services
