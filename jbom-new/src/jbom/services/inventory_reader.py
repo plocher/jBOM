@@ -37,7 +37,7 @@ except ImportError:
     NUMBERS_SUPPORT = False
 
 
-class InventoryLoader:
+class InventoryReader:
     """Loads inventory data from various file formats."""
 
     def __init__(self, inventory_paths: Union[Path, List[Path]]):

@@ -5,12 +5,12 @@ Loader for generating inventory from KiCad project components.
 from typing import List, Tuple, Dict, Set
 
 from jbom.common.types import Component, InventoryItem, DEFAULT_PRIORITY
-from jbom.processors.component_types import get_component_type
+from jbom.common.component_utils import get_component_type
 from jbom.common.constants import CommonFields
 from jbom.common.packages import PackageType
 
 
-class ProjectInventoryLoader:
+class ProjectInventoryGenerator:
     """Generates inventory items from project components."""
 
     def __init__(self, components: List[Component]):

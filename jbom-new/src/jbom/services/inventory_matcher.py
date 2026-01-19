@@ -3,9 +3,9 @@
 from typing import List, Dict, Optional
 from pathlib import Path
 
-from jbom.services.generators.bom_generator import BOMEntry, BOMData
+from jbom.services.bom_generator import BOMEntry, BOMData
 from jbom.common.types import InventoryItem
-from jbom.loaders.inventory import InventoryLoader
+from jbom.services.inventory_reader import InventoryReader
 
 
 class InventoryMatcher:
@@ -75,7 +75,7 @@ class InventoryMatcher:
             return []
 
         try:
-            loader = InventoryLoader(inventory_file)
+            loader = InventoryReader(inventory_file)
             inventory_items, _ = loader.load()
             return inventory_items
         except Exception:
