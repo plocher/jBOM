@@ -1,13 +1,8 @@
 # Domain Services Layer
 
-This directory implements the business logic core of jBOM as **Domain Services** - stateful objects that encapsulate complex business operations and domain knowledge.
+This directory contains jBOM's **Domain Services Layer** - the business logic core implementing domain operations as stateful, configurable objects.
 
-## Domain Service Characteristics
-
-**Stateful Business Objects**: Services maintain configuration and operational state through constructor parameters
-**Business Process Encapsulation**: Each service represents a complete domain operation or business capability
-**Configurable Behavior**: Service behavior customized through constructor parameters and options objects
-**Infrastructure Independence**: Pure domain logic with no external system dependencies
+For architectural principles, design patterns, and service composition guidance, see **[Domain Services Layer](../../docs/architecture/layer-responsibilities.md#domain-services-layer)** in the architecture documentation.
 
 ## Service Boundaries by Domain
 
@@ -33,19 +28,11 @@ Each service operates within a specific **bounded context** with clear domain re
 **Responsibility**: Generate pick-and-place files for manufacturing processes
 **Key Operations**: Coordinate transformation, component filtering, format standardization
 
-## Service Integration Patterns
+## Service Implementation Notes
 
-### Constructor Configuration
-Services receive behavior configuration at instantiation through parameters like aggregation modes, matching criteria, and processing options.
-
-### Service Composition
-Services may use other services for specialized domain operations while avoiding workflow orchestration responsibilities.
-
-### Domain Isolation
-Services maintain clear boundaries - no CLI imports, no print statements, no application layer dependencies.
-
-### Configurable Behavior
-Behavior variations implemented through constructor parameters, conditional logic, and domain-specific processing methods.
+**Constructor Configuration**: Services configured through parameters and options objects at instantiation
+**Domain Isolation**: No dependencies on application layer, CLI frameworks, or infrastructure concerns
+**Service Composition**: Services may use other domain services for specialized operations
 
 ## Development Guidelines
 

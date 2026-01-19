@@ -1,13 +1,8 @@
 # Domain Model Layer
 
-This directory implements jBOM's **Domain Model Layer** - shared domain concepts, value objects, and pure functions used across all bounded contexts.
+This directory contains jBOM's **Domain Model Layer** - shared domain concepts, value objects, and utilities used across all bounded contexts.
 
-## Domain Model Characteristics
-
-**Immutable Value Objects**: Business concepts represented as frozen dataclasses with domain validation
-**Pure Functions**: Stateless operations for domain calculations and transformations
-**Cross-Cutting Utilities**: Infrastructure-agnostic helper functions shared across services
-**Type Safety**: Configuration objects ensuring domain constraint validation
+For domain modeling principles and patterns, see **[Domain Model Layer](../../docs/architecture/layer-responsibilities.md#domain-model-layer)** in the architecture documentation.
 
 ## Key Domain Modules
 
@@ -41,35 +36,11 @@ This directory implements jBOM's **Domain Model Layer** - shared domain concepts
 **Key Functions**: S-expression parsing, Domain object conversion, File validation
 **Characteristics**: Bridge between file formats and domain objects
 
-## Domain Model Principles
+## Domain Model Implementation Notes
 
-### Ubiquitous Language
-Consistent terminology from electronics domain used across all contexts: "reference designator", "component value", "footprint", rather than generic technical terms.
-
-### Domain Invariants
-Business rules encoded directly in domain objects through validation methods, ensuring domain constraints are maintained throughout the system.
-
-### Cross-Context Concepts
-Shared abstractions like aggregation strategies and configuration enumerations that span multiple bounded contexts while maintaining domain meaning.
-
-## Development Guidelines
-
-### Domain Model Creation
-- **Cross-Context Usage**: Ensure concepts are needed by multiple services or application commands
-- **Domain Language**: Use terminology from electronics domain, not generic programming terms
-- **Business Rules**: Encode domain constraints through validation methods and properties
-- **Immutability**: Prefer frozen dataclasses for value objects to ensure consistency
-
-### Testing Strategy
-- **Invariant Tests**: Validate domain rules and business constraints
-- **Function Tests**: Test pure domain logic with representative data
-- **Identity Tests**: Verify entity identity and equality behavior
-- **Integration Tests**: Ensure domain models work correctly with services
-
-### Evolution Guidelines
-- **Backward Compatibility**: Changes to shared models affect all dependent services
-- **Domain Integrity**: Maintain consistency of ubiquitous language across contexts
-- **Minimal Interface**: Keep shared concepts focused on truly cross-cutting concerns
+**Ubiquitous Language**: Consistent electronics domain terminology throughout
+**Domain Invariants**: Business rules encoded in object validation methods
+**Cross-Context Concepts**: Shared abstractions spanning multiple bounded contexts
 
 ## Implementation Guidance
 

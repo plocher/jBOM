@@ -15,23 +15,9 @@ src/jbom/
 └── main.py       # Application composition root
 ```
 
-## Core Design Principles
+## Source Code Organization
 
-### Domain-Driven Design (DDD)
-- **Domain Services**: Stateful objects encapsulating business operations
-- **Domain Models**: Immutable value objects expressing business concepts
-- **Bounded Contexts**: Clear service boundaries around related functionality
-
-### Dependency Inversion
-- **Inward Flow**: Application Layer → Domain Services → Domain Models
-- **No Outward Dependencies**: Domain layer is independent of infrastructure
-- **Interface Agnostic**: Services work with CLI, GUI, API, or plugin interfaces
-
-### Layered Responsibilities
-- **Domain Services Layer**: Business logic and domain operations
-- **Application Layer**: Workflow orchestration and interface adaptation
-- **Domain Model Layer**: Shared concepts and pure functions
-- **Configuration Layer**: Settings and domain configuration
+This source tree implements jBOM's domain-centric architecture with clear layer separation and dependency management. For complete architectural principles and design rationale, see **[Architecture Documentation](../docs/architecture/README.md)**.
 
 ## Layer Overviews
 
@@ -73,52 +59,8 @@ src/jbom/
 - File format and processing options
 - Integration settings for external tools
 
-## Design Patterns
+## Development Resources
 
-### Domain Service Pattern
-- **Stateful Configuration**: Services configured via constructor with strategies and options
-- **Business Process Encapsulation**: Each service represents a complete domain operation
-- **Factory Methods**: Internal creation of domain-specific processors and transformers
-
-### Command/Query Separation
-- **Commands**: Operations that modify state or perform business actions
-- **queries**: Read-only operations returning domain data without side effects
-- **Clear Intent**: Method names explicitly indicate command vs query behavior
-
-### Strategy Pattern
-- **Configurable Behavior**: Services accept strategy objects for varying business rules
-- **Runtime Flexibility**: Aggregation, filtering, and output strategies swappable
-- **Domain-Specific**: Strategies encode business domain knowledge and constraints
-
-## Service Composition
-
-### Composition Root
-- **Centralized Wiring**: `main.py` coordinates service instantiation and configuration
-- **Dependency Injection**: Services receive dependencies through constructors
-- **Application Lifecycle**: Manages startup, configuration, and resource cleanup
-
-### Workflow Patterns
-- **Simple Workflows**: Single service handling complete operations
-- **Collaborative Workflows**: Multiple services coordinated by Application Layer
-- **Pipeline Processing**: Sequential service calls with data transformation
-
-## Architectural Constraints
-
-### Dependency Flow
-- **Inward Dependencies**: Application Layer depends on Domain Services, Domain Services depend on Domain Models
-- **No Outward Dependencies**: Domain layers cannot import from Application Layer
-- **Shared Concepts**: Domain Model Layer provides common concepts to all layers
-
-### Service Autonomy
-- **Isolation**: Services testable independently with mock dependencies
-- **Composability**: Services combine for complex business operations
-- **Interface Agnostic**: Same services support multiple interface types (CLI, GUI, API)
-
-### Evolutionary Design
-- **Open/Closed Principle**: New capabilities added without modifying existing services
-- **Extension Points**: Strategy patterns and factory methods enable customization
-- **Bounded Context Respect**: Clear service boundaries prevent uncontrolled coupling
-
-## Development Guidance
-
-For implementation details and step-by-step development guidance, see the [Developer Tutorial Series](../docs/tutorial/README.md).
+- **[Architecture Documentation](../docs/architecture/README.md)** - Authoritative design principles and patterns
+- **[Developer Tutorial Series](../docs/tutorial/README.md)** - Step-by-step implementation guidance
+- **Layer READMEs** - Specific guidance for each architectural layer
