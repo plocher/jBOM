@@ -1,1 +1,0 @@
-"""Workflows for POS plugin."""

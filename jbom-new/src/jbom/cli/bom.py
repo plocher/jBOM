@@ -6,12 +6,9 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-from jbom.workflows.bom_workflows import (
-    generate_basic_bom,
-    generate_inventory_enhanced_bom,
-    generate_filtered_bom,
-)
-from jbom.services.generators.bom_generator import BOMData
+from jbom.services.schematic_reader import SchematicReader
+from jbom.services.bom_generator import BOMGenerator, BOMData
+from jbom.services.inventory_matcher import InventoryMatcher
 from jbom.common.options import GeneratorOptions
 
 
@@ -76,9 +73,22 @@ def handle_bom(args: argparse.Namespace) -> int:
         options = GeneratorOptions(verbose=args.verbose) if args.verbose else None
         project_name = schematic_file.stem
 
-        # Choose workflow based on arguments
+        # Use services directly - no workflow abstraction needed
+        reader = SchematicReader(options)
+        generator = BOMGenerator(args.aggregation)
+
+        # Load components from schematic
+        components = reader.load_components(schematic_file)
+
+        # Generate basic BOM
+        filters = {
+            "exclude_dnp": not args.include_dnp,
+            "include_only_bom": not args.include_excluded,
+        }
+        bom_data = generator.generate_bom_data(components, project_name, filters)
+
+        # Enhance with inventory if requested
         if args.inventory:
-            # Inventory-enhanced BOM workflow
             inventory_file = Path(args.inventory)
             if not inventory_file.exists():
                 print(
@@ -87,33 +97,10 @@ def handle_bom(args: argparse.Namespace) -> int:
                 )
                 return 1
 
-            bom_data = generate_inventory_enhanced_bom(
-                schematic_file, inventory_file, project_name, options
+            matcher = InventoryMatcher()
+            bom_data = matcher.enhance_bom_with_inventory(
+                bom_data, inventory_file, "ipn_fuzzy"
             )
-
-        elif (
-            args.aggregation != "value_footprint"
-            or args.include_dnp
-            or args.include_excluded
-        ):
-            # Custom filtering/aggregation workflow
-            filters = {
-                "exclude_dnp": not args.include_dnp,
-                "include_only_bom": not args.include_excluded,
-            }
-
-            bom_data = generate_filtered_bom(
-                schematic_file,
-                project_name,
-                args.aggregation,
-                filters["exclude_dnp"],
-                filters["include_only_bom"],
-                options,
-            )
-
-        else:
-            # Basic BOM workflow
-            bom_data = generate_basic_bom(schematic_file, project_name, options)
 
         # Handle output
         return _output_bom(bom_data, args.output)

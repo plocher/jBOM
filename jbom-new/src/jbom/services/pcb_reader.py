@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Optional
 
-from .pcb_model import BoardModel, PcbComponent
+from jbom.common.pcb_types import BoardModel, PcbComponent
 
 
 class KiCadReaderService(ABC):

@@ -14,7 +14,7 @@ from typing import List, Dict, Optional, Union
 
 # warnings imported at line 11 already
 from jbom.common.types import InventoryItem, DEFAULT_PRIORITY
-from jbom.loaders.jlc_loader import JLCPrivateInventoryLoader
+from jbom.services.jlc_loader import JLCPrivateInventoryLoader
 
 # Suppress specific Numbers version warning
 warnings.filterwarnings(
