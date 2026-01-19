@@ -20,6 +20,7 @@ And the CSV output has a row where
 And the CSV output has a row where
       | References | Value | Footprint   | Quantity |
       | R3         | 10K   | R_0603_1608 | 1        |
+    And the line count is 2
 
   Scenario: Aggregation by value only
     Given a KiCad schematic file "value_only.kicad_sch" with components:
@@ -31,4 +32,4 @@ And the CSV output has a row where
 And the CSV output has a row where
       | References | Value |
       | R1, R2     | 10K   |
-    And the line count is 2
+    And the line count is 1
