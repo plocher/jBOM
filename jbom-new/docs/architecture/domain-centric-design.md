@@ -10,8 +10,10 @@ Consistent terminology from the electronics domain used throughout the system:
 **Electronics Terminology**:
 - **Reference Designator**: Component identifier (R1, C5, U3)
 - **Component Value**: Electrical specification (10K, 100nF, STM32F4)
-- **Footprint**: KiCad PCB library reference for component symbol
+- **Symbol**: KiCad schematic library object for electrical representation
+- **Footprint**: KiCad PCB library reference for physical representation
 - **Package**: Physical component specification (0805, SOIC-8, QFN-32)
+- **Component**: Generalized business concept encompassing symbol + footprint + properties
 - **Library ID**: Schematic symbol reference (Device:R, Device:C)
 - **Bill of Materials (BOM)**: Component procurement list with quantities
 - **Pick and Place (POS)**: Manufacturing placement coordinates
