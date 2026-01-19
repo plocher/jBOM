@@ -6,7 +6,7 @@ Feature: CLI Basics
   Scenario: Show help
     When I run "jbom --help"
     Then I should see usage information
-    And I should see available commands
+    And I should see available commands "bom", "inventory", and "pos"
     And the exit code should be 0
 
   Scenario: Show version
@@ -17,4 +17,9 @@ Feature: CLI Basics
   Scenario: Handle unknown command
     When I run "jbom unknown-command"
     Then I should see an error message
+    And the exit code should be non-zero
+
+  Scenario: No command specified
+    When I run "jbom" with no arguments
+    Then I should see usage information
     And the exit code should be non-zero

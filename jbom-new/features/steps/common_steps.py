@@ -145,3 +145,24 @@ def step_see_error(context):
         indicator in context.last_output.lower() for indicator in error_indicators
     )
     assert found, f"No error message found in output.\nGot: {context.last_output}"
+
+
+@then('I should see available commands "bom", "inventory", and "pos"')
+def step_see_specific_commands(context):
+    """Verify specific commands are listed in help output."""
+    assert context.last_output is not None, "No command output captured"
+    required_commands = ["bom", "inventory", "pos"]
+    for command in required_commands:
+        assert_with_diagnostics(
+            command in context.last_output,
+            f"Expected command '{command}' not found in help output",
+            context,
+            expected=command,
+            actual=context.last_output,
+        )
+
+
+@when('I run "jbom" with no arguments')
+def step_run_jbom_no_args(context):
+    """Run jbom with no arguments."""
+    step_run_command(context, "jbom")
