@@ -1,6 +1,182 @@
 # CHANGELOG
 
 
+## v4.8.0 (2026-01-19)
+
+### Features
+
+* feat: added BOM plugin ([`e2dd337`](https://github.com/plocher/jBOM/commit/e2dd337c132da34ab59027b2d560d14f1ee200e6))
+
+### Refactoring
+
+* refactor: remove duplicate sch_api module
+
+The sch_api module contained duplicate functionality that was superseded
+by the domain services architecture. SchematicLoader in sch_api was
+functionally identical to SchematicReader in services/, but with
+architectural violations (debug prints) and no active usage.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`151e2f4`](https://github.com/plocher/jBOM/commit/151e2f4edb38b889d5270e394bc236c8251cefe8))
+
+### Unknown
+
+* Merge pull request #19 from plocher/refactor/apply-simplified-architecture
+
+refactor: establish authoritative architecture documentation and eliminate duplication ([`24e3563`](https://github.com/plocher/jBOM/commit/24e3563476f29131420675adb3d57f2a775d2b8b))
+
+* Phase 5: Validate and clean up Gherkin test environment
+
+- Fix behave.ini to remove references to deleted plugin directories
+- Add missing step definitions for CLI basics tests
+- Update unit test imports for flat service structure
+- Validate services work correctly (BOM generator tested and working)
+- Focus on Gherkin test-driven development approach
+- Keep unit tests for internal service abstractions (complementary to Gherkin)
+
+CLI basics tests: ✅ All passing
+Service validation: ✅ BOM generator working correctly
+Architecture: ✅ Simplified structure validated
+
+Co-Authored-By: Warp <agent@warp.dev> ([`eda2602`](https://github.com/plocher/jBOM/commit/eda2602ce44551de04e3b9da97fa0d0a413ad848))
+
+* Phase 4: Update and consolidate tests to hierarchical structure
+
+- Create hierarchical feature test structure matching CLI commands:
+  - features/bom/ - BOM generation, inventory enhancement, output options
+  - features/inventory/ - Inventory generation and listing
+  - features/pos/ - Position file generation and filtering
+- Remove outdated plugin_discovery.feature (plugin system eliminated)
+- Update cli_basics.feature for simplified CLI structure
+- Each command gets its own directory with focused feature files
+- Tests directly reflect CLI command hierarchy (jbom bom → features/bom/)
+
+Structure: 9 feature files organized by command functionality
+
+Co-Authored-By: Warp <agent@warp.dev> ([`8f1075d`](https://github.com/plocher/jBOM/commit/8f1075d2325c79b22ddd7b2866c04c67e74e5dc1))
+
+* Phase 3: Create simplified CLI with direct registration
+
+- Replace complex plugin-based main.py with simplified direct registration
+- Create inventory.py and pos.py command handlers using services directly
+- Remove plugin registry system completely (90% code reduction proven)
+- Commands are thin wrappers that import and use services directly
+- CLI structure: main.py + 3 command handlers (bom, inventory, pos)
+- All commands tested and working with proper help output
+
+No plugin discovery, no registry, no complex abstractions - just simple imports
+
+Co-Authored-By: Warp <agent@warp.dev> ([`4b33475`](https://github.com/plocher/jBOM/commit/4b33475ac35acbe917c7fb8d78ef209b5abfe3cc))
+
+* Phase 2: Refactor services to pure business logic
+
+- Fix broken imports from old plugin/loader structure
+- Create component_utils.py with get_component_type function
+- Rename InventoryLoader to InventoryReader for consistency
+- Rename ProjectInventoryLoader to ProjectInventoryGenerator
+- Ensure all services compile without errors
+- Remove CLI dependencies from services
+- Services now follow pure business logic pattern
+
+All 8 services are now independently testable with no external dependencies
+
+Co-Authored-By: Warp <agent@warp.dev> ([`867f684`](https://github.com/plocher/jBOM/commit/867f684685e6288cbab600cebb61bdcd934a25d3))
+
+* Phase 1: Restructure to simplified architecture
+
+- Flatten services/ directory (no artificial subdivisions)
+- Consolidate CLI code under cli/
+- Remove plugin infrastructure (plugins/, core/, workflows/)
+- Move loaders to services/ (stateful) or common/ (data models)
+- Update imports for flat service structure
+- Create pos_generator placeholder service
+
+Services now follow 'state + behavior' axiom vs common 'utilities + data'
+
+Co-Authored-By: Warp <agent@warp.dev> ([`e3ff518`](https://github.com/plocher/jBOM/commit/e3ff518780decd817d94da34696ea558ddaef281))
+
+* Add architecture principles documentation
+
+- Document Services vs Common axiom
+- Define target simplified file structure
+- Outline migration strategy based on POC learnings
+
+Co-Authored-By: Warp <agent@warp.dev> ([`50ceb63`](https://github.com/plocher/jBOM/commit/50ceb633923ea1758e87acdaf7fad31e98495ec4))
+
+* Complete Service/Workflow/Command architecture POC
+
+- Added workflow orchestration layer in src/jbom/workflows/
+- Created generate_basic_bom, generate_inventory_enhanced_bom, generate_filtered_bom workflows
+- Added comprehensive workflow integration tests: 5/5 passing
+- Total test suite: 44/44 tests passing
+- Full three-layer architecture demonstrated:
+  * Services: SchematicReader, BOMGenerator, InventoryMatcher (pure business logic)
+  * Workflows: Compose services for complete business scenarios
+  * Commands: (next phase) Handle CLI and user interface concerns
+
+POC Success Metrics Achieved:
+✅ Service independence: Services work without plugin infrastructure
+✅ Service composition: Clean data flow between services
+✅ Unit testing: Fast, isolated service tests
+✅ Integration testing: Workflow orchestration validation
+✅ Backward compatibility: Existing BDD tests still pass
+✅ Enhanced functionality: Three-service pipeline works seamlessly
+
+Architecture evolution from monolithic plugins to Service/Workflow/Command
+decomposition is fully validated and ready for production adoption.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`c35947a`](https://github.com/plocher/jBOM/commit/c35947a04629c6e5f491de82e1a828ef73e1155d))
+
+* Extract InventoryMatcher service with full pipeline validation
+
+- Created pure InventoryMatcher service in src/jbom/services/matchers/
+- Added comprehensive unit tests: 10/10 passing
+- Implemented multiple matching strategies (ipn_exact, ipn_fuzzy, value_package)
+- Enhanced BOM entries with inventory data (manufacturer, voltage, tolerance, etc.)
+- Fixed LED and Timer library category detection
+- Added full three-service pipeline integration test
+- All 39 service and integration tests passing
+- Updated architecture documentation with progress tracking
+- Proven service composition: SchematicReader → BOMGenerator → InventoryMatcher
+
+Co-Authored-By: Warp <agent@warp.dev> ([`4698ca9`](https://github.com/plocher/jBOM/commit/4698ca9e8e9cba5f45c54e1601b1ffc93ff7e25b))
+
+* Extract BOMGenerator service with comprehensive testing
+
+- Created pure BOMGenerator service in src/jbom/services/generators/
+- Added BOMEntry and BOMData models for structured BOM representation
+- Implemented multiple aggregation strategies (value_footprint, value_only, lib_id_value)
+- Added comprehensive unit tests: 16/16 passing
+- Created service composition integration tests: 3/3 passing
+- Updated architecture documentation with progress tracking
+- All 28 service and integration tests passing
+- Services demonstrate true modularity and clean composition
+
+Co-Authored-By: Warp <agent@warp.dev> ([`e26bd8c`](https://github.com/plocher/jBOM/commit/e26bd8c620a7ae8f9c637f9088f42d9fca578628))
+
+* POC: SchematicReader service extraction successful
+
+- Created pure SchematicReader service in src/jbom/services/readers/
+- Added comprehensive unit tests proving service works independently
+- Added integration tests demonstrating service composition capability
+- Fixed test step LibID inference to correctly categorize components
+- Core BDD tests now pass: CAP_100nF correctly identified as CAP not RES
+- Service/Workflow/Command decomposition architectural approach validated
+
+Co-Authored-By: Warp <agent@warp.dev> ([`becfefb`](https://github.com/plocher/jBOM/commit/becfefbfcc15d067eecd612641a96384ca0717f0))
+
+* Complete inventory plugin with working TDD
+
+- Successfully implemented component type detection
+- Inventory generation working with mature ProjectInventoryLoader patterns
+- All TDD tests passing for inventory logic
+- Plugin architecture functioning with pos/bom/inventory commands
+- Component type detection handles LED, Timer (IC), resistors, capacitors correctly
+- CSV output format working properly
+- Added architectural evolution document for service/workflow/command decomposition
+
+Co-Authored-By: Warp <agent@warp.dev> ([`4cd9e01`](https://github.com/plocher/jBOM/commit/4cd9e01090e8262ec8145d22b0f0672cbfa9a0e8))
+
+
 ## v4.7.0 (2026-01-18)
 
 ### Bug Fixes
