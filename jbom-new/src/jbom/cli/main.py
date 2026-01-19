@@ -14,6 +14,8 @@ def create_parser() -> argparse.ArgumentParser:
     """Create the main argument parser."""
     # Load plugin commands before creating parser
     from jbom.plugins.pos import cli_handler  # noqa: F401
+    from jbom.plugins.bom import cli_handler  # noqa: F401
+    from jbom.plugins.inventory import cli_handler  # noqa: F401
 
     parser = argparse.ArgumentParser(
         prog="jbom",

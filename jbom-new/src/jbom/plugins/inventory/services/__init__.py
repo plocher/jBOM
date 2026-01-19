@@ -1,0 +1,1 @@
+"""Inventory plugin services."""

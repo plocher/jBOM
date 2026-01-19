@@ -1,0 +1,1 @@
+"""KiCad schematic API module."""
