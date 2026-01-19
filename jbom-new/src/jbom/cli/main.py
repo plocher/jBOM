@@ -1,22 +1,15 @@
-"""Main CLI entry point for jBOM."""
+"""Simplified main CLI - direct command registration without plugin registry."""
 
 import argparse
 import sys
-from pathlib import Path
 from typing import List, Optional
 
 from jbom import __version__
-from jbom.cli.plugin_registry import get_registry
-from jbom.core.plugin_loader import PluginLoader
+from jbom.cli import bom, inventory, pos
 
 
 def create_parser() -> argparse.ArgumentParser:
     """Create the main argument parser."""
-    # Load plugin commands before creating parser
-    from jbom.plugins.pos import cli_handler  # noqa: F401
-    from jbom.plugins.bom import cli_handler  # noqa: F401
-    from jbom.plugins.inventory import cli_handler  # noqa: F401
-
     parser = argparse.ArgumentParser(
         prog="jbom",
         description="KiCad Bill of Materials and Placement File Generator",
@@ -36,26 +29,16 @@ def create_parser() -> argparse.ArgumentParser:
         help="available commands",
     )
 
-    # Add plugin command
-    plugin_parser = subparsers.add_parser(
-        "plugin",
-        help="manage plugins",
-    )
-    plugin_parser.add_argument(
-        "--list",
-        action="store_true",
-        help="list installed plugins",
-    )
-
-    # Register plugin commands
-    plugin_registry = get_registry()
-    plugin_registry.configure_subparsers(subparsers)
+    # Direct command registration - no registry needed!
+    bom.register_command(subparsers)
+    inventory.register_command(subparsers)
+    pos.register_command(subparsers)
 
     return parser
 
 
 def main(argv: Optional[List[str]] = None) -> int:
-    """Main entry point for jBOM CLI.
+    """Main entry point for simplified jBOM CLI.
 
     Args:
         argv: Command-line arguments (defaults to sys.argv[1:])
@@ -66,41 +49,18 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser = create_parser()
     args = parser.parse_args(argv)
 
-    plugin_registry = get_registry()
-
-    # Handle plugin command
-    if args.command == "plugin":
-        if args.list:
-            # Discover plugins
-            plugins_dir = Path(__file__).parent.parent / "plugins"
-            loader = PluginLoader(plugins_dir)
-            plugins = loader.discover_plugins()
-
-            if not plugins:
-                print("No core plugins found")
-            else:
-                print("Core plugins:")
-                for plugin in plugins:
-                    print(f"  {plugin.name} ({plugin.version})")
-                    if plugin.description:
-                        print(f"    {plugin.description}")
-            return 0
-        else:
-            # No action specified for plugin command
-            parser.parse_args([args.command, "--help"])
-            return 1
-
-    # Handle registered plugin commands
-    command = plugin_registry.get_command(args.command)
-    if command:
-        return command.handler(args)
-
     # No command specified
     if not args.command:
         parser.print_help()
         return 1
 
-    return 0
+    # Execute command handler (already set by register_command)
+    if hasattr(args, "handler"):
+        return args.handler(args)
+
+    # This shouldn't happen with proper command registration
+    print(f"Error: No handler for command '{args.command}'", file=sys.stderr)
+    return 1
 
 
 if __name__ == "__main__":
