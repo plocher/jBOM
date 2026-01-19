@@ -133,11 +133,15 @@ def inventory_enhanced_bom(project, inventory_file, output):
    - 16/16 unit tests passing - comprehensive test coverage
    - Multiple aggregation strategies (value_footprint, value_only, lib_id_value)
    - Proper filtering and property merging
-3. 🚧 **TODO**: Extract `InventoryMatcher` from Inventory plugin
+3. ✅ **COMPLETE**: Extract `InventoryMatcher` service
+   - Pure service created in `src/jbom/services/matchers/inventory_matcher.py`
+   - 10/10 unit tests passing - comprehensive matching strategy coverage
+   - Multiple matching strategies (ipn_exact, ipn_fuzzy, value_package)
+   - Properly enhances BOM entries with inventory data
 4. 🚧 **TODO**: Extract `PCBReader` from POS plugin
 5. 🚧 **TODO**: Create shared `CSVFormatter`, `ConsoleFormatter`
 
-**Progress Summary**: 2/5 services extracted, all tests passing, service composition validated
+**Progress Summary**: 3/5 core services extracted, 39/39 tests passing, three-service composition proven
 
 #### **POC Validation Results**
 
@@ -147,12 +151,14 @@ Our proof-of-concept demonstrates the viability of this architecture:
 # Service Independence - Services work without plugin infrastructure
 reader = SchematicReader()
 bom_generator = BOMGenerator()
+inventory_matcher = InventoryMatcher()
 
-# Service Composition - Services compose cleanly
+# Service Composition - Full pipeline works cleanly
 components = reader.load_components(schematic_file)
 bom_data = bom_generator.generate_bom_data(components, "MyProject")
+enhanced_bom = inventory_matcher.enhance_bom_with_inventory(bom_data, inventory_file)
 
-# Results: 28/28 tests passing, real BDD scenarios improved
+# Results: 39/39 tests passing, three-service composition proven
 ```
 
 **Key Validation Points**:
