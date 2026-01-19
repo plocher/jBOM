@@ -12,7 +12,7 @@ Feature: BOM Generation
       | U1        | LM358 | SOIC-8_3.9x4.9mm |
 
   Scenario: CSV to stdout with default options
-    When I run "jbom bom project.kicad_sch"
+    When I run "jbom bom project.kicad_sch --generic"
     Then the command exits with code 0
     And the output contains CSV headers "References,Value,Footprint,Quantity"
     And the output contains "R1,10K"

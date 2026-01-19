@@ -12,7 +12,7 @@ Feature: BOM Aggregation
       | R1        | 10K   | R_0805_2012 |
       | R2        | 10K   | R_0805_2012 |
       | R3        | 10K   | R_0603_1608 |
-    When I run "jbom bom aggregation.kicad_sch --aggregation value_footprint"
+    When I run "jbom bom aggregation.kicad_sch --aggregation value_footprint --generic"
     Then the command exits with code 0
 And the CSV output has a row where
       | References | Value | Footprint   | Quantity |
@@ -26,7 +26,7 @@ And the CSV output has a row where
       | Reference | Value | Footprint   |
       | R1        | 10K   | R_0805_2012 |
       | R2        | 10K   | R_0603_1608 |
-    When I run "jbom bom value_only.kicad_sch --aggregation value_only"
+    When I run "jbom bom value_only.kicad_sch --aggregation value_only --generic"
     Then the command exits with code 0
 And the CSV output has a row where
       | References | Value |
