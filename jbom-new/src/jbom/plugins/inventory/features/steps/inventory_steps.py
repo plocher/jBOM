@@ -44,10 +44,28 @@ def step_schematic_components(context):
     context.components = []
 
     for row in context.table:
+        # Infer LibID from reference prefix if not provided
+        lib_id = row.get("LibID")
+        if not lib_id:
+            ref = row["Reference"]
+            ref_prefix = ref[0] if ref else "R"
+            # Map common reference prefixes to LibID
+            prefix_to_lib = {
+                "R": "Device:R",
+                "C": "Device:C",
+                "L": "Device:L",
+                "D": "Device:LED" if "LED" in row["Value"] else "Device:D",
+                "U": "Timer:NE555P" if "555" in row["Value"] else "Device:U",
+                "Q": "Device:Q",
+                "J": "Device:J",
+                "P": "Device:P",
+            }
+            lib_id = prefix_to_lib.get(ref_prefix, "Device:R")
+
         # Create Component object from table row
         component = Component(
             reference=row["Reference"],
-            lib_id=row.get("LibID", "Device:R"),  # Default to generic resistor
+            lib_id=lib_id,
             value=row["Value"],
             footprint=row["Footprint"],
             uuid=f"uuid-{row['Reference']}-test",
@@ -312,29 +330,36 @@ def _create_mock_schematic_file(schematic_path: Path, components: list):
                 f'    (in_bom yes) (on_board yes) (uuid "uuid-{component.reference}")\n'
             )
             f.write(
-                f'    (property "Reference" "{component.reference}" (id 0) (at 102 {48 + i*10}) (effects (font (size 1.27 1.27))))\n'
+                f'    (property "Reference" "{component.reference}" '
+                f"(id 0) (at 102 {48 + i*10}) (effects (font (size 1.27 1.27))))\n"
             )
             f.write(
-                f'    (property "Value" "{component.value}" (id 1) (at 102 {52 + i*10}) (effects (font (size 1.27 1.27))))\n'
+                f'    (property "Value" "{component.value}" '
+                f"(id 1) (at 102 {52 + i*10}) (effects (font (size 1.27 1.27))))\n"
             )
             f.write(
-                f'    (property "Footprint" "{component.footprint}" (id 2) (at 100 {50 + i*10}) (effects (font (size 1.27 1.27)) hide))\n'
+                f'    (property "Footprint" "{component.footprint}" '
+                f"(id 2) (at 100 {50 + i*10}) (effects (font (size 1.27 1.27)) hide))\n"
             )
 
             # Add component properties
             prop_id = 3
             for key, value in component.properties.items():
                 f.write(
-                    f'    (property "{key}" "{value}" (id {prop_id}) (at 100 {50 + i*10}) (effects (font (size 1.27 1.27)) hide))\n'
+                    f'    (property "{key}" "{value}" '
+                    f"(id {prop_id}) (at 100 {50 + i*10}) "
+                    f"(effects (font (size 1.27 1.27)) hide))\n"
                 )
                 prop_id += 1
 
             # Add instances block (required for KiCad 6+)
-            f.write(f"    (instances\n")
+            f.write("    (instances\n")
             f.write(
-                f'      (instance (reference "{component.reference}") (unit 1) (value "{component.value}") (footprint "{component.footprint}"))\n'
+                f'      (instance (reference "{component.reference}") '
+                f'(unit 1) (value "{component.value}") '
+                f'(footprint "{component.footprint}"))\n'
             )
-            f.write(f"    )\n")
+            f.write("    )\n")
             f.write("  )\n")
 
         f.write(")")
