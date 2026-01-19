@@ -127,11 +127,12 @@ class SchematicReader:
         )
 
     def _should_include_component(self, component: Component) -> bool:
-        """Determine if component should be included based on options."""
-        if not component.in_bom:
-            return False
-        if component.dnp:
-            return False
+        """Determine if component should be included based on options.
+
+        Note: DNP filtering is handled by BOMGenerator based on user flags,
+        so we don't filter DNP components here.
+        """
+        # Only exclude power symbols and components that are clearly not meant for BOM
         if component.reference.startswith("#"):
             return False
         return True

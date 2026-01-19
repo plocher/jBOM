@@ -290,7 +290,7 @@ def _render_kicad_schematic(stem: str, components: List[Dict[str, Any]]) -> str:
             f'    (property "Reference" "{ref}" (at 0 0 0))',
             f'    (property "Value" "{val}" (at 0 0 0))',
             f'    (property "Footprint" "{fp}" (at 0 0 0))',
-            "    (dnp yes)" if dnp else "",
+            f"    (dnp {'yes' if dnp else 'no'})",
             "  )",
         ]
         lines.extend(sym)
