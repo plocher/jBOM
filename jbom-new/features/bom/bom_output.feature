@@ -3,6 +3,9 @@ Feature: BOM Output Options
   I want flexible BOM output options
   So that I can customize the output format and filtering
 
+  Background:
+    Given a clean test workspace
+
   Scenario: BOM with different aggregation strategies
     Given a KiCad schematic file "aggregation_test.kicad_sch" with components:
       | Reference | Value | Footprint   |

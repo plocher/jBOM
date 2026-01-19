@@ -3,6 +3,9 @@ Feature: POS Generation
   I want to generate component placement files from my KiCad PCB
   So that I can provide placement data to assembly services
 
+  Background:
+    Given a clean test workspace
+
   Scenario: Generate basic POS from PCB
     Given a KiCad PCB file "test_board.kicad_pcb" with components:
       | Reference | X(mm) | Y(mm) | Rotation | Side | Footprint    |

@@ -3,6 +3,9 @@ Feature: BOM Help
   I want clear CLI help for BOM
   So that I can discover options quickly
 
+  Background:
+    Given a clean test workspace
+
   Scenario: Help command shows major options
     When I run "jbom bom --help"
     Then the command exits with code 0

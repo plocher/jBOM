@@ -3,6 +3,9 @@ Feature: BOM Generation
   I want to generate a Bill of Materials from my KiCad schematic
   So that I can order components and manufacture my PCB
 
+  Background:
+    Given a clean test workspace
+
   Scenario: Generate basic BOM from schematic
     Given a KiCad schematic file "test_project.kicad_sch" with components:
       | Reference | Value | Footprint     |

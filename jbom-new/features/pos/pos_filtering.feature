@@ -3,6 +3,9 @@ Feature: POS Filtering Options
   I want to filter POS output by component properties
   So that I can generate placement files for specific assembly requirements
 
+  Background:
+    Given a clean test workspace
+
   Scenario: Filter SMD components only
     Given a KiCad PCB file "mixed_components.kicad_pcb" with components:
       | Reference | X(mm) | Y(mm) | Mount Type | Side | Footprint    |

@@ -1,9 +1,12 @@
 Feature: Inventory Generation
   As a hardware developer
-  I want to generate inventory from project components
+  I want to generate inventory from KiCad schematic components
   So that I can track and manage component requirements
 
-  Scenario: Generate inventory from schematic components
+  Background:
+    Given a clean test workspace
+
+  Scenario: Generate basic inventory from schematic
     Given a KiCad schematic file "project.kicad_sch" with components:
       | Reference | Value | Footprint     | Library        |
       | R1        | 10K   | R_0805_2012   | Device:R       |

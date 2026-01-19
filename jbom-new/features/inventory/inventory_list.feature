@@ -3,6 +3,9 @@ Feature: Inventory Listing
   I want to list and filter inventory items
   So that I can find components and check availability
 
+  Background:
+    Given a clean test workspace
+
   Scenario: List all inventory items
     Given an inventory file "components.csv" with data:
       | IPN      | Category  | Value | Description           | Package |

@@ -3,6 +3,9 @@ Feature: BOM Errors
   I want meaningful error messages
   So that I can fix input problems quickly
 
+  Background:
+    Given a clean test workspace
+
   Scenario: Error on missing schematic file
     When I run "jbom bom missing_file.kicad_sch"
     Then the command exits with code 1
