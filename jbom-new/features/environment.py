@@ -29,10 +29,20 @@ def before_scenario(context, scenario):
 
 def after_scenario(context, scenario):
     """Clean up after each scenario."""
+    import shutil
+
+    # Clean up temporary test workspace if it was created
+    if hasattr(context, "project_root"):
+        # Only clean up if it's a temp directory (contains "jbom_behave_")
+        project_root_str = str(context.project_root)
+        if "jbom_behave_" in project_root_str and context.project_root.exists():
+            try:
+                shutil.rmtree(context.project_root)
+            except OSError:
+                pass  # Ignore cleanup errors
+
     # Clean up any created plugins
     if hasattr(context, "created_plugins"):
-        import shutil
-
         for plugin_dir in context.created_plugins:
             if plugin_dir.exists():
                 shutil.rmtree(plugin_dir)

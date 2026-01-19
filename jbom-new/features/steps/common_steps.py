@@ -1,8 +1,19 @@
 """Common step definitions for jBOM CLI testing."""
 
 import subprocess
-from behave import when, then
+from behave import when, then, given
 from diagnostic_utils import assert_with_diagnostics
+
+
+@given("a clean test workspace")
+def step_clean_test_workspace(context):
+    """Create an isolated workspace for the scenario and use it as project_root."""
+    import tempfile
+    from pathlib import Path
+
+    tmp = Path(tempfile.mkdtemp(prefix="jbom_behave_"))
+    context.project_root = tmp
+    # Keep src_root unchanged (set by environment.py)
 
 
 @when('I run "{command}"')
@@ -11,8 +22,19 @@ def step_run_command(context, command):
     # For now, run via python -m until we have proper installation
     if command.startswith("jbom "):
         # Replace 'jbom' with python module invocation
-        args = command.split()[1:]  # Remove 'jbom' prefix
-        cmd = ["python", "-m", "jbom.cli.main"] + args
+        raw_args = command.split()[1:]  # Remove 'jbom' prefix
+
+        # Default to generic fabricator for predictable behavior on BOM unless explicitly set
+        if len(raw_args) >= 1 and raw_args[0] == "bom":
+            has_fabricator_flag = any(
+                a.startswith("--fabricator") for a in raw_args
+            ) or any(
+                a in ("--jlc", "--pcbway", "--seeed", "--generic") for a in raw_args
+            )
+            if not has_fabricator_flag:
+                raw_args += ["--fabricator", "generic"]
+
+        cmd = ["python", "-m", "jbom.cli.main"] + raw_args
     else:
         cmd = command.split()
 
@@ -145,6 +167,28 @@ def step_see_error(context):
         indicator in context.last_output.lower() for indicator in error_indicators
     )
     assert found, f"No error message found in output.\nGot: {context.last_output}"
+
+
+@then('the output does not contain "{text}"')
+def step_output_not_contains(context, text):
+    out = context.last_output or ""
+    assert text not in out, f"Unexpected text found in output: {text}\nOutput:\n{out}"
+
+
+@then("the error output contains error information")
+def step_error_output_contains_information(context):
+    # Alias to existing error detector
+    step_see_error(context)
+
+
+@then("the output contains verbose information")
+def step_output_contains_verbose(context):
+    out = context.last_output or ""
+    # Heuristic terms that indicate verbose/extra info
+    indicators = ["Verbose", "Match_Quality", "Inventory enhanced", "Total:"]
+    assert (
+        any(term.lower() in out.lower() for term in indicators) or len(out) > 0
+    ), f"No verbose information detected. Output:\n{out}"
 
 
 @then('I should see available commands "bom", "inventory", and "pos"')

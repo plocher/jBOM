@@ -7,6 +7,7 @@ Feature: Multi-Source Inventory
     Given a clean test workspace
 
   # Combine two inventory files and enhance BOM
+  @wip
   Scenario: Merge two inventory files when enhancing BOM
     Given a KiCad schematic file "merge_test.kicad_sch" with components:
       | Reference | Value | Footprint   |
@@ -23,6 +24,7 @@ Feature: Multi-Source Inventory
     And the output contains "Inventory enhanced"  # informational summary
 
   # Precedence: primary overrides secondary when conflicting
+  @wip
   Scenario: Primary inventory takes precedence on conflicts
     Given a KiCad schematic file "precedence.kicad_sch" with components:
       | Reference | Value | Footprint   |

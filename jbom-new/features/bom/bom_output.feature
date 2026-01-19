@@ -55,7 +55,7 @@ Feature: BOM Output Options
   Scenario: Help command
     When I run "jbom bom --help"
     Then the command exits with code 0
-    And the output contains "Generate bill of materials from KiCad schematic"
+    And the output contains "Specify PCB fabricator for field presets"
     And the output contains "--aggregation"
     And the output contains "--inventory"
     And the output contains "--include-dnp"
