@@ -81,7 +81,8 @@ def step_have_sample_fixtures(context, rel_path):
     import shutil
 
     # Compute source (repo) and destination (temp workspace) paths
-    repo_root = Path(__file__).parent.parent  # features/
+    # __file__ => features/steps/common_steps.py; repo root is three levels up
+    repo_root = Path(__file__).parent.parent.parent
     src = (repo_root / rel_path).resolve()
     assert src.exists() and src.is_dir(), f"Fixtures directory not found: {src}"
 
