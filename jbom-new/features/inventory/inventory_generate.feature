@@ -15,7 +15,7 @@ Feature: Inventory Generation
     When I run "jbom inventory generate project.kicad_sch -o project_inventory.csv"
     Then the command exits with code 0
     And a file named "project_inventory.csv" exists
-    And the file "project_inventory.csv" contains CSV headers "IPN,Category,Value,Package,Description"
+    And the file "project_inventory.csv" contains CSV headers "Category,Datasheet,Description,IPN,Keywords,LCSC,MFGPN,Manufacturer,Package,UUID,Value"
     And the file "project_inventory.csv" contains "RES_10K,RESISTOR,10K"
     And the file "project_inventory.csv" contains "CAP_100nF,CAPACITOR,100nF"
     And the file "project_inventory.csv" contains "IC_LM358,INTEGRATED_CIRCUIT,LM358"
@@ -47,6 +47,6 @@ Feature: Inventory Generation
   Scenario: Help command
     When I run "jbom inventory generate --help"
     Then the command exits with code 0
-    And the output contains "Generate inventory from project components"
+    And the output contains "Output inventory CSV file"
     And the output contains "-o OUTPUT"
     And the output contains "--verbose"
