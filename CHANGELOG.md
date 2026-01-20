@@ -1,6 +1,26 @@
 # CHANGELOG
 
 
+## v4.10.0 (2026-01-20)
+
+### Features
+
+* feat: add Issue #24 regression tests for project-centric architecture
+
+- Add comprehensive regression test file following template guidelines
+- Document original file-centric behavior that failed vs current project-centric success
+- Cover edge cases: empty directories, hierarchical schematics, legacy .pro files
+- Ensure backward compatibility scenarios are tested
+
+Co-Authored-By: Warp <agent@warp.dev> ([`71a4e0b`](https://github.com/plocher/jBOM/commit/71a4e0b49362ddb2402bb5f17ba41f1d7d5ec64c))
+
+### Unknown
+
+* Merge pull request #28 from plocher/feature/issue-24-project-centric-regression-tests
+
+feat: regression for Issue #24 project-centric architecture ([`92914c2`](https://github.com/plocher/jBOM/commit/92914c27680dceb570bdff914042769addcf2401))
+
+
 ## v4.9.0 (2026-01-20)
 
 ### Bug Fixes
