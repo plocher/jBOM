@@ -19,6 +19,9 @@ def step_clean_test_workspace(context):
 @when('I run "{command}"')
 def step_run_command(context, command):
     """Run a CLI command and capture output."""
+    # Preserve previous output for later comparisons
+    context.prev_output = getattr(context, "last_output", None)
+
     # For now, run via python -m until we have proper installation
     if command.startswith("jbom "):
         # Replace 'jbom' with python module invocation
@@ -59,6 +62,125 @@ def step_run_command(context, command):
         context.last_command = command
         context.last_output = str(e)
         context.last_exit_code = 1
+
+
+@when('I run jbom command "{args}"')
+def step_run_jbom_command(context, args):
+    """Alias for running jbom commands without repeating the prefix."""
+    step_run_command(context, f"jbom {args}")
+
+
+@given('the sample fixtures under "{rel_path}"')
+def step_have_sample_fixtures(context, rel_path):
+    from pathlib import Path
+
+    base = Path(str(context.project_root))
+    d = (base / rel_path).resolve()
+    assert d.exists() and d.is_dir(), f"Fixtures directory not found: {d}"
+
+
+@given('I am in directory "{rel_path}"')
+def step_cd_project_root(context, rel_path):
+    from pathlib import Path
+
+    base = Path(str(context.project_root))
+    new_root = (base / rel_path).resolve()
+    assert new_root.exists() and new_root.is_dir(), f"Directory not found: {new_root}"
+    context.project_root = new_root
+
+
+@given('an empty directory "{rel_path}"')
+def step_make_empty_dir(context, rel_path):
+    from pathlib import Path
+
+    p = (Path(str(context.project_root)) / rel_path).resolve()
+    p.mkdir(parents=True, exist_ok=True)
+    # Ensure empty
+    for child in p.glob("*"):
+        if child.is_file():
+            child.unlink()
+
+
+@given('I create directory "{rel_path}"')
+def step_create_directory(context, rel_path):
+    from pathlib import Path
+
+    p = (Path(str(context.project_root)) / rel_path).resolve()
+    p.mkdir(parents=True, exist_ok=True)
+
+
+@given('I create file "{rel_path}" with content "{text}"')
+def step_create_file_with_content(context, rel_path, text):
+    from pathlib import Path
+
+    p = (Path(str(context.project_root)) / rel_path).resolve()
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(text, encoding="utf-8")
+
+
+@given('I create symlink "{link_path}" to "{target_path}"')
+def step_create_symlink(context, link_path, target_path):
+    import os
+    from pathlib import Path
+
+    base = Path(str(context.project_root))
+    link = (base / link_path).resolve()
+    target = (base / target_path).resolve()
+    link.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        if link.exists() or link.is_symlink():
+            link.unlink()
+        os.symlink(target, link)
+    except OSError as e:
+        raise AssertionError(f"Failed to create symlink {link} -> {target}: {e}")
+
+
+@then("the command should succeed")
+def step_command_should_succeed(context):
+    step_check_exit_code(context, 0)
+
+
+@then("the command should fail")
+def step_command_should_fail(context):
+    step_check_nonzero_exit(context)
+
+
+@then('the error output should mention "{text}"')
+def step_error_output_should_mention(context, text):
+    out = getattr(context, "last_output", "")
+    assert text in out, f"Expected error text '{text}' not present. Output:\n{out}"
+
+
+@then('the output should contain "{text}"')
+def step_output_should_contain(context, text):
+    out = getattr(context, "last_output", "")
+    assert (
+        out and text in out
+    ), f"Expected text not found in output: {text}\nOutput:\n{out}"
+
+
+@then("the error output should be empty")
+def step_error_output_empty(context):
+    out = getattr(context, "last_output", "")
+    # Heuristic: in quiet mode there should be no remediation or error messages
+    forbidden = [
+        "found matching",
+        "found project",
+        "No project files found",
+        "error",
+        "warning",
+    ]
+    assert not any(
+        f.lower() in out.lower() for f in forbidden
+    ), f"Unexpected messages in output:\n{out}"
+
+
+@then("the two command outputs should be identical")
+def step_outputs_identical(context):
+    prev = getattr(context, "prev_output", None)
+    curr = getattr(context, "last_output", None)
+    assert prev is not None, "Previous command output not available for comparison"
+    assert curr == prev, f"Outputs differ.\nPrev:\n{prev}\n\nCurr:\n{curr}"
 
 
 @then('I should see "{text}"')
