@@ -38,7 +38,7 @@ Feature: Inventory Generation
   Scenario: Help command
     When I run "jbom inventory generate --help"
     Then the command exits with code 0
-    And the output contains "Generate inventory from project components"
+    And the output contains "Output inventory CSV file"
     And the output contains "-o"
     And the output contains "--verbose"
 
