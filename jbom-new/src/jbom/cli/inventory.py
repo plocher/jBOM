@@ -7,6 +7,7 @@ from pathlib import Path
 from jbom.services.inventory_reader import InventoryReader
 from jbom.services.project_inventory import ProjectInventoryGenerator
 from jbom.services.schematic_reader import SchematicReader
+from jbom.services.project_file_resolver import ProjectFileResolver
 from jbom.common.options import GeneratorOptions
 
 
@@ -27,7 +28,12 @@ def register_command(subparsers) -> None:
     gen_parser = inv_subparsers.add_parser(
         "generate", help="Generate inventory from project components"
     )
-    gen_parser.add_argument("schematic", help="Path to .kicad_sch file")
+    gen_parser.add_argument(
+        "input",
+        nargs="?",
+        default=".",
+        help="Path to .kicad_sch file, project directory, or base name (default: current directory)",
+    )
     gen_parser.add_argument(
         "-o", "--output", help="Output inventory CSV file", required=True
     )
@@ -67,20 +73,65 @@ def handle_inventory(args: argparse.Namespace) -> int:
 
 
 def _handle_generate_inventory(args: argparse.Namespace) -> int:
-    """Generate inventory from project components."""
-    schematic_file = Path(args.schematic)
+    """Generate inventory from project components with project-centric input resolution."""
     output_file = Path(args.output)
 
-    if not schematic_file.exists():
-        print(f"Error: Schematic file not found: {schematic_file}", file=sys.stderr)
-        return 1
-
-    # Use services to generate inventory
+    # Create options
     options = GeneratorOptions(verbose=args.verbose) if args.verbose else None
-    reader = SchematicReader(options)
 
-    # Load components
-    components = reader.load_components(schematic_file)
+    # Use ProjectFileResolver for intelligent input resolution
+    resolver = ProjectFileResolver(
+        prefer_pcb=False, target_file_type="schematic", options=options
+    )
+
+    try:
+        resolved_input = resolver.resolve_input(args.input)
+
+        # Handle cross-command intelligence - if user provided wrong file type, try to resolve it
+        if not resolved_input.is_schematic:
+            if args.verbose:
+                print(
+                    f"Note: Inventory generation requires a schematic file. "
+                    f"Found {resolved_input.resolved_path.suffix} file, trying to find matching schematic.",
+                    file=sys.stderr,
+                )
+
+            resolved_input = resolver.resolve_for_wrong_file_type(
+                resolved_input, "schematic"
+            )
+            if args.verbose:
+                print(
+                    f"Using schematic: {resolved_input.resolved_path.name}",
+                    file=sys.stderr,
+                )
+
+        schematic_file = resolved_input.resolved_path
+        reader = SchematicReader(options)
+
+        # Load components from schematic (including hierarchical sheets if available)
+        if resolved_input.project_context:
+            # Get all hierarchical schematic files for complete inventory
+            hierarchical_files = resolved_input.get_hierarchical_files()
+            if args.verbose and len(hierarchical_files) > 1:
+                print(
+                    f"Processing hierarchical design with {len(hierarchical_files)} schematic files",
+                    file=sys.stderr,
+                )
+
+            # Load components from all hierarchical files
+            components = []
+            for sch_file in hierarchical_files:
+                if args.verbose:
+                    print(f"Loading components from {sch_file.name}", file=sys.stderr)
+                file_components = reader.load_components(sch_file)
+                components.extend(file_components)
+        else:
+            # Load components from single schematic
+            components = reader.load_components(schematic_file)
+
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
 
     # Generate inventory
     generator = ProjectInventoryGenerator(components)
