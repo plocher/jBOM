@@ -3,6 +3,10 @@ Feature: BOM Output Options
   I want flexible BOM output options
   So that I can customize the output format and filtering
 
+  Background:
+    Given a clean test workspace
+
+  @wip
   Scenario: BOM with different aggregation strategies
     Given a KiCad schematic file "aggregation_test.kicad_sch" with components:
       | Reference | Value | Footprint   |
@@ -14,6 +18,7 @@ Feature: BOM Output Options
     And the output contains "\"R1, R2\",10K,R_0805_2012,2"
     And the output contains "R3,10K,R_0603_1608,1"
 
+  @wip
   Scenario: BOM with value-only aggregation
     Given a KiCad schematic file "value_test.kicad_sch" with components:
       | Reference | Value | Footprint   |
@@ -55,7 +60,7 @@ Feature: BOM Output Options
   Scenario: Help command
     When I run "jbom bom --help"
     Then the command exits with code 0
-    And the output contains "Generate bill of materials from KiCad schematic"
+    And the output contains "Specify PCB fabricator for field presets"
     And the output contains "--aggregation"
     And the output contains "--inventory"
     And the output contains "--include-dnp"

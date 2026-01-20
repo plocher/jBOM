@@ -3,6 +3,9 @@ Feature: POS Filtering Options
   I want to filter POS output by component properties
   So that I can generate placement files for specific assembly requirements
 
+  Background:
+    Given a clean test workspace
+
   Scenario: Filter SMD components only
     Given a KiCad PCB file "mixed_components.kicad_pcb" with components:
       | Reference | X(mm) | Y(mm) | Mount Type | Side | Footprint    |
@@ -39,11 +42,12 @@ Feature: POS Filtering Options
     Then the command exits with code 0
     And the output contains only SMD components on TOP layer
 
+  # TODO: Should use --generic flag when Issue #26 (POS field selection) is implemented
   Scenario: Output in inches
     Given a KiCad PCB file "units_test.kicad_pcb" with components
     When I run "jbom pos units_test.kicad_pcb --units inch"
     Then the command exits with code 0
-    And the output contains CSV headers "Reference,X(in),Y(in),Rotation"
+    And the output contains CSV headers "Reference,X(in),Y(in),Rotation,Side,Footprint,Package"
     And the coordinate values are in inches
 
   Scenario: Use auxiliary origin

@@ -33,6 +33,17 @@ def register_command(subparsers) -> None:
         "--inventory", help="Enhance BOM with inventory data from CSV file"
     )
 
+    # Fabricator selection (for field presets / predictable output)
+    parser.add_argument(
+        "--fabricator",
+        choices=["generic", "jlc", "pcbway", "seeed"],
+        help="Specify PCB fabricator for field presets (default: generic)",
+    )
+    parser.add_argument("--jlc", action="store_true", help="Use JLC preset")
+    parser.add_argument("--pcbway", action="store_true", help="Use PCBWay preset")
+    parser.add_argument("--seeed", action="store_true", help="Use Seeed preset")
+    parser.add_argument("--generic", action="store_true", help="Use Generic preset")
+
     # Aggregation options
     parser.add_argument(
         "--aggregation",
@@ -80,6 +91,20 @@ def handle_bom(args: argparse.Namespace) -> int:
         # Load components from schematic
         components = reader.load_components(schematic_file)
 
+        # Determine effective fabricator (default generic)
+        fabricator = args.fabricator
+        if not fabricator:
+            if args.jlc:
+                fabricator = "jlc"
+            elif args.pcbway:
+                fabricator = "pcbway"
+            elif args.seeed:
+                fabricator = "seeed"
+            elif args.generic:
+                fabricator = "generic"
+        if not fabricator:
+            fabricator = "generic"
+
         # Generate basic BOM
         filters = {
             "exclude_dnp": not args.include_dnp,
@@ -98,6 +123,8 @@ def handle_bom(args: argparse.Namespace) -> int:
                 return 1
 
             matcher = InventoryMatcher()
+            # Note: current matcher API uses a strategy string; fabricator can
+            # be incorporated internally later. For now we keep behavior stable.
             bom_data = matcher.enhance_bom_with_inventory(
                 bom_data, inventory_file, "ipn_fuzzy"
             )

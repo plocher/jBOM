@@ -3,6 +3,9 @@ Feature: CLI Basics
   I want basic CLI functionality
   So that I can interact with jBOM
 
+  Background:
+    Given a clean test workspace
+
   Scenario: Show help
     When I run "jbom --help"
     Then I should see usage information

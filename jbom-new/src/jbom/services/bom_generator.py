@@ -20,7 +20,7 @@ class BOMEntry:
     @property
     def references_string(self) -> str:
         """Comma-separated string of references for display."""
-        return ", ".join(sorted(self.references))
+        return ", ".join(BOMGenerator._natural_sort_references(self.references))
 
 
 @dataclass
@@ -170,3 +170,22 @@ class BOMGenerator:
             quantity=len(references),
             attributes=merged_attributes,
         )
+
+    @staticmethod
+    def _natural_sort_references(references: List[str]) -> List[str]:
+        """Sort component references in natural order (R1, R2, R10 not R1, R10, R2)."""
+        import re
+
+        def natural_key(ref: str):
+            # Split reference into prefix and numeric parts
+            # E.g., "R10" -> [("R", 0), ("", 10)]
+            parts = re.split(r"(\d+)", ref)
+            result = []
+            for part in parts:
+                if part.isdigit():
+                    result.append(int(part))
+                else:
+                    result.append(part)
+            return result
+
+        return sorted(references, key=natural_key)

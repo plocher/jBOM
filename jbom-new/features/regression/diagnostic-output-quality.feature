@@ -9,6 +9,9 @@ Feature: Diagnostic Output Quality
   # These tests SHOULD fail - that's the point!
   # We're verifying the failure output is helpful for debugging.
 
+  Background:
+    Given a clean test workspace
+
   Scenario: Diagnostic shows command and output on text mismatch
     When I run "jbom --version"
     Then I should see "INTENTIONALLY_WRONG_TEXT"
