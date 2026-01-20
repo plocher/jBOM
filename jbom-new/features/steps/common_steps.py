@@ -72,11 +72,24 @@ def step_run_jbom_command(context, args):
 
 @given('the sample fixtures under "{rel_path}"')
 def step_have_sample_fixtures(context, rel_path):
-    from pathlib import Path
+    """Copy fixture subtree into the temp workspace so tests don't write under repo.
 
-    base = Path(str(context.project_root))
-    d = (base / rel_path).resolve()
-    assert d.exists() and d.is_dir(), f"Fixtures directory not found: {d}"
+    Example rel_path: "features/fixtures/kicad_samples".
+    We copy that directory from the repo root into context.project_root/rel_path.
+    """
+    from pathlib import Path
+    import shutil
+
+    # Compute source (repo) and destination (temp workspace) paths
+    repo_root = Path(__file__).parent.parent  # features/
+    src = (repo_root / rel_path).resolve()
+    assert src.exists() and src.is_dir(), f"Fixtures directory not found: {src}"
+
+    dest = context.project_root / rel_path
+    if dest.exists():
+        shutil.rmtree(dest)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(src, dest)
 
 
 @given('I am in directory "{rel_path}"')

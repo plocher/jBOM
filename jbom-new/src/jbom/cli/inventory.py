@@ -73,8 +73,14 @@ def handle_inventory(args: argparse.Namespace) -> int:
 
 
 def _handle_generate_inventory(args: argparse.Namespace) -> int:
-    """Generate inventory from project components with project-centric input resolution."""
-    output_file = Path(args.output)
+    """Generate inventory from project components with project-centric input resolution.
+
+    Special-cases output destinations:
+    - "console" or "-": write CSV to stdout instead of a file
+    - otherwise: treat as a file path
+    """
+    write_to_stdout = args.output in ("console", "-")
+    output_file = None if write_to_stdout else Path(args.output)
 
     # Create options
     options = GeneratorOptions(verbose=args.verbose) if args.verbose else None
@@ -137,38 +143,51 @@ def _handle_generate_inventory(args: argparse.Namespace) -> int:
     generator = ProjectInventoryGenerator(components)
     inventory_items, field_names = generator.load()
 
-    # Write to CSV
+    # Write to CSV (file or stdout)
     import csv
+    import sys
 
-    with open(output_file, "w", newline="", encoding="utf-8") as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=field_names)
+    if write_to_stdout:
+        writer = csv.DictWriter(sys.stdout, fieldnames=field_names)
         writer.writeheader()
+        target_desc = "stdout"
+    else:
+        csvfile = open(output_file, "w", newline="", encoding="utf-8")
+        try:
+            writer = csv.DictWriter(csvfile, fieldnames=field_names)
+            writer.writeheader()
+            target_desc = str(output_file)
+        finally:
+            pass
 
-        for item in inventory_items:
-            row = {
-                "IPN": item.ipn,
-                "Category": item.category,
-                "Value": item.value,
-                "Description": item.description,
-                "Package": item.package,
-                "Manufacturer": item.manufacturer,
-                "MFGPN": item.mfgpn,
-                "LCSC": item.lcsc,
-                "Datasheet": item.datasheet,
-                "UUID": item.uuid,
-            }
-            # Add any extra fields from component properties
-            for field in field_names:
-                if (
-                    field not in row
-                    and hasattr(item, "raw_data")
-                    and field in item.raw_data
-                ):
-                    row[field] = item.raw_data[field]
-            writer.writerow(row)
+    for item in inventory_items:
+        row = {
+            "IPN": item.ipn,
+            "Category": item.category,
+            "Value": item.value,
+            "Description": item.description,
+            "Package": item.package,
+            "Manufacturer": item.manufacturer,
+            "MFGPN": item.mfgpn,
+            "LCSC": item.lcsc,
+            "Datasheet": item.datasheet,
+            "UUID": item.uuid,
+        }
+        # Add any extra fields from component properties
+        for field in field_names:
+            if (
+                field not in row
+                and hasattr(item, "raw_data")
+                and field in item.raw_data
+            ):
+                row[field] = item.raw_data[field]
+        writer.writerow(row)
+
+    if not write_to_stdout:
+        csvfile.close()
 
     print(
-        f"Generated inventory with {len(inventory_items)} items written to {output_file}"
+        f"Generated inventory with {len(inventory_items)} items written to {target_desc}"
     )
     return 0
 

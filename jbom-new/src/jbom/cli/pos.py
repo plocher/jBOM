@@ -123,15 +123,18 @@ def handle_pos(args: argparse.Namespace) -> int:
 
 
 def _output_pos(pos_data: list, output: str, units: str) -> int:
-    """Output position data in the requested format."""
+    """Output position data in the requested format.
+
+    Special cases:
+    - output in {None, "stdout", "-"} => CSV to stdout
+    - output == "console" => formatted table to stdout
+    - otherwise => treat as file path
+    """
     if output == "console":
-        # Formatted table output
         _print_console_table(pos_data, units)
-    elif output == "stdout" or output is None:
-        # CSV to stdout
+    elif output in (None, "stdout", "-"):
         _print_csv(pos_data, units)
     else:
-        # CSV to file
         output_path = Path(output)
         _write_csv(pos_data, output_path, units)
         print(f"Position file written to {output_path}")
