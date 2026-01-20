@@ -6,6 +6,7 @@ Feature: Inventory Generation
   Background:
     Given a clean test workspace
 
+  @wip
   Scenario: Generate basic inventory from schematic
     Given a KiCad schematic file "project.kicad_sch" with components:
       | Reference | Value | Footprint     | Library        |

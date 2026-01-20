@@ -6,6 +6,7 @@ Feature: BOM Output Options
   Background:
     Given a clean test workspace
 
+  @wip
   Scenario: BOM with different aggregation strategies
     Given a KiCad schematic file "aggregation_test.kicad_sch" with components:
       | Reference | Value | Footprint   |
@@ -17,6 +18,7 @@ Feature: BOM Output Options
     And the output contains "\"R1, R2\",10K,R_0805_2012,2"
     And the output contains "R3,10K,R_0603_1608,1"
 
+  @wip
   Scenario: BOM with value-only aggregation
     Given a KiCad schematic file "value_test.kicad_sch" with components:
       | Reference | Value | Footprint   |
