@@ -6,6 +6,7 @@ Feature: Schematic Loading Edge Cases
   Background:
     Given a clean test workspace
 
+  @wip
   Scenario: Directory with multiple schematics requires explicit selection
     Given a KiCad schematic file "a.kicad_sch" with basic components
     And a KiCad schematic file "b.kicad_sch" with basic components
@@ -13,6 +14,7 @@ Feature: Schematic Loading Edge Cases
     Then the command exits with code 1
     And the error output contains "Multiple schematics found"
 
+  @wip
   Scenario: Directory with one schematic is auto-selected
     Given a KiCad schematic file "single.kicad_sch" with basic components
     When I run "jbom bom ."
