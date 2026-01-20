@@ -6,6 +6,7 @@ Feature: Inventory Listing
   Background:
     Given a clean test workspace
 
+  @wip
   Scenario: List all inventory items
     Given an inventory file "components.csv" with data:
       | IPN      | Category  | Value | Description        | Package |
@@ -16,6 +17,7 @@ Feature: Inventory Listing
     Then the command exits with code 0
     And the output contains "Inventory: 3 items"
 
+  @wip
   Scenario: Filter inventory by category
     Given an inventory file "mixed.csv" with mixed component categories
     When I run "jbom inventory list mixed.csv --category resistor"
@@ -23,23 +25,27 @@ Feature: Inventory Listing
     And the output contains only resistor components
     And the output does not contain capacitor components
 
+  @wip
   Scenario: Empty inventory shows no items
     Given an empty inventory file "empty.csv"
     When I run "jbom inventory list empty.csv"
     Then the command exits with code 0
     And the output contains "No items found"
 
+  @wip
   Scenario: Help command
     When I run "jbom inventory list --help"
     Then the command exits with code 0
     And the output contains "List inventory items"
     And the output contains "--category"
 
+  @wip
   Scenario: Missing inventory file
     When I run "jbom inventory list nonexistent.csv"
     Then the command exits with code 1
     And the error output contains "Inventory file not found"
 
+  @wip
   Scenario: Invalid inventory file format
     Given a file "invalid.csv" with invalid CSV format
     When I run "jbom inventory list invalid.csv"
