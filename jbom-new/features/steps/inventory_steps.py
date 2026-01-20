@@ -3,11 +3,8 @@
 from __future__ import annotations
 
 import csv
-from pathlib import Path
-from typing import List
 
 from behave import given, then
-from diagnostic_utils import assert_with_diagnostics
 
 
 @given('an inventory file "{filename}" with data:')
@@ -217,9 +214,10 @@ def then_output_contains_inventory_columns(context) -> None:
             has_inventory_data = True
             break
 
-    assert (
-        has_inventory_data
-    ), f"No inventory enhancement detected in output. Expected more than 4 CSV fields per row or inventory headers.\nOutput: {out}"
+    assert has_inventory_data, (
+        "No inventory enhancement detected in output. Expected more than 4 "
+        "CSV fields per row or inventory headers.\nOutput: " + out
+    )
 
 
 @then("the output contains inventory data for matched components")
