@@ -1,6 +1,24 @@
 # CHANGELOG
 
 
+## v4.10.1 (2026-01-20)
+
+### Bug Fixes
+
+* fix: address flake8 unused imports in project_context and resolver tests
+
+- Remove unused ProjectFiles import
+- Remove unused ResolvedInput import
+
+Co-Authored-By: Warp <agent@warp.dev> ([`c043cff`](https://github.com/plocher/jBOM/commit/c043cff75a3de1207a5f2bd13ca2a9118815c04a))
+
+### Unknown
+
+* Merge pull request #29 from plocher/feature/issue-24-project-centric-implementation
+
+feat: project-centric architecture core services + CLI integration (Issue #24) ([`a0b5011`](https://github.com/plocher/jBOM/commit/a0b5011eaf0dd49849cac5c556db58121dd74f03))
+
+
 ## v4.10.0 (2026-01-20)
 
 ### Features
