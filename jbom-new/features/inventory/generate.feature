@@ -15,7 +15,7 @@ Feature: Inventory Generation
     When I run "jbom inventory generate project.kicad_sch -o project_inventory.csv"
     Then the command exits with code 0
     And a file named "project_inventory.csv" exists
-    And the file "project_inventory.csv" contains CSV headers "IPN,Category,Value,Package,Description"
+    And the file "project_inventory.csv" contains CSV headers "Category,Datasheet,Description,IPN,Keywords,LCSC,MFGPN,Manufacturer,Package,UUID,Value"
 
   Scenario: Group identical components into single inventory rows
     Given a KiCad schematic file "grouped.kicad_sch" with components:
