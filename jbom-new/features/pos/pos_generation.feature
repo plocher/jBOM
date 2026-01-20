@@ -47,7 +47,7 @@ Feature: POS Generation
   Scenario: Help command
     When I run "jbom pos --help"
     Then the command exits with code 0
-    And the output contains "Generate component placement files from KiCad PCB"
+    And the output contains "Path to .kicad_pcb file"
     And the output contains "--smd-only"
     And the output contains "--layer"
     And the output contains "--units"
