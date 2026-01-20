@@ -7,7 +7,8 @@ from pathlib import Path
 
 from jbom.services.pcb_reader import DefaultKiCadReaderService
 from jbom.services.pos_generator import POSGenerator
-from jbom.common.options import PlacementOptions
+from jbom.services.project_file_resolver import ProjectFileResolver
+from jbom.common.options import PlacementOptions, GeneratorOptions
 
 
 def register_command(subparsers) -> None:
@@ -16,8 +17,13 @@ def register_command(subparsers) -> None:
         "pos", help="Generate component placement files from KiCad PCB"
     )
 
-    # Positional argument
-    parser.add_argument("pcb", help="Path to .kicad_pcb file")
+    # Positional argument - now supports project-centric inputs
+    parser.add_argument(
+        "input",
+        nargs="?",
+        default=".",
+        help="Path to .kicad_pcb file, project directory, or base name (default: current directory)",
+    )
 
     # Output options
     parser.add_argument(
@@ -62,13 +68,33 @@ def register_command(subparsers) -> None:
 
 
 def handle_pos(args: argparse.Namespace) -> int:
-    """Handle POS command."""
+    """Handle POS command with project-centric input resolution."""
     try:
-        pcb_file = Path(args.pcb)
+        # Create options
+        gen_options = GeneratorOptions(verbose=args.verbose) if args.verbose else None
 
-        if not pcb_file.exists():
-            print(f"Error: PCB file not found: {pcb_file}", file=sys.stderr)
-            return 1
+        # Use ProjectFileResolver for intelligent input resolution
+        resolver = ProjectFileResolver(
+            prefer_pcb=True, target_file_type="pcb", options=gen_options
+        )
+        resolved_input = resolver.resolve_input(args.input)
+
+        # Handle cross-command intelligence - if user provided wrong file type, try to resolve it
+        if not resolved_input.is_pcb:
+            if args.verbose:
+                print(
+                    f"Note: POS generation requires a PCB file. "
+                    f"Found {resolved_input.resolved_path.suffix} file, trying to find matching PCB.",
+                    file=sys.stderr,
+                )
+
+            resolved_input = resolver.resolve_for_wrong_file_type(resolved_input, "pcb")
+            if args.verbose:
+                print(
+                    f"Using PCB: {resolved_input.resolved_path.name}", file=sys.stderr
+                )
+
+        pcb_file = resolved_input.resolved_path
 
         # Create placement options
         options = PlacementOptions(

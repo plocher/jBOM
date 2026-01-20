@@ -9,6 +9,7 @@ from typing import Optional
 from jbom.services.schematic_reader import SchematicReader
 from jbom.services.bom_generator import BOMGenerator, BOMData
 from jbom.services.inventory_matcher import InventoryMatcher
+from jbom.services.project_file_resolver import ProjectFileResolver
 from jbom.common.options import GeneratorOptions
 
 
@@ -18,8 +19,13 @@ def register_command(subparsers) -> None:
         "bom", help="Generate bill of materials from KiCad schematic"
     )
 
-    # Positional argument
-    parser.add_argument("schematic", help="Path to .kicad_sch file")
+    # Positional argument - now supports project-centric inputs
+    parser.add_argument(
+        "input",
+        nargs="?",
+        default=".",
+        help="Path to .kicad_sch file, project directory, or base name (default: current directory)",
+    )
 
     # Output options
     parser.add_argument(
@@ -72,24 +78,71 @@ def register_command(subparsers) -> None:
 
 
 def handle_bom(args: argparse.Namespace) -> int:
-    """Handle BOM command - pure CLI logic."""
+    """Handle BOM command with project-centric input resolution."""
     try:
-        schematic_file = Path(args.schematic)
-
-        if not schematic_file.exists():
-            print(f"Error: Schematic file not found: {schematic_file}", file=sys.stderr)
-            return 1
-
         # Create options
         options = GeneratorOptions(verbose=args.verbose) if args.verbose else None
-        project_name = schematic_file.stem
+
+        # Use ProjectFileResolver for intelligent input resolution
+        resolver = ProjectFileResolver(
+            prefer_pcb=False, target_file_type="schematic", options=options
+        )
+        resolved_input = resolver.resolve_input(args.input)
+
+        # Handle cross-command intelligence - if user provided wrong file type, try to resolve it
+        if not resolved_input.is_schematic:
+            if args.verbose:
+                print(
+                    f"Note: BOM generation requires a schematic file. "
+                    f"Found {resolved_input.resolved_path.suffix} file, trying to find matching schematic.",
+                    file=sys.stderr,
+                )
+
+            try:
+                resolved_input = resolver.resolve_for_wrong_file_type(
+                    resolved_input, "schematic"
+                )
+                if args.verbose:
+                    print(
+                        f"Using schematic: {resolved_input.resolved_path.name}",
+                        file=sys.stderr,
+                    )
+            except ValueError as e:
+                print(f"Error: {e}", file=sys.stderr)
+                return 1
+
+        schematic_file = resolved_input.resolved_path
+
+        # Determine project name from context or file
+        if resolved_input.project_context:
+            project_name = resolved_input.project_context.project_base_name
+        else:
+            project_name = schematic_file.stem
 
         # Use services directly - no workflow abstraction needed
         reader = SchematicReader(options)
         generator = BOMGenerator(args.aggregation)
 
-        # Load components from schematic
-        components = reader.load_components(schematic_file)
+        # Load components from schematic (including hierarchical sheets if available)
+        if resolved_input.project_context:
+            # Get all hierarchical schematic files for complete BOM
+            hierarchical_files = resolved_input.get_hierarchical_files()
+            if args.verbose and len(hierarchical_files) > 1:
+                print(
+                    f"Processing hierarchical design with {len(hierarchical_files)} schematic files",
+                    file=sys.stderr,
+                )
+
+            # Load components from all hierarchical files
+            components = []
+            for sch_file in hierarchical_files:
+                if args.verbose:
+                    print(f"Loading components from {sch_file.name}", file=sys.stderr)
+                file_components = reader.load_components(sch_file)
+                components.extend(file_components)
+        else:
+            # Load components from single schematic
+            components = reader.load_components(schematic_file)
 
         # Determine effective fabricator (default generic)
         fabricator = args.fabricator
