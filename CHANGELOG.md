@@ -1,6 +1,57 @@
 # CHANGELOG
 
 
+## v4.12.0 (2026-01-21)
+
+### Bug Fixes
+
+* fix: update .gitignore to allow features/parts/ directory
+
+- Change parts/ to /parts/ to only ignore top-level parts directory
+- Allows proper tracking of features/parts/ test directory
+- Fixes git add issues with new parts list feature tests
+
+Co-Authored-By: Warp <agent@warp.dev> ([`34265cd`](https://github.com/plocher/jBOM/commit/34265cd728bb7fb97e60627c673c0219eb0e692d))
+
+### Features
+
+* feat: remove aggregation flag from BOM command
+
+Co-Authored-By: Warp <agent@warp.dev> ([`5c518bb`](https://github.com/plocher/jBOM/commit/5c518bbbf83bc6f9f5236debc3ec864e91aecf66))
+
+* feat: add parts CLI command for individual component listings
+
+- Implement parts CLI command with full feature parity to BOM command
+- Support same options: -o, --inventory, --fabricator, --include-dnp, --include-excluded, -v
+- Default output to stdout (CSV format), support console table and file output
+- Register parts command in main CLI entry point
+- Mirror BOM command structure for consistency
+
+Enables 'jbom parts' for assembly-focused component listings
+
+Refs: #21
+
+Co-Authored-By: Warp <agent@warp.dev> ([`8d1f323`](https://github.com/plocher/jBOM/commit/8d1f32360a38db9b75c514f4d9ff5073f43e9108))
+
+* feat: add PartsListGenerator service for individual component listings
+
+- Implement PartsListGenerator service with 1:1 component mapping
+- Add PartsListEntry and PartsListData data classes
+- Support natural reference sorting (R1, R2, R10)
+- Apply same filtering logic as BOMGenerator (DNP, excluded components)
+- No aggregation - each component gets individual entry for assembly guidance
+
+Refs: #21
+
+Co-Authored-By: Warp <agent@warp.dev> ([`82e297f`](https://github.com/plocher/jBOM/commit/82e297fec049a5f43aaddd40d6a71e17459e3788))
+
+### Unknown
+
+* Merge pull request #34 from plocher/feature/issue-21-parts-list-command
+
+feat!: Add parts list command and remove BOM --aggregation flag ([`abf18d6`](https://github.com/plocher/jBOM/commit/abf18d6820d00489ad1d3b65b6b7bb717ef4a681))
+
+
 ## v4.11.0 (2026-01-21)
 
 ### Bug Fixes
