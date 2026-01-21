@@ -1,7 +1,13 @@
-Feature: BOM Aggregation
+Feature: BOM Aggregation (DEPRECATED - Issue #21)
   As a hardware developer
   I want to control BOM aggregation strategies
   So that the BOM matches my sourcing preferences
+
+  # NOTE: This feature demonstrates the conceptual problem addressed in Issue #21
+  # The --aggregation flag conflates BOM (procurement) with Parts List (assembly)
+  # This entire feature will be replaced with:
+  # - BOM command that always aggregates by value+package
+  # - Parts command that shows individual components
 
   Background:
     Given the generic fabricator is selected
