@@ -2,14 +2,14 @@
 
 This directory contains Behavior-Driven Development (BDD) tests using Gherkin syntax for jBOM. The test suite was comprehensively refactored in **Issue #27** to follow consistent, maintainable patterns.
 
-## 🎯 Testing Philosophy: Ultra-Simplified Patterns
+## Testing Philosophy: Ultra-Simplified Patterns
 
 All core functionality tests follow a **standardized ultra-simplified pattern** that prioritizes:
 - **Consistency**: Identical structure across all feature areas
 - **Maintainability**: Easy to read, write, and debug
 - **Functional focus**: Tests validate behavior, not brittle format details
 
-## 📁 Test Organization
+## Test Organization
 
 ```
 features/
@@ -41,10 +41,7 @@ features/
     └── ...                 # Issue-specific regression tests
 ```
 
-## 🔧 Ultra-Simplified Pattern (Issue #27)
-
-### Standard Pattern Structure
-All core functionality tests (BOM/POS/Inventory/CLI) use this identical pattern:
+## Standard Pattern Structure
 
 ```gherkin
 Feature: [Functionality Description]
@@ -59,27 +56,70 @@ Feature: [Functionality Description]
     Given a schematic that contains:
       | Reference | Value | Footprint   |
       | R1        | 10K   | R_0805_2012 |
-      | C1        | 100nF | C_0603_1608 |
     When I run jbom command "bom [options]"
     Then the command should succeed
     And the output should contain "R1"
-    And the output should contain "10K"
 ```
 
 ### Key Pattern Elements
 
-#### 1. **Background**: Consistent fabricator selection
+#### 1. **Background**: Consistent sandbox environment setup
+All core functionality tests (BOM/POS/Inventory/CLI) use a Background pattern
+that sets up a consistent and predictable sandbox environment for the scenerios.
+This sandbox uses default jbom behavior as a baseline, with explicit use of the
+generic fabricator from the config system.  This allows features to focus on
+**their own** nuances, edge cases and key features without having to also work
+through the interaction combinatorics with other features.
+
+With this pattern, the `fabricator test.feature` is expected to iterate through
+the various fabricators that have been configured and verify that the capabilities
+the user expects are indeed functioning correctly.  This lets `all the other.feature`
+files depend on `generic` behavior, which is intended to be predictable and stable.
+
 ```gherkin
 Background:
   Given the generic fabricator is selected
 ```
 
 #### 2. **Component Definition**: Table-driven, inline component creation
+Scenerios should be both minimalist and explicit.  They should follow DRY patterns
+so as to not overconstrain or burden the test with unrelated baggage statements,
+while at the same time being specific about the details being exercised.
+
+In this example, the scenerio is making sure that the bom feature works with
+defaults - that is, with no additional CLI options.
+
 ```gherkin
-Given a schematic that contains:
-  | Reference | Value | Footprint   |
-  | R1        | 10K   | R_0805_2012 |
+ Scenario: Minimal options, correct behavior
+    Given a schematic that contains:
+      | Reference | Value | Footprint   |
+      | R1        | 10K   | R_0805_2012 |
+      | C1        | 100nF | C_0603_1608 |
 ```
+All this feature requires is that a KiCad schematic file exists, and that it
+contains components.  The `Given` is crafted to provide a KiCad project with
+a kicad_sch file in the sandbox directory; the table provided populates the
+schematic with two components.
+
+```gherkin
+    When I run jbom command "bom"
+```
+The details of how to execute the jbom command are left to the test framework,
+all this scenerio requires is that the `bom` subcommand is invoked in this
+specific way.
+
+```gherkin
+    Then the command should succeed
+    And the output should contain "R1"
+    And the output should contain "10K"
+    And the output should contain "C1"
+    And the output should contain "100nF"
+```
+Finally, the validation `Then` steps are very explicit about what they expect,
+that the command does not exit with an error, and the output contains information
+about all the components that were placed into the schematic.
+
+This pattern is used throughout jBOM:
 
 For POS tests, use:
 ```gherkin
@@ -105,7 +145,7 @@ And a file named "output.csv" should exist
 And the file "output.csv" should contain "R1"
 ```
 
-## ✅ Benefits of Ultra-Simplified Pattern
+## Benefits of Ultra-Simplified Pattern
 
 ### **Consistency**
 - Identical structure across all feature areas
@@ -118,71 +158,14 @@ And the file "output.csv" should contain "R1"
 - Less likely to break from minor output formatting changes
 
 ### **Maintainability**
-- Clear separation between simple component testing and complex architecture testing
+- Clear separation between feature-specific testing and a predictable environment with other features
 - Reduced cognitive load when reading/writing tests
-- Consistent Background setup eliminates repetition
+- The use of `Background` supports the DRY design pattern
 
-### **Developer Experience**
-- New contributors can easily follow established patterns
-- Canonical assertion steps reduce duplication
-- Enhanced error diagnostics when tests fail
 
-## 🏗️ Writing New Tests
+## Anti-Patterns to Avoid
 
-### For Core Functionality (BOM/POS/Inventory)
-**Always use the ultra-simplified pattern:**
-
-```gherkin
-Feature: New BOM Feature
-  As a hardware developer
-  I want to [new functionality]
-  So that I can [benefit]
-
-  Background:
-    Given the generic fabricator is selected
-
-  Scenario: [Specific test case]
-    Given a schematic that contains:
-      | Reference | Value | Footprint |
-      | [components for this test]
-    When I run jbom command "[command with options]"
-    Then the command should succeed
-    And the output should contain "[expected component or value]"
-```
-
-### For CLI Functionality
-Use the same pattern but focus on CLI behavior:
-
-```gherkin
-Scenario: Show help
-  When I run jbom command "--help"
-  Then the command should succeed
-  And the output should contain "usage:"
-```
-
-### For Complex Architecture Testing
-Only use fixtures and complex setup for legitimate architectural concerns:
-- Project discovery and resolution
-- Cross-command intelligence (BOM finding PCB files)
-- Hierarchical schematic processing
-- Legacy file format support
-
-## 🚫 Anti-Patterns to Avoid
-
-### ❌ **Don't use fixtures for simple component testing**
-```gherkin
-# BAD - Unnecessarily complex
-Given the sample fixtures under "features/fixtures/kicad_samples"
-When I run jbom command "bom flat_project"
-
-# GOOD - Simple and direct
-Given a schematic that contains:
-  | Reference | Value |
-  | R1        | 10K   |
-When I run jbom command "bom"
-```
-
-### ❌ **Don't test fragile format details**
+### **Don't test fragile format details**
 ```gherkin
 # BAD - Brittle CSV format assertion
 Then the output should contain "\"R1, R2\",10K,R_0805_2012,2"
@@ -193,10 +176,7 @@ And the output should contain "R2"
 And the output should contain "10K"
 ```
 
-### ❌ **Don't create duplicate scenarios**
-All duplicate feature files were removed in Issue #27. Each scenario should test a distinct aspect of functionality.
-
-## 🧪 Running Tests
+## Running Tests
 
 ```bash
 # All tests
@@ -217,7 +197,7 @@ behave --no-capture
 behave --dry-run
 ```
 
-## 📚 Available Step Definitions
+## Available Step Definitions
 
 ### Core Steps (Ultra-Simplified Pattern)
 - `Given the generic fabricator is selected` - Standard background
@@ -230,10 +210,6 @@ behave --dry-run
 - `And a file named "[filename]" should exist` - File creation validation
 - `And the file "[filename]" should contain "[text]"` - File content validation
 
-### Legacy Steps (Project-Centric Only)
-- `Given the sample fixtures under "[path]"` - Complex project setup
-- `Given a KiCad project directory "[name]"` - Project directory creation
-- `And the project contains a file "[name]" with content` - File creation with content
 
 See [`steps/common_steps.py`](steps/common_steps.py) for complete implementation.
 
@@ -253,13 +229,3 @@ See [`steps/common_steps.py`](steps/common_steps.py) for complete implementation
 - **Purpose**: Validate command-line interface behavior
 - **Pattern**: Direct command execution + output validation
 - **Examples**: Help text, version info, error handling
-
-## 🔄 Migration Notes (Issue #27)
-
-The test suite was comprehensively refactored to achieve:
-- ✅ **Consistency**: All core features use identical patterns
-- ✅ **Organization**: Logical directory structure, no redundant file names
-- ✅ **Quality**: Functional vs format testing, better assertions
-- ✅ **Maintainability**: Clear patterns, comprehensive documentation
-
-**For developers**: All new tests should follow the ultra-simplified pattern unless testing complex architectural behavior that genuinely requires fixtures.
