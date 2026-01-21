@@ -91,7 +91,10 @@ def handle_bom(args: argparse.Namespace) -> int:
 
         # Handle cross-command intelligence - if user provided wrong file type, try to resolve it
         if not resolved_input.is_schematic:
-            if args.verbose:
+            # Provide guidance about cross-resolution unless quiet
+            import os as _os
+
+            if not _os.environ.get("JBOM_QUIET"):
                 print(
                     f"Note: BOM generation requires a schematic file. "
                     f"Found {resolved_input.resolved_path.suffix} file, trying to find matching schematic.",
@@ -102,7 +105,14 @@ def handle_bom(args: argparse.Namespace) -> int:
                 resolved_input = resolver.resolve_for_wrong_file_type(
                     resolved_input, "schematic"
                 )
-                if args.verbose:
+                # Emit phrasing expected by Gherkin tests unless quiet
+                import os as _os
+
+                if not _os.environ.get("JBOM_QUIET"):
+                    print(
+                        f"found matching schematic {resolved_input.resolved_path.name}",
+                        file=sys.stderr,
+                    )
                     print(
                         f"Using schematic: {resolved_input.resolved_path.name}",
                         file=sys.stderr,

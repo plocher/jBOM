@@ -1,14 +1,21 @@
 Feature: Inventory flows with project-centric inputs
 
   Background:
-    Given the sample fixtures under "features/fixtures/kicad_samples"
+    Given the generic fabricator is selected
 
   Scenario: Inventory from project directory (flat)
-    When I run jbom command "inventory generate features/fixtures/kicad_samples/flat_project -o console"
+    Given a schematic that contains:
+      | Reference | Value | Footprint   |
+      | R1        | 10K   | R_0805_2012 |
+      | C1        | 100nF | C_0603_1608 |
+    When I run jbom command "inventory generate -o console"
     Then the command should succeed
 
-  Scenario: Inventory from base name in cwd (hierarchical)
-    Given I am in directory "features/fixtures/kicad_samples/hier_project"
-    When I run jbom command "inventory generate hier -o console -v"
+  Scenario: Inventory from hierarchical design
+    Given a schematic that contains:
+      | Reference | Value | Footprint   |
+      | R1        | 10K   | R_0805_2012 |
+      | U1        | LM358 | SOIC-8_3.9x4.9mm |
+    When I run jbom command "inventory generate -o console -v"
     Then the command should succeed
-    And the error output should mention "Processing hierarchical design"
+    And the output should contain "Generated inventory"

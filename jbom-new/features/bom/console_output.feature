@@ -4,11 +4,13 @@ Feature: BOM Console Output
   So that I can inspect BOMs without generating files
 
   Background:
-    Given a clean test workspace
+    Given the generic fabricator is selected
 
   Scenario: Console output formatting
-    Given a KiCad schematic file "console.kicad_sch" with basic components
-    When I run "jbom bom console.kicad_sch -o console --generic"
-    Then the command exits with code 0
-    And the output contains a formatted table header
-    And the output contains component references and values
+    Given a schematic that contains:
+      | Reference | Value | Footprint   |
+      | R1        | 10K   | R_0805_2012 |
+    When I run jbom command "bom -o console"
+    Then the command should succeed
+    And the output should contain "Bill of Materials"
+    And the output should contain "R1"

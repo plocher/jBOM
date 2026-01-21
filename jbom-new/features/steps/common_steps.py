@@ -22,12 +22,48 @@ def step_run_command(context, command):
     # Preserve previous output for later comparisons
     context.prev_output = getattr(context, "last_output", None)
 
+    # Prepare diagnostics (pre-state)
+    def _tree(root: str, depth: int = 3) -> str:
+        from pathlib import Path as _P
+
+        lines = []
+        rootp = _P(root)
+        for p in sorted(rootp.rglob("*")):
+            rel = p.relative_to(rootp)
+            if len(rel.parts) > depth:
+                continue
+            try:
+                if p.is_dir():
+                    lines.append(f"[D] {rel}/")
+                else:
+                    size = p.stat().st_size
+                    lines.append(f"[F] {rel} ({size} bytes)")
+            except OSError:
+                continue
+        return "\n".join(lines)
+
+    pre_tree = (
+        _tree(str(context.project_root)) if getattr(context, "trace", False) else None
+    )
+
     # For now, run via python -m until we have proper installation
     if command.startswith("jbom "):
         # Replace 'jbom' with python module invocation
         raw_args = command.split()[1:]  # Remove 'jbom' prefix
 
-        # Default to generic fabricator for predictable behavior on BOM unless explicitly set
+        # Enforce sandbox safety on -o paths: disallow any path separators in tests
+        if "-o" in raw_args:
+            try:
+                idx = raw_args.index("-o")
+                outval = raw_args[idx + 1]
+                if ("/" in outval) or ("\\" in outval):
+                    raise AssertionError(
+                        "-o value must not contain path separators in tests"
+                    )
+            except (ValueError, IndexError):
+                pass
+
+        # Add explicit fabricator from context if set and not already specified
         if len(raw_args) >= 1 and raw_args[0] == "bom":
             has_fabricator_flag = any(
                 a.startswith("--fabricator") for a in raw_args
@@ -35,7 +71,10 @@ def step_run_command(context, command):
                 a in ("--jlc", "--pcbway", "--seeed", "--generic") for a in raw_args
             )
             if not has_fabricator_flag:
-                raw_args += ["--fabricator", "generic"]
+                fabricator = getattr(
+                    context, "fabricator", "generic"
+                )  # Default to generic if not set
+                raw_args += ["--fabricator", fabricator]
 
         cmd = ["python", "-m", "jbom.cli.main"] + raw_args
     else:
@@ -46,6 +85,8 @@ def step_run_command(context, command):
 
     env = os.environ.copy()
     env["PYTHONPATH"] = str(context.src_root)
+    if getattr(context, "trace", False):
+        env["JBOM_BEHAVE_TRACE"] = "1"
 
     try:
         result = subprocess.run(
@@ -58,6 +99,16 @@ def step_run_command(context, command):
         context.last_command = command
         context.last_output = result.stdout + result.stderr
         context.last_exit_code = result.returncode
+        if getattr(context, "trace", False):
+            post_tree = _tree(str(context.project_root))
+            context.diagnostics = (
+                "=== DIAGNOSTICS ===\n"
+                f"CWD (project_root): {context.project_root}\n"
+                f"Command: {cmd}\n"
+                "--- PRE TREE ---\n" + (pre_tree or "(trace off)") + "\n"
+                "--- POST TREE ---\n" + post_tree + "\n"
+                f"Exit: {result.returncode}\n"
+            )
     except Exception as e:
         context.last_command = command
         context.last_output = str(e)
@@ -72,21 +123,43 @@ def step_run_jbom_command(context, args):
 
 @given('the sample fixtures under "{rel_path}"')
 def step_have_sample_fixtures(context, rel_path):
-    """Copy fixture subtree into the temp workspace so tests don't write under repo.
+    """Copy fixture subtree into the per-scenario temp workspace.
 
-    Example rel_path: "features/fixtures/kicad_samples".
-    We copy that directory from the repo root into context.project_root/rel_path.
+    Rules:
+    - Source is ALWAYS under jbom-new/features/fixtures in the repo.
+    - Destination is ALWAYS under the scenario temp dir (context.project_root).
+    - We never delete or modify files under the repo working tree.
     """
     from pathlib import Path
     import shutil
 
-    # Compute source (repo) and destination (temp workspace) paths
-    # __file__ => features/steps/common_steps.py; repo root is three levels up
-    repo_root = Path(__file__).parent.parent.parent
-    src = (repo_root / rel_path).resolve()
+    assert hasattr(context, "sandbox_root"), "sandbox_root not initialized"
+    repo_jbom_new = Path(getattr(context, "jbom_new_root"))
+
+    # Normalize incoming path: allow callers to pass either of these prefixes
+    #   "features/fixtures/..." or "jbom-new/features/fixtures/..."
+    raw = rel_path.strip("/")
+    parts = raw.split("/")
+    # Strip optional leading "jbom-new"
+    if parts and parts[0] == "jbom-new":
+        parts = parts[1:]
+    normalized_rel = "/".join(parts)
+
+    # Compute absolute source under repo jbom-new
+    src = (repo_jbom_new / normalized_rel).resolve()
     assert src.exists() and src.is_dir(), f"Fixtures directory not found: {src}"
 
-    dest = context.project_root / rel_path
+    # Compute destination under temp workspace, mirroring the normalized path
+    dest = (Path(context.sandbox_root) / normalized_rel).resolve()
+
+    # SAFETY: Refuse to operate if destination escapes the temp workspace
+    temp_root = Path(context.sandbox_root).resolve()
+    try:
+        dest.relative_to(temp_root)
+    except Exception:
+        raise AssertionError(f"Refusing to write outside temp workspace: {dest}")
+
+    # Create/replace the destination within the temp workspace
     if dest.exists():
         shutil.rmtree(dest)
     dest.parent.mkdir(parents=True, exist_ok=True)
@@ -99,15 +172,43 @@ def step_cd_project_root(context, rel_path):
 
     base = Path(str(context.project_root))
     new_root = (base / rel_path).resolve()
-    assert new_root.exists() and new_root.is_dir(), f"Directory not found: {new_root}"
+    new_root.mkdir(parents=True, exist_ok=True)
     context.project_root = new_root
+
+
+@when('I am in directory "{rel_path}"')
+def step_when_cd_project_root(context, rel_path):
+    """When-style directory switching (alias to Given)."""
+    step_cd_project_root(context, rel_path)
+
+
+@given('I am in project directory "{name}"')
+def step_cd_project_directory(context, name):
+    """Switch to a KiCad project directory, creating minimal skeleton if needed."""
+    from pathlib import Path
+    from ._workspace import ensure_project, chdir
+
+    base = Path(str(context.project_root))
+    proj_dir = ensure_project(base, name)
+    chdir(context, proj_dir)
+
+
+@when('I am in project directory "{name}"')
+def step_when_cd_project_directory(context, name):
+    """When-style project directory switching (alias to Given)."""
+    step_cd_project_directory(context, name)
 
 
 @given('an empty directory "{rel_path}"')
 def step_make_empty_dir(context, rel_path):
     from pathlib import Path
 
-    p = (Path(str(context.project_root)) / rel_path).resolve()
+    base = Path(context.sandbox_root)
+    p = (
+        (base / rel_path).resolve()
+        if not Path(rel_path).is_absolute()
+        else Path(rel_path)
+    )
     p.mkdir(parents=True, exist_ok=True)
     # Ensure empty
     for child in p.glob("*"):
@@ -119,7 +220,12 @@ def step_make_empty_dir(context, rel_path):
 def step_create_directory(context, rel_path):
     from pathlib import Path
 
-    p = (Path(str(context.project_root)) / rel_path).resolve()
+    base = Path(context.sandbox_root)
+    p = (
+        (base / rel_path).resolve()
+        if not Path(rel_path).is_absolute()
+        else Path(rel_path)
+    )
     p.mkdir(parents=True, exist_ok=True)
 
 
@@ -127,7 +233,12 @@ def step_create_directory(context, rel_path):
 def step_create_file_with_content(context, rel_path, text):
     from pathlib import Path
 
-    p = (Path(str(context.project_root)) / rel_path).resolve()
+    base = Path(context.sandbox_root)
+    p = (
+        (base / rel_path).resolve()
+        if not Path(rel_path).is_absolute()
+        else Path(rel_path)
+    )
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(text, encoding="utf-8")
 
@@ -137,9 +248,17 @@ def step_create_symlink(context, link_path, target_path):
     import os
     from pathlib import Path
 
-    base = Path(str(context.project_root))
-    link = (base / link_path).resolve()
-    target = (base / target_path).resolve()
+    base = Path(context.sandbox_root)
+    link = (
+        (base / link_path).resolve()
+        if not Path(link_path).is_absolute()
+        else Path(link_path)
+    )
+    target = (
+        (base / target_path).resolve()
+        if not Path(target_path).is_absolute()
+        else Path(target_path)
+    )
     link.parent.mkdir(parents=True, exist_ok=True)
     try:
         if link.exists() or link.is_symlink():
@@ -189,6 +308,20 @@ def step_error_output_empty(context):
     ), f"Unexpected messages in output:\n{out}"
 
 
+@given("print diagnostics")
+@when("print diagnostics")
+@then("print diagnostics")
+def step_print_diagnostics(context):
+    diag = getattr(context, "diagnostics", None)
+    out = getattr(context, "last_output", None)
+    msg = (diag or "(no diagnostics)\n") + ("\n=== OUTPUT ===\n" + out if out else "")
+    # Emit to stdout so it works in any phase; do not affect test status
+    try:
+        print(msg)
+    except Exception:
+        pass
+
+
 @then("the two command outputs should be identical")
 def step_outputs_identical(context):
     prev = getattr(context, "prev_output", None)
@@ -205,32 +338,31 @@ def step_see_text(context, text):
     )
     assert_with_diagnostics(
         text in context.last_output,
-        "Expected text not found in output",
+        f"Expected text '{text}' not found in output",
         context,
-        expected=text,
-        actual=context.last_output,
     )
 
 
-@then("I should see {text} in the output")
-def step_see_text_in_output(context, text):
-    """Verify text appears in command output (alternative phrasing)."""
-    # Remove quotes if present
-    text = text.strip("\"'")
+def step_check_exit_code(context, expected_code):
+    """Check that command exited with expected code."""
+    actual_code = getattr(context, "last_exit_code", None)
     assert_with_diagnostics(
-        context.last_output is not None, "No command output captured", context
-    )
-    assert_with_diagnostics(
-        text in context.last_output,
-        "Expected text not found in output",
+        actual_code == expected_code,
+        f"Exit code mismatch\n  Expected: {expected_code}\n  Actual:   {actual_code}",
         context,
-        expected=text,
-        actual=context.last_output,
+    )
+
+
+def step_check_nonzero_exit(context):
+    """Check that command failed (non-zero exit)."""
+    actual_code = getattr(context, "last_exit_code", None)
+    assert_with_diagnostics(
+        actual_code != 0, f"Expected failure but got exit code: {actual_code}", context
     )
 
 
 @then("the exit code should be {expected_code:d}")
-def step_check_exit_code(context, expected_code):
+def step_check_exit_code_param(context, expected_code):
     """Verify command exit code."""
     assert_with_diagnostics(
         context.last_exit_code is not None, "No command executed", context
@@ -245,7 +377,7 @@ def step_check_exit_code(context, expected_code):
 
 
 @then("the exit code should be non-zero")
-def step_check_nonzero_exit(context):
+def step_check_nonzero_exit_should(context):
     """Verify command failed."""
     assert_with_diagnostics(
         context.last_exit_code is not None, "No command executed", context
@@ -309,6 +441,34 @@ def step_see_error(context):
 def step_output_not_contains(context, text):
     out = context.last_output or ""
     assert text not in out, f"Unexpected text found in output: {text}\nOutput:\n{out}"
+
+
+@then('the output should not contain "{text}"')
+def step_output_should_not_contain(context, text):
+    """Alias for ultra-simplified pattern consistency."""
+    step_output_not_contains(context, text)
+
+
+@then('a file named "{filename}" should exist')
+def step_file_should_exist(context, filename):
+    """Verify that a file exists in the project directory."""
+    from pathlib import Path
+
+    file_path = Path(context.project_root) / filename
+    assert file_path.exists(), f"File not found: {file_path}"
+
+
+@then('the file "{filename}" should contain "{text}"')
+def step_file_should_contain(context, filename, text):
+    """Verify that a file contains specific text."""
+    from pathlib import Path
+
+    file_path = Path(context.project_root) / filename
+    assert file_path.exists(), f"File not found: {file_path}"
+    content = file_path.read_text(encoding="utf-8")
+    assert (
+        text in content
+    ), f"Text '{text}' not found in file {filename}\nContent:\n{content}"
 
 
 @then("the error output contains error information")

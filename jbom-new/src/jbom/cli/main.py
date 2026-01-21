@@ -21,6 +21,12 @@ def create_parser() -> argparse.ArgumentParser:
         action="version",
         version=f"jbom {__version__}",
     )
+    parser.add_argument(
+        "-q",
+        "--quiet",
+        action="store_true",
+        help="Suppress diagnostic guidance output",
+    )
 
     # Create subparsers for commands
     subparsers = parser.add_subparsers(
@@ -48,6 +54,12 @@ def main(argv: Optional[List[str]] = None) -> int:
     """
     parser = create_parser()
     args = parser.parse_args(argv)
+
+    # Apply quiet flag globally via environment for downstream components
+    if getattr(args, "quiet", False):
+        import os as _os
+
+        _os.environ["JBOM_QUIET"] = "1"
 
     # No command specified
     if not args.command:

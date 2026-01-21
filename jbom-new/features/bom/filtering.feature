@@ -4,22 +4,31 @@ Feature: BOM Filtering (DNP / Excluded)
   So that I can generate BOMs for different build configurations
 
   Background:
-    Given a clean test workspace
+    Given the generic fabricator is selected
 
   Scenario: Include DNP components when requested
-    Given a KiCad schematic file "dnp_include.kicad_sch" with DNP components
-    When I run "jbom bom dnp_include.kicad_sch --include-dnp --generic"
-    Then the command exits with code 0
-    And the output contains "R2,22K"
+    Given a schematic that contains:
+      | Reference | Value | Footprint   | DNP |
+      | R1        | 10K   | R_0805_2012 | No  |
+      | R2        | 22K   | R_0805_2012 | Yes |
+    When I run jbom command "bom --include-dnp"
+    Then the command should succeed
+    And the output should contain "R2,22K"
 
   Scenario: Exclude DNP components by default
-    Given a KiCad schematic file "dnp_exclude.kicad_sch" with DNP components
-    When I run "jbom bom dnp_exclude.kicad_sch --generic"
-    Then the command exits with code 0
-    And the output does not contain "R2"
+    Given a schematic that contains:
+      | Reference | Value | Footprint   | DNP |
+      | R1        | 10K   | R_0805_2012 | No  |
+      | R2        | 22K   | R_0805_2012 | Yes |
+    When I run jbom command "bom"
+    Then the command should succeed
+    And the output should not contain "R2"
 
   Scenario: Include components excluded from BOM when requested
-    Given a KiCad schematic file "excluded.kicad_sch" with components excluded from BOM
-    When I run "jbom bom excluded.kicad_sch --include-excluded --generic"
-    Then the command exits with code 0
-    And the output contains excluded component references
+    Given a schematic that contains:
+      | Reference | Value | Footprint   | ExcludeFromBOM |
+      | R1        | 10K   | R_0805_2012 | No             |
+      | R2        | 22K   | R_0805_2012 | Yes            |
+    When I run jbom command "bom --include-excluded"
+    Then the command should succeed
+    And the output should contain "R2,22K"

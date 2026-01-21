@@ -4,9 +4,9 @@ Feature: BOM Errors
   So that I can fix input problems quickly
 
   Background:
-    Given a clean test workspace
+    Given the generic fabricator is selected
 
   Scenario: Error on missing schematic file
-    When I run "jbom bom missing_file.kicad_sch"
-    Then the command exits with code 1
-    And the error output contains "Schematic file not found"
+    When I run jbom command "bom missing_file.kicad_sch"
+    Then the command should fail
+    And the error output should mention "Schematic file not found"

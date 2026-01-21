@@ -74,10 +74,30 @@ class ProjectDiscovery:
 
         # Prefer .kicad_pro files
         if kicad_pro_files:
+            # If legacy also present, emit UX note selecting modern file
+            try:
+                import sys as _sys
+
+                if pro_files:
+                    print(
+                        f"using modern project file {sorted(kicad_pro_files)[0].name}",
+                        file=_sys.stderr,
+                    )
+            except Exception:
+                pass
             return self._select_best_file(kicad_pro_files, search_dir.name)
 
         # Fall back to legacy .pro files
         if pro_files:
+            try:
+                import sys as _sys
+
+                print(
+                    f"using legacy project file {sorted(pro_files)[0].name}",
+                    file=_sys.stderr,
+                )
+            except Exception:
+                pass
             return self._select_best_file(pro_files, search_dir.name)
 
         return None

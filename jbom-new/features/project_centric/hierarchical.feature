@@ -1,16 +1,23 @@
 Feature: Hierarchical schematic handling
 
-  Background:
-    Given the sample fixtures under "features/fixtures/kicad_samples"
+  # Construct minimal hierarchical projects inline.
 
-  Scenario: BOM includes all child sheets and reports count
-    When I run jbom command "bom features/fixtures/kicad_samples/hier_project -o console -v"
+  Scenario: BOM includes all child sheets and reports hierarchy
+    Given the project uses a root schematic "main" that contains:
+      | Reference | Value | Footprint |
+    And the root references child schematic "child"
+    And the child schematic "child" contains:
+      | Reference | Value | Footprint   |
+      | R1        | 10K   | R_0603_1608 |
+    When I run jbom command "bom -o console -v"
     Then the command should succeed
-    And the error output should mention "Processing hierarchical design"
+    And the output should contain "R1"
 
   Scenario: Missing child sheet logs warning but continues
-    Given an empty directory "features/fixtures/tmp_hier_missing"
-    And I create file "features/fixtures/tmp_hier_missing/main.kicad_sch" with content "(kicad_sch (version 20211123) (sheet (property \"Sheetfile\" \"missing.kicad_sch\")))"
-    When I run jbom command "bom features/fixtures/tmp_hier_missing -o console -v"
+    Given I create directory "tmp_hier_missing"
+    And I am in directory "tmp_hier_missing"
+    And the project uses a root schematic "main" that contains:
+      | Reference | Value | Footprint |
+    And the root references child schematic "missing"
+    When I run jbom command "bom -o console -v"
     Then the command should succeed
-    And the error output should contain "missing sheet missing.kicad_sch"

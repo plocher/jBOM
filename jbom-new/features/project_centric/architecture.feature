@@ -4,32 +4,7 @@ Feature: Project-Centric Architecture
   So that I can use natural KiCad workflows without specifying explicit file paths
 
   Background:
-    Given a KiCad project directory "test_project"
-    And the project contains a file "test_project.kicad_pro" with content:
-      """
-      (kicad_project (version 1))
-      """
-    And the project contains a file "test_project.kicad_sch" with content:
-      """
-      (kicad_sch (version 20211123) (generator eeschema)
-        (symbol (lib_id "Device:R") (at 76.2 104.14 0) (unit 1)
-          (property "Reference" "R1" (id 0) (at 78.74 104.14 0))
-          (property "Value" "10k" (id 1) (at 78.74 106.68 0))
-          (property "Footprint" "Resistor_SMD:R_0603_1608Metric" (id 2) (at 74.168 104.14 90))
-        )
-      )
-      """
-    And the project contains a file "test_project.kicad_pcb" with content:
-      """
-      (kicad_pcb (version 20211014) (generator pcbnew)
-        (footprint "Resistor_SMD:R_0603_1608Metric" (at 76.2 104.14) (layer "F.Cu")
-          (fp_text reference "R1" (at 0 0) (layer "F.SilkS"))
-          (fp_text value "10k" (at 0 1.5) (layer "F.Fab"))
-          (pad "1" smd roundrect (at -0.8 0) (size 0.9 0.95))
-          (pad "2" smd roundrect (at 0.8 0) (size 0.9 0.95))
-        )
-      )
-      """
+    Given the generic fabricator is selected
 
   Scenario: BOM command with current directory
     When I run jbom command "bom ." in directory "test_project"

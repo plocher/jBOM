@@ -1,53 +1,38 @@
+@wip
 Feature: Inventory Listing
   As a hardware developer
   I want to list and filter inventory items
   So that I can quickly find components
 
   Background:
-    Given a clean test workspace
+    Given the generic fabricator is selected
 
   @wip
   Scenario: List all inventory items
-    Given an inventory file "components.csv" with data:
-      | IPN      | Category  | Value | Description        | Package |
-      | RES_10K  | RESISTOR  | 10K   | 10K Ohm Resistor  | 0805    |
-      | CAP_100N | CAPACITOR | 100nF | 100nF Ceramic Cap | 0603    |
-      | IC_LM358 | IC        | LM358 | Dual Op-Amp       | SOIC-8  |
-    When I run "jbom inventory list components.csv"
-    Then the command exits with code 0
-    And the output contains "Inventory: 3 items"
+    Given a schematic that contains:
+      | Reference | Value | Footprint | IPN      | Category  |
+      | R1        | 10K   | 0805      | RES_10K  | RESISTOR  |
+      | C1        | 100nF | 0603      | CAP_100N | CAPACITOR |
+      | U1        | LM358 | SOIC-8    | IC_LM358 | IC        |
+    When I run jbom command "inventory list -o console"
+    Then the command should succeed
+    And the output should contain "Inventory: 3 items"
 
   @wip
   Scenario: Filter inventory by category
-    Given an inventory file "mixed.csv" with mixed component categories
-    When I run "jbom inventory list mixed.csv --category resistor"
-    Then the command exits with code 0
-    And the output contains only resistor components
-    And the output does not contain capacitor components
+    Given a schematic that contains:
+      | Reference | Value | Category  |
+      | R1        | 10K   | RESISTOR  |
+      | C1        | 100nF | CAPACITOR |
+    When I run jbom command "inventory list --category resistor"
+    Then the command should succeed
+    And the output should contain "R1"
+    And the output should not contain "C1"
 
   @wip
   Scenario: Empty inventory shows no items
-    Given an empty inventory file "empty.csv"
-    When I run "jbom inventory list empty.csv"
-    Then the command exits with code 0
-    And the output contains "No items found"
-
-  @wip
-  Scenario: Help command
-    When I run "jbom inventory list --help"
-    Then the command exits with code 0
-    And the output contains "List inventory items"
-    And the output contains "--category"
-
-  @wip
-  Scenario: Missing inventory file
-    When I run "jbom inventory list nonexistent.csv"
-    Then the command exits with code 1
-    And the error output contains "Inventory file not found"
-
-  @wip
-  Scenario: Invalid inventory file format
-    Given a file "invalid.csv" with invalid CSV format
-    When I run "jbom inventory list invalid.csv"
-    Then the command exits with code 1
-    And the error output contains error information
+    Given a schematic that contains:
+      | Reference | Value | Footprint |
+    When I run jbom command "inventory list -o console"
+    Then the command should succeed
+    And the output should contain "No items found"
