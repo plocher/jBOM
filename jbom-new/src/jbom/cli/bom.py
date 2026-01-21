@@ -16,7 +16,10 @@ from jbom.common.options import GeneratorOptions
 def register_command(subparsers) -> None:
     """Register BOM command with argument parser."""
     parser = subparsers.add_parser(
-        "bom", help="Generate bill of materials from KiCad schematic"
+        "bom",
+        help="Generate bill of materials from KiCad schematic (aggregated for procurement)",
+        description="Generate Bill of Materials (BOM) from KiCad schematic. "
+        "Always aggregated by value+package for procurement.",
     )
 
     # Positional argument - now supports project-centric inputs
@@ -50,13 +53,7 @@ def register_command(subparsers) -> None:
     parser.add_argument("--seeed", action="store_true", help="Use Seeed preset")
     parser.add_argument("--generic", action="store_true", help="Use Generic preset")
 
-    # Aggregation options
-    parser.add_argument(
-        "--aggregation",
-        choices=["value_footprint", "value_only", "lib_id_value"],
-        default="value_footprint",
-        help="Component aggregation strategy",
-    )
+    # BOM always aggregates by value+package (footprint) for procurement
 
     # Filtering options
     parser.add_argument(
@@ -131,7 +128,9 @@ def handle_bom(args: argparse.Namespace) -> int:
 
         # Use services directly - no workflow abstraction needed
         reader = SchematicReader(options)
-        generator = BOMGenerator(args.aggregation)
+        generator = BOMGenerator(
+            "value_footprint"
+        )  # BOM always aggregates by value+package
 
         # Load components from schematic (including hierarchical sheets if available)
         if resolved_input.project_context:
