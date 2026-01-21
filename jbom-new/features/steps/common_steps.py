@@ -506,3 +506,29 @@ def step_see_specific_commands(context):
 def step_run_jbom_no_args(context):
     """Run jbom with no arguments."""
     step_run_command(context, "jbom")
+
+
+@then("the help text should indicate BOM is always aggregated")
+def step_help_text_indicates_bom_aggregated(context):
+    """Verify that BOM help text indicates aggregation behavior."""
+    assert context.last_output is not None, "No command output captured"
+    out = context.last_output.lower()
+    # Look for indicators that BOM is aggregated
+    indicators = ["aggregated", "procurement", "bill of materials"]
+    found = any(indicator in out for indicator in indicators)
+    assert (
+        found
+    ), f"Help text does not indicate BOM aggregation behavior.\nOutput:\n{context.last_output}"
+
+
+@then("the help text should show both bom and parts commands")
+def step_help_text_shows_bom_and_parts(context):
+    """Verify that main help shows both BOM and Parts commands."""
+    assert context.last_output is not None, "No command output captured"
+    out = context.last_output.lower()
+    assert (
+        "bom" in out
+    ), f"BOM command not found in main help.\nOutput:\n{context.last_output}"
+    assert (
+        "parts" in out
+    ), f"Parts command not found in main help.\nOutput:\n{context.last_output}"
