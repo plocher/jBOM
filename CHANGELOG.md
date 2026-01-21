@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## Unreleased
+
+### Added
+- BDD fixtures for project-centric tests (flat, hierarchical, mismatched, legacy .pro)
+- Regression suite scaffold for Issue #27 expansion across all commands
+- Migration notes: jbom-new/docs/migration/project_centric_migration.md
 
 ## v4.10.1 (2026-01-20)
 

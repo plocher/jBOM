@@ -1,188 +1,231 @@
-# Features - Gherkin BDD Tests
+# jBOM Feature Tests - Ultra-Simplified BDD Testing
 
-This directory contains Behavior-Driven Development (BDD) tests using Gherkin syntax. These tests validate user-facing behavior and CLI functionality.
+This directory contains Behavior-Driven Development (BDD) tests using Gherkin syntax for jBOM. The test suite was comprehensively refactored in **Issue #27** to follow consistent, maintainable patterns.
 
-## Test Structure: Hierarchical by Command
+## Testing Philosophy: Ultra-Simplified Patterns
 
-Tests are organized hierarchically to mirror the CLI command structure:
+All core functionality tests follow a **standardized ultra-simplified pattern** that prioritizes:
+- **Consistency**: Identical structure across all feature areas
+- **Maintainability**: Easy to read, write, and debug
+- **Functional focus**: Tests validate behavior, not brittle format details
+
+## Test Organization
 
 ```
 features/
-├── cli_basics.feature          # General CLI behavior
-├── bom/                        # jbom bom command tests
-│   ├── bom_generation.feature  # Basic BOM generation
-│   ├── bom_inventory.feature   # BOM + inventory enhancement
-│   └── bom_output.feature      # Output formats & filtering
-├── inventory/                  # jbom inventory command tests
-│   ├── inventory_generate.feature  # jbom inventory generate
-│   └── inventory_list.feature     # jbom inventory list
-├── pos/                        # jbom pos command tests
-│   ├── pos_generation.feature  # Basic position file generation
-│   └── pos_filtering.feature   # Filtering options
-└── regression/                 # Cross-cutting regression tests
-    └── diagnostic-output-quality.feature
+├── README.md              # This file
+├── bom/                    # BOM generation and processing
+│   ├── core.feature        # Core BOM functionality
+│   ├── output.feature      # Output formats and options
+│   ├── filtering.feature   # Component filtering (DNP, etc.)
+│   ├── aggregation.feature # Component grouping strategies
+│   └── ...                 # Additional BOM features
+├── pos/                    # Position/placement file generation
+│   ├── core.feature        # Core POS functionality
+│   ├── filtering.feature   # Component filtering (SMD, layers)
+│   ├── generation.feature  # Basic generation scenarios
+│   └── ...                 # Additional POS features
+├── inventory/              # Inventory management
+│   ├── core.feature        # Core inventory functionality
+│   ├── generate.feature    # Inventory generation
+│   ├── list.feature        # Inventory listing/filtering
+│   └── ...                 # Additional inventory features
+├── cli/                    # CLI basics (help, version, errors)
+│   └── basics.feature      # Basic CLI functionality
+├── project_centric/        # Complex project discovery & resolution
+│   ├── fixtures/           # Test project files (ONLY for architecture testing)
+│   ├── architecture.feature # Project discovery and resolution
+│   ├── hierarchical.feature # Multi-schematic projects
+│   └── ...                 # Complex architectural scenarios
+└── regression/             # Cross-cutting regression tests
+    └── ...                 # Issue-specific regression tests
 ```
 
-## Command-Test Mapping
+## Standard Pattern Structure
 
-| CLI Command | Test Location |
-|-------------|---------------|
-| `jbom --help` | [`cli_basics.feature`](cli_basics.feature) |
-| `jbom bom schematic.kicad_sch` | [`bom/bom_generation.feature`](bom/bom_generation.feature) |
-| `jbom bom --inventory components.csv` | [`bom/bom_inventory.feature`](bom/bom_inventory.feature) |
-| `jbom inventory generate` | [`inventory/inventory_generate.feature`](inventory/inventory_generate.feature) |
-| `jbom inventory list` | [`inventory/inventory_list.feature`](inventory/inventory_list.feature) |
-| `jbom pos board.kicad_pcb` | [`pos/pos_generation.feature`](pos/pos_generation.feature) |
-
-## Running Tests
-
-### All Tests
-```bash
-# Run all Gherkin tests
-behave
-
-# Run with summary
-behave --summary
-```
-
-### Command-Specific Tests
-```bash
-# Test specific command functionality
-behave features/bom/
-behave features/inventory/
-behave features/pos/
-
-# Test specific feature
-behave features/bom/bom_generation.feature
-```
-
-### Test Configuration
-See [`behave.ini`](../behave.ini) for behavior configuration.
-
-## Test Infrastructure
-
-### Environment Setup
-- [`environment.py`](environment.py) - Test environment configuration
-  - Sets up Python path to include `src/`
-  - Initializes test context before scenarios
-
-### Step Definitions
-- [`steps/common_steps.py`](steps/common_steps.py) - Common step definitions
-  - `When I run "command"` - Execute CLI commands
-  - `Then I should see "text"` - Validate output
-  - `And the exit code should be 0` - Check return codes
-- [`steps/diagnostic_utils.py`](steps/diagnostic_utils.py) - Enhanced error diagnostics
-
-## Writing New Tests
-
-### Adding Tests for Existing Commands
-1. Add scenarios to existing feature files in appropriate command directory
-2. Use existing step definitions from `steps/common_steps.py`
-3. Follow established patterns for Given/When/Then structure
-
-Example:
 ```gherkin
-Scenario: New BOM functionality
-  Given a KiCad schematic file "test.kicad_sch" with components:
-    | Reference | Value | Footprint   |
-    | R1        | 10K   | R_0805_2012 |
-  When I run "jbom bom test.kicad_sch --new-option"
-  Then the command exits with code 0
-  And the output contains "expected result"
-```
-
-### Adding Tests for New Commands
-1. Create new directory: `features/new-command/`
-2. Create feature files following naming pattern: `new_command_functionality.feature`
-3. Add step definitions if needed (prefer reusing existing steps)
-4. Update this README to document the new command tests
-
-### Feature File Structure
-Each feature file follows this structure:
-```gherkin
-Feature: [Command] [Functionality]
+Feature: [Functionality Description]
   As a [user type]
   I want to [perform action]
   So that I can [achieve goal]
 
-  Scenario: [Specific behavior description]
-    Given [preconditions]
-    When I run "jbom command args"
-    Then [expected outcomes]
-    And [additional validations]
+  Background:
+    Given the generic fabricator is selected
+
+  Scenario: [Specific behavior]
+    Given a schematic that contains:
+      | Reference | Value | Footprint   |
+      | R1        | 10K   | R_0805_2012 |
+    When I run jbom command "bom [options]"
+    Then the command should succeed
+    And the output should contain "R1"
 ```
 
-## Test Patterns
+### Key Pattern Elements
 
-### File-Based Tests
-Tests that work with files follow this pattern:
+#### 1. **Background**: Consistent sandbox environment setup
+All core functionality tests (BOM/POS/Inventory/CLI) use a Background pattern
+that sets up a consistent and predictable sandbox environment for the scenerios.
+This sandbox uses default jbom behavior as a baseline, with explicit use of the
+generic fabricator from the config system.  This allows features to focus on
+**their own** nuances, edge cases and key features without having to also work
+through the interaction combinatorics with other features.
+
+With this pattern, the `fabricator test.feature` is expected to iterate through
+the various fabricators that have been configured and verify that the capabilities
+the user expects are indeed functioning correctly.  This lets `all the other.feature`
+files depend on `generic` behavior, which is intended to be predictable and stable.
+
 ```gherkin
-Given a KiCad schematic file "input.kicad_sch" with components:
-  | Reference | Value | Footprint |
-  | R1        | 10K   | R_0805    |
-When I run "jbom bom input.kicad_sch -o output.csv"
-Then the command exits with code 0
-And a file named "output.csv" exists
-And the file "output.csv" contains valid CSV data
+Background:
+  Given the generic fabricator is selected
 ```
 
-### Error Handling Tests
-Tests for error conditions:
+#### 2. **Component Definition**: Table-driven, inline component creation
+Scenerios should be both minimalist and explicit.  They should follow DRY patterns
+so as to not overconstrain or burden the test with unrelated baggage statements,
+while at the same time being specific about the details being exercised.
+
+In this example, the scenerio is making sure that the bom feature works with
+defaults - that is, with no additional CLI options.
+
 ```gherkin
-Scenario: Handle missing input file
-  When I run "jbom bom nonexistent.kicad_sch"
-  Then the command exits with code 1
-  And the error output contains "file not found"
+ Scenario: Minimal options, correct behavior
+    Given a schematic that contains:
+      | Reference | Value | Footprint   |
+      | R1        | 10K   | R_0805_2012 |
+      | C1        | 100nF | C_0603_1608 |
 ```
+All this feature requires is that a KiCad schematic file exists, and that it
+contains components.  The `Given` is crafted to provide a KiCad project with
+a kicad_sch file in the sandbox directory; the table provided populates the
+schematic with two components.
 
-### Help and Usage Tests
-Tests for command help:
 ```gherkin
-Scenario: Show command help
-  When I run "jbom bom --help"
-  Then the command exits with code 0
-  And the output contains "Generate bill of materials"
+    When I run jbom command "bom"
+```
+The details of how to execute the jbom command are left to the test framework,
+all this scenerio requires is that the `bom` subcommand is invoked in this
+specific way.
+
+```gherkin
+    Then the command should succeed
+    And the output should contain "R1"
+    And the output should contain "10K"
+    And the output should contain "C1"
+    And the output should contain "100nF"
+```
+Finally, the validation `Then` steps are very explicit about what they expect,
+that the command does not exit with an error, and the output contains information
+about all the components that were placed into the schematic.
+
+This pattern is used throughout jBOM:
+
+For POS tests, use:
+```gherkin
+Given a PCB that contains:
+  | Reference | X | Y | Side | Footprint   |
+  | R1        | 10| 5 | TOP  | R_0805_2012 |
 ```
 
-## BDD vs Unit Testing
+#### 3. **Command Execution**: Standardized jBOM command invocation
+```gherkin
+When I run jbom command "bom [options]"
+When I run jbom command "pos --smd-only -o console"
+When I run jbom command "inventory generate -o inventory.csv"
+```
 
-### Gherkin Tests (BDD)
-- **Purpose**: Validate user-facing behavior
-- **Focus**: CLI commands, file I/O, user workflows
-- **Audience**: Product owners, users, developers
-- **Examples**: "Generate BOM from schematic", "Handle missing files"
+#### 4. **Assertions**: Functional behavior validation (not format-specific)
+```gherkin
+Then the command should succeed          # or should fail
+And the output should contain "R1"       # Component presence
+And the output should contain "10K"      # Value presence
+And the output should not contain "R2"   # Exclusion testing
+And a file named "output.csv" should exist
+And the file "output.csv" should contain "R1"
+```
 
-### Unit Tests
-- **Purpose**: Validate internal service logic
-- **Focus**: Business logic, algorithms, edge cases
-- **Audience**: Developers
-- **Examples**: "BOM aggregation strategies", "Component filtering logic"
+## Benefits of Ultra-Simplified Pattern
 
-Both are valuable and complementary:
-- **Gherkin tests** ensure features work as users expect
-- **Unit tests** ensure services work correctly in isolation
+### **Consistency**
+- Identical structure across all feature areas
+- No guessing about how to write new tests
+- Easy to maintain and extend
 
-## Step Definition Reference
+### **Robustness**
+- Tests focus on **functional behavior** instead of **brittle format details**
+- Example: `output should contain "R1"` vs `output should contain "R1,10K,0805,1"`
+- Less likely to break from minor output formatting changes
 
-Common step definitions available:
+### **Maintainability**
+- Clear separation between feature-specific testing and a predictable environment with other features
+- Reduced cognitive load when reading/writing tests
+- The use of `Background` supports the DRY design pattern
 
-### Command Execution
-- `When I run "command"` - Execute CLI command
-- `When I run "jbom" with no arguments` - Execute without args
 
-### Output Validation
-- `Then I should see "text"` - Check output contains text
-- `Then I should see usage information` - Validate help output
-- `Then the output contains CSV headers "Headers"` - Check CSV format
+## Anti-Patterns to Avoid
 
-### Exit Code Validation
-- `Then the exit code should be 0` - Success
-- `Then the exit code should be non-zero` - Failure
-- `Then the command exits with code 1` - Specific code
+### **Don't test fragile format details**
+```gherkin
+# BAD - Brittle CSV format assertion
+Then the output should contain "\"R1, R2\",10K,R_0805_2012,2"
 
-### File Operations
-- `Given a file "name" with content "content"` - Create test file
-- `Then a file named "name" exists` - Validate file creation
-- `And the file "name" contains valid CSV data` - Validate file content
+# GOOD - Functional behavior assertion
+Then the output should contain "R1"
+And the output should contain "R2"
+And the output should contain "10K"
+```
 
-See [`steps/common_steps.py`](steps/common_steps.py) for complete list and implementation details.
+## Running Tests
+
+```bash
+# All tests
+behave
+
+# Specific feature area
+behave features/bom/
+behave features/pos/
+behave features/inventory/
+
+# Specific feature file
+behave features/bom/core.feature
+
+# With verbose output
+behave --no-capture
+
+# Dry run to check syntax
+behave --dry-run
+```
+
+## Available Step Definitions
+
+### Core Steps (Ultra-Simplified Pattern)
+- `Given the generic fabricator is selected` - Standard background
+- `Given a schematic that contains:` - Table-driven component creation
+- `Given a PCB that contains:` - Table-driven PCB component creation
+- `When I run jbom command "[args]"` - Command execution
+- `Then the command should succeed` / `should fail` - Exit code validation
+- `And the output should contain "[text]"` - Output content validation
+- `And the output should not contain "[text]"` - Exclusion validation
+- `And a file named "[filename]" should exist` - File creation validation
+- `And the file "[filename]" should contain "[text]"` - File content validation
+
+
+See [`steps/common_steps.py`](steps/common_steps.py) for complete implementation.
+
+## 🎯 Test Categories
+
+### **Core Functionality** (Ultra-Simplified Pattern)
+- **Purpose**: Validate primary user workflows
+- **Pattern**: Background + table components + canonical assertions
+- **Examples**: Generate BOM, filter components, output formats
+
+### **Architecture Testing** (Complex Setup)
+- **Purpose**: Validate project discovery, file resolution, cross-command behavior
+- **Pattern**: Fixtures + specialized steps
+- **Examples**: Hierarchical projects, legacy .pro support, path resolution
+
+### **CLI Testing** (Simplified Pattern)
+- **Purpose**: Validate command-line interface behavior
+- **Pattern**: Direct command execution + output validation
+- **Examples**: Help text, version info, error handling

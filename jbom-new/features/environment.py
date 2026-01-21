@@ -1,15 +1,24 @@
-"""Behave environment configuration for jBOM testing."""
+"""Behave environment configuration for jBOM testing.
+
+Hard rule: tests must NEVER write into the repo working tree. Every scenario runs in
+an isolated temp workspace and all fixture copying targets that sandbox.
+"""
 
 import os
 import sys
+import tempfile
 from pathlib import Path
 
 
 def before_all(context):
     """Set up test environment before all tests."""
-    # Store the project root
-    context.project_root = Path(__file__).parent.parent
-    context.src_root = context.project_root / "src"
+    # Repository root (…/jBOM) and jbom-new root (…/jBOM/jbom-new)
+    repo_root = Path(__file__).resolve().parents[2]
+    jbom_new_root = Path(__file__).resolve().parents[1]
+
+    context.repo_root = repo_root
+    context.jbom_new_root = jbom_new_root
+    context.src_root = jbom_new_root / "src"
 
     # Set BEHAVE_STEPS_DIR so plugin features can find core step definitions
     steps_dir = Path(__file__).parent / "steps"
@@ -20,29 +29,43 @@ def before_all(context):
 
 
 def before_scenario(context, scenario):
-    """Set up before each scenario."""
+    """Set up an isolated temp workspace before each scenario."""
     # Reset command output storage
     context.last_command = None
     context.last_output = None
     context.last_exit_code = None
+    context.diagnostics = None
+
+    # Optional trace via tag @trace or env JBOM_BEHAVE_TRACE=1
+    import os as _os
+
+    context.trace = ("trace" in getattr(scenario, "effective_tags", set())) or (
+        _os.environ.get("JBOM_BEHAVE_TRACE") == "1"
+    )
+
+    # Create per-scenario sandbox
+    tmp = Path(tempfile.mkdtemp(prefix="jbom_behave_"))
+    context.sandbox_root = tmp
+    context.project_root = tmp
 
 
 def after_scenario(context, scenario):
-    """Clean up after each scenario."""
+    """Clean up the per-scenario temp workspace."""
     import shutil
 
-    # Clean up temporary test workspace if it was created
-    if hasattr(context, "project_root"):
-        # Only clean up if it's a temp directory (contains "jbom_behave_")
-        project_root_str = str(context.project_root)
-        if "jbom_behave_" in project_root_str and context.project_root.exists():
+    # Only clean up if it's a temp directory we created
+    if getattr(context, "project_root", None):
+        project_root = Path(context.project_root)
+        if project_root.exists() and project_root.name.startswith("jbom_behave_"):
             try:
-                shutil.rmtree(context.project_root)
+                shutil.rmtree(project_root)
             except OSError:
                 pass  # Ignore cleanup errors
 
     # Clean up any created plugins
-    if hasattr(context, "created_plugins"):
-        for plugin_dir in context.created_plugins:
-            if plugin_dir.exists():
+    for plugin_dir in getattr(context, "created_plugins", []):
+        if plugin_dir.exists():
+            try:
                 shutil.rmtree(plugin_dir)
+            except OSError:
+                pass

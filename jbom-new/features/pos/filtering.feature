@@ -4,40 +4,75 @@ Feature: POS Filtering
   So that I can generate exactly what my assembly needs
 
   Background:
-    Given a clean test workspace
+    Given the generic fabricator is selected
 
   Scenario: SMD-only filtering
-    Given a KiCad PCB file "mixed.kicad_pcb" with components:
-      | Reference | X(mm) | Y(mm) | Rotation | Side | Footprint        | Mount Type |
-      | R1        | 10.0  | 5.0   | 0        | TOP  | R_0805_2012      | smd        |
-      | R2        | 15.0  | 8.0   | 0        | TOP  | R_Axial_DIN0207  | through    |
-      | C1        | 20.0  | 12.0  | 0        | TOP  | C_0603_1608      | smd        |
-    When I run "jbom pos mixed.kicad_pcb --smd-only"
-    Then the command exits with code 0
-    And the output contains "R1"
-    And the output contains "C1"
-    And the output does not contain "R2"
+    Given a PCB that contains:
+      | Reference | X | Y | Rotation | Side | Footprint        |
+      | R1        | 10| 5 | 0        | TOP  | R_0805_2012      |
+      | R2        | 15| 8 | 0        | TOP  | R_Axial_DIN0207  |
+      | C1        | 20|12 | 0        | TOP  | C_0603_1608      |
+    When I run jbom command "pos --smd-only -o -"
+    Then the command should succeed
+    And the output should contain "R1"
+    And the output should contain "C1"
+    And the output should not contain "R2"
 
   Scenario: Layer filter - TOP only
-    Given a KiCad PCB file "dual_side.kicad_pcb" with components:
-      | Reference | X(mm) | Y(mm) | Rotation | Side   | Footprint   |
-      | R1        | 10.0  | 5.0   | 0        | TOP    | R_0805_2012 |
-      | R2        | 15.0  | 8.0   | 0        | BOTTOM | R_0805_2012 |
-      | C1        | 20.0  | 12.0  | 0        | TOP    | C_0603_1608 |
-    When I run "jbom pos dual_side.kicad_pcb --layer TOP"
-    Then the command exits with code 0
-    And the output contains "R1"
-    And the output contains "C1"
-    And the output does not contain "R2"
+    Given a PCB that contains:
+      | Reference | X | Y | Rotation | Side   | Footprint   |
+      | R1        | 10| 5 | 0        | TOP    | R_0805_2012 |
+      | R2        | 15| 8 | 0        | BOTTOM | R_0805_2012 |
+      | C1        | 20|12 | 0        | TOP    | C_0603_1608 |
+    When I run jbom command "pos --layer TOP -o -"
+    Then the command should succeed
+    And the output should contain "R1"
+    And the output should contain "C1"
+    And the output should not contain "R2"
 
   Scenario: Layer filter - BOTTOM only
-    Given a KiCad PCB file "dual_side.kicad_pcb" with TOP and BOTTOM components
-    When I run "jbom pos dual_side.kicad_pcb --layer BOTTOM"
-    Then the command exits with code 0
-    And the output contains only BOTTOM side components
+    Given a PCB that contains:
+      | Reference | X | Y | Side   | Footprint   |
+      | R1        | 10| 5 | TOP    | R_0805_2012 |
+      | R2        | 15| 8 | BOTTOM | R_0805_2012 |
+      | C1        | 20|12 | TOP    | C_0603_1608 |
+    When I run jbom command "pos --layer BOTTOM -o -"
+    Then the command should succeed
+    And the output should contain "R2"
+    And the output should not contain "R1"
+    And the output should not contain "C1"
 
   Scenario: Combined filters - SMD on TOP
-    Given a KiCad PCB file "complex.kicad_pcb" with mixed components and sides
-    When I run "jbom pos complex.kicad_pcb --smd-only --layer TOP"
-    Then the command exits with code 0
-    And the output contains only SMD components on TOP layer
+    Given a PCB that contains:
+      | Reference | X | Y | Side   | Footprint        |
+      | R1        | 10| 5 | TOP    | R_0805_2012      |
+      | R2        | 15| 8 | BOTTOM | R_0805_2012      |
+      | R3        | 20|12 | TOP    | R_Axial_DIN0207  |
+      | C1        | 25|15 | TOP    | C_0603_1608      |
+    When I run jbom command "pos --smd-only --layer TOP -o -"
+    Then the command should succeed
+    And the output should contain "R1"
+    And the output should contain "C1"
+    And the output should not contain "R2"
+    And the output should not contain "R3"
+
+  # TODO: Should use --generic flag when Issue #26 (POS field selection) is implemented
+  Scenario: Output in inches
+    Given a PCB that contains:
+      | Reference | X | Y | Side | Footprint   |
+      | R1        | 10| 5 | TOP  | R_0805_2012 |
+      | C1        | 15| 8 | TOP  | C_0603_1608 |
+    When I run jbom command "pos --units inch -o -"
+    Then the command should succeed
+    And the output should contain "R1"
+    And the output should contain "C1"
+
+  Scenario: Use auxiliary origin
+    Given a PCB that contains:
+      | Reference | X | Y | Side | Footprint   |
+      | R1        | 10| 5 | TOP  | R_0805_2012 |
+      | C1        | 15| 8 | TOP  | C_0603_1608 |
+    When I run jbom command "pos --origin aux -o -"
+    Then the command should succeed
+    And the output should contain "R1"
+    And the output should contain "C1"

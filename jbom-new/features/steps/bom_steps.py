@@ -6,10 +6,8 @@ jbom.services.schematic_reader and verify CLI output/files.
 from __future__ import annotations
 
 import csv
-from pathlib import Path
-from typing import Any, Dict, List
 
-from behave import given, then
+from behave import then
 from diagnostic_utils import assert_with_diagnostics
 
 try:
@@ -17,35 +15,14 @@ try:
 except ImportError:
 
     def list_fabricators():
-        return ["jlc"]  # fallback
+        return ["generic"]  # fallback
 
 
 # -------------------------
-# Given steps (test inputs)
+# Legacy step definitions removed - use ultra-simplified project-centric pattern:
+# - Given a schematic that contains: (in project_centric_steps.py)
+# - Given the generic fabricator is selected (in project_centric_steps.py)
 # -------------------------
-@given('a KiCad schematic file "{filename}" with components:')
-def given_schematic_with_components(context, filename: str) -> None:
-    """Create a schematic at project_root/filename with the table components."""
-    if not context.table:
-        raise AssertionError("Component table required")
-    components: List[Dict[str, Any]] = [row.as_dict() for row in context.table]
-    _write_schematic(context, filename, components)
-
-
-@given('a KiCad schematic file "{filename}" with basic components')
-def given_basic_schematic(context, filename: str) -> None:
-    """Create a schematic with a few standard parts used by features."""
-    components = [
-        {"Reference": "R1", "Value": "10K", "Footprint": "R_0805_2012"},
-        {"Reference": "C1", "Value": "100nF", "Footprint": "C_0603_1608"},
-        {"Reference": "U1", "Value": "LM358", "Footprint": "SOIC-8_3.9x4.9mm"},
-    ]
-    _write_schematic(context, filename, components)
-
-
-@given('a file "{filename}" with content "{text}"')
-def given_file_with_content(context, filename: str, text: str) -> None:
-    (context.project_root / filename).write_text(text, encoding="utf-8")
 
 
 # --------------------------
@@ -207,22 +184,11 @@ def then_contains_excluded_refs(context) -> None:
     assert out.strip() != ""
 
 
-@given('a KiCad schematic file "{filename}" with DNP components')
-def given_schematic_with_dnp(context, filename: str) -> None:
-    components = [
-        {"Reference": "R1", "Value": "10K", "Footprint": "R_0805_2012", "DNP": "No"},
-        {"Reference": "R2", "Value": "22K", "Footprint": "R_0805_2012", "DNP": "Yes"},
-    ]
-    _write_schematic(context, filename, components)
-
-
-@given('a KiCad schematic file "{filename}" with components excluded from BOM')
-def given_schematic_with_excluded(context, filename: str) -> None:
-    components = [
-        {"Reference": "R1", "Value": "10K", "Footprint": "R_0805_2012", "InBOM": "Yes"},
-        {"Reference": "R2", "Value": "22K", "Footprint": "R_0805_2012", "InBOM": "No"},
-    ]
-    _write_schematic(context, filename, components)
+# Legacy @given steps removed - use table-driven approach:
+# Given a schematic that contains:
+#   | Reference | Value | DNP | InBOM |
+#   | R1        | 10K   | No  | Yes   |
+#   | R2        | 22K   | Yes | No    |
 
 
 @then("the CSV output has a row where")
@@ -258,46 +224,11 @@ def then_csv_output_has_row(context) -> None:
 
 
 # -----------------
-# Helper functions
+# Helper functions (cleaned up - schematic writing moved to project_centric_steps.py)
 # -----------------
 
 
-def _write_schematic(context, filename: str, components: List[Dict[str, Any]]) -> None:
-    target = context.project_root / filename
-    content = _render_kicad_schematic(Path(filename).stem, components)
-    target.write_text(content, encoding="utf-8")
-
-
-def _render_kicad_schematic(stem: str, components: List[Dict[str, Any]]) -> str:
-    lines = [
-        "(kicad_sch (version 20221018) (generator eeschema)",
-        f"  (uuid test-{stem}-uuid)",
-        '  (paper "A4")',
-    ]
-    for c in components:
-        ref = c.get("Reference") or c.get("reference", "U1")
-        val = c.get("Value") or c.get("value", "VAL")
-        fp = c.get("Footprint") or c.get("footprint", "")
-        dnp = str(c.get("DNP", c.get("dnp", "no"))).lower() in ("yes", "true", "1")
-        in_bom_flag = str(c.get("InBOM", c.get("in_bom", "yes"))).lower() not in (
-            "no",
-            "false",
-            "0",
-        )
-        sym = [
-            '  (symbol (lib_id "Device:R") (at 100 100 0) (unit 1)',
-            f"    (in_bom {'yes' if in_bom_flag else 'no'}) (on_board yes)",
-            f'    (property "Reference" "{ref}" (at 0 0 0))',
-            f'    (property "Value" "{val}" (at 0 0 0))',
-            f'    (property "Footprint" "{fp}" (at 0 0 0))',
-            f"    (dnp {'yes' if dnp else 'no'})",
-            "  )",
-        ]
-        lines.extend(sym)
-    lines.append(")")
-    return "\n".join(lines)
-
-
+#  TODO Issue #31: This list needs to be dynamically constructed from the config files, not hardcoded
 def _get_available_fabricators() -> list[str]:
     """Get list of available fabricators."""
     # All these fabricators are confirmed to work in jbom
@@ -316,6 +247,7 @@ def then_bom_works_with_all_fabricators(context) -> None:
 
     base_cmd = context.last_command
     # Remove any existing fabricator flags
+    # TODO Issue #31: this hardcoded list needs to be replaced with dynamic info from the config files
     for fab in ["--generic", "--jlc", "--pcbway", "--seeed"] + [
         f"--fabricator {f}" for f in _get_available_fabricators()
     ]:
@@ -351,6 +283,7 @@ def then_bom_output_varies_by_fabricator(context) -> None:
 
     base_cmd = context.last_command
     # Remove any existing fabricator flags and add the standard field preset to show differences
+    # TODO Issue #31: This hardcoded list needs to be replaced with dynamic info from the config files
     for fab in ["--generic", "--jlc", "--pcbway", "--seeed"] + [
         f"--fabricator {f}" for f in _get_available_fabricators()
     ]:

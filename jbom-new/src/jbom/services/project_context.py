@@ -224,6 +224,15 @@ class ProjectContext:
         # Process each referenced sheet
         for sheet_file in sheet_files:
             sheet_path = self.project_directory / sheet_file
+            if not sheet_path.exists():
+                try:
+                    import sys as _sys
+
+                    print(f"missing sheet {sheet_file}", file=_sys.stderr)
+                except Exception:
+                    pass
+                # Continue without the missing sheet
+                continue
             self._process_hierarchical_schematic(sheet_path, files, processed)
 
     def _extract_sheet_files(self, schematic_path: Path) -> List[str]:
