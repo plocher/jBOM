@@ -1,11 +1,37 @@
 # CHANGELOG
 
-## Unreleased
 
-### Added
-- BDD fixtures for project-centric tests (flat, hierarchical, mismatched, legacy .pro)
-- Regression suite scaffold for Issue #27 expansion across all commands
-- Migration notes: jbom-new/docs/migration/project_centric_migration.md
+## v4.11.0 (2026-01-21)
+
+### Bug Fixes
+
+* fix: treat -o console and - as stdout across CLI; copy fixtures to temp workspace; ignore stray fixture artifacts (Issue #27)
+
+Co-Authored-By: Warp <agent@warp.dev> ([`2eb2f52`](https://github.com/plocher/jBOM/commit/2eb2f520a31988a448500870dd4b43b36ef2d0b3))
+
+### Features
+
+* feat: complete Issue #27 ultra-simplified test pattern migration
+
+- Migrated all BOM/POS/Inventory/CLI features to consistent patterns
+- Standardized Background + table-driven components + canonical assertions
+- Organized features, removed duplicates, enhanced maintainability
+
+Closes #27
+Co-Authored-By: Warp <agent@warp.dev> ([`f8cf340`](https://github.com/plocher/jBOM/commit/f8cf340e5164fb2a0eb5682f39411b5fb9fba9e8))
+
+### Refactoring
+
+* refactor(cli): use shared pretty-printing utilities for -o console (no DRY)
+
+Co-Authored-By: Warp <agent@warp.dev> ([`c32dd34`](https://github.com/plocher/jBOM/commit/c32dd348fbf53951eab99b856ebca21a6e9f7ada))
+
+### Unknown
+
+* Merge pull request #30 from plocher/feature/issue-27-expansion
+
+test/docs: scaffold project-centric coverage for Issue #27 ([`0ddf8dc`](https://github.com/plocher/jBOM/commit/0ddf8dc6a828e5356de701bbc4f740bf27f6546f))
+
 
 ## v4.10.1 (2026-01-20)
 
