@@ -1,6 +1,81 @@
 # CHANGELOG
 
 
+## v5.0.0 (2026-01-22)
+
+### Breaking
+
+* feat: simplify inventory CLI to match established command pattern
+
+Fixes #25 Phase 1
+
+BREAKING CHANGE: Remove nested subcommands from inventory CLI
+
+- Remove 'generate' and 'list' subcommands from inventory command
+- Replace 'jbom inventory generate KiCadProject' with 'jbom inventory KiCadProject'
+- Replace 'jbom inventory list file.csv' with 'jbom inventory KiCadProject -o console'
+- Support multiple output formats:
+  - Default: writes to part-inventory.csv
+  - -o console: pretty-printed table to stdout
+  - -o -: CSV format to stdout
+  - -o filename.csv: writes to specified file
+- Update all feature tests to use new command syntax
+- Maintain all existing functionality while simplifying CLI interface
+- Follow established jBOM command pattern consistent with BOM and POS commands
+
+Co-Authored-By: Warp <agent@warp.dev> ([`fd0cb17`](https://github.com/plocher/jBOM/commit/fd0cb17516548c40f88493567e967c3d6d94f8de))
+
+### Bug Fixes
+
+* fix: remove duplicate and incorrect inventory test scenarios
+
+- Remove features/project_centric/inventory.feature (duplicate of core.feature scenarios)
+- The 'hierarchical design' scenario was incorrectly named and didn't test hierarchical functionality
+- Add proper hierarchical inventory test to hierarchical.feature with actual multi-sheet structure
+- Eliminate test duplication and improve test accuracy
+
+Co-Authored-By: Warp <agent@warp.dev> ([`ced5973`](https://github.com/plocher/jBOM/commit/ced597356ba6b61bf3a47272150ece7050b0db25))
+
+* fix: update remaining empty scenario in list.feature
+
+- Fix final empty project scenario to expect failure instead of success
+- Maintain consistency with error handling across all empty schematic tests
+- Complete cleanup of LIST subcommand removal
+
+Co-Authored-By: Warp <agent@warp.dev> ([`c20d448`](https://github.com/plocher/jBOM/commit/c20d4488eb15b0d5133cf68ee225645eacb9a284))
+
+* fix: return error for empty schematics in inventory generation
+
+- Add validation to detect empty component lists
+- Return error code 1 with meaningful message when no components found
+- Update test scenarios to expect failure instead of success for empty schematics
+- Prevent creation of empty inventory files with no meaningful structure
+
+Co-Authored-By: Warp <agent@warp.dev> ([`74c8903`](https://github.com/plocher/jBOM/commit/74c89030b65485bb27ed0f0ce7b1c254a4db6718))
+
+### Refactoring
+
+* refactor: consolidate and clean up inventory feature files
+
+- Remove obsolete generate.feature and list.feature files
+- Consolidate unique scenarios into core.feature:
+  * LibID-based inventory generation
+  * Component grouping/deduplication testing
+  * Verbose flag testing
+  * Console output with IPN/Category data
+- Remove duplicate scenarios across files
+- Improve feature organization and maintainability
+- All consolidated scenarios tested and working
+
+Co-Authored-By: Warp <agent@warp.dev> ([`1d2004b`](https://github.com/plocher/jBOM/commit/1d2004b11ca2c05872a7b674e23c5d15c62fb044))
+
+### Unknown
+
+* Merge pull request #36 from plocher/issue-25-simplify-inventory-cli-phase1
+
+feat: simplify inventory CLI to match established command pattern (Issue #25 Phase 1) ([`b640907`](https://github.com/plocher/jBOM/commit/b6409079293b52b30c45db53986429b5ac5711f0))
+
+
 ## v4.12.0 (2026-01-21)
 
 ### Bug Fixes
