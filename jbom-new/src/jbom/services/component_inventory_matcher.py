@@ -34,6 +34,10 @@ class ComponentInventoryMatcher:
         if inventory_file:
             self._load_inventory(inventory_file)
 
+    def set_inventory(self, inventory_items: List[InventoryItem]) -> None:
+        """Manually set inventory items (for multi-source scenarios)."""
+        self.inventory = inventory_items
+
     def _load_inventory(self, inventory_file: Path) -> None:
         """Load inventory from file."""
         if not inventory_file.exists():

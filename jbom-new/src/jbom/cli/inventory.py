@@ -40,8 +40,10 @@ def register_command(subparsers) -> None:
     # Inventory merge options
     parser.add_argument(
         "--inventory",
-        help="Path to existing inventory CSV file for merge operations",
+        help="Path to existing inventory CSV file for merge operations (can be specified multiple times)",
         type=Path,
+        action="append",
+        dest="inventory_files",
     )
 
     parser.add_argument(
@@ -152,9 +154,9 @@ def _handle_generate_inventory(args: argparse.Namespace) -> int:
     inventory_items, field_names = generator.load()
 
     # Apply inventory filtering if requested
-    if args.inventory or args.filter_matches:
+    if args.inventory_files or args.filter_matches:
         inventory_items = _apply_inventory_filtering(
-            inventory_items, args.inventory, args.filter_matches, args.verbose
+            inventory_items, args.inventory_files, args.filter_matches, args.verbose
         )
 
     # Handle output using same pattern as BOM command
@@ -164,41 +166,87 @@ def _handle_generate_inventory(args: argparse.Namespace) -> int:
 
 
 def _apply_inventory_filtering(
-    inventory_items, inventory_file, filter_matches, verbose
+    inventory_items, inventory_files, filter_matches, verbose
 ):
     """Apply inventory filtering based on existing inventory matches.
 
     Args:
         inventory_items: List of inventory items from the project
-        inventory_file: Path to existing inventory CSV file
+        inventory_files: List of paths to existing inventory CSV files (first has precedence)
         filter_matches: If True, filter OUT matched components (show only new ones)
         verbose: Enable verbose output
 
     Returns:
         Filtered list of inventory items
     """
-    if not inventory_file:
+    if not inventory_files:
         if filter_matches:
             print(
-                "Warning: --filter-matches requires --inventory file", file=sys.stderr
+                "Warning: --filter-matches requires --inventory file(s)",
+                file=sys.stderr,
             )
         return inventory_items
 
-    # Initialize matcher with existing inventory
+    # Initialize matcher with merged inventory from multiple sources
     try:
-        matcher = ComponentInventoryMatcher(inventory_file)
-    except FileNotFoundError as e:
-        print(f"Error: {e}", file=sys.stderr)
-        return inventory_items
-    except Exception as e:
-        print(f"Error loading inventory: {e}", file=sys.stderr)
-        return inventory_items
+        matcher = ComponentInventoryMatcher()
+        merged_inventory = []
+        seen_ipns = set()  # Track IPNs for precedence
+        total_files_loaded = 0
 
-    if verbose:
-        print(
-            f"Loaded {len(matcher.inventory)} items from {inventory_file}",
-            file=sys.stderr,
-        )
+        if verbose:
+            print(
+                f"Loading {len(inventory_files)} inventory file(s) with precedence order:",
+                file=sys.stderr,
+            )
+
+        # Load files in order - first file has highest precedence
+        for i, inventory_file in enumerate(inventory_files):
+            try:
+                from jbom.services.inventory_reader import InventoryReader
+
+                reader = InventoryReader(inventory_file)
+                file_inventory, _ = reader.load()
+
+                added_count = 0
+                for item in file_inventory:
+                    if item.ipn not in seen_ipns:  # First occurrence wins (precedence)
+                        merged_inventory.append(item)
+                        seen_ipns.add(item.ipn)
+                        added_count += 1
+
+                total_files_loaded += 1
+                if verbose:
+                    precedence = "primary" if i == 0 else f"precedence {i+1}"
+                    print(
+                        f"  {precedence}: {inventory_file} ({added_count}/{len(file_inventory)} items added)",
+                        file=sys.stderr,
+                    )
+
+            except FileNotFoundError:
+                print(
+                    f"Error: Inventory file not found: {inventory_file}",
+                    file=sys.stderr,
+                )
+            except Exception as e:
+                print(f"Error loading {inventory_file}: {e}", file=sys.stderr)
+
+        if not merged_inventory:
+            print("Error: No inventory items loaded from any file", file=sys.stderr)
+            return inventory_items
+
+        # Set the merged inventory in the matcher
+        matcher.set_inventory(merged_inventory)
+
+        if verbose:
+            print(
+                f"Merged inventory: {len(merged_inventory)} total items from {total_files_loaded} file(s)",
+                file=sys.stderr,
+            )
+
+    except Exception as e:
+        print(f"Error loading inventories: {e}", file=sys.stderr)
+        return inventory_items
 
     # Apply filtering logic
     filtered_items = []
