@@ -37,7 +37,7 @@ jbom bom project.kicad_sch
 jbom bom project.kicad_sch --inventory components.csv
 
 # Generate inventory from project
-jbom inventory generate project.kicad_sch -o project_inventory.csv
+jbom inventory project.kicad_sch -o project_inventory.csv
 
 # Generate placement file
 jbom pos board.kicad_pcb --smd-only

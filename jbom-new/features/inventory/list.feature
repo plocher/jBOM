@@ -1,38 +1,38 @@
 @wip
-Feature: Inventory Listing
+Feature: Inventory Console Output
   As a hardware developer
-  I want to list and filter inventory items
-  So that I can quickly find components
+  I want to display inventory items in a formatted table
+  So that I can quickly review components
 
   Background:
     Given the generic fabricator is selected
 
   @wip
-  Scenario: List all inventory items
+  Scenario: Display all inventory items as console table
     Given a schematic that contains:
       | Reference | Value | Footprint | IPN      | Category  |
       | R1        | 10K   | 0805      | RES_10K  | RESISTOR  |
       | C1        | 100nF | 0603      | CAP_100N | CAPACITOR |
       | U1        | LM358 | SOIC-8    | IC_LM358 | IC        |
-    When I run jbom command "inventory list -o console"
+    When I run jbom command "inventory -o console"
     Then the command should succeed
     And the output should contain "Inventory: 3 items"
 
   @wip
-  Scenario: Filter inventory by category
+  Scenario: Display inventory items from project
     Given a schematic that contains:
       | Reference | Value | Category  |
       | R1        | 10K   | RESISTOR  |
       | C1        | 100nF | CAPACITOR |
-    When I run jbom command "inventory list --category resistor"
+    When I run jbom command "inventory -o console"
     Then the command should succeed
     And the output should contain "R1"
-    And the output should not contain "C1"
+    And the output should contain "C1"
 
   @wip
-  Scenario: Empty inventory shows no items
+  Scenario: Empty project shows no items
     Given a schematic that contains:
       | Reference | Value | Footprint |
-    When I run jbom command "inventory list -o console"
+    When I run jbom command "inventory -o console"
     Then the command should succeed
     And the output should contain "No items found"
