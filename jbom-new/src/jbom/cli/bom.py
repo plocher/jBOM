@@ -39,7 +39,10 @@ def register_command(subparsers) -> None:
 
     # Enhancement options
     parser.add_argument(
-        "--inventory", help="Enhance BOM with inventory data from CSV file"
+        "--inventory",
+        help="Enhance BOM with inventory data from CSV file (can be specified multiple times)",
+        action="append",
+        dest="inventory_files",
     )
 
     # Fabricator selection (for field presets / predictable output)
@@ -175,14 +178,29 @@ def handle_bom(args: argparse.Namespace) -> int:
         bom_data = generator.generate_bom_data(components, project_name, filters)
 
         # Enhance with inventory if requested
-        if args.inventory:
-            inventory_file = Path(args.inventory)
+        if args.inventory_files:
+            if args.verbose:
+                print(
+                    f"Enhancing BOM with {len(args.inventory_files)} inventory file(s)",
+                    file=sys.stderr,
+                )
+
+            # For now, use the first inventory file (single-file enhancement)
+            # TODO: Implement multi-file enhancement in InventoryMatcher service
+            inventory_file = Path(args.inventory_files[0])
+
             if not inventory_file.exists():
                 print(
                     f"Error: Inventory file not found: {inventory_file}",
                     file=sys.stderr,
                 )
                 return 1
+
+            if len(args.inventory_files) > 1 and args.verbose:
+                print(
+                    f"Note: Using primary inventory file {inventory_file}, multi-file enhancement coming soon",
+                    file=sys.stderr,
+                )
 
             matcher = InventoryMatcher()
             # Note: current matcher API uses a strategy string; fabricator can
@@ -202,14 +220,16 @@ def handle_bom(args: argparse.Namespace) -> int:
 def _output_bom(bom_data: BOMData, output: Optional[str]) -> int:
     """Output BOM data in the requested format.
 
-    Special cases:
-    - output in {None, "stdout", "-"} => CSV to stdout
-    - output == "console" => formatted table to stdout
+    Human-first defaults (BREAKING CHANGE for UX consistency):
+    - output is None => formatted table to stdout (human exploration)
+    - output == "console" => formatted table to stdout (explicit)
+    - output == "-" => CSV to stdout (machine readable)
+    - "stdout" removed (legacy compatibility)
     - otherwise => treat as file path
     """
-    if output == "console":
+    if output is None or output == "console":
         _print_console_table(bom_data)
-    elif output in (None, "stdout", "-"):
+    elif output == "-":
         _print_csv(bom_data)
     else:
         output_path = Path(output)

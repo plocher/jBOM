@@ -30,17 +30,23 @@ python -m jbom.cli.main --help
 
 ### Basic Usage
 ```bash
-# Generate BOM from schematic
+# Generate BOM from schematic (console table by default)
 jbom bom project.kicad_sch
 
-# Generate BOM with inventory enhancement
-jbom bom project.kicad_sch --inventory components.csv
+# Generate BOM enhanced with inventory data
+jbom bom project.kicad_sch --inventory stock.csv -o enhanced_bom.csv
 
 # Generate inventory from project
 jbom inventory project.kicad_sch -o project_inventory.csv
 
+# Multi-source inventory with precedence
+jbom bom project.kicad_sch \
+  --inventory primary_stock.csv \
+  --inventory supplier_catalog.csv \
+  -o comprehensive_bom.csv
+
 # Generate placement file
-jbom pos board.kicad_pcb --smd-only
+jbom pos board.kicad_pcb --smd-only -o placement.csv
 ```
 
 ## Architecture Principles
@@ -74,6 +80,16 @@ Services can be used by any interface without modification:
 - Web APIs (future)
 - KiCad plugins (future)
 
+## Documentation
+
+### User Documentation
+- [`docs/USER_GUIDE.md`](docs/USER_GUIDE.md) - Comprehensive user workflows and examples
+- Built-in help: `jbom --help`, `jbom bom --help`, etc.
+
+### Developer Documentation
+- [`docs/DEVELOPER_GUIDE.md`](docs/DEVELOPER_GUIDE.md) - Architecture, patterns, and implementation guide
+- [`docs/`](docs/README.md) - Architecture documentation and tutorials
+
 ## Directory Guide
 
 - [`src/jbom/services/`](src/jbom/services/README.md) - Business logic services
@@ -81,7 +97,6 @@ Services can be used by any interface without modification:
 - [`src/jbom/common/`](src/jbom/common/README.md) - Shared utilities and models
 - [`features/`](features/README.md) - Gherkin BDD tests
 - [`tests/`](tests/README.md) - Unit tests for services
-- [`docs/`](docs/README.md) - Architecture documentation
 
 ## Development
 

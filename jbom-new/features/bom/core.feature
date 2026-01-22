@@ -5,13 +5,13 @@ Feature: BOM Generation (Core Functionality)
 
   Background:
     Given the generic fabricator is selected
-
-  Scenario: Generate basic BOM to stdout (CSV format)
-    Given a schematic that contains:
+    And a standard test schematic that contains:
       | Reference | Value | Footprint         |
       | R1        | 10K   | R_0805_2012       |
       | C1        | 100nF | C_0603_1608       |
       | U1        | LM358 | SOIC-8_3.9x4.9mm |
+
+  Scenario: Generate basic BOM with default console output (human-first)
     When I run jbom command "bom"
     Then the command should succeed
     And the output should contain "R1"
@@ -22,19 +22,11 @@ Feature: BOM Generation (Core Functionality)
     And the output should contain "LM358"
 
   Scenario: Generate BOM to specific output file
-    Given a schematic that contains:
-      | Reference | Value | Footprint   |
-      | R1        | 10K   | R_0805_2012 |
-      | C1        | 100nF | C_0603_1608 |
     When I run jbom command "bom -o custom_bom.csv"
     Then the command should succeed
     And a file named "custom_bom.csv" exists
 
-  Scenario: Generate BOM with console table output
-    Given a schematic that contains:
-      | Reference | Value | Footprint   |
-      | R1        | 10K   | R_0805_2012 |
-      | C1        | 100nF | C_0603_1608 |
+  Scenario: Generate BOM with explicit console table output
     When I run jbom command "bom -o console"
     Then the command should succeed
     And the output should contain "Bill of Materials"

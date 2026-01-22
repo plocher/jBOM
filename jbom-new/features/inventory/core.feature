@@ -7,12 +7,23 @@ Feature: Inventory Management (Core Functionality)
   Background:
     Given the generic fabricator is selected
 
-  Scenario: Generate inventory from schematic components with LibID
+  Scenario: Generate inventory with default console output (human-first)
     Given a schematic that contains:
       | Reference | Value | Footprint         | LibID                        |
       | R1        | 10K   | R_0805_2012       | Device:R                     |
       | C1        | 100nF | C_0603_1608       | Device:C                     |
       | U1        | LM358 | SOIC-8_3.9x4.9mm | Amplifier_Operational:LM358 |
+    When I run jbom command "inventory"
+    Then the command should succeed
+    And the output should contain "Generated inventory"
+    And the output should contain "IPN"
+    And the output should contain "Category"
+
+  Scenario: Generate inventory to explicit file
+    Given a schematic that contains:
+      | Reference | Value | Footprint         | LibID                        |
+      | R1        | 10K   | R_0805_2012       | Device:R                     |
+      | C1        | 100nF | C_0603_1608       | Device:C                     |
     When I run jbom command "inventory -o project_inventory.csv"
     Then the command should succeed
     And a file named "project_inventory.csv" should exist

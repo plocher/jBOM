@@ -6,13 +6,26 @@ Feature: POS Generation (Core Functionality)
   Background:
     Given the generic fabricator is selected
 
-  Scenario: Generate basic POS to stdout (CSV format)
+  Scenario: Generate basic POS with default console output (human-first)
     Given a PCB that contains:
       | Reference | X | Y | Rotation | Side | Footprint         |
       | R1        | 10| 5 | 0        | TOP  | R_0805_2012       |
       | C1        | 15| 8 | 90       | TOP  | C_0603_1608       |
       | U1        | 25|12 | 180      | TOP  | SOIC-8_3.9x4.9mm |
     When I run jbom command "pos"
+    Then the command should succeed
+    And the output should contain "Component Placement Data"
+    And the output should contain "R1"
+    And the output should contain "C1"
+    And the output should contain "U1"
+
+  Scenario: Generate POS to CSV stdout with -o -
+    Given a PCB that contains:
+      | Reference | X | Y | Rotation | Side | Footprint         |
+      | R1        | 10| 5 | 0        | TOP  | R_0805_2012       |
+      | C1        | 15| 8 | 90       | TOP  | C_0603_1608       |
+      | U1        | 25|12 | 180      | TOP  | SOIC-8_3.9x4.9mm |
+    When I run jbom command "pos -o -"
     Then the command should succeed
     And the output should contain "R1"
     And the output should contain "10.0000,5.0000"

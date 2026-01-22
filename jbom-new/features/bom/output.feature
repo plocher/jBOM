@@ -5,13 +5,15 @@ Feature: BOM Output Options
 
   Background:
     Given the generic fabricator is selected
-
-  Scenario: CSV to stdout with default options
-    Given a schematic that contains:
+    And a standard BOM test schematic that contains:
       | Reference | Value | Footprint         |
       | R1        | 10K   | R_0805_2012       |
+      | R2        | 10K   | R_0805_2012       |
+      | R3        | 10K   | R_0603_1608       |
       | C1        | 100nF | C_0603_1608       |
       | U1        | LM358 | SOIC-8_3.9x4.9mm |
+
+  Scenario: Console table output with default options (human-first)
     When I run jbom command "bom"
     Then the command should succeed
     And the output should contain "R1"
@@ -22,11 +24,6 @@ Feature: BOM Output Options
     And the output should contain "LM358"
 
   Scenario: BOM with aggregated components
-    Given a schematic that contains:
-      | Reference | Value | Footprint   |
-      | R1        | 10K   | R_0805_2012 |
-      | R2        | 10K   | R_0805_2012 |
-      | R3        | 10K   | R_0603_1608 |
     When I run jbom command "bom"
     Then the command should succeed
     And the output should contain "R1"
@@ -34,11 +31,7 @@ Feature: BOM Output Options
     And the output should contain "R3"
     And the output should contain "10K"
 
-  Scenario: Console output format
-    Given a schematic that contains:
-      | Reference | Value | Footprint   |
-      | R1        | 10K   | R_0805_2012 |
-      | C1        | 100nF | C_0603_1608 |
+  Scenario: Explicit console output format
     When I run jbom command "bom -o console"
     Then the command should succeed
     And the output should contain "Bill of Materials"
@@ -46,9 +39,6 @@ Feature: BOM Output Options
     And the output should contain "C1"
 
   Scenario: Verbose output
-    Given a schematic that contains:
-      | Reference | Value | Footprint   |
-      | R1        | 10K   | R_0805_2012 |
     When I run jbom command "bom -v"
     Then the command should succeed
     And the output should contain "R1"
