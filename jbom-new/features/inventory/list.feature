@@ -34,5 +34,5 @@ Feature: Inventory Console Output
     Given a schematic that contains:
       | Reference | Value | Footprint |
     When I run jbom command "inventory -o console"
-    Then the command should succeed
-    And the output should contain "No items found"
+    Then the command should fail
+    And the output should contain "Error: No components found in project. Cannot create inventory from empty schematic."
