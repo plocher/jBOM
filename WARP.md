@@ -42,8 +42,9 @@ There are two versions of jBOM in the repo ~/Dropbox/KiCad/jBOM:
    1. an older, monolithic, stable jBOM (found in ~/Dropbox/KiCad/jBOM/src) and
    2. a new, modular, in-progress ~/Dropbox/KiCad/jBOM/jbom-new.
 
-Our current development work is currently focused on the new version
-We are in the process of migrating functionality from old to new:
+Our current development work is focused on the new version
+We are in the process of migrating functionality from old to new
+
   - all code changes are to be in the jbom-new directory hierarchy
   - the code in jBOM/src/* is considered a read-only source of high quality code that is useful for inspiration and reuse, with the expectation that it will need rework to fit into the jbom-new design patterns and architectural framework.
   - the jBOM/poc/inventory-enhancement tree and the old jbom's inventory-search
@@ -55,8 +56,9 @@ The README*.md files at every level in jbom-new provide a developer overview, wh
 - **Sample KiCad projects**: `/Users/jplocher/Dropbox/KiCad/projects/{AltmillSwitches,Core-wt32-eth0,LEDStripDriver}`
 
 ## Environment Gotchas
+- You MUST use `PYTHONPATH=/Users/jplocher/Dropbox/KiCad/jBOM/jbom-new/src` when invoking jbom or you will be invoke the legacy version and get confused.
 
--   **Shell**: macOS uses zsh
+- **Shell**: macOS uses zsh
   - exclamation marks `!` in double quotes trigger history expansion. Always use single quotes for commit messages like `fix!: something`.
   - use zsh shell style quoting for shell interactions
   - use --body-file or json representations with the gh tool when creating Issues and PRs, and when adding comments to them
