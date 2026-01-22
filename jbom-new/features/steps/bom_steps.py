@@ -198,7 +198,7 @@ def then_csv_output_has_row(context) -> None:
     """Assert CSV output contains a row matching the table's single row of expectations."""
     out = getattr(context, "last_output", "")
     assert out.strip(), "No CSV output captured"
-    import csv
+
     from io import StringIO
 
     rows = list(csv.DictReader(StringIO(out)))
@@ -223,6 +223,63 @@ def then_csv_output_has_row(context) -> None:
     assert any(
         matches(r) for r in rows
     ), f"Expected row not found: {expected}\nRows: {rows}"
+
+
+# Field system step definitions
+@then('the output should contain CSV headers "{headers}"')
+def then_output_should_contain_csv_headers(context, headers: str) -> None:
+    """Assert output should contain specific CSV headers (alias for consistency)."""
+    then_output_contains_headers(context, headers)
+
+
+@then('the output should not contain CSV headers "{headers}"')
+def then_output_should_not_contain_csv_headers(context, headers: str) -> None:
+    """Assert output should not contain specific CSV headers."""
+    expected = headers.strip()
+    output = getattr(context, "last_output", "")
+    assert_with_diagnostics(
+        expected not in output,
+        f"Output should not contain CSV headers '{expected}' but it does",
+        context,
+        expected=f"output without '{expected}'",
+        actual=output,
+    )
+
+
+@then('the console table headers should be "{headers}"')
+def then_console_table_headers_should_be(context, headers: str) -> None:
+    """Assert console table has specific headers (space-separated)."""
+    expected_headers = headers.split()
+    output = getattr(context, "last_output", "")
+
+    # Look for the table header line (should contain the headers)
+    lines = output.splitlines()
+    header_line = None
+    for line in lines:
+        if all(header in line for header in expected_headers):
+            header_line = line
+            break
+
+    assert_with_diagnostics(
+        header_line is not None,
+        f"Console table headers '{headers}' not found",
+        context,
+        expected=f"table headers: {expected_headers}",
+        actual=output,
+    )
+
+
+@then('the console table should not contain "{text}"')
+def then_console_table_should_not_contain(context, text: str) -> None:
+    """Assert console table output does not contain specified text."""
+    output = getattr(context, "last_output", "")
+    assert_with_diagnostics(
+        text not in output,
+        f"Console table should not contain '{text}' but it does",
+        context,
+        expected=f"table without '{text}'",
+        actual=output,
+    )
 
 
 # -----------------
