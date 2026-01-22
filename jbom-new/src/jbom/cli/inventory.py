@@ -4,6 +4,8 @@ import argparse
 import csv
 import sys
 from pathlib import Path
+from datetime import datetime
+import shutil
 
 from jbom.services.project_inventory import ProjectInventoryGenerator
 from jbom.services.schematic_reader import SchematicReader
@@ -46,6 +48,13 @@ def register_command(subparsers) -> None:
         "--filter-matches",
         action="store_true",
         help="Filter out components that match existing inventory items",
+    )
+
+    # Safety options
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Overwrite existing output files without confirmation",
     )
 
     # Verbose mode
@@ -149,7 +158,9 @@ def _handle_generate_inventory(args: argparse.Namespace) -> int:
         )
 
     # Handle output using same pattern as BOM command
-    return _output_inventory(inventory_items, field_names, args.output)
+    return _output_inventory(
+        inventory_items, field_names, args.output, args.force, args.verbose
+    )
 
 
 def _apply_inventory_filtering(
@@ -237,14 +248,16 @@ def _apply_inventory_filtering(
     return filtered_items
 
 
-def _output_inventory(inventory_items, field_names, output) -> int:
+def _output_inventory(
+    inventory_items, field_names, output, force=False, verbose=False
+) -> int:
     """Output inventory data in the requested format.
 
     Human-first defaults (BREAKING CHANGE for UX consistency):
     - output is None => formatted table to stdout (human exploration)
     - output == "console" => formatted table to stdout (explicit)
     - output == "-" => CSV to stdout (machine readable)
-    - otherwise => treat as file path
+    - otherwise => treat as file path with safety checks
     """
     if output is None or output == "console":
         _print_console_table(inventory_items, field_names)
@@ -252,12 +265,55 @@ def _output_inventory(inventory_items, field_names, output) -> int:
         _print_csv(inventory_items, field_names)
     else:
         output_path = Path(output)
+
+        # File existence and backup handling
+        if output_path.exists():
+            if not force:
+                print(
+                    f"Error: Output file '{output_path}' already exists. Use --force to overwrite.",
+                    file=sys.stderr,
+                )
+                return 1
+
+            # Create timestamped backup
+            backup_path = _create_backup(output_path, verbose)
+            if backup_path and verbose:
+                print(f"Created backup: {backup_path}", file=sys.stderr)
+
         _write_csv(inventory_items, field_names, output_path)
         print(
             f"Generated inventory with {len(inventory_items)} items written to {output_path}"
         )
 
     return 0
+
+
+def _create_backup(file_path: Path, verbose: bool = False) -> Path:
+    """Create a timestamped backup of an existing file.
+
+    Args:
+        file_path: Path to file to backup
+        verbose: Enable verbose output
+
+    Returns:
+        Path to created backup file, or None if backup failed
+    """
+    if not file_path.exists():
+        return None
+
+    # Generate timestamped backup filename
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    backup_path = file_path.with_name(
+        f"{file_path.stem}.backup.{timestamp}{file_path.suffix}"
+    )
+
+    try:
+        shutil.copy2(file_path, backup_path)
+        return backup_path
+    except Exception as e:
+        if verbose:
+            print(f"Warning: Failed to create backup: {e}", file=sys.stderr)
+        return None
 
 
 def _print_console_table(inventory_items, field_names) -> None:
