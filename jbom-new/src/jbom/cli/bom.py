@@ -202,14 +202,16 @@ def handle_bom(args: argparse.Namespace) -> int:
 def _output_bom(bom_data: BOMData, output: Optional[str]) -> int:
     """Output BOM data in the requested format.
 
-    Special cases:
-    - output in {None, "stdout", "-"} => CSV to stdout
-    - output == "console" => formatted table to stdout
+    Human-first defaults (BREAKING CHANGE for UX consistency):
+    - output is None => formatted table to stdout (human exploration)
+    - output == "console" => formatted table to stdout (explicit)
+    - output == "-" => CSV to stdout (machine readable)
+    - "stdout" removed (legacy compatibility)
     - otherwise => treat as file path
     """
-    if output == "console":
+    if output is None or output == "console":
         _print_console_table(bom_data)
-    elif output in (None, "stdout", "-"):
+    elif output == "-":
         _print_csv(bom_data)
     else:
         output_path = Path(output)

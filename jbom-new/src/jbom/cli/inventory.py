@@ -8,6 +8,7 @@ from pathlib import Path
 from jbom.services.project_inventory import ProjectInventoryGenerator
 from jbom.services.schematic_reader import SchematicReader
 from jbom.services.project_file_resolver import ProjectFileResolver
+from jbom.services.component_inventory_matcher import ComponentInventoryMatcher
 from jbom.common.options import GeneratorOptions
 from jbom.cli.formatting import print_inventory_table
 
@@ -32,6 +33,19 @@ def register_command(subparsers) -> None:
         "--output",
         help="Output destination: file path, 'console', or '-' for stdout (default: part-inventory.csv)",
         default=None,
+    )
+
+    # Inventory merge options
+    parser.add_argument(
+        "--inventory",
+        help="Path to existing inventory CSV file for merge operations",
+        type=Path,
+    )
+
+    parser.add_argument(
+        "--filter-matches",
+        action="store_true",
+        help="Filter out components that match existing inventory items",
     )
 
     # Verbose mode
@@ -128,30 +142,114 @@ def _handle_generate_inventory(args: argparse.Namespace) -> int:
     generator = ProjectInventoryGenerator(components)
     inventory_items, field_names = generator.load()
 
+    # Apply inventory filtering if requested
+    if args.inventory or args.filter_matches:
+        inventory_items = _apply_inventory_filtering(
+            inventory_items, args.inventory, args.filter_matches, args.verbose
+        )
+
     # Handle output using same pattern as BOM command
     return _output_inventory(inventory_items, field_names, args.output)
-    return 0
+
+
+def _apply_inventory_filtering(
+    inventory_items, inventory_file, filter_matches, verbose
+):
+    """Apply inventory filtering based on existing inventory matches.
+
+    Args:
+        inventory_items: List of inventory items from the project
+        inventory_file: Path to existing inventory CSV file
+        filter_matches: If True, filter OUT matched components (show only new ones)
+        verbose: Enable verbose output
+
+    Returns:
+        Filtered list of inventory items
+    """
+    if not inventory_file:
+        if filter_matches:
+            print(
+                "Warning: --filter-matches requires --inventory file", file=sys.stderr
+            )
+        return inventory_items
+
+    # Initialize matcher with existing inventory
+    try:
+        matcher = ComponentInventoryMatcher(inventory_file)
+    except FileNotFoundError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return inventory_items
+    except Exception as e:
+        print(f"Error loading inventory: {e}", file=sys.stderr)
+        return inventory_items
+
+    if verbose:
+        print(
+            f"Loaded {len(matcher.inventory)} items from {inventory_file}",
+            file=sys.stderr,
+        )
+
+    # Apply filtering logic
+    filtered_items = []
+    matched_count = 0
+
+    for item in inventory_items:
+        # Convert inventory item to component data format for matching
+        component_data = {
+            "value": item.value or "",
+            "footprint": "",  # inventory items don't have footprint info
+            "lib_id": f"{item.category}:{item.value}"
+            if item.category and item.value
+            else "",
+            "properties": {},
+        }
+
+        # Find matches using sophisticated logic
+        matches = matcher.find_matches(component_data, debug=verbose)
+
+        if matches:
+            matched_count += 1
+            if verbose:
+                best_match = matches[0]
+                print(f"Matched {item.ipn}: {best_match.debug_info}", file=sys.stderr)
+
+            # If filter_matches=True, exclude matched items (show only new ones)
+            if not filter_matches:
+                filtered_items.append(item)
+        else:
+            # No match found
+            if verbose:
+                print(f"No match for {item.ipn} ({item.value})", file=sys.stderr)
+
+            # If filter_matches=True, include unmatched items (new ones)
+            # If filter_matches=False, include all items
+            filtered_items.append(item)
+
+    if verbose:
+        total = len(inventory_items)
+        filtered = len(filtered_items)
+        action = "filtered out" if filter_matches else "included"
+        print(
+            f"\nInventory filtering: {matched_count}/{total} matched, {filtered} {action}",
+            file=sys.stderr,
+        )
+
+    return filtered_items
 
 
 def _output_inventory(inventory_items, field_names, output) -> int:
     """Output inventory data in the requested format.
 
-    Special cases (following BOM pattern):
-    - output == "console" => formatted table to stdout
-    - output in {None, "-"} => CSV to stdout
+    Human-first defaults (BREAKING CHANGE for UX consistency):
+    - output is None => formatted table to stdout (human exploration)
+    - output == "console" => formatted table to stdout (explicit)
+    - output == "-" => CSV to stdout (machine readable)
     - otherwise => treat as file path
     """
-    if output == "console":
+    if output is None or output == "console":
         _print_console_table(inventory_items, field_names)
     elif output == "-":
         _print_csv(inventory_items, field_names)
-    elif output is None:
-        # Default to part-inventory.csv file
-        output_path = Path("part-inventory.csv")
-        _write_csv(inventory_items, field_names, output_path)
-        print(
-            f"Generated inventory with {len(inventory_items)} items written to {output_path}"
-        )
     else:
         output_path = Path(output)
         _write_csv(inventory_items, field_names, output_path)

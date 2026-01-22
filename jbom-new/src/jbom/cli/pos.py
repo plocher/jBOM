@@ -146,14 +146,16 @@ def handle_pos(args: argparse.Namespace) -> int:
 def _output_pos(pos_data: list, output: str, units: str) -> int:
     """Output position data in the requested format.
 
-    Special cases:
-    - output in {None, "stdout", "-"} => CSV to stdout
-    - output == "console" => formatted table to stdout
+    Human-first defaults (BREAKING CHANGE for UX consistency):
+    - output is None => formatted table to stdout (human exploration)
+    - output == "console" => formatted table to stdout (explicit)
+    - output == "-" => CSV to stdout (machine readable)
+    - "stdout" removed (legacy compatibility)
     - otherwise => treat as file path
     """
-    if output == "console":
+    if output is None or output == "console":
         _print_console_table(pos_data, units)
-    elif output in (None, "stdout", "-"):
+    elif output == "-":
         _print_csv(pos_data, units)
     else:
         output_path = Path(output)

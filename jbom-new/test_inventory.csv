@@ -1,0 +1,5 @@
+IPN,Category,Value,Description,Package,Manufacturer,MFGPN,LCSC,Datasheet,UUID
+RES_10k,RESISTOR,10k,10k Ohm 1% resistor,0603,Yageo,RC0603FR-0710KL,C25804,,uuid-res-10k-001
+RES_1k,RESISTOR,1k,1k Ohm 1% resistor,0603,Yageo,RC0603FR-071KL,C21190,,uuid-res-1k-001
+CAP_100n,CAPACITOR,100nF,100nF ceramic capacitor,0603,Murata,GRM188R71H104KA93,C14663,,uuid-cap-100n-001
+LED_RED,LED,RED,Red LED 20mA,0603,Kingbright,APT1608SRCPRV,C2286,,uuid-led-red-001

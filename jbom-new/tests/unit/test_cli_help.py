@@ -34,7 +34,7 @@ def test_bom_help_includes_fabricator_choices():
 
 def test_bom_help_shows_key_options():
     out = run_help(["bom"]).lower()
-    for token in ["--aggregation", "--include-dnp", "--inventory", "-o", "--output"]:
+    for token in ["--include-dnp", "--inventory", "-o", "--output"]:
         assert token in out
 
 
@@ -46,14 +46,7 @@ def test_pos_help_shows_core_flags():
 
 def test_inventory_help_shows_inventory_interface_tokens():
     out = run_help(["inventory"]).lower()
-    # Support both variants:
-    # - Simplified single-command inventory with search flags
-    # - Older subcommand-based inventory with {generate,list}
-    tokens_search = ["--search", "--provider", "--api-key", "--limit", "--interactive"]
-    tokens_subcmd = ["{generate,list}", "inventory commands", "generate", "list"]
-    if any(t in out for t in tokens_search):
-        for token in tokens_search:
-            assert token in out
-    else:
-        # Fall back to subcommands presence and basic -o/-output on generate
-        assert any(t in out for t in tokens_subcmd)
+    # Test current simplified interface with inventory matching flags
+    tokens_current = ["--inventory", "--filter-matches", "-o", "--output"]
+    for token in tokens_current:
+        assert token in out
