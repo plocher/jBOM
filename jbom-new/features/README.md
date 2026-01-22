@@ -81,6 +81,71 @@ Background:
   Given the generic fabricator is selected
 ```
 
+##### **DRY Background Pattern** (DESIGN DECISION)
+**When to consolidate component setup into Background:**
+
+If a feature file has **3+ scenarios with repetitive component definitions**, consolidate the setup into Background for maximum maintainability:
+
+```gherkin
+# BEFORE: Repetitive setup in each scenario
+Scenario: Basic functionality
+  Given a schematic that contains:
+    | Reference | Value | Footprint   |
+    | R1        | 10K   | R_0805_2012 |
+    | C1        | 100nF | C_0603_1608 |
+  When I run jbom command "bom"
+
+Scenario: File output
+  Given a schematic that contains:     # DUPLICATE SETUP
+    | Reference | Value | Footprint   |
+    | R1        | 10K   | R_0805_2012 |
+    | C1        | 100nF | C_0603_1608 |
+  When I run jbom command "bom -o file.csv"
+
+# AFTER: DRY Background consolidation
+Background:
+  Given the generic fabricator is selected
+  And a standard test schematic that contains:
+    | Reference | Value | Footprint   |
+    | R1        | 10K   | R_0805_2012 |
+    | C1        | 100nF | C_0603_1608 |
+
+Scenario: Basic functionality
+  When I run jbom command "bom"          # Clean focus on behavior
+
+Scenario: File output
+  When I run jbom command "bom -o file.csv"   # Clean focus on behavior
+```
+
+**Benefits of DRY Background Pattern:**
+- ✅ **Single source of truth** for test data
+- ✅ **Scenarios focus purely on behavior** rather than setup
+- ✅ **Easier maintenance** - change test data once, affects all scenarios
+- ✅ **Prevents flaky tests** from inconsistent data
+- ✅ **Professional Gherkin** following BDD best practices
+
+**Strategic Background Design:**
+Design Background components to support multiple test scenarios:
+
+```gherkin
+# Good: Rich data supporting multiple test cases
+Background:
+  And a comprehensive test schematic that contains:
+    | Reference | Value | Footprint   |
+    | R1        | 10k   | R_0603_1608 |  # Basic component
+    | R2        | 22k   | R_0603_1608 |  # Different value
+    | R10       | 10k   | R_0805_2012 |  # Natural sorting test
+    | C1        | 100nF | C_0603_1608 |  # Different component type
+    | LED1      | RED   | LED_0603    |  # Matching test component
+    | U1        | LM358 | SOIC-8      |  # Complex component
+
+# Enables multiple scenarios:
+# - Basic functionality (uses R1, C1, U1)
+# - Component matching (R1 matches, R2 doesn't)
+# - Natural sorting (R1 < R2 < R10)
+# - Multi-type testing (R, C, LED, U components)
+```
+
 #### 2. **Component Definition**: Table-driven, inline component creation
 Scenerios should be both minimalist and explicit.  They should follow DRY patterns
 so as to not overconstrain or burden the test with unrelated baggage statements,
@@ -175,6 +240,34 @@ Then the output should contain "R1"
 And the output should contain "R2"
 And the output should contain "10K"
 ```
+
+### **Don't over-apply DRY Background pattern**
+```gherkin
+# BAD - Using Background when scenarios need different component setups
+Background:
+  And a schematic that contains:
+    | Reference | Value | Footprint |
+    | R1        | 10K   | 0805      |
+
+Scenario: Test with capacitor  # Needs capacitor, not resistor!
+  When I run jbom command "bom"
+  Then the output should contain "C1"  # Will fail - no C1 in Background
+
+# GOOD - Use individual Given when scenarios have different needs
+Scenario: Test with resistor
+  Given a schematic that contains:
+    | Reference | Value | Footprint |
+    | R1        | 10K   | 0805      |
+  When I run jbom command "bom"
+
+Scenario: Test with capacitor
+  Given a schematic that contains:
+    | Reference | Value | Footprint |
+    | C1        | 100nF | 0603      |
+  When I run jbom command "bom"
+```
+
+**Rule of thumb:** Use DRY Background when scenarios share 80%+ of component setup. Otherwise, keep individual `Given` clauses for clarity.
 
 ## Running Tests
 
