@@ -11,10 +11,12 @@ from behave import then
 from diagnostic_utils import assert_with_diagnostics
 
 try:
-    from jbom.config.fabricators import list_fabricators
+    from jbom.config.fabricators import (
+        get_available_fabricators as _get_available_fabricators,
+    )
 except ImportError:
 
-    def list_fabricators():
+    def _get_available_fabricators():
         return ["generic"]  # fallback
 
 
@@ -228,13 +230,6 @@ def then_csv_output_has_row(context) -> None:
 # -----------------
 
 
-#  TODO Issue #31: This list needs to be dynamically constructed from the config files, not hardcoded
-def _get_available_fabricators() -> list[str]:
-    """Get list of available fabricators."""
-    # All these fabricators are confirmed to work in jbom
-    return ["generic", "jlc", "pcbway", "seeed"]
-
-
 # Dynamic fabricator testing step definitions
 
 
@@ -246,12 +241,13 @@ def then_bom_works_with_all_fabricators(context) -> None:
         raise AssertionError("No previous command found to test with fabricators")
 
     base_cmd = context.last_command
-    # Remove any existing fabricator flags
-    # TODO Issue #31: this hardcoded list needs to be replaced with dynamic info from the config files
-    for fab in ["--generic", "--jlc", "--pcbway", "--seeed"] + [
-        f"--fabricator {f}" for f in _get_available_fabricators()
-    ]:
-        base_cmd = base_cmd.replace(fab, "").strip()
+    # Remove any existing fabricator flags - using dynamic fabricator discovery
+    available_fabricators = _get_available_fabricators()
+    fabricator_flags = [f"--{f}" for f in available_fabricators] + [
+        f"--fabricator {f}" for f in available_fabricators
+    ]
+    for fab_flag in fabricator_flags:
+        base_cmd = base_cmd.replace(fab_flag, "").strip()
 
     fabricators = _get_available_fabricators()
     failures = []
@@ -283,11 +279,13 @@ def then_bom_output_varies_by_fabricator(context) -> None:
 
     base_cmd = context.last_command
     # Remove any existing fabricator flags and add the standard field preset to show differences
-    # TODO Issue #31: This hardcoded list needs to be replaced with dynamic info from the config files
-    for fab in ["--generic", "--jlc", "--pcbway", "--seeed"] + [
-        f"--fabricator {f}" for f in _get_available_fabricators()
-    ]:
-        base_cmd = base_cmd.replace(fab, "").strip()
+    # Using dynamic fabricator discovery - addresses Issue #31
+    available_fabricators = _get_available_fabricators()
+    fabricator_flags = [f"--{f}" for f in available_fabricators] + [
+        f"--fabricator {f}" for f in available_fabricators
+    ]
+    for fab_flag in fabricator_flags:
+        base_cmd = base_cmd.replace(fab_flag, "").strip()
 
     # Add standard field preset to ensure we get fabricator-specific headers
     if "-f" not in base_cmd and "--fields" not in base_cmd:
