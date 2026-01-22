@@ -40,5 +40,5 @@ Feature: Inventory Generation
     Given a schematic that contains:
       | Reference | Value | Footprint |
     When I run jbom command "inventory -o empty_inventory.csv"
-    Then the command should succeed
-    And the output should contain "Generated inventory with 0 items"
+    Then the command should fail
+    And the output should contain "Error: No components found in project. Cannot create inventory from empty schematic."

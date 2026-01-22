@@ -43,8 +43,8 @@ Feature: Inventory Management (Core Functionality)
     Given a schematic that contains:
       | Reference | Part Number | Quantity |
     When I run jbom command "inventory -o console"
-    Then the command should succeed
-    And the output should contain "Generated inventory with 0 items"
+    Then the command should fail
+    And the output should contain "Error: No components found in project. Cannot create inventory from empty schematic."
 
   Scenario: Inventory help command
     When I run jbom command "inventory --help"

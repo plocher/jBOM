@@ -116,6 +116,14 @@ def _handle_generate_inventory(args: argparse.Namespace) -> int:
         print(f"Error: {e}", file=sys.stderr)
         return 1
 
+    # Check for empty components list
+    if not components:
+        print(
+            "Error: No components found in project. Cannot create inventory from empty schematic.",
+            file=sys.stderr,
+        )
+        return 1
+
     # Generate inventory
     generator = ProjectInventoryGenerator(components)
     inventory_items, field_names = generator.load()
