@@ -5,9 +5,13 @@ Feature: UX Consistency Across Commands
 
   Background:
     Given the generic fabricator is selected
+    And a complete project with components and PCB layout:
+      | Reference | Value | Footprint   | LibID     | X | Y | Side |
+      | R1        | 10k   | R_0603_1608 | Device:R  | 5 | 3 | TOP  |
+      | C1        | 100nF | C_0603_1608 | Device:C  | 8 | 6 | TOP  |
+      | U1        | LM358 | SOIC-8      | Device:IC |12 | 9 | TOP  |
 
   Scenario: All commands default to human-readable console output
-    Given a project with components and PCB layout
     When I run jbom command "bom"
     Then the command should succeed
     And the output should contain a formatted table
@@ -24,7 +28,6 @@ Feature: UX Consistency Across Commands
     And the output should not be CSV format
 
   Scenario: All commands support -o - for CSV stdout
-    Given a project with components and PCB layout
     When I run jbom command "bom -o -"
     Then the command should succeed
     And the output should be in CSV format
@@ -41,7 +44,6 @@ Feature: UX Consistency Across Commands
     And the output should contain "IPN,Category,Value"
 
   Scenario: All commands support -o console for explicit table output
-    Given a project with components and PCB layout
     When I run jbom command "bom -o console"
     Then the command should succeed
     And the output should contain a formatted table
@@ -58,7 +60,6 @@ Feature: UX Consistency Across Commands
     And the output should contain "Generated inventory"
 
   Scenario: All commands support -o filename.csv for file output
-    Given a project with components and PCB layout
     When I run jbom command "bom -o test_bom.csv"
     Then the command should succeed
     And a file named "test_bom.csv" should exist
