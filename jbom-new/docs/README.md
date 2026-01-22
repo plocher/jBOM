@@ -26,11 +26,11 @@ The jBOM architecture follows these key principles established during the Servic
 
 ## Project Documentation
 
-### [CHANGELOG.md](CHANGELOG.md)
-Project change history following semantic versioning principles.
+### [USER_GUIDE.md](USER_GUIDE.md)
+Comprehensive user workflows and examples for BOM generation, inventory management, and component placement.
 
-### [CONTRIBUTING.md](CONTRIBUTING.md)
-Contribution guidelines and development workflow.
+### [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md)
+Architecture, design patterns, and implementation guide for contributors and maintainers.
 
 ## Historical Context
 
