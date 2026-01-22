@@ -72,6 +72,19 @@ def register_command(subparsers) -> None:
         help="Include components excluded from BOM",
     )
 
+    # Field selection (key feature for fabricator customization)
+    parser.add_argument(
+        "-f",
+        "--fields",
+        help="Comma-separated field list or preset (+minimal, +standard, +jlc, etc.)",
+    )
+
+    parser.add_argument(
+        "--list-fields",
+        action="store_true",
+        help="List available fields and presets, then exit",
+    )
+
     # Options
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
 
