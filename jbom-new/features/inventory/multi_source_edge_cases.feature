@@ -5,7 +5,7 @@ Feature: Multi-Source Inventory Edge Cases
 
   Background:
     Given the generic fabricator is selected
-    And a minimal test schematic that contains:
+    And a schematic that contains:
       | Reference | Value | Footprint   | LibID    |
       | R1        | 10k   | R_0603_1608 | Device:R |
 

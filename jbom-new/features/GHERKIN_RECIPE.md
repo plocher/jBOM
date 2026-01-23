@@ -111,6 +111,32 @@ Given a KiCad project "test_project" with files:
 - Multi-step manual file creation → Use `"Given a minimal KiCad project"`
 - Ambiguous magic strings → Use table-driven component data
 
+### Circular Validation Anti-Pattern
+```gherkin
+# ❌ BAD: Hand-crafted files that mirror jBOM expectations
+Given the project contains a file "test.kicad_sch" with content:
+  """
+  (kicad_sch (version 20211123)
+    (symbol (lib_id "Device:R") (at 50 50 0) (unit 1)
+      (property "Reference" "R1" (id 0) (at 52 48 0))
+      (property "Value" "10K" (id 1) (at 52 52 0))
+    )
+  )
+  """
+
+# ✅ GOOD: Use fixture-based approach with real KiCad files
+Given I copy fixture "fixtures/real_kicad_project" to "test_project"
+And I am in directory "test_project"
+```
+
+**Architectural Issue**: Creating hand-crafted KiCad files that mirror jBOM expectations creates circular validation - proving the validator can read files the validator created.
+
+**Proper Solution**:
+1. Use actual KiCad to generate real project files
+2. Save them as fixtures in `fixtures/` directory
+3. Copy fixture files for test scenarios
+4. Tests real-world compatibility, not circular validation
+
 ## Command Execution Architecture
 
 ### Layer 3 Auto-Enhancement
