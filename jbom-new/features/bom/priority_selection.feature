@@ -29,4 +29,4 @@ Feature: BOM Priority and Selection Rules
     When I run jbom command "bom --aggregation value_footprint"
     Then the command should succeed
     And the output should contain "Reference,Value,Footprint,Quantity"
-    And the output should contain "R1,  R3"  # grouped by 1K should appear together
+    And the output should contain "R1,  R3"
