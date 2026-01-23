@@ -6,54 +6,44 @@ Feature: Project-Centric Architecture
   Background:
     Given the generic fabricator is selected
 
-  Scenario: BOM command with current directory
-    When I run jbom command "bom ." in directory "test_project"
+  Scenario Outline: BOM command works with different project references
+    Given a KiCad project directory "test_project"
+    And the project contains a file "test_project.kicad_pro"
+    And the project contains a file "test_project.kicad_sch" with basic schematic content
+    When I run jbom command "bom <path>" <location>
     Then the command should succeed
     And the BOM should contain component "R1" with value "10k"
     And the project name should be "test_project"
+    Examples:
+      | path                              | location                     |
+      | .                                 | in directory "test_project"  |
+      | test_project                      |                              |
+      | test_project/test_project.kicad_sch |                            |
 
-  Scenario: BOM command with project directory path
-    When I run jbom command "bom test_project"
-    Then the command should succeed
-    And the BOM should contain component "R1" with value "10k"
-    And the project name should be "test_project"
-
-  Scenario: BOM command with project base name
-    When I run jbom command "bom test_project" in directory "."
-    Then the command should succeed
-    And the BOM should contain component "R1" with value "10k"
-    And the project name should be "test_project"
-
-  Scenario: BOM command with explicit schematic file (backward compatibility)
-    When I run jbom command "bom test_project/test_project.kicad_sch"
-    Then the command should succeed
-    And the BOM should contain component "R1" with value "10k"
-    And the project name should be "test_project"
-
-  Scenario: POS command with current directory
-    When I run jbom command "pos ." in directory "test_project"
+  Scenario Outline: POS command works with different project references
+    Given a KiCad project directory "test_project"
+    And the project contains a file "test_project.kicad_pro"
+    And the project contains a file "test_project.kicad_pcb" with basic PCB content
+    When I run jbom command "pos <path>" <location>
     Then the command should succeed
     And the POS should contain component "R1" at position "76.2,104.14"
+    Examples:
+      | path                              | location                     |
+      | .                                 | in directory "test_project"  |
+      | test_project                      |                              |
+      | test_project/test_project.kicad_pcb |                            |
 
-  Scenario: POS command with project directory path
-    When I run jbom command "pos test_project"
-    Then the command should succeed
-    And the POS should contain component "R1" at position "76.2,104.14"
-
-  Scenario: POS command with explicit PCB file (backward compatibility)
-    When I run jbom command "pos test_project/test_project.kicad_pcb"
-    Then the command should succeed
-    And the POS should contain component "R1" at position "76.2,104.14"
-
-  Scenario: Inventory generate with current directory
-    When I run jbom command "inventory generate . -o test_inventory.csv" in directory "test_project"
+  Scenario Outline: Inventory generate works with different project references
+    Given a KiCad project directory "test_project"
+    And the project contains a file "test_project.kicad_pro"
+    And the project contains a file "test_project.kicad_sch" with basic schematic content
+    When I run jbom command "inventory generate <path> -o test_inventory.csv" <location>
     Then the command should succeed
     And the inventory file should contain component with value "10k"
-
-  Scenario: Inventory generate with project directory path
-    When I run jbom command "inventory generate test_project -o test_inventory.csv"
-    Then the command should succeed
-    And the inventory file should contain component with value "10k"
+    Examples:
+      | path         | location                     |
+      | .            | in directory "test_project"  |
+      | test_project |                              |
 
   # Cross-command intelligence scenarios
   Scenario: BOM command with PCB file should find matching schematic
