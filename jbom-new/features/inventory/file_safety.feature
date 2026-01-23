@@ -11,7 +11,7 @@ Feature: Inventory File Safety and Backup
       | C1        | 100nF | C_0603_1608 | Device:C |
 
   Scenario: Prevent accidental overwrite without --force flag
-    Given an inventory file "existing_inventory.csv" with contents:
+    Given an inventory file "existing_inventory.csv" that contains:
       | IPN    | Category | Value |
       | RES_1K | RESISTOR | 1k    |
     When I run jbom command "inventory -o existing_inventory.csv"
@@ -20,7 +20,7 @@ Feature: Inventory File Safety and Backup
     And the file "existing_inventory.csv" should contain "RES_1K"
 
   Scenario: Allow overwrite with --force flag
-    Given an inventory file "existing_inventory.csv" with contents:
+    Given an inventory file "existing_inventory.csv" that contains:
       | IPN    | Category | Value |
       | RES_1K | RESISTOR | 1k    |
     When I run jbom command "inventory -o existing_inventory.csv --force"
@@ -30,7 +30,7 @@ Feature: Inventory File Safety and Backup
     And the file "inventory.csv" should contain "CAP_100N"
 
   Scenario: Force flag successfully overwrites existing files
-    Given an inventory file "inventory.csv" with contents:
+    Given an inventory file "inventory.csv" that contains:
       | IPN           | Category | Value |
       | OLD_COMPONENT | RESISTOR | 1k    |
     When I run jbom command "inventory -o inventory.csv --force"
@@ -40,7 +40,7 @@ Feature: Inventory File Safety and Backup
 
 
   Scenario: Graceful handling of backup failure
-    Given an inventory file "readonly_inventory.csv" with contents:
+    Given an inventory file "readonly_inventory.csv" that contains:
       | IPN  | Category | Value |
       | TEST | RESISTOR | 1k    |
     And the directory is read-only

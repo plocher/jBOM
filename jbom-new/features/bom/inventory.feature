@@ -11,7 +11,7 @@ Feature: BOM Inventory Enhancement
       | Reference | Value | Footprint   |
       | R1        | 10K   | R_0805_2012 |
       | C1        | 100nF | C_0603_1608 |
-    And an inventory file "components.csv" with data:
+    And an inventory file "components.csv" that contains:
       | IPN     | Category  | Value | Package | Manufacturer | MFGPN           | LCSC   |
       | RES_10K | RESISTOR  | 10K   | 0805    | Yageo        | RC0805FR-0710KL | C17414 |
       | CAP_100N| CAPACITOR | 100nF | 0603    | Samsung      | CL10B104KB8NNNC | C1591  |

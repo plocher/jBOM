@@ -9,14 +9,26 @@ from pathlib import Path
 from behave import given, then
 
 
-@given('an inventory file "{filename}" with data:')
-def given_inventory_file_with_data(context, filename: str) -> None:
+@given('an inventory file "{filename}" that contains:')
+def given_inventory_file_that_contains(context, filename: str) -> None:
+    """Create inventory CSV file with table data (canonical pattern)."""
     p = context.project_root / filename
+    p.parent.mkdir(parents=True, exist_ok=True)
+
     with p.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        writer.writerow(context.table.headings)
-        for row in context.table:
-            writer.writerow([row[h] for h in context.table.headings])
+        if context.table and context.table.headings:
+            writer = csv.DictWriter(f, fieldnames=context.table.headings)
+            writer.writeheader()
+            for row in context.table:
+                writer.writerow(row.as_dict())
+
+
+@given("an inventory file that contains:")
+def given_default_inventory_file_that_contains(context) -> None:
+    """Create inventory.csv file with table data (canonical pattern)."""
+    filename = "inventory.csv"
+    given_inventory_file_that_contains(context, filename)
+    context.inventory_filename = filename
 
 
 @given('an empty inventory file "{filename}"')

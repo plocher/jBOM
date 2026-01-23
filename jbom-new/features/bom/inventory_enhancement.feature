@@ -5,12 +5,12 @@ Feature: BOM Inventory Enhancement
 
   Background:
     Given the generic fabricator is selected
-    And an inventory file "component_inventory.csv" with contents:
+    And an inventory file "component_inventory.csv" that contains:
       | IPN       | Category  | Value | Description         | Package | Manufacturer | MFGPN           | LCSC    | Voltage | Tolerance |
       | RES_10K   | RESISTOR  | 10k   | 10k Ohm resistor    | 0603    | Yageo        | RC0603FR-0710KL | C25804  | 75V     | 1%        |
       | CAP_100N  | CAPACITOR | 100nF | 100nF ceramic cap   | 0603    | Murata       | GRM188R71H104KA | C14663  | 50V     | 10%       |
       | LED_RED   | LED       | RED   | Red LED 20mA        | 0603    | Kingbright   | APT1608SRCPRV   | C2286   | 2V      |           |
-    And an inventory file "enhanced_inventory.csv" with contents:
+    And an inventory file "enhanced_inventory.csv" that contains:
       | IPN       | Category  | Value | Description         | Package | Manufacturer | MFGPN           | LCSC    | Datasheet                    |
       | IC_LM358  | IC        | LM358 | Dual Op-Amp         | SOIC-8  | Texas Instruments | LM358DR  | C7950   | https://ti.com/lit/ds/lm358 |
     And a schematic that contains:

@@ -17,23 +17,6 @@ import project_centric_steps
 #   4. Tests real-world compatibility, not circular validation
 
 
-@given('an inventory file "{filename}" with contents:')
-def given_inventory_file_with_contents(context, filename):
-    """Legacy: create inventory CSV file with table data."""
-    from pathlib import Path
-    import csv
-
-    file_path = Path(context.project_root) / filename
-    file_path.parent.mkdir(parents=True, exist_ok=True)
-
-    with file_path.open("w", newline="", encoding="utf-8") as csvfile:
-        if context.table and context.table.headings:
-            writer = csv.DictWriter(csvfile, fieldnames=context.table.headings)
-            writer.writeheader()
-            for row in context.table:
-                writer.writerow(row.as_dict())
-
-
 @given("a standard BOM test schematic that contains:")
 def given_standard_bom_test_schematic(context):
     """Legacy: create standard BOM test schematic."""
