@@ -18,21 +18,6 @@ import common_steps
 #   4. Tests real-world compatibility, not circular validation
 
 
-@given('the project contains a schematic with component "{ref}" with value "{value}"')
-def given_project_contains_schematic_with_component(context, ref, value):
-    """Legacy: add specific component to project schematic."""
-    from behave.model import Table, Row
-
-    # Create minimal schematic with the specified component
-    context.table = Table(
-        headings=["Reference", "Value", "Footprint"],
-        rows=[
-            Row(table=None, cells=[ref, value, "Generic_Footprint"]),
-        ],
-    )
-    project_centric_steps.given_simple_schematic(context)
-
-
 @given('a hierarchical project "{name}"')
 def given_hierarchical_project(context, name):
     """Legacy: create hierarchical project setup."""
