@@ -11,6 +11,7 @@ from jbom.services.bom_generator import BOMGenerator, BOMData
 from jbom.services.inventory_matcher import InventoryMatcher
 from jbom.services.project_file_resolver import ProjectFileResolver
 from jbom.common.options import GeneratorOptions
+from jbom.config.fabricators import get_available_fabricators
 
 
 def register_command(subparsers) -> None:
@@ -48,7 +49,7 @@ def register_command(subparsers) -> None:
     # Fabricator selection (for field presets / predictable output)
     parser.add_argument(
         "--fabricator",
-        choices=["generic", "jlc", "pcbway", "seeed"],
+        choices=get_available_fabricators(),
         help="Specify PCB fabricator for field presets (default: generic)",
     )
     parser.add_argument("--jlc", action="store_true", help="Use JLC preset")

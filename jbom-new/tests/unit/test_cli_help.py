@@ -28,8 +28,19 @@ def test_bom_help_includes_fabricator_choices():
     out = run_help(["bom"]).lower()
     # Stable tokens rather than brittle long strings
     assert "--fabricator" in out
-    for fab in ["generic", "jlc", "pcbway", "seeed"]:
-        assert fab in out
+
+    # Use dynamic fabricator discovery instead of hardcoded list
+    import sys
+
+    sys.path.insert(0, str(SRC_DIR))
+    try:
+        from jbom.config.fabricators import get_available_fabricators
+
+        available_fabricators = get_available_fabricators()
+        for fab in available_fabricators:
+            assert fab in out
+    finally:
+        sys.path.remove(str(SRC_DIR))
 
 
 def test_bom_help_shows_key_options():
