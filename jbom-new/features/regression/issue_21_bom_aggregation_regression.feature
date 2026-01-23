@@ -15,7 +15,7 @@ Feature: Issue #21 BOM Aggregation Regression Tests
       | R3        | 10K   | R_0603_1608 |
       | C1        | 100nF | C_0603_1608 |
       | C2        | 100nF | C_0603_1608 |
-    When I run jbom command "bom --aggregation value_footprint"
+    When I run jbom command "bom -o -"
     Then the command should succeed
     And the output should contain "R1, R2"
     And the output should contain "R_0805_2012"
@@ -35,13 +35,8 @@ Feature: Issue #21 BOM Aggregation Regression Tests
       | C1        | 100nF | C_0603_1608 |
       | C2        | 100nF | C_0805_2012 |
     When I run jbom command "bom --aggregation value_only"
-    Then the command should succeed
-    And the output should contain "R1, R2"
-    And the output should contain "10K"
-    And the output should contain "2"
-    And the output should contain "C1, C2"
-    And the output should contain "100nF"
-    And the output should contain "2"
+    Then the command should fail
+    And the error output should mention "unrecognized arguments: --aggregation"
 
   @regression @issue-21
   Scenario: Current lib_id_value aggregation behavior
@@ -51,12 +46,8 @@ Feature: Issue #21 BOM Aggregation Regression Tests
       | R2        | 10K   | R_0603_1608 | Device:R        |
       | R3        | 10K   | R_0805_2012 | Device:R_Small  |
     When I run jbom command "bom --aggregation lib_id_value"
-    Then the command should succeed
-    And the output should contain "R1, R2"
-    And the output should contain "10K"
-    And the output should contain "2"
-    And the output should contain "R3"
-    And the output should contain "1"
+    Then the command should fail
+    And the error output should mention "unrecognized arguments: --aggregation"
 
   @regression @issue-21
   Scenario: Future BOM behavior - always aggregates by value+package (footprint)
@@ -67,7 +58,7 @@ Feature: Issue #21 BOM Aggregation Regression Tests
       | R3        | 10K   | R_0603_1608 |
       | C1        | 100nF | C_0603_1608 |
       | C2        | 100nF | C_0603_1608 |
-    When I run jbom command "bom"
+    When I run jbom command "bom -o -"
     Then the command should succeed
     And the output should contain "R1, R2"
     And the output should contain "R_0805_2012"
@@ -96,7 +87,7 @@ Feature: Issue #21 BOM Aggregation Regression Tests
       | R1        | 10K   | R_0805_2012 |
       | R2        | 10K   | R_0805_2012 |
       | R20       | 10K   | R_0805_2012 |
-    When I run jbom command "bom"
+    When I run jbom command "bom -o -"
     Then the command should succeed
     And the output should contain "R1, R2, R10, R20"
     And the output should contain "4"

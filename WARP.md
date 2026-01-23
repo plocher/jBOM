@@ -36,6 +36,7 @@ I will treat you as a trusted collaborator, and I expect to be treated the same 
   ```
 
 ### C) FINISH - GitHub PR and Issue Closure
+- **Run behave** and address all failures and missing step definitions
 - **Push feature branch** to origin
 - **Create GitHub PR** with comprehensive description including:
   - Issues addressed (using "Closes #N" syntax)
@@ -107,7 +108,11 @@ jBOM is a sophisticated KiCad Bill of Materials generator in Python. It matches 
 - **Single responsibility principle** for functions
 
 ### Testing Requirements
-- **All unit and functional tests must pass** before attempting git commit
+- **Unit and functional tests for an item should pass** before they are committed
+- **Behave functional tests MUST pass before opening or merging any PR.**
+  - Run from `jbom-new/`: `python -m behave --format progress`
+  - Merges are blocked if any scenarios are failed, error, or undefined
+  - During development it's fine to run by tag (e.g., `--tags @regression`), but run the full suite before merge
 - **Create functional tests** as needed in the `tests/` folder using TDD
 - **Update/delete unit tests** proactively as internal design changes
 - **Use behave/Gherkin** for user-facing behavior validation

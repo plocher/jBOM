@@ -175,6 +175,29 @@ def then_file_contains_inventory_columns(context, filename: str) -> None:
         ), f"Missing inventory column '{col}' in {filename}: {header}"
 
 
+@given('an inventory file with fields "{field_list}"')
+def given_inventory_file_with_fields(context, field_list: str) -> None:
+    """Create an inventory.csv file with specific fields for testing I: prefix functionality."""
+    fields = [f.strip() for f in field_list.split(",")]
+
+    # Create basic inventory file with the specified fields
+    p = context.project_root / "inventory.csv"
+    with p.open("w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+
+        # Write headers: standard fields + custom fields
+        headers = ["IPN", "Category", "Value", "Description"] + fields
+        writer.writerow(headers)
+
+        # Write sample data rows matching components from background table
+        writer.writerow(
+            ["RES_10K", "RESISTOR", "10K", "10K Resistor", "3.3V", "5%", "0805"]
+        )
+        writer.writerow(
+            ["CAP_100N", "CAPACITOR", "100nF", "100nF Capacitor", "16V", "10%", "0603"]
+        )
+
+
 @then('the file "{filename}" contains "{text}"')
 def then_file_contains_text(context, filename: str, text: str) -> None:
     p = context.project_root / filename

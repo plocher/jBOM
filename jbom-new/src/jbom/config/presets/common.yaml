@@ -1,0 +1,21 @@
+# Global field presets available across all fabricators
+presets:
+  minimal:
+    description: "Minimal BOM with essential fields only"
+    fields:
+      - "reference"
+      - "quantity"
+      - "value"
+      - "fabricator_part_number"  # This maps to LCSC via generic fabricator
+
+  standard:
+    description: "Standard BOM with comprehensive part information"
+    fields:
+      - "reference"
+      - "quantity"
+      - "value"
+      - "description"
+      - "footprint"
+      - "manufacturer"
+      - "fabricator_part_number"
+      - "datasheet"

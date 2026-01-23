@@ -136,3 +136,105 @@ def headers_for_fields(fab: Optional[FabricatorConfig], fields: list[str]) -> li
         return [rev.get(f, default_headers.get(f, f)) for f in fields]
 
     return [default_headers.get(f, f) for f in fields]
+
+
+def get_fabricator_presets(fabricator_id: str) -> Optional[Dict[str, Any]]:
+    """Load field presets from fabricator configuration.
+
+    Args:
+        fabricator_id: ID of fabricator to load presets for
+
+    Returns:
+        Dict of presets if available, None if fabricator not found or no presets
+    """
+    try:
+        config = load_fabricator(fabricator_id)
+        return config.presets
+    except ValueError:
+        return None
+
+
+def get_fabricator_column_mapping(
+    fabricator_id: str, output_type: str
+) -> Optional[Dict[str, str]]:
+    """Get column mapping from fabricator configuration.
+
+    Args:
+        fabricator_id: ID of fabricator
+        output_type: Either 'bom' or 'pos' for the type of output
+
+    Returns:
+        Dict mapping headers to internal field names, or None if not found
+    """
+    try:
+        config = load_fabricator(fabricator_id)
+        if output_type == "bom":
+            return config.bom_columns
+        elif output_type == "pos":
+            return config.pos_columns
+        else:
+            raise ValueError(
+                f"Unknown output_type: {output_type}. Must be 'bom' or 'pos'"
+            )
+    except ValueError:
+        return None
+
+
+def apply_fabricator_column_mapping(
+    fabricator_id: str, output_type: str, fields: List[str]
+) -> List[str]:
+    """Apply fabricator-specific column mapping to field list.
+
+    Args:
+        fabricator_id: ID of fabricator
+        output_type: Either 'bom' or 'pos'
+        fields: List of internal field names
+
+    Returns:
+        List of headers using fabricator-specific mapping
+    """
+    column_mapping = get_fabricator_column_mapping(fabricator_id, output_type)
+
+    if not column_mapping:
+        # No fabricator mapping available, convert field names to proper headers
+        from ..common.fields import field_to_header
+
+        return [field_to_header(field) for field in fields]
+
+    # Create reverse mapping: internal field -> header
+    reverse_mapping = {v: k for k, v in column_mapping.items()}
+
+    # Apply mapping, falling back to formatted field name if no mapping exists
+    headers = []
+    for field in fields:
+        if field in reverse_mapping:
+            header = reverse_mapping[field]
+        else:
+            # No specific mapping - format the field name nicely
+            from ..common.fields import field_to_header
+
+            header = field_to_header(field)
+        headers.append(header)
+
+    return headers
+
+
+def get_fabricator_default_fields(
+    fabricator_id: str, output_type: str
+) -> Optional[List[str]]:
+    """Get default fields for a fabricator based on its column mapping.
+
+    Args:
+        fabricator_id: ID of fabricator
+        output_type: Either 'bom' or 'pos'
+
+    Returns:
+        List of default field names based on fabricator config, or None
+    """
+    column_mapping = get_fabricator_column_mapping(fabricator_id, output_type)
+
+    if column_mapping:
+        # Return the internal field names from the column mapping
+        return list(column_mapping.values())
+
+    return None
