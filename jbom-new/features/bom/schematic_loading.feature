@@ -1,28 +1,22 @@
-Feature: Schematic Loading Edge Cases
+Feature: File Extension Validation
   As a user
-  I want clear behavior when selecting schematics
-  So that errors are actionable and guidance is provided
+  I want clear errors for unsupported file types
+  So that I know what files jBOM can process
 
   Background:
     Given a clean test workspace
-
-  @wip
-  Scenario: Directory with multiple schematics requires explicit selection
-    Given a KiCad schematic file "a.kicad_sch" with basic components
-    And a KiCad schematic file "b.kicad_sch" with basic components
-    When I run "jbom bom ."
-    Then the command exits with code 1
-    And the error output contains "Multiple schematics found"
-
-  @wip
-  Scenario: Directory with one schematic is auto-selected
-    Given a KiCad schematic file "single.kicad_sch" with basic components
-    When I run "jbom bom ."
-    Then the command exits with code 0
-    And the output contains CSV headers "References,Value,Footprint,Quantity"
 
   Scenario: Unsupported file extension is rejected
     Given I create file "not_schematic.txt" with content "hello"
     When I run "jbom bom not_schematic.txt"
     Then the command exits with code 1
     And the error output contains "Expected .kicad_sch file"
+
+  # REMOVED: WIP scenarios based on incorrect project discovery assumptions
+  # These assumed jBOM looks for loose *.kicad_sch files, but it actually:
+  # 1. Looks for *.kicad_pro files first
+  # 2. Derives schematic names from project file or basename
+  # 3. Does not glob for random schematic files
+  #
+  # If fallback-to-glob behavior is needed, it belongs in project_centric/ domain
+  # with proper .kicad_pro context, not as schematic-loading edge cases.

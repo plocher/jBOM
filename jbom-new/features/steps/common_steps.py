@@ -339,6 +339,48 @@ def step_create_symlink(context, link_path, target_path):
         raise AssertionError(f"Failed to create symlink {link} -> {target}: {e}")
 
 
+@given('the file "{filename}" is unreadable')
+def step_file_is_unreadable(context, filename):
+    """Make a file unreadable by removing read permissions."""
+    from pathlib import Path
+    import stat
+
+    file_path = Path(context.project_root) / filename
+    assert file_path.exists(), f"File {filename} does not exist"
+
+    # Remove read permissions (keep only write permissions for owner)
+    file_path.chmod(stat.S_IWUSR)
+
+
+@then("{ref1} appears before {ref2} in the output")
+def step_component_appears_before_component(context, ref1, ref2):
+    """Check component order in output - supports natural sorting tests.
+
+    TODO: Replace with table-driven approach for better natural ordering tests:
+
+    Scenario Outline: Natural order sorting
+      Given the system contains components: <initial_list>
+      When I run jbom command "parts"
+      Then the result should be:
+        | Reference |
+        | R1        |
+        | R2        |
+        | R10       |
+
+    This step applies to BOM, POS, parts, and inventory CSV output commands.
+    Should be consolidated into general CSV output testing.
+    """
+    output = getattr(context, "last_output", "")
+    assert output, "No output captured"
+
+    pos1 = output.find(ref1)
+    pos2 = output.find(ref2)
+
+    assert pos1 >= 0, f"Component {ref1} not found in output"
+    assert pos2 >= 0, f"Component {ref2} not found in output"
+    assert pos1 < pos2, f"Expected {ref1} to appear before {ref2} in output"
+
+
 @then("the command should succeed")
 def step_command_should_succeed(context):
     step_check_exit_code(context, 0)

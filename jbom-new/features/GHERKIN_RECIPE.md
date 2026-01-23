@@ -71,6 +71,24 @@ Given an inventory file "A.csv" with contents:
 Given an inventory file "B.csv" with contents:
 ```
 
+### 5. Verbose Project Setup Anti-Patterns
+```gherkin
+# ❌ BAD: Manual file specification with magic strings
+Given a KiCad project directory "test_project"
+And the project contains a file "test_project.kicad_pro"
+And the project contains a file "test_project.kicad_sch" with basic schematic content
+And the project contains a file "test_project.kicad_pcb" with basic PCB content
+
+# ✅ GOOD: Streamlined with clear intent
+Given a minimal KiCad project "test_project"
+
+# ✅ GOOD: Explicit component data when needed
+Given a KiCad project "test_project" with files:
+  | File                   | Reference | Value | Footprint   |
+  | test_project.kicad_sch | R1        | 10K   | R_0805_2012 |
+  | test_project.kicad_pcb | R1        |       | R_0805_2012 |
+```
+
 ## Patterns to Eliminate
 
 ### Legacy Command Variations
@@ -86,6 +104,12 @@ Given an inventory file "B.csv" with contents:
 - `"the output contains BOM headers"` → Test actual data content
 - `"the BOM contains"` → Test specific CSV output
 - Format checking steps → Focus on business value
+
+### Legacy Project Setup
+- `"with basic schematic content"` → Use explicit table data or minimal project
+- `"with basic PCB content"` → Use explicit component specifications
+- Multi-step manual file creation → Use `"Given a minimal KiCad project"`
+- Ambiguous magic strings → Use table-driven component data
 
 ## Command Execution Architecture
 
@@ -113,6 +137,8 @@ def step_run_jbom_command(context, command):
 5. **Step Colocation**: Single-feature steps belong in feature-specific files, not shared locations
 6. **Legacy Elimination**: 44% reduction (50→25 steps) through unused removal and canonical migration
 7. **Trailing Space Handling**: Scenario outline edge cases require explicit whitespace pattern handling
+8. **Streamlined Project Creation**: Replace verbose multi-step patterns with parameterized single steps
+9. **Eliminate Magic Strings**: Replace ambiguous "basic content" with explicit table data
 
 ## Legacy Step Cleanup Methodology
 

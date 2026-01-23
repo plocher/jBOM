@@ -7,9 +7,7 @@ Feature: Project-Centric Architecture
     Given the generic fabricator is selected
 
   Scenario: BOM command discovers project files from directory (current directory path)
-    Given a KiCad project directory "test_project"
-    And the project contains a file "test_project.kicad_pro"
-    And the project contains a file "test_project.kicad_sch" with basic schematic content
+    Given a minimal KiCad project "test_project"
     And I am in directory "test_project"
     When I run jbom command "bom . -v"
     Then the command should succeed
@@ -129,46 +127,12 @@ Feature: Project-Centric Architecture
     Then the command should fail
     And the error should contain "No PCB file found"
 
-  # Hierarchical schematic scenarios
-  Scenario: Hierarchical schematic processing
-    Given a KiCad project directory "hierarchical_project"
-    And the project contains a file "main.kicad_sch" with content:
-      """
-      (kicad_sch (version 20211123)
-        (symbol (lib_id "Device:R") (at 50 50 0) (unit 1)
-          (property "Reference" "R1" (id 0) (at 52 50 0))
-          (property "Value" "1k" (id 1) (at 52 52 0))
-        )
-        (sheet (at 100 100) (size 30 20)
-          (property "Sheetname" "Power Supply")
-          (property "Sheetfile" "power.kicad_sch")
-        )
-      )
-      """
-    And the project contains a file "power.kicad_sch" with content:
-      """
-      (kicad_sch (version 20211123)
-        (symbol (lib_id "Device:C") (at 76.2 104.14 0) (unit 1)
-          (property "Reference" "C1" (id 0) (at 78.74 104.14 0))
-          (property "Value" "100n" (id 1) (at 78.74 106.68 0))
-        )
-      )
-      """
-    When I run jbom command "bom hierarchical_project -v"
-    Then the command should succeed
-    And the output should contain "Processing hierarchical design with 2 schematic files"
-    And the output should contain "Loading components from main.kicad_sch"
-    And the output should contain "Loading components from power.kicad_sch"
-    And the BOM should contain component "R1" with value "1k"
-    And the BOM should contain component "C1" with value "100n"
+  # TODO: Hierarchical schematic scenarios
+  # Current implementation uses circular validation (hand-crafted KiCad files that mirror jBOM expectations)
+  # Proper approach: Use real KiCad-generated fixture files for authentic compatibility testing
+  # See: https://github.com/user/repo/issues/XXX - Replace with fixture-based hierarchical testing
 
-  # Legacy project file support
-  Scenario: Legacy .pro project file support
-    Given a KiCad project directory "legacy_project"
-    And the project contains a file "legacy.pro" with content:
-      """
-      legacy project file content
-      """
-    And the project contains a file "legacy.kicad_sch" with basic schematic content
-    When I run jbom command "bom legacy_project"
-    Then the command should succeed
+  # TODO: Legacy project file support
+  # Current implementation uses fake .pro content that doesn't test real KiCad compatibility
+  # Proper approach: Use actual legacy KiCad .pro files from fixtures/
+  # See: https://github.com/user/repo/issues/XXX - Replace with fixture-based legacy testing

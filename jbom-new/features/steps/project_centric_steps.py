@@ -240,6 +240,108 @@ def given_kicad_project_directory(context, name: str) -> None:
     context.current_project = name
 
 
+@given('a KiCad project "{name}" with files:')
+def given_kicad_project_with_files(context, name: str) -> None:
+    """Create a complete KiCad project with specified files and components.
+
+    Uses table data to create project files with explicit component content.
+    Replaces ambiguous 'with basic content' patterns with explicit data tables.
+
+    Example:
+        Given a KiCad project "test_project" with files:
+          | File                     | Component | Reference | Value | Footprint     |
+          | test_project.kicad_pro   |           |           |       |               |
+          | test_project.kicad_sch   | Resistor  | R1        | 10K   | R_0805_2012   |
+          | test_project.kicad_pcb   | Footprint | R1        |       | R_0805_2012   |
+    """
+    project_dir = Path(context.project_root) / name
+    project_dir.mkdir(parents=True, exist_ok=True)
+
+    # Update context
+    context.project_root = project_dir
+    context.current_project = name
+
+    # Process table to create files
+    if context.table:
+        files_created = set()
+        for row in context.table:
+            filename = row.get("File") or row.get("file")
+            if not filename:
+                continue
+
+            file_path = project_dir / filename
+
+            # Create each file only once
+            if filename not in files_created:
+                if filename.endswith(".kicad_pro"):
+                    file_path.write_text(
+                        "(kicad_project (version 1))\n", encoding="utf-8"
+                    )
+                elif filename.endswith(".kicad_sch"):
+                    # Create schematic with component if specified
+                    ref = row.get("Reference") or row.get("reference") or "R1"
+                    value = row.get("Value") or row.get("value") or "10K"
+                    footprint = (
+                        row.get("Footprint") or row.get("footprint") or "R_0805_2012"
+                    )
+
+                    content = f"""(kicad_sch (version 20211123) (generator eeschema)
+  (paper "A4")
+  (symbol (lib_id "Device:R") (at 50 50 0) (unit 1)
+    (property "Reference" "{ref}" (id 0) (at 52 48 0))
+    (property "Value" "{value}" (id 1) (at 52 52 0))
+    (property "Footprint" "{footprint}" (id 2) (at 52 54 0))
+  )
+)
+"""
+                    file_path.write_text(content, encoding="utf-8")
+                elif filename.endswith(".kicad_pcb"):
+                    # Create PCB with footprint if specified
+                    ref = row.get("Reference") or row.get("reference") or "R1"
+                    footprint = (
+                        row.get("Footprint") or row.get("footprint") or "R_0805_2012"
+                    )
+
+                    content = f"""(kicad_pcb (version 20211014) (generator pcbnew)
+  (paper "A4")
+  (footprint "{footprint}" (at 76.2 104.14 0) (layer "F.Cu")
+    (property "Reference" "{ref}")
+  )
+)
+"""
+                    file_path.write_text(content, encoding="utf-8")
+                else:
+                    file_path.write_text("", encoding="utf-8")
+
+                files_created.add(filename)
+
+
+@given('a minimal KiCad project "{name}"')
+def given_minimal_kicad_project(context, name: str) -> None:
+    """Create a minimal KiCad project with empty .pro, .sch, .pcb files.
+
+    Use this for project discovery testing that doesn't need specific component data.
+    Creates standard project files with minimal but valid content.
+    """
+    project_dir = Path(context.project_root) / name
+    project_dir.mkdir(parents=True, exist_ok=True)
+
+    # Update context
+    context.project_root = project_dir
+    context.current_project = name
+
+    # Create minimal project files
+    (project_dir / f"{name}.kicad_pro").write_text(
+        "(kicad_project (version 1))\n", encoding="utf-8"
+    )
+    (project_dir / f"{name}.kicad_sch").write_text(
+        "(kicad_sch (version 20211123) (generator eeschema))\n", encoding="utf-8"
+    )
+    (project_dir / f"{name}.kicad_pcb").write_text(
+        "(kicad_pcb (version 20211014) (generator pcbnew))\n", encoding="utf-8"
+    )
+
+
 @given('the project contains a file "{filename}"')
 def given_project_contains_file(context, filename: str) -> None:
     """Create minimal KiCad project file with appropriate content.

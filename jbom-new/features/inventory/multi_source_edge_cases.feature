@@ -61,20 +61,31 @@ Feature: Multi-Source Inventory Edge Cases
     # Verify primary version is used in matching, not secondary
 
   Scenario: Large number of inventory files (stress test)
-    Given multiple inventory files with unique IPNs:
-      | file_name   | IPN       | Description  |
-      | file1.csv   | RES_1K    | File 1 item  |
-      | file2.csv   | RES_2K    | File 2 item  |
-      | file3.csv   | RES_3K    | File 3 item  |
-      | file4.csv   | RES_4K    | File 4 item  |
-      | file5.csv   | RES_5K    | File 5 item  |
+    Given an inventory file "file1.csv" with contents:
+      | IPN    | Category | Value | Description | Package | Manufacturer | MFGPN |
+      | RES_1K | RESISTOR | 1k    | File 1 item | 0603    | Yageo        | TEST1 |
+    And an inventory file "file2.csv" with contents:
+      | IPN    | Category | Value | Description | Package | Manufacturer | MFGPN |
+      | RES_2K | RESISTOR | 2k    | File 2 item | 0603    | Yageo        | TEST2 |
+    And an inventory file "file3.csv" with contents:
+      | IPN    | Category | Value | Description | Package | Manufacturer | MFGPN |
+      | RES_3K | RESISTOR | 3k    | File 3 item | 0603    | Yageo        | TEST3 |
+    And an inventory file "file4.csv" with contents:
+      | IPN    | Category | Value | Description | Package | Manufacturer | MFGPN |
+      | RES_4K | RESISTOR | 4k    | File 4 item | 0603    | Yageo        | TEST4 |
+    And an inventory file "file5.csv" with contents:
+      | IPN    | Category | Value | Description | Package | Manufacturer | MFGPN |
+      | RES_5K | RESISTOR | 5k    | File 5 item | 0603    | Yageo        | TEST5 |
     When I run jbom command "inventory --inventory file1.csv --inventory file2.csv --inventory file3.csv --inventory file4.csv --inventory file5.csv -o console -v"
     Then the command should succeed
     And the output should contain "Loading 5 inventory file(s) with precedence order"
     And the output should contain "Merged inventory: 5 total items"
 
   Scenario: File permission errors handled gracefully
-    Given an inaccessible inventory file "restricted.csv" with no read permissions
+    Given an inventory file "restricted.csv" with contents:
+      | IPN     | Category | Value | Description | Package | Manufacturer | MFGPN |
+      | RES_1K  | RESISTOR | 1k    | Test item   | 0603    | Yageo        | TEST  |
+    And the file "restricted.csv" is unreadable
     And an inventory file "accessible.csv" with contents:
       | IPN     | Category | Value | Description | Package | Manufacturer | MFGPN |
       | RES_10K | RESISTOR | 10k   | Good item   | 0603    | Yageo        | GOOD  |
@@ -101,7 +112,7 @@ Feature: Multi-Source Inventory Edge Cases
     And the output should contain "Generated inventory with 1 items"
 
   Scenario: Very long file paths and names
-    Given an inventory file with a very long name "very_long_inventory_file_name_that_exceeds_normal_length_expectations_for_testing_robust_path_handling.csv" with contents:
+    Given an inventory file "very_long_inventory_file_name_that_exceeds_normal_length_expectations_for_testing_robust_path_handling.csv" with contents:
       | IPN       | Category | Value | Description | Package | Manufacturer | MFGPN  |
       | RES_LONG  | RESISTOR | 10k   | Long path   | 0603    | Yageo        | LONG   |
     When I run jbom command "inventory --inventory very_long_inventory_file_name_that_exceeds_normal_length_expectations_for_testing_robust_path_handling.csv -o console"

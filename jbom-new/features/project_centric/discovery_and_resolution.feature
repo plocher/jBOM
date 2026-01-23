@@ -12,7 +12,7 @@ Scenario: Project base name in parent directory resolves correctly
     And the output should contain "R1"
 
 Scenario: Project in target directory with dot path
-    Given a project named "flat"
+    Given a KiCad project directory "flat"
     And the schematic "flat" contains:
       | Reference | Value | Footprint   | LibID    |
       | R1        | 10K   | R_0603_1608 | Device:R |
@@ -32,8 +32,8 @@ Scenario: Project and directory share the same name (pedantic)
     And print diagnostics
     Then the command should succeed
     And the output should contain "R1"
-    Given a directory "flat_project"
-    And a project named "flat"
+    Given I create directory "flat_project"
+    And a KiCad project directory "flat"
     And the project uses a root schematic "flat" that contains:
       | Reference | Value | Footprint             | LibID    |
       | R1        | 10K   | R_0603_1608           | Device:R |

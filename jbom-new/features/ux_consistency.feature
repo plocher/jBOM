@@ -101,7 +101,8 @@ Feature: UX Consistency Across Commands
     And the output should contain "--output"
 
   Scenario: All commands handle empty projects gracefully
-    Given a project with no components
+    Given a schematic that contains:
+      | Reference | Value | Footprint |
     When I run jbom command "bom"
     Then the command should fail
     And the output should contain "No components found"

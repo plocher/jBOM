@@ -58,7 +58,7 @@ Feature: Multi-Source Inventory
     And the output should contain "LED_RED"
 
   Scenario: Empty inventory files handled gracefully
-    Given an empty inventory file "empty_inventory.csv" with headers only:
+    Given an inventory file "empty_inventory.csv" with contents:
       | IPN | Category | Value | Description | Package | Manufacturer | MFGPN |
     When I run jbom command "inventory --inventory primary_inventory.csv --inventory empty_inventory.csv -o console -v"
     Then the command should succeed
