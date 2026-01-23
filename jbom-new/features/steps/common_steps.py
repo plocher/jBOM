@@ -85,6 +85,8 @@ def step_run_command(context, command):
 
     env = os.environ.copy()
     env["PYTHONPATH"] = str(context.src_root)
+    # Suppress noisy informational stderr in tests so CSV parsing is clean
+    env["JBOM_QUIET"] = "1"
     if getattr(context, "trace", False):
         env["JBOM_BEHAVE_TRACE"] = "1"
 

@@ -16,8 +16,8 @@ Feature: BOM Priority and Selection Rules
     When I run jbom command "bom -o -"
     Then the command should succeed
     And the CSV output has a row where
-      | References       | Value | Footprint   | Quantity |
-      | R1, R2, R10      | 10K   | R_0805_2012 | 3        |
+      | Reference       | Value | Footprint   | Quantity |
+      | R1, R2, R10     | 10K   | R_0805_2012 | 3        |
 
   # Deterministic line-item ordering for readability (Value then Footprint)
   Scenario: Line items are ordered by Value then Footprint
@@ -28,5 +28,5 @@ Feature: BOM Priority and Selection Rules
       | R3        | 1K    | R_0805_2012 |
     When I run jbom command "bom --aggregation value_footprint"
     Then the command should succeed
-    And the output should contain "References,Value,Footprint,Quantity"
+    And the output should contain "Reference,Value,Footprint,Quantity"
     And the output should contain "R1,  R3"  # grouped by 1K should appear together

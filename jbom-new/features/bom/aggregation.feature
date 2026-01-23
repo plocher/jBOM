@@ -21,10 +21,10 @@ Feature: BOM Aggregation (DEPRECATED - Issue #21)
     When I run jbom command "bom -o -"
     Then the command should succeed
     And the CSV output has a row where
-      | References | Value | Footprint   | Quantity |
+      | Reference | Value | Footprint   | Quantity |
       | R1, R2     | 10K   | R_0805_2012 | 2        |
     And the CSV output has a row where
-      | References | Value | Footprint   | Quantity |
+      | Reference | Value | Footprint   | Quantity |
       | R3         | 10K   | R_0603_1608 | 1        |
 
   Scenario: Aggregation by value only

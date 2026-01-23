@@ -87,7 +87,7 @@ Feature: Issue #21 BOM Aggregation Regression Tests
       | R1        | 10K   | R_0805_2012 |
       | R2        | 10K   | R_0805_2012 |
       | R20       | 10K   | R_0805_2012 |
-    When I run jbom command "bom"
+    When I run jbom command "bom -o -"
     Then the command should succeed
     And the output should contain "R1, R2, R10, R20"
     And the output should contain "4"
