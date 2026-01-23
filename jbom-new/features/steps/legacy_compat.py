@@ -504,6 +504,36 @@ def then_error_output_should_contain_alt(context, text):
     common_steps.step_error_output_should_mention(context, text)
 
 
+@given('an empty inventory file "{filename}" with headers only:')
+def given_empty_inventory_file_headers(context, filename):
+    """Legacy: create empty inventory with headers from table."""
+    from pathlib import Path
+    import csv
+    import io
+
+    # Create CSV with headers but no data rows
+    output = io.StringIO()
+    if context.table and context.table.headings:
+        writer = csv.DictWriter(output, fieldnames=context.table.headings)
+        writer.writeheader()
+
+    file_path = Path(context.project_root) / filename
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+    file_path.write_text(output.getvalue(), encoding="utf-8")
+
+
+@given('a third inventory file "{filename}" with contents:')
+def given_third_inventory_file(context, filename):
+    """Legacy: create third inventory CSV file."""
+    given_inventory_file_with_contents(context, filename)
+
+
+@then('the error should contain "{text}"')
+def then_error_should_contain(context, text):
+    """Legacy: check error output contains text."""
+    common_steps.step_error_output_should_mention(context, text)
+
+
 # --------------------------
 # Legacy inventory and file patterns
 # --------------------------

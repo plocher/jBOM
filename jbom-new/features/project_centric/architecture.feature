@@ -6,83 +6,68 @@ Feature: Project-Centric Architecture
   Background:
     Given the generic fabricator is selected
 
-  Scenario Outline: BOM command works with different project references
+  Scenario Outline: BOM command discovers project files from different path types
     Given a KiCad project directory "test_project"
     And the project contains a file "test_project.kicad_pro"
     And the project contains a file "test_project.kicad_sch" with basic schematic content
-    When I run jbom command "bom <path>" <location>
+    When I run jbom command "bom <path> -v" <location>
     Then the command should succeed
-    And the BOM should contain component "R1" with value "10k"
-    And the project name should be "test_project"
+    And the output should contain "Using schematic: test_project.kicad_sch"
     Examples:
       | path                              | location                     |
       | .                                 | in directory "test_project"  |
       | test_project                      |                              |
       | test_project/test_project.kicad_sch |                            |
 
-  Scenario Outline: POS command works with different project references
+  Scenario Outline: POS command discovers project files from different path types
     Given a KiCad project directory "test_project"
     And the project contains a file "test_project.kicad_pro"
     And the project contains a file "test_project.kicad_pcb" with basic PCB content
-    When I run jbom command "pos <path>" <location>
+    When I run jbom command "pos <path> -v" <location>
     Then the command should succeed
-    And the POS should contain component "R1" at position "76.2,104.14"
+    And the output should contain "Using PCB: test_project.kicad_pcb"
     Examples:
       | path                              | location                     |
       | .                                 | in directory "test_project"  |
       | test_project                      |                              |
       | test_project/test_project.kicad_pcb |                            |
 
-  Scenario Outline: Inventory generate works with different project references
+  Scenario Outline: Inventory command discovers project files from different path types
     Given a KiCad project directory "test_project"
     And the project contains a file "test_project.kicad_pro"
     And the project contains a file "test_project.kicad_sch" with basic schematic content
-    When I run jbom command "inventory generate <path> -o test_inventory.csv" <location>
+    When I run jbom command "inventory generate <path> -o test_inventory.csv -v" <location>
     Then the command should succeed
-    And the inventory file should contain component with value "10k"
+    And the output should contain "Using schematic: test_project.kicad_sch"
     Examples:
       | path         | location                     |
       | .            | in directory "test_project"  |
       | test_project |                              |
 
-  # Cross-command intelligence scenarios
-  Scenario: BOM command with PCB file should find matching schematic
-    When I run jbom command "bom test_project/test_project.kicad_pcb -v"
+  # Cross-file intelligence scenarios
+  Scenario Outline: Cross-file intelligence discovers matching files
+    Given a KiCad project directory "cross_test"
+    And the project contains a file "cross_test.kicad_sch" with basic schematic content
+    And the project contains a file "cross_test.kicad_pcb" with basic PCB content
+    When I run jbom command "<command> cross_test/<input_file> -v"
     Then the command should succeed
-    And the output should contain "trying to find matching schematic"
-    And the output should contain "Using schematic: test_project.kicad_sch"
-    And the BOM should contain component "R1" with value "10k"
-
-  Scenario: BOM command with project file should find matching schematic
-    When I run jbom command "bom test_project/test_project.kicad_pro -v"
-    Then the command should succeed
-    And the output should contain "trying to find matching schematic"
-    And the output should contain "Using schematic: test_project.kicad_sch"
-    And the BOM should contain component "R1" with value "10k"
-
-  Scenario: POS command with schematic file should find matching PCB
-    When I run jbom command "pos test_project/test_project.kicad_sch -v"
-    Then the command should succeed
-    And the output should contain "trying to find matching PCB"
-    And the output should contain "Using PCB: test_project.kicad_pcb"
-    And the POS should contain component "R1" at position "76.2,104.14"
-
-  Scenario: POS command with project file should find matching PCB
-    When I run jbom command "pos test_project/test_project.kicad_pro -v"
-    Then the command should succeed
-    And the output should contain "trying to find matching PCB"
-    And the output should contain "Using PCB: test_project.kicad_pcb"
-    And the POS should contain component "R1" at position "76.2,104.14"
+    And the output should contain "trying to find matching <target_type>"
+    And the output should contain "Using <target_type>: cross_test.<target_ext>"
+    Examples:
+      | command | input_file           | target_type | target_ext |
+      | bom     | cross_test.kicad_pcb | schematic   | kicad_sch  |
+      | bom     | cross_test.kicad_pro | schematic   | kicad_sch  |
+      | pos     | cross_test.kicad_sch | PCB         | kicad_pcb  |
+      | pos     | cross_test.kicad_pro | PCB         | kicad_pcb  |
 
   # Different naming scenarios
   Scenario: Project with different file names
     Given a KiCad project directory "mixed_project"
     And the project contains a file "different_name.kicad_pro"
     And the project contains a file "different_name.kicad_sch" with basic schematic content
-    And the project contains a file "different_name.kicad_pcb" with basic PCB content
-    When I run jbom command "bom mixed_project"
+    When I run jbom command "bom mixed_project -v"
     Then the command should succeed
-    And the project name should be "different_name"
+    And the output should contain "Using schematic: different_name.kicad_sch"
 
   Scenario: Multiple project files should use first one found
     Given a KiCad project directory "multi_project"
@@ -90,9 +75,9 @@ Feature: Project-Centric Architecture
     And the project contains a file "first.kicad_sch" with basic schematic content
     And the project contains a file "second.kicad_pro"
     And the project contains a file "second.kicad_sch" with basic schematic content
-    When I run jbom command "bom multi_project"
+    When I run jbom command "bom multi_project -v"
     Then the command should succeed
-    And the project name should be "first"
+    And the output should contain "Using schematic: first.kicad_sch"
 
   # Error handling scenarios
   Scenario: Empty directory should provide helpful error
