@@ -5,7 +5,7 @@ Feature: Multi-Source Inventory Edge Cases
 
   Background:
     Given the generic fabricator is selected
-    And a minimal test schematic that contains:
+    And a schematic that contains:
       | Reference | Value | Footprint   | LibID    |
       | R1        | 10k   | R_0603_1608 | Device:R |
 
@@ -24,13 +24,13 @@ Feature: Multi-Source Inventory Edge Cases
     And the output should contain "Generated inventory with 1 items"
 
   Scenario: Malformed inventory file with valid backup file
-    Given a malformed inventory file "malformed.csv" with contents:
+    Given an inventory file "malformed.csv" that contains:
       """
       This is not a valid CSV file
       Missing headers, invalid structure
       R1,10k,incomplete row
       """
-    And a valid inventory file "backup.csv" with contents:
+    And an inventory file "backup.csv" that contains:
       | IPN     | Category | Value | Description | Package | Manufacturer | MFGPN |
       | RES_10K | RESISTOR | 10k   | Backup item | 0603    | Yageo        | TEST  |
     When I run jbom command "inventory --inventory malformed.csv --inventory backup.csv -o console -v"
@@ -47,10 +47,10 @@ Feature: Multi-Source Inventory Edge Cases
     And the output should contain "Error: No components found in project. Cannot create inventory from empty schematic."
 
   Scenario: Duplicate IPN across multiple files shows precedence
-    Given a primary inventory file "dup_primary.csv" with contents:
+    Given an inventory file "dup_primary.csv" that contains:
       | IPN     | Category | Value | Description     | Package | Manufacturer | MFGPN    |
       | RES_10K | RESISTOR | 10k   | Primary version | 0603    | Yageo        | PRIMARY  |
-    And a secondary inventory file "dup_secondary.csv" with contents:
+    And an inventory file "dup_secondary.csv" that contains:
       | IPN     | Category | Value | Description       | Package | Manufacturer | MFGPN      |
       | RES_10K | RESISTOR | 10k   | Secondary version | 0603    | Vishay       | SECONDARY  |
     When I run jbom command "inventory --inventory dup_primary.csv --inventory dup_secondary.csv -o console -v"
@@ -61,21 +61,32 @@ Feature: Multi-Source Inventory Edge Cases
     # Verify primary version is used in matching, not secondary
 
   Scenario: Large number of inventory files (stress test)
-    Given multiple inventory files with unique IPNs:
-      | file_name   | IPN       | Description  |
-      | file1.csv   | RES_1K    | File 1 item  |
-      | file2.csv   | RES_2K    | File 2 item  |
-      | file3.csv   | RES_3K    | File 3 item  |
-      | file4.csv   | RES_4K    | File 4 item  |
-      | file5.csv   | RES_5K    | File 5 item  |
+    Given an inventory file "file1.csv" that contains:
+      | IPN    | Category | Value | Description | Package | Manufacturer | MFGPN |
+      | RES_1K | RESISTOR | 1k    | File 1 item | 0603    | Yageo        | TEST1 |
+    And an inventory file "file2.csv" that contains:
+      | IPN    | Category | Value | Description | Package | Manufacturer | MFGPN |
+      | RES_2K | RESISTOR | 2k    | File 2 item | 0603    | Yageo        | TEST2 |
+    And an inventory file "file3.csv" that contains:
+      | IPN    | Category | Value | Description | Package | Manufacturer | MFGPN |
+      | RES_3K | RESISTOR | 3k    | File 3 item | 0603    | Yageo        | TEST3 |
+    And an inventory file "file4.csv" that contains:
+      | IPN    | Category | Value | Description | Package | Manufacturer | MFGPN |
+      | RES_4K | RESISTOR | 4k    | File 4 item | 0603    | Yageo        | TEST4 |
+    And an inventory file "file5.csv" that contains:
+      | IPN    | Category | Value | Description | Package | Manufacturer | MFGPN |
+      | RES_5K | RESISTOR | 5k    | File 5 item | 0603    | Yageo        | TEST5 |
     When I run jbom command "inventory --inventory file1.csv --inventory file2.csv --inventory file3.csv --inventory file4.csv --inventory file5.csv -o console -v"
     Then the command should succeed
     And the output should contain "Loading 5 inventory file(s) with precedence order"
     And the output should contain "Merged inventory: 5 total items"
 
   Scenario: File permission errors handled gracefully
-    Given an inaccessible inventory file "restricted.csv" with no read permissions
-    And a valid inventory file "accessible.csv" with contents:
+    Given an inventory file "restricted.csv" that contains:
+      | IPN     | Category | Value | Description | Package | Manufacturer | MFGPN |
+      | RES_1K  | RESISTOR | 1k    | Test item   | 0603    | Yageo        | TEST  |
+    And the file "restricted.csv" is unreadable
+    And an inventory file "accessible.csv" that contains:
       | IPN     | Category | Value | Description | Package | Manufacturer | MFGPN |
       | RES_10K | RESISTOR | 10k   | Good item   | 0603    | Yageo        | GOOD  |
     When I run jbom command "inventory --inventory restricted.csv --inventory accessible.csv -o console -v"
@@ -84,7 +95,7 @@ Feature: Multi-Source Inventory Edge Cases
     And the output should contain "precedence 2: accessible.csv (1/1 items added)"
 
   Scenario: Mixed single and multiple flag usage (argument parsing edge case)
-    Given a valid inventory file "single.csv" with contents:
+    Given an inventory file "single.csv" that contains:
       | IPN     | Category | Value | Description | Package | Manufacturer | MFGPN |
       | RES_10K | RESISTOR | 10k   | Single item | 0603    | Yageo        | SINGLE |
     # Test that the argument parser handles the transition correctly
@@ -93,7 +104,7 @@ Feature: Multi-Source Inventory Edge Cases
     And the output should contain "Generated inventory with 1 items"
 
   Scenario: CSV with special characters and encoding
-    Given an inventory file "special_chars.csv" with contents:
+    Given an inventory file "special_chars.csv" that contains:
       | IPN          | Category | Value | Description           | Package | Manufacturer | MFGPN     |
       | RES_SPECIAL  | RESISTOR | 10kΩ  | Résistance spéciale   | 0603    | Müller & Co  | MÜ-10K-Ω  |
     When I run jbom command "inventory --inventory special_chars.csv -o console"
@@ -101,7 +112,7 @@ Feature: Multi-Source Inventory Edge Cases
     And the output should contain "Generated inventory with 1 items"
 
   Scenario: Very long file paths and names
-    Given an inventory file with a very long name "very_long_inventory_file_name_that_exceeds_normal_length_expectations_for_testing_robust_path_handling.csv" with contents:
+    Given an inventory file "very_long_inventory_file_name_that_exceeds_normal_length_expectations_for_testing_robust_path_handling.csv" that contains:
       | IPN       | Category | Value | Description | Package | Manufacturer | MFGPN  |
       | RES_LONG  | RESISTOR | 10k   | Long path   | 0603    | Yageo        | LONG   |
     When I run jbom command "inventory --inventory very_long_inventory_file_name_that_exceeds_normal_length_expectations_for_testing_robust_path_handling.csv -o console"

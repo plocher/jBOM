@@ -5,15 +5,15 @@ Feature: BOM Inventory Enhancement
 
   Background:
     Given the generic fabricator is selected
-    And an existing inventory file "component_inventory.csv" with contents:
+    And an inventory file "component_inventory.csv" that contains:
       | IPN       | Category  | Value | Description         | Package | Manufacturer | MFGPN           | LCSC    | Voltage | Tolerance |
       | RES_10K   | RESISTOR  | 10k   | 10k Ohm resistor    | 0603    | Yageo        | RC0603FR-0710KL | C25804  | 75V     | 1%        |
       | CAP_100N  | CAPACITOR | 100nF | 100nF ceramic cap   | 0603    | Murata       | GRM188R71H104KA | C14663  | 50V     | 10%       |
       | LED_RED   | LED       | RED   | Red LED 20mA        | 0603    | Kingbright   | APT1608SRCPRV   | C2286   | 2V      |           |
-    And a secondary inventory file "enhanced_inventory.csv" with contents:
+    And an inventory file "enhanced_inventory.csv" that contains:
       | IPN       | Category  | Value | Description         | Package | Manufacturer | MFGPN           | LCSC    | Datasheet                    |
       | IC_LM358  | IC        | LM358 | Dual Op-Amp         | SOIC-8  | Texas Instruments | LM358DR  | C7950   | https://ti.com/lit/ds/lm358 |
-    And a BOM test schematic that contains:
+    And a schematic that contains:
       | Reference | Value | Footprint         | LibID     |
       | R1        | 10k   | R_0603_1608       | Device:R  |
       | R2        | 10k   | R_0603_1608       | Device:R  |
@@ -100,5 +100,5 @@ Feature: BOM Inventory Enhancement
     Then the command should succeed
     And the output should contain "Enhancing BOM with 2 inventory file(s)"
     And the output should contain "References,Value,Footprint,Quantity"
-    And the output should contain "R1, R2,10k"  # Should be enhanced from primary inventory
-    And the output should contain "U1,LM358"    # Available in secondary but using primary for now
+    And the output should contain "R1, R2,10k"
+    And the output should contain "U1,LM358"

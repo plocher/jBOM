@@ -1,19 +1,65 @@
 """Common step definitions for jBOM CLI testing."""
 
 import subprocess
+from pathlib import Path
 from behave import when, then, given
 from diagnostic_utils import assert_with_diagnostics
 
 
-@given("a clean test workspace")
-def step_clean_test_workspace(context):
-    """Create an isolated workspace for the scenario and use it as project_root."""
+@given("a test environment")
+def step_test_environment(context):
+    """Layer 1: Create isolated sandbox directory, nothing else.
+
+    Use this for project discovery edge cases, malformed project testing.
+    """
     import tempfile
     from pathlib import Path
 
     tmp = Path(tempfile.mkdtemp(prefix="jbom_behave_"))
     context.project_root = tmp
     # Keep src_root unchanged (set by environment.py)
+
+
+@given("a default jBOM environment")
+def step_default_jbom_environment(context):
+    """Layer 2: Sandbox + empty KiCad project, no command defaults.
+
+    Use this for command behavior testing, explicit output format testing.
+    """
+    # Build on Layer 1
+    step_test_environment(context)
+
+    # Create empty but complete KiCad project
+    project_name = "project"
+    proj_dir = Path(context.project_root)
+    (proj_dir / f"{project_name}.kicad_pro").write_text(
+        "(kicad_project (version 1))\n", encoding="utf-8"
+    )
+    (proj_dir / f"{project_name}.kicad_sch").write_text(
+        "(kicad_sch (version 20211123) (generator eeschema))\n", encoding="utf-8"
+    )
+    context.current_project = project_name
+
+
+@given("a default jBOM CSV environment")
+def step_default_jbom_csv_environment(context):
+    """Layer 3: Sandbox + project + standardized I/O for testing.
+
+    Automatically adds '-o -' and '--fabricator generic' to jbom commands.
+    Use this for most business logic testing (95% of scenarios).
+    """
+    # Build on Layer 2
+    step_default_jbom_environment(context)
+
+    # Set command execution defaults (used by step_run_jbom_command)
+    context.default_output = "-o -"
+    context.default_fabricator = "--fabricator generic"
+
+
+@given("a clean test workspace")
+def step_clean_test_workspace(context):
+    """Legacy alias for Layer 1 - use 'Given a test environment' instead."""
+    step_test_environment(context)
 
 
 @when('I run "{command}"')
@@ -119,7 +165,30 @@ def step_run_command(context, command):
 
 @when('I run jbom command "{args}"')
 def step_run_jbom_command(context, args):
-    """Alias for running jbom commands without repeating the prefix."""
+    """Alias for running jbom commands without repeating the prefix.
+
+    Layer 3 environments automatically add default flags and detect DRY violations.
+    """
+    # Layer 3 anti-pattern detection and auto-enhancement
+    if hasattr(context, "default_output"):
+        if "-o" in args:
+            raise AssertionError(
+                f"DRY VIOLATION: Using Layer 3 background ('default jBOM CSV environment') "
+                f"but specifying -o in command. Either use Layer 2 background, "
+                f"or remove '-o' from command: {args}"
+            )
+        args += f" {context.default_output}"
+
+    if hasattr(context, "default_fabricator"):
+        fabricator_flags = ["--fabricator", "--jlc", "--pcbway", "--seeed", "--generic"]
+        if any(flag in args for flag in fabricator_flags):
+            raise AssertionError(
+                f"DRY VIOLATION: Using Layer 3 background ('default jBOM CSV environment') "
+                f"but specifying fabricator in command. Either use Layer 2 background, "
+                f"or remove fabricator from command: {args}"
+            )
+        args += f" {context.default_fabricator}"
+
     step_run_command(context, f"jbom {args}")
 
 
@@ -268,6 +337,48 @@ def step_create_symlink(context, link_path, target_path):
         os.symlink(target, link)
     except OSError as e:
         raise AssertionError(f"Failed to create symlink {link} -> {target}: {e}")
+
+
+@given('the file "{filename}" is unreadable')
+def step_file_is_unreadable(context, filename):
+    """Make a file unreadable by removing read permissions."""
+    from pathlib import Path
+    import stat
+
+    file_path = Path(context.project_root) / filename
+    assert file_path.exists(), f"File {filename} does not exist"
+
+    # Remove read permissions (keep only write permissions for owner)
+    file_path.chmod(stat.S_IWUSR)
+
+
+@then("{ref1} appears before {ref2} in the output")
+def step_component_appears_before_component(context, ref1, ref2):
+    """Check component order in output - supports natural sorting tests.
+
+    TODO: Replace with table-driven approach for better natural ordering tests:
+
+    Scenario Outline: Natural order sorting
+      Given the system contains components: <initial_list>
+      When I run jbom command "parts"
+      Then the result should be:
+        | Reference |
+        | R1        |
+        | R2        |
+        | R10       |
+
+    This step applies to BOM, POS, parts, and inventory CSV output commands.
+    Should be consolidated into general CSV output testing.
+    """
+    output = getattr(context, "last_output", "")
+    assert output, "No output captured"
+
+    pos1 = output.find(ref1)
+    pos2 = output.find(ref2)
+
+    assert pos1 >= 0, f"Component {ref1} not found in output"
+    assert pos2 >= 0, f"Component {ref2} not found in output"
+    assert pos1 < pos2, f"Expected {ref1} to appear before {ref2} in output"
 
 
 @then("the command should succeed")
@@ -471,6 +582,34 @@ def step_file_should_contain(context, filename, text):
     assert (
         text in content
     ), f"Text '{text}' not found in file {filename}\nContent:\n{content}"
+
+
+@then('a file should exist that contains "{text}"')
+def step_any_file_should_contain(context, text):
+    """Functional test: verify some file in the sandbox contains the specified text.
+
+    This tests backup behavior without coupling to specific backup file naming conventions.
+    """
+    from pathlib import Path
+
+    project_dir = Path(context.project_root)
+    all_files = list(project_dir.glob("*"))
+    text_files = [f for f in all_files if f.is_file() and f.suffix in (".csv", ".txt")]
+
+    found = False
+    for file_path in text_files:
+        try:
+            content = file_path.read_text(encoding="utf-8")
+            if text in content:
+                found = True
+                break
+        except (UnicodeDecodeError, PermissionError):
+            continue  # Skip binary or inaccessible files
+
+    assert found, (
+        f"Text '{text}' not found in any file in the sandbox. "
+        f"Files checked: {[f.name for f in text_files]}"
+    )
 
 
 @then("the error output contains error information")

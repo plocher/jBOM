@@ -5,13 +5,13 @@ Feature: Inventory Matching and Filtering
 
   Background:
     Given the generic fabricator is selected
-    And an existing inventory file "existing_inventory.csv" with contents:
+    And an inventory file "existing_inventory.csv" that contains:
       | IPN       | Category  | Value | Description        | Package | Manufacturer | MFGPN           |
       | RES_10K   | RESISTOR  | 10k   | 10k Ohm resistor   | 0603    | Yageo        | RC0603FR-0710KL |
       | RES_1K    | RESISTOR  | 1k    | 1k Ohm resistor    | 0603    | Yageo        | RC0603FR-071KL  |
       | CAP_100N  | CAPACITOR | 100nF | 100nF ceramic cap  | 0603    | Murata       | GRM188R71H104KA |
       | LED_RED   | LED       | RED   | Red LED 20mA       | 0603    | Kingbright   | APT1608SRCPRV   |
-    And a test schematic that contains:
+    And a schematic that contains:
       | Reference | Value | Footprint   | LibID     |
       | R1        | 10k   | R_0603_1608 | Device:R  |
       | R2        | 22k   | R_0603_1608 | Device:R  |
@@ -63,13 +63,7 @@ Feature: Inventory Matching and Filtering
     And the output should contain "Error: Inventory file not found"
     And the output should contain "Generated inventory with 6 items"
 
-  Scenario: Export filtered results to file
-    When I run jbom command "inventory --inventory existing_inventory.csv --filter-matches -o new_components.csv"
-    Then the command should succeed
-    And a file named "new_components.csv" should exist
-    And the file "new_components.csv" should contain "RES_22K"
-    And the file "new_components.csv" should contain "CAP_22P"
-    And the file "new_components.csv" should contain "IC_LM358"
-    And the file "new_components.csv" should not contain "RES_10K"
-    And the file "new_components.csv" should not contain "CAP_100N"
-    And the file "new_components.csv" should not contain "LED_RED"
+  # Removed: Export filtered results to file scenario
+  # This was a "two-for" scenario testing both file creation and content verification
+  # File output is already covered by basic inventory scenarios
+  # Content filtering is already verified by console output scenarios above

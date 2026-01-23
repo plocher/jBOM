@@ -3,18 +3,24 @@
 from __future__ import annotations
 
 import csv
+import stat
+from pathlib import Path
 
 from behave import given, then
 
 
-@given('an inventory file "{filename}" with data:')
-def given_inventory_file_with_data(context, filename: str) -> None:
+@given('an inventory file "{filename}" that contains:')
+def given_inventory_file_that_contains(context, filename: str) -> None:
+    """Create inventory CSV file with table data (canonical pattern)."""
     p = context.project_root / filename
+    p.parent.mkdir(parents=True, exist_ok=True)
+
     with p.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        writer.writerow(context.table.headings)
-        for row in context.table:
-            writer.writerow([row[h] for h in context.table.headings])
+        if context.table and context.table.headings:
+            writer = csv.DictWriter(f, fieldnames=context.table.headings)
+            writer.writeheader()
+            for row in context.table:
+                writer.writerow(row.as_dict())
 
 
 @given('an empty inventory file "{filename}"')
@@ -257,3 +263,19 @@ def then_output_contains_inventory_data(context) -> None:
         line for line in lines[1:] if line and not line.replace(",", "").strip() == ""
     ]
     assert data_lines, f"Expected non-empty inventory data rows. Output: {out}"
+
+
+@given("the directory is read-only")
+def given_directory_readonly(context):
+    """Make the current project directory read-only for file safety testing.
+
+    Used exclusively by inventory/file_safety.feature to test backup behavior
+    when the target directory cannot be written to.
+    """
+    # Make the project directory read-only
+    project_dir = Path(context.project_root)
+    current_permissions = project_dir.stat().st_mode
+    project_dir.chmod(current_permissions & ~stat.S_IWRITE)
+
+    # Store original permissions for cleanup
+    context.original_permissions = current_permissions

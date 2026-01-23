@@ -18,5 +18,5 @@ Feature: UX messaging and verbosity controls
     Given an empty directory "features/project_centric/fixtures/empty_dir2"
     When I run jbom command "bom features/project_centric/fixtures/empty_dir2 -o console"
     Then the command should fail
-    And the error output should contain "No project files found"
-    And the error output should contain "Add <name>.kicad_pro or <name>.kicad_sch or <name>.kicad_pcb"
+    And the error output should mention "No project files found"
+    And the error output should mention "Add <name>.kicad_pro or <name>.kicad_sch or <name>.kicad_pcb"

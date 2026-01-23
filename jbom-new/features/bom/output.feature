@@ -5,7 +5,7 @@ Feature: BOM Output Options
 
   Background:
     Given the generic fabricator is selected
-    And a standard BOM test schematic that contains:
+    And a schematic that contains:
       | Reference | Value | Footprint         |
       | R1        | 10K   | R_0805_2012       |
       | R2        | 10K   | R_0805_2012       |

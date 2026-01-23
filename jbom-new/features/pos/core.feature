@@ -41,7 +41,7 @@ Feature: POS Generation (Core Functionality)
       | C1        | 8 | 6 | TOP  | C_0603_1608 |
     When I run jbom command "pos -o placement.csv"
     Then the command should succeed
-    And a file named "placement.csv" exists
+    And a file named "custom_pos.csv" should exist
 
   Scenario: Generate POS with console table output
     Given a PCB that contains:

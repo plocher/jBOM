@@ -27,13 +27,29 @@ def _write_schematic_local(
         val = row.get("Value", "VAL")
         fp = row.get("Footprint", "")
         lib = row.get("LibID", "Device:Generic")
-        symbols.append(
-            f'  (symbol (lib_id "{lib}") (at {x} 50 0) (unit 1)\n'
-            f'    (property "Reference" "{ref}" (id 0) (at {x+2} 48 0))\n'
-            f'    (property "Value" "{val}" (id 1) (at {x+2} 52 0))\n'
-            f'    (property "Footprint" "{fp}" (id 2) (at {x+2} 54 0))\n'
-            f"  )"
+        dnp = row.get("DNP", "No")
+        exclude_from_bom = row.get("ExcludeFromBOM", "No")
+
+        # Build symbol with base properties
+        symbol_parts = [f'(symbol (lib_id "{lib}") (at {x} 50 0) (unit 1)']
+
+        # Add DNP and in_bom flags at symbol level if needed
+        if dnp.lower() in ["yes", "true", "1"]:
+            symbol_parts.append("(dnp yes)")
+        if exclude_from_bom.lower() in ["yes", "true", "1"]:
+            symbol_parts.append("(in_bom no)")
+
+        # Add properties
+        symbol_parts.extend(
+            [
+                f'(property "Reference" "{ref}" (id 0) (at {x+2} 48 0))',
+                f'(property "Value" "{val}" (id 1) (at {x+2} 52 0))',
+                f'(property "Footprint" "{fp}" (id 2) (at {x+2} 54 0))',
+            ]
         )
+
+        symbol_lines = [f"  {part}" for part in symbol_parts] + ["  )"]
+        symbols.append("\n".join(symbol_lines))
         x += 20
     content = """(kicad_sch (version 20211123) (generator eeschema)
   (paper "A4")
@@ -204,6 +220,186 @@ def given_generic_fabricator(context) -> None:
     rather than having it as a hidden side effect in command execution.
     """
     context.fabricator = "generic"
+
+
+@given('a KiCad project directory "{name}"')
+def given_kicad_project_directory(context, name: str) -> None:
+    """Create a KiCad project directory for external testing (without changing cwd).
+
+    Use this for project discovery testing where commands need to reference
+    the project directory from outside. Complements 'I am in project directory'
+    which changes the working context to inside the directory.
+
+    Part of the Layer 3 testing architecture.
+    """
+    project_dir = Path(context.project_root) / name
+    project_dir.mkdir(parents=True, exist_ok=True)
+
+    # Update context to use this as the working directory
+    context.project_root = project_dir
+    context.current_project = name
+
+
+@given('a KiCad project "{name}" with files:')
+def given_kicad_project_with_files(context, name: str) -> None:
+    """Create a complete KiCad project with specified files and components.
+
+    Uses table data to create project files with explicit component content.
+    Replaces ambiguous 'with basic content' patterns with explicit data tables.
+
+    Example:
+        Given a KiCad project "test_project" with files:
+          | File                     | Component | Reference | Value | Footprint     |
+          | test_project.kicad_pro   |           |           |       |               |
+          | test_project.kicad_sch   | Resistor  | R1        | 10K   | R_0805_2012   |
+          | test_project.kicad_pcb   | Footprint | R1        |       | R_0805_2012   |
+    """
+    project_dir = Path(context.project_root) / name
+    project_dir.mkdir(parents=True, exist_ok=True)
+
+    # Update context
+    context.project_root = project_dir
+    context.current_project = name
+
+    # Process table to create files
+    if context.table:
+        files_created = set()
+        for row in context.table:
+            filename = row.get("File") or row.get("file")
+            if not filename:
+                continue
+
+            file_path = project_dir / filename
+
+            # Create each file only once
+            if filename not in files_created:
+                if filename.endswith(".kicad_pro"):
+                    file_path.write_text(
+                        "(kicad_project (version 1))\n", encoding="utf-8"
+                    )
+                elif filename.endswith(".kicad_sch"):
+                    # Create schematic with component if specified
+                    ref = row.get("Reference") or row.get("reference") or "R1"
+                    value = row.get("Value") or row.get("value") or "10K"
+                    footprint = (
+                        row.get("Footprint") or row.get("footprint") or "R_0805_2012"
+                    )
+
+                    content = f"""(kicad_sch (version 20211123) (generator eeschema)
+  (paper "A4")
+  (symbol (lib_id "Device:R") (at 50 50 0) (unit 1)
+    (property "Reference" "{ref}" (id 0) (at 52 48 0))
+    (property "Value" "{value}" (id 1) (at 52 52 0))
+    (property "Footprint" "{footprint}" (id 2) (at 52 54 0))
+  )
+)
+"""
+                    file_path.write_text(content, encoding="utf-8")
+                elif filename.endswith(".kicad_pcb"):
+                    # Create PCB with footprint if specified
+                    ref = row.get("Reference") or row.get("reference") or "R1"
+                    footprint = (
+                        row.get("Footprint") or row.get("footprint") or "R_0805_2012"
+                    )
+
+                    content = f"""(kicad_pcb (version 20211014) (generator pcbnew)
+  (paper "A4")
+  (footprint "{footprint}" (at 76.2 104.14 0) (layer "F.Cu")
+    (property "Reference" "{ref}")
+  )
+)
+"""
+                    file_path.write_text(content, encoding="utf-8")
+                else:
+                    file_path.write_text("", encoding="utf-8")
+
+                files_created.add(filename)
+
+
+@given('a minimal KiCad project "{name}"')
+def given_minimal_kicad_project(context, name: str) -> None:
+    """Create a minimal KiCad project with empty .pro, .sch, .pcb files.
+
+    Use this for project discovery testing that doesn't need specific component data.
+    Creates standard project files with minimal but valid content.
+    """
+    project_dir = Path(context.project_root) / name
+    project_dir.mkdir(parents=True, exist_ok=True)
+
+    # Update context
+    context.project_root = project_dir
+    context.current_project = name
+
+    # Create minimal project files
+    (project_dir / f"{name}.kicad_pro").write_text(
+        "(kicad_project (version 1))\n", encoding="utf-8"
+    )
+    (project_dir / f"{name}.kicad_sch").write_text(
+        "(kicad_sch (version 20211123) (generator eeschema))\n", encoding="utf-8"
+    )
+    (project_dir / f"{name}.kicad_pcb").write_text(
+        "(kicad_pcb (version 20211014) (generator pcbnew))\n", encoding="utf-8"
+    )
+
+
+@given('the project contains a file "{filename}"')
+def given_project_contains_file(context, filename: str) -> None:
+    """Create minimal KiCad project file with appropriate content.
+
+    Automatically generates proper content for .kicad_pro, .kicad_sch, .kicad_pcb files.
+    Used for project discovery and architecture testing.
+    """
+    file_path = Path(context.project_root) / filename
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if filename.endswith(".kicad_pro"):
+        file_path.write_text("(kicad_project (version 1))\n", encoding="utf-8")
+    elif filename.endswith(".kicad_sch"):
+        file_path.write_text(
+            "(kicad_sch (version 20211123) (generator eeschema))\n", encoding="utf-8"
+        )
+    elif filename.endswith(".kicad_pcb"):
+        file_path.write_text(
+            "(kicad_pcb (version 20211014) (generator pcbnew))\n", encoding="utf-8"
+        )
+    else:
+        file_path.write_text("", encoding="utf-8")
+
+
+@given('the project contains a file "{filename}" with basic schematic content')
+def given_project_file_basic_schematic(context, filename: str) -> None:
+    """Create schematic file with basic component for testing.
+
+    Contains a simple R1 10K resistor component for project discovery testing.
+    """
+    file_path = Path(context.project_root) / filename
+    content = """(kicad_sch (version 20211123) (generator eeschema)
+  (paper "A4")
+  (symbol (lib_id "Device:R") (at 50 50 0) (unit 1)
+    (property "Reference" "R1" (id 0) (at 52 48 0))
+    (property "Value" "10K" (id 1) (at 52 52 0))
+    (property "Footprint" "R_0805_2012" (id 2) (at 52 54 0))
+  )
+)
+"""
+    file_path.write_text(content, encoding="utf-8")
+
+
+@given('the project contains a file "{filename}" with basic PCB content')
+def given_project_file_basic_pcb(context, filename: str) -> None:
+    """Create PCB file with basic footprint for testing.
+
+    Contains a simple R1 footprint at known coordinates for project discovery testing.
+    """
+    file_path = Path(context.project_root) / filename
+    content = """(kicad_pcb (version 20211014) (generator pcbnew)
+  (paper "A4")
+  (footprint "R_0805_2012" (at 76.2 104.14 0) (layer "F.Cu")
+    (property "Reference" "R1")
+  )
+)
+"""
+    file_path.write_text(content, encoding="utf-8")
 
 
 # -------------------------

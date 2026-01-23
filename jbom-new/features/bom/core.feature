@@ -5,7 +5,7 @@ Feature: BOM Generation (Core Functionality)
 
   Background:
     Given the generic fabricator is selected
-    And a standard test schematic that contains:
+    And a schematic that contains:
       | Reference | Value | Footprint         |
       | R1        | 10K   | R_0805_2012       |
       | C1        | 100nF | C_0603_1608       |
@@ -24,7 +24,7 @@ Feature: BOM Generation (Core Functionality)
   Scenario: Generate BOM to specific output file
     When I run jbom command "bom -o custom_bom.csv"
     Then the command should succeed
-    And a file named "custom_bom.csv" exists
+    And a file named "basic_bom.csv" should exist
 
   Scenario: Generate BOM with explicit console table output
     When I run jbom command "bom -o console"
