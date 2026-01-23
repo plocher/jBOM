@@ -41,3 +41,27 @@ pos_columns:
   "Layer": "side"
   "Rotation": "rotation"
   "Package": "package"
+
+presets:
+  default:
+    description: "JLC BOM format for JLCPCB assembly"
+    fields:
+      - "reference"
+      - "quantity"
+      - "value"
+      - "description"
+      - "i:package"
+      - "fabricator_part_number"
+      - "smd"
+  jlc:
+    description: "JLC preset alias"
+    fields:
+      - "reference"
+      - "quantity"
+      - "value"
+      - "description"
+      - "fabricator_part_number"
+
+cli_aliases:
+  flags: ["--jlc"]
+  presets: ["+jlc"]

@@ -12,25 +12,26 @@ from .fields import normalize_field_name, FIELD_PRESETS
 def parse_fields_argument(
     fields_arg: Optional[str],
     available_fields: Dict[str, str],
+    fabricator_id: str = "generic",
     fabricator_presets: Optional[Dict[str, Any]] = None,
-    default_preset: str = "standard",
 ) -> List[str]:
-    """Parse field argument that may contain presets and custom fields.
+    """Parse field argument with sophisticated fabricator-aware logic.
 
-    Supports:
-    - Preset names with + prefix: +jlc, +standard, +minimal, +all
-    - Custom field names: Reference,Value,LCSC
-    - Mixed: +jlc,CustomField,I:Tolerance
-    - Fabricator-specific presets from fabricator configs
+    Implements the complex jBOM field selection rules:
+    1. If no --fields: use fabricator's default preset
+    2. If --fields provided: parse presets and custom fields
+    3. Smart fabricator preset injection: if no +fabricator preset in --fields,
+       silently append +fabricator preset with deduplication
+    4. Support I:/C: prefixes for inventory/component field disambiguation
 
     Args:
         fields_arg: Field argument string or None
         available_fields: Dict of available field names and descriptions
+        fabricator_id: Current fabricator ID (affects default and auto-injection)
         fabricator_presets: Optional fabricator-specific presets from config
-        default_preset: Default preset to use if fields_arg is None
 
     Returns:
-        List of normalized field names (deduplicated, in order)
+        List of normalized field names (deduplicated, preserving order)
 
     Raises:
         ValueError: If unknown preset or field name is encountered
@@ -40,22 +41,35 @@ def parse_fields_argument(
     if fabricator_presets:
         all_presets.update(fabricator_presets)
 
+    # Case 1: No fields argument - use fabricator's default preset
     if not fields_arg:
-        # Use default preset
-        preset_def = all_presets.get(default_preset)
-        if not preset_def:
-            # Fall back to global default if fabricator-specific default doesn't exist
-            preset_def = FIELD_PRESETS.get(default_preset)
+        default_preset = "default"  # Fabricator's default preset
+        if fabricator_presets and default_preset in fabricator_presets:
+            preset_fields = fabricator_presets[default_preset].get("fields")
+            if preset_fields:
+                return preset_fields.copy()
 
-        if preset_def and preset_def.get("fields"):
-            return preset_def["fields"].copy()
-        else:
-            # 'all' preset or missing - return all available fields
-            return list(available_fields.keys())
+        # Fall back to standard preset if fabricator has no default
+        standard_preset = all_presets.get("standard")
+        if standard_preset and standard_preset.get("fields"):
+            return standard_preset["fields"].copy()
 
+        # Ultimate fallback
+        return ["reference", "quantity", "value", "footprint"]
+
+    # Case 2: Parse explicit fields argument
     tokens = [t.strip() for t in fields_arg.split(",") if t.strip()]
     result: List[str] = []
+    has_fabricator_preset = False
 
+    # Check if fabricator preset is already specified
+    fabricator_preset_name = f"+{fabricator_id}"
+    for tok in tokens:
+        if tok.lower() == fabricator_preset_name.lower():
+            has_fabricator_preset = True
+            break
+
+    # Process each token
     for tok in tokens:
         if tok.startswith("+"):
             # Preset expansion
@@ -63,12 +77,17 @@ def parse_fields_argument(
             preset_def = all_presets.get(preset_name)
 
             if not preset_def:
-                # Create helpful error message with available presets
-                global_presets = list(FIELD_PRESETS.keys())
-                fab_presets = (
-                    list(fabricator_presets.keys()) if fabricator_presets else []
+                # Create helpful error message
+                all_preset_names = sorted(
+                    set(
+                        list(FIELD_PRESETS.keys())
+                        + (
+                            list(fabricator_presets.keys())
+                            if fabricator_presets
+                            else []
+                        )
+                    )
                 )
-                all_preset_names = sorted(set(global_presets + fab_presets))
                 valid = ", ".join(f"+{p}" for p in all_preset_names)
                 raise ValueError(f"Unknown preset: {tok} (available: {valid})")
 
@@ -82,7 +101,7 @@ def parse_fields_argument(
             # Custom field name
             normalized = normalize_field_name(tok)
             if normalized not in available_fields:
-                # Try to find a close match or provide helpful error
+                # Try to provide helpful error
                 available_list = sorted(available_fields.keys())
                 raise ValueError(
                     f"Unknown field: '{tok}' (normalized: '{normalized}'). "
@@ -92,6 +111,15 @@ def parse_fields_argument(
                 )
             result.append(normalized)
 
+    # Case 3: Smart fabricator preset injection
+    # If no fabricator preset was explicitly specified, append it silently
+    if not has_fabricator_preset and fabricator_presets:
+        fabricator_preset_def = fabricator_presets.get(
+            "default"
+        ) or fabricator_presets.get(fabricator_id)
+        if fabricator_preset_def and fabricator_preset_def.get("fields"):
+            result.extend(fabricator_preset_def["fields"])
+
     # Deduplicate while preserving order
     seen = set()
     deduped: List[str] = []
@@ -100,13 +128,7 @@ def parse_fields_argument(
             seen.add(f)
             deduped.append(f)
 
-    # If we ended up with no fields, fall back to default
-    if not deduped:
-        return parse_fields_argument(
-            None, available_fields, fabricator_presets, default_preset
-        )
-
-    return deduped
+    return deduped if deduped else ["reference", "quantity", "value", "footprint"]
 
 
 def validate_fields_against_available(

@@ -11,7 +11,13 @@ from jbom.services.bom_generator import BOMGenerator, BOMData
 from jbom.services.inventory_matcher import InventoryMatcher
 from jbom.services.project_file_resolver import ProjectFileResolver
 from jbom.common.options import GeneratorOptions
-from jbom.config.fabricators import get_available_fabricators
+from jbom.config.fabricators import (
+    get_available_fabricators,
+    get_fabricator_presets,
+    apply_fabricator_column_mapping,
+)
+from jbom.common.field_parser import parse_fields_argument
+from jbom.common.fields import get_available_presets
 
 
 def register_command(subparsers) -> None:
@@ -184,6 +190,26 @@ def handle_bom(args: argparse.Namespace) -> int:
         if not fabricator:
             fabricator = "generic"
 
+        # Handle --list-fields before processing
+        if args.list_fields:
+            _list_available_fields(fabricator)
+            return 0
+
+        # Parse field selection
+        fabricator_presets = get_fabricator_presets(fabricator)
+        available_fields = _get_available_bom_fields(components)
+
+        try:
+            selected_fields = parse_fields_argument(
+                args.fields, available_fields, fabricator, fabricator_presets
+            )
+        except ValueError as e:
+            print(f"Error: {e}", file=sys.stderr)
+            return 1
+
+        if args.verbose:
+            print(f"Selected fields: {', '.join(selected_fields)}", file=sys.stderr)
+
         # Generate basic BOM
         filters = {
             "exclude_dnp": not args.include_dnp,
@@ -224,37 +250,120 @@ def handle_bom(args: argparse.Namespace) -> int:
             )
 
         # Handle output
-        return _output_bom(bom_data, args.output)
+        return _output_bom(bom_data, args.output, selected_fields, fabricator)
 
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1
 
 
-def _output_bom(bom_data: BOMData, output: Optional[str]) -> int:
-    """Output BOM data in the requested format.
+def _list_available_fields(fabricator: str) -> None:
+    """List all available fields and presets for the given fabricator."""
+    print("\nAvailable fields:")
+    print("=" * 40)
 
-    Human-first defaults (BREAKING CHANGE for UX consistency):
-    - output is None => formatted table to stdout (human exploration)
-    - output == "console" => formatted table to stdout (explicit)
-    - output == "-" => CSV to stdout (machine readable)
-    - "stdout" removed (legacy compatibility)
-    - otherwise => treat as file path
+    # Get standard BOM fields
+    standard_fields = [
+        "reference",
+        "quantity",
+        "value",
+        "description",
+        "footprint",
+        "manufacturer",
+        "mfgpn",
+        "fabricator_part_number",
+        "smd",
+        "lcsc",
+    ]
+
+    for field in sorted(standard_fields):
+        print(f"  {field}")
+
+    print("\nAvailable presets:")
+    print("=" * 40)
+
+    # Get global presets
+    global_presets = get_available_presets()
+    for name, desc in global_presets.items():
+        print(f"  +{name}: {desc}")
+
+    # Get fabricator-specific presets
+    fabricator_presets = get_fabricator_presets(fabricator)
+    if fabricator_presets:
+        print(f"\nFabricator-specific presets ({fabricator}):")
+        print("=" * 40)
+        for name, preset_def in fabricator_presets.items():
+            desc = preset_def.get("description", "Fabricator-specific preset")
+            print(f"  +{name}: {desc}")
+
+
+def _get_available_bom_fields(components) -> dict[str, str]:
+    """Get available fields based on component data and inventory enhancement."""
+    # Standard BOM fields available from components
+    fields = {
+        "reference": "Component reference (R1, C2, etc.)",
+        "quantity": "Number of components",
+        "value": "Component value",
+        "description": "Component description",
+        "footprint": "Component footprint",
+        "manufacturer": "Component manufacturer",
+        "mfgpn": "Manufacturer part number",
+        "fabricator_part_number": "Fabricator-specific part number",
+        "smd": "Surface mount indicator",
+        "lcsc": "LCSC part number",
+        # Add inventory fields with I: prefix
+        "i:voltage": "Inventory: Component voltage",
+        "i:tolerance": "Inventory: Component tolerance",
+        "i:package": "Inventory: Component package",
+    }
+
+    # Add any additional fields found in component attributes
+    if components:
+        for comp in components:
+            for attr_key in comp.attributes.keys():
+                normalized_key = attr_key.lower().replace(" ", "_")
+                if normalized_key not in fields:
+                    fields[normalized_key] = f"Component attribute: {attr_key}"
+
+    return fields
+
+
+def _output_bom(
+    bom_data: BOMData,
+    output: Optional[str],
+    selected_fields: list[str],
+    fabricator: str,
+) -> int:
+    """Output BOM data in the requested format with field customization.
+
+    Args:
+        bom_data: BOM data to output
+        output: Output destination (None/"console" for table, "-" for CSV, path for file)
+        selected_fields: List of fields to include in output
+        fabricator: Fabricator ID for column mapping
+
+    Returns:
+        Exit code (0 for success)
     """
+    # Apply fabricator-specific column mapping to get headers
+    headers = apply_fabricator_column_mapping(fabricator, "bom", selected_fields)
+
     if output is None or output == "console":
-        _print_console_table(bom_data)
+        _print_console_table(bom_data, selected_fields, headers)
     elif output == "-":
-        _print_csv(bom_data)
+        _print_csv(bom_data, selected_fields, headers)
     else:
         output_path = Path(output)
-        _write_csv(bom_data, output_path)
+        _write_csv(bom_data, output_path, selected_fields, headers)
         print(f"BOM written to {output_path}")
 
     return 0
 
 
-def _print_console_table(bom_data: BOMData) -> None:
-    """Print BOM as formatted console table."""
+def _print_console_table(
+    bom_data: BOMData, selected_fields: list[str], headers: list[str]
+) -> None:
+    """Print BOM as formatted console table with dynamic fields."""
     print(f"\n{bom_data.project_name} - Bill of Materials")
     print("=" * 60)
 
@@ -262,24 +371,26 @@ def _print_console_table(bom_data: BOMData) -> None:
         print("No components found.")
         return
 
-    # Simple table formatting
-    print(f"{'References':<15} {'Value':<12} {'Footprint':<20} {'Qty':<4}")
-    print("-" * 60)
+    # Dynamic table formatting based on selected fields
+    col_widths = [max(15, len(header)) for header in headers]
+    header_line = "  ".join(
+        f"{headers[i]:<{col_widths[i]}}" for i in range(len(headers))
+    )
+    print(header_line)
+    print("-" * len(header_line))
 
     for entry in bom_data.entries:
-        refs = (
-            entry.references_string[:14] + "..."
-            if len(entry.references_string) > 14
-            else entry.references_string
-        )
-        value = entry.value[:11] + "..." if len(entry.value) > 11 else entry.value
-        footprint = (
-            entry.footprint[:19] + "..."
-            if len(entry.footprint) > 19
-            else entry.footprint
-        )
+        values = []
+        for field in selected_fields:
+            value = _get_field_value(entry, field)
+            # Truncate long values to fit column width
+            col_width = col_widths[len(values)]
+            if len(value) > col_width:
+                value = value[: col_width - 3] + "..."
+            values.append(value)
 
-        print(f"{refs:<15} {value:<12} {footprint:<20} {entry.quantity:<4}")
+        row = "  ".join(f"{values[i]:<{col_widths[i]}}" for i in range(len(values)))
+        print(row)
 
     print(
         f"\nTotal: {bom_data.total_components} components, {bom_data.total_line_items} unique items"
@@ -293,42 +404,70 @@ def _print_console_table(bom_data: BOMData) -> None:
         )
 
 
-def _print_csv(bom_data: BOMData) -> None:
-    """Print BOM as CSV to stdout."""
+def _print_csv(
+    bom_data: BOMData, selected_fields: list[str], headers: list[str]
+) -> None:
+    """Print BOM as CSV to stdout with dynamic fields."""
     writer = csv.writer(sys.stdout)
 
-    # Headers
-    headers = ["References", "Value", "Footprint", "Quantity"]
-
-    # Add inventory headers if present
-    if bom_data.entries and bom_data.entries[0].attributes.get("inventory_matched"):
-        headers.extend(["Manufacturer", "Manufacturer Part", "Description", "Voltage"])
-
+    # Write dynamic headers
     writer.writerow(headers)
 
-    # Data rows
+    # Write data rows
     for entry in bom_data.entries:
-        row = [entry.references_string, entry.value, entry.footprint, entry.quantity]
-
-        # Add inventory data if present
-        if entry.attributes.get("inventory_matched"):
-            row.extend(
-                [
-                    entry.attributes.get("manufacturer", ""),
-                    entry.attributes.get("manufacturer_part", ""),
-                    entry.attributes.get("description", ""),
-                    entry.attributes.get("voltage", ""),
-                ]
-            )
+        row = []
+        for field in selected_fields:
+            value = _get_field_value(entry, field)
+            row.append(value)
 
         writer.writerow(row)
 
 
-def _write_csv(bom_data: BOMData, output_path: Path) -> None:
-    """Write BOM as CSV to file."""
+def _write_csv(
+    bom_data: BOMData, output_path: Path, selected_fields: list[str], headers: list[str]
+) -> None:
+    """Write BOM as CSV to file with dynamic fields."""
     with open(output_path, "w", newline="", encoding="utf-8") as csvfile:
         # Use the same logic as stdout
         old_stdout = sys.stdout
         sys.stdout = csvfile
-        _print_csv(bom_data)
+        _print_csv(bom_data, selected_fields, headers)
         sys.stdout = old_stdout
+
+
+def _get_field_value(entry, field: str) -> str:
+    """Extract field value from BOM entry.
+
+    Args:
+        entry: BOM entry object
+        field: Field name to extract
+
+    Returns:
+        String value for the field
+    """
+    # Handle inventory fields with I: prefix
+    if field.startswith("i:"):
+        inventory_field = field[2:]  # Remove "i:" prefix
+        return entry.attributes.get(inventory_field, "")
+
+    # Handle standard BOM fields
+    field_mapping = {
+        "reference": lambda e: e.references_string,
+        "quantity": lambda e: str(e.quantity),
+        "value": lambda e: e.value,
+        "description": lambda e: e.description or "",
+        "footprint": lambda e: e.footprint,
+        "manufacturer": lambda e: entry.attributes.get("manufacturer", ""),
+        "mfgpn": lambda e: entry.attributes.get("manufacturer_part", ""),
+        "fabricator_part_number": lambda e: entry.attributes.get(
+            "fabricator_part_number", ""
+        ),
+        "smd": lambda e: "Yes" if entry.attributes.get("smd", False) else "No",
+        "lcsc": lambda e: entry.attributes.get("lcsc", ""),
+    }
+
+    if field in field_mapping:
+        return field_mapping[field](entry)
+
+    # Fall back to attribute lookup for unknown fields
+    return entry.attributes.get(field, "")
