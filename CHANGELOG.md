@@ -1,6 +1,231 @@
 # CHANGELOG
 
 
+## v6.2.0 (2026-01-23)
+
+### Bug Fixes
+
+* fix: Remove inline comment from step definition that caused undefined step
+
+Behave cannot parse step definitions with inline comments after step text.
+Keeps the functionality while fixing the parsing issue.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`d361907`](https://github.com/plocher/jBOM/commit/d36190702836e579e1eb9e814fd7d880731c9107))
+
+* fix: Repair import references in legacy compatibility layer
+
+- Remove unused bom_steps import
+- Fix references to given_kicad_project_directory to use project_centric_steps module
+- Resolves linting errors introduced by previous legacy step removal
+
+Co-Authored-By: Warp <agent@warp.dev> ([`5670ae8`](https://github.com/plocher/jBOM/commit/5670ae8a893a3a510ff3c923110a86e224d23b5f))
+
+### Features
+
+* feat: Complete elimination of all legacy compatibility steps
+
+HISTORIC ACHIEVEMENT: 50→0 legacy steps (100% reduction)
+
+- TRANSFORMED: Final 2 schematic wrapper steps to canonical 'schematic that contains'
+- ELIMINATED: legacy_compat.py file completely removed
+- DOCUMENTED: Circular validation anti-pattern moved to GHERKIN_RECIPE.md
+- IMPROVEMENT: All scenarios now use consistent canonical step patterns
+
+Final transformations:
+- 'standard BOM test schematic' → 'schematic that contains'
+- 'minimal test schematic' → 'schematic that contains'
+
+Legacy cleanup summary:
+- Started: 50 legacy compatibility steps
+- Eliminated: 46 unused/redundant steps
+- Transformed: 4 steps to canonical patterns
+- Result: 0 legacy steps remain, 100% reduction achieved
+
+All feature files now use canonical, maintainable step patterns.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`41d5c74`](https://github.com/plocher/jBOM/commit/41d5c74e2cda2725f2eb22eb2f44f6391c2762fb))
+
+### Refactoring
+
+* refactor: Remove premature anonymous inventory file optimization
+
+- ELIMINATED: Anonymous 'inventory file that contains' step
+- RATIONALE: YAGNI - explicit filenames needed for assertions in all real scenarios
+- IMPROVEMENT: Consistent explicit naming, better test clarity and debugging
+- PRINCIPLE: Prefer explicit resource names over anonymous when assertions needed
+
+Maintains single canonical pattern: 'inventory file "{filename}" that contains:'
+
+Co-Authored-By: Warp <agent@warp.dev> ([`0647c7d`](https://github.com/plocher/jBOM/commit/0647c7d2cb1d8e01a184354add1d9e219aa3ae6c))
+
+* refactor: Standardize inventory file steps to canonical 'that contains' pattern
+
+- TRANSFORMED: All inventory steps now use consistent 'that contains:' pattern
+- ADDED: Canonical steps in inventory_steps.py with context support
+- ELIMINATED: Legacy 'with contents:' and 'with data:' wrapper steps
+- IMPROVEMENT: Consistent with schematic/PCB 'that contains' patterns
+- CONTEXT: Anonymous inventory step sets context.inventory_filename
+
+Files affected: 6 feature files + inventory_steps.py + legacy_compat.py
+Legacy step count: 3→2 steps (96% total reduction from original 50)
+
+Co-Authored-By: Warp <agent@warp.dev> ([`f9a0941`](https://github.com/plocher/jBOM/commit/f9a0941b401da695da1378d5b1dda3b33fce4d7e))
+
+* refactor: Replace 'error should contain' with canonical error assertion step
+
+- TRANSFORMED: 3 scenarios in architecture.feature now use canonical step
+- ELIMINATED: 'error should contain' wrapper step from legacy_compat.py
+- IMPROVEMENT: Consistent language with other output assertions
+- RATIONALE: Canonical 'error output should mention' provides same functionality
+
+Legacy step count: 4→3 steps (94% total reduction from original 50)
+Maintains zero undefined steps, preserves all test coverage.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`09dcefd`](https://github.com/plocher/jBOM/commit/09dcefdded662e8ca4f1de55557ac4e7f4182264))
+
+* refactor: Eliminate unused file negative assertion step (Step 10)
+
+Step 10: File negative assertion
+- ELIMINATED: 'file should not contain' file-specific negative assertion step
+- UNUSED: No feature files reference this step definition
+- IMPROVEMENT: Removes unused functionality, canonical output assertions handle current needs
+- RATIONALE: All current tests use 'output should not contain' for command output validation
+
+Legacy step count: 5→4 steps (92% total reduction from original 50)
+Maintains zero undefined steps, zero impact on test coverage.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`a06c83f`](https://github.com/plocher/jBOM/commit/a06c83f3c88fa0c8ebadde6522720d2afbca92fd))
+
+* refactor: Eliminate unused named schematic component wrapper step (Step 9)
+
+Step 9: Named schematic component wrapper
+- ELIMINATED: 'schematic contains component' single-component wrapper step
+- UNUSED: No feature files reference this step definition
+- IMPROVEMENT: Removes wrapper that duplicates canonical table-driven functionality
+- RATIONALE: Canonical named schematic creation with tables already available
+
+Legacy step count: 6→5 steps (90% total reduction from original 50)
+Maintains zero undefined steps, zero impact on test coverage.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`1d147c9`](https://github.com/plocher/jBOM/commit/1d147c9b61c6647c4a2f09163ee58196f3f751d2))
+
+* refactor: Eliminate unused hierarchical project wrapper step (Step 8)
+
+Step 8: Hierarchical project wrapper
+- ELIMINATED: 'a hierarchical project' wrapper step
+- UNUSED: No feature files reference this step definition
+- IMPROVEMENT: Removes semantic alias that duplicates canonical functionality
+- RATIONALE: Canonical 'KiCad project directory' step already handles hierarchical projects
+
+Legacy step count: 7→6 steps (88% total reduction from original 50)
+Maintains zero undefined steps, zero impact on test coverage.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`ed0b112`](https://github.com/plocher/jBOM/commit/ed0b11297d6633cf6305b8968f896e5214b6cc98))
+
+* refactor: Eliminate unused single component schematic wrapper step (Step 7)
+
+Step 7: Single component schematic wrapper
+- ELIMINATED: 'project contains a schematic with component' step
+- UNUSED: No feature files reference this step definition
+- IMPROVEMENT: Removes dead code and wrapper pattern complexity
+- RATIONALE: Canonical table-driven schematic creation already available
+
+Legacy step count: 8→7 steps (86% total reduction from original 50)
+Maintains zero undefined steps, zero impact on test coverage.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`e7929df`](https://github.com/plocher/jBOM/commit/e7929df625eecd70b4fed7cb696de16457302974))
+
+* refactor: Eliminate redundant very long name inventory wrapper step (Step 6)
+
+Step 6: Very long name inventory wrapper
+- ELIMINATED: 'inventory file with a very long name' wrapper step
+- TRANSFORMED: Used canonical 'inventory file with contents:' step
+- IMPROVEMENT: Removes redundant wrapper that duplicated existing functionality
+- RATIONALE: Long filename is already explicit in the filename parameter
+
+Legacy step count: 9→8 steps (84% total reduction from original 50)
+Maintains zero undefined steps and preserves legitimate long path testing.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`650f989`](https://github.com/plocher/jBOM/commit/650f989cf35570caa0b41b8e913f3c19f48939b5))
+
+* refactor(tests): reduce legacy step tech debt by 18% (50→41 steps)
+
+- Remove 9 unused/redundant legacy step definitions
+- Standardize file patterns to consistent inventory/schematic syntax
+- Transform active file assertions to canonical passive forms
+- Eliminate semantic wrapper steps with feature file migrations
+- Maintain 0 undefined steps throughout cleanup process
+- Add comprehensive testing architecture documentation
+
+Architectural improvements:
+- GHERKIN_RECIPE.md: Documents patterns, anti-patterns, format paranoia
+- TESTING_GUIDELINES.md: Functional vs implementation testing principles
+- Background layer architecture fully implemented and documented
+
+Legacy eliminations:
+- Unused: then_output_contains_component_data, given_file_exists_simple
+- Wrapper elimination: error/file creation patterns → canonical forms
+- Consistency: 'exists' vs 'should exist', inventory vs generic file patterns
+
+Co-Authored-By: Warp <agent@warp.dev> ([`e5a6b67`](https://github.com/plocher/jBOM/commit/e5a6b67a0a392dff0840183236bd271a91693deb))
+
+### Unknown
+
+* Merge pull request #45 from plocher/feature/legacy-step-cleanup
+
+feat: elimination of legacy compatibility steps ([`c66a1c0`](https://github.com/plocher/jBOM/commit/c66a1c0831ac62da8cc85eba9bbe5bfa43b6a291))
+
+* Clean up inline comments and add missing legacy patterns
+
+- Moved inline comments from step text to proper scenario documentation
+- Preserved critical business logic explanations (inventory precedence rules)
+- Added legacy adapter patterns for empty inventory files and error handling
+- Reduced undefined steps from 69 to 56 (19% improvement)
+- Better BDD documentation with explanatory comments in proper locations
+
+Co-Authored-By: Warp <agent@warp.dev> ([`55e0037`](https://github.com/plocher/jBOM/commit/55e0037049be753979fa727eb5bf6e719bcb8453))
+
+* Consolidate verbose scenarios using scenario outlines while preserving TDD safety nets
+
+- Refactored project_centric/architecture.feature with scenario outlines
+- Reduced 8 repetitive scenarios to 3 consolidated scenario outlines
+- Maintained full test coverage while reducing file length by 10 lines
+- Preserved regression tests as critical TDD canaries for Issue #24
+- Respected principle: regression tests exist because original coverage was insufficient
+
+Co-Authored-By: Warp <agent@warp.dev> ([`6f00f77`](https://github.com/plocher/jBOM/commit/6f00f77dbabc6856374d86136e46b10ad9c067cb))
+
+* Apply bulk transformation strategy and eliminate redundant legacy adapters
+
+- Applied systematic regex transformations to normalize step patterns across all feature files
+- Normalized schematic/PCB creation, command execution, assertions, fabricator selection
+- Removed 40+ redundant legacy adapter patterns that are now canonical
+- Reduced legacy_compat.py from 100+ to ~60 step definitions
+- Core BOM and Parts features still fully passing after cleanup
+
+Co-Authored-By: Warp <agent@warp.dev> ([`f6a21b8`](https://github.com/plocher/jBOM/commit/f6a21b8237af5fae79e3e800a3a83ada952de4b3))
+
+* Massively expand legacy compatibility adapter across all features
+
+- Added 70+ comprehensive legacy step patterns in legacy_compat.py
+- Covers inventory, parts, project_centric, and regression feature patterns
+- Includes file operations, project setup, hierarchical schematics, output assertions
+- Reduced undefined steps from ~450 to 64 (86% improvement)
+- Parts core feature now fully passing (7 scenarios, 52 steps)
+
+Co-Authored-By: Warp <agent@warp.dev> ([`6b52c68`](https://github.com/plocher/jBOM/commit/6b52c6876b2e6b751a68c2e027f4364a8ae6a354))
+
+* Addingular is :wq
+legacy compatibility adapter and fix BOM test features
+
+- Created features/steps/legacy_compat.py with adapter layer for old step patterns
+- Fixed schematic writer to support correct KiCad DNP and in_bom formats
+- Updated BOM generation/filtering features with correct output expectations
+- All core BOM features (core, generation, filtering) now passing
+
+Co-Authored-By: Warp <agent@warp.dev> ([`7f5f967`](https://github.com/plocher/jBOM/commit/7f5f967572824968f4cac334051304e6cea8759c))
+
+
 ## v6.1.0 (2026-01-23)
 
 ### Features
