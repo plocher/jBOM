@@ -111,21 +111,21 @@ Feature: Project-Centric Architecture
     Given a KiCad project directory "empty_project"
     When I run jbom command "bom empty_project"
     Then the command should fail
-    And the error should contain "No project files found"
+    And the error output should mention "No project files found"
 
   Scenario: Missing schematic file should suggest alternatives
     Given a KiCad project directory "pcb_only_project"
     And the project contains a file "pcb_only.kicad_pcb" with basic PCB content
     When I run jbom command "bom pcb_only_project"
     Then the command should fail
-    And the error should contain "No schematic file found"
+    And the error output should mention "No schematic file found"
 
   Scenario: Missing PCB file should suggest alternatives
     Given a KiCad project directory "sch_only_project"
     And the project contains a file "sch_only.kicad_sch" with basic schematic content
     When I run jbom command "pos sch_only_project"
     Then the command should fail
-    And the error should contain "No PCB file found"
+    And the error output should mention "No PCB file found"
 
   # TODO: Hierarchical schematic scenarios
   # Current implementation uses circular validation (hand-crafted KiCad files that mirror jBOM expectations)

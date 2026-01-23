@@ -1,9 +1,8 @@
 """Legacy compatibility steps remaining for cleanup."""
 from __future__ import annotations
 
-from behave import given, then
+from behave import given
 import project_centric_steps
-import common_steps
 
 
 # REMOVED: @given('the project contains a file "{filename}" with content:')
@@ -16,12 +15,6 @@ import common_steps
 #   2. Save them as fixtures in fixtures/ directory
 #   3. Copy fixture files for test scenarios
 #   4. Tests real-world compatibility, not circular validation
-
-
-@then('the error should contain "{text}"')
-def then_error_should_contain(context, text):
-    """Legacy: check error output contains text."""
-    common_steps.step_error_output_should_mention(context, text)
 
 
 @given('an inventory file "{filename}" with contents:')
