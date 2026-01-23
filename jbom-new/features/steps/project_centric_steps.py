@@ -222,6 +222,84 @@ def given_generic_fabricator(context) -> None:
     context.fabricator = "generic"
 
 
+@given('a KiCad project directory "{name}"')
+def given_kicad_project_directory(context, name: str) -> None:
+    """Create a KiCad project directory for external testing (without changing cwd).
+
+    Use this for project discovery testing where commands need to reference
+    the project directory from outside. Complements 'I am in project directory'
+    which changes the working context to inside the directory.
+
+    Part of the Layer 3 testing architecture.
+    """
+    project_dir = Path(context.project_root) / name
+    project_dir.mkdir(parents=True, exist_ok=True)
+
+    # Update context to use this as the working directory
+    context.project_root = project_dir
+    context.current_project = name
+
+
+@given('the project contains a file "{filename}"')
+def given_project_contains_file(context, filename: str) -> None:
+    """Create minimal KiCad project file with appropriate content.
+
+    Automatically generates proper content for .kicad_pro, .kicad_sch, .kicad_pcb files.
+    Used for project discovery and architecture testing.
+    """
+    file_path = Path(context.project_root) / filename
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if filename.endswith(".kicad_pro"):
+        file_path.write_text("(kicad_project (version 1))\n", encoding="utf-8")
+    elif filename.endswith(".kicad_sch"):
+        file_path.write_text(
+            "(kicad_sch (version 20211123) (generator eeschema))\n", encoding="utf-8"
+        )
+    elif filename.endswith(".kicad_pcb"):
+        file_path.write_text(
+            "(kicad_pcb (version 20211014) (generator pcbnew))\n", encoding="utf-8"
+        )
+    else:
+        file_path.write_text("", encoding="utf-8")
+
+
+@given('the project contains a file "{filename}" with basic schematic content')
+def given_project_file_basic_schematic(context, filename: str) -> None:
+    """Create schematic file with basic component for testing.
+
+    Contains a simple R1 10K resistor component for project discovery testing.
+    """
+    file_path = Path(context.project_root) / filename
+    content = """(kicad_sch (version 20211123) (generator eeschema)
+  (paper "A4")
+  (symbol (lib_id "Device:R") (at 50 50 0) (unit 1)
+    (property "Reference" "R1" (id 0) (at 52 48 0))
+    (property "Value" "10K" (id 1) (at 52 52 0))
+    (property "Footprint" "R_0805_2012" (id 2) (at 52 54 0))
+  )
+)
+"""
+    file_path.write_text(content, encoding="utf-8")
+
+
+@given('the project contains a file "{filename}" with basic PCB content')
+def given_project_file_basic_pcb(context, filename: str) -> None:
+    """Create PCB file with basic footprint for testing.
+
+    Contains a simple R1 footprint at known coordinates for project discovery testing.
+    """
+    file_path = Path(context.project_root) / filename
+    content = """(kicad_pcb (version 20211014) (generator pcbnew)
+  (paper "A4")
+  (footprint "R_0805_2012" (at 76.2 104.14 0) (layer "F.Cu")
+    (property "Reference" "R1")
+  )
+)
+"""
+    file_path.write_text(content, encoding="utf-8")
+
+
 # -------------------------
 # Legacy compatibility steps removed - use ultra-simplified pattern:
 # - Given a schematic that contains: (replaces all schematic creation steps)

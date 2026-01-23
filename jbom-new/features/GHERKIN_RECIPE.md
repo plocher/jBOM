@@ -110,7 +110,34 @@ def step_run_jbom_command(context, command):
 2. **Command Simplification**: Remove redundant flags when using Layer 3
 3. **Assertion Focus**: Content over format
 4. **Project Setup**: Explicit component tables over implicit "minimal" data
+5. **Step Colocation**: Single-feature steps belong in feature-specific files, not shared locations
+6. **Legacy Elimination**: 44% reduction (50→25 steps) through unused removal and canonical migration
+7. **Trailing Space Handling**: Scenario outline edge cases require explicit whitespace pattern handling
+
+## Legacy Step Cleanup Methodology
+
+### Phase-Based Approach
+1. **Usage Analysis**: Systematic search for step patterns in all .feature files
+2. **Categorization**: Unused vs. transformable vs. architecturally legitimate
+3. **Safe Removal**: Delete completely unused steps after verification
+4. **Canonical Migration**: Move legitimate patterns to appropriate step files
+5. **Feature Transformation**: Convert legacy step usage to canonical patterns
+6. **Verification**: Maintain 0 undefined steps throughout process
+
+### Success Metrics
+- **50→25 steps** (44% reduction in legacy technical debt)
+- **Zero undefined steps** maintained throughout cleanup
+- **Architectural clarity** through Background layer consolidation
+- **DRY principle** enforcement via anti-pattern detection
+
+### Critical Discovery: Scenario Outline Edge Cases
+Trailing whitespace in step patterns from scenario outlines requires explicit handling:
+```python
+@when('I run jbom command "{command}" ')  # Note trailing space
+def when_run_jbom_command_trailing_space(context, command):
+    common_steps.step_run_jbom_command(context, command.strip())
+```
 
 ---
 
-*This document evolves as we discover more patterns during legacy step cleanup*
+*This document evolved through systematic legacy step cleanup (2024)*

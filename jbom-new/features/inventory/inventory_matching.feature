@@ -63,13 +63,7 @@ Feature: Inventory Matching and Filtering
     And the output should contain "Error: Inventory file not found"
     And the output should contain "Generated inventory with 6 items"
 
-  Scenario: Export filtered results to file
-    When I run jbom command "inventory --inventory existing_inventory.csv --filter-matches -o new_components.csv"
-    Then the command should succeed
-    And a file named "new_components.csv" should exist
-    And the file "new_components.csv" should contain "RES_22K"
-    And the file "new_components.csv" should contain "CAP_22P"
-    And the file "new_components.csv" should contain "IC_LM358"
-    And the file "new_components.csv" should not contain "RES_10K"
-    And the file "new_components.csv" should not contain "CAP_100N"
-    And the file "new_components.csv" should not contain "LED_RED"
+  # Removed: Export filtered results to file scenario
+  # This was a "two-for" scenario testing both file creation and content verification
+  # File output is already covered by basic inventory scenarios
+  # Content filtering is already verified by console output scenarios above

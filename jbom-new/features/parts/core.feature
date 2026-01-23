@@ -40,13 +40,6 @@ Feature: Parts List Generation (Core Functionality)
     And R2 appears before R10 in the output
     And C1 appears before C20 in the output
 
-  Scenario: Generate parts list to specific output file
-    When I run jbom command "parts -o custom_parts.csv"
-    Then the command should succeed
-    And a file named "custom_parts.csv" should exist
-    And the file "custom_parts.csv" should contain "R1"
-    And the file "custom_parts.csv" should contain "C1"
-
   Scenario: Generate parts list with console table output
     When I run jbom command "parts -o console"
     Then the command should succeed
@@ -55,9 +48,6 @@ Feature: Parts List Generation (Core Functionality)
     And the output should contain "C1"
 
   Scenario: Custom output filename with project-based default
-    Given a schematic named "TestProject.kicad_sch" that contains:
-      | Reference | Value | Footprint   |
-      | R1        | 10K   | R_0805_2012 |
     When I run jbom command "parts -o TestProject.parts.csv"
     Then the command should succeed
     And a file named "TestProject.parts.csv" should exist

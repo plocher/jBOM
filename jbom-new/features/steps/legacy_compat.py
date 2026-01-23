@@ -10,7 +10,7 @@ TODO: Remove this adapter layer after feature files are migrated to canonical st
 """
 from __future__ import annotations
 
-from behave import given, when, then
+from behave import given, then
 import project_centric_steps
 import common_steps
 
@@ -166,81 +166,9 @@ def given_project_contains_file_with_content(context, filename):
 # =========================
 
 
-@given("a complete project with components and PCB layout:")
-def given_complete_project_with_components_pcb(context):
-    """Legacy: create comprehensive project with schematic and PCB."""
-    # Delegate to canonical complete project setup
-    project_centric_steps.given_complete_project(context)
-
-
-@then("the output should contain a formatted table")
-def then_output_contains_formatted_table(context):
-    """Legacy: verify output contains a formatted table."""
-    output = getattr(context, "last_output", "")
-    # Check for table indicators like headers, separators, aligned columns
-    has_headers = any(
-        "Reference" in line and "Value" in line for line in output.split("\n")
-    )
-    has_separators = any("|" in line or "+-" in line for line in output.split("\n"))
-    assert (
-        has_headers or has_separators
-    ), f"Output does not contain a formatted table. Got: {output}"
-
-
-@then("the output should not be CSV format")
-def then_output_not_csv_format(context):
-    """Legacy: verify output is not in CSV format."""
-    output = getattr(context, "last_output", "")
-    lines = output.strip().split("\n")
-    # CSV typically has comma separators and consistent field counts
-    csv_indicators = sum(
-        1 for line in lines if "," in line and len(line.split(",")) > 2
-    )
-    assert (
-        csv_indicators < len(lines) / 2
-    ), f"Output appears to be in CSV format: {output}"
-
-
-@then("the output should be in CSV format")
-def then_output_in_csv_format(context):
-    """Legacy: verify output is in CSV format."""
-    output = getattr(context, "last_output", "")
-    lines = [line.strip() for line in output.strip().split("\n") if line.strip()]
-    assert lines, "No output to check"
-
-    # Check for CSV characteristics: comma separators, consistent field counts
-    csv_lines = [line for line in lines if "," in line]
-    if csv_lines:
-        field_counts = [len(line.split(",")) for line in csv_lines]
-        consistent_fields = len(set(field_counts)) <= 2  # Allow header/data variation
-        assert consistent_fields, f"Inconsistent CSV field counts: {field_counts}"
-        assert (
-            len(csv_lines) >= len(lines) / 2
-        ), "Less than half the output appears to be CSV format"
-
-
 # =========================
 # SPECIFIC FILE FORMAT CHECKS
 # =========================
-
-
-@then('the file "{filename}" should be in CSV format')
-def then_file_should_be_csv_format(context, filename):
-    """Legacy: verify specific file is in CSV format."""
-    from pathlib import Path
-
-    file_path = Path(context.project_root) / filename
-    assert file_path.exists(), f"File {filename} does not exist"
-
-    content = file_path.read_text(encoding="utf-8")
-    lines = [line.strip() for line in content.strip().split("\n") if line.strip()]
-    assert lines, f"File {filename} is empty"
-
-    # Check for CSV characteristics
-    csv_lines = [line for line in lines if "," in line]
-    assert (
-        len(csv_lines) >= len(lines) / 2
-    ), f"File {filename} does not appear to be CSV format"
 
 
 # =========================
@@ -428,11 +356,7 @@ def given_directory_alt(context, dirname):
     common_steps.step_create_directory(context, dirname)
 
 
-# Handle command patterns with trailing spaces from scenario outlines
-@when('I run jbom command "{command}" ')
-def when_run_jbom_command_trailing_space(context, command):
-    """Legacy: handle jbom commands with trailing spaces."""
-    common_steps.step_run_jbom_command(context, command.strip())
+# Trailing space command handler removed - fixed scenario outlines to use explicit location context
 
 
 # --------------------------

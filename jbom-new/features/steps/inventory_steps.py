@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import csv
+import stat
+from pathlib import Path
 
 from behave import given, then
 
@@ -257,3 +259,19 @@ def then_output_contains_inventory_data(context) -> None:
         line for line in lines[1:] if line and not line.replace(",", "").strip() == ""
     ]
     assert data_lines, f"Expected non-empty inventory data rows. Output: {out}"
+
+
+@given("the directory is read-only")
+def given_directory_readonly(context):
+    """Make the current project directory read-only for file safety testing.
+
+    Used exclusively by inventory/file_safety.feature to test backup behavior
+    when the target directory cannot be written to.
+    """
+    # Make the project directory read-only
+    project_dir = Path(context.project_root)
+    current_permissions = project_dir.stat().st_mode
+    project_dir.chmod(current_permissions & ~stat.S_IWRITE)
+
+    # Store original permissions for cleanup
+    context.original_permissions = current_permissions

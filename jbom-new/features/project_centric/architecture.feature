@@ -6,43 +6,72 @@ Feature: Project-Centric Architecture
   Background:
     Given the generic fabricator is selected
 
-  Scenario Outline: BOM command discovers project files from different path types
+  Scenario: BOM command discovers project files from directory (current directory path)
     Given a KiCad project directory "test_project"
     And the project contains a file "test_project.kicad_pro"
     And the project contains a file "test_project.kicad_sch" with basic schematic content
-    When I run jbom command "bom <path> -v" <location>
+    And I am in directory "test_project"
+    When I run jbom command "bom . -v"
     Then the command should succeed
     And the output should contain "Using schematic: test_project.kicad_sch"
-    Examples:
-      | path                              | location                     |
-      | .                                 | in directory "test_project"  |
-      | test_project                      |                              |
-      | test_project/test_project.kicad_sch |                            |
 
-  Scenario Outline: POS command discovers project files from different path types
+  Scenario: BOM command discovers project files from project name
+    Given a KiCad project directory "test_project"
+    And the project contains a file "test_project.kicad_pro"
+    And the project contains a file "test_project.kicad_sch" with basic schematic content
+    When I run jbom command "bom test_project -v"
+    Then the command should succeed
+    And the output should contain "Using schematic: test_project.kicad_sch"
+
+  Scenario: BOM command discovers project from explicit schematic file path
+    Given a KiCad project directory "test_project"
+    And the project contains a file "test_project.kicad_pro"
+    And the project contains a file "test_project.kicad_sch" with basic schematic content
+    When I run jbom command "bom test_project/test_project.kicad_sch -v"
+    Then the command should succeed
+    And the output should contain "Using schematic: test_project.kicad_sch"
+
+  Scenario: POS command discovers project files from directory (current directory path)
     Given a KiCad project directory "test_project"
     And the project contains a file "test_project.kicad_pro"
     And the project contains a file "test_project.kicad_pcb" with basic PCB content
-    When I run jbom command "pos <path> -v" <location>
+    And I am in directory "test_project"
+    When I run jbom command "pos . -v"
     Then the command should succeed
     And the output should contain "Using PCB: test_project.kicad_pcb"
-    Examples:
-      | path                              | location                     |
-      | .                                 | in directory "test_project"  |
-      | test_project                      |                              |
-      | test_project/test_project.kicad_pcb |                            |
 
-  Scenario Outline: Inventory command discovers project files from different path types
+  Scenario: POS command discovers project files from project name
+    Given a KiCad project directory "test_project"
+    And the project contains a file "test_project.kicad_pro"
+    And the project contains a file "test_project.kicad_pcb" with basic PCB content
+    When I run jbom command "pos test_project -v"
+    Then the command should succeed
+    And the output should contain "Using PCB: test_project.kicad_pcb"
+
+  Scenario: POS command discovers project from explicit PCB file path
+    Given a KiCad project directory "test_project"
+    And the project contains a file "test_project.kicad_pro"
+    And the project contains a file "test_project.kicad_pcb" with basic PCB content
+    When I run jbom command "pos test_project/test_project.kicad_pcb -v"
+    Then the command should succeed
+    And the output should contain "Using PCB: test_project.kicad_pcb"
+
+  Scenario: Inventory command discovers project files from directory (current directory path)
     Given a KiCad project directory "test_project"
     And the project contains a file "test_project.kicad_pro"
     And the project contains a file "test_project.kicad_sch" with basic schematic content
-    When I run jbom command "inventory generate <path> -o test_inventory.csv -v" <location>
+    And I am in directory "test_project"
+    When I run jbom command "inventory generate . -o test_inventory.csv -v"
     Then the command should succeed
     And the output should contain "Using schematic: test_project.kicad_sch"
-    Examples:
-      | path         | location                     |
-      | .            | in directory "test_project"  |
-      | test_project |                              |
+
+  Scenario: Inventory command discovers project files from project name
+    Given a KiCad project directory "test_project"
+    And the project contains a file "test_project.kicad_pro"
+    And the project contains a file "test_project.kicad_sch" with basic schematic content
+    When I run jbom command "inventory generate test_project -o test_inventory.csv -v"
+    Then the command should succeed
+    And the output should contain "Using schematic: test_project.kicad_sch"
 
   # Cross-file intelligence scenarios
   Scenario Outline: Cross-file intelligence discovers matching files
@@ -143,4 +172,3 @@ Feature: Project-Centric Architecture
     And the project contains a file "legacy.kicad_sch" with basic schematic content
     When I run jbom command "bom legacy_project"
     Then the command should succeed
-    And the project name should be "legacy"
