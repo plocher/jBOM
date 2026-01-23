@@ -18,19 +18,6 @@ import common_steps
 #   4. Tests real-world compatibility, not circular validation
 
 
-@given('"{main}" contains component "{ref}" with value "{value}"')
-def given_schematic_contains_component(context, main, ref, value):
-    """Legacy: add component to specific schematic."""
-    from behave.model import Table, Row
-
-    # Create table context for the component
-    context.table = Table(
-        headings=["Reference", "Value", "Footprint"],
-        rows=[Row(table=None, cells=[ref, value, "R_0805_2012"])],
-    )
-    project_centric_steps.given_named_schematic_contains(context, main)
-
-
 @then('the file "{filename}" should not contain "{text}"')
 def then_file_should_not_contain(context, filename, text):
     """Legacy: check file does not contain text."""
