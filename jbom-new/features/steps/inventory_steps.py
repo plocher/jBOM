@@ -23,14 +23,6 @@ def given_inventory_file_that_contains(context, filename: str) -> None:
                 writer.writerow(row.as_dict())
 
 
-@given("an inventory file that contains:")
-def given_default_inventory_file_that_contains(context) -> None:
-    """Create inventory.csv file with table data (canonical pattern)."""
-    filename = "inventory.csv"
-    given_inventory_file_that_contains(context, filename)
-    context.inventory_filename = filename
-
-
 @given('an empty inventory file "{filename}"')
 def given_empty_inventory_file(context, filename: str) -> None:
     p = context.project_root / filename
