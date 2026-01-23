@@ -18,12 +18,6 @@ import common_steps
 #   4. Tests real-world compatibility, not circular validation
 
 
-@given('a hierarchical project "{name}"')
-def given_hierarchical_project(context, name):
-    """Legacy: create hierarchical project setup."""
-    project_centric_steps.given_kicad_project_directory(context, name)
-
-
 @given('"{main}" contains component "{ref}" with value "{value}"')
 def given_schematic_contains_component(context, main, ref, value):
     """Legacy: add component to specific schematic."""
