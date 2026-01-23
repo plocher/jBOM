@@ -21,22 +21,7 @@ import bom_steps
 # --------------------------
 
 
-@given("a standard test schematic that contains:")
-def given_standard_test_schematic(context):
-    """Legacy: delegate to canonical schematic creation."""
-    project_centric_steps.given_simple_schematic(context)
-
-
-@given("a basic schematic that contains:")
-def given_basic_schematic(context):
-    """Legacy: delegate to canonical schematic creation."""
-    project_centric_steps.given_simple_schematic(context)
-
-
-@given("a test schematic that contains:")
-def given_test_schematic(context):
-    """Legacy: delegate to canonical schematic creation."""
-    project_centric_steps.given_simple_schematic(context)
+# Redundant schematic patterns removed - normalized in feature files via transformation
 
 
 @given("an empty schematic")
@@ -70,22 +55,7 @@ def given_minimal_schematic(context):
 # --------------------------
 
 
-@given("a standard test PCB that contains:")
-def given_standard_test_pcb(context):
-    """Legacy: delegate to canonical PCB creation."""
-    project_centric_steps.given_simple_pcb(context)
-
-
-@given("a basic PCB that contains:")
-def given_basic_pcb(context):
-    """Legacy: delegate to canonical PCB creation."""
-    project_centric_steps.given_simple_pcb(context)
-
-
-@given("a test PCB that contains:")
-def given_test_pcb(context):
-    """Legacy: delegate to canonical PCB creation."""
-    project_centric_steps.given_simple_pcb(context)
+# Redundant PCB patterns removed - normalized in feature files via transformation
 
 
 # --------------------------
@@ -93,22 +63,7 @@ def given_test_pcb(context):
 # --------------------------
 
 
-@given("the default fabricator is selected")
-def given_default_fabricator(context):
-    """Legacy: delegate to generic fabricator."""
-    project_centric_steps.given_generic_fabricator(context)
-
-
-@given("using the generic fabricator")
-def given_using_generic_fabricator(context):
-    """Legacy: delegate to generic fabricator."""
-    project_centric_steps.given_generic_fabricator(context)
-
-
-@given("I select the generic fabricator")
-def given_i_select_generic_fabricator(context):
-    """Legacy: delegate to generic fabricator."""
-    project_centric_steps.given_generic_fabricator(context)
+# Redundant fabricator patterns removed - normalized in feature files via transformation
 
 
 # --------------------------
@@ -116,22 +71,7 @@ def given_i_select_generic_fabricator(context):
 # --------------------------
 
 
-@when('I run the jbom command with "{args}"')
-def when_run_jbom_command_with(context, args):
-    """Legacy: delegate to canonical command execution."""
-    common_steps.step_run_jbom_command(context, args)
-
-
-@when('I execute "{command}"')
-def when_execute_command(context, command):
-    """Legacy: delegate to canonical command execution."""
-    common_steps.step_run_command(context, command)
-
-
-@when('I execute jbom "{args}"')
-def when_execute_jbom(context, args):
-    """Legacy: delegate to canonical jbom execution."""
-    common_steps.step_run_jbom_command(context, args)
+# Redundant command execution patterns removed - normalized in feature files via transformation
 
 
 # --------------------------
@@ -139,46 +79,10 @@ def when_execute_jbom(context, args):
 # --------------------------
 
 
-@then("the command succeeds")
-def then_command_succeeds(context):
-    """Legacy: delegate to canonical success check."""
-    common_steps.step_command_should_succeed(context)
+# Redundant assertion patterns removed - normalized in feature files via transformation
 
 
-@then("the command fails")
-def then_command_fails(context):
-    """Legacy: delegate to canonical failure check."""
-    common_steps.step_command_should_fail(context)
-
-
-@then('I see "{text}"')
-def then_i_see_text(context, text):
-    """Legacy: delegate to canonical text verification."""
-    common_steps.step_see_text(context, text)
-
-
-@then('the output includes "{text}"')
-def then_output_includes(context, text):
-    """Legacy: delegate to canonical output check."""
-    common_steps.step_output_should_contain(context, text)
-
-
-@then('the output does not include "{text}"')
-def then_output_not_includes(context, text):
-    """Legacy: delegate to canonical negative output check."""
-    common_steps.step_output_should_not_contain(context, text)
-
-
-@then('a CSV file "{filename}" should exist')
-def then_csv_file_exists(context, filename):
-    """Legacy: delegate to canonical file existence check."""
-    common_steps.step_file_should_exist(context, filename)
-
-
-@then('the CSV file "{filename}" should contain "{text}"')
-def then_csv_file_contains(context, filename, text):
-    """Legacy: delegate to canonical file content check."""
-    common_steps.step_file_should_contain(context, filename, text)
+# Redundant CSV file patterns removed - normalized in feature files via transformation
 
 
 # --------------------------
@@ -226,16 +130,7 @@ def given_directory(context, dirname):
 # --------------------------
 
 
-@given("I am in a clean workspace")
-def given_clean_workspace(context):
-    """Legacy: delegate to canonical workspace setup."""
-    common_steps.step_clean_test_workspace(context)
-
-
-@given("I have a clean test environment")
-def given_clean_test_environment(context):
-    """Legacy: delegate to canonical workspace setup."""
-    common_steps.step_clean_test_workspace(context)
+# Redundant workspace patterns removed - normalized in feature files via transformation
 
 
 # --------------------------
@@ -255,16 +150,7 @@ def when_run_jbom_with(context, args):
     common_steps.step_run_jbom_command(context, args)
 
 
-@then("the result should be successful")
-def then_result_successful(context):
-    """Legacy: alternative success check."""
-    common_steps.step_command_should_succeed(context)
-
-
-@then("the result should fail")
-def then_result_should_fail(context):
-    """Legacy: alternative failure check."""
-    common_steps.step_command_should_fail(context)
+# Redundant result patterns removed - normalized in feature files via transformation
 
 
 # =========================
@@ -361,10 +247,7 @@ def then_no_backup_files(context):
 # =========================
 
 
-@given("a comprehensive test schematic that contains:")
-def given_comprehensive_test_schematic(context):
-    """Legacy: delegate to canonical schematic creation."""
-    project_centric_steps.given_simple_schematic(context)
+# Redundant comprehensive schematic pattern removed - normalized in feature files via transformation
 
 
 @given('a schematic named "{filename}" that contains:')

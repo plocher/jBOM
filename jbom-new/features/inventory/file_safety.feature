@@ -19,7 +19,7 @@ Feature: Inventory File Safety and Backup
     When I run jbom command "inventory -o existing_inventory.csv"
     Then the command should fail
     And the output should contain "Error: Output file 'existing_inventory.csv' already exists. Use --force to overwrite."
-    And the file "existing_inventory.csv" should still contain "RES_1K"
+    And the file "existing_inventory.csv" should contain "RES_1K"
 
   Scenario: Allow overwrite with --force flag
     Given a file named "existing_inventory.csv" exists with content:

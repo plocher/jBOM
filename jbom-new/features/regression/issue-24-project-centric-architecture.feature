@@ -16,7 +16,7 @@ Feature: [Issue #24] Project-Centric Architecture - File-centric commands break 
   #   Should accept directories, base names, and provide cross-file intelligence
 
   Background:
-    Given a test workspace
+    Given a clean test workspace
     And a KiCad project directory "test_project"
     And the project contains a file "test_project.kicad_pro" with content:
       """

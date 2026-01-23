@@ -13,7 +13,7 @@ Feature: Multi-Source Inventory
       | IPN       | Category  | Value | Description         | Package | Manufacturer | MFGPN           |
       | RES_10K   | RESISTOR  | 10k   | Secondary resistor  | 0603    | Vishay       | CRCW060310K0FKEA|
       | LED_RED   | LED       | RED   | Red LED 20mA        | 0603    | Kingbright   | APT1608SRCPRV   |
-    And a test schematic that contains:
+    And a schematic that contains:
       | Reference | Value | Footprint   | LibID     |
       | R1        | 10k   | R_0603_1608 | Device:R  |
       | R2        | 22k   | R_0603_1608 | Device:R  |

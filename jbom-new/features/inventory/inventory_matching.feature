@@ -11,7 +11,7 @@ Feature: Inventory Matching and Filtering
       | RES_1K    | RESISTOR  | 1k    | 1k Ohm resistor    | 0603    | Yageo        | RC0603FR-071KL  |
       | CAP_100N  | CAPACITOR | 100nF | 100nF ceramic cap  | 0603    | Murata       | GRM188R71H104KA |
       | LED_RED   | LED       | RED   | Red LED 20mA       | 0603    | Kingbright   | APT1608SRCPRV   |
-    And a test schematic that contains:
+    And a schematic that contains:
       | Reference | Value | Footprint   | LibID     |
       | R1        | 10k   | R_0603_1608 | Device:R  |
       | R2        | 22k   | R_0603_1608 | Device:R  |

@@ -5,7 +5,7 @@ Feature: BOM Generation (Core Functionality)
 
   Background:
     Given the generic fabricator is selected
-    And a standard test schematic that contains:
+    And a schematic that contains:
       | Reference | Value | Footprint         |
       | R1        | 10K   | R_0805_2012       |
       | C1        | 100nF | C_0603_1608       |
