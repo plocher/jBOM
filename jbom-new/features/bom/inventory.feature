@@ -44,5 +44,5 @@ Feature: BOM Inventory Enhancement
     And an inventory file "inventory.csv" with matching data
     When I run jbom command "bom --inventory inventory.csv -o enhanced_bom.csv"
     Then the command should succeed
-    And a file named "enhanced_bom.csv" exists
+    And a file named "enhanced_bom.csv" should exist
     And the file "enhanced_bom.csv" contains inventory columns

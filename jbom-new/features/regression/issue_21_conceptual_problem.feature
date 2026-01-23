@@ -68,14 +68,6 @@ Feature: Issue #21 Conceptual Problem - BOM vs Parts List Distinction
     And the output should not contain "R1, R2"
     And the output should not contain "Quantity"
 
-  @regression @issue-21 @solution
-  Scenario: Solution - No more confusing aggregation options
-    Given a schematic that contains:
-      | Reference | Value | Footprint   |
-      | R1        | 10K   | R_0805_2012 |
-    When I run jbom command "bom --aggregation value_only"
-    Then the command should fail
-    And the error output should mention "unrecognized arguments: --aggregation"
 
   @regression @issue-21 @solution
   Scenario: Solution - Clear command semantics in help

@@ -82,7 +82,7 @@ Feature: [Issue #24] Project-Centric Architecture - File-centric commands break 
     Given an empty directory "empty_project"
     When I run jbom command "bom empty_project"
     Then the command should fail
-    And the error output should contain "No project files found"
+    And the error output should mention "No project files found"
 
   Scenario: Edge case that could trigger regression - Base name resolution works consistently
     # Edge case: Base name resolution across all commands

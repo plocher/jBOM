@@ -24,13 +24,13 @@ Feature: Multi-Source Inventory Edge Cases
     And the output should contain "Generated inventory with 1 items"
 
   Scenario: Malformed inventory file with valid backup file
-    Given a malformed inventory file "malformed.csv" with contents:
+    Given an inventory file "malformed.csv" with contents:
       """
       This is not a valid CSV file
       Missing headers, invalid structure
       R1,10k,incomplete row
       """
-    And a valid inventory file "backup.csv" with contents:
+    And an inventory file "backup.csv" with contents:
       | IPN     | Category | Value | Description | Package | Manufacturer | MFGPN |
       | RES_10K | RESISTOR | 10k   | Backup item | 0603    | Yageo        | TEST  |
     When I run jbom command "inventory --inventory malformed.csv --inventory backup.csv -o console -v"
@@ -47,10 +47,10 @@ Feature: Multi-Source Inventory Edge Cases
     And the output should contain "Error: No components found in project. Cannot create inventory from empty schematic."
 
   Scenario: Duplicate IPN across multiple files shows precedence
-    Given a primary inventory file "dup_primary.csv" with contents:
+    Given an inventory file "dup_primary.csv" with contents:
       | IPN     | Category | Value | Description     | Package | Manufacturer | MFGPN    |
       | RES_10K | RESISTOR | 10k   | Primary version | 0603    | Yageo        | PRIMARY  |
-    And a secondary inventory file "dup_secondary.csv" with contents:
+    And an inventory file "dup_secondary.csv" with contents:
       | IPN     | Category | Value | Description       | Package | Manufacturer | MFGPN      |
       | RES_10K | RESISTOR | 10k   | Secondary version | 0603    | Vishay       | SECONDARY  |
     When I run jbom command "inventory --inventory dup_primary.csv --inventory dup_secondary.csv -o console -v"
@@ -75,7 +75,7 @@ Feature: Multi-Source Inventory Edge Cases
 
   Scenario: File permission errors handled gracefully
     Given an inaccessible inventory file "restricted.csv" with no read permissions
-    And a valid inventory file "accessible.csv" with contents:
+    And an inventory file "accessible.csv" with contents:
       | IPN     | Category | Value | Description | Package | Manufacturer | MFGPN |
       | RES_10K | RESISTOR | 10k   | Good item   | 0603    | Yageo        | GOOD  |
     When I run jbom command "inventory --inventory restricted.csv --inventory accessible.csv -o console -v"
@@ -84,7 +84,7 @@ Feature: Multi-Source Inventory Edge Cases
     And the output should contain "precedence 2: accessible.csv (1/1 items added)"
 
   Scenario: Mixed single and multiple flag usage (argument parsing edge case)
-    Given a valid inventory file "single.csv" with contents:
+    Given an inventory file "single.csv" with contents:
       | IPN     | Category | Value | Description | Package | Manufacturer | MFGPN |
       | RES_10K | RESISTOR | 10k   | Single item | 0603    | Yageo        | SINGLE |
     # Test that the argument parser handles the transition correctly

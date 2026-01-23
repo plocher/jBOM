@@ -22,7 +22,7 @@ Feature: Schematic Loading Edge Cases
     And the output contains CSV headers "References,Value,Footprint,Quantity"
 
   Scenario: Unsupported file extension is rejected
-    Given a file "not_schematic.txt" with content "hello"
+    Given I create file "not_schematic.txt" with content "hello"
     When I run "jbom bom not_schematic.txt"
     Then the command exits with code 1
     And the error output contains "Expected .kicad_sch file"

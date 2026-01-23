@@ -5,11 +5,11 @@ Feature: Multi-Source Inventory
 
   Background:
     Given the generic fabricator is selected
-    And an existing inventory file "primary_inventory.csv" with contents:
+    And an inventory file "primary_inventory.csv" with contents:
       | IPN       | Category  | Value | Description         | Package | Manufacturer | MFGPN           |
       | RES_10K   | RESISTOR  | 10k   | 10k Ohm resistor    | 0603    | Yageo        | RC0603FR-0710KL |
       | CAP_100N  | CAPACITOR | 100nF | 100nF ceramic cap   | 0603    | Murata       | GRM188R71H104KA |
-    And a secondary inventory file "secondary_inventory.csv" with contents:
+    And an inventory file "secondary_inventory.csv" with contents:
       | IPN       | Category  | Value | Description         | Package | Manufacturer | MFGPN           |
       | RES_10K   | RESISTOR  | 10k   | Secondary resistor  | 0603    | Vishay       | CRCW060310K0FKEA|
       | LED_RED   | LED       | RED   | Red LED 20mA        | 0603    | Kingbright   | APT1608SRCPRV   |
@@ -76,7 +76,7 @@ Feature: Multi-Source Inventory
   Scenario: Three inventory files with complex precedence
     # Tests that primary inventory takes precedence over secondary and tertiary for RES_10K
     # RES_10K appears in all three: Yageo (primary) should win over Vishay (secondary) and Panasonic (tertiary)
-    Given a third inventory file "tertiary_inventory.csv" with contents:
+    Given an inventory file "tertiary_inventory.csv" with contents:
       | IPN       | Category  | Value | Description         | Package | Manufacturer | MFGPN           |
       | RES_10K   | RESISTOR  | 10k   | Tertiary resistor   | 0603    | Panasonic    | ERJ-3EKF1002V   |
       | RES_22K   | RESISTOR  | 22k   | 22k Ohm resistor    | 0603    | Yageo        | RC0603FR-0722KL |

@@ -5,7 +5,7 @@ Feature: Inventory Matching and Filtering
 
   Background:
     Given the generic fabricator is selected
-    And an existing inventory file "existing_inventory.csv" with contents:
+    And an inventory file "existing_inventory.csv" with contents:
       | IPN       | Category  | Value | Description        | Package | Manufacturer | MFGPN           |
       | RES_10K   | RESISTOR  | 10k   | 10k Ohm resistor   | 0603    | Yageo        | RC0603FR-0710KL |
       | RES_1K    | RESISTOR  | 1k    | 1k Ohm resistor    | 0603    | Yageo        | RC0603FR-071KL  |

@@ -28,7 +28,7 @@ Feature: BOM Generation
       | R1        | 10K   | R_0805_2012   |
     When I run jbom command "bom -o custom_bom.csv"
     Then the command should succeed
-    And a file named "custom_bom.csv" exists
+    And a file named "custom_bom.csv" should exist
 
   Scenario: Generate BOM with console output
     Given a schematic that contains:
@@ -45,7 +45,7 @@ Feature: BOM Generation
     And the error output should mention "No schematic file found"
 
   Scenario: Handle invalid schematic file
-    Given a file "invalid.txt" with content "This is not a schematic"
+    Given I create file "invalid.txt" with content "This is not a schematic"
     When I run jbom command "bom invalid.txt"
     Then the command should fail
     And the error output should mention "Cannot resolve schematic file"
