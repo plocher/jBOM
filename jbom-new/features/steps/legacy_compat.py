@@ -13,7 +13,6 @@ from __future__ import annotations
 from behave import given, when, then
 import project_centric_steps
 import common_steps
-import bom_steps
 
 
 # --------------------------
@@ -64,18 +63,6 @@ import bom_steps
 # --------------------------
 
 
-@then("the output contains BOM headers")
-def then_output_contains_bom_headers(context):
-    """Legacy: delegate to canonical CSV headers check."""
-    bom_steps.then_output_contains_csv_headers(context)
-
-
-@then('the BOM contains "{ref}" with value "{value}"')
-def then_bom_contains_ref_value_legacy(context, ref, value):
-    """Legacy: delegate to canonical BOM assertion."""
-    project_centric_steps.then_bom_contains_ref_value(context, ref, value)
-
-
 # --------------------------
 # Legacy file operations → canonical file steps
 # --------------------------
@@ -115,12 +102,6 @@ def then_bom_contains_ref_value_legacy(context, ref, value):
 # Redundant comprehensive schematic pattern removed - normalized in feature files via transformation
 
 
-@given('a schematic named "{filename}" that contains:')
-def given_named_schematic_that_contains(context, filename):
-    """Legacy: create specifically named schematic."""
-    project_centric_steps.given_named_schematic_contains(context, filename)
-
-
 # =========================
 # OUTPUT ORDERING AND CONTENT ASSERTIONS
 # =========================
@@ -145,57 +126,16 @@ def then_ref_appears_before_ref(context, ref1, ref2):
 # =========================
 
 
+# used in project_centric/architecture.feature
 @then('the BOM should contain component "{ref}" with value "{value}"')
 def then_bom_should_contain_component_value(context, ref, value):
     """Legacy: delegate to canonical BOM assertion."""
     project_centric_steps.then_bom_contains_ref_value(context, ref, value)
 
 
-@then('the project name should be "{name}"')
-def then_project_name_should_be(context, name):
-    """Legacy: check project name in output."""
-    output = getattr(context, "last_output", "")
-    assert name in output, f"Project name '{name}' not found in output. Got: {output}"
-
-
-@then('the POS should contain component "{ref}" at position "{position}"')
-def then_pos_should_contain_component_position(context, ref, position):
-    """Legacy: delegate to canonical POS assertion."""
-    x, y = position.split(",") if "," in position else (position, "0")
-    project_centric_steps.then_pos_contains_component_at(context, ref, x, y)
-
-
-@then('the BOM title should show project name "{name}"')
-def then_bom_title_shows_project(context, name):
-    """Legacy: check BOM title contains project name."""
-    output = getattr(context, "last_output", "")
-    assert (
-        f"{name} - Bill of Materials" in output or "Bill of Materials" in output
-    ), f"BOM title with project name '{name}' not found in output"
-
-
 # =========================
 # WORKSPACE AND PROJECT SETUP
 # =========================
-
-
-@given("a test workspace")
-def given_test_workspace(context):
-    """Legacy: delegate to canonical workspace setup."""
-    common_steps.step_clean_test_workspace(context)
-
-
-@given('a KiCad project directory "{name}"')
-def given_kicad_project_directory(context, name):
-    """Legacy: create KiCad project directory."""
-    from pathlib import Path
-
-    project_dir = Path(context.project_root) / name
-    project_dir.mkdir(parents=True, exist_ok=True)
-
-    # Update context to use this as the working directory
-    context.project_root = project_dir
-    context.current_project = name
 
 
 @given('the project contains a file "{filename}" with content:')
@@ -374,31 +314,6 @@ def given_inventory_file_long_name_with_contents(context, filename):
 # =========================
 
 
-@given('a project directory "{dirname}" with legacy ".pro" file')
-def given_project_directory_with_legacy_pro(context, dirname):
-    """Legacy: create project directory with legacy .pro file."""
-    from pathlib import Path
-
-    # Create project directory
-    project_dir = Path(context.project_root) / dirname
-    project_dir.mkdir(parents=True, exist_ok=True)
-
-    # Create legacy .pro file
-    pro_file = project_dir / f"{dirname}.pro"
-    pro_file.write_text(
-        f"""# Legacy KiCad project file for {dirname}
-[general]
-version=1
-[/general]
-""",
-        encoding="utf-8",
-    )
-
-    # Update context to use this as the working directory
-    context.project_root = project_dir
-    context.current_project = dirname
-
-
 @given('the project contains a schematic with component "{ref}" with value "{value}"')
 def given_project_contains_schematic_with_component(context, ref, value):
     """Legacy: add specific component to project schematic."""
@@ -414,97 +329,6 @@ def given_project_contains_schematic_with_component(context, ref, value):
     project_centric_steps.given_simple_schematic(context)
 
 
-@given('the project contains a file "{filename}"')
-def given_project_contains_file(context, filename):
-    """Legacy: create minimal file in project."""
-    from pathlib import Path
-
-    file_path = Path(context.project_root) / filename
-    file_path.parent.mkdir(parents=True, exist_ok=True)
-
-    if filename.endswith(".kicad_pro"):
-        file_path.write_text("(kicad_project (version 1))\n", encoding="utf-8")
-    elif filename.endswith(".kicad_sch"):
-        file_path.write_text(
-            "(kicad_sch (version 20211123) (generator eeschema))\n", encoding="utf-8"
-        )
-    elif filename.endswith(".kicad_pcb"):
-        file_path.write_text(
-            "(kicad_pcb (version 20211014) (generator pcbnew))\n", encoding="utf-8"
-        )
-    else:
-        file_path.write_text("", encoding="utf-8")
-
-
-@given('the project contains a file "{filename}" with basic schematic content')
-def given_project_file_basic_schematic(context, filename):
-    """Legacy: create basic schematic file."""
-    from pathlib import Path
-
-    file_path = Path(context.project_root) / filename
-    content = """(kicad_sch (version 20211123) (generator eeschema)
-  (paper "A4")
-  (symbol (lib_id "Device:R") (at 50 50 0) (unit 1)
-    (property "Reference" "R1" (id 0) (at 52 48 0))
-    (property "Value" "10K" (id 1) (at 52 52 0))
-    (property "Footprint" "R_0805_2012" (id 2) (at 52 54 0))
-  )
-)
-"""
-    file_path.write_text(content, encoding="utf-8")
-
-
-@given('the project contains a file "{filename}" with basic PCB content')
-def given_project_file_basic_pcb(context, filename):
-    """Legacy: create basic PCB file."""
-    from pathlib import Path
-
-    file_path = Path(context.project_root) / filename
-    content = """(kicad_pcb (version 20211014) (generator pcbnew)
-  (paper "A4")
-  (footprint "R_0805_2012" (at 76.2 104.14 0) (layer "F.Cu")
-    (property "Reference" "R1")
-  )
-)
-"""
-    file_path.write_text(content, encoding="utf-8")
-
-
-@given('the project contains a schematic "{filename}" with components:')
-def given_project_contains_schematic_components(context, filename):
-    """Legacy: create schematic with component table."""
-    project_centric_steps.given_named_schematic_contains(context, filename)
-
-
-@given('the project contains a PCB "{filename}" with footprints:')
-def given_project_contains_pcb_footprints(context, filename):
-    """Legacy: create PCB with footprint table."""
-    # Use canonical PCB creation but with specific filename
-    project_centric_steps.given_simple_pcb(context)
-    # Rename the generated file
-    from pathlib import Path
-
-    old_path = Path(context.project_root) / "project.kicad_pcb"
-    new_path = Path(context.project_root) / filename
-    if old_path.exists():
-        old_path.rename(new_path)
-
-
-@given("the directory is read-only")
-def given_directory_readonly(context):
-    """Legacy: make directory read-only."""
-    from pathlib import Path
-    import stat
-
-    # Make the project directory read-only
-    project_dir = Path(context.project_root)
-    current_permissions = project_dir.stat().st_mode
-    project_dir.chmod(current_permissions & ~stat.S_IWRITE)
-
-    # Store original permissions for cleanup
-    context.original_permissions = current_permissions
-
-
 # =========================
 # HIERARCHICAL PROJECT PATTERNS
 # =========================
@@ -513,17 +337,7 @@ def given_directory_readonly(context):
 @given('a hierarchical project "{name}"')
 def given_hierarchical_project(context, name):
     """Legacy: create hierarchical project setup."""
-    given_kicad_project_directory(context, name)
-
-
-@given('the main schematic "{main}" references sheet "{child}"')
-def given_main_references_sheet(context, main, child):
-    """Legacy: delegate to canonical hierarchical reference."""
-    # Set the main schematic name for the project context
-    context.current_project = main.replace(".kicad_sch", "")
-    project_centric_steps.given_root_references_child(
-        context, child.replace(".kicad_sch", "")
-    )
+    project_centric_steps.given_kicad_project_directory(context, name)
 
 
 @given('"{main}" contains component "{ref}" with value "{value}"')
@@ -605,7 +419,7 @@ def given_inaccessible_inventory_file(context, filename):
 @given('a project named "{name}"')
 def given_project_named(context, name):
     """Legacy: create named project."""
-    given_kicad_project_directory(context, name)
+    project_centric_steps.given_kicad_project_directory(context, name)
 
 
 @given('a directory "{dirname}"')
