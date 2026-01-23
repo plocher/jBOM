@@ -158,10 +158,6 @@ def then_file_contains_csv(context, filename: str) -> None:
     assert rows and len(rows[0]) >= 2, f"CSV appears invalid or empty: {p}"
 
 
-@then('the error output contains "{text}"')
-def then_error_output_contains(context, text: str) -> None:
-    out = getattr(context, "last_output", "")
-    assert text in out, f"Expected error text '{text}' not present. Output:\n{out}"
 
 
 @then("the line count is {n:d}")
@@ -287,6 +283,23 @@ def then_console_table_should_not_contain(context, text: str) -> None:
 # -----------------
 
 
+# Field system step definitions - validation scenarios
+@then('the error output should contain "{text}"')
+def then_error_output_should_contain(context, text: str) -> None:
+    """Assert error output should contain specific text."""
+    error_output = getattr(
+        context, "last_error_output", getattr(context, "last_output", "")
+    )
+    assert_with_diagnostics(
+        text in error_output,
+        "Expected error text not found",
+        context,
+        expected=text,
+        actual=error_output,
+    )
+
+
+#  TODO Issue #31: This list needs to be dynamically constructed from the config files, not hardcoded
 # Dynamic fabricator testing step definitions
 
 

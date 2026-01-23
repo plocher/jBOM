@@ -16,7 +16,10 @@ from jbom.config.fabricators import (
     get_fabricator_presets,
     apply_fabricator_column_mapping,
 )
-from jbom.common.field_parser import parse_fields_argument
+from jbom.common.field_parser import (
+    parse_fields_argument,
+    check_fabricator_field_completeness,
+)
 from jbom.common.fields import get_available_presets
 
 
@@ -210,6 +213,14 @@ def handle_bom(args: argparse.Namespace) -> int:
         if args.verbose:
             print(f"Selected fields: {', '.join(selected_fields)}", file=sys.stderr)
 
+        # Check for missing fabricator-specific fields and warn if appropriate
+        if args.fields:  # Only warn if user explicitly provided fields
+            warning = check_fabricator_field_completeness(
+                selected_fields, fabricator, fabricator_presets
+            )
+            if warning:
+                print(warning, file=sys.stderr)
+
         # Generate basic BOM
         filters = {
             "exclude_dnp": not args.include_dnp,
@@ -317,13 +328,15 @@ def _get_available_bom_fields(components) -> dict[str, str]:
         "i:package": "Inventory: Component package",
     }
 
-    # Add any additional fields found in component attributes
+    # Add any additional fields found in component properties
     if components:
         for comp in components:
-            for attr_key in comp.attributes.keys():
-                normalized_key = attr_key.lower().replace(" ", "_")
-                if normalized_key not in fields:
-                    fields[normalized_key] = f"Component attribute: {attr_key}"
+            # Components have .properties, not .attributes
+            if hasattr(comp, "properties"):
+                for attr_key in comp.properties.keys():
+                    normalized_key = attr_key.lower().replace(" ", "_")
+                    if normalized_key not in fields:
+                        fields[normalized_key] = f"Component property: {attr_key}"
 
     return fields
 
@@ -455,19 +468,22 @@ def _get_field_value(entry, field: str) -> str:
         "reference": lambda e: e.references_string,
         "quantity": lambda e: str(e.quantity),
         "value": lambda e: e.value,
-        "description": lambda e: e.description or "",
+        "description": lambda e: e.attributes.get("description", ""),
         "footprint": lambda e: e.footprint,
-        "manufacturer": lambda e: entry.attributes.get("manufacturer", ""),
-        "mfgpn": lambda e: entry.attributes.get("manufacturer_part", ""),
-        "fabricator_part_number": lambda e: entry.attributes.get(
+        "manufacturer": lambda e: e.attributes.get("manufacturer", ""),
+        "mfgpn": lambda e: e.attributes.get("manufacturer_part", ""),
+        "fabricator_part_number": lambda e: e.attributes.get(
             "fabricator_part_number", ""
         ),
-        "smd": lambda e: "Yes" if entry.attributes.get("smd", False) else "No",
-        "lcsc": lambda e: entry.attributes.get("lcsc", ""),
+        "smd": lambda e: "Yes" if e.attributes.get("smd", False) else "No",
+        "lcsc": lambda e: e.attributes.get("lcsc", "") or e.attributes.get("LCSC", ""),
+        "package": lambda e: e.attributes.get("package", ""),
     }
 
     if field in field_mapping:
         return field_mapping[field](entry)
 
+    # Fall back to attribute lookup for unknown fields
+    return entry.attributes.get(field, "")
     # Fall back to attribute lookup for unknown fields
     return entry.attributes.get(field, "")

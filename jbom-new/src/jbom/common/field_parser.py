@@ -15,19 +15,17 @@ def parse_fields_argument(
     fabricator_id: str = "generic",
     fabricator_presets: Optional[Dict[str, Any]] = None,
 ) -> List[str]:
-    """Parse field argument with sophisticated fabricator-aware logic.
+    """Parse field argument with simple, predictable logic.
 
-    Implements the complex jBOM field selection rules:
+    Simple rules:
     1. If no --fields: use fabricator's default preset
-    2. If --fields provided: parse presets and custom fields
-    3. Smart fabricator preset injection: if no +fabricator preset in --fields,
-       silently append +fabricator preset with deduplication
-    4. Support I:/C: prefixes for inventory/component field disambiguation
+    2. If --fields provided: use exactly what user specified (presets + custom)
+    3. Always apply fabricator column mapping to final fields
 
     Args:
         fields_arg: Field argument string or None
         available_fields: Dict of available field names and descriptions
-        fabricator_id: Current fabricator ID (affects default and auto-injection)
+        fabricator_id: Current fabricator ID (used for default preset)
         fabricator_presets: Optional fabricator-specific presets from config
 
     Returns:
@@ -43,13 +41,12 @@ def parse_fields_argument(
 
     # Case 1: No fields argument - use fabricator's default preset
     if not fields_arg:
-        default_preset = "default"  # Fabricator's default preset
-        if fabricator_presets and default_preset in fabricator_presets:
-            preset_fields = fabricator_presets[default_preset].get("fields")
+        if fabricator_presets and "default" in fabricator_presets:
+            preset_fields = fabricator_presets["default"].get("fields")
             if preset_fields:
                 return preset_fields.copy()
 
-        # Fall back to standard preset if fabricator has no default
+        # Fall back to standard preset
         standard_preset = all_presets.get("standard")
         if standard_preset and standard_preset.get("fields"):
             return standard_preset["fields"].copy()
@@ -57,19 +54,10 @@ def parse_fields_argument(
         # Ultimate fallback
         return ["reference", "quantity", "value", "footprint"]
 
-    # Case 2: Parse explicit fields argument
+    # Case 2: User provided fields - parse exactly what they specified
     tokens = [t.strip() for t in fields_arg.split(",") if t.strip()]
     result: List[str] = []
-    has_fabricator_preset = False
 
-    # Check if fabricator preset is already specified
-    fabricator_preset_name = f"+{fabricator_id}"
-    for tok in tokens:
-        if tok.lower() == fabricator_preset_name.lower():
-            has_fabricator_preset = True
-            break
-
-    # Process each token
     for tok in tokens:
         if tok.startswith("+"):
             # Preset expansion
@@ -77,7 +65,6 @@ def parse_fields_argument(
             preset_def = all_presets.get(preset_name)
 
             if not preset_def:
-                # Create helpful error message
                 all_preset_names = sorted(
                     set(
                         list(FIELD_PRESETS.keys())
@@ -93,7 +80,7 @@ def parse_fields_argument(
 
             preset_fields = preset_def.get("fields")
             if preset_fields is None:
-                # 'all' preset - expand to all available fields
+                # 'all' preset
                 result.extend(available_fields.keys())
             else:
                 result.extend(preset_fields)
@@ -101,7 +88,6 @@ def parse_fields_argument(
             # Custom field name
             normalized = normalize_field_name(tok)
             if normalized not in available_fields:
-                # Try to provide helpful error
                 available_list = sorted(available_fields.keys())
                 raise ValueError(
                     f"Unknown field: '{tok}' (normalized: '{normalized}'). "
@@ -110,15 +96,6 @@ def parse_fields_argument(
                     else f"Available fields: {', '.join(available_list)}"
                 )
             result.append(normalized)
-
-    # Case 3: Smart fabricator preset injection
-    # If no fabricator preset was explicitly specified, append it silently
-    if not has_fabricator_preset and fabricator_presets:
-        fabricator_preset_def = fabricator_presets.get(
-            "default"
-        ) or fabricator_presets.get(fabricator_id)
-        if fabricator_preset_def and fabricator_preset_def.get("fields"):
-            result.extend(fabricator_preset_def["fields"])
 
     # Deduplicate while preserving order
     seen = set()
@@ -129,6 +106,46 @@ def parse_fields_argument(
             deduped.append(f)
 
     return deduped if deduped else ["reference", "quantity", "value", "footprint"]
+
+
+def check_fabricator_field_completeness(
+    selected_fields: List[str],
+    fabricator_id: str,
+    fabricator_presets: Optional[Dict[str, Any]] = None,
+) -> Optional[str]:
+    """Check if selected fields are missing important fabricator-specific fields.
+
+    Args:
+        selected_fields: Fields selected by user
+        fabricator_id: Current fabricator ID
+        fabricator_presets: Fabricator-specific presets
+
+    Returns:
+        Warning message if important fields are missing, None otherwise
+    """
+    if not fabricator_presets:
+        return None
+
+    # Get fabricator's default/recommended fields
+    default_preset = fabricator_presets.get("default")
+    if not default_preset or not default_preset.get("fields"):
+        return None
+
+    recommended_fields = set(default_preset["fields"])
+    selected_fields_set = set(selected_fields)
+
+    # Check for critical missing fields (fabricator part number, etc.)
+    critical_missing = recommended_fields - selected_fields_set
+    important_missing = [
+        f
+        for f in critical_missing
+        if f in ["fabricator_part_number", "reference", "quantity", "value"]
+    ]
+
+    if important_missing:
+        return f"Warning: Missing important {fabricator_id} fields: {', '.join(important_missing)}"
+
+    return None
 
 
 def validate_fields_against_available(

@@ -72,7 +72,7 @@ Feature: BOM Field System and Output Customization
   Scenario: Field validation - unknown field should fail
     When I run jbom command "bom -f Reference,Value,UnknownField -o -"
     Then the command should fail
-    And the error output should contain "Unknown field: UnknownField"
+    And the error output should contain "Unknown field: 'UnknownField'"
 
   @regression @current-broken
   Scenario: Preset validation - unknown preset should fail
@@ -108,19 +108,8 @@ Feature: BOM Field System and Output Customization
     And the output should contain "Designator"
     And the output should contain "LCSC"
 
-  # Current state tests - these should pass now but demonstrate the limitation
-  @regression @current-passing
-  Scenario: Current fabricator selection works but produces identical output
-    When I run jbom command "bom --fabricator generic -o -"
-    Then the command should succeed
-    And the output contains CSV headers "References,Value,Footprint,Quantity"
-    When I run jbom command "bom --fabricator jlc -o -"
-    Then the command should succeed
-    And the output contains CSV headers "References,Value,Footprint,Quantity"
-    # This demonstrates the bug - identical output despite different fabricators
-
-  @regression @current-passing
-  Scenario: Missing -f argument is handled gracefully
+  @regression @current-broken
+  Scenario: CLI argument validation - missing field list
     When I run jbom command "bom -f"
     Then the command should fail
     And the error output should contain "argument -f/--fields: expected one argument"

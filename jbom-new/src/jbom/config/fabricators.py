@@ -196,16 +196,24 @@ def apply_fabricator_column_mapping(
     column_mapping = get_fabricator_column_mapping(fabricator_id, output_type)
 
     if not column_mapping:
-        # No fabricator mapping available, use field names as-is
-        return fields
+        # No fabricator mapping available, convert field names to proper headers
+        from ..common.fields import field_to_header
+
+        return [field_to_header(field) for field in fields]
 
     # Create reverse mapping: internal field -> header
     reverse_mapping = {v: k for k, v in column_mapping.items()}
 
-    # Apply mapping, falling back to field name if no mapping exists
+    # Apply mapping, falling back to formatted field name if no mapping exists
     headers = []
     for field in fields:
-        header = reverse_mapping.get(field, field)
+        if field in reverse_mapping:
+            header = reverse_mapping[field]
+        else:
+            # No specific mapping - format the field name nicely
+            from ..common.fields import field_to_header
+
+            header = field_to_header(field)
         headers.append(header)
 
     return headers

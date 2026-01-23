@@ -42,6 +42,15 @@ presets:
       - "footprint"
       - "manufacturer"
       - "fabricator_part_number"
+  generic:
+    description: "Generic preset alias"
+    fields:
+      - "reference"
+      - "quantity"
+      - "description"
+      - "value"
+      - "manufacturer"
+      - "fabricator_part_number"
 
 cli_aliases:
   flags: ["--generic"]
