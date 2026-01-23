@@ -18,7 +18,7 @@ Feature: BOM Aggregation (DEPRECATED - Issue #21)
       | R1        | 10K   | R_0805_2012 |
       | R2        | 10K   | R_0805_2012 |
       | R3        | 10K   | R_0603_1608 |
-    When I run jbom command "bom --aggregation value_footprint"
+    When I run jbom command "bom -o -"
     Then the command should succeed
     And the CSV output has a row where
       | References | Value | Footprint   | Quantity |
@@ -33,7 +33,8 @@ Feature: BOM Aggregation (DEPRECATED - Issue #21)
       | R1        | 10K   | R_0805_2012 |
       | R2        | 10K   | R_0603_1608 |
     When I run jbom command "bom --aggregation value_only"
-    Then the command should succeed
+    Then the command should fail
+    And the error output should mention "unrecognized arguments: --aggregation"
     And the CSV output has a row where
       | References | Value | Footprint   | Quantity |
       | "R1, R2"   | 10K   |             | 2        |

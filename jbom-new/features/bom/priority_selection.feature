@@ -13,7 +13,7 @@ Feature: BOM Priority and Selection Rules
       | R10       | 10K   | R_0805_2012 |
       | R2        | 10K   | R_0805_2012 |
       | R1        | 10K   | R_0805_2012 |
-    When I run jbom command "bom --aggregation value_footprint"
+    When I run jbom command "bom -o -"
     Then the command should succeed
     And the CSV output has a row where
       | References       | Value | Footprint   | Quantity |
