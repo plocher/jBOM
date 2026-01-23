@@ -1,6 +1,65 @@
 # CHANGELOG
 
 
+## v6.1.0 (2026-01-23)
+
+### Features
+
+* feat: Implement sophisticated field parsing with fabricator logic
+
+- Rewrite field parser to handle complex jBOM field selection rules
+- Add complete JLC fabricator configuration with presets
+- Implement smart fabricator preset injection with deduplication
+- Support fabricator-specific defaults and column mappings
+- Handle I:/C: prefix system for field disambiguation
+- Foundation for sophisticated field customization per Issue #42
+
+Co-Authored-By: Warp <agent@warp.dev> ([`09cb718`](https://github.com/plocher/jBOM/commit/09cb71881be27711bd2ca075e71cb0423e658da1))
+
+* feat: Add -f/--fields argument and fabricator configs to BOM CLI
+
+- Add -f/--fields argument with preset and custom field support
+- Add --list-fields argument for field discovery
+- Copy fabricator configurations from legacy system
+- Enable dynamic fabricator choice discovery
+- Foundation in place to implement field parsing and output formatting
+
+Co-Authored-By: Warp <agent@warp.dev> ([`e67ca0f`](https://github.com/plocher/jBOM/commit/e67ca0fe55f38105b372674e373a56157691f94b))
+
+* feat: Implement core field system foundation
+
+- Create field normalization module with normalize_field_name() and field_to_header()
+- Add field parser with support for +preset,custom,I:field syntax
+- Include fabricator preset loading and column mapping functions
+- Support global presets (minimal, standard, generic, all) and fabricator-specific presets
+- Provide comprehensive field validation and error messages
+- Foundation for TDD implementation of Issue #42 field system
+
+Co-Authored-By: Warp <agent@warp.dev> ([`f13664c`](https://github.com/plocher/jBOM/commit/f13664ccb62c8d42375577e9bb5fc1ff5ba72732))
+
+* feat: Add BDD step definitions for field system tests
+
+- Add missing step definitions for regression test scenarios
+- Support "should contain CSV headers", "should not contain CSV headers"
+- Support console table header validation
+- Enable proper TDD workflow with failing tests
+- Fix linting issues and remove duplicate code
+
+Co-Authored-By: Warp <agent@warp.dev> ([`c240f95`](https://github.com/plocher/jBOM/commit/c240f95a63ff2e6f2aade69ebccfde8b6cbb420a))
+
+### Unknown
+
+* Merge pull request #43 from plocher/feature/issue-42-fabricator-field-system
+
+Issue #42: Sophisticated Fabricator Field System and Output Customization ([`a060c24`](https://github.com/plocher/jBOM/commit/a060c24b8fbbb1c21b839a5742a53a4167359920))
+
+* doc: agent update ([`f188eb0`](https://github.com/plocher/jBOM/commit/f188eb0655a935127b1ba58b21184d88db2256ac))
+
+* Apply black formatting to bom_steps.py
+
+Co-Authored-By: Warp <agent@warp.dev> ([`3c9660d`](https://github.com/plocher/jBOM/commit/3c9660dd48791d6817c7f3adba76d0fe43158a37))
+
+
 ## v6.0.0 (2026-01-23)
 
 ### Breaking
