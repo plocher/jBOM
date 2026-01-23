@@ -1,6 +1,263 @@
 # CHANGELOG
 
 
+## v6.0.0 (2026-01-23)
+
+### Breaking
+
+* fix!: replace hardcoded fabricator choices with dynamic discovery
+
+- Update bom.py and parts.py to use get_available_fabricators()
+- CLI help now shows dynamic fabricator list instead of hardcoded
+- Fabricators automatically discovered from config files at runtime
+- Addresses Issue #23: dynamic fabricator list in CLI help
+
+Co-Authored-By: Warp <agent@warp.dev> ([`d464979`](https://github.com/plocher/jBOM/commit/d464979f0408916ea8914107af4c80f0c9cb05d7))
+
+### Bug Fixes
+
+* fix: replace hardcoded fabricators in BDD steps with dynamic discovery
+
+- Replace _get_available_fabricators() hardcoded list with import
+- Update fabricator testing step definitions for dynamic discovery
+- Remove TODO comments about hardcoded fabricator lists
+- Fix import placement to satisfy flake8
+- Addresses Issue #31: dynamic fabricator discovery in tests
+
+Co-Authored-By: Warp <agent@warp.dev> ([`d566175`](https://github.com/plocher/jBOM/commit/d56617507704963dd87a2ff155f1b2401cce0f6d))
+
+### Features
+
+* feat: extend FabricatorConfig with complete feature set
+
+- Add bom_columns, part_number, presets, cli_aliases fields
+- Update load_fabricator() to parse complete config structure
+- Add get_available_fabricators() for dynamic discovery
+- Maintain backward compatibility with existing pos_columns usage
+- Addresses Issue #22: comprehensive fabricator system
+
+Co-Authored-By: Warp <agent@warp.dev> ([`4ec0303`](https://github.com/plocher/jBOM/commit/4ec03030c7b6894addfef5a7ceb8845cc85bb1ce))
+
+* feat: migrate fabricator configs from legacy system
+
+- Copy generic.fab.yaml, pcbway.fab.yaml, seeed.fab.yaml from legacy
+- Update jlc.fab.yaml with complete configuration structure
+- All configs now include bom_columns, part_number, presets, cli_aliases
+- Addresses Issue #22: comprehensive fabricator configurations
+
+Co-Authored-By: Warp <agent@warp.dev> ([`e5ce763`](https://github.com/plocher/jBOM/commit/e5ce763ae0151e9e110b11ece06cda325ac5c213))
+
+### Unknown
+
+* Merge pull request #41 from plocher/feature/issues-22-23-31-fabricator-config-migration
+
+Migrate fabricator config system and implement dynamic discovery ([`aa45f14`](https://github.com/plocher/jBOM/commit/aa45f14f9dd78e45e992014e99763db64a1e8cc2))
+
+* doc:Agent updates ([`b1ec70d`](https://github.com/plocher/jBOM/commit/b1ec70d0b579ecb5143e0c7ca8dd62c3f68fcd04))
+
+* Merge pull request #39 from plocher/issue-25-inventory-features-phase2
+
+Complete Issue #25 Phase 2: Advanced Inventory Management with Documentation ([`c35410a`](https://github.com/plocher/jBOM/commit/c35410abb3adcb799cd4942e41c3fdbf4c4f1f9f))
+
+* Add comprehensive Gherkin test coverage for multi-source inventory
+
+Three new comprehensive feature files:
+
+features/inventory/multi_source.feature (expanded):
+- 8+ scenarios covering multiple inventory file combinations
+- Precedence testing with 3 inventory files
+- Edge cases: empty files, missing files, backward compatibility
+- File export with multi-source data
+- Complex precedence verification (primary > secondary > tertiary)
+
+features/bom/inventory_enhancement.feature (new):
+- 10 scenarios covering BOM inventory enhancement
+- Single and multi-file inventory enhancement
+- CSV output with inventory columns (Manufacturer, MFGPN, etc.)
+- File output testing with enhanced data
+- Fabricator compatibility and filtering preservation
+- Verbose output validation
+- Error handling for missing files
+
+features/inventory/multi_source_edge_cases.feature (new):
+- 9 edge case scenarios for robustness testing
+- Error handling: missing files, malformed CSV, permission errors
+- Precedence edge cases: duplicate IPNs, large file counts
+- Special character handling and encoding tests
+- Argument parsing edge cases and stress testing
+- Graceful degradation when some files fail
+
+Total coverage:
+✅ 27 new comprehensive test scenarios
+✅ Multi-source precedence logic thoroughly tested
+✅ BOM enhancement workflows completely covered
+✅ Edge cases and error conditions validated
+✅ Professional BDD scenario structure with DRY backgrounds
+
+This provides bulletproof test coverage for the multi-source inventory
+functionality across both inventory and BOM commands.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`e836a35`](https://github.com/plocher/jBOM/commit/e836a35b8b9678d3ebe0a85049c28173ff5139bf))
+
+* Implement multi-source inventory support (Phase 2C)
+
+Major new capability: Multiple --inventory files with precedence
+
+inventory command:
+- Multiple --inventory flags supported: --inventory primary.csv --inventory secondary.csv
+- First file has precedence (primary overrides secondary for same IPN)
+- Sophisticated merging logic with verbose precedence reporting
+- Updated ComponentInventoryMatcher to support manual inventory setting
+
+BOM command:
+- Multiple --inventory flags supported for BOM enhancement
+- Currently uses primary file (full multi-file enhancement planned)
+- Verbose output shows multi-file detection
+
+multi_source.feature:
+- Removed @wip tags - feature is now implemented
+- Comprehensive test scenarios for precedence and merging
+- Background with strategic test data (overlapping/unique IPNs)
+
+Use cases now supported:
+✅ jbom inventory project --inventory CompanyGeneral.csv --inventory MyLocal.csv
+✅ jbom bom project --inventory existing.csv --inventory new.csv
+✅ Iterative workflow: generate → enhance → test with multiple sources
+
+This enables the sophisticated sourcing workflows requested, with proper
+precedence handling and verbose feedback for debugging.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`b8f67fb`](https://github.com/plocher/jBOM/commit/b8f67fb9c37ca31a6cec7f10a818d61ff9a28b2f))
+
+* Document DRY Background pattern design decision in features README
+
+Added comprehensive guidance on when and how to apply DRY Background patterns:
+
+New section: 'DRY Background Pattern (DESIGN DECISION)'
+- Clear criteria: Use when 3+ scenarios have repetitive component definitions
+- Before/after examples showing the transformation
+- Benefits: Single source of truth, behavior focus, easier maintenance
+- Strategic design guidance for rich Background data
+
+New anti-pattern section: 'Don't over-apply DRY Background pattern'
+- When NOT to use Background (scenarios with different component needs)
+- Rule of thumb: Use when scenarios share 80%+ of component setup
+- Clear examples of appropriate individual Given clauses
+
+Documentation captures the rationale behind our systematic DRY refactoring
+so future developers understand why this pattern is used consistently
+across BOM, POS, inventory, and parts feature files.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`3028a22`](https://github.com/plocher/jBOM/commit/3028a22f860864681fe89984bcc0e8c64cf1f5c9))
+
+* Extend DRY principles to BOM and Parts feature files
+
+Applied comprehensive Background cleanup to highest-impact files:
+
+parts/core.feature:
+- Consolidated 7 repetitive schematic setups into comprehensive Background
+- Removed 21 lines of duplicate Given clauses
+- Background includes R1, R2, R10, C1, C20, U1 for complete test coverage
+- Natural sorting and aggregation tests now use shared data
+
+bom/core.feature:
+- Consolidated 4 repetitive setups into standard Background
+- Updated scenario names to reflect human-first defaults
+- Clean separation between basic, file output, and console scenarios
+
+bom/output.feature:
+- Consolidated 4 repetitive setups with comprehensive test data
+- Background includes multiple resistors for aggregation testing
+- Scenarios focus purely on output behavior verification
+
+Impact:
+✅ Removed ~35 lines of repetitive Given clauses
+✅ Single source of truth for test data per feature
+✅ Consistent test data prevents flaky tests
+✅ Easier maintenance when adding new test scenarios
+✅ Better readability - scenarios focus on behavior
+
+DRY principle systematically applied to most repetitive feature files.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`acd7282`](https://github.com/plocher/jBOM/commit/acd7282d53a60a2f4d159760806374b84414909c))
+
+* Apply DRY principles to Gherkin scenarios for clarity
+
+Refactored feature files to use Background setup:
+
+inventory/inventory_matching.feature:
+- Consolidated common schematic setup into Background
+- Removed 18 lines of repetitive Given clauses
+- Scenarios now focus purely on behavior verification
+- Easier to maintain and modify test data
+
+ux_consistency.feature:
+- Added complete project setup in Background
+- Removed redundant Given clauses from all scenarios
+- Cleaner focus on UX behavior testing
+
+Benefits:
+✅ Reduced duplication by ~30 lines
+✅ Single source of truth for test data
+✅ Scenarios focus on behavior, not setup
+✅ Easier maintenance when test data changes
+✅ Improved readability and clarity
+
+DRY principle applied while maintaining comprehensive test coverage.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`a9acbb0`](https://github.com/plocher/jBOM/commit/a9acbb01dc4f1c546c1b00f7637ca2e666818ef7))
+
+* Add comprehensive Gherkin test scenarios for Phase 2 functionality
+
+New feature files:
+- inventory/inventory_matching.feature: Tests --inventory and --filter-matches functionality
+- inventory/file_safety.feature: Tests --force flag and backup functionality
+- ux_consistency.feature: Tests human-first defaults across BOM/POS/inventory
+
+Updated existing files:
+- inventory/core.feature: Updated to reflect console table defaults
+- pos/core.feature: Updated to reflect console table defaults
+
+Test coverage for:
+✅ Inventory matching with sophisticated scoring
+✅ Component filtering with --filter-matches
+✅ File safety with --force and timestamped backups
+✅ UX consistency across all three commands
+✅ Human-first defaults (console tables by default)
+✅ Error handling and edge cases
+✅ Verbose output and debug information
+
+Co-Authored-By: Warp <agent@warp.dev> ([`96c80fd`](https://github.com/plocher/jBOM/commit/96c80fd1e1065b4cbf6b9ab46233e9323e9b8bba))
+
+* Complete Phase 2B: Production-ready safety features
+
+- Add --force flag for overwriting existing files
+- Implement timestamped backup functionality before file overwrites
+- Add file existence checking with user-friendly error messages
+- Enhanced _output_inventory with safety checks and backup creation
+- File naming: {filename}.backup.YYYYMMDD_HHMMSS{extension}
+- Verbose mode shows backup creation details
+
+Issue #25 Phase 2 now complete: inventory ADD/UPDATE operations with mature matching logic and production safety features.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`e26c5e6`](https://github.com/plocher/jBOM/commit/e26c5e6966d6a885aad848cb480f8212745768c2))
+
+* Implement Phase 2A: UX consistency and core inventory matching
+
+- Fixed POS command default output to console table (UX consistency)
+- Added --inventory and --filter-matches flags to inventory command
+- Created mature component inventory matcher service adapted from old jBOM
+- Integrated sophisticated matching logic with type, value, package, and property scoring
+- Default behavior: append everything (no magic filtering)
+- --filter-matches: exclude components that match existing inventory
+- Human-first defaults: all three commands (BOM, POS, inventory) now default to console tables
+- Updated tests to reflect simplified interface (no --aggregation since BOMs are always aggregated)
+
+Breaking changes for UX consistency across BOM, POS, and inventory commands.
+
+Co-Authored-By: Warp <agent@warp.dev> ([`ca76621`](https://github.com/plocher/jBOM/commit/ca766215f55d17bc7157aef50afe6259b107c5b0))
+
+
 ## v5.0.0 (2026-01-22)
 
 ### Breaking
