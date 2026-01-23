@@ -108,6 +108,10 @@ jBOM is a sophisticated KiCad Bill of Materials generator in Python. It matches 
 
 ### Testing Requirements
 - **All unit and functional tests must pass** before attempting git commit
+- **Behave functional tests MUST pass before opening or merging any PR.**
+  - Run from `jbom-new/`: `python -m behave --format progress`
+  - Merges are blocked if any scenarios are failed, error, or undefined
+  - During development it's fine to run by tag (e.g., `--tags @regression`), but run the full suite before merge
 - **Create functional tests** as needed in the `tests/` folder using TDD
 - **Update/delete unit tests** proactively as internal design changes
 - **Use behave/Gherkin** for user-facing behavior validation
