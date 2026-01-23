@@ -100,5 +100,5 @@ Feature: BOM Inventory Enhancement
     Then the command should succeed
     And the output should contain "Enhancing BOM with 2 inventory file(s)"
     And the output should contain "References,Value,Footprint,Quantity"
-    And the output should contain "R1, R2,10k"  # Should be enhanced from primary inventory
-    And the output should contain "U1,LM358"    # Available in secondary but using primary for now
+    And the output should contain "R1, R2,10k"
+    And the output should contain "U1,LM358"

@@ -27,13 +27,29 @@ def _write_schematic_local(
         val = row.get("Value", "VAL")
         fp = row.get("Footprint", "")
         lib = row.get("LibID", "Device:Generic")
-        symbols.append(
-            f'  (symbol (lib_id "{lib}") (at {x} 50 0) (unit 1)\n'
-            f'    (property "Reference" "{ref}" (id 0) (at {x+2} 48 0))\n'
-            f'    (property "Value" "{val}" (id 1) (at {x+2} 52 0))\n'
-            f'    (property "Footprint" "{fp}" (id 2) (at {x+2} 54 0))\n'
-            f"  )"
+        dnp = row.get("DNP", "No")
+        exclude_from_bom = row.get("ExcludeFromBOM", "No")
+
+        # Build symbol with base properties
+        symbol_parts = [f'(symbol (lib_id "{lib}") (at {x} 50 0) (unit 1)']
+
+        # Add DNP and in_bom flags at symbol level if needed
+        if dnp.lower() in ["yes", "true", "1"]:
+            symbol_parts.append("(dnp yes)")
+        if exclude_from_bom.lower() in ["yes", "true", "1"]:
+            symbol_parts.append("(in_bom no)")
+
+        # Add properties
+        symbol_parts.extend(
+            [
+                f'(property "Reference" "{ref}" (id 0) (at {x+2} 48 0))',
+                f'(property "Value" "{val}" (id 1) (at {x+2} 52 0))',
+                f'(property "Footprint" "{fp}" (id 2) (at {x+2} 54 0))',
+            ]
         )
+
+        symbol_lines = [f"  {part}" for part in symbol_parts] + ["  )"]
+        symbols.append("\n".join(symbol_lines))
         x += 20
     content = """(kicad_sch (version 20211123) (generator eeschema)
   (paper "A4")

@@ -11,7 +11,7 @@ Feature: BOM Filtering (DNP / Excluded)
       | Reference | Value | Footprint   | DNP |
       | R1        | 10K   | R_0805_2012 | No  |
       | R2        | 22K   | R_0805_2012 | Yes |
-    When I run jbom command "bom --include-dnp"
+    When I run jbom command "bom --include-dnp -o -"
     Then the command should succeed
     And the output should contain "R2,22K"
 
@@ -20,7 +20,7 @@ Feature: BOM Filtering (DNP / Excluded)
       | Reference | Value | Footprint   | DNP |
       | R1        | 10K   | R_0805_2012 | No  |
       | R2        | 22K   | R_0805_2012 | Yes |
-    When I run jbom command "bom"
+    When I run jbom command "bom -o -"
     Then the command should succeed
     And the output should not contain "R2"
 
@@ -29,6 +29,6 @@ Feature: BOM Filtering (DNP / Excluded)
       | Reference | Value | Footprint   | ExcludeFromBOM |
       | R1        | 10K   | R_0805_2012 | No             |
       | R2        | 22K   | R_0805_2012 | Yes            |
-    When I run jbom command "bom --include-excluded"
+    When I run jbom command "bom --include-excluded -o -"
     Then the command should succeed
     And the output should contain "R2,22K"
