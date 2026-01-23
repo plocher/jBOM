@@ -18,19 +18,6 @@ import common_steps
 #   4. Tests real-world compatibility, not circular validation
 
 
-@then('the file "{filename}" should not contain "{text}"')
-def then_file_should_not_contain(context, filename, text):
-    """Legacy: check file does not contain text."""
-    from pathlib import Path
-
-    file_path = Path(context.project_root) / filename
-    assert file_path.exists(), f"File not found: {file_path}"
-    content = file_path.read_text(encoding="utf-8")
-    assert (
-        text not in content
-    ), f"File '{filename}' should not contain '{text}' but it does.\nContent:\n{content}"
-
-
 @then('the error should contain "{text}"')
 def then_error_should_contain(context, text):
     """Legacy: check error output contains text."""
