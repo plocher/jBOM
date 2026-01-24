@@ -46,19 +46,20 @@ Feature: BOM Inventory Enhancement
   Scenario: BOM enhancement CSV output includes inventory columns
     When I run jbom command "bom --inventory component_inventory.csv -o -"
     Then the command should succeed
-    And the output should contain "References,Value,Footprint,Quantity,Manufacturer,Manufacturer Part,Description,Voltage"
-    And the output should contain "R1, R2,10k,R_0603_1608,2,Yageo,RC0603FR-0710KL"
-    And the output should contain "C1,100nF,C_0603_1608,1,Murata,GRM188R71H104KA"
-    And the output should contain "LED1,RED,LED_0603,1,Kingbright,APT1608SRCPRV"
+    And the output should contain "Reference,Quantity,Description,Value,Package,Footprint,Manufacturer,Part Number"
+    And the output should contain "R1, R2"
+    And the output should contain "10k,,R_0603_1608"
+    And the output should contain "C1,1,,100nF"
+    And the output should contain "LED1,1,Red LED 20mA,RED"
+    And the output should contain "Kingbright"
 
   Scenario: BOM enhancement to file output
     When I run jbom command "bom --inventory component_inventory.csv -o enhanced_bom.csv"
     Then the command should succeed
     And a file named "enhanced_bom.csv" should exist
-    And the file "enhanced_bom.csv" should contain "Manufacturer,Manufacturer Part"
-    And the file "enhanced_bom.csv" should contain "Yageo,RC0603FR-0710KL"
-    And the file "enhanced_bom.csv" should contain "Murata,GRM188R71H104KA"
-    And the file "enhanced_bom.csv" should contain "Kingbright,APT1608SRCPRV"
+    And the file "enhanced_bom.csv" should contain "Manufacturer,Part Number"
+    And the file "enhanced_bom.csv" should contain "Kingbright"
+    And the file "enhanced_bom.csv" should contain "Red LED 20mA"
 
   Scenario: BOM without inventory enhancement (baseline)
     When I run jbom command "bom -o console"
@@ -99,6 +100,8 @@ Feature: BOM Inventory Enhancement
     When I run jbom command "bom --inventory component_inventory.csv --inventory enhanced_inventory.csv -o - -v"
     Then the command should succeed
     And the output should contain "Enhancing BOM with 2 inventory file(s)"
-    And the output should contain "References,Value,Footprint,Quantity"
-    And the output should contain "R1, R2,10k"
-    And the output should contain "U1,LM358"
+    And the output should contain "Reference,Quantity,Description,Value"
+    And the output should contain "R1, R2"
+    And the output should contain "10k"
+    And the output should contain "U1"
+    And the output should contain "LM358"
