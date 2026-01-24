@@ -8,18 +8,17 @@
 |-------|---------|-----------|
 | `Given a sandbox` | Isolated sandbox directory, no KiCad project | Project discovery edge cases, malformed project testing |
 | `Given a KiCad sandbox` | Sandbox + empty KiCad project, no command defaults | Command behavior testing, explicit output format testing |
-| `Given a jBOM CSV sandbox` | Sandbox + project + CSV on stdout (`-o -`) | Fabricator and config file feature tests |
-| `Given a generic jBOM CSV sandbox` | Sandbox + project + standardized CSV I/O (`-o -`, `--fabricator generic`) | Most business logic testing (95% of scenarios) |
+| `Given a jBOM CSV sandbox` | Sandbox + project + CSV output (`-o -`), uses jBOM's intrinsic defaults | Most business logic testing and fabricator functionality (95% of scenarios) |
 
 ## Anti-Patterns Discovered
 
-### 1. DRY Violations in Layer 3
+### 1. DRY Violations
 ```gherkin
 # ❌ BAD: Redundant specification
 Background:
-  Given a default jBOM CSV environment    # Already adds -o - and --fabricator generic
+  Given a jBOM CSV sandbox    # Already adds -o -
 Scenario: Test BOM
-  When I run jbom command "bom -o - --fabricator generic"  # Repeats defaults!
+  When I run jbom command "bom -o -"  # Repeats defaults!
 ```
 
 ### 2. Format Obsession
@@ -54,7 +53,7 @@ Given an inventory file "A.csv" with contents:
 Given an inventory file "B.csv" with contents:
 ```
 
-### 5. Verbose Project Setup Anti-Patterns
+### 5. Verbose Scenario Project Setup
 ```gherkin
 # ❌ BAD: Manual file specification with magic strings
 Given a KiCad project directory "test_project"
@@ -71,6 +70,24 @@ Given a KiCad project "test_project" with files:
   | test_project.kicad_sch | R1        | 10K   | R_0805_2012 |
   | test_project.kicad_pcb | R1        |       | R_0805_2012 |
 ```
+### Circular Validation Anti-Pattern
+```gherkin
+# ❌ BAD: Hand-crafted files that mirror jBOM expectations
+Given the project contains a file "test.kicad_sch" with content:
+  """
+  (kicad_sch (version 20211123)
+    (symbol (lib_id "Device:R") (at 50 50 0) (unit 1)
+      (property "Reference" "R1" (id 0) (at 52 48 0))
+      (property "Value" "10K" (id 1) (at 52 52 0))
+    )
+  )
+  """
+
+# ✅ GOOD: Use fixture-based approach with real KiCad files
+Given I copy fixture "fixtures/real_kicad_project" to "test_project"
+And I am in directory "test_project"
+```
+
 
 ## Patterns to Eliminate
 
@@ -94,24 +111,6 @@ Given a KiCad project "test_project" with files:
 - Multi-step manual file creation → Use `"Given a minimal KiCad project"`
 - Ambiguous magic strings → Use table-driven component data
 
-### Circular Validation Anti-Pattern
-```gherkin
-# ❌ BAD: Hand-crafted files that mirror jBOM expectations
-Given the project contains a file "test.kicad_sch" with content:
-  """
-  (kicad_sch (version 20211123)
-    (symbol (lib_id "Device:R") (at 50 50 0) (unit 1)
-      (property "Reference" "R1" (id 0) (at 52 48 0))
-      (property "Value" "10K" (id 1) (at 52 52 0))
-    )
-  )
-  """
-
-# ✅ GOOD: Use fixture-based approach with real KiCad files
-Given I copy fixture "fixtures/real_kicad_project" to "test_project"
-And I am in directory "test_project"
-```
-
 **Architectural Issue**: Creating hand-crafted KiCad files that mirror jBOM expectations creates circular validation - proving the validator can read files the validator created.
 
 **Proper Solution**:
@@ -122,25 +121,26 @@ And I am in directory "test_project"
 
 ## Command Execution Architecture
 
-### Layer 3 Auto-Enhancement
+### CSV Sandbox Auto-Enhancement
+
+Note: POS outputs mm only and echoes numeric tokens exactly as authored in the PCB. Do not expect step-side formatting or tolerance. If a scenario needs inches, convert in fixtures before authoring; POS will not convert units.
 ```python
 @when('I run jbom command "{command}"')
 def step_run_jbom_command(context, command):
     # Anti-pattern detection
     if hasattr(context, 'default_output') and '-o' in command:
-        raise AssertionError("DRY VIOLATION: Layer 3 background + explicit -o")
+        raise AssertionError("DRY VIOLATION: jBOM CSV sandbox + explicit -o")
 
-    # Add Layer 3 defaults
+    # Add CSV output default
     if hasattr(context, 'default_output'):
         command += f" {context.default_output}"
-    if hasattr(context, 'default_fabricator'):
-        command += f" {context.default_fabricator}"
+    # Note: No fabricator hardcoding - jBOM uses intrinsic defaults
 ```
 
 ## Discovered Transformation Patterns
 
-1. **Background Consolidation**: Most features → Layer 3
-2. **Command Simplification**: Remove redundant flags when using Layer 3
+1. **Background Consolidation**: Most features → jBOM CSV sandbox
+2. **Command Simplification**: Remove redundant flags when using jBOM CSV sandbox
 3. **Assertion Focus**: Content over format
 4. **Project Setup**: Explicit component tables over implicit "minimal" data
 5. **Step Colocation**: Single-feature steps belong in feature-specific files, not shared locations

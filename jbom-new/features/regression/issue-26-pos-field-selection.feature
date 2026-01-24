@@ -27,9 +27,9 @@ Feature: Issue #26 - POS Field Selection and Output Control (Regression Canaries
     And the output should not contain these fields:
       | Rotation | Footprint | Package |
     And the output should contain these component data rows:
-      | R1 | 10.0000 | 5.0000 | TOP |
-      | C1 | 15.0000 | 8.0000 | TOP |
-      | U1 | 25.0000 | 12.0000 | TOP |
+      | R1 | 10 | 5 | TOP |
+      | C1 | 15 | 8 | TOP |
+      | U1 | 25 | 12 | TOP |
 
   Scenario: POS command should support fabricator presets like BOM (CANARY - CURRENTLY MISSING)
     When I run jbom command "pos --jlc"
@@ -37,7 +37,7 @@ Feature: Issue #26 - POS Field Selection and Output Control (Regression Canaries
     And the output should contain these fields:
       | Designator | Mid X | Mid Y | Layer | Rotation | Package |
     And the output should contain these component data rows:
-      | R1 | 10.0000 | 5.0000 | TOP | 0.0 | 0805 |
+      | R1 | 10 | 5 | TOP | 0 | 0805 |
 
   # Additional field selection patterns
 
@@ -49,8 +49,8 @@ Feature: Issue #26 - POS Field Selection and Output Control (Regression Canaries
     And the output should not contain these fields:
       | Side | Package |
     And the output should contain these component data rows:
-      | R1 | 10.0000 | 5.0000 | 0.0 |
-      | C1 | 15.0000 | 8.0000 | 90.0 |
+      | R1 | 10 | 5 | 0 |
+      | C1 | 15 | 8 | 90 |
 
   # Fabricator preset compatibility (TDD - desired behavior)
   Scenario: Generic fabricator preset uses fabricator-specific field names
@@ -59,7 +59,7 @@ Feature: Issue #26 - POS Field Selection and Output Control (Regression Canaries
     And the output should contain these fields:
       | Designator | Mid X | Mid Y | Layer | Rotation | Package |
     And the output should contain these component data rows:
-      | R1 | 10.0000 | 5.0000 | TOP | 0.0 | 0805 |
+      | R1 | 10 | 5 | TOP | 0 | 0805 |
 
   Scenario: JLC fabricator preset uses JLC-specific field names
     When I run jbom command "pos --jlc"
@@ -67,7 +67,7 @@ Feature: Issue #26 - POS Field Selection and Output Control (Regression Canaries
     And the output should contain these fields:
       | Designator | Mid X | Mid Y | Layer | Rotation | Package |
     And the output should contain these component data rows:
-      | R1 | 10.0000 | 5.0000 | TOP | 0.0 | 0805 |
+      | R1 | 10 | 5 | TOP | 0 | 0805 |
 
   Scenario: PCBWay fabricator preset for POS
     When I run jbom command "pos --pcbway"
@@ -99,8 +99,8 @@ Feature: Issue #26 - POS Field Selection and Output Control (Regression Canaries
     And the output should contain these fields:
       | Reference | X | Y | Rotation | Side | Footprint | Package | Value |
     And the output should contain these component data rows:
-      | R1 | 10.0000 | 5.0000 | 0.0 | TOP | R_0805_2012 | 0805 | 10K |
-      | C1 | 15.0000 | 8.0000 | 90.0 | TOP | C_0603_1608 | 0603 | 100nF |
+      | R1 | 10 | 5 | 0 | TOP | R_0805_2012 | 0805 | 10K |
+      | C1 | 15 | 8 | 90 | TOP | C_0603_1608 | 0603 | 100nF |
 
   Scenario: Add fabricator part number field with special alias
     When I run jbom command "pos --fields +fabricator_part_number"
@@ -116,7 +116,7 @@ Feature: Issue #26 - POS Field Selection and Output Control (Regression Canaries
     And the output should contain these fields:
       | Designator | Mid X | Mid Y | Layer | Rotation | Package | Value |
     And the output should contain these component data rows:
-      | U1 | 25.0000 | 12.0000 | TOP | 180.0 | SOIC-8 | LM358 |
+      | U1 | 25 | 12 | TOP | 180 | SOIC-8 | LM358 |
 
   # Output format compatibility (canary - full testing in features/pos/fields.feature)
 
@@ -124,20 +124,23 @@ Feature: Issue #26 - POS Field Selection and Output Control (Regression Canaries
   Scenario: Invalid field names should be rejected with helpful message
     When I run jbom command "pos --fields Reference,InvalidField,X"
     Then the command should fail
-    And the error output should contain "Invalid field: InvalidField"
-    And the error output should contain "Available fields:"
+    And the error output contains:
+      | Invalid field: InvalidField |
+      | Available fields:           |
     And the error output should list these available fields:
       | Reference | X | Y | Rotation | Side | Footprint | Package | Value |
 
   Scenario: Empty fields parameter should be rejected
     When I run jbom command "pos --fields ''"
     Then the command should fail
-    And the error output should contain "--fields parameter cannot be empty"
+    And the error output contains:
+      | --fields parameter cannot be empty |
 
   Scenario: Multiple fabricator presets should be rejected
     When I run jbom command "pos --jlc --pcbway"
     Then the command should fail
-    And the error output should contain "Cannot specify multiple fabricator presets"
+    And the error output contains:
+      | Cannot specify multiple fabricator presets |
 
   # Edge cases and integration testing moved to features/pos/fields.feature
 
