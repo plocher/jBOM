@@ -17,6 +17,7 @@ from jbom.common.field_parser import (
     parse_fields_argument,
     validate_fields_against_available,
 )
+from jbom.common.fields import field_to_header
 from jbom.config.fabricators import (
     get_fabricator_default_fields,
     apply_fabricator_column_mapping,
@@ -57,13 +58,7 @@ def register_command(subparsers) -> None:
         help="Include only components on specified layer",
     )
 
-    # Unit options
-    parser.add_argument(
-        "--units",
-        choices=["mm", "inch"],
-        default="mm",
-        help="Output units (default: mm)",
-    )
+    # Unit options removed: POS always uses mm and echoes raw tokens from PCB
 
     # Origin options
     parser.add_argument(
@@ -153,9 +148,8 @@ def handle_pos(args: argparse.Namespace) -> int:
             except Exception:
                 pass
 
-        # Create placement options
+        # Create placement options - units removed, always mm with raw token echo
         options = PlacementOptions(
-            units=args.units,
             origin=args.origin,
             smd_only=args.smd_only,
             layer_filter=args.layer,
@@ -175,6 +169,25 @@ def handle_pos(args: argparse.Namespace) -> int:
         available_pos_fields = _get_available_pos_fields()
         # NOTE: Don't pass BOM fabricator_presets to POS - they contain incompatible fields
         # POS uses get_fabricator_default_fields() instead
+
+        # Explicitly reject empty --fields (e.g., --fields '' or only commas)
+        if args.fields is not None:
+            raw = [t.strip() for t in args.fields.split(",")]
+            tokens = []
+            for tok in raw:
+                if not tok:
+                    continue
+                if len(tok) >= 2 and tok[0] == tok[-1] and tok[0] in ("'", '"'):
+                    tok = tok[1:-1].strip()
+                if tok:
+                    tokens.append(tok)
+            if not tokens:
+                print("Error: --fields parameter cannot be empty", file=sys.stderr)
+                return 1
+
+        # Track whether fields were user-specified or came from fabricator defaults
+        # If user specified a non-generic fabricator, treat field additions as fabricator preset modifications
+        user_specified_fields = args.fields is not None and fabricator == "generic"
 
         try:
             selected_fields = parse_fields_argument(
@@ -204,7 +217,7 @@ def handle_pos(args: argparse.Namespace) -> int:
 
         # Handle output
         return _output_pos(
-            pos_data, args.output, args.units, fabricator, selected_fields
+            pos_data, args.output, fabricator, selected_fields, user_specified_fields
         )
 
     except Exception as e:
@@ -259,9 +272,9 @@ def _list_available_pos_fields(fabricator: str) -> None:
 def _output_pos(
     pos_data: list,
     output: str,
-    units: str,
     fabricator: str = "generic",
     selected_fields: list = None,
+    user_specified_fields: bool = False,
 ) -> int:
     """Output position data in the requested format.
 
@@ -275,9 +288,9 @@ def _output_pos(
     Args:
         pos_data: List of position data dictionaries
         output: Output destination
-        units: Units for coordinate display
         fabricator: Fabricator ID for column mapping
         selected_fields: List of selected field names to include
+        user_specified_fields: Whether fields were explicitly specified by user
     """
     # Use default fields if none selected
     if not selected_fields:
@@ -293,25 +306,30 @@ def _output_pos(
                 "footprint",
                 "package",
             ]
+        # Mark that these came from fabricator defaults, not user specification
+        user_specified_fields = False
 
-    # Apply fabricator column mapping to get proper headers
-    headers = apply_fabricator_column_mapping(fabricator, "pos", selected_fields)
+    # Apply fabricator column mapping only for fabricator presets, not user-specified fields
+    if user_specified_fields:
+        # User specified exact field names - use them as headers with proper display names
+        headers = [field_to_header(field) for field in selected_fields]
+    else:
+        # Fabricator preset - use fabricator-specific column names
+        headers = apply_fabricator_column_mapping(fabricator, "pos", selected_fields)
 
     if output is None or output == "console":
-        _print_console_table(pos_data, units, selected_fields, headers)
+        _print_console_table(pos_data, selected_fields, headers)
     elif output == "-":
-        _print_csv(pos_data, units, selected_fields, headers)
+        _print_csv(pos_data, selected_fields, headers)
     else:
         output_path = Path(output)
-        _write_csv(pos_data, output_path, units, selected_fields, headers)
+        _write_csv(pos_data, output_path, selected_fields, headers)
         print(f"Position file written to {output_path}")
 
     return 0
 
 
-def _print_console_table(
-    pos_data: list, units: str, selected_fields: list, headers: list
-) -> None:
+def _print_console_table(pos_data: list, selected_fields: list, headers: list) -> None:
     """Print position data as formatted console table."""
     print(f"\nComponent Placement Data ({len(pos_data)} components)")
     print("=" * 80)
@@ -343,7 +361,7 @@ def _print_console_table(
     for entry in pos_data:
         row_values = []
         for field in selected_fields:
-            value = _get_pos_field_value(entry, field, units)
+            value = _get_pos_field_value(entry, field)
             # Truncate values that are too long for display
             width = 12 if len(row_values) > 0 else 10  # First column narrower
             if len(value) > width:
@@ -361,9 +379,7 @@ def _print_console_table(
     print(f"\nTotal: {len(pos_data)} components")
 
 
-def _print_csv(
-    pos_data: list, units: str, selected_fields: list, headers: list
-) -> None:
+def _print_csv(pos_data: list, selected_fields: list, headers: list) -> None:
     """Print position data as CSV to stdout."""
     writer = csv.writer(sys.stdout)
 
@@ -374,30 +390,33 @@ def _print_csv(
     for entry in pos_data:
         row = []
         for field in selected_fields:
-            value = _get_pos_field_value(entry, field, units)
+            value = _get_pos_field_value(entry, field)
             row.append(value)
         writer.writerow(row)
 
 
-def _get_pos_field_value(entry: dict, field: str, units: str) -> str:
+def _get_pos_field_value(entry: dict, field: str) -> str:
     """Extract field value from POS entry.
 
     Args:
         entry: POS entry dictionary
         field: Field name to extract
-        units: Units for coordinate formatting
 
     Returns:
         String value for the field
     """
-    # Handle coordinate fields with unit conversion
+    # Handle coordinate/rotation fields
     if field == "x":
-        coord = entry["x_mm"] if units == "mm" else entry["x_mm"] / 25.4
-        return f"{coord:.4f}"
+        if entry.get("x_raw"):
+            return str(entry["x_raw"])  # echo exactly as authored in PCB (mm)
+        return f"{entry['x_mm']:.4f}"
     elif field == "y":
-        coord = entry["y_mm"] if units == "mm" else entry["y_mm"] / 25.4
-        return f"{coord:.4f}"
+        if entry.get("y_raw"):
+            return str(entry["y_raw"])  # echo exactly as authored in PCB (mm)
+        return f"{entry['y_mm']:.4f}"
     elif field == "rotation":
+        if entry.get("rotation_raw") is not None:
+            return str(entry["rotation_raw"])  # echo raw if available
         return f"{entry['rotation']:.1f}"
 
     # Handle standard POS fields
@@ -421,7 +440,6 @@ def _get_pos_field_value(entry: dict, field: str, units: str) -> str:
 def _write_csv(
     pos_data: list,
     output_path: Path,
-    units: str,
     selected_fields: list = None,
     headers: list = None,
 ) -> None:
@@ -430,5 +448,5 @@ def _write_csv(
         # Use the same logic as stdout
         old_stdout = sys.stdout
         sys.stdout = csvfile
-        _print_csv(pos_data, units, selected_fields, headers)
+        _print_csv(pos_data, selected_fields, headers)
         sys.stdout = old_stdout

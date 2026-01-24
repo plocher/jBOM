@@ -41,8 +41,8 @@ def parse_fields_argument(
     if fabricator_presets:
         all_presets.update(fabricator_presets)
 
-    # Case 1: No fields argument - use context-appropriate defaults
-    if not fields_arg:
+    # Case 1: No fields argument (None) - use context-appropriate defaults
+    if fields_arg is None:
         if context == "pos":
             # For POS, use fabricator's column mapping to determine defaults
             from jbom.config.fabricators import get_fabricator_default_fields
@@ -69,7 +69,21 @@ def parse_fields_argument(
             return ["reference", "quantity", "value", "footprint"]
 
     # Case 2: User provided fields - parse exactly what they specified
-    tokens = [t.strip() for t in fields_arg.split(",") if t.strip()]
+    # Build tokens, trimming whitespace and surrounding quotes per token
+    raw = [t.strip() for t in fields_arg.split(",")]
+    tokens: List[str] = []
+    for tok in raw:
+        if not tok:
+            continue
+        if len(tok) >= 2 and tok[0] == tok[-1] and tok[0] in ("'", '"'):
+            tok = tok[1:-1].strip()
+        if tok:
+            tokens.append(tok)
+
+    # If no valid tokens after filtering, this means empty/quoted-empty/whitespace-only
+    if not tokens:
+        raise ValueError("--fields parameter cannot be empty")
+
     result: List[str] = []
 
     for tok in tokens:
@@ -90,21 +104,41 @@ def parse_fields_argument(
                 # Try as a field addition - normalize and check if it's a valid field
                 field_name = normalize_field_name(tok[1:])
                 if field_name in available_fields:
-                    # It's a field addition - add default fields first if result is empty
+                    # It's a field addition - add appropriate context defaults first if result is empty
                     if not result:
-                        # Use context-appropriate fabricator defaults
-                        from jbom.config.fabricators import (
-                            get_fabricator_default_fields,
-                        )
+                        # For + syntax with non-generic fabricator, use fabricator defaults
+                        # For + syntax with generic fabricator, use standard field sets
+                        if fabricator_id != "generic":
+                            # Use fabricator-specific defaults
+                            from jbom.config.fabricators import (
+                                get_fabricator_default_fields,
+                            )
 
-                        default_fields = get_fabricator_default_fields(
-                            fabricator_id, context
-                        )
-
-                        if default_fields:
-                            result.extend(default_fields)
+                            fabricator_defaults = get_fabricator_default_fields(
+                                fabricator_id, context
+                            )
+                            if fabricator_defaults:
+                                result.extend(fabricator_defaults)
+                            else:
+                                # Fallback to standard if fabricator has no defaults
+                                if context == "pos":
+                                    result.extend(
+                                        [
+                                            "reference",
+                                            "x",
+                                            "y",
+                                            "rotation",
+                                            "side",
+                                            "footprint",
+                                            "package",
+                                        ]
+                                    )
+                                else:
+                                    result.extend(
+                                        ["reference", "quantity", "value", "footprint"]
+                                    )
                         else:
-                            # Fall back to context-specific defaults
+                            # For generic fabricator, use standard field sets for predictable behavior
                             if context == "pos":
                                 result.extend(
                                     [
@@ -148,11 +182,12 @@ def parse_fields_argument(
             normalized = normalize_field_name(tok)
             if normalized not in available_fields:
                 available_list = sorted(available_fields.keys())
+                # Format field names as proper headers for user-friendly error messages
+                from .fields import field_to_header
+
+                available_headers = [field_to_header(field) for field in available_list]
                 raise ValueError(
-                    f"Unknown field: '{tok}' (normalized: '{normalized}'). "
-                    f"Available fields: {', '.join(available_list[:10])}..."
-                    if len(available_list) > 10
-                    else f"Available fields: {', '.join(available_list)}"
+                    f"Invalid field: {tok}. Available fields: {', '.join(available_headers)}"
                 )
             result.append(normalized)
 
@@ -236,10 +271,21 @@ def validate_fields_against_available(
 
     if invalid_fields:
         available_list = sorted(available_fields.keys())
-        raise ValueError(
-            f"Invalid fields: {', '.join(invalid_fields)}. "
-            f"Available: {', '.join(available_list)}"
-        )
+        # Format field names as proper headers for user-friendly error messages
+        from .fields import field_to_header
+
+        available_headers = [field_to_header(field) for field in available_list]
+        # Use singular form for single invalid field to match test expectations
+        if len(invalid_fields) == 1:
+            raise ValueError(
+                f"Invalid field: {invalid_fields[0]}. "
+                f"Available fields: {', '.join(available_headers)}"
+            )
+        else:
+            raise ValueError(
+                f"Invalid fields: {', '.join(invalid_fields)}. "
+                f"Available fields: {', '.join(available_headers)}"
+            )
 
     return fields
 
