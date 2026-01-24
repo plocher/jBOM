@@ -15,6 +15,11 @@ Feature: UX Consistency Across Commands
       | R1        | 5 | 3 | TOP  |
       | C1        | 8 | 6 | TOP  |
       | U1        |12 | 9 | TOP  |
+    And an inventory file "test_inventory.csv" that contains:
+      | IPN       | Category | Value | Description      | Package |
+      | RES_10K   | RES      | 10k   | 10k resistor     | 0603    |
+      | CAP_100nF | CAP      | 100nF | 100nF capacitor  | 0603    |
+      | IC_LM358  | IC       | LM358 | Op-amp           | SOIC-8  |
 
   Scenario: All commands default to human-readable console output
     When I run jbom command "bom"
@@ -29,7 +34,7 @@ Feature: UX Consistency Across Commands
     And the output should contain "R1"
     And the output should contain "5"
 
-    When I run jbom command "inventory"
+    When I run jbom command "inventory --inventory test_inventory.csv"
     Then the command should succeed
     And the output should contain "Generated inventory"
     And the output should contain "RES_10K"
@@ -45,10 +50,10 @@ Feature: UX Consistency Across Commands
     And the output should contain "Reference,X(mm),Y(mm)"
     And the output should contain "R1,5,3"
 
-    When I run jbom command "inventory -o -"
+    When I run jbom command "inventory --inventory test_inventory.csv -o -"
     Then the command should succeed
     And the output should contain "IPN,Category,Value"
-    And the output should contain "RES_10K,RESISTOR,10k"
+    And the output should contain "RES_10K,RES,10k"
 
   Scenario: All commands support -o console for explicit table output
     When I run jbom command "bom -o console"
@@ -63,7 +68,7 @@ Feature: UX Consistency Across Commands
     And the output should contain "R1"
     And the output should contain "5"
 
-    When I run jbom command "inventory -o console"
+    When I run jbom command "inventory --inventory test_inventory.csv -o console"
     Then the command should succeed
     And the output should contain "Generated inventory"
     And the output should contain "RES_10K"
@@ -79,10 +84,10 @@ Feature: UX Consistency Across Commands
     And a file named "test_pos.csv" should exist
     And the file "test_pos.csv" should contain "R1,5,3"
 
-    When I run jbom command "inventory -o test_inventory.csv"
+    When I run jbom command "inventory --inventory test_inventory.csv -o test_inventory_output.csv"
     Then the command should succeed
-    And a file named "test_inventory.csv" should exist
-    And the file "test_inventory.csv" should contain "RES_10K,RESISTOR,10k"
+    And a file named "test_inventory_output.csv" should exist
+    And the file "test_inventory_output.csv" should contain "RES_10K,RES,10k"
 
   Scenario: All commands show consistent help patterns
     When I run jbom command "bom --help"
