@@ -9,4 +9,4 @@ Feature: BOM Errors
   Scenario: Error on missing schematic file
     When I run jbom command "bom missing_file.kicad_sch"
     Then the command should fail
-    And the error output should mention "Schematic file not found"
+    And the error output should mention "No schematic file found"
