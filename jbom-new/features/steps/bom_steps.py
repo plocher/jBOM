@@ -158,8 +158,6 @@ def then_file_contains_csv(context, filename: str) -> None:
     assert rows and len(rows[0]) >= 2, f"CSV appears invalid or empty: {p}"
 
 
-
-
 @then("the line count is {n:d}")
 def then_line_count_is(context, n: int) -> None:
     out = getattr(context, "last_output", "")
@@ -297,6 +295,32 @@ def then_error_output_should_contain(context, text: str) -> None:
         expected=text,
         actual=error_output,
     )
+
+
+@then("the error output contains:")
+def then_error_output_contains_table(context) -> None:
+    """Assert error output contains all text items from table (table-driven version).
+
+    Table format:
+    | Expected .kicad_sch file |
+    | Another error message   |
+    """
+    assert context.table is not None, "Expected table data for error validation"
+
+    error_output = getattr(
+        context, "last_error_output", getattr(context, "last_output", "")
+    )
+
+    # Check each text item in the table
+    for row in context.table:
+        text = row.cells[0]  # Get first (and typically only) cell
+        assert_with_diagnostics(
+            text in error_output,
+            f"Expected error text not found: {text}",
+            context,
+            expected=text,
+            actual=error_output,
+        )
 
 
 #  TODO Issue #31: This list needs to be dynamically constructed from the config files, not hardcoded

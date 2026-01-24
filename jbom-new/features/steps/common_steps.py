@@ -42,32 +42,19 @@ def step_default_jbom_environment(context):
 
 
 @given("a jBOM CSV sandbox")
-def step_default_jbom_csv_output_environment(context):
-    """Layer 2.5: Sandbox + project + CSV output, no fabricator defaults.
+def step_jbom_csv_sandbox(context):
+    """Layer 2.5/3: Sandbox + project + CSV output for testing.
 
-    Automatically adds '-o -' to jbom commands for CSV output testing.
-    Use this for testing fabricator functionality without DRY violations.
-    """
-    # Build on Layer 2
-    step_default_jbom_environment(context)
-
-    # Set CSV output default but no fabricator default
-    context.default_output = "-o -"
-
-
-@given("a generic jBOM CSV sandbox")
-def step_default_jbom_csv_environment(context):
-    """Layer 3: Sandbox + project + standardized I/O for testing.
-
-    Automatically adds '-o -' and '--fabricator generic' to jbom commands.
-    Use this for most business logic testing (95% of scenarios).
+    Automatically adds '-o -' to jbom commands.
+    Uses jBOM's intrinsic default (--fabricator generic) without hardcoding.
+    Use this for most business logic testing and fabricator functionality.
     """
     # Build on Layer 2
     step_default_jbom_environment(context)
 
     # Set command execution defaults (used by step_run_jbom_command)
     context.default_output = "-o -"
-    context.default_fabricator = "--fabricator generic"
+    # No longer set default_fabricator - let jBOM use its intrinsic default
 
 
 @given("a clean test workspace")
@@ -183,25 +170,18 @@ def step_run_jbom_command(context, args):
 
     Layer 3 environments automatically add default flags and detect DRY violations.
     """
-    # Layer 3 anti-pattern detection and auto-enhancement
+    # Anti-pattern detection and auto-enhancement
     if hasattr(context, "default_output"):
         if "-o" in args:
             raise AssertionError(
-                f"DRY VIOLATION: Using Layer 3 background ('generic jBOM CSV sandbox') "
-                f"but specifying -o in command. Either use Layer 2.5 background, "
+                f"DRY VIOLATION: Using 'jBOM CSV sandbox' background "
+                f"but specifying -o in command. Either use 'KiCad sandbox' background, "
                 f"or remove '-o' from command: {args}"
             )
         args += f" {context.default_output}"
 
-    if hasattr(context, "default_fabricator"):
-        fabricator_flags = ["--fabricator", "--jlc", "--pcbway", "--seeed", "--generic"]
-        if any(flag in args for flag in fabricator_flags):
-            raise AssertionError(
-                f"DRY VIOLATION: Using Layer 3 background ('generic jBOM CSV sandbox') "
-                f"but specifying fabricator in command. Either use Layer 2.5 background, "
-                f"or remove fabricator from command: {args}"
-            )
-        args += f" {context.default_fabricator}"
+    # Note: default_fabricator no longer set - jBOM uses intrinsic defaults
+    # Scenarios can override with explicit fabricator flags when needed
 
     step_run_command(context, f"jbom {args}")
 
