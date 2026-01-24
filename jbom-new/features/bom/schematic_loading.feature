@@ -4,7 +4,7 @@ Feature: File Extension Validation
   So that I know what files jBOM can process
 
   Background:
-    Given a clean test workspace
+    Given a sandbox
 
   Scenario: Unsupported file extension is rejected
     Given I create file "not_schematic.txt" with content "hello"

@@ -10,7 +10,7 @@ Feature: Diagnostic Output Quality
   # We're verifying the failure output is helpful for debugging.
 
   Background:
-    Given a clean test workspace
+    Given a sandbox
 
   Scenario: Diagnostic shows command and output on text mismatch
     When I run "jbom --version"

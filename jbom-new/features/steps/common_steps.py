@@ -6,7 +6,7 @@ from behave import when, then, given
 from diagnostic_utils import assert_with_diagnostics
 
 
-@given("a test environment")
+@given("a sandbox")
 def step_test_environment(context):
     """Layer 1: Create isolated sandbox directory, nothing else.
 
@@ -20,7 +20,7 @@ def step_test_environment(context):
     # Keep src_root unchanged (set by environment.py)
 
 
-@given("a default jBOM environment")
+@given("a KiCad sandbox")
 def step_default_jbom_environment(context):
     """Layer 2: Sandbox + empty KiCad project, no command defaults.
 
@@ -41,7 +41,7 @@ def step_default_jbom_environment(context):
     context.current_project = project_name
 
 
-@given("a default jBOM CSV output environment")
+@given("a jBOM CSV sandbox")
 def step_default_jbom_csv_output_environment(context):
     """Layer 2.5: Sandbox + project + CSV output, no fabricator defaults.
 
@@ -55,7 +55,7 @@ def step_default_jbom_csv_output_environment(context):
     context.default_output = "-o -"
 
 
-@given("a default jBOM CSV environment")
+@given("a generic jBOM CSV sandbox")
 def step_default_jbom_csv_environment(context):
     """Layer 3: Sandbox + project + standardized I/O for testing.
 
@@ -72,7 +72,7 @@ def step_default_jbom_csv_environment(context):
 
 @given("a clean test workspace")
 def step_clean_test_workspace(context):
-    """Legacy alias for Layer 1 - use 'Given a test environment' instead."""
+    """Legacy alias for Layer 1 - use 'Given a sandbox' instead."""
     step_test_environment(context)
 
 
@@ -187,8 +187,8 @@ def step_run_jbom_command(context, args):
     if hasattr(context, "default_output"):
         if "-o" in args:
             raise AssertionError(
-                f"DRY VIOLATION: Using Layer 3 background ('default jBOM CSV environment') "
-                f"but specifying -o in command. Either use Layer 2 background, "
+                f"DRY VIOLATION: Using Layer 3 background ('generic jBOM CSV sandbox') "
+                f"but specifying -o in command. Either use Layer 2.5 background, "
                 f"or remove '-o' from command: {args}"
             )
         args += f" {context.default_output}"
@@ -197,8 +197,8 @@ def step_run_jbom_command(context, args):
         fabricator_flags = ["--fabricator", "--jlc", "--pcbway", "--seeed", "--generic"]
         if any(flag in args for flag in fabricator_flags):
             raise AssertionError(
-                f"DRY VIOLATION: Using Layer 3 background ('default jBOM CSV environment') "
-                f"but specifying fabricator in command. Either use Layer 2 background, "
+                f"DRY VIOLATION: Using Layer 3 background ('generic jBOM CSV sandbox') "
+                f"but specifying fabricator in command. Either use Layer 2.5 background, "
                 f"or remove fabricator from command: {args}"
             )
         args += f" {context.default_fabricator}"
