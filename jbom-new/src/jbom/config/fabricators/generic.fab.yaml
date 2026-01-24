@@ -26,8 +26,9 @@ pos_columns:
   "Reference": "reference"
   "X": "x"
   "Y": "y"
-  "Side": "side"
   "Rotation": "rotation"
+  "Side": "side"
+  "Footprint": "footprint"
   "Package": "package"
 
 presets:
