@@ -178,7 +178,11 @@ def handle_pos(args: argparse.Namespace) -> int:
 
         try:
             selected_fields = parse_fields_argument(
-                args.fields, available_pos_fields, fabricator, fabricator_presets
+                args.fields,
+                available_pos_fields,
+                fabricator,
+                fabricator_presets,
+                context="pos",
             )
             # Validate fields
             validate_fields_against_available(selected_fields, available_pos_fields)
