@@ -172,7 +172,7 @@ def handle_pos(args: argparse.Namespace) -> int:
         # Generate position data
         pos_data = generator.generate_pos_data(board)
 
-        # Parse field selection
+        # Parse field selection with fabricator awareness
         available_pos_fields = _get_available_pos_fields()
         fabricator_presets = get_fabricator_presets(fabricator)
 
@@ -186,6 +186,17 @@ def handle_pos(args: argparse.Namespace) -> int:
             )
             # Validate fields
             validate_fields_against_available(selected_fields, available_pos_fields)
+
+            # Check for fabricator completeness warnings if fabricator specified but custom fields used
+            if args.fields and fabricator != "generic":
+                from jbom.common.field_parser import check_fabricator_field_completeness
+
+                warning = check_fabricator_field_completeness(
+                    selected_fields, fabricator, fabricator_presets
+                )
+                if warning:
+                    print(f"Warning: {warning}", file=sys.stderr)
+
         except ValueError as e:
             print(f"Error: {e}", file=sys.stderr)
             return 1
@@ -215,6 +226,7 @@ def _get_available_pos_fields() -> dict:
         "footprint": "KiCad footprint name",
         "package": "Component package/case size",
         "value": "Component value",
+        "fabricator_part_number": "Fabricator-specific part number",
     }
 
 
@@ -409,6 +421,7 @@ def _get_pos_field_value(entry: dict, field: str, units: str) -> str:
         "footprint": "footprint",
         "package": "package",
         "value": "value",  # This would need to come from schematic data
+        "fabricator_part_number": "fabricator_part_number",  # From component properties
     }
 
     if field in field_mapping:

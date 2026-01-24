@@ -23,10 +23,10 @@ bom_columns:
   "Part Number": "fabricator_part_number"
 
 pos_columns:
-  "Designator": "reference"
-  "Mid X": "x"
-  "Mid Y": "y"
-  "Layer": "side"
+  "Reference": "reference"
+  "X": "x"
+  "Y": "y"
+  "Side": "side"
   "Rotation": "rotation"
   "Package": "package"
 
