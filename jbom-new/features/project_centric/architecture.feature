@@ -7,11 +7,12 @@ Feature: Project-Centric Architecture
     Given the generic fabricator is selected
 
   Scenario: BOM command discovers project files from directory (current directory path)
-    Given a minimal KiCad project "test_project"
-    And I am in directory "test_project"
+    Given a KiCad project directory "test_project"
+    And the project contains a file "test_project.kicad_pro"
+    And the project contains a file "test_project.kicad_sch" with basic schematic content
     When I run jbom command "bom . -v"
     Then the command should succeed
-    And the output should contain "Using schematic: test_project.kicad_sch"
+    And the output should contain "found schematic test_project.kicad_sch"
 
   Scenario: BOM command discovers project files from project name
     Given a KiCad project directory "test_project"
