@@ -111,6 +111,10 @@ Feature: UX Consistency Across Commands
   Scenario: All commands handle empty projects gracefully
     Given a schematic that contains:
       | Reference | Value | Footprint |
+    And a PCB that contains:
+      | Reference | X | Y | Side |
+    And an inventory file "test_inventory.csv" that contains:
+      | IPN       | Category | Value | Description      | Package |
     When I run jbom command "bom"
     Then the command should succeed
     And the output should contain "No components found"

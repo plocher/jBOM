@@ -166,12 +166,32 @@ def step_run_jbom_command(context, command):
 - **Architectural clarity** through Background layer consolidation
 - **DRY principle** enforcement via anti-pattern detection
 
-### Critical Discovery: Scenario Outline Edge Cases
+## Critical Discovery: Scenario Outline Edge Cases
 Trailing whitespace in step patterns from scenario outlines requires explicit handling:
 ```python
 @when('I run jbom command "{command}" ')  # Note trailing space
 def when_run_jbom_command_trailing_space(context, command):
     common_steps.step_run_jbom_command(context, command.strip())
+```
+
+## Empty Project Testing Pattern
+When testing "empty project" scenarios, ensure ALL project artifacts are emptied, not just one:
+```gherkin
+# ❌ BAD: Only empties schematic, PCB/inventory still populated from Background
+Scenario: All commands handle empty projects gracefully
+  Given a schematic that contains:
+    | Reference | Value | Footprint |
+  When I run jbom command "pos"  # Still finds PCB components!
+
+# ✅ GOOD: Empties all project artifacts for consistent "empty" state
+Scenario: All commands handle empty projects gracefully
+  Given a schematic that contains:
+    | Reference | Value | Footprint |
+  And a PCB that contains:
+    | Reference | X | Y | Side |
+  And an inventory file "test_inventory.csv" that contains:
+    | IPN | Category | Value | Description | Package |
+  # Now all commands see truly empty project
 ```
 
 ## Table-Based Field Validation Meta Pattern (NEW)
