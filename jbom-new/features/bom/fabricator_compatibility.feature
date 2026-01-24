@@ -20,13 +20,13 @@ Feature: BOM Fabricator Compatibility
     And the output should contain "Reference"
     When I run jbom command "bom --jlc"
     Then the command should succeed
-    And the output should contain "Reference"
+    And the output should contain "Designator"
     When I run jbom command "bom --pcbway"
     Then the command should succeed
-    And the output should contain "Reference"
+    And the output should contain "Designator"
     When I run jbom command "bom --seeed"
     Then the command should succeed
-    And the output should contain "Reference"
+    And the output should contain "Designator"
 
   Scenario: Default behavior (generic fabricator)
     When I run jbom command "bom"
