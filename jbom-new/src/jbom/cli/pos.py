@@ -9,6 +9,19 @@ from jbom.services.pcb_reader import DefaultKiCadReaderService
 from jbom.services.pos_generator import POSGenerator
 from jbom.services.project_file_resolver import ProjectFileResolver
 from jbom.common.options import PlacementOptions, GeneratorOptions
+from jbom.common.cli_fabricator import (
+    add_fabricator_arguments,
+    resolve_fabricator_from_args,
+)
+from jbom.common.field_parser import (
+    parse_fields_argument,
+    validate_fields_against_available,
+)
+from jbom.config.fabricators import (
+    get_fabricator_presets,
+    get_fabricator_default_fields,
+    apply_fabricator_column_mapping,
+)
 
 
 def register_command(subparsers) -> None:
@@ -61,6 +74,22 @@ def register_command(subparsers) -> None:
         help="Origin reference (default: board)",
     )
 
+    # Field selection options
+    parser.add_argument(
+        "-f",
+        "--fields",
+        help="Comma-separated field list or preset (+minimal, +standard, +jlc, etc.)",
+    )
+
+    parser.add_argument(
+        "--list-fields",
+        action="store_true",
+        help="List available fields and presets, then exit",
+    )
+
+    # Fabricator selection (for field presets / predictable output)
+    add_fabricator_arguments(parser)
+
     # Options
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
 
@@ -72,6 +101,14 @@ def handle_pos(args: argparse.Namespace) -> int:
     try:
         # Create options
         gen_options = GeneratorOptions(verbose=args.verbose) if args.verbose else None
+
+        # Resolve fabricator from arguments
+        fabricator = resolve_fabricator_from_args(args)
+
+        # Handle --list-fields before processing
+        if args.list_fields:
+            _list_available_pos_fields(fabricator)
+            return 0
 
         # Use ProjectFileResolver for intelligent input resolution
         resolver = ProjectFileResolver(
@@ -135,15 +172,85 @@ def handle_pos(args: argparse.Namespace) -> int:
         # Generate position data
         pos_data = generator.generate_pos_data(board)
 
+        # Parse field selection
+        available_pos_fields = _get_available_pos_fields()
+        fabricator_presets = get_fabricator_presets(fabricator)
+
+        try:
+            selected_fields = parse_fields_argument(
+                args.fields, available_pos_fields, fabricator, fabricator_presets
+            )
+            # Validate fields
+            validate_fields_against_available(selected_fields, available_pos_fields)
+        except ValueError as e:
+            print(f"Error: {e}", file=sys.stderr)
+            return 1
+
         # Handle output
-        return _output_pos(pos_data, args.output, args.units)
+        return _output_pos(
+            pos_data, args.output, args.units, fabricator, selected_fields
+        )
 
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1
 
 
-def _output_pos(pos_data: list, output: str, units: str) -> int:
+def _get_available_pos_fields() -> dict:
+    """Get available POS fields with descriptions.
+
+    Returns:
+        Dict mapping field names to descriptions
+    """
+    return {
+        "reference": "Component reference designator (R1, C1, etc.)",
+        "x": "X coordinate",
+        "y": "Y coordinate",
+        "rotation": "Rotation angle in degrees",
+        "side": "PCB side (TOP/BOTTOM)",
+        "footprint": "KiCad footprint name",
+        "package": "Component package/case size",
+        "value": "Component value",
+    }
+
+
+def _list_available_pos_fields(fabricator: str) -> None:
+    """List available POS fields and fabricator presets.
+
+    Args:
+        fabricator: Current fabricator ID
+    """
+    available_fields = _get_available_pos_fields()
+    fabricator_presets = get_fabricator_presets(fabricator)
+
+    print(f"\nAvailable POS Fields for {fabricator} fabricator:")
+    print("=" * 50)
+
+    for field, description in available_fields.items():
+        print(f"  {field:<15} - {description}")
+
+    print("\nFabricator Presets:")
+    if fabricator_presets:
+        for preset_name, preset_def in fabricator_presets.items():
+            desc = preset_def.get("description", "No description")
+            print(f"  +{preset_name:<12} - {desc}")
+    else:
+        print("  No fabricator-specific presets available")
+
+    # Show default fields if no --fields specified
+    default_fields = get_fabricator_default_fields(fabricator, "pos")
+    if default_fields:
+        print("\nDefault fields (when no --fields specified):")
+        print(f"  {', '.join(default_fields)}")
+
+
+def _output_pos(
+    pos_data: list,
+    output: str,
+    units: str,
+    fabricator: str = "generic",
+    selected_fields: list = None,
+) -> int:
     """Output position data in the requested format.
 
     Human-first defaults (BREAKING CHANGE for UX consistency):
@@ -152,14 +259,39 @@ def _output_pos(pos_data: list, output: str, units: str) -> int:
     - output == "-" => CSV to stdout (machine readable)
     - "stdout" removed (legacy compatibility)
     - otherwise => treat as file path
+
+    Args:
+        pos_data: List of position data dictionaries
+        output: Output destination
+        units: Units for coordinate display
+        fabricator: Fabricator ID for column mapping
+        selected_fields: List of selected field names to include
     """
+    # Use default fields if none selected
+    if not selected_fields:
+        # Try to get fabricator default fields, fall back to standard set
+        selected_fields = get_fabricator_default_fields(fabricator, "pos")
+        if not selected_fields:
+            selected_fields = [
+                "reference",
+                "x",
+                "y",
+                "rotation",
+                "side",
+                "footprint",
+                "package",
+            ]
+
+    # Apply fabricator column mapping to get proper headers
+    headers = apply_fabricator_column_mapping(fabricator, "pos", selected_fields)
+
     if output is None or output == "console":
-        _print_console_table(pos_data, units)
+        _print_console_table(pos_data, units, selected_fields, headers)
     elif output == "-":
-        _print_csv(pos_data, units)
+        _print_csv(pos_data, units, selected_fields, headers)
     else:
         output_path = Path(output)
-        _write_csv(pos_data, output_path, units)
+        _write_csv(pos_data, output_path, units, selected_fields, headers)
         print(f"Position file written to {output_path}")
 
     return 0
