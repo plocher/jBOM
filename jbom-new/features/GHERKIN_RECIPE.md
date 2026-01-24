@@ -165,6 +165,7 @@ def step_run_jbom_command(context, command):
 7. **Trailing Space Handling**: Scenario outline edge cases require explicit whitespace pattern handling
 8. **Streamlined Project Creation**: Replace verbose multi-step patterns with parameterized single steps
 9. **Eliminate Magic Strings**: Replace ambiguous "basic content" with explicit table data
+10. **Table-Based Field Validation**: Replace repetitive individual field assertions with reusable table patterns
 
 ## Legacy Step Cleanup Methodology
 
@@ -190,6 +191,76 @@ def when_run_jbom_command_trailing_space(context, command):
     common_steps.step_run_jbom_command(context, command.strip())
 ```
 
+## Table-Based Field Validation Meta Pattern (NEW)
+
+### Pattern Introduction
+Added during Issue #26 (POS field selection) to eliminate repetitive field validation across BOM, POS, and inventory commands.
+
+### Before: Repetitive Field Validation Anti-Pattern
+```gherkin
+# ❌ BAD: Individual field assertions (repetitive, hard to maintain)
+Then the output should contain "References,Value,Footprint,Quantity"
+And the output should contain "R1,10.0000,5.0000,TOP"
+And the output should contain "C1,15.0000,8.0000,TOP"
+And the output should not contain "Rotation"
+And the output should not contain "Package"
+```
+
+### After: Table-Based Field Validation
+```gherkin
+# ✅ GOOD: Clean table-driven field validation
+Then the output should contain these fields:
+  | Reference | X(mm) | Y(mm) | Side |
+And the output should not contain these fields:
+  | Rotation | Footprint | Package |
+And the output should contain these component data rows:
+  | R1 | 10.0000 | 5.0000 | TOP |
+  | C1 | 15.0000 | 8.0000 | TOP |
+```
+
+### Available Table-Based Steps (common_steps.py)
+
+#### Field Header Validation
+- `Then the output should contain these fields:` - Verify CSV headers exist
+- `Then the output should not contain these fields:` - Verify CSV headers absent
+
+#### Data Content Validation
+- `Then the output should contain these component data rows:` - Verify CSV data rows
+
+#### Help/Error Output Validation
+- `Then the help output should contain these options:` - Verify help option documentation
+- `Then the error output should list these available fields:` - Verify error field suggestions
+
+#### Fabricator-Specific Validation
+- `Then the output should contain the fabricator defined {fabricator_name} POS fields` - Placeholder for fabricator-specific fields
+
+### Usage Guidelines
+
+#### When to Use Table Patterns
+- ✅ **Field validation** across multiple commands (BOM, POS, inventory)
+- ✅ **Data row validation** for component/part listings
+- ✅ **Help text validation** for CLI option documentation
+- ✅ **Error message validation** with suggested alternatives
+
+#### When NOT to Use Table Patterns
+- ❌ **Single field checks** - use simple `Then the output should contain "field"`
+- ❌ **Complex business logic** - use domain-specific step definitions
+- ❌ **Format validation** - focus on business value, not output format
+
+### Maintenance Benefits
+1. **DRY Principle**: Eliminates repetitive field validation across features
+2. **Readability**: Tables are easier to scan than multiple individual assertions
+3. **Maintainability**: Easy to add/modify expected fields without step definition changes
+4. **Reusability**: Same patterns work across BOM, POS, inventory, and future commands
+5. **Consistency**: Uniform validation approach across the entire jBOM test suite
+
+### Migration Strategy
+Existing features can migrate incrementally:
+1. **New features**: Use table patterns from start
+2. **Regression testing**: Use table patterns for field-heavy scenarios
+3. **Legacy features**: Migrate when touching existing field validation scenarios
+4. **No breaking changes**: Old individual assertion steps remain supported
+
 ---
 
-*This document evolved through systematic legacy step cleanup (2024)*
+*This document evolved through systematic legacy step cleanup (2024) + table-based field validation patterns (2026)*

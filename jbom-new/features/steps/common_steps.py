@@ -673,3 +673,163 @@ def step_help_text_shows_bom_and_parts(context):
     assert (
         "parts" in out
     ), f"Parts command not found in main help.\nOutput:\n{context.last_output}"
+
+
+# Table-based field validation step definitions (reusable across BOM, POS, inventory, etc.)
+
+
+@then("the output should contain these fields:")
+def step_output_should_contain_fields(context):
+    """Verify that CSV output contains specified fields as headers.
+
+    Table format:
+    | Field1 | Field2 | Field3 |
+    """
+    assert context.last_output is not None, "No command output captured"
+    assert context.table is not None, "Expected table data for field validation"
+
+    # Get expected fields from first table row
+    expected_fields = [cell for cell in context.table.headings]
+
+    # Create expected header line
+    expected_header = ",".join(expected_fields)
+
+    # Check if header exists in output
+    assert expected_header in context.last_output, (
+        f"Expected header fields not found in output.\n"
+        f"Expected: {expected_header}\n"
+        f"Output:\n{context.last_output}"
+    )
+
+
+@then("the output should not contain these fields:")
+def step_output_should_not_contain_fields(context):
+    """Verify that CSV output does NOT contain specified fields.
+
+    Table format:
+    | Field1 | Field2 | Field3 |
+    """
+    assert context.last_output is not None, "No command output captured"
+    assert context.table is not None, "Expected table data for field validation"
+
+    # Get forbidden fields from first table row
+    forbidden_fields = [cell for cell in context.table.headings]
+
+    # Check that none of the forbidden fields appear in output
+    for field in forbidden_fields:
+        assert field not in context.last_output, (
+            f"Forbidden field '{field}' found in output.\n"
+            f"Output:\n{context.last_output}"
+        )
+
+
+@then("the output should contain these component data rows:")
+def step_output_should_contain_component_data(context):
+    """Verify that CSV output contains specified component data rows.
+
+    Table format:
+    | R1 | 10.0000 | 5.0000 | TOP |
+    | C1 | 15.0000 | 8.0000 | TOP |
+    """
+    assert context.last_output is not None, "No command output captured"
+    assert context.table is not None, "Expected table data for component validation"
+
+    # Check each expected data row
+    for row in context.table:
+        # Create expected CSV row from table row
+        expected_row = ",".join(row.cells)
+
+        # Check if this row exists in output
+        assert expected_row in context.last_output, (
+            f"Expected data row not found in output.\n"
+            f"Expected: {expected_row}\n"
+            f"Output:\n{context.last_output}"
+        )
+
+
+@then("the help output should contain these options:")
+def step_help_should_contain_options(context):
+    """Verify that help output contains specified options and descriptions.
+
+    Table format:
+    | --fields | Select specific fields for output |
+    | --generic | Use Generic preset |
+    """
+    assert context.last_output is not None, "No command output captured"
+    assert context.table is not None, "Expected table data for help validation"
+
+    # Check each expected option
+    for row in context.table:
+        option = row["option"] if "option" in row.headings else row.cells[0]
+        description = (
+            row["description"] if "description" in row.headings else row.cells[1]
+        )
+
+        # Check if option exists in help output
+        assert option in context.last_output, (
+            f"Expected help option '{option}' not found in output.\n"
+            f"Output:\n{context.last_output}"
+        )
+
+        # Check if description exists in help output (optional check)
+        if description and len(description) > 0:
+            assert description in context.last_output, (
+                f"Expected help description '{description}' not found in output.\n"
+                f"Output:\n{context.last_output}"
+            )
+
+
+@then("the error output should contain these options:")
+def step_error_output_should_contain_options(context):
+    """Verify that error output contains specified options - alias for help validation."""
+    step_help_should_contain_options(context)
+
+
+@then("the error output should list these available fields:")
+def step_error_should_list_available_fields(context):
+    """Verify that error output lists the specified available fields.
+
+    Table format:
+    | Reference | X | Y | Rotation | Side | Footprint | Package | Value |
+    """
+    assert context.last_output is not None, "No command output captured"
+    assert (
+        context.table is not None
+    ), "Expected table data for available fields validation"
+
+    # Get expected available fields from first table row
+    expected_fields = [cell for cell in context.table.headings]
+
+    # Check that "Available fields:" text exists
+    assert "Available fields:" in context.last_output, (
+        f"'Available fields:' text not found in error output.\n"
+        f"Output:\n{context.last_output}"
+    )
+
+    # Check that each expected field is mentioned in the error output
+    for field in expected_fields:
+        assert field in context.last_output, (
+            f"Expected available field '{field}' not found in error output.\n"
+            f"Output:\n{context.last_output}"
+        )
+
+
+@then("the output should contain the fabricator defined {fabricator_name} POS fields")
+def step_output_should_contain_fabricator_pos_fields(context, fabricator_name):
+    """Verify that output contains fabricator-specific POS fields.
+
+    This is a placeholder step definition that validates the fabricator name is mentioned
+    and that some POS-specific fields are present. More specific validation would require
+    reading the actual fabricator configuration.
+    """
+    assert context.last_output is not None, "No command output captured"
+
+    # Basic validation - at minimum should be CSV output with some placement fields
+    common_pos_fields = ["Reference", "Designator", "X", "Y", "Mid X", "Mid Y"]
+    found_pos_field = any(field in context.last_output for field in common_pos_fields)
+
+    assert found_pos_field, (
+        f"No POS fields found in {fabricator_name} fabricator output.\n"
+        f"Expected at least one of: {common_pos_fields}\n"
+        f"Output:\n{context.last_output}"
+    )
