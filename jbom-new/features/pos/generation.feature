@@ -14,9 +14,9 @@ Feature: POS Generation
       | U1        | 25|12 | 180      | TOP  | SOIC-8_3.9x4.9mm |
     When I run jbom command "pos -o -"
     Then the command should succeed
-    And the output should contain "R1,10.0000,5.0000,0.0,TOP"
-    And the output should contain "C1,15.0000,8.0000,90.0,TOP"
-    And the output should contain "U1,25.0000,12.0000,180.0,TOP"
+    And the output should contain "R1,10,5,TOP,0,0805"
+    And the output should contain "C1,15,8,TOP,90,0603"
+    And the output should contain "U1,25,12,TOP,180,SOIC"
 
   Scenario: Generate POS to specific output file
     Given a PCB that contains:

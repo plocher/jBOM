@@ -10,7 +10,8 @@ Feature: File Extension Validation
     Given I create file "not_schematic.txt" with content "hello"
     When I run "jbom bom not_schematic.txt"
     Then the command exits with code 1
-    And the error output contains "Expected .kicad_sch file"
+    And the error output contains:
+      | Expected .kicad_sch file |
 
   # REMOVED: WIP scenarios based on incorrect project discovery assumptions
   # These assumed jBOM looks for loose *.kicad_sch files, but it actually:

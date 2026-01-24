@@ -72,13 +72,15 @@ Feature: BOM Field System and Output Customization
   Scenario: Field validation - unknown field should fail
     When I run jbom command "bom -f Reference,Value,UnknownField -o -"
     Then the command should fail
-    And the error output should contain "Unknown field: 'UnknownField'"
+    And the error output contains:
+      | Unknown field: 'UnknownField' |
 
   @regression @current-broken
   Scenario: Preset validation - unknown preset should fail
     When I run jbom command "bom -f +unknown_preset -o -"
     Then the command should fail
-    And the error output should contain "Unknown preset: +unknown_preset"
+    And the error output contains:
+      | Unknown preset: +unknown_preset |
 
   @regression @current-broken
   Scenario: List available fields functionality
@@ -112,4 +114,5 @@ Feature: BOM Field System and Output Customization
   Scenario: CLI argument validation - missing field list
     When I run jbom command "bom -f"
     Then the command should fail
-    And the error output should contain "argument -f/--fields: expected one argument"
+    And the error output contains:
+      | argument -f/--fields: expected one argument |

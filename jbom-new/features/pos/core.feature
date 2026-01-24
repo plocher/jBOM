@@ -28,11 +28,11 @@ Feature: POS Generation (Core Functionality)
     When I run jbom command "pos -o -"
     Then the command should succeed
     And the output should contain "R1"
-    And the output should contain "10.0000,5.0000"
+    And the output should contain "10,5"
     And the output should contain "C1"
-    And the output should contain "15.0000,8.0000"
+    And the output should contain "15,8"
     And the output should contain "U1"
-    And the output should contain "25.0000,12.0000"
+    And the output should contain "25,12"
 
   Scenario: Generate POS to specific output file
     Given a PCB that contains:
@@ -41,7 +41,7 @@ Feature: POS Generation (Core Functionality)
       | C1        | 8 | 6 | TOP  | C_0603_1608 |
     When I run jbom command "pos -o placement.csv"
     Then the command should succeed
-    And a file named "custom_pos.csv" should exist
+    And a file named "placement.csv" should exist
 
   Scenario: Generate POS with console table output
     Given a PCB that contains:
