@@ -41,6 +41,20 @@ def step_default_jbom_environment(context):
     context.current_project = project_name
 
 
+@given("a default jBOM CSV output environment")
+def step_default_jbom_csv_output_environment(context):
+    """Layer 2.5: Sandbox + project + CSV output, no fabricator defaults.
+
+    Automatically adds '-o -' to jbom commands for CSV output testing.
+    Use this for testing fabricator functionality without DRY violations.
+    """
+    # Build on Layer 2
+    step_default_jbom_environment(context)
+
+    # Set CSV output default but no fabricator default
+    context.default_output = "-o -"
+
+
 @given("a default jBOM CSV environment")
 def step_default_jbom_csv_environment(context):
     """Layer 3: Sandbox + project + standardized I/O for testing.

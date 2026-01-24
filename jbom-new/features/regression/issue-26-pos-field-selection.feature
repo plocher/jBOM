@@ -11,7 +11,7 @@ Feature: Issue #26 - POS Field Selection and Output Control (Regression Canaries
   # - This keeps regression focused on "does the feature work" vs "does every edge case work"
 
   Background:
-    Given a default jBOM CSV environment
+    Given a default jBOM CSV output environment
     And a PCB that contains:
       | Reference | X | Y | Rotation | Side | Footprint         | Package      | Value |
       | R1        | 10| 5 | 0        | TOP  | R_0805_2012       | 0805         | 10K   |
