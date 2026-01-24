@@ -4,38 +4,12 @@
 
 ## Background Layer Architecture
 
-### Pure Sandbox
-```gherkin
-Background:
-  Given a sandbox
-```
-**Purpose**: Isolated sandbox directory, no KiCad project
-**Use cases**: Project discovery edge cases, malformed project testing
-
-### Sandbox with empty Kicad project
-```gherkin
-Background:
-  Given a KiCad sandbox
-```
-**Purpose**: Sandbox + empty KiCad project, no command defaults
-**Use cases**: Command behavior testing, explicit output format testing
-
-### Sandbox, KiCad and run jbom with `-o -` CSV output
-```gherkin
-Background:
-  Given a jBOM CSV sandbox
-```
-**Purpose**: Sandbox + project + CSV on stdout (`-o -`)
-**Use cases**: fabricator and config file feature tests
-
-
-### Sandbox, KiCad, CSV and a generic fabricator
-```gherkin
-Background:
-  Given a generic jBOM CSV sandbox
-```
-**Purpose**: Sandbox + project + standardized CSV I/O (`-o -`, `--fabricator generic`)
-**Use cases**: Most business logic testing (95% of scenarios)
+| GIVEN | Purpose | Use Cases |
+|-------|---------|-----------|
+| `Given a sandbox` | Isolated sandbox directory, no KiCad project | Project discovery edge cases, malformed project testing |
+| `Given a KiCad sandbox` | Sandbox + empty KiCad project, no command defaults | Command behavior testing, explicit output format testing |
+| `Given a jBOM CSV sandbox` | Sandbox + project + CSV on stdout (`-o -`) | Fabricator and config file feature tests |
+| `Given a generic jBOM CSV sandbox` | Sandbox + project + standardized CSV I/O (`-o -`, `--fabricator generic`) | Most business logic testing (95% of scenarios) |
 
 ## Anti-Patterns Discovered
 
