@@ -23,7 +23,7 @@ Feature: Issue #26 - POS Field Selection and Output Control (Regression Canaries
     When I run jbom command "pos --fields Reference,X,Y,Side"
     Then the command should succeed
     And the output should contain these fields:
-      | Reference | X(mm) | Y(mm) | Side |
+      | Reference | X | Y | Side |
     And the output should not contain these fields:
       | Rotation | Footprint | Package |
     And the output should contain these component data rows:
@@ -45,7 +45,7 @@ Feature: Issue #26 - POS Field Selection and Output Control (Regression Canaries
     When I run jbom command "pos --fields Reference,X,Y,Rotation"
     Then the command should succeed
     And the output should contain these fields:
-      | Reference | X(mm) | Y(mm) | Rotation |
+      | Reference | X | Y | Rotation |
     And the output should not contain these fields:
       | Side | Package |
     And the output should contain these component data rows:
@@ -97,7 +97,7 @@ Feature: Issue #26 - POS Field Selection and Output Control (Regression Canaries
     When I run jbom command "pos --fields +Value"
     Then the command should succeed
     And the output should contain these fields:
-      | Reference | X(mm) | Y(mm) | Rotation | Side | Footprint | Package | Value |
+      | Reference | X | Y | Rotation | Side | Footprint | Package | Value |
     And the output should contain these component data rows:
       | R1 | 10.0000 | 5.0000 | 0.0 | TOP | R_0805_2012 | 0805 | 10K |
       | C1 | 15.0000 | 8.0000 | 90.0 | TOP | C_0603_1608 | 0603 | 100nF |
@@ -106,7 +106,7 @@ Feature: Issue #26 - POS Field Selection and Output Control (Regression Canaries
     When I run jbom command "pos --fields +fabricator_part_number"
     Then the command should succeed
     And the output should contain these fields:
-      | Reference | X(mm) | Y(mm) | Rotation | Side | Footprint | Package | Fabricator Part Number |
+      | Reference | X | Y | Rotation | Side | Footprint | Package | Fabricator Part Number |
     # fabricator_part_number should be populated from fabricator-specific part number fields
 
   # Field modification with fabricator presets

@@ -371,18 +371,8 @@ def _print_csv(
     """Print position data as CSV to stdout."""
     writer = csv.writer(sys.stdout)
 
-    # Apply unit labels to coordinate headers
-    unit_label = "mm" if units == "mm" else "in"
-    final_headers = []
-    for i, header in enumerate(headers):
-        field = selected_fields[i] if i < len(selected_fields) else "unknown"
-        if field in ["x", "y"] and "(" not in header:
-            # Add unit label if not already present
-            final_headers.append(f"{header}({unit_label})")
-        else:
-            final_headers.append(header)
-
-    writer.writerow(final_headers)
+    # Use headers exactly as provided by fabricator column mapping
+    writer.writerow(headers)
 
     # Data rows - output only selected fields in specified order
     for entry in pos_data:
