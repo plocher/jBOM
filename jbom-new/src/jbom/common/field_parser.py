@@ -41,22 +41,31 @@ def parse_fields_argument(
     if fabricator_presets:
         all_presets.update(fabricator_presets)
 
-    # Case 1: No fields argument - use fabricator's default preset
+    # Case 1: No fields argument - use context-appropriate defaults
     if not fields_arg:
-        if fabricator_presets and "default" in fabricator_presets:
-            preset_fields = fabricator_presets["default"].get("fields")
-            if preset_fields:
-                return preset_fields.copy()
-
-        # Fall back to standard preset
-        standard_preset = all_presets.get("standard")
-        if standard_preset and standard_preset.get("fields"):
-            return standard_preset["fields"].copy()
-
-        # Ultimate fallback - context-specific defaults
         if context == "pos":
+            # For POS, use fabricator's column mapping to determine defaults
+            from jbom.config.fabricators import get_fabricator_default_fields
+
+            default_fields = get_fabricator_default_fields(fabricator_id, context)
+            if default_fields:
+                return default_fields.copy()
+
+            # Fallback for POS if no fabricator mapping exists
             return ["reference", "x", "y", "rotation", "side", "footprint", "package"]
         else:
+            # For BOM, use fabricator presets first, then global presets
+            if fabricator_presets and "default" in fabricator_presets:
+                preset_fields = fabricator_presets["default"].get("fields")
+                if preset_fields:
+                    return preset_fields.copy()
+
+            # Fall back to standard preset for BOM
+            standard_preset = all_presets.get("standard")
+            if standard_preset and standard_preset.get("fields"):
+                return standard_preset["fields"].copy()
+
+            # Ultimate fallback for BOM
             return ["reference", "quantity", "value", "footprint"]
 
     # Case 2: User provided fields - parse exactly what they specified

@@ -18,7 +18,6 @@ from jbom.common.field_parser import (
     validate_fields_against_available,
 )
 from jbom.config.fabricators import (
-    get_fabricator_presets,
     get_fabricator_default_fields,
     apply_fabricator_column_mapping,
 )
@@ -174,14 +173,15 @@ def handle_pos(args: argparse.Namespace) -> int:
 
         # Parse field selection with fabricator awareness
         available_pos_fields = _get_available_pos_fields()
-        fabricator_presets = get_fabricator_presets(fabricator)
+        # NOTE: Don't pass BOM fabricator_presets to POS - they contain incompatible fields
+        # POS uses get_fabricator_default_fields() instead
 
         try:
             selected_fields = parse_fields_argument(
                 args.fields,
                 available_pos_fields,
                 fabricator,
-                fabricator_presets,
+                None,  # No BOM presets for POS
                 context="pos",
             )
             # Validate fields
@@ -191,8 +191,9 @@ def handle_pos(args: argparse.Namespace) -> int:
             if args.fields and fabricator != "generic":
                 from jbom.common.field_parser import check_fabricator_field_completeness
 
+                # Don't use BOM presets for POS completeness check
                 warning = check_fabricator_field_completeness(
-                    selected_fields, fabricator, fabricator_presets
+                    selected_fields, fabricator, None
                 )
                 if warning:
                     print(f"Warning: {warning}", file=sys.stderr)
@@ -237,7 +238,7 @@ def _list_available_pos_fields(fabricator: str) -> None:
         fabricator: Current fabricator ID
     """
     available_fields = _get_available_pos_fields()
-    fabricator_presets = get_fabricator_presets(fabricator)
+    # NOTE: Don't show BOM presets for POS - they contain incompatible fields
 
     print(f"\nAvailable POS Fields for {fabricator} fabricator:")
     print("=" * 50)
@@ -246,12 +247,7 @@ def _list_available_pos_fields(fabricator: str) -> None:
         print(f"  {field:<15} - {description}")
 
     print("\nFabricator Presets:")
-    if fabricator_presets:
-        for preset_name, preset_def in fabricator_presets.items():
-            desc = preset_def.get("description", "No description")
-            print(f"  +{preset_name:<12} - {desc}")
-    else:
-        print("  No fabricator-specific presets available")
+    print("  No POS-specific presets available (POS uses fabricator column mapping)")
 
     # Show default fields if no --fields specified
     default_fields = get_fabricator_default_fields(fabricator, "pos")
