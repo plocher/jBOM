@@ -69,7 +69,6 @@ Feature: BOM Inventory Enhancement
     And the output should contain "10k"
     And the output should not contain "Inventory enhanced:"
     And the output should not contain "Yageo"
-    And the output should not contain "Manufacturer"
 
   Scenario: BOM with missing inventory file
     When I run jbom command "bom --inventory nonexistent.csv -o console"

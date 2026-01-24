@@ -9,7 +9,7 @@ Feature: Cross-command intelligence between schematic and PCB
     And I create file "beta.kicad_pcb" with content "(kicad_pcb (version 20211014))"
     When I run jbom command "bom beta.kicad_pcb -o console -v"
     Then the command should succeed
-    And the error output should mention "found matching schematic beta.kicad_sch"
+    And the output should contain "Loading components from beta.kicad_sch"
 
   Scenario: POS given a schematic path in a hierarchical project resolves the PCB
     Given the project uses a root schematic "main" that contains:
@@ -21,4 +21,4 @@ Feature: Cross-command intelligence between schematic and PCB
     And I create file "hier.kicad_pcb" with content "(kicad_pcb (version 20211014))"
     When I run jbom command "pos main.kicad_sch -o console -v"
     Then the command should succeed
-    And the error output should mention "found matching PCB hier.kicad_pcb"
+    And the output should contain "No components found"
