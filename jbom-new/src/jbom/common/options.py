@@ -34,7 +34,6 @@ class BOMOptions(GeneratorOptions):
 class PlacementOptions(GeneratorOptions):
     """Options specific to placement/CPL generation."""
 
-    units: Literal["mm", "inch"] = "mm"
     origin: Literal["board", "aux"] = "board"
     smd_only: bool = True
     layer_filter: Optional[Literal["TOP", "BOTTOM"]] = None

@@ -46,8 +46,8 @@ def print_bom_table(bom_data: BOMData) -> None:
         )
 
 
-def print_pos_table(pos_data: List[dict], units: str) -> None:
-    """Pretty-print POS data as a formatted table to stdout."""
+def print_pos_table(pos_data: List[dict]) -> None:
+    """Pretty-print POS data as a formatted table to stdout (always mm units)."""
     print(f"\nComponent Placement Data ({len(pos_data)} components)")
     print("=" * 80)
 
@@ -55,15 +55,21 @@ def print_pos_table(pos_data: List[dict], units: str) -> None:
         print("No components found.")
         return
 
-    unit_label = "mm" if units == "mm" else "in"
     print(
-        f"{'Ref':<10} {'X(' + unit_label + ')':<12} {'Y(' + unit_label + ')':<12} {'Rot':<6} {'Side':<6} {'Package':<15}"
+        f"{'Ref':<10} {'X(mm)':<12} {'Y(mm)':<12} {'Rot':<6} {'Side':<6} {'Package':<15}"
     )
     print("-" * 80)
 
     for e in pos_data:
-        x = f"{e['x_mm']:.3f}" if units == "mm" else f"{e['x_mm']/25.4:.4f}"
-        y = f"{e['y_mm']:.3f}" if units == "mm" else f"{e['y_mm']/25.4:.4f}"
+        # Use raw tokens if available, otherwise format mm values
+        if e.get("x_raw"):
+            x = str(e["x_raw"])
+        else:
+            x = f"{e['x_mm']:.3f}"
+        if e.get("y_raw"):
+            y = str(e["y_raw"])
+        else:
+            y = f"{e['y_mm']:.3f}"
         ref = e["reference"]
         if len(ref) > 9:
             ref = ref[:9] + "..."
