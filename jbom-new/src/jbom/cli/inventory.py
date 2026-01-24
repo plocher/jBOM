@@ -18,7 +18,9 @@ from jbom.cli.formatting import print_inventory_table
 def register_command(subparsers) -> None:
     """Register inventory command with argument parser."""
     parser = subparsers.add_parser(
-        "inventory", help="Generate component inventory from project"
+        "inventory",
+        help="Generate component inventory from project",
+        description="Generate component inventory from project",
     )
 
     # Project input as main positional argument

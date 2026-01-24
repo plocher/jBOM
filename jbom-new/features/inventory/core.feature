@@ -66,7 +66,7 @@ Feature: Inventory Management (Core Functionality)
       | C1        | CAP-0603-10U| 1        |
     When I run jbom command "inventory -o inventory.csv"
     Then the command should succeed
-    And a file named "basic_inventory.csv" should exist
+    And a file named "inventory.csv" should exist
 
   Scenario: Handle empty schematic
     Given a schematic that contains:
