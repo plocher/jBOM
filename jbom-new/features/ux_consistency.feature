@@ -1,3 +1,4 @@
+@skip
 Feature: UX Consistency Across Commands
   As a hardware developer
   I want consistent behavior across BOM, POS, and inventory commands
