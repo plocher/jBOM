@@ -6,13 +6,13 @@ Feature: Multi-Source Inventory
   Background:
     Given the generic fabricator is selected
     And an inventory file "primary_inventory.csv" that contains:
-      | IPN       | Category  | Value | Description         | Package | Manufacturer | MFGPN           |
-      | RES_10K   | RESISTOR  | 10k   | 10k Ohm resistor    | 0603    | Yageo        | RC0603FR-0710KL |
-      | CAP_100N  | CAPACITOR | 100nF | 100nF ceramic cap   | 0603    | Murata       | GRM188R71H104KA |
+      | IPN                | Category  | Value | Description         | Package | Manufacturer | MFGPN           |
+      | RES-10K-0603-E12   | RESISTOR  | 10k   | 10k Ohm resistor    | 0603    | Yageo        | RC0603FR-0710KL |
+      | CAP-100nF-0603-X7R | CAPACITOR | 100nF | 100nF ceramic cap   | 0603    | Murata       | GRM188R71H104KA |
     And an inventory file "secondary_inventory.csv" that contains:
-      | IPN       | Category  | Value | Description         | Package | Manufacturer | MFGPN           |
-      | RES_10K   | RESISTOR  | 10k   | Secondary resistor  | 0603    | Vishay       | CRCW060310K0FKEA|
-      | LED_RED   | LED       | RED   | Red LED 20mA        | 0603    | Kingbright   | APT1608SRCPRV   |
+      | IPN                | Category  | Value | Description         | Package | Manufacturer | MFGPN           |
+      | RES-10K-0603-E24   | RESISTOR  | 10k   | Secondary resistor  | 0603    | Vishay       | CRCW060310K0FKEA|
+      | LED-RED-0603-20mA  | LED       | RED   | Red LED 20mA        | 0603    | Kingbright   | APT1608SRCPRV   |
     And a schematic that contains:
       | Reference | Value | Footprint   | LibID     |
       | R1        | 10k   | R_0603_1608 | Device:R  |
@@ -26,12 +26,12 @@ Feature: Multi-Source Inventory
     And the output should contain "Loading 2 inventory file(s) with precedence order"
     And the output should contain "primary: primary_inventory.csv"
     And the output should contain "precedence 2: secondary_inventory.csv"
-    And the output should contain "Merged inventory: 3 total items"
-    And the output should contain "Generated inventory with 1 items"
-    And the output should contain "RES_22K"
-    And the output should not contain "RES_10K"
-    And the output should not contain "CAP_100N"
-    And the output should not contain "LED_RED"
+    And the output should contain "Merged inventory: 4 total items"
+    And the output should contain "Generated inventory with 2 items"
+    And the output should contain "RES_22k"
+    And the output should not contain "RES-10K-0603-E12"
+    And the output should not contain "CAP-100nF-0603-X7R"
+    And the output should not contain "LED-RED-0603-20mA"
 
   Scenario: Primary inventory takes precedence over secondary
     # Verifies that when RES_10K exists in both inventories, primary (Yageo) wins over secondary (Vishay)
@@ -40,7 +40,7 @@ Feature: Multi-Source Inventory
     And the output should contain "primary: primary_inventory.csv (2/2 items added)"
     And the output should contain "precedence 2: secondary_inventory.csv (1/2 items added)"
     And the output should contain "Merged inventory: 3 total items"
-    And the output should contain "Matched RES_10K"
+    And the output should contain "Matched RES-10K-0603-E12"
 
   Scenario: BOM enhancement with multiple inventory files (partial implementation)
     When I run jbom command "bom --inventory primary_inventory.csv --inventory secondary_inventory.csv -o console -v"
@@ -52,10 +52,10 @@ Feature: Multi-Source Inventory
     When I run jbom command "inventory --inventory primary_inventory.csv -o console"
     Then the command should succeed
     And the output should contain "Generated inventory with 4 items"
-    And the output should contain "RES_10K"
-    And the output should contain "RES_22K"
-    And the output should contain "CAP_100N"
-    And the output should contain "LED_RED"
+    And the output should contain "RES-10K-0603-E12"  # From inventory
+    And the output should contain "RES_22k"           # Generated (no match)
+    And the output should contain "CAP-100nF-0603-X7R"  # From inventory
+    And the output should contain "LED_RED"           # Generated (no match)
 
   Scenario: Empty inventory files handled gracefully
     Given an inventory file "empty_inventory.csv" that contains:
@@ -77,10 +77,10 @@ Feature: Multi-Source Inventory
     # Tests that primary inventory takes precedence over secondary and tertiary for RES_10K
     # RES_10K appears in all three: Yageo (primary) should win over Vishay (secondary) and Panasonic (tertiary)
     Given an inventory file "tertiary_inventory.csv" that contains:
-      | IPN       | Category  | Value | Description         | Package | Manufacturer | MFGPN           |
-      | RES_10K   | RESISTOR  | 10k   | Tertiary resistor   | 0603    | Panasonic    | ERJ-3EKF1002V   |
-      | RES_22K   | RESISTOR  | 22k   | 22k Ohm resistor    | 0603    | Yageo        | RC0603FR-0722KL |
-      | IC_LM358  | IC        | LM358 | Dual Op-Amp         | SOIC-8  | TI           | LM358DR         |
+      | IPN                  | Category  | Value | Description         | Package | Manufacturer | MFGPN           |
+      | RES-10K-0603-E96     | RESISTOR  | 10k   | Tertiary resistor   | 0603    | Panasonic    | ERJ-3EKF1002V   |
+      | RES-22K-0603-E12     | RESISTOR  | 22k   | 22k Ohm resistor    | 0603    | Yageo        | RC0603FR-0722KL |
+      | IC-LM358-SOIC8-STD   | IC        | LM358 | Dual Op-Amp         | SOIC-8  | TI           | LM358DR         |
     When I run jbom command "inventory --inventory primary_inventory.csv --inventory secondary_inventory.csv --inventory tertiary_inventory.csv -o console -v"
     Then the command should succeed
     And the output should contain "Loading 3 inventory file(s) with precedence order"
@@ -88,7 +88,7 @@ Feature: Multi-Source Inventory
     And the output should contain "precedence 2: secondary_inventory.csv (1/2 items added)"
     And the output should contain "precedence 3: tertiary_inventory.csv (2/3 items added)"
     And the output should contain "Merged inventory: 5 total items"
-    And the output should contain "Matched RES_10K"
+    And the output should contain "Matched RES-10K-0603-E12"
 
   Scenario: Filter matches with multiple sources shows only unmatched items
     # This scenario verifies that --filter-matches only shows components
@@ -97,10 +97,10 @@ Feature: Multi-Source Inventory
     When I run jbom command "inventory --inventory primary_inventory.csv --inventory secondary_inventory.csv --filter-matches -o console"
     Then the command should succeed
     And the output should contain "Generated inventory with 1 items"
-    And the output should contain "RES_22K"
-    And the output should not contain "RES_10K"
-    And the output should not contain "CAP_100N"
-    And the output should not contain "LED_RED"
+    And the output should contain "RES_22k"  # Generated (no inventory match)
+    And the output should not contain "RES-10K-0603-E12"  # Should be filtered out
+    And the output should not contain "CAP-100nF-0603-X7R"  # Should be filtered out
+    And the output should not contain "LED-RED-0603-20mA"  # Should be filtered out
 
   Scenario: Multi-source inventory export to file
     # Verifies that merged inventory includes components from all sources with proper precedence
@@ -108,7 +108,7 @@ Feature: Multi-Source Inventory
     When I run jbom command "inventory --inventory primary_inventory.csv --inventory secondary_inventory.csv -o merged_output.csv"
     Then the command should succeed
     And a file named "merged_output.csv" should exist
-    And the file "merged_output.csv" should contain "RES_10K"
-    And the file "merged_output.csv" should contain "CAP_100N"
-    And the file "merged_output.csv" should contain "LED_RED"
-    And the file "merged_output.csv" should contain "RES_22K"
+    And the file "merged_output.csv" should contain "RES-10K-0603-E12"  # From primary inventory
+    And the file "merged_output.csv" should contain "CAP-100nF-0603-X7R"  # From primary inventory
+    And the file "merged_output.csv" should contain "LED-RED-0603-20mA"  # From secondary inventory
+    And the file "merged_output.csv" should contain "RES_22k"  # Generated (no match)
