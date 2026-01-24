@@ -26,8 +26,8 @@ Feature: Inventory File Safety and Backup
     When I run jbom command "inventory -o existing_inventory.csv --force"
     Then the command should succeed
     And the output should contain "Generated inventory with 2 items written to existing_inventory.csv"
-    And the file "existing_inventory.csv" should contain "RES_10K"
-    And the file "inventory.csv" should contain "CAP_100N"
+    And the file "existing_inventory.csv" should contain "RES_10k"
+    And the file "existing_inventory.csv" should contain "CAP_100nF"
 
   Scenario: Force flag successfully overwrites existing files
     Given an inventory file "inventory.csv" that contains:
@@ -35,8 +35,8 @@ Feature: Inventory File Safety and Backup
       | OLD_COMPONENT | RESISTOR | 1k    |
     When I run jbom command "inventory -o inventory.csv --force"
     Then the command should succeed
-    And the file "inventory.csv" should contain "RES_10K"
-    And the file "inventory.csv" should contain "CAP_100N"
+    And the file "inventory.csv" should contain "RES_10k"
+    And the file "inventory.csv" should contain "CAP_100nF"
 
 
   Scenario: Graceful handling of backup failure
