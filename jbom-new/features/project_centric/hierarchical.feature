@@ -14,12 +14,11 @@ Feature: Hierarchical schematic handling
     And the output should contain "R1"
 
   Scenario: Missing child sheet logs warning but continues
-    Given I create directory "tmp_hier_missing"
-    And I am in directory "tmp_hier_missing"
+    Given a project "main" placed in "hier_missing"
     And the project uses a root schematic "main" that contains:
       | Reference | Value | Footprint |
     And the root references child schematic "missing"
-    When I run jbom command "bom -o console -v"
+    When I run jbom command "bom hier_missing -o console -v"
     Then the command should succeed
 
   Scenario: Inventory includes all components from hierarchical design

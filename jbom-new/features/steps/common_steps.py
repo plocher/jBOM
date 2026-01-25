@@ -233,12 +233,18 @@ def step_have_sample_fixtures(context, rel_path):
 
 @given('I am in directory "{rel_path}"')
 def step_cd_project_root(context, rel_path):
+    """DEPRECATED: This step changes working directory which violates consistency.
+
+    Use 'Given a project "name" in directory "path"' instead.
+    """
     from pathlib import Path
 
-    base = Path(str(context.project_root))
-    new_root = (base / rel_path).resolve()
-    new_root.mkdir(parents=True, exist_ok=True)
-    context.project_root = new_root
+    # Create the directory but DO NOT change project_root
+    base = Path(str(context.sandbox_root))
+    new_dir = (base / rel_path).resolve()
+    new_dir.mkdir(parents=True, exist_ok=True)
+
+    # REMOVED: context.project_root = new_root  # This was the problem!
 
 
 @when('I am in directory "{rel_path}"')
@@ -249,13 +255,17 @@ def step_when_cd_project_root(context, rel_path):
 
 @given('I am in project directory "{name}"')
 def step_cd_project_directory(context, name):
-    """Switch to a KiCad project directory, creating minimal skeleton if needed."""
-    from pathlib import Path
-    from ._workspace import ensure_project, chdir
+    """DEPRECATED: This step changes working directory which violates consistency.
 
-    base = Path(str(context.project_root))
-    proj_dir = ensure_project(base, name)
-    chdir(context, proj_dir)
+    Use 'Given a project "name" in directory "path"' instead.
+    """
+    from pathlib import Path
+    from ._workspace import ensure_project
+
+    # Create project directory but DO NOT change working directory
+    base = Path(str(context.sandbox_root))
+    ensure_project(base, name)
+    # REMOVED: chdir(context, proj_dir)  # This was the problem!
 
 
 @when('I am in project directory "{name}"')
@@ -339,7 +349,7 @@ def step_file_is_unreadable(context, filename):
     from pathlib import Path
     import stat
 
-    file_path = Path(context.project_root) / filename
+    file_path = Path(context.sandbox_root) / filename
     assert file_path.exists(), f"File {filename} does not exist"
 
     # Remove read permissions (keep only write permissions for owner)

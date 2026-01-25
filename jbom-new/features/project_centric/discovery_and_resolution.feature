@@ -43,14 +43,9 @@ Scenario: Project and directory share the same name (pedantic)
 
   Scenario: Directory with multiple schematics picks a deterministic file
     Given I create directory "mismatched_names"
-    And I am in directory "mismatched_names"
-    And the schematic "alpha" contains:
-      | Reference | Value | Footprint   | LibID    |
-      | R1        | 10K   | R_0603_1608 | Device:R |
-    And the schematic "beta" contains:
-      | Reference | Value | Footprint   | LibID    |
-      | C1        | 100nF | C_0603_1608 | Device:C |
-    When I run jbom command "bom . -o console -v"
+    And I create file "mismatched_names/alpha.kicad_sch" with content "(kicad_sch (version 20211123) (generator eeschema)\n  (symbol (lib_id \"Device:R\") (at 50 50 0) (unit 1)\n    (property \"Reference\" \"R1\") (property \"Value\" \"10K\")))"
+    And I create file "mismatched_names/beta.kicad_sch" with content "(kicad_sch (version 20211123) (generator eeschema)\n  (symbol (lib_id \"Device:C\") (at 50 50 0) (unit 1)\n    (property \"Reference\" \"C1\") (property \"Value\" \"100nF\")))"
+    When I run jbom command "bom mismatched_names -o console -v"
     Then the command should succeed
     # Deterministic pick: sorted order selects alpha here
     And the output should contain "alpha - Bill of Materials"

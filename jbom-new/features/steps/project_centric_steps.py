@@ -416,11 +416,11 @@ def given_kicad_project_with_files(context, name: str) -> None:
           | test_project.kicad_sch   | Resistor  | R1        | 10K   | R_0805_2012   |
           | test_project.kicad_pcb   | Footprint | R1        |       | R_0805_2012   |
     """
-    project_dir = Path(context.project_root) / name
+    project_dir = Path(context.sandbox_root) / name
     project_dir.mkdir(parents=True, exist_ok=True)
 
-    # Update context
-    context.project_root = project_dir
+    # Update context - but DO NOT change project_root (working directory)
+    # REMOVED: context.project_root = project_dir  # This was the problem!
     context.current_project = name
 
     # Process table to create files
@@ -485,11 +485,11 @@ def given_minimal_kicad_project(context, name: str) -> None:
     Use this for project discovery testing that doesn't need specific component data.
     Creates standard project files with minimal but valid content.
     """
-    project_dir = Path(context.project_root) / name
+    project_dir = Path(context.sandbox_root) / name
     project_dir.mkdir(parents=True, exist_ok=True)
 
-    # Update context
-    context.project_root = project_dir
+    # Update context - but DO NOT change project_root (working directory)
+    # REMOVED: context.project_root = project_dir  # This was the problem!
     context.current_project = name
 
     # Create minimal project files
