@@ -1,0 +1,54 @@
+WARP Agent Context Snapshot
+Date: 2026-01-24
+Project: jBOM rewrite (jbom-new)
+Working Dir: /Users/jplocher/Dropbox/KiCad/jBOM/jbom-new
+Branch: feature/issue-26-pos-field-selection
+
+Overview
+- Goal: Triage and fix failing behave scenarios in jbom-new/features to close GitHub issue #26.
+- Status: Multiple UX/fabricator scenarios fixed. Active investigation: Inventory enhancement not applying to BOM output when using --inventory.
+
+Recent Findings
+- Inventory enhancement was non-functional for components without explicit IPN.
+- LED example (features/bom/inventory_enhancement.feature:46) expected Value (RED) + Package (0603) match and LED category gating.
+- Debug showed mismatch between generated component IPN and inventory IPN formats:
+  - Generated: LED_RED (underscore style)
+  - Inventory: LED-RED-0603-20mA (hyphen style)
+- Prior lookup did not normalize hyphenated IPNs or provide value+package keys.
+
+Changes Made
+- File: src/jbom/services/inventory_matcher.py
+- Enhanced inventory lookup to support hyphenated IPNs and heuristic keys:
+    - category_value: e.g., LED_RED
+    - value only: e.g., RED
+    - value_package: e.g., RED_0603 (when package present)
+    - Retain underscore-based alternates and add explicit value+package entry when InventoryItem has value/package.
+- Validation: Created and ran debug script debug_inventory_match.py to verify LED1 now matches inventory item LED-RED-0603-20mA and fills description/manufacturer.
+
+Open Test Failures / Active Topics
+- features/bom/inventory_enhancement.feature:46 (CSV includes inventory columns): expected LED row description now expected to pass after matcher fix; needs re-run.
+- Broader inventory: Ensure DNP/excluded filtering scenarios still behave when enhancement is active.
+- Project discovery/path and error formatting scenarios still require follow-up.
+- Unit tests have known import issues (GitHub issue #46).
+- Migration to table-driven checks for output validation (GitHub issue #47) ongoing.
+
+Next Actions
+1) Re-run behave for inventory_enhancement.feature to confirm LED matching and description/manufacturer population.
+2) Broaden verification across inventory/*.feature to ensure new lookup keys don’t cause false positives.
+3) Add docs note summarizing matching hierarchy (exact IPN → direct matches like value+package/manufacturer+pn → heuristic matching) and the LED category requirement.
+4) Address DNP/exclude filtering behaviors alongside inventory enhancement.
+5) Continue table-driven conversion for brittle string-compare steps.
+
+Key Files Recently Touched
+- src/jbom/services/inventory_matcher.py (inventory lookup improvement)
+- debug_inventory_match.py (temporary local debug harness)
+- features/bom/inventory_enhancement.feature (already table-driven; scenario reference at line 46)
+
+Reference Scenario Details
+- Background inventory rows include:
+  - LED-RED-0603-20mA, Category=LED, Value=RED, Description=Red LED 20mA, Package=0603, Manufacturer=Kingbright, MFGPN=APT1608SRCPRV, LCSC=C2286
+- Schematic includes: LED1 (Value=RED, Footprint=LED_0603, LibID=Device:LED).
+
+Notes
+- Ensure POS/fabricator flows remain unaffected by inventory enhancement.
+- Maintain requirements: type hints on functions, docstrings for public methods, dataclasses for structured data, and validation at data intake.

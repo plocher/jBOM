@@ -397,8 +397,8 @@ def given_kicad_project_directory(context, name: str) -> None:
     project_dir = Path(context.project_root) / name
     project_dir.mkdir(parents=True, exist_ok=True)
 
-    # Update context to use this as the working directory
-    context.project_root = project_dir
+    # DON'T update context.project_root - keep working directory as parent
+    # This allows commands to reference the project directory by name
     context.current_project = name
 
 

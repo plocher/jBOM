@@ -46,20 +46,20 @@ Feature: BOM Inventory Enhancement
   Scenario: BOM enhancement CSV output includes inventory columns
     When I run jbom command "bom --inventory component_inventory.csv -o -"
     Then the command should succeed
-    And the output should contain "Reference,Quantity,Description,Value,Package,Footprint,Manufacturer,Part Number"
-    And the output should contain "R1, R2"
-    And the output should contain "10k,,R_0603_1608"
-    And the output should contain "C1,1,,100nF"
-    And the output should contain "LED1,1,Red LED 20mA,RED"
-    And the output should contain "Kingbright"
+    And the output should contain these fields:
+      | Reference | Quantity | Description | Value | Package | Footprint | Manufacturer | Part Number |
+    And the output should contain these component data rows:
+      | C1 | 1 | 100nF ceramic cap | 100nF |
+      | LED1 | 1 | Red LED 20mA | RED |
+      | "R1, R2" | 2 | 10k Ohm resistor | 10k |
+      | U1 | 1 | | LM358 |
 
   Scenario: BOM enhancement to file output
     When I run jbom command "bom --inventory component_inventory.csv -o enhanced_bom.csv"
     Then the command should succeed
     And a file named "enhanced_bom.csv" should exist
-    And the file "enhanced_bom.csv" should contain "Manufacturer,Part Number"
-    And the file "enhanced_bom.csv" should contain "Kingbright"
-    And the file "enhanced_bom.csv" should contain "Red LED 20mA"
+    And the file "enhanced_bom.csv" should contain these inventory data elements:
+      | Kingbright | Yageo | Murata | Red LED 20mA | 10k Ohm resistor |
 
   Scenario: BOM without inventory enhancement (baseline)
     When I run jbom command "bom -o console"

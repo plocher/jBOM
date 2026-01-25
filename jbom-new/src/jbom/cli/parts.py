@@ -179,11 +179,8 @@ def handle_parts(args: argparse.Namespace) -> int:
                 )
                 return 1
 
-            # Note: current matcher API uses a strategy string; fabricator can
-            # be incorporated internally later. For now we keep behavior stable.
-            parts_data = _enhance_parts_with_inventory(
-                parts_data, inventory_file, "ipn_fuzzy"
-            )
+            # TODO: Implement inventory enhancement for parts list
+            parts_data = _enhance_parts_with_inventory(parts_data, inventory_file)
 
         # Handle output
         return _output_parts(parts_data, args.output, project_name)
@@ -194,7 +191,7 @@ def handle_parts(args: argparse.Namespace) -> int:
 
 
 def _enhance_parts_with_inventory(
-    parts_data: PartsListData, inventory_file: Path, strategy: str
+    parts_data: PartsListData, inventory_file: Path
 ) -> PartsListData:
     """Enhance parts list with inventory data (placeholder implementation)."""
     # TODO: Implement inventory enhancement for parts list

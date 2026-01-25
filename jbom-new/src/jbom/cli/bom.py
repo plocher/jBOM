@@ -254,11 +254,7 @@ def handle_bom(args: argparse.Namespace) -> int:
                 )
 
             matcher = InventoryMatcher()
-            # Note: current matcher API uses a strategy string; fabricator can
-            # be incorporated internally later. For now we keep behavior stable.
-            bom_data = matcher.enhance_bom_with_inventory(
-                bom_data, inventory_file, "ipn_fuzzy"
-            )
+            bom_data = matcher.enhance_bom_with_inventory(bom_data, inventory_file)
 
         # Handle output
         return _output_bom(bom_data, args.output, selected_fields, fabricator)

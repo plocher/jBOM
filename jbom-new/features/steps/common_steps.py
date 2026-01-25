@@ -808,6 +808,42 @@ def step_error_should_list_available_fields(context):
         )
 
 
+@then('the file "{filename}" should contain these inventory data elements:')
+def step_file_should_contain_inventory_elements(context, filename: str):
+    """Verify that a file contains all specified inventory data elements.
+
+    Table format:
+    | Kingbright | Yageo | Murata | Red LED 20mA | 10k Ohm resistor |
+    """
+    assert context.table is not None, "Expected table data for inventory validation"
+
+    # Get file path relative to project root
+    file_path = context.project_root / filename
+    assert_with_diagnostics(
+        file_path.exists(),
+        f"File not found: {filename}",
+        context,
+        expected=f"file to exist: {filename}",
+        actual=f"file exists: {file_path.exists()}",
+    )
+
+    # Read file contents
+    with file_path.open("r", encoding="utf-8") as f:
+        content = f.read()
+
+    # Check each expected inventory element from table
+    for row in context.table:
+        for cell in row.cells:
+            if cell.strip():  # Skip empty cells
+                assert_with_diagnostics(
+                    cell in content,
+                    f"Expected inventory data element '{cell}' not found in file {filename}",
+                    context,
+                    expected=cell,
+                    actual=content[:500] + "..." if len(content) > 500 else content,
+                )
+
+
 @then("the output should contain the fabricator defined {fabricator_name} POS fields")
 def step_output_should_contain_fabricator_pos_fields(context, fabricator_name):
     """Verify that output contains fabricator-specific POS fields.
