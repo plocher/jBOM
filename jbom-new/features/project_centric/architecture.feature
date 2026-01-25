@@ -9,10 +9,10 @@ Feature: Project Discovery Architecture
   # Positive cases - jBOM works correctly when used properly
 
   Scenario: Discover project from current directory
-    Given a KiCad project "current_dir_test" with files:
-      | File                           | Component | Reference | Value | Footprint     |
-      | current_dir_test.kicad_pro     |           |           |       |               |
-      | current_dir_test.kicad_sch     | Resistor  | R1        | 10K   | R_0805_2012   |
+    Given a project "current_dir_test" placed in "."
+    And a schematic that contains:
+      | Reference | Value | Footprint     |
+      | R1        | 10K   | R_0805_2012   |
     And the generic fabricator is selected
     When I run jbom command "bom ."
     Then the command should succeed
@@ -21,47 +21,47 @@ Feature: Project Discovery Architecture
       | info | current_dir_test - Bill of Materials |
 
   Scenario: Discover project from project directory name
-    Given a KiCad project "named_project" with files:
-      | File                        | Component | Reference | Value | Footprint     |
-      | named_project.kicad_pro     |           |           |       |               |
-      | named_project.kicad_sch     | Resistor  | R1        | 10K   | R_0805_2012   |
+    Given a project "named_project" placed in "named_project"
+    And a schematic that contains:
+      | Reference | Value | Footprint     |
+      | R1        | 10K   | R_0805_2012   |
     And the generic fabricator is selected
-    When I run jbom command "bom ."
+    When I run jbom command "bom named_project"
     Then the command should succeed
     And the output should contain the following messages:
       | message_type | content |
       | info | named_project - Bill of Materials |
 
   Scenario: Discover project from explicit schematic file
-    Given a KiCad project "explicit_sch" with files:
-      | File                      | Component | Reference | Value | Footprint     |
-      | explicit_sch.kicad_pro    |           |           |       |               |
-      | explicit_sch.kicad_sch    | Resistor  | R1        | 10K   | R_0805_2012   |
+    Given a project "explicit_sch" placed in "explicit_sch"
+    And a schematic that contains:
+      | Reference | Value | Footprint     |
+      | R1        | 10K   | R_0805_2012   |
     And the generic fabricator is selected
-    When I run jbom command "bom explicit_sch.kicad_sch"
+    When I run jbom command "bom explicit_sch/explicit_sch.kicad_sch"
     Then the command should succeed
     And the output should contain the following messages:
       | message_type | content |
       | info | explicit_sch - Bill of Materials |
 
   Scenario: Discover project from explicit PCB file
-    Given a KiCad project "explicit_pcb" with files:
-      | File                     | Component | Reference | Value | Footprint     |
-      | explicit_pcb.kicad_pro   |           |           |       |               |
-      | explicit_pcb.kicad_pcb   | Footprint | R1        |       | R_0805_2012   |
-    When I run jbom command "pos explicit_pcb.kicad_pcb"
+    Given a project "explicit_pcb" placed in "explicit_pcb"
+    And a PCB that contains:
+      | reference | x | y | rotation | side | footprint     |
+      | R1        | 0 | 0 | 0        | TOP  | R_0805_2012   |
+    When I run jbom command "pos explicit_pcb/explicit_pcb.kicad_pcb"
     Then the command should succeed
     And the output should contain the following messages:
       | message_type | content |
       | info | Component Placement Data |
 
   Scenario: Discover project from project file
-    Given a KiCad project "from_pro_file" with files:
-      | File                       | Component | Reference | Value | Footprint     |
-      | from_pro_file.kicad_pro    |           |           |       |               |
-      | from_pro_file.kicad_sch    | Resistor  | R1        | 10K   | R_0805_2012   |
+    Given a project "from_pro_file" placed in "from_pro_file"
+    And a schematic that contains:
+      | Reference | Value | Footprint     |
+      | R1        | 10K   | R_0805_2012   |
     And the generic fabricator is selected
-    When I run jbom command "bom from_pro_file.kicad_pro"
+    When I run jbom command "bom from_pro_file/from_pro_file.kicad_pro"
     Then the command should succeed
     And the output should contain the following messages:
       | message_type | content |
@@ -92,32 +92,29 @@ Feature: Project Discovery Architecture
       | error | No project files found |
 
   Scenario: Multiple project files in directory
-    Given a KiCad project "multi_project" with files:
-      | File               | Component | Reference | Value | Footprint |
-      | first.kicad_pro    |           |           |       |           |
-      | second.kicad_pro   |           |           |       |           |
-    When I run jbom command "bom ."
+    Given a project "multi_project" placed in "multi_project"
+    And the project contains a file "first.kicad_pro"
+    And the project contains a file "second.kicad_pro"
+    When I run jbom command "bom multi_project"
     Then the command should fail
     And the error output should contain the following messages:
       | message_type | content |
       | error | No schematic file found |
 
   Scenario: Derived schematic file missing
-    Given a KiCad project "missing_sch" with files:
-      | File                   | Component | Reference | Value | Footprint |
-      | missing_sch.kicad_pro  |           |           |       |           |
+    Given a project "missing_sch" placed in "missing_sch"
+    And the project contains a file "missing_sch.kicad_pro"
     And the generic fabricator is selected
-    When I run jbom command "bom ."
+    When I run jbom command "bom missing_sch"
     Then the command should fail
     And the error output should contain the following messages:
       | message_type | content |
       | error | No schematic file found |
 
   Scenario: Derived PCB file missing
-    Given a KiCad project "missing_pcb" with files:
-      | File                  | Component | Reference | Value | Footprint |
-      | missing_pcb.kicad_pro |           |           |       |           |
-    When I run jbom command "pos ."
+    Given a project "missing_pcb" placed in "missing_pcb"
+    And the project contains a file "missing_pcb.kicad_pro"
+    When I run jbom command "pos missing_pcb"
     Then the command should fail
     And the error output should contain the following messages:
       | message_type | content |

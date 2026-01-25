@@ -90,7 +90,7 @@ def step_run_command(context, command):
         return "\n".join(lines)
 
     pre_tree = (
-        _tree(str(context.project_root)) if getattr(context, "trace", False) else None
+        _tree(str(context.sandbox_root)) if getattr(context, "trace", False) else None
     )
 
     # For now, run via python -m until we have proper installation
@@ -142,17 +142,17 @@ def step_run_command(context, command):
             cmd,
             capture_output=True,
             text=True,
-            cwd=context.project_root,
+            cwd=context.sandbox_root,
             env=env,
         )
         context.last_command = command
         context.last_output = result.stdout + result.stderr
         context.last_exit_code = result.returncode
         if getattr(context, "trace", False):
-            post_tree = _tree(str(context.project_root))
+            post_tree = _tree(str(context.sandbox_root))
             context.diagnostics = (
                 "=== DIAGNOSTICS ===\n"
-                f"CWD (project_root): {context.project_root}\n"
+                f"CWD (sandbox_root): {context.sandbox_root}\n"
                 f"Command: {cmd}\n"
                 "--- PRE TREE ---\n" + (pre_tree or "(trace off)") + "\n"
                 "--- POST TREE ---\n" + post_tree + "\n"

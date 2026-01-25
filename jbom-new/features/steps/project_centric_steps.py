@@ -16,8 +16,8 @@ def _write_schematic_local(
     Components accept keys: Reference, Value, Footprint, LibID (optional).
     """
     # Use project_placement_dir if available (for projects placed in subdirectories)
-    # Otherwise use project_root (for projects in current directory)
-    base_dir = getattr(context, "project_placement_dir", context.project_root)
+    # Otherwise use sandbox_root (working directory is always sandbox)
+    base_dir = getattr(context, "project_placement_dir", context.sandbox_root)
     p = Path(base_dir) / filename
     p.parent.mkdir(parents=True, exist_ok=True)
     symbols = []
@@ -108,7 +108,7 @@ def given_root_schematic_contains(context, root: str) -> None:
 def given_root_references_child(context, child: str) -> None:
     """Append a child sheet reference from <root> to <child>."""
     root = getattr(context, "current_project", None) or "project"
-    base_dir = getattr(context, "project_placement_dir", context.project_root)
+    base_dir = getattr(context, "project_placement_dir", context.sandbox_root)
     main_path = Path(base_dir) / f"{root}.kicad_sch"
     child_file = f"{child}.kicad_sch"
     # Ensure main exists
@@ -142,15 +142,18 @@ def given_simple_schematic(context) -> None:
 
     Uses default project name and places in current test workspace.
     Most BOM/POS tests don't care about the specific project name.
+    Respects project_placement_dir if set by previous project placement steps.
     """
-    # Create minimal project file
-    project_name = "project"  # Default name
-    proj_dir = Path(context.project_root)
-    (proj_dir / f"{project_name}.kicad_pro").write_text(
+    # Get project name from context or use default
+    project_name = getattr(context, "current_project", "project")
+
+    # Create minimal project file in correct location
+    base_dir = getattr(context, "project_placement_dir", Path(context.sandbox_root))
+    (base_dir / f"{project_name}.kicad_pro").write_text(
         "(kicad_project (version 1))\n", encoding="utf-8"
     )
 
-    # Create schematic with components
+    # Create schematic with components - _write_schematic_local respects project_placement_dir
     comps: List[Dict[str, Any]] = [row.as_dict() for row in (context.table or [])]
     filename = f"{project_name}.kicad_sch"
     _write_schematic_local(context, filename, comps)
@@ -280,11 +283,14 @@ def given_simple_pcb(context) -> None:
 
     Uses default project name and places in current test workspace.
     Most POS tests don't care about the specific project name.
+    Respects project_placement_dir if set by previous project placement steps.
     """
-    # Create minimal project file
-    project_name = "project"  # Default name
-    proj_dir = Path(context.project_root)
-    (proj_dir / f"{project_name}.kicad_pro").write_text(
+    # Get project name from context or use default
+    project_name = getattr(context, "current_project", "project")
+
+    # Create minimal project file in correct location
+    base_dir = getattr(context, "project_placement_dir", Path(context.sandbox_root))
+    (base_dir / f"{project_name}.kicad_pro").write_text(
         "(kicad_project (version 1))\n", encoding="utf-8"
     )
 
@@ -305,8 +311,8 @@ def given_simple_pcb(context) -> None:
                 "SMD": r.get("smd", r.get("SMD", "")),
             }
         )
-    # Write PCB file directly to avoid import issues
-    pcb_file = Path(context.project_root) / f"{project_name}.kicad_pcb"
+    # Write PCB file in correct location
+    pcb_file = base_dir / f"{project_name}.kicad_pcb"
     footprints = []
     for comp in comps:
         ref = comp["Reference"]
@@ -394,88 +400,19 @@ def given_kicad_project_directory(context, name: str) -> None:
 
     Part of the Layer 3 testing architecture.
     """
-    project_dir = Path(context.project_root) / name
+    project_dir = Path(context.sandbox_root) / name
     project_dir.mkdir(parents=True, exist_ok=True)
 
-    # DON'T update context.project_root - keep working directory as parent
+    # DON'T update context.sandbox_root - keep working directory as parent
     # This allows commands to reference the project directory by name
     context.current_project = name
 
 
-@given('a KiCad project "{name}" with files:')
-def given_kicad_project_with_files(context, name: str) -> None:
-    """Create a complete KiCad project with specified files and components.
-
-    Uses table data to create project files with explicit component content.
-    Replaces ambiguous 'with basic content' patterns with explicit data tables.
-
-    Example:
-        Given a KiCad project "test_project" with files:
-          | File                     | Component | Reference | Value | Footprint     |
-          | test_project.kicad_pro   |           |           |       |               |
-          | test_project.kicad_sch   | Resistor  | R1        | 10K   | R_0805_2012   |
-          | test_project.kicad_pcb   | Footprint | R1        |       | R_0805_2012   |
-    """
-    project_dir = Path(context.sandbox_root) / name
-    project_dir.mkdir(parents=True, exist_ok=True)
-
-    # Update context - but DO NOT change project_root (working directory)
-    # REMOVED: context.project_root = project_dir  # This was the problem!
-    context.current_project = name
-
-    # Process table to create files
-    if context.table:
-        files_created = set()
-        for row in context.table:
-            filename = row.get("File") or row.get("file")
-            if not filename:
-                continue
-
-            file_path = project_dir / filename
-
-            # Create each file only once
-            if filename not in files_created:
-                if filename.endswith(".kicad_pro"):
-                    file_path.write_text(
-                        "(kicad_project (version 1))\n", encoding="utf-8"
-                    )
-                elif filename.endswith(".kicad_sch"):
-                    # Create schematic with component if specified
-                    ref = row.get("Reference") or row.get("reference") or "R1"
-                    value = row.get("Value") or row.get("value") or "10K"
-                    footprint = (
-                        row.get("Footprint") or row.get("footprint") or "R_0805_2012"
-                    )
-
-                    content = f"""(kicad_sch (version 20211123) (generator eeschema)
-  (paper "A4")
-  (symbol (lib_id "Device:R") (at 50 50 0) (unit 1)
-    (property "Reference" "{ref}" (id 0) (at 52 48 0))
-    (property "Value" "{value}" (id 1) (at 52 52 0))
-    (property "Footprint" "{footprint}" (id 2) (at 52 54 0))
-  )
-)
-"""
-                    file_path.write_text(content, encoding="utf-8")
-                elif filename.endswith(".kicad_pcb"):
-                    # Create PCB with footprint if specified
-                    ref = row.get("Reference") or row.get("reference") or "R1"
-                    footprint = (
-                        row.get("Footprint") or row.get("footprint") or "R_0805_2012"
-                    )
-
-                    content = f"""(kicad_pcb (version 20211014) (generator pcbnew)
-  (paper "A4")
-  (footprint "{footprint}" (at 76.2 104.14 0) (layer "F.Cu")
-    (property "Reference" "{ref}")
-  )
-)
-"""
-                    file_path.write_text(content, encoding="utf-8")
-                else:
-                    file_path.write_text("", encoding="utf-8")
-
-                files_created.add(filename)
+# REMOVED: @given('a KiCad project "{name}" with files:') step definition
+# This step was problematic because it created subdirectories and was table-driven
+# in a way that violated GHERKIN_RECIPE principles. Replaced with explicit
+# step combinations: @given('a project "{project}" placed in "{dir}"') +
+# @given('a schematic that contains:') or @given('a PCB that contains:')
 
 
 @given('a minimal KiCad project "{name}"')
@@ -488,8 +425,8 @@ def given_minimal_kicad_project(context, name: str) -> None:
     project_dir = Path(context.sandbox_root) / name
     project_dir.mkdir(parents=True, exist_ok=True)
 
-    # Update context - but DO NOT change project_root (working directory)
-    # REMOVED: context.project_root = project_dir  # This was the problem!
+    # Update context - but DO NOT change sandbox_root (working directory)
+    # REMOVED: context.sandbox_root = project_dir  # This was the problem!
     context.current_project = name
 
     # Create minimal project files
@@ -514,10 +451,10 @@ def given_project_contains_file(context, filename: str) -> None:
     # Determine where to create the file - use current project directory if set
     if hasattr(context, "current_project") and context.current_project:
         # File goes in the project directory that was created
-        file_path = Path(context.project_root) / context.current_project / filename
+        file_path = Path(context.sandbox_root) / context.current_project / filename
     else:
-        # File goes directly in project_root
-        file_path = Path(context.project_root) / filename
+        # File goes directly in sandbox_root
+        file_path = Path(context.sandbox_root) / filename
 
     file_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -543,9 +480,9 @@ def given_project_file_basic_schematic(context, filename: str) -> None:
     """
     # Determine where to create the file - use current project directory if set
     if hasattr(context, "current_project") and context.current_project:
-        file_path = Path(context.project_root) / context.current_project / filename
+        file_path = Path(context.sandbox_root) / context.current_project / filename
     else:
-        file_path = Path(context.project_root) / filename
+        file_path = Path(context.sandbox_root) / filename
     content = """(kicad_sch (version 20211123) (generator eeschema)
   (paper "A4")
   (symbol (lib_id "Device:R") (at 50 50 0) (unit 1)
@@ -566,9 +503,9 @@ def given_project_file_basic_pcb(context, filename: str) -> None:
     """
     # Determine where to create the file - use current project directory if set
     if hasattr(context, "current_project") and context.current_project:
-        file_path = Path(context.project_root) / context.current_project / filename
+        file_path = Path(context.sandbox_root) / context.current_project / filename
     else:
-        file_path = Path(context.project_root) / filename
+        file_path = Path(context.sandbox_root) / filename
     content = """(kicad_pcb (version 20211014) (generator pcbnew)
   (paper "A4")
   (footprint "R_0805_2012" (at 76.2 104.14 0) (layer "F.Cu")
@@ -613,8 +550,8 @@ def then_pos_contains_component_at(context, ref: str, x: str, y: str) -> None:
 
 @then('the inventory file should contain component with value "{value}"')
 def then_inventory_file_contains_value(context, value: str) -> None:
-    csv_files = list(Path(context.project_root).glob("*.csv"))
-    assert csv_files, f"No CSV inventory files found under {context.project_root}"
+    csv_files = list(Path(context.sandbox_root).glob("*.csv"))
+    assert csv_files, f"No CSV inventory files found under {context.sandbox_root}"
     content = "\n".join(p.read_text(encoding="utf-8") for p in csv_files)
     assert (
         value in content
