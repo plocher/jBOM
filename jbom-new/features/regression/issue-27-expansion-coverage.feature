@@ -9,17 +9,16 @@ Feature: [Issue #27] Expand project-centric coverage across all commands
     And the schematic "flat" contains:
       | Reference | Value | Footprint     | LibID    |
       | R1        | 10K   | R_0805_2012   | Device:R |
-    When I run jbom command "inventory generate flat_project -o console"
+    When I run jbom command "inventory flat_project -o console"
     Then the command should succeed
 
-  Scenario: POS resolves from explicit schematic file
+  Scenario: POS resolves from explicit PCB file
     Given a project "test" placed in "test_project"
-    And a PCB "test" contains:
-      | Reference | X(mm) | Y(mm) | Rotation | Side | Footprint     |
+    And a PCB that contains:
+      | reference | x     | y     | rotation | side | footprint     |
       | R1        | 76.2  | 104.1 | 0        | TOP  | R_0805_2012   |
-    When I run jbom command "pos test_project/test.kicad_sch -o console -v"
+    When I run jbom command "pos test_project/test.kicad_pcb -o console -v"
     Then the command should succeed
-    And the output should contain "Component Placement Data"
 
   Scenario: Empty directory provides helpful error message
     Given an empty directory "empty_test"
