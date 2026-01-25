@@ -399,6 +399,60 @@ def step_output_should_contain(context, text):
     ), f"Expected text not found in output: {text}\nOutput:\n{out}"
 
 
+@then("the output should contain the following messages:")
+def step_output_should_contain_messages(context):
+    """Assert output contains all messages from table (table-driven validation).
+
+    Table format:
+    | message_type | content |
+    | info | Using schematic: test.kicad_sch |
+    | error | No project files found |
+    """
+    assert context.table is not None, "Expected table data for message validation"
+
+    output = getattr(context, "last_output", "")
+
+    for row in context.table:
+        message_type = row["message_type"]
+        content = row["content"]
+
+        assert_with_diagnostics(
+            content in output,
+            f"Expected {message_type} message not found: {content}",
+            context,
+            expected=content,
+            actual=output,
+        )
+
+
+@then("the error output should contain the following messages:")
+def step_error_output_should_contain_messages(context):
+    """Assert error output contains all messages from table (table-driven validation).
+
+    Table format:
+    | message_type | content |
+    | error | No project files found |
+    """
+    assert context.table is not None, "Expected table data for error message validation"
+
+    # Get error output - check both stderr and combined output
+    error_output = getattr(
+        context, "last_error_output", getattr(context, "last_output", "")
+    )
+
+    for row in context.table:
+        message_type = row["message_type"]
+        content = row["content"]
+
+        assert_with_diagnostics(
+            content in error_output,
+            f"Expected {message_type} error message not found: {content}",
+            context,
+            expected=content,
+            actual=error_output,
+        )
+
+
 @then("the error output should be empty")
 def step_error_output_empty(context):
     out = getattr(context, "last_output", "")

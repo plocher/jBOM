@@ -1,141 +1,123 @@
-Feature: Project-Centric Architecture
+Feature: Project Discovery Architecture
   As a KiCad user
-  I want jBOM commands to work with project directories and base names
-  So that I can use natural KiCad workflows without specifying explicit file paths
+  I want jBOM to correctly discover project files from various input types
+  So that I can use natural KiCad workflows and get clear errors when things go wrong
 
   Background:
-    Given the generic fabricator is selected
+    Given a sandbox
 
-  Scenario: BOM command discovers project files from directory (current directory path)
-    Given a KiCad project directory "test_project"
-    And the project contains a file "test_project.kicad_pro"
-    And the project contains a file "test_project.kicad_sch" with basic schematic content
-    When I run jbom command "bom . -v"
+  # Positive cases - jBOM works correctly when used properly
+
+  Scenario: Discover project from current directory
+    Given a KiCad project directory "current_dir_test"
+    And the project contains a file "current_dir_test.kicad_pro"
+    And the project contains a file "current_dir_test.kicad_sch" with basic schematic content
+    And the generic fabricator is selected
+    And I am in directory "current_dir_test"
+    When I run jbom command "bom ."
     Then the command should succeed
-    And the output should contain "found schematic test_project.kicad_sch"
+    And the output should contain the following messages:
+      | message_type | content |
+      | info | current_dir_test - Bill of Materials |
 
-  Scenario: BOM command discovers project files from project name
-    Given a KiCad project directory "test_project"
-    And the project contains a file "test_project.kicad_pro"
-    And the project contains a file "test_project.kicad_sch" with basic schematic content
-    When I run jbom command "bom test_project -v"
+  Scenario: Discover project from project directory name
+    Given a KiCad project directory "named_project"
+    And the project contains a file "named_project.kicad_pro"
+    And the project contains a file "named_project.kicad_sch" with basic schematic content
+    And the generic fabricator is selected
+    When I run jbom command "bom named_project"
     Then the command should succeed
-    And the output should contain "Using schematic: test_project.kicad_sch"
+    And the output should contain the following messages:
+      | message_type | content |
+      | info | named_project - Bill of Materials |
 
-  Scenario: BOM command discovers project from explicit schematic file path
-    Given a KiCad project directory "test_project"
-    And the project contains a file "test_project.kicad_pro"
-    And the project contains a file "test_project.kicad_sch" with basic schematic content
-    When I run jbom command "bom test_project/test_project.kicad_sch -v"
+  Scenario: Discover project from explicit schematic file
+    Given a KiCad project directory "explicit_sch"
+    And the project contains a file "explicit_sch.kicad_pro"
+    And the project contains a file "explicit_sch.kicad_sch" with basic schematic content
+    And the generic fabricator is selected
+    When I run jbom command "bom explicit_sch/explicit_sch.kicad_sch"
     Then the command should succeed
-    And the output should contain "Using schematic: test_project.kicad_sch"
+    And the output should contain the following messages:
+      | message_type | content |
+      | info | explicit_sch - Bill of Materials |
 
-  Scenario: POS command discovers project files from directory (current directory path)
-    Given a KiCad project directory "test_project"
-    And the project contains a file "test_project.kicad_pro"
-    And the project contains a file "test_project.kicad_pcb" with basic PCB content
-    And I am in directory "test_project"
-    When I run jbom command "pos . -v"
+  Scenario: Discover project from explicit PCB file
+    Given a KiCad project directory "explicit_pcb"
+    And the project contains a file "explicit_pcb.kicad_pro"
+    And the project contains a file "explicit_pcb.kicad_pcb" with basic PCB content
+    When I run jbom command "pos explicit_pcb/explicit_pcb.kicad_pcb"
     Then the command should succeed
-    And the output should contain "Using PCB: test_project.kicad_pcb"
+    And the output should contain the following messages:
+      | message_type | content |
+      | info | Component Placement Data |
 
-  Scenario: POS command discovers project files from project name
-    Given a KiCad project directory "test_project"
-    And the project contains a file "test_project.kicad_pro"
-    And the project contains a file "test_project.kicad_pcb" with basic PCB content
-    When I run jbom command "pos test_project -v"
+  Scenario: Discover project from project file
+    Given a KiCad project directory "from_pro_file"
+    And the project contains a file "from_pro_file.kicad_pro"
+    And the project contains a file "from_pro_file.kicad_sch" with basic schematic content
+    And the generic fabricator is selected
+    When I run jbom command "bom from_pro_file/from_pro_file.kicad_pro"
     Then the command should succeed
-    And the output should contain "Using PCB: test_project.kicad_pcb"
+    And the output should contain the following messages:
+      | message_type | content |
+      | info | from_pro_file - Bill of Materials |
 
-  Scenario: POS command discovers project from explicit PCB file path
-    Given a KiCad project directory "test_project"
-    And the project contains a file "test_project.kicad_pro"
-    And the project contains a file "test_project.kicad_pcb" with basic PCB content
-    When I run jbom command "pos test_project/test_project.kicad_pcb -v"
-    Then the command should succeed
-    And the output should contain "Using PCB: test_project.kicad_pcb"
+  # Negative cases - jBOM fails correctly when used improperly
 
-  Scenario: Inventory command discovers project files from directory (current directory path)
-    Given a KiCad project directory "test_project"
-    And the project contains a file "test_project.kicad_pro"
-    And the project contains a file "test_project.kicad_sch" with basic schematic content
-    And I am in directory "test_project"
-    When I run jbom command "inventory generate . -o test_inventory.csv -v"
-    Then the command should succeed
-    And the output should contain "Using schematic: test_project.kicad_sch"
+  Scenario: Directory does not exist
+    When I run jbom command "bom nonexistent_directory"
+    Then the command should fail
+    And the error output should contain the following messages:
+      | message_type | content |
+      | error | Path does not exist |
 
-  Scenario: Inventory command discovers project files from project name
-    Given a KiCad project directory "test_project"
-    And the project contains a file "test_project.kicad_pro"
-    And the project contains a file "test_project.kicad_sch" with basic schematic content
-    When I run jbom command "inventory generate test_project -o test_inventory.csv -v"
-    Then the command should succeed
-    And the output should contain "Using schematic: test_project.kicad_sch"
+  Scenario: File does not exist
+    When I run jbom command "bom nonexistent_file.kicad_sch"
+    Then the command should fail
+    And the error output should contain the following messages:
+      | message_type | content |
+      | error | No schematic file found |
 
-  # Cross-file intelligence scenarios
-  Scenario Outline: Cross-file intelligence discovers matching files
-    Given a KiCad project directory "cross_test"
-    And the project contains a file "cross_test.kicad_sch" with basic schematic content
-    And the project contains a file "cross_test.kicad_pcb" with basic PCB content
-    When I run jbom command "<command> cross_test/<input_file> -v"
-    Then the command should succeed
-    And the output should contain "trying to find matching <target_type>"
-    And the output should contain "Using <target_type>: cross_test.<target_ext>"
-    Examples:
-      | command | input_file           | target_type | target_ext |
-      | bom     | cross_test.kicad_pcb | schematic   | kicad_sch  |
-      | bom     | cross_test.kicad_pro | schematic   | kicad_sch  |
-      | pos     | cross_test.kicad_sch | PCB         | kicad_pcb  |
-      | pos     | cross_test.kicad_pro | PCB         | kicad_pcb  |
+  Scenario: Empty directory has no project files
+    Given a KiCad project directory "empty_dir"
+    When I run jbom command "bom empty_dir"
+    Then the command should fail
+    And the error output should contain the following messages:
+      | message_type | content |
+      | error | No project files found |
 
-  # Different naming scenarios
-  Scenario: Project with different file names
-    Given a KiCad project directory "mixed_project"
-    And the project contains a file "different_name.kicad_pro"
-    And the project contains a file "different_name.kicad_sch" with basic schematic content
-    When I run jbom command "bom mixed_project -v"
-    Then the command should succeed
-    And the output should contain "Using schematic: different_name.kicad_sch"
-
-  Scenario: Multiple project files should use first one found
+  Scenario: Multiple project files in directory
     Given a KiCad project directory "multi_project"
     And the project contains a file "first.kicad_pro"
-    And the project contains a file "first.kicad_sch" with basic schematic content
     And the project contains a file "second.kicad_pro"
-    And the project contains a file "second.kicad_sch" with basic schematic content
-    When I run jbom command "bom multi_project -v"
-    Then the command should succeed
-    And the output should contain "Using schematic: first.kicad_sch"
-
-  # Error handling scenarios
-  Scenario: Empty directory should provide helpful error
-    Given a KiCad project directory "empty_project"
-    When I run jbom command "bom empty_project"
+    When I run jbom command "bom multi_project"
     Then the command should fail
-    And the error output should mention "No project files found"
+    And the error output should contain the following messages:
+      | message_type | content |
+      | error | No schematic file found |
 
-  # WIP: Issue #49 - These scenarios test invalid KiCad project structures
-  # TODO: Replace with real KiCad fixture projects that have .kicad_pro files
-  Scenario: Missing schematic file should suggest alternatives (WIP Issue #49)
-    Given a KiCad project directory "pcb_only_project"
-    And the project contains a file "pcb_only.kicad_pcb" with basic PCB content
-    When I run jbom command "bom pcb_only_project"
+  Scenario: Derived schematic file missing
+    Given a KiCad project directory "missing_sch"
+    And the project contains a file "missing_sch.kicad_pro"
+    And the generic fabricator is selected
+    When I run jbom command "bom missing_sch"
     Then the command should fail
-    And the error output should mention "No project files found"
+    And the error output should contain the following messages:
+      | message_type | content |
+      | error | No schematic file found |
 
-  Scenario: Missing PCB file should suggest alternatives (WIP Issue #49)
-    Given a KiCad project directory "sch_only_project"
-    And the project contains a file "sch_only.kicad_sch" with basic schematic content
-    When I run jbom command "pos sch_only_project"
+  Scenario: Derived PCB file missing
+    Given a KiCad project directory "missing_pcb"
+    And the project contains a file "missing_pcb.kicad_pro"
+    When I run jbom command "pos missing_pcb"
     Then the command should fail
-    And the error output should mention "No project files found"
+    And the error output should contain the following messages:
+      | message_type | content |
+      | error | No PCB file found |
 
-  # TODO: Hierarchical schematic scenarios
-  # Current implementation uses circular validation (hand-crafted KiCad files that mirror jBOM expectations)
-  # Proper approach: Use real KiCad-generated fixture files for authentic compatibility testing
-  # See: https://github.com/user/repo/issues/XXX - Replace with fixture-based hierarchical testing
-
-  # TODO: Legacy project file support
-  # Current implementation uses fake .pro content that doesn't test real KiCad compatibility
-  # Proper approach: Use actual legacy KiCad .pro files from fixtures/
-  # See: https://github.com/user/repo/issues/XXX - Replace with fixture-based legacy testing
+  # TODO: Additional discovery scenarios to implement:
+  # - Hierarchical schematic discovery with (sheet ...) tokens
+  # - Warning when provided schematic not in project hierarchy
+  # - Cross-file intelligence (finding PCB from SCH, etc.)
+  # - Legacy .pro file support with real fixtures

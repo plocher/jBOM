@@ -511,7 +511,14 @@ def given_project_contains_file(context, filename: str) -> None:
     Automatically generates proper content for .kicad_pro, .kicad_sch, .kicad_pcb files.
     Used for project discovery and architecture testing.
     """
-    file_path = Path(context.project_root) / filename
+    # Determine where to create the file - use current project directory if set
+    if hasattr(context, "current_project") and context.current_project:
+        # File goes in the project directory that was created
+        file_path = Path(context.project_root) / context.current_project / filename
+    else:
+        # File goes directly in project_root
+        file_path = Path(context.project_root) / filename
+
     file_path.parent.mkdir(parents=True, exist_ok=True)
 
     if filename.endswith(".kicad_pro"):
@@ -534,7 +541,11 @@ def given_project_file_basic_schematic(context, filename: str) -> None:
 
     Contains a simple R1 10K resistor component for project discovery testing.
     """
-    file_path = Path(context.project_root) / filename
+    # Determine where to create the file - use current project directory if set
+    if hasattr(context, "current_project") and context.current_project:
+        file_path = Path(context.project_root) / context.current_project / filename
+    else:
+        file_path = Path(context.project_root) / filename
     content = """(kicad_sch (version 20211123) (generator eeschema)
   (paper "A4")
   (symbol (lib_id "Device:R") (at 50 50 0) (unit 1)
@@ -553,7 +564,11 @@ def given_project_file_basic_pcb(context, filename: str) -> None:
 
     Contains a simple R1 footprint at known coordinates for project discovery testing.
     """
-    file_path = Path(context.project_root) / filename
+    # Determine where to create the file - use current project directory if set
+    if hasattr(context, "current_project") and context.current_project:
+        file_path = Path(context.project_root) / context.current_project / filename
+    else:
+        file_path = Path(context.project_root) / filename
     content = """(kicad_pcb (version 20211014) (generator pcbnew)
   (paper "A4")
   (footprint "R_0805_2012" (at 76.2 104.14 0) (layer "F.Cu")
