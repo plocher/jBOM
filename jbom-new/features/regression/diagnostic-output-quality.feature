@@ -13,18 +13,19 @@ Feature: Diagnostic Output Quality
     Given a sandbox
 
   Scenario: Diagnostic shows command and output on text mismatch
-    When I run "jbom --version"
-    Then I should see "INTENTIONALLY_WRONG_TEXT"
-    # Expected diagnostic sections:
-    # - COMMAND EXECUTED
-    # - Exit Code
-    # - OUTPUT
-    # - Expected vs Actual
+    When I expect text assertion "INTENTIONALLY_WRONG_TEXT" to fail for command "jbom --version"
+    Then the diagnostic output should show command "jbom --version"
+    And the diagnostic output should show exit code 0
+    And the diagnostic output should show the actual output
+    And the diagnostic output should show expected vs actual comparison
+    And the diagnostic output should show working directory
+    And the diagnostic output should contain "DIAGNOSTIC INFORMATION"
 
   Scenario: Diagnostic shows plugin state on plugin test failure
     Given a core plugin "test" exists with version "1.0.0"
-    When I run "jbom plugin --list"
-    Then I should see "WRONG_PLUGIN_NAME"
-    # Expected diagnostic sections:
-    # - PLUGINS DIRECTORY
-    # - CREATED TEST PLUGINS
+    When I expect plugin assertion "WRONG_PLUGIN_NAME" to fail for command "jbom plugin --list"
+    Then the diagnostic output should show command "jbom plugin --list"
+    And the diagnostic output should show plugins directory
+    And the diagnostic output should contain "CREATED TEST PLUGINS"
+    And the diagnostic output should show expected vs actual comparison
+    And the diagnostic output should contain "DIAGNOSTIC INFORMATION"
