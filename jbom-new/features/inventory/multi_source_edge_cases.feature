@@ -48,14 +48,14 @@ Feature: Multi-Source Inventory Edge Cases
     Then the command should fail
     And the output should contain "Error: No components found in project. Cannot create inventory from empty schematic."
 
-  Scenario: Duplicate IPN across multiple files
-    Given an inventory file "dup_primary.csv" that contains:
+  Scenario: Multi-supplier alternatives with same IPN
+    Given an inventory file "primary_supplier.csv" that contains:
       | IPN     | Category | Value | Package | Manufacturer | MFGPN |
       | RES_10K | RESISTOR | 10k   | 0603    | Yageo        | Y100  |
-    And an inventory file "dup_secondary.csv" that contains:
+    And an inventory file "alternate_supplier.csv" that contains:
       | IPN     | Category | Value | Package | Manufacturer | MFGPN  |
       | RES_10K | RESISTOR | 10k   | 0603    | Vishay       | V222   |
-    When I run jbom command "inventory --inventory dup_primary.csv --inventory dup_secondary.csv -o -"
+    When I run jbom command "inventory --inventory primary_supplier.csv --inventory alternate_supplier.csv -o -"
     Then the command should succeed
     And the CSV output has components where:
       | Category | Value |
