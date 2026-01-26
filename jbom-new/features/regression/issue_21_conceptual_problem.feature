@@ -15,7 +15,7 @@ Feature: Issue #21 Conceptual Problem - BOM vs Parts List Distinction
       | C1        | 100nF | C_0603_1608 |
     When I run jbom command "bom --aggregation value_only"
     Then the command should fail
-    And the error output should mention "unrecognized arguments: --aggregation"
+    And the error output should contain "unrecognized arguments: --aggregation"
     # Problem solved: The confusing --aggregation flag is gone!
 
   @regression @issue-21 @problem-solved
@@ -45,12 +45,15 @@ Feature: Issue #21 Conceptual Problem - BOM vs Parts List Distinction
     When I run jbom command "bom"
     Then the command should succeed
     # BOM aggregates by value+package for proper procurement
-    And the output should contain "R1, R2"
-    And the output should contain "2"
-    And the output should contain "R3"
-    And the output should contain "1"
-    And the output should contain "C1, C2"
-    And the output should contain "2"
+    And the CSV output has a row where
+      | Reference | Quantity |
+      | R1, R2    | 2        |
+    And the CSV output has a row where
+      | Reference | Quantity |
+      | R3        | 1        |
+    And the CSV output has a row where
+      | Reference | Quantity |
+      | C1, C2    | 2        |
 
   @regression @issue-21 @solution
   Scenario: Solution - Parts list shows individual components for assembly
