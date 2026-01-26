@@ -80,12 +80,13 @@ Scenario: Check diagnostic output quality
   # Requires human to manually verify diagnostic output is "good enough"
 
 # ✅ GOOD: Automated diagnostic validation
-Scenario: Diagnostic shows helpful output on failure
-  When I expect text assertion "WRONG_TEXT" to fail for command "jbom --version"
-  Then the diagnostic output should show command "jbom --version"
-  And the diagnostic output should show exit code 0
-  And the diagnostic output should show expected vs actual comparison
-  And the diagnostic output should contain "DIAGNOSTIC INFORMATION"
+Scenario: Test failures provide comprehensive diagnostic context
+  When a test fails looking for missing content
+  Then I should receive detailed diagnostic information
+  And the diagnostic should include the command that was executed
+  And the diagnostic should show the exit code
+  And the diagnostic should show expected vs actual comparison
+  And the diagnostic should be clearly labeled
 ```
 
 ### 7. Component Filtering DRY Violations
@@ -259,26 +260,35 @@ During test infrastructure improvements, we discovered that tests can and should
 
 ### Controlled Failure Pattern
 ```gherkin
-# Test the test infrastructure by triggering controlled failures
+# Test the test infrastructure by simulating test failures
 # and validating that diagnostic output is complete and helpful
-Scenario: Diagnostic shows helpful output on assertion failure
-  When I expect text assertion "INTENTIONALLY_WRONG_TEXT" to fail for command "jbom --version"
-  Then the diagnostic output should show command "jbom --version"
-  And the diagnostic output should show exit code 0
-  And the diagnostic output should show expected vs actual comparison
-  And the diagnostic output should show working directory
-  And the diagnostic output should contain "DIAGNOSTIC INFORMATION"
+Scenario: Test failures provide comprehensive diagnostic context
+  When a test fails looking for missing content
+  Then I should receive detailed diagnostic information
+  And the diagnostic should include the command that was executed
+  And the diagnostic should show the exit code
+  And the diagnostic should show the actual output
+  And the diagnostic should show expected vs actual comparison
+  And the diagnostic should include working directory context
+  And the diagnostic should be clearly labeled
 ```
 
 ### Available Diagnostic Testing Steps (diagnostic_steps.py)
-- `When I expect text assertion "{text}" to fail for command "{command}"`
-- `When I expect plugin assertion "{plugin}" to fail for command "{command}"`
-- `Then the diagnostic output should show command "{command}"`
-- `Then the diagnostic output should show exit code {code}`
-- `Then the diagnostic output should show expected vs actual comparison`
-- `Then the diagnostic output should show the actual output`
-- `Then the diagnostic output should show working directory`
-- `Then the diagnostic output should contain "{text}"`
+#### When Steps (Test Failure Simulation)
+- `When a test fails looking for missing content`
+- `When a plugin-related test fails`
+
+#### Then Steps (Diagnostic Validation)
+- `Then I should receive detailed diagnostic information`
+- `Then the diagnostic should include the command that was executed`
+- `Then the diagnostic should show the exit code`
+- `Then the diagnostic should show the actual output`
+- `Then the diagnostic should show expected vs actual comparison`
+- `Then the diagnostic should include working directory context`
+- `Then the diagnostic should be clearly labeled`
+- `Then the diagnostic should show the plugin directory state`
+- `Then the diagnostic should show any test plugins that were created`
+- `Then the diagnostic should contain "{text}"` (for specific content validation)
 
 ### Benefits of Infrastructure Testing
 1. **Automated validation**: No manual inspection required

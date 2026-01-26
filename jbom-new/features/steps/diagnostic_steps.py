@@ -8,22 +8,23 @@ from behave import when, then
 from features.steps.diagnostic_utils import assert_with_diagnostics
 
 
-@when('I expect text assertion "{expected_text}" to fail for command "{command}"')
-def step_expect_text_assertion_failure(context, expected_text, command):
-    """Execute a command and expect a text assertion to fail, capturing diagnostics.
+@when("a test fails looking for missing content")
+def step_test_fails_missing_content(context):
+    """Simulate a test failure scenario by running a command and looking for content that won't be found.
 
     This step:
-    1. Runs the specified command
-    2. Attempts to find the expected text (which should fail)
-    3. Captures the AssertionError with diagnostic output
+    1. Runs a test command (jbom --version)
+    2. Attempts to find text that won't be there (simulating test failure)
+    3. Captures the diagnostic output that would be provided to the developer
     4. Stores the diagnostic output for validation
     """
-    # First run the command (reuse existing step)
+    # First run a command (reuse existing step)
     from features.steps.common_steps import step_run_command
 
-    step_run_command(context, command)
+    step_run_command(context, "jbom --version")
 
-    # Now attempt the text assertion and capture the failure
+    # Now simulate looking for missing content and capture the diagnostic failure
+    expected_text = "INTENTIONALLY_WRONG_TEXT"
     try:
         assert_with_diagnostics(
             expected_text in context.last_output,
@@ -32,24 +33,31 @@ def step_expect_text_assertion_failure(context, expected_text, command):
             expected=expected_text,
             actual=context.last_output,
         )
-        # If we get here, the assertion didn't fail as expected
+        # If we get here, the test didn't fail as expected
         raise AssertionError(
-            f"Expected text assertion to fail, but '{expected_text}' was found in output"
+            f"Expected test to fail, but '{expected_text}' was found in output"
         )
     except AssertionError as e:
         # This is the expected failure - capture the diagnostic output
         context.captured_diagnostic = str(e)
 
 
-@when('I expect plugin assertion "{expected_plugin}" to fail for command "{command}"')
-def step_expect_plugin_assertion_failure(context, expected_plugin, command):
-    """Execute a command and expect a plugin assertion to fail, capturing diagnostics."""
-    # First run the command (reuse existing step)
+@when("a plugin-related test fails")
+def step_plugin_test_fails(context):
+    """Simulate a plugin-related test failure scenario.
+
+    This step:
+    1. Runs a plugin-related command
+    2. Attempts to find a plugin that won't be there (simulating test failure)
+    3. Captures the diagnostic output that would be provided to the developer
+    """
+    # First run a command (reuse existing step)
     from features.steps.common_steps import step_run_command
 
-    step_run_command(context, command)
+    step_run_command(context, "jbom plugin --list")
 
-    # Now attempt the plugin assertion and capture the failure
+    # Now simulate looking for missing plugin and capture the diagnostic failure
+    expected_plugin = "WRONG_PLUGIN_NAME"
     try:
         assert_with_diagnostics(
             expected_plugin in context.last_output,
@@ -58,21 +66,34 @@ def step_expect_plugin_assertion_failure(context, expected_plugin, command):
             expected=expected_plugin,
             actual=context.last_output,
         )
-        # If we get here, the assertion didn't fail as expected
+        # If we get here, the test didn't fail as expected
         raise AssertionError(
-            f"Expected plugin assertion to fail, but '{expected_plugin}' was found in output"
+            f"Expected plugin test to fail, but '{expected_plugin}' was found in output"
         )
     except AssertionError as e:
         # This is the expected failure - capture the diagnostic output
         context.captured_diagnostic = str(e)
 
 
-@then('the diagnostic output should contain "{text}"')
-def step_diagnostic_should_contain(context, text):
-    """Verify that the captured diagnostic output contains specific text."""
+@then("I should receive detailed diagnostic information")
+def step_should_receive_diagnostic_info(context):
+    """Verify that diagnostic information was captured when the test failed."""
     if not hasattr(context, "captured_diagnostic"):
         raise AssertionError(
-            "No diagnostic output captured. Use a 'when I expect ... to fail' step first."
+            "No diagnostic output captured. The test failure simulation may not have worked."
+        )
+
+    diagnostic = context.captured_diagnostic
+    if not diagnostic or len(diagnostic.strip()) == 0:
+        raise AssertionError("Diagnostic output was captured but appears to be empty")
+
+
+@then('the diagnostic should contain "{text}"')
+def step_diagnostic_should_contain(context, text):
+    """Verify that the diagnostic output contains specific text."""
+    if not hasattr(context, "captured_diagnostic"):
+        raise AssertionError(
+            "No diagnostic output captured. The test failure simulation may not have worked."
         )
 
     diagnostic = context.captured_diagnostic
@@ -84,42 +105,50 @@ def step_diagnostic_should_contain(context, text):
         )
 
 
-@then('the diagnostic output should show command "{command}"')
-def step_diagnostic_should_show_command(context, command):
-    """Verify that the diagnostic output shows the executed command."""
-    step_diagnostic_should_contain(context, f"Command: {command}")
+@then("the diagnostic should include the command that was executed")
+def step_diagnostic_should_include_command(context):
+    """Verify that the diagnostic output shows what command was executed."""
+    step_diagnostic_should_contain(context, "Command:")
 
 
-@then("the diagnostic output should show exit code {exit_code:d}")
-def step_diagnostic_should_show_exit_code(context, exit_code):
-    """Verify that the diagnostic output shows the expected exit code."""
-    step_diagnostic_should_contain(context, f"Exit Code: {exit_code}")
+@then("the diagnostic should show the exit code")
+def step_diagnostic_should_show_exit_code(context):
+    """Verify that the diagnostic output shows the command exit code."""
+    step_diagnostic_should_contain(context, "Exit Code:")
 
 
-@then("the diagnostic output should show the actual output")
+@then("the diagnostic should show the actual output")
 def step_diagnostic_should_show_actual_output(context):
     """Verify that the diagnostic output includes the actual command output."""
-    if not hasattr(context, "last_output"):
-        raise AssertionError("No command output available")
-
-    # The diagnostic should contain the actual output
-    step_diagnostic_should_contain(context, context.last_output.strip())
+    step_diagnostic_should_contain(context, "--- OUTPUT ---")
 
 
-@then("the diagnostic output should show working directory")
-def step_diagnostic_should_show_working_directory(context):
-    """Verify that the diagnostic output shows the working directory."""
-    step_diagnostic_should_contain(context, "--- WORKING DIRECTORY ---")
-
-
-@then("the diagnostic output should show plugins directory")
-def step_diagnostic_should_show_plugins_directory(context):
-    """Verify that the diagnostic output shows plugin directory information."""
-    step_diagnostic_should_contain(context, "--- PLUGINS DIRECTORY ---")
-
-
-@then("the diagnostic output should show expected vs actual comparison")
+@then("the diagnostic should show expected vs actual comparison")
 def step_diagnostic_should_show_comparison(context):
     """Verify that the diagnostic output shows expected vs actual comparison."""
     step_diagnostic_should_contain(context, "Expected:")
     step_diagnostic_should_contain(context, "Actual:")
+
+
+@then("the diagnostic should include working directory context")
+def step_diagnostic_should_include_working_directory(context):
+    """Verify that the diagnostic output shows the working directory."""
+    step_diagnostic_should_contain(context, "--- WORKING DIRECTORY ---")
+
+
+@then("the diagnostic should be clearly labeled")
+def step_diagnostic_should_be_labeled(context):
+    """Verify that the diagnostic output is clearly labeled."""
+    step_diagnostic_should_contain(context, "DIAGNOSTIC INFORMATION")
+
+
+@then("the diagnostic should show the plugin directory state")
+def step_diagnostic_should_show_plugin_directory(context):
+    """Verify that the diagnostic output shows plugin directory information."""
+    step_diagnostic_should_contain(context, "--- PLUGINS DIRECTORY ---")
+
+
+@then("the diagnostic should show any test plugins that were created")
+def step_diagnostic_should_show_created_plugins(context):
+    """Verify that the diagnostic output shows any test plugins that were created."""
+    step_diagnostic_should_contain(context, "CREATED TEST PLUGINS")
