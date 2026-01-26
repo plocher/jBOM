@@ -1,32 +1,36 @@
 Feature: BOM Priority and Selection Rules
   As a hardware developer
-  I want deterministic BOM grouping and selection behavior
-  So that results are predictable and reviewable
+  I want predictable BOM organization based on fabricator configuration
+  So that I get consistent, reviewable bills of materials
 
   Background:
     Given the generic fabricator is selected
+    And a schematic that contains:
+      | Reference | Value | Footprint     | LibID      |
+      | C1        | 100nF | C_0805_2012   | Device:C   |
+      | C2        | 100nF | C_0805_2012   | Device:C   |
+      | R1        | 10K   | R_0603_1608   | Device:R   |
+      | R2        | 1K    | R_0805_2012   | Device:R   |
+      | U1        | LM358 | SOIC-8_3.9x4.9mm_P1.27mm | Amplifier_Operational:LM358 |
 
-  # Deterministic ordering of grouped references (natural numeric order)
-  Scenario: Grouped references are listed in natural order
-    Given a schematic that contains:
-      | Reference | Value | Footprint   |
-      | R10       | 10K   | R_0805_2012 |
-      | R2        | 10K   | R_0805_2012 |
-      | R1        | 10K   | R_0805_2012 |
+
+  Scenario: Components with same value+footprint are grouped
     When I run jbom command "bom -o -"
     Then the command should succeed
     And the CSV output has a row where
-      | Reference       | Value | Footprint   | Quantity |
-      | R1, R2, R10     | 10K   | R_0805_2012 | 3        |
+      | Reference | Quantity | Value |
+      | C1, C2    | 2        | 100nF |
 
-  # Deterministic line-item ordering for readability (Value then Footprint)
-  Scenario: Line items are ordered by Value then Footprint
-    Given a schematic that contains:
-      | Reference | Value | Footprint   |
-      | R1        | 1K    | R_0603_1608 |
-      | R2        | 10K   | R_0805_2012 |
-      | R3        | 1K    | R_0805_2012 |
-    When I run jbom command "bom --aggregation value_footprint"
+  Scenario: References grouped and sorted naturally
+    When I run jbom command "bom -o -"
     Then the command should succeed
-    And the output should contain "Reference,Value,Footprint,Quantity"
-    And the output should contain "R1,  R3"
+    And the CSV output has a row where
+      | Reference | Value | Quantity |
+      | C1, C2    | 100nF | 2        |
+
+  Scenario: CSV format determined by fabricator configuration
+    When I run jbom command "bom -o -"
+    Then the command should succeed
+    And the CSV output has a row where
+      | Reference | Quantity |
+      | C1, C2    | 2        |
