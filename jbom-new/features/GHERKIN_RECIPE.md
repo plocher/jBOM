@@ -70,6 +70,59 @@ Given a KiCad project "test_project" with files:
   | test_project.kicad_sch | R1        | 10K   | R_0805_2012 |
   | test_project.kicad_pcb | R1        |       | R_0805_2012 |
 ```
+
+### 6. Intentional Test Failures (Diagnostic Anti-Pattern)
+```gherkin
+# ❌ BAD: Tests designed to fail for manual inspection
+Scenario: Check diagnostic output quality
+  When I run "jbom --version"
+  Then I should see "INTENTIONALLY_WRONG_TEXT"  # Always fails!
+  # Requires human to manually verify diagnostic output is "good enough"
+
+# ✅ GOOD: Automated diagnostic validation
+Scenario: Diagnostic shows helpful output on failure
+  When I expect text assertion "WRONG_TEXT" to fail for command "jbom --version"
+  Then the diagnostic output should show command "jbom --version"
+  And the diagnostic output should show exit code 0
+  And the diagnostic output should show expected vs actual comparison
+  And the diagnostic output should contain "DIAGNOSTIC INFORMATION"
+```
+
+### 7. Component Filtering DRY Violations
+```gherkin
+# ❌ BAD: Each command implementing inconsistent filtering
+# Leads to different flag names and behavior per command
+# BOM: --exclude-dnp, --include-virtual
+# Parts: --no-dnp, --with-power
+# POS: --skip-dnp, --all-components
+
+# ✅ GOOD: Consistent filtering flags across ALL commands
+When I run jbom command "bom --include-all"
+When I run jbom command "parts --include-all"
+When I run jbom command "pos --include-all"
+# All commands support: --include-dnp, --include-excluded, --include-all
+```
+
+### 8. Premature Data Filtering
+```gherkin
+# ❌ BAD: Data loading stage filters before user control
+# (SchematicReader excluded virtual symbols before user filtering could apply)
+# Result: --include-all flag doesn't work for virtual symbols
+
+# ✅ GOOD: Load ALL data, filter at user control stage
+# Virtual symbols (#PWR01, #PWR02) loaded, then filtered based on user flags
+Given a schematic that contains:
+  | Reference | Value | Footprint   |
+  | R1        | 10K   | R_0805_2012 |
+  | #PWR01    | GND   |             |
+  | #PWR02    | VCC   |             |
+When I run jbom command "parts --include-all"
+Then the CSV output has rows where:
+  | Reference | Value |
+  | R1        | 10K   |
+  | #PWR01    | GND   |
+  | #PWR02    | VCC   |
+```
 ### Circular Validation Anti-Pattern
 ```gherkin
 # ❌ BAD: Hand-crafted files that mirror jBOM expectations
@@ -104,6 +157,8 @@ And I am in directory "test_project"
 - `"the output contains BOM headers"` → Test actual data content
 - `"the BOM contains"` → Test specific CSV output
 - Format checking steps → Focus on business value
+- Intentional test failures → Use automated diagnostic validation
+- Inconsistent component filtering → Use unified filtering flags
 
 ### Legacy Project Setup
 - `"with basic schematic content"` → Use explicit table data or minimal project
@@ -165,6 +220,9 @@ def step_run_jbom_command(context, command):
 - **Zero undefined steps** maintained throughout cleanup
 - **Architectural clarity** through Background layer consolidation
 - **DRY principle** enforcement via anti-pattern detection
+- **100% test success**: Eliminated false failures from intentional diagnostic test failures
+- **Component filtering unification**: Consistent filtering flags across all CLI commands
+- **Diagnostic test quality**: Infrastructure tests now validate diagnostic output automatically
 
 ## Critical Discovery: Scenario Outline Edge Cases
 Trailing whitespace in step patterns from scenario outlines requires explicit handling:
@@ -193,6 +251,49 @@ Scenario: All commands handle empty projects gracefully
     | IPN | Category | Value | Description | Package |
   # Now all commands see truly empty project
 ```
+
+## Infrastructure Testing Meta-Patterns (NEW)
+
+### Pattern Discovery (Issues #32/#47)
+During test infrastructure improvements, we discovered that tests can and should validate their own infrastructure quality automatically, rather than requiring manual inspection or intentional failures.
+
+### Controlled Failure Pattern
+```gherkin
+# Test the test infrastructure by triggering controlled failures
+# and validating that diagnostic output is complete and helpful
+Scenario: Diagnostic shows helpful output on assertion failure
+  When I expect text assertion "INTENTIONALLY_WRONG_TEXT" to fail for command "jbom --version"
+  Then the diagnostic output should show command "jbom --version"
+  And the diagnostic output should show exit code 0
+  And the diagnostic output should show expected vs actual comparison
+  And the diagnostic output should show working directory
+  And the diagnostic output should contain "DIAGNOSTIC INFORMATION"
+```
+
+### Available Diagnostic Testing Steps (diagnostic_steps.py)
+- `When I expect text assertion "{text}" to fail for command "{command}"`
+- `When I expect plugin assertion "{plugin}" to fail for command "{command}"`
+- `Then the diagnostic output should show command "{command}"`
+- `Then the diagnostic output should show exit code {code}`
+- `Then the diagnostic output should show expected vs actual comparison`
+- `Then the diagnostic output should show the actual output`
+- `Then the diagnostic output should show working directory`
+- `Then the diagnostic output should contain "{text}"`
+
+### Benefits of Infrastructure Testing
+1. **Automated validation**: No manual inspection required
+2. **Regression detection**: Changes to diagnostic output automatically caught
+3. **CI/CD friendly**: Tests PASS when infrastructure works, FAIL when broken
+4. **Self-documenting**: Test failures show exactly what diagnostic content is missing
+5. **Quality assurance**: Ensures test infrastructure provides helpful debugging information
+
+### When to Use Diagnostic Testing
+- ✅ **Testing diagnostic output quality** after assertion failures
+- ✅ **Validating error message completeness** and helpfulness
+- ✅ **Ensuring test infrastructure reliability** across different failure modes
+- ✅ **Meta-testing**: Testing that tests provide good debugging information
+- ❌ **Regular business logic testing** - use standard assertion patterns
+- ❌ **Performance testing** - diagnostic overhead not suitable
 
 ## Table-Based Field Validation Meta Pattern (NEW)
 
@@ -266,4 +367,4 @@ Existing features can migrate incrementally:
 
 ---
 
-*This document evolved through systematic legacy step cleanup (2024) + table-based field validation patterns (2026)*
+*This document evolved through systematic legacy step cleanup (2024) + table-based field validation patterns (2026) + infrastructure testing meta-patterns and component filtering unification (2026)*
