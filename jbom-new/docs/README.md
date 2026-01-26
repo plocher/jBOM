@@ -153,12 +153,17 @@ It is important to note that the ONLY time jbom creates IPMs is when it is creat
 
 It appears that jBOM is incorrectly creating IPNs when creating BOMs, and not restricting that effort to the inventory creation use case.
 
+## kicad project references
 
-kicad project unpacking
+As a KiCad user, I want to reference my project to jBOM in whatever way feels natural, without having to remember which specific file each jBOM operation needs.
+
+1. "When I'm in a directory with a KiCad project, I shouldn't have to tell ijBOM what to use"
+2. "I want to give it the name of a directory that contains a KiCad project"
+3. "I want to give it the name of a KiCad file and have it figure out the project it is part of"
+4. "I want jBOM to figure out what it needs when I give it a valid KiCad project filename, even if it is the wrong project file for the operation I am using"
+
 
 The search logic should be similar to this pseudocode/english description:
-
-
 if no project_argument is provided, set project_argument = "."  (current directory) and continue
 
 if the project_argument directory or file does not exist:
