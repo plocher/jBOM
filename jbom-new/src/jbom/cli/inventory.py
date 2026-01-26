@@ -174,7 +174,7 @@ def _apply_inventory_filtering(
 
     Args:
         inventory_items: List of inventory items from the project
-        inventory_files: List of paths to existing inventory CSV files (first has precedence)
+        inventory_files: List of paths to existing inventory CSV files
         filter_matches: If True, filter OUT matched components (show only new ones)
         verbose: Enable verbose output
 
@@ -194,16 +194,16 @@ def _apply_inventory_filtering(
     try:
         matcher = ComponentInventoryMatcher()
         merged_inventory = []
-        seen_ipns = set()  # Track IPNs for precedence
+        seen_ipns = set()  # Track IPNs to avoid duplicates
         total_files_loaded = 0
 
         if verbose:
             print(
-                f"Loading {len(inventory_files)} inventory file(s) with precedence order:",
+                f"Loading {len(inventory_files)} inventory file(s):",
                 file=sys.stderr,
             )
 
-        # Load files in order - first file has highest precedence
+        # Load files in order - first occurrence of each IPN is used
         missing_file_detected = False
         for i, inventory_file in enumerate(inventory_files):
             try:
@@ -214,16 +214,16 @@ def _apply_inventory_filtering(
 
                 added_count = 0
                 for item in file_inventory:
-                    if item.ipn not in seen_ipns:  # First occurrence wins (precedence)
+                    if item.ipn not in seen_ipns:  # First occurrence wins
                         merged_inventory.append(item)
                         seen_ipns.add(item.ipn)
                         added_count += 1
 
                 total_files_loaded += 1
                 if verbose:
-                    precedence = "primary" if i == 0 else f"precedence {i+1}"
+                    file_desc = f"file {i+1}"
                     print(
-                        f"  {precedence}: {inventory_file} ({added_count}/{len(file_inventory)} items added)",
+                        f"  {file_desc}: {inventory_file} ({added_count}/{len(file_inventory)} items added)",
                         file=sys.stderr,
                     )
 

@@ -7,7 +7,7 @@ As a hardware engineer, I want to understand what components I need and what I a
 1. "I want to see all the components my project needs in a format I can use for ordering"
 2. "I want to know which components from my project I don't already have in inventory"
 3. "I want to add my project's components to my existing inventory without creating duplicates"
-4. "I want to check against multiple inventory sources (suppliers, locations) with clear precedence"
+4. "I want to check against multiple inventory sources (suppliers, locations) and get the best matches"
 5. "I want the system to handle missing or bad inventory files gracefully"
 
 ## Feature Files
@@ -28,8 +28,8 @@ Tests IPN creation logic and formatting consistency.
 - Supports all user needs through stable component identification
 
 ### multi_source.feature
-Tests multiple inventory file handling with precedence.
-- Scenarios: precedence rules, duplicate handling, partial matches
+Tests multiple inventory file handling and best match selection.
+- Scenarios: multiple sources, duplicate handling, best match logic
 - Covers user need #4
 
 ### multi_source_edge_cases.feature

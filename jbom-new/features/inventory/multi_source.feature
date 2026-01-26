@@ -45,7 +45,7 @@ Feature: Multi-Source Inventory
     When I run jbom command "inventory --inventory primary_inventory.csv --inventory nonexistent.csv --filter-matches -o -"
     Then the command should fail
 
-  Scenario: Three inventory files with complex precedence
+  Scenario: Three inventory files with multiple matching options
     # Validate remaining unmatched after three inventories (LED may remain)
     Given an inventory file "tertiary_inventory.csv" that contains:
       | IPN                  | Category  | Value | Description         | Package | Manufacturer | MFGPN           |
