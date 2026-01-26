@@ -19,5 +19,5 @@ Feature: File Extension Validation
   # 2. Derives schematic names from project file or basename
   # 3. Does not glob for random schematic files
   #
-  # If fallback-to-glob behavior is needed, it belongs in project_centric/ domain
+  # If fallback-to-glob behavior is needed, it belongs in project/ domain
   # with proper .kicad_pro context, not as schematic-loading edge cases.

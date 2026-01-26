@@ -51,8 +51,3 @@ def given_pcb_deleted(context):
     pcb_file = Path(context.sandbox_root) / "project.kicad_pcb"
     if pcb_file.exists():
         pcb_file.unlink()
-
-
-# NOTE: The step @given('a project "{project}" placed in "{dir}"')
-# already exists in project_centric_steps.py and handles directory project creation.
-# We don't need to duplicate it here.

@@ -151,7 +151,7 @@ Then the output should contain "Yageo"
 ## Step Definition Architecture
 
 ### Current Structure
-- **Canonical steps**: Core business logic in `project_centric_steps.py`, `common_steps.py`
+- **Canonical steps**: Core business logic in `common_steps.py`
 - **Legacy adapter**: Backward compatibility in `legacy_compat.py`
 - **Domain-specific**: BOM, POS, inventory steps in separate files
 

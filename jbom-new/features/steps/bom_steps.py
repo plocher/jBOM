@@ -21,9 +21,9 @@ except ImportError:
 
 
 # -------------------------
-# Legacy step definitions removed - use ultra-simplified project-centric pattern:
+# Legacy step definitions removed - use ultra-simplified canonical pattern:
 # - Given a schematic that contains: (in project_centric_steps.py)
-# - Given the generic fabricator is selected (in project_centric_steps.py)
+# - Given the generic fabricator is selected (in common_steps.py)
 # -------------------------
 
 
@@ -277,7 +277,7 @@ def then_console_table_should_not_contain(context, text: str) -> None:
 
 
 # -----------------
-# Helper functions (cleaned up - schematic writing moved to project_centric_steps.py)
+# Helper functions (cleaned up)
 # -----------------
 
 
