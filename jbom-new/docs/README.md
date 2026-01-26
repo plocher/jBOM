@@ -149,8 +149,8 @@ A) produce a bom from a kicad project without an inventory
 B) create a new inventory from a kicad project.
    This may require jbom to invent IPN (Inventory Part Numbers) values for the new inventory.
    An inventory is a list of Items that represent the specific supplier, manufacturer, location or desirability of a physical device that satisfies the electro-mechanical requirements from the designer
-   In jBOM, the inventory is allowed to have multiple Items with the same IPN, as long as all share the same electro-mechanical details.  This allows the inventory to provide mutiple sources, lots, locations... for the "same" part.
-   You can think of IPNs as hash values that represent a specific set of electro-mechanical component attributes - their exact value is immaterial, it is only the equality comparison that matters.
+   **Core IPN Concept**: In jBOM, the inventory is designed to have multiple Items with the same IPN, as long as all share the same electro-mechanical details. This allows the inventory to provide multiple sources, lots, locations... for the "same" part.
+   **IPN as Electrical Specification Hash**: You can think of IPNs as hash values that represent a specific set of electro-mechanical component attributes - their exact value is immaterial, it is only the equality comparison that matters. Multiple suppliers can provide components that satisfy the same electrical specification.
     Inventories contain Items that have attributes; KiCad's Component attributes overlap with Inventory attributes in the electro-mechanical domain; inventory Item's attributes are a superset of the Component's attributes that capture sourcing, pricing and other production-of-product details.
 
 C) produce a BOM from a kicad project and a (set of) inventory file(s)
@@ -179,7 +179,24 @@ As a KiCad user, I want to reference my project to jBOM in whatever way feels na
 3. "I want to give it the name of a KiCad file and have it figure out the project it is part of"
 4. "I want jBOM to figure out what it needs when I give it a valid KiCad project filename, even if it is the wrong project file for the operation I am using"
 
+### IPN Supplier Alternatives and Deduplication
 
+When reading inventory files (using, for example, --inventory A.csv), a virtual inventory data structure is created and inventory IPNs are collected into it.
+
+**Exact Duplicate Handling**: Items that are complete and exact duplicates of an existing virtual inventory Item are silently dropped, so the virtual inventory never has to deal with exact duplicates. This is never an issue, since they are exact duplicates, no information is lost or gained.
+
+**Supplier Alternatives**: Items with the same IPN but different supplier information (manufacturer, distributor, MPN, priority) are preserved as separate items. This is the intended behavior - IPNs serve as "electrical specification hashes" that allow multiple sourcing options for the same component.
+
+The test case for exact duplicate handling is:
+jbom ... --inventory A  => results in N items
+jbom ... --inventory A --inventory A  => results in exactly the same N items
+
+**Fabricator Filtering**: The fabricator and related filtering based on non-electro-mechanical attributes (aka fields) deals with how to select specific suppliers from the many that may exist with the same IPN. This is where priority ranking and supplier selection occurs.
+J Thank you for that crucial context! This significantly clarifies the current behavior and helps me understand that the "Naive Deduplication" mentioned in the documentation is actually working correctly and is intentional behavior, not a gap to be fixed.
+
+Let me update my understanding:
+
+### KiCad projects
 The search logic should be similar to this pseudocode/english description:
 if no project_argument is provided, set project_argument = "."  (current directory) and continue
 
