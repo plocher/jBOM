@@ -1,91 +1,48 @@
 # Inventory Domain
 
-## Problem Statement
+## Use Case
+As a hardware engineer, I want to understand what components I need and what I already have, so I can make informed decisions about ordering parts for manufacturing.
 
-Hardware engineers need to bridge the gap between KiCad project components (design intent) and physical parts inventory (sourcing reality). This domain covers generating, matching, and filtering inventory items based on project requirements.
+## Core User Needs
+1. "I want to see all the components my project needs in a format I can use for ordering"
+2. "I want to know which components from my project I don't already have in inventory"
+3. "I want to add my project's components to my existing inventory without creating duplicates"
+4. "I want to check against multiple inventory sources (suppliers, locations) with clear precedence"
+5. "I want the system to handle missing or bad inventory files gracefully"
 
-## Core Use Cases
+## Feature Files
 
-### UC1: Generate Project Inventory
-**As a** hardware engineer
-**I want to** generate an inventory file from my KiCad project
-**So that I can** bootstrap my inventory system or identify all required components
+### core.feature
+Tests basic inventory generation from KiCad projects.
+- Scenarios: generate IPNs, categorize components, normalize packaging
+- Covers user need #1
 
-```bash
-jbom inventory project/ -o new_inventory.csv
-```
+### inventory_matching.feature
+Tests matching project components against existing inventory.
+- Scenarios: basic matching, filtering, error handling for missing files
+- Covers user needs #2, #3, #5
 
-**Expected behavior:**
-- Each unique component gets an inventory item with auto-generated IPN
-- Components are categorized and normalized for consistent tracking
-- Output includes description, package, and category information
+### IPN_generation.feature
+Tests IPN creation logic and formatting consistency.
+- Scenarios: category detection, value normalization, IPN patterns
+- Supports all user needs through stable component identification
 
-### UC2: Identify Missing Components
-**As a** hardware engineer
-**I want to** compare my project against existing inventory
-**So that I can** identify what components I need to order
+### multi_source.feature
+Tests multiple inventory file handling with precedence.
+- Scenarios: precedence rules, duplicate handling, partial matches
+- Covers user need #4
 
-```bash
-jbom inventory --inventory existing.csv --filter-matches -o -
-```
+### multi_source_edge_cases.feature
+Tests complex scenarios with malformed files and error conditions.
+- Scenarios: missing files, malformed CSV, duplicate IPNs
+- Covers user need #5
 
-**Expected behavior:**
-- Only components not found in existing inventory are output
-- Matching is based on component attributes (category, value, package)
-- Helps with procurement planning
+### file_safety.feature
+Tests file handling and command validation.
+- Scenarios: file permissions, invalid combinations
+- Covers user need #5
 
-### UC3: Merge Inventories
-**As a** hardware engineer
-**I want to** combine project components with existing inventory
-**So that I can** maintain a comprehensive parts database
-
-```bash
-jbom inventory --inventory existing.csv -o merged_inventory.csv
-```
-
-**Expected behavior:**
-- Existing inventory items are preserved
-- New project components are added with unique IPNs
-- No duplicate entries for identical components
-
-### UC4: Handle Multiple Inventory Sources
-**As a** hardware engineer
-**I want to** work with multiple inventory files with precedence rules
-**So that I can** manage different suppliers or inventory locations
-
-```bash
-jbom inventory --inventory primary.csv --inventory backup.csv -o -
-```
-
-**Expected behavior:**
-- Files are processed in order of precedence (first file wins)
-- Components found in earlier files are not duplicated
-- Missing or malformed files are handled gracefully
-
-## Key Concepts
-
-### IPN (Inventory Part Number)
-Auto-generated unique identifier for inventory items based on component attributes. Examples: `RES_10K`, `CAP_100nF`, `IC_LM358`
-
-### Component Matching
-Components are matched between project and inventory using category, value, and package attributes rather than exact string matching.
-
-## Error Handling
-
-### Invalid Inventory Files
-- Missing inventory files cause command failure with clear error message
-- Malformed CSV files are reported but don't prevent processing of valid files
-- Multiple inventory file errors are reported individually
-
-### Invalid Command Combinations
-- `--filter-matches` without `--inventory` causes command failure
-- Clear error messages guide correct usage
-
-## Feature File Organization
-
-- `core.feature` - Basic inventory generation from projects
-- `IPN_generation.feature` - IPN creation and formatting rules
-- `inventory_matching.feature` - Matching and filtering workflows
-- `multi_source.feature` - Multiple inventory file handling
-- `multi_source_edge_cases.feature` - Complex precedence and error scenarios
-- `file_safety.feature` - File handling and error cases
+## Implementation Notes
+- All features use CSV-first assertions with `jbom inventory -o -` for reliable data validation
+- Tests focus on business outcomes (what components are identified) rather than console formatting
+- Error scenarios verify both exit codes and meaningful error messages
