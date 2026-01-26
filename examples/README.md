@@ -22,13 +22,18 @@ SWI_EDG-104,SWI,EDG-104,DIP-8,ECE,EDG104S,1,SPCoast
 - **Different Suppliers**: JLC vs SPCoast distribution channels
 - **Priority Ranking**: Lower numbers indicate higher priority (SPCoast=1, JLC=10)
 
-### How Fabricator Filtering Works
+### How Fabricator Filtering and Matching Works
 
 When you use jBOM with fabricator filtering (e.g., `--fabricator JLC`), the system:
 
-1. **Groups by IPN**: Finds all items with the same IPN
-2. **Applies Filters**: Removes items that don't match fabricator criteria
-3. **Selects by Priority**: Chooses the highest priority (lowest number) from remaining options
+1. **Pre-filters Inventory**: Applies fabricator filters to inventory items before matching begins
+2. **Component Matching**: For each KiCad component, attempts to find matching inventory items:
+   - **Perfect Match**: If component has an IPN that matches inventory item(s), use those
+   - **Heuristic Match**: Otherwise, use electrical/physical characteristics to find candidates
+   - **Priority Selection**: When multiple items match, chooses highest priority (lowest number)
+3. **Match Confidence**: Returns results only if confidence level is sufficient
+
+The key insight is that **fabricator filtering happens before matching**, not after. This ensures that only relevant supplier alternatives are considered during the component matching process.
 
 ### Valid vs Invalid Patterns
 
@@ -58,5 +63,11 @@ RES_10K_0603,RESISTOR,22k,0603,Vishay,CRCW060310K0FKEA,2  # Different value!
 2. **Set appropriate priorities** to rank supplier preferences
 3. **Maintain electrical characteristic consistency** within IPN groups
 4. **Use fabricator filtering** to select appropriate suppliers for your build
+
+## Important Notes
+
+**IPN Creation**: jBOM only creates IPNs when generating a new inventory from a KiCad project (workflow B above). During BOM generation with existing inventory (workflow C), jBOM matches components to existing inventory items but does not create new IPNs.
+
+**Matching Priority**: The system first tries exact IPN matches, then falls back to heuristic matching based on electrical characteristics. This ensures reliable component identification while supporting flexible inventory management.
 
 This approach enables flexible supplier management while maintaining data integrity through electrical specification validation.
