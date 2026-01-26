@@ -207,7 +207,7 @@ def then_csv_output_has_row(context) -> None:
             if actual is None:
                 # Try case-insensitive match
                 for rk in r.keys():
-                    if rk.lower() == k.lower():
+                    if rk is not None and rk.lower() == k.lower():
                         actual = r[rk]
                         break
             if actual is None or str(actual) != str(v):

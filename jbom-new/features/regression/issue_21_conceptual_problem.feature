@@ -42,7 +42,7 @@ Feature: Issue #21 Conceptual Problem - BOM vs Parts List Distinction
       | R3        | 10K   | R_0603_1608 |
       | C1        | 100nF | C_0603_1608 |
       | C2        | 100nF | C_0603_1608 |
-    When I run jbom command "bom"
+    When I run jbom command "bom -o -"
     Then the command should succeed
     # BOM aggregates by value+package for proper procurement
     And the CSV output has a row where
