@@ -219,6 +219,44 @@ def then_csv_output_has_row(context) -> None:
     ), f"Expected row not found: {expected}\nRows: {rows}"
 
 
+@then("the CSV output has rows where")
+def then_csv_output_has_rows(context) -> None:
+    """Assert CSV output contains all rows matching the table's expectations."""
+    out = getattr(context, "last_output", "")
+    assert out.strip(), "No CSV output captured"
+
+    from io import StringIO
+
+    rows = list(csv.DictReader(StringIO(out)))
+    assert (
+        context.table and len(context.table.rows) >= 1
+    ), "Provide at least one expected row"
+
+    def matches(r: dict, expected_row: dict) -> bool:
+        for k, v in expected_row.items():
+            actual = r.get(k)
+            if actual is None:
+                # Try case-insensitive match
+                for rk in r.keys():
+                    if rk is not None and rk.lower() == k.lower():
+                        actual = r[rk]
+                        break
+            if actual is None or str(actual) != str(v):
+                return False
+        return True
+
+    # Check that each expected row exists in the CSV output
+    missing_rows = []
+    for table_row in context.table.rows:
+        expected = {h: table_row[h] for h in context.table.headings}
+        if not any(matches(r, expected) for r in rows):
+            missing_rows.append(expected)
+
+    assert (
+        not missing_rows
+    ), f"Expected rows not found: {missing_rows}\nActual CSV rows: {rows}"
+
+
 # Field system step definitions
 @then('the output should contain CSV headers "{headers}"')
 def then_output_should_contain_csv_headers(context, headers: str) -> None:

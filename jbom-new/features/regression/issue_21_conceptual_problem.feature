@@ -45,14 +45,10 @@ Feature: Issue #21 Conceptual Problem - BOM vs Parts List Distinction
     When I run jbom command "bom -o -"
     Then the command should succeed
     # BOM aggregates by value+package for proper procurement
-    And the CSV output has a row where
+    And the CSV output has rows where
       | Reference | Quantity |
       | R1, R2    | 2        |
-    And the CSV output has a row where
-      | Reference | Quantity |
       | R3        | 1        |
-    And the CSV output has a row where
-      | Reference | Quantity |
       | C1, C2    | 2        |
 
   @regression @issue-21 @solution
