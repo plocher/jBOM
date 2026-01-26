@@ -10,6 +10,10 @@ from jbom.services.schematic_reader import SchematicReader
 from jbom.services.parts_list_generator import PartsListGenerator, PartsListData
 from jbom.services.project_file_resolver import ProjectFileResolver
 from jbom.common.options import GeneratorOptions
+from jbom.common.component_filters import (
+    add_component_filter_arguments,
+    create_filter_config,
+)
 from jbom.config.fabricators import get_available_fabricators
 
 
@@ -50,18 +54,8 @@ def register_command(subparsers) -> None:
     parser.add_argument("--seeed", action="store_true", help="Use Seeed preset")
     parser.add_argument("--generic", action="store_true", help="Use Generic preset")
 
-    # Filtering options
-    parser.add_argument(
-        "--include-dnp",
-        action="store_true",
-        help='Include "do not populate" components',
-    )
-
-    parser.add_argument(
-        "--include-excluded",
-        action="store_true",
-        help="Include components excluded from BOM",
-    )
+    # Component filtering options
+    add_component_filter_arguments(parser)
 
     # Options
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
@@ -160,11 +154,8 @@ def handle_parts(args: argparse.Namespace) -> int:
         if not fabricator:
             fabricator = "generic"
 
-        # Generate basic parts list
-        filters = {
-            "exclude_dnp": not args.include_dnp,
-            "include_only_bom": not args.include_excluded,
-        }
+        # Generate basic parts list with common filtering logic
+        filters = create_filter_config(args)
         parts_data = generator.generate_parts_list_data(
             components, project_name, filters
         )

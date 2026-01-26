@@ -104,12 +104,29 @@ The Service-Command architecture provides a stable foundation that can support a
 
 
 ## Fetures and Workflows
+### DNP and ExcludeFromBOM
 
+In KiCad, attribute to exclude a component from the Bill of Materials (BOM) is labeled "Exclude from bill of materials". This attribute is used for virtual components like mounting holes, fiducials, or logos, rather than for "Do Not Populate" (DNP) parts.
+Key details regarding this feature:
+Function: It prevents the component from appearing in generated BOM exports.
+"Virtual" Attribute: Similar to marking footprints as "Virtual" in the PCB editor.
+Difference from DNP: "Exclude from BOM" is different from "Do Not Populate" (DNP); the latter still includes the part in the BOM but marks it as not to be assembled, while the former removes it entirely from the document.
+
+
+In KiCad, the hash ('#') prefix in a component's reference designator is primarily used for virtual or non-physical components that exist in the schematic but should not be exported to the PCB layout or the Bill of Materials (BOM).
+Here are the specific components and scenarios where KiCad uses the '#' prefix:
+Power Ports and Power Symbols: When a symbol is defined as a power port (e.g., VCC, GND) in its properties, KiCad often marks it with a '#' (e.g., #PWR01) to indicate it is a global power net connection rather than a physical part.
+PWR_FLAG Symbols: Similar to power ports, these are virtual components used to inform the Electrical Rules Check (ERC) that a power net is driven, and they do not represent physical components on the board.
+Unannotated or Non-physical Symbols: If a symbol is created that is not meant for the board, or if automatic annotation fails to categorize a symbol properly, it may receive a '#' prefix.
+Hierarchical Labels/Pins: Sometimes intermediate connection points within schematic hierarchies can be marked with this prefix.
+
+### MATCH
 The match function's scope is to find the inventory items that satisfy the electrical/physical requirements of partially specified kicad components
 If it can do that simply (component.IPM == Inventory.IPN), fantastic happy path.  There are other happy paths, and a slew of more focused heuristic paths, each adding their own levels of uncertainty to the algorithm, with the worst case that there isn't enough "specified" in the component to do the match
 
 the inventory workflows supported by jbom are
 
+### INVENTORY
 
 A) produce a bom from a kicad project without an inventory
    This produces a simple table of components found in the project schematics, aggregated (grouped) by component type and value
@@ -185,3 +202,28 @@ Child schematics are hierarchical sheets linked within the root or other parent 
 Within the Root File: Open the root .kicad_sch file (which is a text-based S-expression file) and look for the (sheet ...) token.
 Extraction: Each (sheet ...) entry contains a (property "Sheetfile" "filename.kicad_sch") field that specifies the child's filename.
 Recursive Hierarchy: Subsheets can themselves contain other subsheets. To find all children, you must recursively check every identified .kicad_sch file for further (sheet ...) definitions.
+
+
+
+project_steps.py (3 steps):
+•  @given("a KiCad project") - Creates anonymous project from template
+•  @given("the schematic is deleted") - Removes schematic file
+•  @given("the PCB is deleted") - Removes PCB file
+
+project_centric_steps.py (19 steps):
+•  @given('a KiCad project directory "{name}"') - Named directory projects
+•  @given('a minimal KiCad project "{name}"') - Named minimal projects
+•  @given('a project "{project}" placed in "{dir}"') - Directory placement
+•  @given("a schematic that contains:") - Core schematic creation
+•  @given("a PCB that contains:") - Core PCB creation
+•  Many other specialized steps for complex scenarios
+
+Key Findings:•  @given("a KiCad project") (project_steps.py) creates anonymous projects
+•  @given('a KiCad project directory "{name}"') (project_centric_steps.py) creates named projects
+•  These are complementary, not duplicate
+
+Critical Dependencies ⚠️
+The project_centric_steps.py file contains essential core steps used throughout the test suite:
+•  @given("a schematic that contains:") - Used by all BOM/inventory features
+•  @given("a PCB that contains:") - Used by all POS features
+•  Complex project setup steps for multi-file scenarios

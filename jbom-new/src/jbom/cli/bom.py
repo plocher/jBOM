@@ -21,6 +21,10 @@ from jbom.common.field_parser import (
     check_fabricator_field_completeness,
 )
 from jbom.common.fields import get_available_presets
+from jbom.common.component_filters import (
+    add_component_filter_arguments,
+    create_filter_config,
+)
 
 
 def register_command(subparsers) -> None:
@@ -68,18 +72,8 @@ def register_command(subparsers) -> None:
 
     # BOM always aggregates by value+package (footprint) for procurement
 
-    # Filtering options
-    parser.add_argument(
-        "--include-dnp",
-        action="store_true",
-        help='Include "do not populate" components',
-    )
-
-    parser.add_argument(
-        "--include-excluded",
-        action="store_true",
-        help="Include components excluded from BOM",
-    )
+    # Component filtering options
+    add_component_filter_arguments(parser)
 
     # Field selection (key feature for fabricator customization)
     parser.add_argument(
@@ -221,11 +215,8 @@ def handle_bom(args: argparse.Namespace) -> int:
             if warning:
                 print(warning, file=sys.stderr)
 
-        # Generate basic BOM
-        filters = {
-            "exclude_dnp": not args.include_dnp,
-            "include_only_bom": not args.include_excluded,
-        }
+        # Generate basic BOM with common filtering logic
+        filters = create_filter_config(args)
         bom_data = generator.generate_bom_data(components, project_name, filters)
 
         # Enhance with inventory if requested

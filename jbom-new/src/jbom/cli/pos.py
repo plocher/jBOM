@@ -18,6 +18,10 @@ from jbom.common.field_parser import (
     validate_fields_against_available,
 )
 from jbom.common.fields import field_to_header
+from jbom.common.component_filters import (
+    add_component_filter_arguments,
+    create_filter_config,
+)
 from jbom.config.fabricators import (
     get_fabricator_default_fields,
     apply_fabricator_column_mapping,
@@ -80,6 +84,9 @@ def register_command(subparsers) -> None:
         action="store_true",
         help="List available fields and presets, then exit",
     )
+
+    # Component filtering (POS-specific: only DNP filtering applies)
+    add_component_filter_arguments(parser, command_type="pos")
 
     # Fabricator selection (for field presets / predictable output)
     add_fabricator_arguments(parser)
@@ -154,6 +161,14 @@ def handle_pos(args: argparse.Namespace) -> int:
             smd_only=args.smd_only,
             layer_filter=args.layer,
         )
+
+        # Create component filter configuration (for future DNP filtering support)
+        component_filters = create_filter_config(args, command_type="pos")
+        if args.verbose and not component_filters.get("exclude_dnp", True):
+            print(
+                "Note: --include-dnp specified but DNP filtering not yet implemented for POS",
+                file=sys.stderr,
+            )
 
         # Use services to generate POS data
         reader = DefaultKiCadReaderService()

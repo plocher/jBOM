@@ -28,6 +28,11 @@ except ImportError:
 
 
 # --------------------------
+# Given steps (setup)
+# --------------------------
+
+
+# --------------------------
 # Then steps (verifications)
 # --------------------------
 @then("the command exits with code {code:d}")
@@ -158,6 +163,38 @@ def then_file_contains_csv(context, filename: str) -> None:
     assert rows and len(rows[0]) >= 2, f"CSV appears invalid or empty: {p}"
 
 
+@then('the file "{filename}" should contain only CSV headers')
+def then_file_contains_only_csv_headers(context, filename: str) -> None:
+    """Assert that a CSV file contains only headers (no data rows)."""
+    p = context.project_root / filename
+    assert_with_diagnostics(
+        p.exists() and p.is_file(),
+        "File not found",
+        context,
+        expected=f"file to exist: {filename}",
+        actual=f"file exists: {p.exists()}, is file: {p.is_file() if p.exists() else 'N/A'}",
+    )
+
+    with p.open("r", encoding="utf-8") as f:
+        rows = list(csv.reader(f))
+
+    assert_with_diagnostics(
+        len(rows) >= 1,
+        "CSV file should have at least header row",
+        context,
+        expected="at least 1 row (headers)",
+        actual=f"{len(rows)} rows",
+    )
+
+    assert_with_diagnostics(
+        len(rows) == 1,
+        "CSV file should contain only headers (no data rows)",
+        context,
+        expected="exactly 1 row (headers only)",
+        actual=f"{len(rows)} rows total",
+    )
+
+
 @then("the line count is {n:d}")
 def then_line_count_is(context, n: int) -> None:
     out = getattr(context, "last_output", "")
@@ -257,6 +294,64 @@ def then_csv_output_has_rows(context) -> None:
     ), f"Expected rows not found: {missing_rows}\nActual CSV rows: {rows}"
 
 
+@then("the CSV output has rows where:")
+def then_csv_output_has_rows_with_colon(context) -> None:
+    """Assert CSV output contains all rows matching the table's expectations (colon version)."""
+    then_csv_output_has_rows(context)
+
+
+@then('the CSV file "{filename}" has rows where')
+def then_csv_file_has_rows(context, filename: str) -> None:
+    """Assert CSV file contains all rows matching the table's expectations."""
+    p = context.project_root / filename
+    assert_with_diagnostics(
+        p.exists() and p.is_file(),
+        "CSV file not found",
+        context,
+        expected=f"file to exist: {filename}",
+        actual=f"file exists: {p.exists()}, is file: {p.is_file() if p.exists() else 'N/A'}",
+    )
+
+    with p.open("r", encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
+
+    assert_with_diagnostics(
+        context.table and len(context.table.rows) >= 1,
+        "Expected at least one expected row in table",
+        context,
+        expected="table with ≥1 rows",
+        actual=f"table with {len(context.table.rows) if context.table else 0} rows",
+    )
+
+    def matches(r: dict, expected_row: dict) -> bool:
+        for k, v in expected_row.items():
+            actual = r.get(k)
+            if actual is None:
+                # Try case-insensitive match
+                for rk in r.keys():
+                    if rk is not None and rk.lower() == k.lower():
+                        actual = r[rk]
+                        break
+            if actual is None or str(actual) != str(v):
+                return False
+        return True
+
+    # Check that each expected row exists in the CSV file
+    missing_rows = []
+    for table_row in context.table.rows:
+        expected = {h: table_row[h] for h in context.table.headings}
+        if not any(matches(r, expected) for r in rows):
+            missing_rows.append(expected)
+
+    assert_with_diagnostics(
+        not missing_rows,
+        "Expected rows not found in CSV file",
+        context,
+        expected="all rows from table to be found",
+        actual=f"missing: {missing_rows}, found: {rows}",
+    )
+
+
 # Field system step definitions
 @then('the output should contain CSV headers "{headers}"')
 def then_output_should_contain_csv_headers(context, headers: str) -> None:
@@ -317,6 +412,140 @@ def then_console_table_should_not_contain(context, text: str) -> None:
 # -----------------
 # Helper functions (cleaned up)
 # -----------------
+
+
+# Resilient error-reporting assertions
+@then("the output reports errors for files:")
+def then_output_reports_errors_for_files(context) -> None:
+    """Assert that output contains error mentions for each filename in the table.
+
+    Table format:
+    | filename |
+    | missing1.csv |
+    | bad.csv |
+    """
+    assert context.table is not None, "Expected a table of filenames"
+    out = getattr(context, "last_output", "")
+    lower_lines = [ln.lower() for ln in out.splitlines()]
+    missing = []
+    for row in context.table:
+        fname = row.get("filename") or row.cells[0]
+        found = any("error" in ln and fname.lower() in ln for ln in lower_lines)
+        if not found:
+            missing.append(fname)
+    assert_with_diagnostics(
+        not missing,
+        f"Expected error lines for files not found: {missing}",
+        context,
+        expected="errors for files listed",
+        actual=out,
+    )
+
+
+@then("the output contains at least {n:d} errors")
+def then_output_contains_at_least_n_errors(context, n: int) -> None:
+    out = getattr(context, "last_output", "")
+    count = sum(1 for ln in out.splitlines() if "error" in ln.lower())
+    assert_with_diagnostics(
+        count >= n,
+        f"Expected at least {n} error lines, found {count}",
+        context,
+        expected=f">= {n} errors",
+        actual=f"{count} errors\n{out}",
+    )
+
+
+# Resilient CSV component assertions (ignore IPN unless provided)
+@then("the CSV output row count is {n:d}")
+def then_csv_output_row_count_is(context, n: int) -> None:
+    out = getattr(context, "last_output", "")
+    from io import StringIO
+
+    rows = list(csv.DictReader(StringIO(out)))
+    assert_with_diagnostics(
+        len(rows) == n,
+        "Row count mismatch",
+        context,
+        expected=n,
+        actual=len(rows),
+    )
+
+
+@then("the CSV output has components where:")
+def then_csv_output_has_components_where(context) -> None:
+    """Assert CSV output contains rows matching only the provided columns.
+
+    Example table:
+    | Category | Value |
+    | RES | 22k |
+    Optional columns like Package may be included.
+    """
+    out = getattr(context, "last_output", "")
+    from io import StringIO
+
+    rows = list(csv.DictReader(StringIO(out)))
+    assert context.table is not None and context.table.rows, "Expected component table"
+
+    def header_get(d: dict, key: str):
+        for k in d.keys():
+            if k is not None and k.lower() == key.lower():
+                return d[k]
+        return None
+
+    def matches(d: dict, expected: dict) -> bool:
+        for k, v in expected.items():
+            actual = header_get(d, k)
+            if actual is None or str(actual) != str(v):
+                return False
+        return True
+
+    missing = []
+    for tr in context.table.rows:
+        expected = {h: tr[h] for h in context.table.headings}
+        if not any(matches(r, expected) for r in rows):
+            missing.append(expected)
+    assert_with_diagnostics(
+        not missing,
+        f"Expected components not found: {missing}",
+        context,
+        expected="all components present",
+        actual=rows,
+    )
+
+
+@then("the CSV output does not contain components where:")
+def then_csv_output_does_not_contain_components_where(context) -> None:
+    out = getattr(context, "last_output", "")
+    from io import StringIO
+
+    rows = list(csv.DictReader(StringIO(out)))
+    assert context.table is not None and context.table.rows, "Expected component table"
+
+    def header_get(d: dict, key: str):
+        for k in d.keys():
+            if k is not None and k.lower() == key.lower():
+                return d[k]
+        return None
+
+    def matches(d: dict, expected: dict) -> bool:
+        for k, v in expected.items():
+            actual = header_get(d, k)
+            if actual is None or str(actual) != str(v):
+                return False
+        return True
+
+    forbidden = []
+    for tr in context.table.rows:
+        expected = {h: tr[h] for h in context.table.headings}
+        if any(matches(r, expected) for r in rows):
+            forbidden.append(expected)
+    assert_with_diagnostics(
+        not forbidden,
+        f"Forbidden components present: {forbidden}",
+        context,
+        expected="no forbidden components",
+        actual=rows,
+    )
 
 
 # Field system step definitions - validation scenarios
