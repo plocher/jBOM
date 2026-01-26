@@ -13,7 +13,9 @@ Feature: BOM Filtering (DNP / Excluded)
       | R2        | 22K   | R_0805_2012 | Yes |
     When I run jbom command "bom --include-dnp -o -"
     Then the command should succeed
-    And the output should contain "R2,22K"
+    And the CSV output has a row where
+      | Reference | Value |
+      | R2        | 22K   |
 
   Scenario: Exclude DNP components by default
     Given a schematic that contains:
@@ -31,4 +33,6 @@ Feature: BOM Filtering (DNP / Excluded)
       | R2        | 22K   | R_0805_2012 | Yes            |
     When I run jbom command "bom --include-excluded -o -"
     Then the command should succeed
-    And the output should contain "R2,22K"
+    And the CSV output has a row where
+      | Reference | Value |
+      | R2        | 22K   |

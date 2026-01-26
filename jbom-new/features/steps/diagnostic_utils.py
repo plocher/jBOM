@@ -40,35 +40,6 @@ def format_execution_context(context, include_files: bool = True) -> str:
     if hasattr(context, "project_root"):
         lines.append(f"\n--- WORKING DIRECTORY ---\n{context.project_root}")
 
-    # Plugin directory
-    plugins_dir = context.src_root / "jbom" / "plugins"
-    if plugins_dir.exists():
-        lines.append("\n--- PLUGINS DIRECTORY ---")
-        try:
-            plugins = [
-                p.name
-                for p in plugins_dir.iterdir()
-                if p.is_dir() and not p.name.startswith((".", "_"))
-            ]
-            if plugins:
-                for plugin in plugins:
-                    lines.append(f"  {plugin}/")
-            else:
-                lines.append("  (empty)")
-        except Exception as e:
-            lines.append(f"  (error listing: {e})")
-
-    # Files generated (if any test plugins were created)
-    if include_files and hasattr(context, "created_plugins"):
-        lines.append("\n--- CREATED TEST PLUGINS ---")
-        for plugin_dir in context.created_plugins:
-            lines.append(f"  {plugin_dir.name}/")
-            if plugin_dir.exists():
-                for file in plugin_dir.iterdir():
-                    if file.is_file():
-                        size = file.stat().st_size
-                        lines.append(f"    {file.name} ({size} bytes)")
-
     lines.append("\n" + "=" * 80 + "\n")
     return "\n".join(lines)
 

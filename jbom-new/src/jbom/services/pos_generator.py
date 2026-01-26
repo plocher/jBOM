@@ -40,7 +40,26 @@ class POSGenerator:
                     "side": component.side,
                     "footprint": component.footprint_name,
                     "package": component.package_token,
+                    # Raw tokens (if available) to preserve author-intended formatting
+                    "x_raw": component.center_x_raw,
+                    "y_raw": component.center_y_raw,
+                    "rotation_raw": component.rotation_raw,
                 }
+
+                # Extract additional attributes that may be requested in field selection
+                # Include value if available from component attributes
+                if "Value" in component.attributes:
+                    entry["value"] = component.attributes["Value"]
+                elif hasattr(component, "value") and component.value:
+                    entry["value"] = component.value
+                else:
+                    entry["value"] = ""
+
+                # Include other common attributes that might be requested
+                entry["fabricator_part_number"] = component.attributes.get(
+                    "fabricator_part_number", ""
+                )
+
                 pos_entries.append(entry)
 
         return pos_entries

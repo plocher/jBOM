@@ -36,11 +36,11 @@ Given a primary inventory file "primary.csv" with contents:
 And a secondary inventory file "secondary.csv" with contents:
 ```
 
-**Why**: Step names like "primary/secondary" encode assumptions about precedence rules that may not exist or may change.
+**Why**: Step names like "primary/secondary" encode assumptions about selection rules that may not exist or may change.
 
 ### 3. Test Distinguishable Scenarios
 
-**✅ Good: Tests actual precedence with different data**
+**✅ Good: Tests actual selection logic with different data**
 ```gherkin
 Given an inventory file "A.csv" with contents:
   | IPN     | Manufacturer |
@@ -52,7 +52,7 @@ When I run jbom command "bom --inventory A.csv --inventory B.csv"
 Then the output should contain "Yageo"
 ```
 
-**❌ Bad: Identical data can't test precedence**
+**❌ Bad: Identical data can't test selection logic**
 ```gherkin
 Given an inventory file "A.csv" with contents:
   | IPN     | Value |
@@ -98,7 +98,7 @@ When I run jbom command "bom --inventory components.csv"
 ### Phase 1: Validate Business Logic
 1. **Test basic deduplication**: `--inventory A.csv --inventory A.csv` should deduplicate
 2. **Verify tool usage**: Ensure `jbom inventory` vs `jbom bom` tests are using correct commands
-3. **Check precedence logic**: Verify if "precedence" is actually broken deduplication
+3. **Check selection logic**: Verify component selection and priority handling
 
 ### Phase 2: Execute and Debug
 1. **Run passing features**: Identify which scenarios actually work
@@ -139,7 +139,7 @@ Then RES_10K should have manufacturer "Yageo"
 # ❌ DON'T: Test scenarios with identical outcomes
 Given file A contains: RES_10K,10k,Yageo
 Given file B contains: RES_10K,10k,Yageo
-Then precedence should favor file A
+Then the best match should be selected
 # ^ This proves nothing since both outcomes are identical
 
 # ✅ DO: Test scenarios with distinguishable outcomes
@@ -151,7 +151,7 @@ Then the output should contain "Yageo"
 ## Step Definition Architecture
 
 ### Current Structure
-- **Canonical steps**: Core business logic in `project_centric_steps.py`, `common_steps.py`
+- **Canonical steps**: Core business logic in `common_steps.py`
 - **Legacy adapter**: Backward compatibility in `legacy_compat.py`
 - **Domain-specific**: BOM, POS, inventory steps in separate files
 

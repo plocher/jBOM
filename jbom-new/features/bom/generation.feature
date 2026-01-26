@@ -48,4 +48,4 @@ Feature: BOM Generation
     Given I create file "invalid.txt" with content "This is not a schematic"
     When I run jbom command "bom invalid.txt"
     Then the command should fail
-    And the error output should mention "Cannot resolve schematic file"
+    And the error output should mention "No schematic file found"

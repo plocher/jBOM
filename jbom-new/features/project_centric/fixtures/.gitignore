@@ -1,4 +1,0 @@
-# Ignore artifacts created by tests that accidentally write into fixtures
-**/console
-/tmp_*/
-flat_link

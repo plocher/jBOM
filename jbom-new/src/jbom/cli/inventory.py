@@ -18,7 +18,9 @@ from jbom.cli.formatting import print_inventory_table
 def register_command(subparsers) -> None:
     """Register inventory command with argument parser."""
     parser = subparsers.add_parser(
-        "inventory", help="Generate component inventory from project"
+        "inventory",
+        help="Generate component inventory from project",
+        description="Generate component inventory from project",
     )
 
     # Project input as main positional argument
@@ -172,7 +174,7 @@ def _apply_inventory_filtering(
 
     Args:
         inventory_items: List of inventory items from the project
-        inventory_files: List of paths to existing inventory CSV files (first has precedence)
+        inventory_files: List of paths to existing inventory CSV files
         filter_matches: If True, filter OUT matched components (show only new ones)
         verbose: Enable verbose output
 
@@ -182,25 +184,27 @@ def _apply_inventory_filtering(
     if not inventory_files:
         if filter_matches:
             print(
-                "Warning: --filter-matches requires --inventory file(s)",
+                "Error: --filter-matches requires --inventory file(s)",
                 file=sys.stderr,
             )
+            raise SystemExit(1)
         return inventory_items
 
     # Initialize matcher with merged inventory from multiple sources
     try:
         matcher = ComponentInventoryMatcher()
         merged_inventory = []
-        seen_ipns = set()  # Track IPNs for precedence
+        seen_ipns = set()  # Track IPNs to avoid duplicates
         total_files_loaded = 0
 
         if verbose:
             print(
-                f"Loading {len(inventory_files)} inventory file(s) with precedence order:",
+                f"Loading {len(inventory_files)} inventory file(s):",
                 file=sys.stderr,
             )
 
-        # Load files in order - first file has highest precedence
+        # Load files in order - first occurrence of each IPN is used
+        missing_file_detected = False
         for i, inventory_file in enumerate(inventory_files):
             try:
                 from jbom.services.inventory_reader import InventoryReader
@@ -210,20 +214,21 @@ def _apply_inventory_filtering(
 
                 added_count = 0
                 for item in file_inventory:
-                    if item.ipn not in seen_ipns:  # First occurrence wins (precedence)
+                    if item.ipn not in seen_ipns:  # First occurrence wins
                         merged_inventory.append(item)
                         seen_ipns.add(item.ipn)
                         added_count += 1
 
                 total_files_loaded += 1
                 if verbose:
-                    precedence = "primary" if i == 0 else f"precedence {i+1}"
+                    file_desc = f"file {i+1}"
                     print(
-                        f"  {precedence}: {inventory_file} ({added_count}/{len(file_inventory)} items added)",
+                        f"  {file_desc}: {inventory_file} ({added_count}/{len(file_inventory)} items added)",
                         file=sys.stderr,
                     )
 
             except FileNotFoundError:
+                missing_file_detected = True
                 print(
                     f"Error: Inventory file not found: {inventory_file}",
                     file=sys.stderr,
@@ -231,9 +236,13 @@ def _apply_inventory_filtering(
             except Exception as e:
                 print(f"Error loading {inventory_file}: {e}", file=sys.stderr)
 
+        if missing_file_detected:
+            # Fail-fast with a non-zero exit when any inventory file is missing
+            raise SystemExit(1)
+
         if not merged_inventory:
             print("Error: No inventory items loaded from any file", file=sys.stderr)
-            return inventory_items
+            raise SystemExit(1)
 
         # Set the merged inventory in the matcher
         matcher.set_inventory(merged_inventory)

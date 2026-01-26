@@ -65,10 +65,10 @@ jbom inventory project.kicad_sch --inventory existing_stock.csv --filter-matches
 
 ### Multi-Source Inventory Management
 
-Combine multiple inventory sources with precedence ordering:
+Combine multiple inventory sources with priority-based selection:
 
 ```bash
-# Use multiple inventory sources (first source wins for duplicates)
+# Use multiple inventory sources (priority fields determine best matches)
 jbom bom project.kicad_sch \
   --inventory primary_stock.csv \
   --inventory backup_suppliers.csv \

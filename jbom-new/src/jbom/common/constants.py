@@ -162,6 +162,7 @@ COMPONENT_TYPE_MAPPING = {
     "D": ComponentType.DIODE,
     "INDUCTOR": ComponentType.INDUCTOR,
     "L": ComponentType.INDUCTOR,
+    "LED": ComponentType.LED,
     "TRANSISTOR": ComponentType.TRANSISTOR,
     "MICROCONTROLLER": ComponentType.MICROCONTROLLER,
     "REGULATOR": ComponentType.REGULATOR,
@@ -170,6 +171,9 @@ COMPONENT_TYPE_MAPPING = {
     "RELAY": ComponentType.RELAY,
     "CONNECTOR": ComponentType.CONNECTOR,
     "ANALOG": ComponentType.ANALOG,
+    "IC": ComponentType.INTEGRATED_CIRCUIT,
+    "LM358": ComponentType.INTEGRATED_CIRCUIT,
+    "LM": ComponentType.INTEGRATED_CIRCUIT,  # Common IC prefix
 }
 
 

@@ -32,11 +32,11 @@ features/
 │   └── ...                 # Additional inventory features
 ├── cli/                    # CLI basics (help, version, errors)
 │   └── basics.feature      # Basic CLI functionality
-├── project_centric/        # Complex project discovery & resolution
-│   ├── fixtures/           # Test project files (ONLY for architecture testing)
-│   ├── architecture.feature # Project discovery and resolution
-│   ├── hierarchical.feature # Multi-schematic projects
-│   └── ...                 # Complex architectural scenarios
+├── project/               # KiCad project reference patterns
+│   ├── directory.feature   # Directory-based project references
+│   ├── file.feature       # File-based project references
+│   ├── cross_resolution.feature # Cross-file type resolution
+│   └── fixtures/          # Real KiCad project templates
 └── regression/             # Cross-cutting regression tests
     └── ...                 # Issue-specific regression tests
 ```

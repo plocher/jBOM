@@ -22,7 +22,7 @@ Feature: CLI Basics
   Scenario: Handle unknown command
     When I run jbom command "unknown-command"
     Then the command should fail
-    And the output should contain "unrecognized arguments"
+    And the output should contain "invalid choice"
 
   Scenario: No command specified
     When I run "jbom" with no arguments

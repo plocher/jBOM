@@ -17,6 +17,10 @@ class PcbComponent:
     center_y_mm: float
     rotation_deg: float
     side: str  # 'TOP' | 'BOTTOM'
+    # Raw text tokens as they appeared in the KiCad file (if available)
+    center_x_raw: Optional[str] = None
+    center_y_raw: Optional[str] = None
+    rotation_raw: Optional[str] = None
     attributes: Dict[str, str] = field(default_factory=dict)
 
 

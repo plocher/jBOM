@@ -4,6 +4,7 @@ from typing import List, Dict, Any, Optional
 from dataclasses import dataclass, field
 
 from jbom.common.types import Component
+from jbom.common.component_filters import apply_component_filters
 
 
 @dataclass
@@ -54,8 +55,8 @@ class PartsListGenerator:
         Returns:
             PartsListData object with individual component entries
         """
-        # Apply filters (same logic as BOMGenerator)
-        filtered_components = self._apply_filters(components, filters or {})
+        # Apply filters using common logic
+        filtered_components = apply_component_filters(components, filters or {})
 
         # Create individual entries (no aggregation)
         entries = self._create_individual_entries(filtered_components)
@@ -71,33 +72,6 @@ class PartsListGenerator:
                 "filtered_components": len(filtered_components),
             },
         )
-
-    def _apply_filters(
-        self, components: List[Component], filters: Dict[str, Any]
-    ) -> List[Component]:
-        """Apply filtering criteria to components (same as BOMGenerator)."""
-        filtered = []
-
-        # Default: exclude DNP and components not in BOM
-        exclude_dnp = filters.get("exclude_dnp", True)
-        include_only_bom = filters.get("include_only_bom", True)
-
-        for component in components:
-            # Apply DNP filter
-            if exclude_dnp and component.dnp:
-                continue
-
-            # Apply include only BOM components filter
-            if include_only_bom and not component.in_bom:
-                continue
-
-            # Skip power symbols (references starting with #)
-            if component.reference.startswith("#"):
-                continue
-
-            filtered.append(component)
-
-        return filtered
 
     def _create_individual_entries(
         self, components: List[Component]

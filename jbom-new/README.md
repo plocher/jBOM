@@ -39,7 +39,7 @@ jbom bom project.kicad_sch --inventory stock.csv -o enhanced_bom.csv
 # Generate inventory from project
 jbom inventory project.kicad_sch -o project_inventory.csv
 
-# Multi-source inventory with precedence
+# Multi-source inventory with best match selection
 jbom bom project.kicad_sch \
   --inventory primary_stock.csv \
   --inventory supplier_catalog.csv \

@@ -24,7 +24,7 @@ Feature: BOM Generation (Core Functionality)
   Scenario: Generate BOM to specific output file
     When I run jbom command "bom -o custom_bom.csv"
     Then the command should succeed
-    And a file named "basic_bom.csv" should exist
+    And a file named "custom_bom.csv" should exist
 
   Scenario: Generate BOM with explicit console table output
     When I run jbom command "bom -o console"

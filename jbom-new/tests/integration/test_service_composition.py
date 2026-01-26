@@ -288,7 +288,7 @@ class TestServiceComposition:
 
             # Step 3: Enhance BOM with inventory
             enhanced_bom = inventory_matcher.enhance_bom_with_inventory(
-                bom_data, Path("/inventory/parts.csv"), "ipn_fuzzy"
+                bom_data, Path("/inventory/parts.csv")
             )
 
         # Verify the full pipeline results

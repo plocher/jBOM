@@ -158,6 +158,7 @@ class DefaultKiCadReaderService(KiCadReaderService):
         value = ""
         x_mm = y_mm = 0.0
         rot = 0.0
+        x_raw = y_raw = rot_raw = None
         side = "TOP"
         attributes = {}
 
@@ -177,6 +178,10 @@ class DefaultKiCadReaderService(KiCadReaderService):
             elif head == Symbol("at") and len(child) >= 3:
                 # (at x y [rot])
                 try:
+                    # Capture raw tokens as strings for later echoing
+                    x_raw = str(child[1]) if len(child) >= 2 else None
+                    y_raw = str(child[2]) if len(child) >= 3 else None
+                    rot_raw = str(child[3]) if len(child) >= 4 else None
                     x_mm = float(child[1])
                     y_mm = float(child[2])
                     if len(child) >= 4:
@@ -234,6 +239,9 @@ class DefaultKiCadReaderService(KiCadReaderService):
             center_y_mm=y_mm,
             rotation_deg=rot,
             side=side,
+            center_x_raw=x_raw,
+            center_y_raw=y_raw,
+            rotation_raw=rot_raw,
             attributes=attributes,
         )
 

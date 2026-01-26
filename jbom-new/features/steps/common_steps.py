@@ -6,7 +6,7 @@ from behave import when, then, given
 from diagnostic_utils import assert_with_diagnostics
 
 
-@given("a test environment")
+@given("a sandbox")
 def step_test_environment(context):
     """Layer 1: Create isolated sandbox directory, nothing else.
 
@@ -20,7 +20,7 @@ def step_test_environment(context):
     # Keep src_root unchanged (set by environment.py)
 
 
-@given("a default jBOM environment")
+@given("a KiCad sandbox")
 def step_default_jbom_environment(context):
     """Layer 2: Sandbox + empty KiCad project, no command defaults.
 
@@ -41,24 +41,25 @@ def step_default_jbom_environment(context):
     context.current_project = project_name
 
 
-@given("a default jBOM CSV environment")
-def step_default_jbom_csv_environment(context):
-    """Layer 3: Sandbox + project + standardized I/O for testing.
+@given("a jBOM CSV sandbox")
+def step_jbom_csv_sandbox(context):
+    """Layer 2.5/3: Sandbox + project + CSV output for testing.
 
-    Automatically adds '-o -' and '--fabricator generic' to jbom commands.
-    Use this for most business logic testing (95% of scenarios).
+    Automatically adds '-o -' to jbom commands.
+    Uses jBOM's intrinsic default (--fabricator generic) without hardcoding.
+    Use this for most business logic testing and fabricator functionality.
     """
     # Build on Layer 2
     step_default_jbom_environment(context)
 
     # Set command execution defaults (used by step_run_jbom_command)
     context.default_output = "-o -"
-    context.default_fabricator = "--fabricator generic"
+    # No longer set default_fabricator - let jBOM use its intrinsic default
 
 
 @given("a clean test workspace")
 def step_clean_test_workspace(context):
-    """Legacy alias for Layer 1 - use 'Given a test environment' instead."""
+    """Legacy alias for Layer 1 - use 'Given a sandbox' instead."""
     step_test_environment(context)
 
 
@@ -89,7 +90,7 @@ def step_run_command(context, command):
         return "\n".join(lines)
 
     pre_tree = (
-        _tree(str(context.project_root)) if getattr(context, "trace", False) else None
+        _tree(str(context.sandbox_root)) if getattr(context, "trace", False) else None
     )
 
     # For now, run via python -m until we have proper installation
@@ -141,17 +142,17 @@ def step_run_command(context, command):
             cmd,
             capture_output=True,
             text=True,
-            cwd=context.project_root,
+            cwd=context.sandbox_root,
             env=env,
         )
         context.last_command = command
         context.last_output = result.stdout + result.stderr
         context.last_exit_code = result.returncode
         if getattr(context, "trace", False):
-            post_tree = _tree(str(context.project_root))
+            post_tree = _tree(str(context.sandbox_root))
             context.diagnostics = (
                 "=== DIAGNOSTICS ===\n"
-                f"CWD (project_root): {context.project_root}\n"
+                f"CWD (sandbox_root): {context.sandbox_root}\n"
                 f"Command: {cmd}\n"
                 "--- PRE TREE ---\n" + (pre_tree or "(trace off)") + "\n"
                 "--- POST TREE ---\n" + post_tree + "\n"
@@ -169,25 +170,18 @@ def step_run_jbom_command(context, args):
 
     Layer 3 environments automatically add default flags and detect DRY violations.
     """
-    # Layer 3 anti-pattern detection and auto-enhancement
+    # Anti-pattern detection and auto-enhancement
     if hasattr(context, "default_output"):
         if "-o" in args:
             raise AssertionError(
-                f"DRY VIOLATION: Using Layer 3 background ('default jBOM CSV environment') "
-                f"but specifying -o in command. Either use Layer 2 background, "
+                f"DRY VIOLATION: Using 'jBOM CSV sandbox' background "
+                f"but specifying -o in command. Either use 'KiCad sandbox' background, "
                 f"or remove '-o' from command: {args}"
             )
         args += f" {context.default_output}"
 
-    if hasattr(context, "default_fabricator"):
-        fabricator_flags = ["--fabricator", "--jlc", "--pcbway", "--seeed", "--generic"]
-        if any(flag in args for flag in fabricator_flags):
-            raise AssertionError(
-                f"DRY VIOLATION: Using Layer 3 background ('default jBOM CSV environment') "
-                f"but specifying fabricator in command. Either use Layer 2 background, "
-                f"or remove fabricator from command: {args}"
-            )
-        args += f" {context.default_fabricator}"
+    # Note: default_fabricator no longer set - jBOM uses intrinsic defaults
+    # Scenarios can override with explicit fabricator flags when needed
 
     step_run_command(context, f"jbom {args}")
 
@@ -239,12 +233,18 @@ def step_have_sample_fixtures(context, rel_path):
 
 @given('I am in directory "{rel_path}"')
 def step_cd_project_root(context, rel_path):
+    """DEPRECATED: This step changes working directory which violates consistency.
+
+    Use 'Given a project "name" in directory "path"' instead.
+    """
     from pathlib import Path
 
-    base = Path(str(context.project_root))
-    new_root = (base / rel_path).resolve()
-    new_root.mkdir(parents=True, exist_ok=True)
-    context.project_root = new_root
+    # Create the directory but DO NOT change project_root
+    base = Path(str(context.sandbox_root))
+    new_dir = (base / rel_path).resolve()
+    new_dir.mkdir(parents=True, exist_ok=True)
+
+    # REMOVED: context.project_root = new_root  # This was the problem!
 
 
 @when('I am in directory "{rel_path}"')
@@ -255,13 +255,17 @@ def step_when_cd_project_root(context, rel_path):
 
 @given('I am in project directory "{name}"')
 def step_cd_project_directory(context, name):
-    """Switch to a KiCad project directory, creating minimal skeleton if needed."""
-    from pathlib import Path
-    from ._workspace import ensure_project, chdir
+    """DEPRECATED: This step changes working directory which violates consistency.
 
-    base = Path(str(context.project_root))
-    proj_dir = ensure_project(base, name)
-    chdir(context, proj_dir)
+    Use 'Given a project "name" in directory "path"' instead.
+    """
+    from pathlib import Path
+    from ._workspace import ensure_project
+
+    # Create project directory but DO NOT change working directory
+    base = Path(str(context.sandbox_root))
+    ensure_project(base, name)
+    # REMOVED: chdir(context, proj_dir)  # This was the problem!
 
 
 @when('I am in project directory "{name}"')
@@ -345,7 +349,7 @@ def step_file_is_unreadable(context, filename):
     from pathlib import Path
     import stat
 
-    file_path = Path(context.project_root) / filename
+    file_path = Path(context.sandbox_root) / filename
     assert file_path.exists(), f"File {filename} does not exist"
 
     # Remove read permissions (keep only write permissions for owner)
@@ -403,6 +407,60 @@ def step_output_should_contain(context, text):
     assert (
         out and text in out
     ), f"Expected text not found in output: {text}\nOutput:\n{out}"
+
+
+@then("the output should contain the following messages:")
+def step_output_should_contain_messages(context):
+    """Assert output contains all messages from table (table-driven validation).
+
+    Table format:
+    | message_type | content |
+    | info | Using schematic: test.kicad_sch |
+    | error | No project files found |
+    """
+    assert context.table is not None, "Expected table data for message validation"
+
+    output = getattr(context, "last_output", "")
+
+    for row in context.table:
+        message_type = row["message_type"]
+        content = row["content"]
+
+        assert_with_diagnostics(
+            content in output,
+            f"Expected {message_type} message not found: {content}",
+            context,
+            expected=content,
+            actual=output,
+        )
+
+
+@then("the error output should contain the following messages:")
+def step_error_output_should_contain_messages(context):
+    """Assert error output contains all messages from table (table-driven validation).
+
+    Table format:
+    | message_type | content |
+    | error | No project files found |
+    """
+    assert context.table is not None, "Expected table data for error message validation"
+
+    # Get error output - check both stderr and combined output
+    error_output = getattr(
+        context, "last_error_output", getattr(context, "last_output", "")
+    )
+
+    for row in context.table:
+        message_type = row["message_type"]
+        content = row["content"]
+
+        assert_with_diagnostics(
+            content in error_output,
+            f"Expected {message_type} error message not found: {content}",
+            context,
+            expected=content,
+            actual=error_output,
+        )
 
 
 @then("the error output should be empty")
@@ -673,3 +731,199 @@ def step_help_text_shows_bom_and_parts(context):
     assert (
         "parts" in out
     ), f"Parts command not found in main help.\nOutput:\n{context.last_output}"
+
+
+# Table-based field validation step definitions (reusable across BOM, POS, inventory, etc.)
+
+
+@then("the output should contain these fields:")
+def step_output_should_contain_fields(context):
+    """Verify that CSV output contains specified fields as headers.
+
+    Table format:
+    | Field1 | Field2 | Field3 |
+    """
+    assert context.last_output is not None, "No command output captured"
+    assert context.table is not None, "Expected table data for field validation"
+
+    # Get expected fields from first table row
+    expected_fields = [cell for cell in context.table.headings]
+
+    # Create expected header line
+    expected_header = ",".join(expected_fields)
+
+    # Check if header exists in output
+    assert expected_header in context.last_output, (
+        f"Expected header fields not found in output.\n"
+        f"Expected: {expected_header}\n"
+        f"Output:\n{context.last_output}"
+    )
+
+
+@then("the output should not contain these fields:")
+def step_output_should_not_contain_fields(context):
+    """Verify that CSV output does NOT contain specified fields.
+
+    Table format:
+    | Field1 | Field2 | Field3 |
+    """
+    assert context.last_output is not None, "No command output captured"
+    assert context.table is not None, "Expected table data for field validation"
+
+    # Get forbidden fields from first table row
+    forbidden_fields = [cell for cell in context.table.headings]
+
+    # Check that none of the forbidden fields appear in output
+    for field in forbidden_fields:
+        assert field not in context.last_output, (
+            f"Forbidden field '{field}' found in output.\n"
+            f"Output:\n{context.last_output}"
+        )
+
+
+@then("the output should contain these component data rows:")
+def step_output_should_contain_component_data(context):
+    """Verify that CSV output contains specified component data rows.
+
+    Table format:
+    | R1 | 10.0000 | 5.0000 | TOP |
+    | C1 | 15.0000 | 8.0000 | TOP |
+    """
+    assert context.last_output is not None, "No command output captured"
+    assert context.table is not None, "Expected table data for component validation"
+
+    # Check each expected data row
+    for row in context.table:
+        # Create expected CSV row from table row
+        expected_row = ",".join(row.cells)
+
+        # Check if this row exists in output
+        assert expected_row in context.last_output, (
+            f"Expected data row not found in output.\n"
+            f"Expected: {expected_row}\n"
+            f"Output:\n{context.last_output}"
+        )
+
+
+@then("the help output should contain these options:")
+def step_help_should_contain_options(context):
+    """Verify that help output contains specified options and descriptions.
+
+    Table format:
+    | --fields | Select specific fields for output |
+    | --generic | Use Generic preset |
+    """
+    assert context.last_output is not None, "No command output captured"
+    assert context.table is not None, "Expected table data for help validation"
+
+    # Check each expected option
+    for row in context.table:
+        option = row["option"] if "option" in row.headings else row.cells[0]
+        description = (
+            row["description"] if "description" in row.headings else row.cells[1]
+        )
+
+        # Check if option exists in help output
+        assert option in context.last_output, (
+            f"Expected help option '{option}' not found in output.\n"
+            f"Output:\n{context.last_output}"
+        )
+
+        # Check if description exists in help output (optional check)
+        if description and len(description) > 0:
+            assert description in context.last_output, (
+                f"Expected help description '{description}' not found in output.\n"
+                f"Output:\n{context.last_output}"
+            )
+
+
+@then("the error output should contain these options:")
+def step_error_output_should_contain_options(context):
+    """Verify that error output contains specified options - alias for help validation."""
+    step_help_should_contain_options(context)
+
+
+@then("the error output should list these available fields:")
+def step_error_should_list_available_fields(context):
+    """Verify that error output lists the specified available fields.
+
+    Table format:
+    | Reference | X | Y | Rotation | Side | Footprint | Package | Value |
+    """
+    assert context.last_output is not None, "No command output captured"
+    assert (
+        context.table is not None
+    ), "Expected table data for available fields validation"
+
+    # Get expected available fields from first table row
+    expected_fields = [cell for cell in context.table.headings]
+
+    # Check that "Available fields:" text exists
+    assert "Available fields:" in context.last_output, (
+        f"'Available fields:' text not found in error output.\n"
+        f"Output:\n{context.last_output}"
+    )
+
+    # Check that each expected field is mentioned in the error output
+    for field in expected_fields:
+        assert field in context.last_output, (
+            f"Expected available field '{field}' not found in error output.\n"
+            f"Output:\n{context.last_output}"
+        )
+
+
+@then('the file "{filename}" should contain these inventory data elements:')
+def step_file_should_contain_inventory_elements(context, filename: str):
+    """Verify that a file contains all specified inventory data elements.
+
+    Table format:
+    | Kingbright | Yageo | Murata | Red LED 20mA | 10k Ohm resistor |
+    """
+    assert context.table is not None, "Expected table data for inventory validation"
+
+    # Get file path relative to project root
+    file_path = context.project_root / filename
+    assert_with_diagnostics(
+        file_path.exists(),
+        f"File not found: {filename}",
+        context,
+        expected=f"file to exist: {filename}",
+        actual=f"file exists: {file_path.exists()}",
+    )
+
+    # Read file contents
+    with file_path.open("r", encoding="utf-8") as f:
+        content = f.read()
+
+    # Check each expected inventory element from table
+    for row in context.table:
+        for cell in row.cells:
+            if cell.strip():  # Skip empty cells
+                assert_with_diagnostics(
+                    cell in content,
+                    f"Expected inventory data element '{cell}' not found in file {filename}",
+                    context,
+                    expected=cell,
+                    actual=content[:500] + "..." if len(content) > 500 else content,
+                )
+
+
+@then("the output should contain the fabricator defined {fabricator_name} POS fields")
+def step_output_should_contain_fabricator_pos_fields(context, fabricator_name):
+    """Verify that output contains fabricator-specific POS fields.
+
+    This is a placeholder step definition that validates the fabricator name is mentioned
+    and that some POS-specific fields are present. More specific validation would require
+    reading the actual fabricator configuration.
+    """
+    assert context.last_output is not None, "No command output captured"
+
+    # Basic validation - at minimum should be CSV output with some placement fields
+    common_pos_fields = ["Reference", "Designator", "X", "Y", "Mid X", "Mid Y"]
+    found_pos_field = any(field in context.last_output for field in common_pos_fields)
+
+    assert found_pos_field, (
+        f"No POS fields found in {fabricator_name} fabricator output.\n"
+        f"Expected at least one of: {common_pos_fields}\n"
+        f"Output:\n{context.last_output}"
+    )

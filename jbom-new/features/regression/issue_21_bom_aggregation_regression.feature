@@ -17,14 +17,15 @@ Feature: Issue #21 BOM Aggregation Regression Tests
       | C2        | 100nF | C_0603_1608 |
     When I run jbom command "bom -o -"
     Then the command should succeed
-    And the output should contain "R1, R2"
-    And the output should contain "R_0805_2012"
-    And the output should contain "2"
-    And the output should contain "R3"
-    And the output should contain "R_0603_1608"
-    And the output should contain "1"
-    And the output should contain "C1, C2"
-    And the output should contain "100nF"
+    And the CSV output has a row where
+      | Reference | Quantity | Footprint   |
+      | R1, R2    | 2        | R_0805_2012 |
+    And the CSV output has a row where
+      | Reference | Quantity | Footprint   |
+      | R3        | 1        | R_0603_1608 |
+    And the CSV output has a row where
+      | Reference | Value | Quantity |
+      | C1, C2    | 100nF | 2        |
 
   @regression @issue-21
   Scenario: Current value_only aggregation behavior
@@ -36,7 +37,7 @@ Feature: Issue #21 BOM Aggregation Regression Tests
       | C2        | 100nF | C_0805_2012 |
     When I run jbom command "bom --aggregation value_only"
     Then the command should fail
-    And the error output should mention "unrecognized arguments: --aggregation"
+    And the error output should contain "unrecognized arguments: --aggregation"
 
   @regression @issue-21
   Scenario: Current lib_id_value aggregation behavior
@@ -47,7 +48,7 @@ Feature: Issue #21 BOM Aggregation Regression Tests
       | R3        | 10K   | R_0805_2012 | Device:R_Small  |
     When I run jbom command "bom --aggregation lib_id_value"
     Then the command should fail
-    And the error output should mention "unrecognized arguments: --aggregation"
+    And the error output should contain "unrecognized arguments: --aggregation"
 
   @regression @issue-21
   Scenario: Future BOM behavior - always aggregates by value+package (footprint)
@@ -60,15 +61,15 @@ Feature: Issue #21 BOM Aggregation Regression Tests
       | C2        | 100nF | C_0603_1608 |
     When I run jbom command "bom -o -"
     Then the command should succeed
-    And the output should contain "R1, R2"
-    And the output should contain "R_0805_2012"
-    And the output should contain "2"
-    And the output should contain "R3"
-    And the output should contain "R_0603_1608"
-    And the output should contain "1"
-    And the output should contain "C1, C2"
-    And the output should contain "100nF"
-    And the output should contain "2"
+    And the CSV output has a row where
+      | Reference | Quantity | Footprint   |
+      | R1, R2    | 2        | R_0805_2012 |
+    And the CSV output has a row where
+      | Reference | Quantity | Footprint   |
+      | R3        | 1        | R_0603_1608 |
+    And the CSV output has a row where
+      | Reference | Value | Quantity |
+      | C1, C2    | 100nF | 2        |
 
   @regression @issue-21
   Scenario: BOM command should not accept aggregation flag after Issue #21
@@ -77,7 +78,7 @@ Feature: Issue #21 BOM Aggregation Regression Tests
       | R1        | 10K   | R_0805_2012 |
     When I run jbom command "bom --aggregation value_only"
     Then the command should fail
-    And the error output should mention "unrecognized arguments: --aggregation"
+    And the error output should contain "unrecognized arguments: --aggregation"
 
   @regression @issue-21
   Scenario: Natural reference sorting in aggregated BOM
@@ -89,5 +90,6 @@ Feature: Issue #21 BOM Aggregation Regression Tests
       | R20       | 10K   | R_0805_2012 |
     When I run jbom command "bom -o -"
     Then the command should succeed
-    And the output should contain "R1, R2, R10, R20"
-    And the output should contain "4"
+    And the CSV output has a row where
+      | Reference       | Quantity |
+      | R1, R2, R10, R20 | 4        |

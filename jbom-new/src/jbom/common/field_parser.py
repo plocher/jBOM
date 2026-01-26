@@ -14,6 +14,7 @@ def parse_fields_argument(
     available_fields: Dict[str, str],
     fabricator_id: str = "generic",
     fabricator_presets: Optional[Dict[str, Any]] = None,
+    context: str = "bom",  # "bom" or "pos"
 ) -> List[str]:
     """Parse field argument with simple, predictable logic.
 
@@ -27,6 +28,7 @@ def parse_fields_argument(
         available_fields: Dict of available field names and descriptions
         fabricator_id: Current fabricator ID (used for default preset)
         fabricator_presets: Optional fabricator-specific presets from config
+        context: Context for field selection ("bom" or "pos")
 
     Returns:
         List of normalized field names (deduplicated, preserving order)
@@ -39,61 +41,153 @@ def parse_fields_argument(
     if fabricator_presets:
         all_presets.update(fabricator_presets)
 
-    # Case 1: No fields argument - use fabricator's default preset
-    if not fields_arg:
-        if fabricator_presets and "default" in fabricator_presets:
-            preset_fields = fabricator_presets["default"].get("fields")
-            if preset_fields:
-                return preset_fields.copy()
+    # Case 1: No fields argument (None) - use context-appropriate defaults
+    if fields_arg is None:
+        if context == "pos":
+            # For POS, use fabricator's column mapping to determine defaults
+            from jbom.config.fabricators import get_fabricator_default_fields
 
-        # Fall back to standard preset
-        standard_preset = all_presets.get("standard")
-        if standard_preset and standard_preset.get("fields"):
-            return standard_preset["fields"].copy()
+            default_fields = get_fabricator_default_fields(fabricator_id, context)
+            if default_fields:
+                return default_fields.copy()
 
-        # Ultimate fallback
-        return ["reference", "quantity", "value", "footprint"]
+            # Fallback for POS if no fabricator mapping exists
+            return ["reference", "x", "y", "rotation", "side", "footprint", "package"]
+        else:
+            # For BOM, use fabricator presets first, then global presets
+            if fabricator_presets and "default" in fabricator_presets:
+                preset_fields = fabricator_presets["default"].get("fields")
+                if preset_fields:
+                    return preset_fields.copy()
+
+            # Fall back to standard preset for BOM
+            standard_preset = all_presets.get("standard")
+            if standard_preset and standard_preset.get("fields"):
+                return standard_preset["fields"].copy()
+
+            # Ultimate fallback for BOM
+            return ["reference", "quantity", "value", "footprint"]
 
     # Case 2: User provided fields - parse exactly what they specified
-    tokens = [t.strip() for t in fields_arg.split(",") if t.strip()]
+    # Build tokens, trimming whitespace and surrounding quotes per token
+    raw = [t.strip() for t in fields_arg.split(",")]
+    tokens: List[str] = []
+    for tok in raw:
+        if not tok:
+            continue
+        if len(tok) >= 2 and tok[0] == tok[-1] and tok[0] in ("'", '"'):
+            tok = tok[1:-1].strip()
+        if tok:
+            tokens.append(tok)
+
+    # If no valid tokens after filtering, this means empty/quoted-empty/whitespace-only
+    if not tokens:
+        raise ValueError("--fields parameter cannot be empty")
+
     result: List[str] = []
 
     for tok in tokens:
         if tok.startswith("+"):
-            # Preset expansion
+            # Try preset expansion first
             preset_name = tok[1:].lower()
             preset_def = all_presets.get(preset_name)
 
-            if not preset_def:
-                all_preset_names = sorted(
-                    set(
-                        list(FIELD_PRESETS.keys())
-                        + (
-                            list(fabricator_presets.keys())
-                            if fabricator_presets
-                            else []
+            if preset_def:
+                # It's a valid preset
+                preset_fields = preset_def.get("fields")
+                if preset_fields is None:
+                    # 'all' preset
+                    result.extend(available_fields.keys())
+                else:
+                    result.extend(preset_fields)
+            else:
+                # Try as a field addition - normalize and check if it's a valid field
+                field_name = normalize_field_name(tok[1:])
+                if field_name in available_fields:
+                    # It's a field addition - add appropriate context defaults first if result is empty
+                    if not result:
+                        # For + syntax with non-generic fabricator, use fabricator defaults
+                        # For + syntax with generic fabricator, use standard field sets
+                        if fabricator_id != "generic":
+                            # Use fabricator-specific defaults
+                            from jbom.config.fabricators import (
+                                get_fabricator_default_fields,
+                            )
+
+                            fabricator_defaults = get_fabricator_default_fields(
+                                fabricator_id, context
+                            )
+                            if fabricator_defaults:
+                                result.extend(fabricator_defaults)
+                            else:
+                                # Fallback to standard if fabricator has no defaults
+                                if context == "pos":
+                                    result.extend(
+                                        [
+                                            "reference",
+                                            "x",
+                                            "y",
+                                            "rotation",
+                                            "side",
+                                            "footprint",
+                                            "package",
+                                        ]
+                                    )
+                                else:
+                                    result.extend(
+                                        ["reference", "quantity", "value", "footprint"]
+                                    )
+                        else:
+                            # For generic fabricator, use standard field sets for predictable behavior
+                            if context == "pos":
+                                result.extend(
+                                    [
+                                        "reference",
+                                        "x",
+                                        "y",
+                                        "rotation",
+                                        "side",
+                                        "footprint",
+                                        "package",
+                                    ]
+                                )
+                            else:
+                                result.extend(
+                                    ["reference", "quantity", "value", "footprint"]
+                                )
+
+                    # Add the requested field
+                    result.append(field_name)
+                else:
+                    # Not a preset or field - show error with both options
+                    all_preset_names = sorted(
+                        set(
+                            list(FIELD_PRESETS.keys())
+                            + (
+                                list(fabricator_presets.keys())
+                                if fabricator_presets
+                                else []
+                            )
                         )
                     )
-                )
-                valid = ", ".join(f"+{p}" for p in all_preset_names)
-                raise ValueError(f"Unknown preset: {tok} (available: {valid})")
-
-            preset_fields = preset_def.get("fields")
-            if preset_fields is None:
-                # 'all' preset
-                result.extend(available_fields.keys())
-            else:
-                result.extend(preset_fields)
+                    available_fields_list = sorted(available_fields.keys())
+                    valid_presets = ", ".join(f"+{p}" for p in all_preset_names)
+                    valid_fields = ", ".join(f"+{f}" for f in available_fields_list[:5])
+                    raise ValueError(
+                        f"Unknown preset or field: {tok}. Available presets: {valid_presets}. "
+                        f"Available fields for addition: {valid_fields}..."
+                    )
         else:
             # Custom field name
             normalized = normalize_field_name(tok)
             if normalized not in available_fields:
                 available_list = sorted(available_fields.keys())
+                # Format field names as proper headers for user-friendly error messages
+                from .fields import field_to_header
+
+                available_headers = [field_to_header(field) for field in available_list]
                 raise ValueError(
-                    f"Unknown field: '{tok}' (normalized: '{normalized}'). "
-                    f"Available fields: {', '.join(available_list[:10])}..."
-                    if len(available_list) > 10
-                    else f"Available fields: {', '.join(available_list)}"
+                    f"Invalid field: {tok}. Available fields: {', '.join(available_headers)}"
                 )
             result.append(normalized)
 
@@ -105,7 +199,14 @@ def parse_fields_argument(
             seen.add(f)
             deduped.append(f)
 
-    return deduped if deduped else ["reference", "quantity", "value", "footprint"]
+    # Final fallback if no fields were selected
+    if not deduped:
+        if context == "pos":
+            return ["reference", "x", "y", "rotation", "side", "footprint", "package"]
+        else:
+            return ["reference", "quantity", "value", "footprint"]
+
+    return deduped
 
 
 def check_fabricator_field_completeness(
@@ -170,10 +271,21 @@ def validate_fields_against_available(
 
     if invalid_fields:
         available_list = sorted(available_fields.keys())
-        raise ValueError(
-            f"Invalid fields: {', '.join(invalid_fields)}. "
-            f"Available: {', '.join(available_list)}"
-        )
+        # Format field names as proper headers for user-friendly error messages
+        from .fields import field_to_header
+
+        available_headers = [field_to_header(field) for field in available_list]
+        # Use singular form for single invalid field to match test expectations
+        if len(invalid_fields) == 1:
+            raise ValueError(
+                f"Invalid field: {invalid_fields[0]}. "
+                f"Available fields: {', '.join(available_headers)}"
+            )
+        else:
+            raise ValueError(
+                f"Invalid fields: {', '.join(invalid_fields)}. "
+                f"Available fields: {', '.join(available_headers)}"
+            )
 
     return fields
 

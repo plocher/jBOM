@@ -1,0 +1,69 @@
+# Behave Scenario Failure Triage - GitHub Issue #26
+
+## Context
+Fix failed behave scenarios in `jbom-new/features/` with robust step diagnostics. Reference `jbom-new/features/steps/GHERKIN-RECIPE.md` for systemic issues.
+
+## Workflow
+
+### Phase 1: Assessment (Single Pass)
+```bash
+behave --dry-run -f json > failures.json  # Get all scenarios
+behave -f json > results.json             # Get actual failures
+```
+- Categorize by failure pattern
+- Identify batch fix opportunities
+- Create priority order
+
+### Phase 2: Focused Analysis
+**Per scenario - request only essential data:**
+- Scenario name + line number
+- Background (if scenario-specific)
+- **Key failure line only** (not full output unless requested)
+- Diagnostic context (if non-obvious)
+
+**Analysis format:**
+- Root cause (1 sentence)
+- Category: `FIX_CODE|RETHINK_SCENARIO|FIX_TEST|SKIP_DEFER|RELOCATE`
+- Action (bullet points, not paragraphs)
+
+### Phase 3: Batch Implementation
+- Group similar fixes
+- Implement in logical order
+- Test incrementally: `behave -n "pattern"`
+- Update docs only when necessary
+
+### Phase 4: Validation
+```bash
+behave                    # Full suite
+pytest                    # Unit tests
+git add . && git commit   # Clean state
+```
+
+## Efficiency Rules
+- **Skip obvious analysis** - just state the fix
+- **Batch similar issues** - don't repeat explanations
+- **Minimal output** - no verbose explanations unless complex
+- **Progressive disclosure** - start with summary, dive deeper on request
+- **Focused runs** - test specific scenarios, not full suite each time
+
+## Output Format
+```
+Scenario: test_name (file.feature:123)
+Issue: Brief root cause
+Fix: Specific action needed
+```
+
+For complex issues only:
+```
+Background: [relevant context]
+Error: [key failure line]
+Analysis: [detailed explanation]
+```
+
+## Request Pattern
+1. "Show failure summary with categories"
+2. "Fix batch: [category]"
+3. "Next scenario: [name]"
+4. "Validate and commit"
+
+Ready to begin? Start with failure assessment.

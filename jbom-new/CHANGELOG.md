@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **Multi-source inventory management**: Support multiple `--inventory` flags with precedence ordering
+- **Multi-source inventory management**: Support multiple `--inventory` flags with priority-based selection
 - **Component matching system**: Sophisticated component identification with scoring algorithm
   - Exact IPN matching (100 points)
   - Type+Value+Package matching (85 points)
@@ -48,7 +48,7 @@ jbom bom project.kicad_sch --inventory stock.csv -o enhanced_bom.csv
 
 ### Multi-source inventory:
 ```bash
-# Use multiple inventory sources (first wins for duplicates)
+# Use multiple inventory sources (priority fields determine best matches)
 jbom bom project.kicad_sch \
   --inventory primary_stock.csv \
   --inventory supplier_catalog.csv \

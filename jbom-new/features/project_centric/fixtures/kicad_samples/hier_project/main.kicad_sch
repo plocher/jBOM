@@ -1,6 +1,0 @@
-(kicad_sch (version 20211123)
-  (sheet (at 50 50) (size 30 20)
-    (property "Sheetname" "Power")
-    (property "Sheetfile" "power.kicad_sch")
-  )
-)

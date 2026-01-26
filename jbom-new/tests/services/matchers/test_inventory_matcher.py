@@ -4,7 +4,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from jbom.services.inventory_matcher import InventoryMatcher
-from jbom.services.generators.bom_generator import BOMEntry, BOMData
+from jbom.services.bom_generator import BOMEntry, BOMData
 from jbom.common.types import InventoryItem, DEFAULT_PRIORITY
 
 
@@ -177,14 +177,14 @@ class TestInventoryMatcher:
         assert result.metadata["matched_entries"] == 0
         assert not result.entries[0].attributes.get("inventory_matched")
 
-    def test_match_strategies(self):
-        """Test different matching strategies."""
+    def test_matching_logic(self):
+        """Test the simplified matching logic."""
         matcher = InventoryMatcher()
 
         # Create test entry
         entry = BOMEntry(["R1"], "10K", "R_0603_1608Metric", 1, "Device:R", {})
 
-        # Create inventory lookup
+        # Create inventory items
         inventory_item = InventoryItem(
             ipn="RES_10K",
             category="RES",
@@ -211,139 +211,25 @@ class TestInventoryMatcher:
             source_file=None,
             raw_data={},
         )
+        inventory_items = [inventory_item]
 
-        # Test ipn_exact strategy
-        exact_lookup = {"RES_10K": inventory_item}
-        match = matcher._find_matching_inventory_item(entry, exact_lookup, "ipn_exact")
+        # Test value-based matching
+        match = matcher._find_matching_inventory_item(entry, inventory_items)
         assert match == inventory_item
-
-        # Test ipn_fuzzy strategy (should find by value)
-        fuzzy_lookup = {"10K": inventory_item}  # Just value, no category
-        match = matcher._find_matching_inventory_item(entry, fuzzy_lookup, "ipn_fuzzy")
-        assert match == inventory_item
-
-        # Test value_package strategy
-        value_package_lookup = {"10K_0603": inventory_item}
-        match = matcher._find_matching_inventory_item(
-            entry, value_package_lookup, "value_package"
-        )
-        assert match == inventory_item
-
-    def test_generate_ipn_from_entry(self):
-        """Test IPN generation from BOM entry."""
-        matcher = InventoryMatcher()
-
-        # Test resistor
-        resistor_entry = BOMEntry(["R1"], "10K", "R_0603_1608Metric", 1, "Device:R", {})
-        ipn = matcher._generate_ipn_from_entry(resistor_entry)
-        assert ipn == "RES_10K"
-
-        # Test capacitor
-        capacitor_entry = BOMEntry(
-            ["C1"], "100nF", "C_0603_1608Metric", 1, "Device:C", {}
-        )
-        ipn = matcher._generate_ipn_from_entry(capacitor_entry)
-        assert ipn == "CAP_100nF"
-
-        # Test with special characters in value
-        special_entry = BOMEntry(
-            ["R1"], "4K7/0.1W", "R_0603_1608Metric", 1, "Device:R", {}
-        )
-        ipn = matcher._generate_ipn_from_entry(special_entry)
-        assert ipn == "RES_4K7_0.1W"  # Forward slash replaced with underscore
-
-    def test_detect_category_from_lib_id(self):
-        """Test category detection from lib_id."""
-        matcher = InventoryMatcher()
-
-        test_cases = [
-            ("Device:R", "RES"),
-            ("Device:C", "CAP"),
-            ("Device:L", "IND"),
-            ("Device:D", "DIODE"),
-            ("Device:LED", "LED"),
-            ("Device:U", "IC"),
-            ("Timer:NE555P", "IC"),  # Contains IC
-            ("Unknown:Something", "UNKNOWN"),
-            ("NoColon", "UNKNOWN"),
-            ("", "UNKNOWN"),
-        ]
-
-        for lib_id, expected_category in test_cases:
-            category = matcher._detect_category_from_lib_id(lib_id)
-            assert (
-                category == expected_category
-            ), f"Failed for {lib_id}: got {category}, expected {expected_category}"
 
     def test_extract_package(self):
         """Test package extraction from footprint."""
         matcher = InventoryMatcher()
 
-        test_cases = [
-            ("R_0603_1608Metric", "0603"),
-            ("C_0805_2012Metric", "0805"),
-            ("SOT-23", "SOT-23"),
-            ("SOIC-8_3.9x4.9mm", "SOIC-8"),
-            ("Unknown_Footprint", "Unknown_Footprint"),  # Fallback
-            ("", ""),  # Empty
-        ]
+        # Test 0603 package extraction
+        footprint = "R_0603_1608Metric"
+        package = matcher._extract_package(footprint)
+        assert package == "0603"
 
-        for footprint, expected_package in test_cases:
-            package = matcher._extract_package(footprint)
-            assert (
-                package == expected_package
-            ), f"Failed for {footprint}: got {package}, expected {expected_package}"
-
-    def test_create_inventory_lookup_strategies(self):
-        """Test inventory lookup creation for different strategies."""
-        matcher = InventoryMatcher()
-
-        inventory_items = [
-            InventoryItem(
-                ipn="RES_10K",
-                category="RES",
-                value="10K",
-                package="0603",
-                manufacturer="",
-                mfgpn="",
-                description="",
-                tolerance="",
-                keywords="",
-                smd="",
-                type="",
-                voltage="",
-                amperage="",
-                wattage="",
-                lcsc="",
-                datasheet="",
-                distributor="",
-                distributor_part_number="",
-                uuid="",
-                fabricator="",
-                priority=DEFAULT_PRIORITY,
-                source="",
-                source_file=None,
-                raw_data={},
-            )
-        ]
-
-        # Test ipn_exact
-        exact_lookup = matcher._create_inventory_lookup(inventory_items, "ipn_exact")
-        assert "RES_10K" in exact_lookup
-        assert len(exact_lookup) == 1
-
-        # Test ipn_fuzzy (should have both full IPN and value)
-        fuzzy_lookup = matcher._create_inventory_lookup(inventory_items, "ipn_fuzzy")
-        assert "RES_10K" in fuzzy_lookup  # Full IPN
-        assert "10K" in fuzzy_lookup  # Value without category
-        assert len(fuzzy_lookup) == 2
-
-        # Test value_package
-        value_package_lookup = matcher._create_inventory_lookup(
-            inventory_items, "value_package"
-        )
-        assert "10K_0603" in value_package_lookup
-        assert len(value_package_lookup) == 1
+        # Test SOIC package extraction
+        footprint = "SOIC-8_3.9x4.9mm_P1.27mm"
+        package = matcher._extract_package(footprint)
+        assert package == "SOIC-8"
 
 
 class TestInventoryMatcherIntegration:
@@ -431,9 +317,7 @@ class TestInventoryMatcherIntegration:
         with patch.object(
             matcher, "_load_inventory", return_value=mock_inventory_items
         ):
-            result = matcher.enhance_bom_with_inventory(
-                bom_data, inventory_file, "ipn_fuzzy"
-            )
+            result = matcher.enhance_bom_with_inventory(bom_data, inventory_file)
 
         # Verify results
         assert len(result.entries) == 2

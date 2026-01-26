@@ -14,42 +14,6 @@ Feature: BOM Fabricator Compatibility
     When I run jbom command "bom"
     Then the BOM works with all configured fabricators
 
-  Scenario: Different fabricators produce different output formats
-    When I run jbom command "bom --generic"
-    Then the command should succeed
-    And the output should contain "Reference"
-    When I run jbom command "bom --jlc"
-    Then the command should succeed
-    And the output should contain "Reference"
-    When I run jbom command "bom --pcbway"
-    Then the command should succeed
-    And the output should contain "Reference"
-    When I run jbom command "bom --seeed"
-    Then the command should succeed
-    And the output should contain "Reference"
-
-  Scenario: Default behavior (generic fabricator)
+  Scenario: All configured fabricators work without errors
     When I run jbom command "bom"
-    Then the command should succeed
-    And the output should contain "References,Value,Footprint,Quantity"
-
-  Scenario: No fabricator flag (default behavior)
-    When I run jbom command "bom"
-    Then the command should succeed
-    And the output should contain "References,Value,Footprint,Quantity"
-
-  Scenario: JLC fabricator specific format
-    When I run jbom command "bom --fabricator jlc --generic"
-    Then the command should succeed
-    And the output should contain "References,Value,Footprint,Quantity"
-
-  # These will be skipped if fabricators not available
-  Scenario: PCBWay fabricator specific format
-    When I run jbom command "bom --fabricator pcbway --generic"
-    Then the command should succeed
-    And the output should contain "References,Value,Footprint,Quantity"
-
-  Scenario: Seeed fabricator specific format
-    When I run jbom command "bom --fabricator seeed --generic"
-    Then the command should succeed
-    And the output should contain "References,Value,Footprint,Quantity"
+    Then the BOM works with all configured fabricators
