@@ -184,9 +184,10 @@ def _apply_inventory_filtering(
     if not inventory_files:
         if filter_matches:
             print(
-                "Warning: --filter-matches requires --inventory file(s)",
+                "Error: --filter-matches requires --inventory file(s)",
                 file=sys.stderr,
             )
+            raise SystemExit(1)
         return inventory_items
 
     # Initialize matcher with merged inventory from multiple sources
@@ -203,6 +204,7 @@ def _apply_inventory_filtering(
             )
 
         # Load files in order - first file has highest precedence
+        missing_file_detected = False
         for i, inventory_file in enumerate(inventory_files):
             try:
                 from jbom.services.inventory_reader import InventoryReader
@@ -226,6 +228,7 @@ def _apply_inventory_filtering(
                     )
 
             except FileNotFoundError:
+                missing_file_detected = True
                 print(
                     f"Error: Inventory file not found: {inventory_file}",
                     file=sys.stderr,
@@ -233,9 +236,13 @@ def _apply_inventory_filtering(
             except Exception as e:
                 print(f"Error loading {inventory_file}: {e}", file=sys.stderr)
 
+        if missing_file_detected:
+            # Fail-fast with a non-zero exit when any inventory file is missing
+            raise SystemExit(1)
+
         if not merged_inventory:
             print("Error: No inventory items loaded from any file", file=sys.stderr)
-            return inventory_items
+            raise SystemExit(1)
 
         # Set the merged inventory in the matcher
         matcher.set_inventory(merged_inventory)

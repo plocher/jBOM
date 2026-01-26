@@ -44,14 +44,15 @@ Feature: IPN Generation from Schematic Components
       | R1        | 10k   | R_0603_1608 | Device:R        |
       | X1        | XTAL  | Crystal_SMD | Unknown:Mystery |
       | J1        | CONN  | Connector   |                 |
-    When I run jbom command "inventory -o mystery.csv"
+    When I run jbom command "inventory -o -"
     Then the command should succeed
-    And a file named "mystery.csv" should exist
-    # Known component gets generated IPN
-    And the file "mystery.csv" should contain "RES_10k"
-    # Unknown components get blank IPNs (no magic)
-    And the file "mystery.csv" should contain ",XTAL,"
-    And the file "mystery.csv" should contain ",CONN,"
+    And the CSV output has rows where:
+      | IPN    | Value | Category |
+      | RES_10k| 10k   | RES      |
+    And the CSV output has rows where:
+      | Value | Category |
+      | XTAL  | Unknown  |
+      | CONN  | Unknown  |
 
   Scenario: IPN generation handles special characters properly
     Given a schematic that contains:
