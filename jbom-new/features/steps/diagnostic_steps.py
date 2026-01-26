@@ -42,33 +42,33 @@ def step_test_fails_missing_content(context):
         context.captured_diagnostic = str(e)
 
 
-@when("a plugin-related test fails")
-def step_plugin_test_fails(context):
-    """Simulate a plugin-related test failure scenario.
+@when("a test fails with an invalid command")
+def step_test_fails_invalid_command(context):
+    """Simulate a test failure scenario with an invalid command.
 
     This step:
-    1. Runs a plugin-related command
-    2. Attempts to find a plugin that won't be there (simulating test failure)
+    1. Runs an invalid command (to generate an error)
+    2. Attempts to find success text that won't be there (simulating test failure)
     3. Captures the diagnostic output that would be provided to the developer
     """
-    # First run a command (reuse existing step)
+    # First run an invalid command (reuse existing step)
     from features.steps.common_steps import step_run_command
 
-    step_run_command(context, "jbom plugin --list")
+    step_run_command(context, "jbom invalid-command")
 
-    # Now simulate looking for missing plugin and capture the diagnostic failure
-    expected_plugin = "WRONG_PLUGIN_NAME"
+    # Now simulate looking for success text in error output and capture the diagnostic failure
+    expected_text = "SUCCESS_MESSAGE_NOT_IN_ERROR"
     try:
         assert_with_diagnostics(
-            expected_plugin in context.last_output,
-            f"Expected plugin '{expected_plugin}' not found in output",
+            expected_text in context.last_output,
+            f"Expected text '{expected_text}' not found in output",
             context,
-            expected=expected_plugin,
+            expected=expected_text,
             actual=context.last_output,
         )
         # If we get here, the test didn't fail as expected
         raise AssertionError(
-            f"Expected plugin test to fail, but '{expected_plugin}' was found in output"
+            f"Expected command error test to fail, but '{expected_text}' was found in output"
         )
     except AssertionError as e:
         # This is the expected failure - capture the diagnostic output
@@ -142,13 +142,7 @@ def step_diagnostic_should_be_labeled(context):
     step_diagnostic_should_contain(context, "DIAGNOSTIC INFORMATION")
 
 
-@then("the diagnostic should show the plugin directory state")
-def step_diagnostic_should_show_plugin_directory(context):
-    """Verify that the diagnostic output shows plugin directory information."""
-    step_diagnostic_should_contain(context, "--- PLUGINS DIRECTORY ---")
-
-
-@then("the diagnostic should show any test plugins that were created")
-def step_diagnostic_should_show_created_plugins(context):
-    """Verify that the diagnostic output shows any test plugins that were created."""
-    step_diagnostic_should_contain(context, "CREATED TEST PLUGINS")
+@then("the diagnostic should show the actual error output")
+def step_diagnostic_should_show_error_output(context):
+    """Verify that the diagnostic output includes the actual error output."""
+    step_diagnostic_should_contain(context, "--- OUTPUT ---")

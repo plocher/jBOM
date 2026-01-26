@@ -21,12 +21,12 @@ Feature: Test Failure Diagnostic Quality
     And the diagnostic should include working directory context
     And the diagnostic should be clearly labeled
 
-  Scenario: Plugin-related test failures include plugin state information
-    Given a core plugin "test" exists with version "1.0.0"
-    When a plugin-related test fails
+  Scenario: Command error test failures include comprehensive context
+    When a test fails with an invalid command
     Then I should receive detailed diagnostic information
     And the diagnostic should include the command that was executed
-    And the diagnostic should show the plugin directory state
-    And the diagnostic should show any test plugins that were created
+    And the diagnostic should show the exit code
+    And the diagnostic should show the actual error output
     And the diagnostic should show expected vs actual comparison
+    And the diagnostic should include working directory context
     And the diagnostic should be clearly labeled

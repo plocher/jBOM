@@ -276,7 +276,7 @@ Scenario: Test failures provide comprehensive diagnostic context
 ### Available Diagnostic Testing Steps (diagnostic_steps.py)
 #### When Steps (Test Failure Simulation)
 - `When a test fails looking for missing content`
-- `When a plugin-related test fails`
+- `When a test fails with an invalid command`
 
 #### Then Steps (Diagnostic Validation)
 - `Then I should receive detailed diagnostic information`
@@ -286,8 +286,7 @@ Scenario: Test failures provide comprehensive diagnostic context
 - `Then the diagnostic should show expected vs actual comparison`
 - `Then the diagnostic should include working directory context`
 - `Then the diagnostic should be clearly labeled`
-- `Then the diagnostic should show the plugin directory state`
-- `Then the diagnostic should show any test plugins that were created`
+- `Then the diagnostic should show the actual error output`
 - `Then the diagnostic should contain "{text}"` (for specific content validation)
 
 ### Benefits of Infrastructure Testing
