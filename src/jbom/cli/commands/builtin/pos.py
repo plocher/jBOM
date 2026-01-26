@@ -39,6 +39,7 @@ class POSCommand(Command):
   jbom pos board.kicad_pcb -o - | wc -l                 # CSV to stdout for piping
   jbom pos board.kicad_pcb --jlc                        # Use JLCPCB field preset
   jbom pos board.kicad_pcb -f +standard,datasheet       # Add custom fields
+  jbom pos board.kicad_pcb --units inch --origin aux    # Imperial units with aux origin
   jbom pos board.kicad_pcb --layer TOP                  # Only top-side components
 """
 
@@ -92,6 +93,12 @@ class POSCommand(Command):
 
         # Coordinate options
         parser.add_argument(
+            "--units",
+            choices=["mm", "inch"],
+            default="mm",
+            help="Coordinate units for X/Y positions (default: mm)",
+        )
+        parser.add_argument(
             "--origin",
             choices=["board", "aux"],
             default="board",
@@ -136,6 +143,7 @@ class POSCommand(Command):
 
         # Create placement options
         opts = PlacementOptions(
+            units=args.units,
             origin=args.origin,
             smd_only=args.smd_only,
             layer_filter=args.layer,

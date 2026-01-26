@@ -52,6 +52,7 @@ PLACEMENT_PRESETS: Dict[str, Dict[str, Optional[List[str]]]] = {
 class PlacementOptions(GeneratorOptions):
     """Options for placement generation, extends GeneratorOptions"""
 
+    units: Units = "mm"
     origin: Origin = "board"
     smd_only: bool = True
     layer_filter: Optional[Layer] = None
@@ -178,22 +179,18 @@ class POSGenerator(Generator):
             w.writerow(headers)
             for c in entries:
                 row: List[str] = []
-                x_str, y_str = self._xy_as_strings(c)
+                x, y = self._xy_in_units(c)
                 for fld in norm_fields:
                     if fld == "reference":
                         row.append(c.reference)
                     elif fld == "value":
                         row.append(c.attributes.get("value", ""))
                     elif fld == "x":
-                        row.append(x_str)
+                        row.append(f"{x:.4f}")
                     elif fld == "y":
-                        row.append(y_str)
+                        row.append(f"{y:.4f}")
                     elif fld == "rotation":
-                        # For rotation, use raw token if available
-                        if hasattr(c, "rotation_raw") and c.rotation_raw:
-                            row.append(c.rotation_raw)
-                        else:
-                            row.append(str(c.rotation_deg))
+                        row.append(f"{c.rotation_deg:.1f}")
                     elif fld == "side":
                         row.append(c.side)
                     elif fld == "footprint":
@@ -301,31 +298,13 @@ class POSGenerator(Generator):
             return self.board.aux_origin_mm
         return (0.0, 0.0)
 
-    def _xy_as_strings(self, c: PcbComponent) -> tuple[str, str]:
-        """Get X,Y coordinates as strings, using raw tokens if available for mm units."""
+    def _xy_in_units(self, c: PcbComponent) -> tuple[float, float]:
         ox, oy = self._origin_offset_mm()
-
-        # For mm units, try to use raw tokens to preserve original formatting
-        if (
-            hasattr(c, "center_x_raw")
-            and c.center_x_raw
-            and hasattr(c, "center_y_raw")
-            and c.center_y_raw
-        ):
-            # Apply origin offset to raw values if needed
-            if ox == 0.0 and oy == 0.0:
-                # No offset, use raw tokens directly
-                return (c.center_x_raw, c.center_y_raw)
-            else:
-                # Need to apply offset, fall back to computed values
-                x = c.center_x_mm - ox
-                y = c.center_y_mm - oy
-                return (str(x), str(y))
-        else:
-            # No raw tokens, use computed values
-            x = c.center_x_mm - ox
-            y = c.center_y_mm - oy
-            return (str(x), str(y))
+        x = c.center_x_mm - ox
+        y = c.center_y_mm - oy
+        if self.options.units == "inch":
+            return (x / 25.4, y / 25.4)
+        return (x, y)
 
 
 def print_pos_table(gen: POSGenerator, fields: Optional[List[str]] = None) -> None:
@@ -355,7 +334,7 @@ def print_pos_table(gen: POSGenerator, fields: Optional[List[str]] = None) -> No
 
     # Calculate widths based on data
     for comp in components:
-        x_str, y_str = gen._xy_as_strings(comp)
+        x, y = gen._xy_in_units(comp)
 
         for field in norm_fields:
             if field == "reference":
@@ -365,15 +344,13 @@ def print_pos_table(gen: POSGenerator, fields: Optional[List[str]] = None) -> No
                     col_widths[field], len(comp.attributes.get("value", ""))
                 )
             elif field == "x":
-                col_widths[field] = max(col_widths[field], len(x_str))
+                col_widths[field] = max(col_widths[field], len(f"{x:.4f}"))
             elif field == "y":
-                col_widths[field] = max(col_widths[field], len(y_str))
+                col_widths[field] = max(col_widths[field], len(f"{y:.4f}"))
             elif field == "rotation":
-                if hasattr(comp, "rotation_raw") and comp.rotation_raw:
-                    rot_str = comp.rotation_raw
-                else:
-                    rot_str = str(comp.rotation_deg)
-                col_widths[field] = max(col_widths[field], len(rot_str))
+                col_widths[field] = max(
+                    col_widths[field], len(f"{comp.rotation_deg:.1f}")
+                )
             elif field == "side":
                 col_widths[field] = max(col_widths[field], len(comp.side))
             elif field == "footprint":
@@ -433,7 +410,7 @@ def print_pos_table(gen: POSGenerator, fields: Optional[List[str]] = None) -> No
 
     # Print entries
     for comp in components:
-        x_str, y_str = gen._xy_as_strings(comp)
+        x, y = gen._xy_in_units(comp)
         row_line = ""
 
         for i, field in enumerate(norm_fields):
@@ -444,14 +421,11 @@ def print_pos_table(gen: POSGenerator, fields: Optional[List[str]] = None) -> No
             elif field == "value":
                 content = comp.attributes.get("value", "")[:width]
             elif field == "x":
-                content = x_str
+                content = f"{x:.4f}"
             elif field == "y":
-                content = y_str
+                content = f"{y:.4f}"
             elif field == "rotation":
-                if hasattr(comp, "rotation_raw") and comp.rotation_raw:
-                    content = comp.rotation_raw
-                else:
-                    content = str(comp.rotation_deg)
+                content = f"{comp.rotation_deg:.1f}"
             elif field == "side":
                 content = comp.side
             elif field == "footprint":
