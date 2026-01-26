@@ -110,15 +110,15 @@ IPN-10k-E17-0603-Resistor,resistor,10k,0603,Vishay,CRCW060310K0FKEA,2
 4. **Future extensibility** - design allows migration to fully normalized tables
 
 **Current Implementation vs. Intent**:
-1. **Missing Validation**: No checks for consistent component specs across same-IPN rows
-2. **Naive Deduplication**: "First wins" instead of priority-based supplier ranking
-3. **Unused Priority Field**: Priority exists but not used for supplier selection
+1. **Exact Duplicate Handling**: Complete duplicates are correctly silently dropped during loading
+2. **Supplier Alternative Support**: Same IPN with different suppliers correctly preserved as separate items
+3. **Priority-Based Selection**: Priority field used by fabricator filtering to select from supplier alternatives
 
 **Alignment with Pragmatic Model**:
-- **Accept repeated IPNs** as supplier alternatives (not duplicates to eliminate)
-- **Validate component specs** are consistent within IPN groups
-- **Use Priority field** for supplier ranking instead of file order
-- **Preserve spreadsheet usability** while maintaining normalized intent
+- **Embrace repeated IPNs** as the core mechanism for supplier alternatives
+- **Validate electrical consistency** within IPN groups to catch data entry errors
+- **Leverage Priority field** for supplier ranking and fabricator filtering
+- **Maintain spreadsheet usability** while enabling sophisticated supplier selection
 
 **Future Integration Readiness**:
 This pragmatic approach provides a compatible foundation for future integrations with KiCad database systems and enterprise ERP/PLM solutions while maintaining CSV simplicity for current users.
@@ -133,31 +133,31 @@ This pragmatic approach provides a compatible foundation for future integrations
 
 Multi-source inventory requires validation to prevent indeterminate behavior:
 
-#### Duplicate IPN Detection
+#### IPN Supplier Alternative Validation
 ```python
 class InventoryValidator:
-    def validate_merged_inventory(self, items: List[InventoryItem]) -> List[ValidationWarning]:
-        """Detect duplicate IPNs with conflicting data."""
+    def validate_supplier_alternatives(self, items: List[InventoryItem]) -> List[ValidationWarning]:
+        """Validate electrical consistency within IPN supplier alternative groups."""
         warnings = []
         ipn_groups = group_by_ipn(items)
 
         for ipn, group in ipn_groups.items():
             if len(group) > 1:
-                conflicts = self._find_field_conflicts(group)
-                if conflicts:
-                    warnings.append(DuplicateIPNWarning(
+                electrical_conflicts = self._find_electrical_spec_conflicts(group)
+                if electrical_conflicts:
+                    warnings.append(IPNElectricalConflictWarning(
                         ipn=ipn,
                         sources=[item.source_file for item in group],
-                        conflicts=conflicts
+                        conflicts=electrical_conflicts
                     ))
         return warnings
 ```
 
 #### Validation Rules
-- **Priority field differences**: Expected and allowed for ranking
-- **Source metadata differences**: Expected (source, source_file)
-- **Core field differences**: Warning required (manufacturer, value, package, etc.)
-- **UUID differences**: Warning (could indicate different physical components)
+- **Supplier field differences**: Expected and desired for alternative sourcing (manufacturer, distributor, MPN, priority)
+- **Source metadata differences**: Expected when loading from multiple files (source, source_file)
+- **Electrical specification differences**: Warning required - same IPN must have consistent electrical characteristics (value, tolerance, voltage, package, etc.)
+- **UUID differences**: Expected when items represent same electrical spec from different suppliers
 
 ### File Safety Architecture
 
