@@ -1,4 +1,0 @@
-# -- RERUN: 3 failing scenarios during last test run.
-features/parts/filtering.feature:87
-features/regression/diagnostic-output-quality.feature:15
-features/regression/diagnostic-output-quality.feature:24
