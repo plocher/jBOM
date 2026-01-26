@@ -1,6 +1,30 @@
 # CHANGELOG
 
 
+## v6.3.1 (2026-01-26)
+
+### Bug Fixes
+
+* fix: correct fabricator filtering workflow description
+
+- Clarify that fabricator filtering happens BEFORE matching, not after
+- Explain the actual MATCH process: IPN match -> heuristic match -> priority selection
+- Add notes about when jBOM creates IPNs vs when it matches existing ones
+- Address the distinction between inventory generation and BOM generation workflows
+
+Co-Authored-By: Warp <agent@warp.dev> ([`bc26723`](https://github.com/plocher/jBOM/commit/bc267236ce1ababf2a5971fff07821ea26d3b22a))
+
+* fix: remove unused import in inventory_validator
+
+Co-Authored-By: Warp <agent@warp.dev> ([`c830b50`](https://github.com/plocher/jBOM/commit/c830b50fa4c5e8cdf40589b3ce977ff74d35ef31))
+
+### Unknown
+
+* Merge pull request #52 from plocher/feature/issue-40-clarify-ipn-validation
+
+Clarify IPN duplicate handling: supplier alternatives vs data integrity errors ([`a35635e`](https://github.com/plocher/jBOM/commit/a35635e4c4b8fd5e189f1115ac72406b83439283))
+
+
 ## v6.3.0 (2026-01-26)
 
 ### Bug Fixes
