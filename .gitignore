@@ -211,3 +211,9 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Behave development artifacts
+# These files are created by `behave -f rerun -o filename.txt` for efficient development
+failed_scenarios.txt
+*_failures.txt
+*_scenarios.txt

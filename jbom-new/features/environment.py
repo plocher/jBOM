@@ -27,6 +27,14 @@ def before_all(context):
     # Add src to Python path so we can import jbom
     sys.path.insert(0, str(context.src_root))
 
+    # Enable KiCad validation hooks for seamless integration
+    try:
+        from features.steps.kicad_project_validation_hook import enhance_jbom_steps
+
+        enhance_jbom_steps()
+    except ImportError:
+        pass  # Validation hooks not available, tests continue without validation
+
 
 def before_scenario(context, scenario):
     """Set up an isolated temp workspace before each scenario."""
