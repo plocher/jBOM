@@ -138,9 +138,10 @@ Feature: TDD Regression - Project-Centric Architecture (Issue #24)
   Scenario: Missing target file should suggest alternatives
     # ORIGINAL: jbom bom pcb_only_dir → Generic error
     # EXPECTED: jbom bom pcb_only_dir → Helpful suggestion about missing schematic
+    # NOTE: Using real KiCad project structure (.kicad_pro + .kicad_pcb, no .kicad_sch)
 
-    Given a directory "pcb_only" with only PCB files
-    When I run jbom command "bom pcb_only"
+    Given a KiCad project fixture "pcb_only" named "test_pcb_only"
+    When I run jbom command "bom test_pcb_only"
     Then the command should fail
     And the error output should contain "schematic file found"
 
