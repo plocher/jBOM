@@ -64,12 +64,32 @@ def validate_kicad_project_if_enabled(context, project_dir: Path) -> Optional[st
         # Skip validation if KiCad CLI not available - don't fail the test
         return None
 
+    # Initialize detailed validation results for diagnostics
+    validation_results = {
+        "project_files": [],
+        "schematic_files": [],
+        "pcb_files": [],
+        "all_passed": True,
+        "summary": {"total": 0, "passed": 0, "failed": 0},
+    }
+    context.kicad_validation_results = validation_results
+
     validation_errors = []
 
     # Validate project structure
     for pro_file in project_dir.glob("*.kicad_pro"):
         success, message = _validate_project_structure(pro_file)
-        if not success:
+
+        # Store detailed result for diagnostics
+        result = {"file": str(pro_file), "success": success, "message": message}
+        validation_results["project_files"].append(result)
+        validation_results["summary"]["total"] += 1
+
+        if success:
+            validation_results["summary"]["passed"] += 1
+        else:
+            validation_results["summary"]["failed"] += 1
+            validation_results["all_passed"] = False
             validation_errors.append(f"Project {pro_file.name}: {message}")
 
     # Validate schematics with ERC
@@ -87,14 +107,42 @@ def validate_kicad_project_if_enabled(context, project_dir: Path) -> Optional[st
             timeout=15,
         )
 
-        if (
-            not success and stderr
-        ):  # Only report if there's an actual error, not just violations
-            validation_errors.append(
-                f"Schematic {sch_file.name}: KiCad ERC error - {stderr[:100]}"
-            )
+        # Parse violations for detailed diagnostics
+        violations = []
+        if stdout:
+            try:
+                import json
 
-    # Validate PCBs with DRC (but be more tolerant since empty PCBs might have issues)
+                erc_data = json.loads(stdout)
+                violations = erc_data.get("violations", [])
+            except json.JSONDecodeError:
+                pass
+
+        # Determine success/failure - be more tolerant of design violations
+        file_success = success or not stderr  # Success if no parsing errors
+        message = "ERC passed" if file_success else f"ERC error: {stderr[:100]}"
+        if violations:
+            message += f" ({len(violations)} violations)"
+
+        # Store detailed result
+        result = {
+            "file": str(sch_file),
+            "success": file_success,
+            "message": message,
+            "violations": violations,
+            "raw_output": stdout,
+        }
+        validation_results["schematic_files"].append(result)
+        validation_results["summary"]["total"] += 1
+
+        if file_success:
+            validation_results["summary"]["passed"] += 1
+        else:
+            validation_results["summary"]["failed"] += 1
+            validation_results["all_passed"] = False
+            validation_errors.append(f"Schematic {sch_file.name}: {message}")
+
+    # Validate PCBs with DRC (be more tolerant since empty PCBs might have issues)
     for pcb_file in project_dir.glob("*.kicad_pcb"):
         success, stdout, stderr = run_kicad_validation(
             [
@@ -109,10 +157,40 @@ def validate_kicad_project_if_enabled(context, project_dir: Path) -> Optional[st
             timeout=15,
         )
 
-        if not success and stderr:  # Only report parsing errors, not design violations
-            validation_errors.append(
-                f"PCB {pcb_file.name}: KiCad DRC error - {stderr[:100]}"
-            )
+        # Parse violations for detailed diagnostics
+        violations = []
+        if stdout:
+            try:
+                import json
+
+                drc_data = json.loads(stdout)
+                violations = drc_data.get("violations", [])
+            except json.JSONDecodeError:
+                pass
+
+        # Be tolerant of design violations for PCBs
+        file_success = success or not stderr  # Success if no parsing errors
+        message = "DRC passed" if file_success else f"DRC error: {stderr[:100]}"
+        if violations:
+            message += f" ({len(violations)} violations)"
+
+        # Store detailed result
+        result = {
+            "file": str(pcb_file),
+            "success": file_success,
+            "message": message,
+            "violations": violations,
+            "raw_output": stdout,
+        }
+        validation_results["pcb_files"].append(result)
+        validation_results["summary"]["total"] += 1
+
+        if file_success:
+            validation_results["summary"]["passed"] += 1
+        else:
+            validation_results["summary"]["failed"] += 1
+            validation_results["all_passed"] = False
+            validation_errors.append(f"PCB {pcb_file.name}: {message}")
 
     if validation_errors:
         return "KiCad validation failed:\n" + "\n".join(validation_errors)
@@ -145,13 +223,189 @@ def validate_before_jbom_command(context, command_args: str) -> None:
     # Perform validation
     error_message = validate_kicad_project_if_enabled(context, project_dir)
     if error_message:
-        raise AssertionError(
-            f"KiCad project validation failed before running jBOM command '{command_args}':\n"
-            f"{error_message}\n\n"
-            f"This ensures jBOM receives authentic KiCad files, not fake test content.\n"
-            f"To disable validation: unset JBOM_VALIDATE_KICAD environment variable.\n"
-            f"To fix: ensure project files are authentic KiCad-generated content."
+        # Use enhanced diagnostics for better failure reporting
+        _raise_validation_error_with_diagnostics(
+            context, command_args, project_dir, error_message
         )
+
+
+def _raise_validation_error_with_diagnostics(
+    context, command_args: str, project_dir: Path, error_message: str
+) -> None:
+    """Raise validation error with comprehensive diagnostics."""
+    try:
+        from .diagnostic_utils import format_execution_context
+    except ImportError:
+        # Fallback if diagnostic utils not available
+        def format_execution_context(ctx):
+            return "[Diagnostics not available]"
+
+    # Build comprehensive error message
+    diagnostic_parts = [
+        "\n" + "=" * 80,
+        "KiCad PROJECT VALIDATION FAILED",
+        "=" * 80,
+        f"\nCommand that would have run: jbom {command_args}",
+        f"Project directory: {project_dir}",
+        "\n--- VALIDATION ERRORS ---",
+        error_message,
+    ]
+
+    # Add project file inventory for debugging
+    diagnostic_parts.extend(
+        [
+            "\n--- PROJECT FILE INVENTORY ---",
+            _format_project_file_inventory(project_dir),
+        ]
+    )
+
+    # Add detailed validation results if available
+    if hasattr(context, "kicad_validation_results"):
+        diagnostic_parts.extend(
+            [
+                "\n--- DETAILED VALIDATION RESULTS ---",
+                _format_detailed_validation_results(context.kicad_validation_results),
+            ]
+        )
+
+    # Add KiCad CLI diagnostics
+    diagnostic_parts.extend(
+        ["\n--- KICAD CLI DIAGNOSTICS ---", _format_kicad_cli_diagnostics()]
+    )
+
+    # Add resolution guidance
+    diagnostic_parts.extend(
+        [
+            "\n--- RESOLUTION GUIDANCE ---",
+            "• This validation ensures jBOM receives authentic KiCad files, not fake test content",
+            "• To disable validation temporarily: unset JBOM_VALIDATE_KICAD",
+            "• To fix permanently: replace fake KiCad content with authentic fixtures",
+            "• Use scripts/validate_fixtures.py to check all fixtures",
+            "• See docs/SEAMLESS_KICAD_VALIDATION.md for integration guide",
+        ]
+    )
+
+    # Include standard execution context from diagnostic utils
+    if format_execution_context:
+        try:
+            diagnostic_parts.append(
+                format_execution_context(context, include_files=True)
+            )
+        except Exception:
+            pass  # Don't let diagnostic formatting break the error
+
+    diagnostic_parts.extend(
+        ["\n" + "=" * 80, "END KiCad VALIDATION DIAGNOSTICS", "=" * 80 + "\n"]
+    )
+
+    raise AssertionError("\n".join(diagnostic_parts))
+
+
+def _format_project_file_inventory(project_dir: Path) -> str:
+    """Format project file inventory for diagnostics."""
+    inventory_lines = []
+
+    # List all KiCad-related files
+    kicad_extensions = [
+        ".kicad_pro",
+        ".kicad_sch",
+        ".kicad_pcb",
+        ".kicad_prl",
+        ".kicad_wks",
+    ]
+
+    for ext in kicad_extensions:
+        files = list(project_dir.glob(f"*{ext}"))
+        if files:
+            for file in files:
+                try:
+                    size = file.stat().st_size
+                    inventory_lines.append(f"  {file.name}: {size} bytes")
+
+                    # Show first few lines of small files
+                    if size < 500:
+                        try:
+                            content = file.read_text(encoding="utf-8")[:200]
+                            inventory_lines.append(
+                                f"    Preview: {repr(content[:100])}..."
+                            )
+                        except Exception:
+                            pass
+                except Exception:
+                    inventory_lines.append(f"  {file.name}: [Error reading file]")
+        else:
+            inventory_lines.append(f"  No {ext} files found")
+
+    return "\n".join(inventory_lines) if inventory_lines else "No KiCad files found"
+
+
+def _format_detailed_validation_results(validation_results: dict) -> str:
+    """Format detailed validation results for diagnostics."""
+    lines = []
+
+    # Summary
+    summary = validation_results.get("summary", {})
+    lines.append(
+        f"Summary: {summary.get('passed', 0)}/{summary.get('total', 0)} files passed"
+    )
+
+    # Per-file details
+    for file_type in ["project_files", "schematic_files", "pcb_files"]:
+        results = validation_results.get(file_type, [])
+        if results:
+            lines.append(f"\n{file_type.replace('_', ' ').title()}:")
+            for result in results:
+                status = "✅ PASS" if result["success"] else "❌ FAIL"
+                file_name = Path(result["file"]).name
+                lines.append(f"  {status} {file_name}: {result['message']}")
+
+                # Show violations if available
+                if "violations" in result and result["violations"]:
+                    lines.append(f"    Violations: {len(result['violations'])}")
+                    for i, violation in enumerate(
+                        result["violations"][:3]
+                    ):  # Show first 3
+                        lines.append(
+                            f"      {i+1}. {violation.get('description', 'Unknown violation')}"
+                        )
+                    if len(result["violations"]) > 3:
+                        lines.append(
+                            f"      ... and {len(result['violations']) - 3} more"
+                        )
+
+    return "\n".join(lines) if lines else "No detailed results available"
+
+
+def _format_kicad_cli_diagnostics() -> str:
+    """Format KiCad CLI diagnostics."""
+    lines = []
+
+    kicad_cli = Path("/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli")
+
+    if kicad_cli.exists():
+        lines.append(f"✅ KiCad CLI found: {kicad_cli}")
+        try:
+            import subprocess
+
+            result = subprocess.run(
+                [str(kicad_cli), "--version"], capture_output=True, text=True, timeout=5
+            )
+            if result.returncode == 0:
+                version_line = (
+                    result.stdout.strip().split("\n")[0]
+                    if result.stdout
+                    else "Unknown version"
+                )
+                lines.append(f"   Version: {version_line}")
+            else:
+                lines.append(f"   Version check failed: {result.stderr}")
+        except Exception as e:
+            lines.append(f"   Version check error: {str(e)}")
+    else:
+        lines.append(f"❌ KiCad CLI not found at: {kicad_cli}")
+        lines.append("   Install KiCad or validation will be skipped")
+
+    return "\n".join(lines)
 
 
 # Integration with existing steps - monkey patch approach for seamless integration
