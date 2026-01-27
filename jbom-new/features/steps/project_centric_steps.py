@@ -163,13 +163,35 @@ def given_project_in_dir(context, project: str, dir: str) -> None:
 
     Only use this for tests that specifically need directory resolution testing.
     Most tests should use 'Given a schematic that contains:' instead.
+    Uses authentic empty KiCad fixture instead of fake files.
     """
+    import shutil
+    from pathlib import Path
+
+    # Get empty project fixture
+    fixture_root = (
+        Path(context.jbom_new_root)
+        / "features"
+        / "fixtures"
+        / "kicad_templates"
+        / "empty_project"
+    )
+
     base = Path(context.sandbox_root)
     target = (base / dir).resolve()
     target.mkdir(parents=True, exist_ok=True)
-    (target / f"{project}.kicad_pro").write_text(
-        "(kicad_project (version 1))\n", encoding="utf-8"
-    )
+
+    # Copy authentic empty project fixture
+    project_dir = target / project
+    if project_dir.exists():
+        shutil.rmtree(project_dir)
+    shutil.copytree(fixture_root, project_dir)
+
+    # Rename files to match project name
+    for old_file in project_dir.glob("empty.*"):
+        new_name = old_file.name.replace("empty", project)
+        old_file.rename(project_dir / new_name)
+
     context.current_project = project
     context.project_placement_dir = target
 
@@ -237,11 +259,33 @@ def given_simple_schematic(context) -> None:
     # Get project name from context or use default
     project_name = getattr(context, "current_project", "project")
 
-    # Create minimal project file in correct location
-    base_dir = getattr(context, "project_placement_dir", Path(context.sandbox_root))
-    (base_dir / f"{project_name}.kicad_pro").write_text(
-        "(kicad_project (version 1))\n", encoding="utf-8"
+    # Create authentic project file in correct location
+    # Copy empty project fixture and extract just the .kicad_pro file
+    import shutil
+
+    fixture_root = (
+        Path(context.jbom_new_root)
+        / "features"
+        / "fixtures"
+        / "kicad_templates"
+        / "empty_project"
     )
+
+    base_dir = getattr(context, "project_placement_dir", Path(context.sandbox_root))
+    fixture_pro = fixture_root / "empty.kicad_pro"
+    target_pro = base_dir / f"{project_name}.kicad_pro"
+
+    if fixture_pro.exists():
+        shutil.copy2(fixture_pro, target_pro)
+        # Update filename reference in the copied project file
+        content = target_pro.read_text(encoding="utf-8")
+        content = content.replace(
+            '"filename": "empty.kicad_pro"', f'"filename": "{project_name}.kicad_pro"'
+        )
+        target_pro.write_text(content, encoding="utf-8")
+    else:
+        # Fallback to minimal content if fixture not found
+        target_pro.write_text("(kicad_project (version 1))\n", encoding="utf-8")
 
     # Create schematic with components - _write_schematic_local respects project_placement_dir
     comps: List[Dict[str, Any]] = [row.as_dict() for row in (context.table or [])]
@@ -507,28 +551,36 @@ def given_kicad_project_directory(context, name: str) -> None:
 
 @given('a minimal KiCad project "{name}"')
 def given_minimal_kicad_project(context, name: str) -> None:
-    """Create a minimal KiCad project with empty .pro, .sch, .pcb files.
+    """Create a minimal KiCad project with authentic empty project files.
 
     Use this for project discovery testing that doesn't need specific component data.
-    Creates standard project files with minimal but valid content.
+    Uses authentic empty KiCad fixture instead of fake minimal content.
     """
+    import shutil
+
+    # Get empty project fixture
+    fixture_root = (
+        Path(context.jbom_new_root)
+        / "features"
+        / "fixtures"
+        / "kicad_templates"
+        / "empty_project"
+    )
+
     project_dir = Path(context.sandbox_root) / name
-    project_dir.mkdir(parents=True, exist_ok=True)
+
+    # Copy authentic empty project fixture
+    if project_dir.exists():
+        shutil.rmtree(project_dir)
+    shutil.copytree(fixture_root, project_dir)
+
+    # Rename files to match project name
+    for old_file in project_dir.glob("empty.*"):
+        new_name = old_file.name.replace("empty", name)
+        old_file.rename(project_dir / new_name)
 
     # Update context - but DO NOT change sandbox_root (working directory)
-    # REMOVED: context.sandbox_root = project_dir  # This was the problem!
     context.current_project = name
-
-    # Create minimal project files
-    (project_dir / f"{name}.kicad_pro").write_text(
-        "(kicad_project (version 1))\n", encoding="utf-8"
-    )
-    (project_dir / f"{name}.kicad_sch").write_text(
-        "(kicad_sch (version 20211123) (generator eeschema))\n", encoding="utf-8"
-    )
-    (project_dir / f"{name}.kicad_pcb").write_text(
-        "(kicad_pcb (version 20211014) (generator pcbnew))\n", encoding="utf-8"
-    )
 
 
 @given('the project contains a file "{filename}"')
@@ -549,15 +601,66 @@ def given_project_contains_file(context, filename: str) -> None:
     file_path.parent.mkdir(parents=True, exist_ok=True)
 
     if filename.endswith(".kicad_pro"):
-        file_path.write_text("(kicad_project (version 1))\n", encoding="utf-8")
+        # Use authentic fixture content for project files
+        import shutil
+
+        fixture_root = (
+            Path(context.jbom_new_root)
+            / "features"
+            / "fixtures"
+            / "kicad_templates"
+            / "empty_project"
+        )
+        fixture_file = fixture_root / "empty.kicad_pro"
+        if fixture_file.exists():
+            shutil.copy2(fixture_file, file_path)
+            # Update filename reference
+            content = file_path.read_text(encoding="utf-8")
+            project_name = file_path.stem
+            content = content.replace(
+                '"filename": "empty.kicad_pro"',
+                f'"filename": "{project_name}.kicad_pro"',
+            )
+            file_path.write_text(content, encoding="utf-8")
+        else:
+            file_path.write_text("(kicad_project (version 1))\n", encoding="utf-8")
     elif filename.endswith(".kicad_sch"):
-        file_path.write_text(
-            "(kicad_sch (version 20211123) (generator eeschema))\n", encoding="utf-8"
+        # Use authentic fixture content for schematic files
+        import shutil
+
+        fixture_root = (
+            Path(context.jbom_new_root)
+            / "features"
+            / "fixtures"
+            / "kicad_templates"
+            / "empty_project"
         )
+        fixture_file = fixture_root / "empty.kicad_sch"
+        if fixture_file.exists():
+            shutil.copy2(fixture_file, file_path)
+        else:
+            file_path.write_text(
+                "(kicad_sch (version 20211123) (generator eeschema))\n",
+                encoding="utf-8",
+            )
     elif filename.endswith(".kicad_pcb"):
-        file_path.write_text(
-            "(kicad_pcb (version 20211014) (generator pcbnew))\n", encoding="utf-8"
+        # Use authentic fixture content for PCB files
+        import shutil
+
+        fixture_root = (
+            Path(context.jbom_new_root)
+            / "features"
+            / "fixtures"
+            / "kicad_templates"
+            / "empty_project"
         )
+        fixture_file = fixture_root / "empty.kicad_pcb"
+        if fixture_file.exists():
+            shutil.copy2(fixture_file, file_path)
+        else:
+            file_path.write_text(
+                "(kicad_pcb (version 20211014) (generator pcbnew))\n", encoding="utf-8"
+            )
     else:
         file_path.write_text("", encoding="utf-8")
 
