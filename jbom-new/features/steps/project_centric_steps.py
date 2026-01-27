@@ -208,41 +208,6 @@ def given_named_schematic_contains(context, name: str) -> None:
     _write_schematic_local(context, filename, comps)
 
 
-@given('the project uses a root schematic "{root}" that contains:')
-def given_root_schematic_contains(context, root: str) -> None:
-    """Create root schematic named <root> with components from the table."""
-    comps: List[Dict[str, Any]] = [row.as_dict() for row in (context.table or [])]
-    filename = f"{root}.kicad_sch"
-    _write_schematic_local(context, filename, comps)
-
-
-@given('the root references child schematic "{child}"')
-def given_root_references_child(context, child: str) -> None:
-    """Append a child sheet reference from <root> to <child>."""
-    root = getattr(context, "current_project", None) or "project"
-    base_dir = getattr(context, "project_placement_dir", context.sandbox_root)
-    main_path = Path(base_dir) / f"{root}.kicad_sch"
-    child_file = f"{child}.kicad_sch"
-    # Ensure main exists
-    if not main_path.exists():
-        main_path.write_text("(kicad_sch (version 20211123))\n", encoding="utf-8")
-    content = f"""(kicad_sch (version 20211123)
-  (sheet (at 50 50) (size 30 20)
-    (property "Sheetname" "{child}")
-    (property "Sheetfile" "{child_file}")
-  )
-)
-"""
-    main_path.write_text(content, encoding="utf-8")
-
-
-@given('the child schematic "{child}" contains:')
-def given_child_contains(context, child: str) -> None:
-    comps: List[Dict[str, Any]] = [row.as_dict() for row in (context.table or [])]
-    filename = f"{child}.kicad_sch"
-    _write_schematic_local(context, filename, comps)
-
-
 # -------------------------
 # Ultra-simplified DRY steps for maximum simplicity
 # -------------------------
@@ -422,11 +387,32 @@ def given_simple_pcb(context) -> None:
     # Get project name from context or use default
     project_name = getattr(context, "current_project", "project")
 
-    # Create minimal project file in correct location
-    base_dir = getattr(context, "project_placement_dir", Path(context.sandbox_root))
-    (base_dir / f"{project_name}.kicad_pro").write_text(
-        "(kicad_project (version 1))\n", encoding="utf-8"
+    # Create authentic project file in correct location
+    import shutil
+
+    fixture_root = (
+        Path(context.jbom_new_root)
+        / "features"
+        / "fixtures"
+        / "kicad_templates"
+        / "empty_project"
     )
+
+    base_dir = getattr(context, "project_placement_dir", Path(context.sandbox_root))
+    fixture_pro = fixture_root / "empty.kicad_pro"
+    target_pro = base_dir / f"{project_name}.kicad_pro"
+
+    if fixture_pro.exists():
+        shutil.copy2(fixture_pro, target_pro)
+        # Update filename reference in the copied project file
+        content = target_pro.read_text(encoding="utf-8")
+        content = content.replace(
+            '"filename": "empty.kicad_pro"', f'"filename": "{project_name}.kicad_pro"'
+        )
+        target_pro.write_text(content, encoding="utf-8")
+    else:
+        # Fallback to minimal content if fixture not found
+        target_pro.write_text("(kicad_project (version 1))\n", encoding="utf-8")
 
     # Create PCB with footprints
     rows: List[Dict[str, Any]] = [row.as_dict() for row in (context.table or [])]
@@ -547,40 +533,6 @@ def given_kicad_project_directory(context, name: str) -> None:
 # in a way that violated GHERKIN_RECIPE principles. Replaced with explicit
 # step combinations: @given('a project "{project}" placed in "{dir}"') +
 # @given('a schematic that contains:') or @given('a PCB that contains:')
-
-
-@given('a minimal KiCad project "{name}"')
-def given_minimal_kicad_project(context, name: str) -> None:
-    """Create a minimal KiCad project with authentic empty project files.
-
-    Use this for project discovery testing that doesn't need specific component data.
-    Uses authentic empty KiCad fixture instead of fake minimal content.
-    """
-    import shutil
-
-    # Get empty project fixture
-    fixture_root = (
-        Path(context.jbom_new_root)
-        / "features"
-        / "fixtures"
-        / "kicad_templates"
-        / "empty_project"
-    )
-
-    project_dir = Path(context.sandbox_root) / name
-
-    # Copy authentic empty project fixture
-    if project_dir.exists():
-        shutil.rmtree(project_dir)
-    shutil.copytree(fixture_root, project_dir)
-
-    # Rename files to match project name
-    for old_file in project_dir.glob("empty.*"):
-        new_name = old_file.name.replace("empty", name)
-        old_file.rename(project_dir / new_name)
-
-    # Update context - but DO NOT change sandbox_root (working directory)
-    context.current_project = name
 
 
 @given('the project contains a file "{filename}"')
