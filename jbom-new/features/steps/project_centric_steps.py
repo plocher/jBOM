@@ -66,7 +66,7 @@ def _write_schematic_local(
 # -------------------------
 
 
-@given('a KiCad project fixture "{fixture_name}"')
+@given('the KiCad fixture "{fixture_name}"')
 def given_kicad_project_fixture(context, fixture_name: str) -> None:
     """Copy a real KiCad project fixture into the test workspace.
 
@@ -102,49 +102,6 @@ def given_kicad_project_fixture(context, fixture_name: str) -> None:
         shutil.rmtree(target_dir)
 
     shutil.copytree(fixture_root, target_dir)
-
-    # Set context for other steps to reference
-    context.current_project = project_name
-    context.project_placement_dir = target_dir
-
-
-@given('a KiCad project fixture "{fixture_name}" named "{project_name}"')
-def given_named_kicad_project_fixture(
-    context, fixture_name: str, project_name: str
-) -> None:
-    """Copy a real KiCad project fixture with a specific project name.
-
-    This allows tests to use authentic KiCad fixtures but name them appropriately
-    for the test scenario (e.g., fixture 'empty_project' named 'test_project').
-    """
-    import shutil
-    from pathlib import Path
-
-    # Get fixture source directory
-    fixture_root = (
-        Path(context.jbom_new_root)
-        / "features"
-        / "fixtures"
-        / "kicad_templates"
-        / fixture_name
-    )
-    if not fixture_root.exists():
-        raise AssertionError(
-            f"KiCad fixture '{fixture_name}' not found at {fixture_root}"
-        )
-
-    # Copy fixture to sandbox with specified project name
-    target_dir = Path(context.sandbox_root) / project_name
-
-    if target_dir.exists():
-        shutil.rmtree(target_dir)
-
-    shutil.copytree(fixture_root, target_dir)
-
-    # Rename files within the directory to match the project name
-    for old_file in target_dir.glob(f"{fixture_name}.*"):
-        new_name = old_file.name.replace(fixture_name, project_name)
-        old_file.rename(target_dir / new_name)
 
     # Set context for other steps to reference
     context.current_project = project_name
