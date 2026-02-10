@@ -134,28 +134,29 @@ jBOM lets Alex work in the appropriate context for each task without losing the 
    - Maintains KiCad design focus
 
 **Procurement Phase**:
-1. Alex validates a KiCad project's component usage against inventory items
-   - Extracts component electrical and physical requirements from KiCad schematic and PCB files
-   - Compares KiCad project components with inventory items to identify matches
-   - Identifies ambiguous project components that matched multiple inventory items
-   - Identifies orphan project components that didn't match inventory items
-   - Identifies obsolete project components that matched retired inventory items
+1. Alex validates a KiCad project's component usage against inventory items `[Validate.Coverage]`
+   - `[Extract.Components]` Extracts component specifications from KiCad project files
+   - `[Match.Components]` Compares KiCad project components with inventory items to identify matches
+   - `[Identify.Ambiguous]` Identifies ambiguous project components that matched multiple inventory items
+   - `[Identify.Orphans]` Identifies orphan project components that didn't match inventory items
+   - `[Identify.Obsolete]` Identifies obsolete project components that matched retired inventory items
 
-2. Alex peruses parts catalogs that match orphan KiCad components
-   - Searches supplier databases for parts matching KiCad component electrical specifications
-   - Evaluates supplier options based on suitability, cost, availability, and lead times
-   - Adds desirable Items to inventory files
-   - Multi-sources alternative Items from multiple suppliers for drop-in replacement if needed
+2. Alex researches supplier options for orphan components `[Research.Components]`
+   - `[Search.Suppliers]` Searches supplier databases for parts matching electrical specifications
+   - `[Evaluate.Options]` Evaluates supplier options based on suitability, cost, availability, and lead times
+   - `[Add.Items]` Adds desirable Items to inventory files
+   - `[Add.Alternatives]` Multi-sources alternative Items from multiple suppliers for drop-in replacement if needed
 
 **Manufacturing Phase**:
-1. Alex generates fabricator-specific manufacturing packages for a KiCad project using inventory data
-   - Produces fabricator-compatible BOMs
-   - Adapts component sourcing from inventory to match fabricator preferences and capabilities
-   - Generates complete manufacturing file packages without modifying original KiCad design files
+1. Alex generates fabricator-specific manufacturing packages for a KiCad project using inventory data `[Create.Package]`
+   - `[Identify.Project]`, `[Extract.Components]`, `[Extract.Inventory]`,`[Filter.Suppliers]`, `[Generate.BOM]` Produces fabricator-compatible BOMs from a KiCad project
+   - `[Extract.Inventory]`,`[Filter.Suppliers]` Adapts component sourcing from inventory to match fabricator preferences and capabilities
+   - `[Generate.Files]` Generates complete manufacturing file packages without modifying original KiCad design files
 
-2. Alex creates and customizes supplier and fabricator profiles as needed
+2. Alex creates and customizes supplier and fabricator profiles as needed `Create.Profile]`
    - The provided profiles (for JLC, PCBWay...) may not meet Alex's exact needs
    - In-house prototyping, local fabrication choices and custom business processes may require flexability
+   - `[Read.Profile]` Gather supply chain info provided by the user
 
 **End Result**: **jBOM's Value**: Alex keeps electrical design decisions (1kΩ resistor, 0603 package) separate from supply chain decisions (UNI-ROYAL vs YAGEO, LCSC vs Mouser). The same electrical design can serve different fabricators and sourcing strategies over the product lifecycle without KiCad file changes.
 
@@ -172,21 +173,21 @@ jBOM lets Alex work in the appropriate context for each task without losing the 
 #### The Solution With jBOM:
 
 **Component Discovery Process**:
-1. Alex validates a KiCad project's component usage against inventory items
-   - Extracts electrical and physical requirements from KiCad schematic and PCB files
-   - Compares KiCad project components with inventory items to identify matches
-   - Identifies orphan project components that didn't match inventory items
-   - Reports orphan components for supplier research
+1. Alex validates a KiCad project's component usage against inventory items `[Validate.Coverage]`
+   - `[Extract.Components]` Extracts component specifications from KiCad project files
+   - `[Match.Components]` Compares KiCad project components with inventory items to identify matches
+   - `[Identify.Orphans]` Identifies orphan project components that didn't match inventory items
+   - `[Report.Orphans]` Reports orphan components for supplier research
 
-2. Alex peruses parts catalogs that match orphan KiCad components
-   - Searches supplier databases for parts matching KiCad component electrical specifications
-   - Evaluates supplier options based on suitability, cost, availability, and lead times
-   - Adds desirable Items to inventory files
-   - Multi-sources alternative Items from multiple suppliers for drop-in replacement if needed
+2. Alex researches supplier options for orphan components `[Research.Components]`
+   - `[Search.Suppliers]` Searches supplier databases for parts matching electrical specifications
+   - `[Evaluate.Options]` Evaluates supplier options based on suitability, cost, availability, and lead times
+   - `[Add.Items]` Adds desirable Items to inventory files
+   - `[Add.Alternatives]` Multi-sources alternative Items from multiple suppliers for drop-in replacement if needed
 
-3. Alex validates inventory coverage for the KiCad project
-   - Verifies all KiCad project components can be matched with inventory items
-   - Confirms fabricator-specific BOMs can be generated with complete supplier information from inventory
+3. Alex validates inventory coverage for the KiCad project `[Validate.Completeness]`
+   - `[Verify.Coverage]` Verifies all KiCad project components can be matched with inventory items
+   - `[Confirm.Capability]` Confirms fabricator-specific BOMs can be generated with complete supplier information from inventory
 
 **End Result**: **jBOM's Value**: Alex systematically builds inventory knowledge through project work. Each new component research effort benefits all future projects that use similar components. The inventory becomes a reusable asset that reduces per-project research time.
 
@@ -204,20 +205,20 @@ jBOM lets Alex work in the appropriate context for each task without losing the 
 #### The Solution With jBOM:
 
 **Multi-Fabricator Workflow**:
-1. Alex completes a KiCad design with supplier-neutral component specifications
-   - Selects KiCad schematic symbols and annotates them with electrical specifications
-   - Associates KiCad footprints with components based on physical packages
-   - Maintains KiCad design independence from fabricator choices
+1. Alex completes a KiCad design with supplier-neutral component specifications `[Create.Design]`
+   - `[Select.Symbols]` Selects KiCad schematic symbols and annotates them with electrical specifications
+   - `[Associate.Footprints]` Associates KiCad footprints with components based on physical packages
+   - `[Maintain.Independence]` Maintains KiCad design independence from fabricator choices
 
-2. Alex generates fabricator-specific manufacturing packages for the KiCad project using inventory data
-   - Filters inventory files to match fabricator supplier ecosystems
-   - Produces fabricator-compatible BOMs by combining KiCad project data with filtered inventory
-   - Adapts component sourcing from inventory without changing KiCad design specifications
+2. Alex generates fabricator-specific manufacturing packages for the KiCad project using inventory data `[Create.Package]`
+   - `[Filter.Inventory]` Filters inventory files to match fabricator supplier ecosystems
+   - `[Generate.BOM]` Produces fabricator-compatible BOMs by combining KiCad project data with filtered inventory
+   - `[Adapt.Sourcing]` Adapts component sourcing from inventory without changing KiCad design specifications
 
-3. Alex switches fabricators based on business needs for the same KiCad project
-   - Evaluates fabricator options based on cost, capability, and schedule
-   - Generates different manufacturing file packages from the KiCad project using different inventory filters
-   - Multi-sources alternative Items from multiple suppliers to support fabricator flexibility
+3. Alex switches fabricators based on business needs for the same KiCad project `[Switch.Fabricators]`
+   - `[Evaluate.Fabricators]` Evaluates fabricator options based on cost, capability, and schedule
+   - `[Create.Package]` Generates different manufacturing file packages from the KiCad project using different inventory filters
+   - `[Add.Alternatives]` Multi-sources alternative Items from multiple suppliers to support fabricator flexibility
 
 **End Result**: **jBOM's Value**: The same KiCad design serves multiple fabricators through inventory-based supply chain mapping. Business decisions about fabricators can be made based on cost, capability, and availability without forcing design changes.
 
@@ -236,20 +237,20 @@ jBOM lets Alex work in the appropriate context for each task without losing the 
 #### The Solution With jBOM:
 
 **Manufacturing Package Generation**:
-1. Alex generates fabricator-specific manufacturing packages for the KiCad project using inventory data
-   - Produces PCB fabrication files (Gerbers, drill files) from KiCad PCB data with accurate layer and drill specifications
-   - Generates fabricator-compatible BOMs by combining KiCad component data with inventory supplier information
-   - Creates component placement files (CPL) from KiCad PCB data with precise positions and orientations
-   - Formats all files according to fabricator specifications and requirements
+1. Alex generates fabricator-specific manufacturing packages for the KiCad project using inventory data `[Create.Package]`
+   - `[Generate.CAM]` Produces PCB fabrication files (Gerbers, drill files) from KiCad PCB data with accurate layer and drill specifications
+   - `[Generate.BOM]` Generates fabricator-compatible BOMs by combining KiCad component data with inventory supplier information
+   - `[Generate.CPL]` Creates component placement files (CPL) from KiCad PCB data with precise positions and orientations
+   - `[Format.Files]` Formats all files according to fabricator specifications and requirements
 
-2. Alex creates and customizes fabricator profiles as needed
-   - The provided profiles (for JLC, PCBWay...) may not meet Alex's exact needs
-   - In-house prototyping, local fabrication choices and custom business processes may require flexibility
+2. Alex creates and customizes fabricator profiles as needed `[Customize.Profiles]`
+   - `[Adapt.Profiles]` The provided profiles (for JLC, PCBWay...) may not meet Alex's exact needs
+   - `[Support.Flexibility]` In-house prototyping, local fabrication choices and custom business processes may require flexibility
 
-3. Alex validates manufacturing package completeness
-   - Verifies all required fabricator files are generated from the KiCad project with consistent specifications
-   - Confirms files are ready for fabricator submission without manual coordination between file types
-   - Ensures repeatable generation of identical packages from same KiCad project and inventory inputs
+3. Alex validates manufacturing package completeness `[Validate.Package]`
+   - `[Verify.Generation]` Verifies all required fabricator files are generated from the KiCad project with consistent specifications
+   - `[Confirm.Readiness]` Confirms files are ready for fabricator submission without manual coordination between file types
+   - `[Ensure.Repeatability]` Ensures repeatable generation of identical packages from same KiCad project and inventory inputs
 
 **End Result**: **jBOM's Value**: jBOM orchestrates KiCad's file generation capabilities with inventory-driven BOMs and fabricator-specific formatting to produce complete, consistent manufacturing packages. What took hours of manual coordination now happens with a single command.
 
@@ -265,17 +266,17 @@ Alex would manually research alternative suppliers for each component, visit mul
 #### The Solution With jBOM:
 
 **Alternative Supplier Development**:
-1. Alex expands supplier coverage for existing inventory Items
-   - Searches additional supplier databases for Items with limited sourcing options in inventory files
-   - Evaluates alternative suppliers based on suitability, cost, availability, and lead times
-   - Adds desirable Items to inventory files for sourcing flexibility
-   - Multi-sources alternative Items from multiple suppliers for drop-in replacement if needed
+1. Alex expands supplier coverage for existing inventory Items `[Expand.Coverage]`
+   - `[Search.Suppliers]` Searches additional supplier databases for Items with limited sourcing options in inventory files
+   - `[Evaluate.Options]` Evaluates alternative suppliers based on suitability, cost, availability, and lead times
+   - `[Add.Items]` Adds desirable Items to inventory files for sourcing flexibility
+   - `[Add.Alternatives]` Multi-sources alternative Items from multiple suppliers for drop-in replacement if needed
 
-2. Alex addresses supplier availability constraints in inventory
-   - Identifies inventory Items with limited or restricted supplier availability
-   - Peruses parts catalogs for alternative sources offering equivalent components
-   - Evaluates alternatives based on electrical compatibility and business requirements
-   - Updates inventory files with suitable alternative Items to maintain sourcing continuity
+2. Alex addresses supplier availability constraints in inventory `[Address.Constraints]`
+   - `[Identify.Constrained]` Identifies inventory Items with limited or restricted supplier availability
+   - `[Search.Alternatives]` Peruses parts catalogs for alternative sources offering equivalent components
+   - `[Evaluate.Compatibility]` Evaluates alternatives based on electrical compatibility and business requirements
+   - `[Update.Inventory]` Updates inventory files with suitable alternative Items to maintain sourcing continuity
 
 **End Result**: **jBOM's Value**: jBOM provides systematic alternatives discovery and supplier diversification without requiring changes to KiCad projects. Multiple sourcing options reduce supply chain risk while maintaining design stability.
 
@@ -292,23 +293,23 @@ When suppliers change or parts become unavailable, Alex would need to update mul
 #### The Solution With jBOM:
 
 **Supply Chain Adaptation**:
-1. Alex handles component availability disruptions in inventory
-   - Identifies inventory Items that become unavailable from current suppliers
-   - Peruses parts catalogs for electrically compatible alternatives with equivalent specifications
-   - Adds suitable replacement Items to inventory files maintaining KiCad design compatibility
-   - Applies inventory changes across all KiCad projects without modifying design files
+1. Alex handles component availability disruptions in inventory `[Handle.Disruptions]`
+   - `[Identify.Unavailable]` Identifies inventory Items that become unavailable from current suppliers
+   - `[Search.Alternatives]` Peruses parts catalogs for electrically compatible alternatives with equivalent specifications
+   - `[Add.Replacements]` Adds suitable replacement Items to inventory files maintaining KiCad design compatibility
+   - `[Apply.Changes]` Applies inventory changes across all KiCad projects without modifying design files
 
-2. Alex manages supplier relationship changes in inventory
-   - Adapts inventory files to supplier discontinuations and market changes
-   - Maintains component sourcing continuity through alternative Items in inventory
-   - Multi-sources alternative Items from multiple suppliers for drop-in replacement if needed
-   - Preserves KiCad design stability while adapting supply chain relationships in inventory
+2. Alex manages supplier relationship changes in inventory `[Manage.Changes]`
+   - `[Adapt.Inventory]` Adapts inventory files to supplier discontinuations and market changes
+   - `[Maintain.Continuity]` Maintains component sourcing continuity through alternative Items in inventory
+   - `[Add.Alternatives]` Multi-sources alternative Items from multiple suppliers for drop-in replacement if needed
+   - `[Preserve.Stability]` Preserves KiCad design stability while adapting supply chain relationships in inventory
 
-3. Alex optimizes component choices through KiCad design iteration
-   - Modifies component specifications in KiCad project files based on performance requirements
-   - Validates a KiCad project's component usage against inventory Items
-   - Leverages existing supplier relationships in inventory for specification changes
-   - Minimizes additional supplier research for KiCad design improvements
+3. Alex optimizes component choices through KiCad design iteration `[Optimize.Components]`
+   - `[Modify.Specifications]` Modifies component specifications in KiCad project files based on performance requirements
+   - `[Validate.Coverage]` Validates a KiCad project's component usage against inventory Items
+   - `[Leverage.Relationships]` Leverages existing supplier relationships in inventory for specification changes
+   - `[Minimize.Research]` Minimizes additional supplier research for KiCad design improvements
 
 **End Result**: **jBOM's Value**: Because design requirements are separated from supply chain details, Alex can adapt to market changes, supplier disruptions, and component obsolescence without touching KiCad files. Resilience comes from this architectural separation, not just good planning.
 
