@@ -125,38 +125,63 @@ jBOM lets Alex work in the appropriate context for each task without losing the 
 
 **Design Phase**:
 1. Alex creates a KiCad project focused on electrical requirements
-   - Selects KiCad schematic symbols and annotates them with electrical specifications such as value, tolerance, power rating
-   - Associates KiCad footprints with the schematic's components based on physical packages and board design constraints
+   - Selects KiCad schematic symbols and annotates them with electrical specifications (value, tolerance, power rating)
+   - Associates KiCad footprints with components based on physical packages and board constraints
+   - Validates electrical specifications meet design requirements
+   - Verifies footprint selections meet board design constraints
 
 2. Alex validates the KiCad project's electrical design through iteration
-   - Tests and refines component attributes and footprints
-   - Modifies KiCad component specifications in KiCad projects
-   - Maintains KiCad design focus
+   - Tests component specifications against circuit requirements
+   - Refines component attributes based on testing results
+   - Modifies KiCad component specifications in project files
+   - Maintains KiCad design focus on electrical and physical requirements
 
 **Procurement Phase**:
-1. Alex validates a KiCad project's component usage against inventory items `[Validate.Coverage]`
-   - `[Extract.Components]` Extracts component specifications from KiCad project files
-   - `[Match.Components]` Compares KiCad project components with inventory items to identify matches
-   - `[Identify.Ambiguous]` Identifies ambiguous project components that matched multiple inventory items
-   - `[Identify.Orphans]` Identifies orphan project components that didn't match inventory items
-   - `[Identify.Obsolete]` Identifies obsolete project components that matched retired inventory items
+@Scenario: `[Validate.Coverage]`
+1. Alex validates a KiCad project's component usage against inventory items
+@Steps:
+   - `[Identify.Project]` Identify the KiCad project to validate against inventory
+   - `[Extract.Components]` Extract component specifications from KiCad project files
+   - `[Extract.Inventory]` Extract available items from inventory files
+   - `[Match.Components]` Compare KiCad project components with inventory items to identify matches
+   - `[Identify.Ambiguous]` Identify ambiguous project components that matched multiple inventory items
+   - `[Identify.Orphans]` Identify orphan project components that didn't match inventory items
+   - `[Identify.Obsolete]` Identify obsolete project components that matched retired inventory items
 
-2. Alex researches supplier options for orphan components `[Research.Components]`
-   - `[Search.Suppliers]` Searches supplier databases for parts matching electrical specifications
-   - `[Evaluate.Options]` Evaluates supplier options based on suitability, cost, availability, and lead times
-   - `[Add.Items]` Adds desirable Items to inventory files
-   - `[Add.Alternatives]` Multi-sources alternative Items from multiple suppliers for drop-in replacement if needed
+@Scenario: `[Research.Components]`
+2. Alex researches supplier options for orphan components
+@Steps:
+   - `[Select.Orphans]` Select orphan components requiring supplier research
+   - `[Search.Suppliers]` Search supplier databases for parts matching electrical specifications
+   - `[Evaluate.Options]` Evaluate supplier options based on suitability, cost, availability, and lead times
+   - `[Add.Items]` Add selected items to inventory files with complete supplier information
+   - `[Add.Alternatives]` Add alternative items from multiple suppliers for drop-in replacement if needed
 
 **Manufacturing Phase**:
-1. Alex generates fabricator-specific manufacturing packages for a KiCad project using inventory data `[Create.Package]`
-   - `[Identify.Project]`, `[Extract.Components]`, `[Extract.Inventory]`,`[Filter.Suppliers]`, `[Generate.BOM]` Produces fabricator-compatible BOMs from a KiCad project
-   - `[Extract.Inventory]`,`[Filter.Suppliers]` Adapts component sourcing from inventory to match fabricator preferences and capabilities
-   - `[Generate.Files]` Generates complete manufacturing file packages without modifying original KiCad design files
+@Scenario: `[Create.Package]`
+1. Alex generates fabricator-specific manufacturing packages for a KiCad project using inventory data
+@Steps:
+   - `[Identify.Project]` Identify the KiCad project to process for manufacturing
+   - `[Extract.Components]` Extract component specifications from KiCad project files
+   - `[Extract.Inventory]` Extract available items from inventory files
+   - `[Filter.Suppliers]` Filter inventory to match fabricator supplier ecosystem
+   - `[Match.Components]` Match project components to filtered inventory items
+   - `[Resolve.Conflicts]` Resolve ambiguous matches and missing components
+   - `[Generate.BOM]` Generate fabricator-compatible Bill of Materials
+   - `[Generate.CPL]` Generate component placement file from KiCad PCB data
+   - `[Generate.CAM]` Generate Gerber and drill files for PCB fabrication
+   - `[Format.Files]` Format all files according to fabricator specifications
+   - `[Validate.Package]` Validate manufacturing package completeness
 
-2. Alex creates and customizes supplier and fabricator profiles as needed `Create.Profile]`
-   - The provided profiles (for JLC, PCBWay...) may not meet Alex's exact needs
-   - In-house prototyping, local fabrication choices and custom business processes may require flexability
-   - `[Read.Profile]` Gather supply chain info provided by the user
+@Scenario: `[Customize.Profile]`
+2. Alex creates and customizes supplier and fabricator profiles as needed
+@Steps:
+   - `[Identify.Requirements]` Identify specific fabricator or supplier requirements not met by default profiles
+   - `[Gather.Specifications]` Gather supply chain information provided by fabricator or supplier
+   - `[Create.Profile]` Create new profile configuration for custom fabrication workflow
+   - `[Configure.Formats]` Configure file formats and field mappings for custom requirements
+   - `[Test.Profile]` Test profile with sample project to verify correct output generation
+   - `[Document.Usage]` Document profile usage for team members and future reference
 
 **End Result**: **jBOM's Value**: Alex keeps electrical design decisions (1kΩ resistor, 0603 package) separate from supply chain decisions (UNI-ROYAL vs YAGEO, LCSC vs Mouser). The same electrical design can serve different fabricators and sourcing strategies over the product lifecycle without KiCad file changes.
 
@@ -173,21 +198,42 @@ jBOM lets Alex work in the appropriate context for each task without losing the 
 #### The Solution With jBOM:
 
 **Component Discovery Process**:
-1. Alex validates a KiCad project's component usage against inventory items `[Validate.Coverage]`
-   - `[Extract.Components]` Extracts component specifications from KiCad project files
-   - `[Match.Components]` Compares KiCad project components with inventory items to identify matches
-   - `[Identify.Orphans]` Identifies orphan project components that didn't match inventory items
-   - `[Report.Orphans]` Reports orphan components for supplier research
+@Scenario: `[Validate.Coverage]`
+1. Alex validates a KiCad project's component usage against inventory items
+@Steps:
+   - `[Identify.Project]` Identify the KiCad project to validate against inventory
+   - `[Extract.Components]` Extract component specifications from KiCad project files
+   - `[Extract.Inventory]` Extract available items from inventory files
+   - `[Match.Components]` Compare KiCad project components with inventory items to identify matches
+   - `[Identify.Ambiguous]` Identify ambiguous project components that matched multiple inventory items
+   - `[Identify.Orphans]` Identify orphan project components that didn't match inventory items
+   - `[Identify.Obsolete]` Identify obsolete project components that matched retired inventory items
+   - `[Report.Coverage]` Generate coverage report showing matches, orphans, and conflicts
+   - `[Prioritize.Research]` Prioritize orphan components for supplier research based on project importance
 
-2. Alex researches supplier options for orphan components `[Research.Components]`
-   - `[Search.Suppliers]` Searches supplier databases for parts matching electrical specifications
-   - `[Evaluate.Options]` Evaluates supplier options based on suitability, cost, availability, and lead times
-   - `[Add.Items]` Adds desirable Items to inventory files
-   - `[Add.Alternatives]` Multi-sources alternative Items from multiple suppliers for drop-in replacement if needed
+@Scenario: `[Research.Components]`
+2. Alex researches supplier options for orphan components
+@Steps:
+   - `[Select.Orphans]` Select orphan components requiring supplier research
+   - `[Define.Specifications]` Define electrical and physical specifications for supplier search
+   - `[Search.Suppliers]` Search supplier databases for parts matching specifications
+   - `[Compare.Options]` Compare available options across multiple suppliers
+   - `[Evaluate.Suitability]` Evaluate supplier options for electrical compatibility
+   - `[Assess.Business]` Assess supplier options for cost, availability, and lead times
+   - `[Select.Candidates]` Select desirable items for inventory addition
+   - `[Add.Items]` Add selected items to inventory files with complete supplier information
+   - `[Add.Alternatives]` Add alternative items from multiple suppliers for sourcing flexibility
 
-3. Alex validates inventory coverage for the KiCad project `[Validate.Completeness]`
-   - `[Verify.Coverage]` Verifies all KiCad project components can be matched with inventory items
-   - `[Confirm.Capability]` Confirms fabricator-specific BOMs can be generated with complete supplier information from inventory
+@Scenario: `[Validate.Completeness]`
+3. Alex validates inventory coverage for the KiCad project
+@Steps:
+   - `[Re-extract.Components]` Re-extract components from KiCad project after inventory updates
+   - `[Re-extract.Inventory]` Re-extract updated inventory with newly added items
+   - `[Re-match.Components]` Re-match project components against updated inventory
+   - `[Verify.Coverage]` Verify all KiCad project components can be matched with inventory items
+   - `[Test.Generation]` Test fabricator-specific BOM generation with complete supplier information
+   - `[Confirm.Capability]` Confirm manufacturing packages can be generated successfully
+   - `[Document.Results]` Document validation results for project records
 
 **End Result**: **jBOM's Value**: Alex systematically builds inventory knowledge through project work. Each new component research effort benefits all future projects that use similar components. The inventory becomes a reusable asset that reduces per-project research time.
 
@@ -205,20 +251,40 @@ jBOM lets Alex work in the appropriate context for each task without losing the 
 #### The Solution With jBOM:
 
 **Multi-Fabricator Workflow**:
-1. Alex completes a KiCad design with supplier-neutral component specifications `[Create.Design]`
-   - `[Select.Symbols]` Selects KiCad schematic symbols and annotates them with electrical specifications
-   - `[Associate.Footprints]` Associates KiCad footprints with components based on physical packages
-   - `[Maintain.Independence]` Maintains KiCad design independence from fabricator choices
+@Scenario: `[Create.Design]`
+1. Alex completes a KiCad design with supplier-neutral component specifications
+@Steps:
+   - `[Select.Symbols]` Select KiCad schematic symbols from standard component libraries
+   - `[Annotate.Specifications]` Annotate symbols with electrical specifications (value, tolerance, power rating)
+   - `[Associate.Footprints]` Associate KiCad footprints with components based on physical packages
+   - `[Verify.Neutrality]` Verify component specifications remain fabricator-neutral
+   - `[Document.Requirements]` Document electrical and physical requirements in KiCad project
+   - `[Maintain.Independence]` Maintain KiCad design independence from specific supplier or fabricator choices
 
-2. Alex generates fabricator-specific manufacturing packages for the KiCad project using inventory data `[Create.Package]`
-   - `[Filter.Inventory]` Filters inventory files to match fabricator supplier ecosystems
-   - `[Generate.BOM]` Produces fabricator-compatible BOMs by combining KiCad project data with filtered inventory
-   - `[Adapt.Sourcing]` Adapts component sourcing from inventory without changing KiCad design specifications
+@Scenario: `[Create.Package]`
+2. Alex generates fabricator-specific manufacturing packages for the KiCad project using inventory data
+@Steps:
+   - `[Identify.Fabricator]` Identify target fabricator for manufacturing package generation
+   - `[Extract.Components]` Extract component specifications from KiCad project files
+   - `[Extract.Inventory]` Extract available items from inventory files
+   - `[Filter.Inventory]` Filter inventory files to match fabricator supplier ecosystem preferences
+   - `[Match.Components]` Match project components to fabricator-filtered inventory items
+   - `[Resolve.Conflicts]` Resolve component matches for fabricator-specific requirements
+   - `[Generate.BOM]` Generate fabricator-compatible BOM using filtered inventory data
+   - `[Generate.Files]` Generate complete manufacturing file package for fabricator submission
+   - `[Validate.Package]` Validate package meets fabricator specifications and requirements
 
-3. Alex switches fabricators based on business needs for the same KiCad project `[Switch.Fabricators]`
-   - `[Evaluate.Fabricators]` Evaluates fabricator options based on cost, capability, and schedule
-   - `[Create.Package]` Generates different manufacturing file packages from the KiCad project using different inventory filters
-   - `[Add.Alternatives]` Multi-sources alternative Items from multiple suppliers to support fabricator flexibility
+@Scenario: `[Switch.Fabricators]`
+3. Alex switches fabricators based on business needs for the same KiCad project
+@Steps:
+   - `[Assess.Requirements]` Assess current project requirements for fabricator selection
+   - `[Evaluate.Fabricators]` Evaluate available fabricator options based on cost, capability, and schedule
+   - `[Select.Fabricator]` Select optimal fabricator for current business needs
+   - `[Filter.Inventory]` Filter inventory using different fabricator supplier ecosystem
+   - `[Re-match.Components]` Re-match project components against new fabricator's inventory filter
+   - `[Generate.Package]` Generate manufacturing package for new fabricator using same KiCad project
+   - `[Compare.Options]` Compare fabricator options and validate business decision
+   - `[Maintain.Flexibility]` Ensure inventory supports multiple fabricator switching options
 
 **End Result**: **jBOM's Value**: The same KiCad design serves multiple fabricators through inventory-based supply chain mapping. Business decisions about fabricators can be made based on cost, capability, and availability without forcing design changes.
 
@@ -237,20 +303,47 @@ jBOM lets Alex work in the appropriate context for each task without losing the 
 #### The Solution With jBOM:
 
 **Manufacturing Package Generation**:
-1. Alex generates fabricator-specific manufacturing packages for the KiCad project using inventory data `[Create.Package]`
-   - `[Generate.CAM]` Produces PCB fabrication files (Gerbers, drill files) from KiCad PCB data with accurate layer and drill specifications
-   - `[Generate.BOM]` Generates fabricator-compatible BOMs by combining KiCad component data with inventory supplier information
-   - `[Generate.CPL]` Creates component placement files (CPL) from KiCad PCB data with precise positions and orientations
-   - `[Format.Files]` Formats all files according to fabricator specifications and requirements
+@Scenario: `[Create.Package]`
+1. Alex generates fabricator-specific manufacturing packages for the KiCad project using inventory data
+@Steps:
+   - `[Identify.Project]` Identify the KiCad project ready for manufacturing package generation
+   - `[Identify.Fabricator]` Identify target fabricator and manufacturing requirements
+   - `[Extract.Components]` Extract component specifications from KiCad project files
+   - `[Extract.Inventory]` Extract available items from inventory files
+   - `[Filter.Suppliers]` Filter inventory to match fabricator supplier ecosystem
+   - `[Match.Components]` Match project components to fabricator-filtered inventory items
+   - `[Resolve.Conflicts]` Resolve component matching conflicts and missing items
+   - `[Generate.CAM]` Generate PCB fabrication files (Gerbers, drill files) from KiCad PCB data
+   - `[Generate.BOM]` Generate fabricator-compatible BOM combining KiCad and inventory data
+   - `[Generate.CPL]` Generate component placement file from KiCad PCB positioning data
+   - `[Format.Files]` Format all files according to fabricator specifications and requirements
+   - `[Package.Files]` Package all manufacturing files for fabricator submission
+   - `[Validate.Package]` Validate manufacturing package completeness and consistency
 
-2. Alex creates and customizes fabricator profiles as needed `[Customize.Profiles]`
-   - `[Adapt.Profiles]` The provided profiles (for JLC, PCBWay...) may not meet Alex's exact needs
-   - `[Support.Flexibility]` In-house prototyping, local fabrication choices and custom business processes may require flexibility
+@Scenario: `[Customize.Profiles]`
+2. Alex creates and customizes fabricator profiles as needed
+@Steps:
+   - `[Assess.Needs]` Assess current fabricator profile coverage against business requirements
+   - `[Identify.Gaps]` Identify fabricator or supplier requirements not met by default profiles
+   - `[Gather.Specifications]` Gather fabricator specifications for file formats and field requirements
+   - `[Design.Profile]` Design profile configuration for custom fabrication workflow
+   - `[Configure.Formats]` Configure file formats, field mappings, and naming conventions
+   - `[Configure.Filters]` Configure supplier filtering rules for fabricator ecosystem
+   - `[Test.Profile]` Test profile with sample project to verify correct output generation
+   - `[Validate.Output]` Validate generated files meet fabricator submission requirements
+   - `[Document.Usage]` Document profile usage and configuration for future reference
 
-3. Alex validates manufacturing package completeness `[Validate.Package]`
-   - `[Verify.Generation]` Verifies all required fabricator files are generated from the KiCad project with consistent specifications
-   - `[Confirm.Readiness]` Confirms files are ready for fabricator submission without manual coordination between file types
-   - `[Ensure.Repeatability]` Ensures repeatable generation of identical packages from same KiCad project and inventory inputs
+@Scenario: `[Validate.Package]`
+3. Alex validates manufacturing package completeness
+@Steps:
+   - `[Check.Files]` Check all required fabricator files are present in package
+   - `[Verify.Formats]` Verify file formats match fabricator specifications exactly
+   - `[Validate.Data]` Validate data consistency between BOM, CPL, and CAM files
+   - `[Check.Components]` Check all project components have supplier information in BOM
+   - `[Verify.Placement]` Verify component placement data matches PCB layout
+   - `[Test.Fabrication]` Test package with fabricator validation tools if available
+   - `[Confirm.Readiness]` Confirm files are ready for fabricator submission
+   - `[Archive.Package]` Archive complete package for project records and resubmission
 
 **End Result**: **jBOM's Value**: jBOM orchestrates KiCad's file generation capabilities with inventory-driven BOMs and fabricator-specific formatting to produce complete, consistent manufacturing packages. What took hours of manual coordination now happens with a single command.
 
@@ -266,17 +359,34 @@ Alex would manually research alternative suppliers for each component, visit mul
 #### The Solution With jBOM:
 
 **Alternative Supplier Development**:
-1. Alex expands supplier coverage for existing inventory Items `[Expand.Coverage]`
-   - `[Search.Suppliers]` Searches additional supplier databases for Items with limited sourcing options in inventory files
-   - `[Evaluate.Options]` Evaluates alternative suppliers based on suitability, cost, availability, and lead times
-   - `[Add.Items]` Adds desirable Items to inventory files for sourcing flexibility
-   - `[Add.Alternatives]` Multi-sources alternative Items from multiple suppliers for drop-in replacement if needed
+@Scenario: `[Expand.Coverage]`
+1. Alex expands supplier coverage for existing inventory Items
+@Steps:
+   - `[Analyze.Inventory]` Analyze current inventory to identify items with limited sourcing options
+   - `[Prioritize.Items]` Prioritize items for supplier expansion based on project usage and business impact
+   - `[Define.Criteria]` Define search criteria for alternative suppliers (electrical, mechanical, business requirements)
+   - `[Search.Suppliers]` Search additional supplier databases for items with limited sourcing options
+   - `[Compare.Specifications]` Compare alternative supplier specifications against existing inventory items
+   - `[Evaluate.Business]` Evaluate alternative suppliers based on cost, availability, lead times, and reliability
+   - `[Assess.Compatibility]` Assess electrical and mechanical compatibility of alternative supplier options
+   - `[Select.Candidates]` Select best alternative supplier candidates for inventory addition
+   - `[Add.Items]` Add selected alternative items to inventory files with complete supplier information
+   - `[Test.Coverage]` Test expanded supplier coverage with sample projects
+   - `[Document.Sources]` Document alternative sourcing strategies for team knowledge
 
-2. Alex addresses supplier availability constraints in inventory `[Address.Constraints]`
-   - `[Identify.Constrained]` Identifies inventory Items with limited or restricted supplier availability
-   - `[Search.Alternatives]` Peruses parts catalogs for alternative sources offering equivalent components
-   - `[Evaluate.Compatibility]` Evaluates alternatives based on electrical compatibility and business requirements
-   - `[Update.Inventory]` Updates inventory files with suitable alternative Items to maintain sourcing continuity
+@Scenario: `[Address.Constraints]`
+2. Alex addresses supplier availability constraints in inventory
+@Steps:
+   - `[Monitor.Availability]` Monitor supplier availability and identify constrained or at-risk items
+   - `[Identify.Constrained]` Identify inventory items with limited or restricted supplier availability
+   - `[Assess.Impact]` Assess business impact of supplier constraints on current and planned projects
+   - `[Research.Alternatives]` Research parts catalogs for alternative sources offering equivalent components
+   - `[Evaluate.Equivalents]` Evaluate alternative components for electrical and mechanical compatibility
+   - `[Assess.Business]` Assess alternative suppliers for business suitability (cost, reliability, lead times)
+   - `[Validate.Substitution]` Validate component substitutions meet design requirements
+   - `[Update.Inventory]` Update inventory files with suitable alternative items
+   - `[Test.Substitutions]` Test substitutions with existing projects to verify compatibility
+   - `[Communicate.Changes]` Communicate supplier changes and alternatives to project stakeholders
 
 **End Result**: **jBOM's Value**: jBOM provides systematic alternatives discovery and supplier diversification without requiring changes to KiCad projects. Multiple sourcing options reduce supply chain risk while maintaining design stability.
 
@@ -293,23 +403,48 @@ When suppliers change or parts become unavailable, Alex would need to update mul
 #### The Solution With jBOM:
 
 **Supply Chain Adaptation**:
-1. Alex handles component availability disruptions in inventory `[Handle.Disruptions]`
-   - `[Identify.Unavailable]` Identifies inventory Items that become unavailable from current suppliers
-   - `[Search.Alternatives]` Peruses parts catalogs for electrically compatible alternatives with equivalent specifications
-   - `[Add.Replacements]` Adds suitable replacement Items to inventory files maintaining KiCad design compatibility
-   - `[Apply.Changes]` Applies inventory changes across all KiCad projects without modifying design files
+@Scenario: `[Handle.Disruptions]`
+1. Alex handles component availability disruptions in inventory
+@Steps:
+   - `[Monitor.Supply]` Monitor supplier announcements and availability status for inventory items
+   - `[Identify.Unavailable]` Identify inventory items that become unavailable from current suppliers
+   - `[Assess.Impact]` Assess impact of unavailable items on current and planned projects
+   - `[Prioritize.Replacements]` Prioritize replacement research based on project criticality and timelines
+   - `[Search.Alternatives]` Search parts catalogs for electrically compatible alternatives with equivalent specifications
+   - `[Evaluate.Compatibility]` Evaluate alternative components for electrical and mechanical compatibility
+   - `[Assess.Business]` Assess alternative suppliers for business suitability (cost, availability, reliability)
+   - `[Validate.Substitutions]` Validate component substitutions maintain design integrity
+   - `[Add.Replacements]` Add suitable replacement items to inventory files with compatibility notes
+   - `[Test.Projects]` Test affected projects with new component substitutions
+   - `[Document.Changes]` Document supply chain disruption response for future reference
 
-2. Alex manages supplier relationship changes in inventory `[Manage.Changes]`
-   - `[Adapt.Inventory]` Adapts inventory files to supplier discontinuations and market changes
-   - `[Maintain.Continuity]` Maintains component sourcing continuity through alternative Items in inventory
-   - `[Add.Alternatives]` Multi-sources alternative Items from multiple suppliers for drop-in replacement if needed
-   - `[Preserve.Stability]` Preserves KiCad design stability while adapting supply chain relationships in inventory
+@Scenario: `[Manage.Changes]`
+2. Alex manages supplier relationship changes in inventory
+@Steps:
+   - `[Track.Relationships]` Track supplier relationship changes, discontinuations, and market developments
+   - `[Evaluate.Impact]` Evaluate impact of supplier changes on inventory and project portfolio
+   - `[Plan.Adaptation]` Plan inventory adaptation strategy for supplier relationship changes
+   - `[Research.Replacements]` Research replacement suppliers and alternative component sources
+   - `[Migrate.Sources]` Migrate from discontinued or problematic suppliers to reliable alternatives
+   - `[Update.Inventory]` Update inventory files with new supplier relationships and part numbers
+   - `[Test.Continuity]` Test component sourcing continuity across affected projects
+   - `[Maintain.Quality]` Maintain component quality standards during supplier transitions
+   - `[Preserve.Designs]` Preserve KiCad design stability while adapting supply chain relationships
+   - `[Communicate.Transitions]` Communicate supplier transitions to project stakeholders
 
-3. Alex optimizes component choices through KiCad design iteration `[Optimize.Components]`
-   - `[Modify.Specifications]` Modifies component specifications in KiCad project files based on performance requirements
-   - `[Validate.Coverage]` Validates a KiCad project's component usage against inventory Items
-   - `[Leverage.Relationships]` Leverages existing supplier relationships in inventory for specification changes
-   - `[Minimize.Research]` Minimizes additional supplier research for KiCad design improvements
+@Scenario: `[Optimize.Components]`
+3. Alex optimizes component choices through KiCad design iteration
+@Steps:
+   - `[Analyze.Usage]` Analyze component usage patterns across project portfolio
+   - `[Identify.Opportunities]` Identify optimization opportunities based on supplier relationships
+   - `[Evaluate.Alternatives]` Evaluate component alternatives that leverage existing supplier relationships
+   - `[Assess.Performance]` Assess performance impact of component specification changes
+   - `[Plan.Changes]` Plan component specification changes in KiCad projects
+   - `[Modify.Specifications]` Modify component specifications in KiCad project files
+   - `[Validate.Coverage]` Validate updated project components against current inventory
+   - `[Test.Designs]` Test design changes to ensure electrical and mechanical compatibility
+   - `[Leverage.Relationships]` Leverage existing supplier relationships for cost and availability benefits
+   - `[Document.Optimization]` Document component optimization decisions and rationale
 
 **End Result**: **jBOM's Value**: Because design requirements are separated from supply chain details, Alex can adapt to market changes, supplier disruptions, and component obsolescence without touching KiCad files. Resilience comes from this architectural separation, not just good planning.
 
