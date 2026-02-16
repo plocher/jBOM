@@ -26,10 +26,10 @@ The jBOM architecture follows these key principles established during the Servic
 
 ## Project Documentation
 
-### [USER_GUIDE.md](USER_GUIDE.md)
+### [USER_GUIDE.md](guides/USER_GUIDE.md)
 Comprehensive user workflows and examples for BOM generation, inventory management, and component placement.
 
-### [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md)
+### [DEVELOPER_GUIDE.md](guides/DEVELOPER_GUIDE.md)
 Architecture, design patterns, and implementation guide for contributors and maintainers.
 
 ## Historical Context

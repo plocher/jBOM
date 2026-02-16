@@ -83,11 +83,11 @@ Services can be used by any interface without modification:
 ## Documentation
 
 ### User Documentation
-- [`docs/USER_GUIDE.md`](docs/USER_GUIDE.md) - Comprehensive user workflows and examples
+- [`docs/guides/USER_GUIDE.md`](docs/guides/USER_GUIDE.md) - Comprehensive user workflows and examples
 - Built-in help: `jbom --help`, `jbom bom --help`, etc.
 
 ### Developer Documentation
-- [`docs/DEVELOPER_GUIDE.md`](docs/DEVELOPER_GUIDE.md) - Architecture, patterns, and implementation guide
+- [`docs/guides/DEVELOPER_GUIDE.md`](docs/guides/DEVELOPER_GUIDE.md) - Architecture, patterns, and implementation guide
 - [`docs/`](docs/README.md) - Architecture documentation and tutorials
 
 ## Directory Guide
