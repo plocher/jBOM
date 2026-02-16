@@ -103,25 +103,21 @@ As jBOM grows, maintain these documentation principles:
 The Service-Command architecture provides a stable foundation that can support additional interfaces (GUI, Web, KiCad plugins) without requiring architectural changes or documentation restructuring.
 
 
-## Fetures and Workflows
+<!-- ## Fetures and Workflows
 ### DNP and ExcludeFromBOM
 
-In KiCad, attribute to exclude a component from the Bill of Materials (BOM) is labeled "Exclude from bill of materials". This attribute is used for virtual components like mounting holes, fiducials, or logos, rather than for "Do Not Populate" (DNP) parts.
-Key details regarding this feature:
-Function: It prevents the component from appearing in generated BOM exports.
-"Virtual" Attribute: Similar to marking footprints as "Virtual" in the PCB editor.
-Difference from DNP: "Exclude from BOM" is different from "Do Not Populate" (DNP); the latter still includes the part in the BOM but marks it as not to be assembled, while the former removes it entirely from the document.
+In KiCad, Components have an attribute to exclude a component from the Bill of Materials (BOM) labeled "Exclude from Bill of Materials". This attribute is used for virtual components like mounting holes, fiducials, or logos and prevents the component from appearing in generated BOM exports.
 
+There is a related attribute, "Do Not Populate" (DNP), which is used for physical components that should not be placed.  These components are included in the BOM but marked as "DNP" so they won't be placed or populated during fabrication.
 
-In KiCad, the hash ('#') prefix in a component's reference designator is primarily used for virtual or non-physical components that exist in the schematic but should not be exported to the PCB layout or the Bill of Materials (BOM).
-Here are the specific components and scenarios where KiCad uses the '#' prefix:
-Power Ports and Power Symbols: When a symbol is defined as a power port (e.g., VCC, GND) in its properties, KiCad often marks it with a '#' (e.g., #PWR01) to indicate it is a global power net connection rather than a physical part.
-PWR_FLAG Symbols: Similar to power ports, these are virtual components used to inform the Electrical Rules Check (ERC) that a power net is driven, and they do not represent physical components on the board.
-Unannotated or Non-physical Symbols: If a symbol is created that is not meant for the board, or if automatic annotation fails to categorize a symbol properly, it may receive a '#' prefix.
-Hierarchical Labels/Pins: Sometimes intermediate connection points within schematic hierarchies can be marked with this prefix.
+In KiCad component reference designators, the hash ('#') prefix is primarily used for virtual or non-physical components that exist in the schematic but should not be exported to the PCB layout or the Bill of Materials (BOM).  Examples include:
+  * Power Ports and Power Symbols: When a symbol is defined as a power port (e.g., VCC, GND) in its properties, KiCad often marks it with a '#' (e.g., #PWR01) to indicate it is a global power net connection rather than a physical part.
+  * PWR_FLAG Symbols: Similar to power ports, these are virtual components used to inform the Electrical Rules Check (ERC) that a power net is driven, and they do not represent physical components on the board.
+  * Unannotated or Non-physical Symbols: If a symbol is created that is not meant for the board, or if automatic annotation fails to categorize a symbol properly, it may receive a '#' prefix.
+  * Hierarchical Labels/Pins: Sometimes intermediate connection points within schematic hierarchies can be marked with this prefix. -->
 
 ### MATCH
-The match function's scope is to find the inventory items that satisfy the electrical/physical requirements of partially specified kicad components
+The jBOM match function's scope is to find the inventory items that satisfy the electrical/physical requirements of partially specified kicad components
 If it can do that simply (component.IPM == Inventory.IPN), fantastic happy path.  There are other happy paths, and a slew of more focused heuristic paths, each adding their own levels of uncertainty to the algorithm, with the worst case that there isn't enough "specified" in the component to do the match
 
 the inventory workflows supported by jbom are
@@ -170,14 +166,14 @@ It is important to note that the ONLY time jbom creates IPMs is when it is creat
 
 It appears that jBOM is incorrectly creating IPNs when creating BOMs, and not restricting that effort to the inventory creation use case.
 
-## kicad project references
+<!-- ## kicad project references
 
 As a KiCad user, I want to reference my project to jBOM in whatever way feels natural, without having to remember which specific file each jBOM operation needs.
 
 1. "When I'm in a directory with a KiCad project, I shouldn't have to tell ijBOM what to use"
 2. "I want to give it the name of a directory that contains a KiCad project"
 3. "I want to give it the name of a KiCad file and have it figure out the project it is part of"
-4. "I want jBOM to figure out what it needs when I give it a valid KiCad project filename, even if it is the wrong project file for the operation I am using"
+4. "I want jBOM to figure out what it needs when I give it a valid KiCad project filename, even if it is the wrong project file for the operation I am using" -->
 
 ### IPN Supplier Alternatives and Deduplication
 
@@ -197,7 +193,7 @@ J Thank you for that crucial context! This significantly clarifies the current b
 Let me update my understanding:
 
 ### KiCad projects
-The search logic should be similar to this pseudocode/english description:
+<!-- The search logic should be similar to this pseudocode/english description:
 if no project_argument is provided, set project_argument = "."  (current directory) and continue
 
 if the project_argument directory or file does not exist:
@@ -218,7 +214,7 @@ if !isDir(project_argument) then
 Child schematics are hierarchical sheets linked within the root or other parent sheets.
 Within the Root File: Open the root .kicad_sch file (which is a text-based S-expression file) and look for the (sheet ...) token.
 Extraction: Each (sheet ...) entry contains a (property "Sheetfile" "filename.kicad_sch") field that specifies the child's filename.
-Recursive Hierarchy: Subsheets can themselves contain other subsheets. To find all children, you must recursively check every identified .kicad_sch file for further (sheet ...) definitions.
+Recursive Hierarchy: Subsheets can themselves contain other subsheets. To find all children, you must recursively check every identified .kicad_sch file for further (sheet ...) definitions. -->
 
 
 
