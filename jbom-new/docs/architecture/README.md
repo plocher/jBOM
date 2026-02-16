@@ -110,6 +110,13 @@ This architecture documentation is organized as the authoritative source of desi
 - **[Design Patterns](design-patterns.md)** - Established patterns used throughout jBOM
 - **[Integration Patterns](integration-patterns.md)** - Service composition and layer interaction
 
+## Architectural Evolution
+
+Documentation of how jBOM's architecture evolved:
+
+- **[Why jBOM-New](why-jbom-new.md)** - Refactoring summary and architectural decisions that led to simplified design
+- **[Project-Centric Design](project-centric-design.md)** - Historical migration from complex plugin-based architecture
+
 For implementation guidance, see:
 - **Source Code READMEs** - Layer-specific developer overviews
 - **[Developer Tutorials](../tutorial/README.md)** - Step-by-step implementation patterns
