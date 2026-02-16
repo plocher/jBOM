@@ -26,11 +26,33 @@ The jBOM architecture follows these key principles established during the Servic
 
 ## Project Documentation
 
-### [USER_GUIDE.md](guides/USER_GUIDE.md)
-Comprehensive user workflows and examples for BOM generation, inventory management, and component placement.
+### Guides
+- **[USER_GUIDE.md](guides/USER_GUIDE.md)** - Comprehensive user workflows and examples for BOM generation, inventory management, and component placement
+- **[DEVELOPER_GUIDE.md](guides/DEVELOPER_GUIDE.md)** - Architecture, design patterns, and implementation guide for contributors and maintainers
 
-### [DEVELOPER_GUIDE.md](guides/DEVELOPER_GUIDE.md)
-Architecture, design patterns, and implementation guide for contributors and maintainers.
+### Workflow Documentation
+Active work tracking and development coordination:
+- **[NEXT.md](workflow/NEXT.md)** - Current priorities and next tasks
+- **[QUICK_START.md](workflow/QUICK_START.md)** - Quick reference for the paired development workflow
+- **[WORK_LOG.md](workflow/WORK_LOG.md)** - Session notes and progress tracking
+- **[GIT_WORKFLOW.md](workflow/GIT_WORKFLOW.md)** - Git branching patterns and commit conventions
+- **[HUMAN_WORKFLOW.md](workflow/HUMAN_WORKFLOW.md)** - Guide for paired development and supervision
+- **[planning/PHASE_1_TASKS.md](workflow/planning/PHASE_1_TASKS.md)** - Phase 1 implementation tasks and checkpoints
+- **[WIP/](workflow/WIP/)** - Work-in-progress notes and active investigations
+
+### Architecture Documentation
+Core architectural principles and evolution:
+- **[architecture/README.md](architecture/README.md)** - Architecture overview and design principles
+- **[architecture/why-jbom-new.md](architecture/why-jbom-new.md)** - Refactoring summary and architectural evolution
+- **[architecture/project-centric-design.md](architecture/project-centric-design.md)** - Historical migration from complex architecture
+
+### Implementation Tutorials
+Step-by-step implementation patterns:
+- **[tutorial/README.md](tutorial/README.md)** - Tutorial overview
+- **[tutorial/README.implementation.md](tutorial/README.implementation.md)** - Implementation guides
+
+### Feature Testing
+- **[../features/GHERKIN_RECIPE.md](../features/GHERKIN_RECIPE.md)** - Well-crafted Gherkin patterns and anti-patterns
 
 ## Historical Context
 

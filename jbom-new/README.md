@@ -82,13 +82,18 @@ Services can be used by any interface without modification:
 
 ## Documentation
 
-### User Documentation
-- [`docs/guides/USER_GUIDE.md`](docs/guides/USER_GUIDE.md) - Comprehensive user workflows and examples
+### Getting Started
+- **[docs/guides/USER_GUIDE.md](docs/guides/USER_GUIDE.md)** - Comprehensive user workflows and examples
+- **[docs/guides/DEVELOPER_GUIDE.md](docs/guides/DEVELOPER_GUIDE.md)** - Architecture, patterns, and implementation guide
 - Built-in help: `jbom --help`, `jbom bom --help`, etc.
 
-### Developer Documentation
-- [`docs/guides/DEVELOPER_GUIDE.md`](docs/guides/DEVELOPER_GUIDE.md) - Architecture, patterns, and implementation guide
-- [`docs/`](docs/README.md) - Architecture documentation and tutorials
+### Documentation Hub
+- **[docs/README.md](docs/README.md)** - Complete documentation index with all available resources
+
+### For Active Development
+- **[docs/workflow/NEXT.md](docs/workflow/NEXT.md)** - What to work on next
+- **[docs/workflow/QUICK_START.md](docs/workflow/QUICK_START.md)** - Quick reference for paired development
+- **[docs/workflow/planning/PHASE_1_TASKS.md](docs/workflow/planning/PHASE_1_TASKS.md)** - Phase 1 task breakdown and checkpoints
 
 ## Directory Guide
 
