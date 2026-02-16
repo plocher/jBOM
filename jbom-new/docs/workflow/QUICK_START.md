@@ -7,7 +7,7 @@
 cat jbom-new/docs/workflow/NEXT.md
 
 # 2. Read the full task card
-cat jbom-new/docs/PHASE_1_TASKS.md | less
+cat jbom-new/docs/workflow/planning/PHASE_1_TASKS.md | less
 # (search for the task in NEXT.md)
 
 # 3. Open Warp, start working

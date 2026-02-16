@@ -12,14 +12,14 @@ You are the **architect and quality gatekeeper**. The agent is your **junior dev
 
 ### Before Each Session (2 minutes)
 1. Open `docs/workflow/NEXT.md` - see what task is next
-2. Open `docs/PHASE_1_TASKS.md` - read the full task card
+2. Open `docs/workflow/planning/PHASE_1_TASKS.md` - read the full task card
 3. Decide: Am I ready to work on this task?
 
 ### During Each Session (30-90 minutes)
 
 **Step 1: Define the Task** (You)
 ```
-Tell agent: "Let's work on Task 1.X - [task name from PHASE_1_TASKS.md]"
+Tell agent: "Let's work on Task 1.X - [task name from docs/workflow/planning/PHASE_1_TASKS.md]"
 ```
 
 **Step 2: Agent Works** (Watch & Learn)
@@ -94,7 +94,7 @@ Now write tests to validate the parsing functions.
 
 ### After Each Session (1 minute)
 - Close gracefully: "Thanks, that's good for today"
-- Mark task status in PHASE_1_TASKS.md
+- Mark task status in docs/workflow/planning/PHASE_1_TASKS.md
 - You now know what to do next session
 
 ---
