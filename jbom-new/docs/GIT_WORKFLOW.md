@@ -1,6 +1,43 @@
 # Git Workflow with Pre-Commit Hooks
 
-## The Problem
+## Feature Branch Workflow
+
+### Always Work in Feature Branches
+
+**Rule**: NEVER work directly in `main`. Always create a feature branch first.
+
+```bash
+# Create and switch to feature branch
+git checkout -b feature/phase-N-description
+
+# Or if branch exists
+git checkout feature/phase-N-description
+```
+
+**Branch naming convention**:
+- `feature/phase-1-extract-matcher` - Phase-based work
+- `feature/issue-48-sophisticated-matching` - Issue-based work
+- `fix/issue-50-field-names` - Bug fixes
+
+### When to Create Feature Branch
+
+✅ **Before starting any Phase work**
+✅ **Before addressing any GitHub issue**
+✅ **For any non-trivial changes**
+
+❌ **Never commit directly to main**
+
+### Merging Feature Branch
+
+When Phase 1 is complete:
+1. Push feature branch: `git push -u origin feature/phase-1-extract-matcher`
+2. Create GitHub PR
+3. Wait for CI/CD checks
+4. Merge PR when approved
+
+## Pre-Commit Hook Workflow
+
+### The Problem
 
 Pre-commit hooks **modify files** when they run (fixing trailing whitespace, line endings, etc.). If you commit without re-adding, the commit fails because files changed after staging.
 

@@ -3,6 +3,9 @@
 ## Current Task
 **Task 1.1: Document Anti-Patterns** (Not started)
 
+## Current Branch
+`feature/phase-1-extract-matcher`
+
 ## Context
 Starting Phase 1: Extract sophisticated matcher from old-jbom into jbom-new's clean architecture.
 
