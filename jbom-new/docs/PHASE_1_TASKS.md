@@ -15,7 +15,7 @@ Total Estimated Time: 2-4 weeks (with paired approach and learning)
 2. Tell agent: "Let's work on Task 1.1 - document anti-patterns from old-jbom"
 3. Review the document agent creates
 4. Ask questions or request changes
-5. When satisfied, commit and update NEXT.md
+5. When satisfied, commit and update docs/workflow/NEXT.md
 
 **What Agent Does**:
 - Reads old-jbom code (inventory_matcher.py, bom.py)
@@ -292,7 +292,7 @@ Same paired pattern as 1.2:
 When all tasks done:
 - [ ] All files committed with semantic commit messages
 - [ ] Update WORK_LOG.md with summary
-- [ ] Update NEXT.md to point to Phase 2
+- [ ] Update docs/workflow/NEXT.md to point to Phase 2
 - [ ] Close GitHub Issue #48
 - [ ] Create feature branch PR for review
 

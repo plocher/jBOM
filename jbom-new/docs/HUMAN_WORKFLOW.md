@@ -11,7 +11,7 @@ You are the **architect and quality gatekeeper**. The agent is your **junior dev
 ## The Basic Pattern
 
 ### Before Each Session (2 minutes)
-1. Open `NEXT.md` - see what task is next
+1. Open `docs/workflow/NEXT.md` - see what task is next
 2. Open `docs/PHASE_1_TASKS.md` - read the full task card
 3. Decide: Am I ready to work on this task?
 
@@ -81,7 +81,7 @@ Update `WORK_LOG.md`:
 **Next**: Task 1.2b - Write tests for value_parsing
 ```
 
-Update `NEXT.md`:
+Update `docs/workflow/NEXT.md`:
 ```markdown
 ## Current Task
 **Task 1.2b: Unit Test Value Parsing** (Ready)

@@ -3,7 +3,7 @@
 ## 2026-02-16
 
 ### Session 1: Setup
-- Created tracking infrastructure (NEXT.md, WORK_LOG.md, etc.)
+- Created tracking infrastructure (docs/workflow/NEXT.md, docs/WORK_LOG.md, etc.)
 - Created feature branch: `feature/phase-1-extract-matcher`
 - Created doc cleanup plan (DOC_CLEANUP_TASK.md)
 - Delegated doc cleanup to Haiku agent (Tasks DC-1 through DC-8)

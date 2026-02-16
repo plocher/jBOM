@@ -4,7 +4,7 @@
 
 ```bash
 # 1. Check what's next
-cat jbom-new/NEXT.md
+cat jbom-new/docs/workflow/NEXT.md
 
 # 2. Read the full task card
 cat jbom-new/docs/PHASE_1_TASKS.md | less
@@ -54,12 +54,12 @@ Co-Authored-By: Warp <agent@warp.dev>
 
 Then **you update**:
 1. `jbom-new/docs/WORK_LOG.md` - add session entry
-2. `jbom-new/NEXT.md` - point to next task
+2. `jbom-new/docs/workflow/NEXT.md` - point to next task
 3. `jbom-new/docs/PHASE_1_TASKS.md` - mark task done
 
 ## Files You Need
 
-📄 **NEXT.md** - What to do right now
+📄 **docs/workflow/NEXT.md** - What to do right now
 📄 **docs/PHASE_1_TASKS.md** - All tasks with checklists
 📄 **docs/HUMAN_WORKFLOW.md** - Detailed workflow guide
 📄 **docs/WORK_LOG.md** - Session history
