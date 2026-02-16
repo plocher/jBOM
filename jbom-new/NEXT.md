@@ -1,7 +1,10 @@
 # What to Do Next
 
 ## Current Task
-**Task 1.1: Document Anti-Patterns** (Not started)
+**Doc Cleanup: Tasks DC-1 through DC-8** (Delegated to Haiku agent)
+
+**Next Task When Haiku Completes**:
+**Task 1.1: Document Anti-Patterns** (Ready to start)
 
 ## Current Branch
 `feature/phase-1-extract-matcher`

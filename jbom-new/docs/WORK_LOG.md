@@ -5,7 +5,9 @@
 ### Session 1: Setup
 - Created tracking infrastructure (NEXT.md, WORK_LOG.md, etc.)
 - Created feature branch: `feature/phase-1-extract-matcher`
-- Ready to begin Task 1.1
+- Created doc cleanup plan (DOC_CLEANUP_TASK.md)
+- Delegated doc cleanup to Haiku agent (Tasks DC-1 through DC-8)
+- Sonnet agent on standby for Phase 1 Task 1.1
 
 ### Completed Tasks
 None yet
