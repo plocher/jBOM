@@ -29,9 +29,6 @@ Each row represents one stocked component. Columns define the component's attrib
 **Package**
 : Physical package code (0603, 0805, 1206, SOT-23, SOIC-8, QFN-32, etc.). Extracted from schematic footprint and matched exactly.
 
-**LCSC**
-: Supplier part number from LCSC Electronics. Used as the primary identifier in the BOM output.
-
 **Priority**
 : Integer ranking (1 = most preferred, higher = less preferred). When multiple parts match equally, the lowest Priority is selected. Allows you to prefer stocked parts (Priority=1) over others (Priority=2+).
 
@@ -42,6 +39,10 @@ Each row represents one stocked component. Columns define the component's attrib
 
 **MFGPN**
 : Manufacturer part number (0603WAJ0331T5E, CC0603KRX7R9BB104, etc.).
+
+
+**LCSC**
+: Supplier part number from LCSC Electronics. Used as the primary identifier in the BOM output.
 
 **Datasheet**
 : URL to component datasheet PDF.

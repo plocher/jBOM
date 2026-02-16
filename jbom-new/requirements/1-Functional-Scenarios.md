@@ -1,396 +1,249 @@
 ## Program start up and initialization
 
+### Scenario: `[Profile.Concept]`
+**Profile configuration scope and format [TBD - depends on understanding and clarifying functional expectations]**
+
+Profiles capture supply chain context to enable fabricator switching without design changes. Minimum viable profile defines BOM column mapping and basic supplier preferences.
+
+**Future decisions needed:**
+- Which component matching rules are configurable vs built-in?
+- Profile file format and composition model?
+- Granularity of fabricator-specific formatting options?
+- Integration with supplier API credentials and search parameters?
+
+**Dependencies:** Results from implementing other scenarios will inform profile requirements.
+
 ### Scenario: `[Discover.Profiles]`
-Discover available supply chain profiles
-@Steps:
-   - enumerate an ordered directory search mechanism where profiles might be found:
-   - load and validate profile files
-     - Utilize a deterministic hierarchical model where higher profiles can be extended, modified or overridden by lower ones
-   - expose profile data structures to rest of jBOM
-      - for help/usage text
-      - for defining supply chain actors and CLI shortcuts
-        - e.g., a JLCPCB profile may define `--jlc` as a CLI flag that defines various BOM, CAM and CPL options
-      - integrate into jBOM's argument parsing templates
-      - used by `[Specify.Profile]`
-@End
+System finds and loads supply chain configuration files
+
+Alex needs jBOM to work with his supply chain preferences without hardcoded assumptions. Maybe Alex prefers Mouser over Digikey, or his company mandates specific manufacturers. Maybe Alex's fabricator expects "LCSC Part#" column while another expects "Supplier PN".
+
+jBOM should find configuration files that define these preferences - from the project folder, user settings, or system defaults. This lets Alex (or his team) customize supplier APIs, BOM formatting, component matching rules without code changes.
+
+The system searches multiple locations in priority order: project directory, git repository root, user home directory, system installation. Higher priority profiles can extend or override lower priority ones.
 
 ### Scenario: `[Specify.Profile]`
-Specify the supply chain profile to use
-@Steps:
-   - Profile Hierarchy (Search Order)
-      1. **Common web site**:`JBOM_URL` (if set)
-      2. **jBOM installation Directory**: `JBOM_HOME` (or `/Applications/jBOM/` ...)
-      3. **KiCad plugins Directory**:
-         * Windows: %APPDATA%\kicad\<version>\scripting\plugins (e.g., C:\Users\<username>\AppData\Roaming\kicad\9.0\scripting\plugins).
-         * macOS: ~/Documents/KiCad/<version>/scripting/plugins/ or ~/Library/Preferences/kicad/scripting/plugins.
-         * Linux: ~/.kicad/<version>/scripting/plugins/ or ~/.config/kicad/scripting/plugins.
-      4. **Environment Variable**: `JBOM_DIR` (if set)
-      5. **Project Directory**: `.jbom/` in current working directory
-      6. **Git Repo Root**: `.jbom/` in repository root (if in git repo)
-      7. **User Home**: `~/.jbom/`
-   - User Profile Capabilities
-      - **Custom Supplier**: Define new supplier (mouser, digikey, LCSC)
-      - **Custom Fabricators**: Define new fabricator (JLC, PCBWay, OSHPark)
-      - **Custom Catalog**: Define new catalog search configurations (octopart, suppliers, ...)
-      - **Override Built-ins**: Customize specific aspects of built-in profiles
-      - **Extend Configurations**: Add new fields/presets to existing profiles
-      - **Project-Specific**: Per-project customizations
-      - **Organization Configs**: Team/company-wide configuration sharing via `JBOM_DIR`
-@Documentation:
-Of interest are preferred manufacturers, product families, suppliers and fabricators.
+Select which supply chain configuration to use for this operation
 
-Fabricators have specific BOM and CPL names and content they require.
-See the jBOM git source tree:  `repo://jBOM/src/jbom/config/fabricators` and `repo://jBOM/jbom-new/src/jbom/config/fabricators`
+Alex operates in different supply chain contexts - hobby projects use LCSC/JLCPCB, client work uses Mouser/PCBWay, company projects have approved vendor lists. Each context needs different supplier preferences, BOM formats, and component matching rules.
 
-@End
+The system should let Alex choose his supply chain context explicitly or automatically detect it based on project location. Company projects in shared repositories might automatically use organization-wide profiles. Personal projects use Alex's preferred suppliers.
+
+Profiles define everything from "prefer YAGEO resistors" to "BOM needs LCSC column for JLCPCB" to "search Mouser first, Digikey as backup." Alex shouldn't need to reconfigure these preferences for each project.
 
 ### Scenario: `[Specify.Project]`
-Specify the KiCad project to use
-@Steps:
-@Documentation:
-## Use Case
-As a KiCad user, I want to reference my project to jBOM in whatever way feels natural, without having to remember which specific file each jBOM operation needs.
+Identify which KiCad project to process
 
-## Core User Needs
-1. "When I'm in a directory with a KiCad project, I shouldn't have to tell it what to use"
-2. "I want to give it the name of a directory that contains a KiCad project"
-3. "I want to give it the name of a KiCad file and have it figure out the project it is part of"
-4. "I want jBOM to figure out what it needs if I give it a valid project filename, even if it is the wrong KiCad project file for the operation I am using"
+Alex shouldn't have to remember that BOM generation needs schematic files while CPL generation needs PCB files. When Alex is in a project directory, jBOM should just work. When Alex points to any KiCad file, jBOM should figure out what else it needs.
 
-## Feature Files
+The system should handle Alex's natural workflow: "I'm in my project directory, generate a BOM" or "Here's my .kicad_pcb file, I need assembly files" or "Process this project folder for fabrication."
 
-### directory.feature
-Tests implicit current directory references and explicit directory references.
-- Scenarios: no project parameter, directory names, directory edge cases
-
-### file.feature
-Tests explicit file references (.kicad_pro, .kicad_sch, .kicad_pcb).
-- Scenarios: all file types with all commands, file edge cases
-
-### cross_resolution.feature
-Tests wrong file type → right file type resolution.
-- Scenarios: bom given .pcb, pos given .sch, inventory given wrong files
-@End
+jBOM should automatically discover project files, resolve file dependencies (schematic for components, PCB for placement), and handle multi-sheet hierarchical projects without Alex specifying every file.
 
 ### Scenario: `[Specify.Inventory]`
-Specify the Inventory to use
-@Steps:
+Determine which inventory sources to use for component matching
 
-## Use Case
-As a hardware engineer, I want to understand what components I need and what I already have, so I can make informed decisions about ordering parts for manufacturing.
+Alex maintains component inventory in spreadsheets - maybe one master CSV file, maybe separate files per supplier, maybe Excel files shared with teammates. His inventory maps design requirements ("1kΩ resistor, 0603") to real parts he can actually order ("YAGEO RC0603JR-071KL from Mouser").
 
-## Core User Needs
-1. "I want to see all the components my project needs in a format I can use for ordering"
-2. "I want to know which components from my project I don't already have in inventory"
-3. "I want to add my project's components to my existing inventory without creating duplicates"
-4. "I want to check against multiple inventory sources (suppliers, locations) and get the best matches"
-5. "I want the system to handle missing or bad inventory files gracefully"
+The system should find Alex's inventory files automatically or let him specify them explicitly. Alex might have multiple inventory sources - his personal parts collection, company-approved parts list, supplier-specific catalogs. The system should combine these intelligently and handle missing or corrupted files gracefully.
 
-## Feature Files
-
-### core.feature
-Tests basic inventory generation from KiCad projects.
-- Scenarios: generate IPNs, categorize components, normalize packaging
-
-### inventory_matching.feature
-Tests matching project components against existing inventory.
-- Scenarios: basic matching, filtering, error handling for missing files
-
-### IPN_generation.feature
-Tests IPN creation logic and formatting consistency.
-- Scenarios: category detection, value normalization, IPN patterns
-- Supports all user needs through stable component identification
-
-### multi_source.feature
-Tests multiple inventory file handling and best match selection.
-- Scenarios: multiple sources, duplicate handling, best match logic
-
-### multi_source_edge_cases.feature
-Tests complex scenarios with malformed files and error conditions.
-- Scenarios: missing files, malformed CSV, duplicate IPNs
-
-### file_safety.feature
-Tests file handling and command validation.
-- Scenarios: file permissions, invalid combinations
+When Alex adds new components to projects, the system should help him update his inventory with suitable supplier options rather than requiring manual research every time.
 
 ## read and extract data from sources
 
 ### Scenario: `[Extract.Components]`
-Extract component specifications from KiCad project files
-@Steps:
-@Documentatation:
-Given a KiCad project (see `[Specify.Project]`), find and parse all the project's schematics
-extracting the Components (Symbols) and all of their attributes.
+Get component specifications from KiCad project files
+
+Alex's KiCad project contains components with design requirements: "R1: 1kΩ resistor, 0603 package, 5% tolerance" or "U1: ESP32-WROOM-32 microcontroller." The system needs to extract these components and their attributes from schematic files to understand what Alex actually needs to build his board.
+
+The system should handle hierarchical schematics, multiple sheets, and all the different ways KiCad stores component information. It should capture reference designators (R1, C5, U3), values (1kΩ, 100nF), footprints (0603, SOIC-8), and any custom fields Alex added.
+
+This gives jBOM the complete component requirements list that can be matched against inventory to generate real BOMs.
 
 ### Scenario: `[Extract.Items]`
-Extract items from inventory files
-@Steps:
-@Documentatation:
-Given an inventory file (see `[Specify.Inventory]`), parse it, extracting the items and all of their attributes.
+Load inventory data from Alex's spreadsheets and databases
 
-Handles loading inventory data from multiple file formats:
-- CSV (.csv)
-- Excel (.xlsx, .xls)
-- Apple Numbers (.numbers)
-- KiCad Database
-- jBOM inventory schema
-- JLC Parts List schema (no IPN...)  (See repo://examples/JLCPCB-INVENTORY.csv)
+Alex maintains his component inventory in various formats - maybe a master CSV file, maybe separate Excel sheets per supplier, maybe Apple Numbers files shared with teammates. Each inventory item maps design requirements to real, orderable parts with supplier details.
 
-@End
+The system should read Alex's inventory files regardless of format (CSV, Excel, Numbers, KiCad databases) and extract the component specifications, supplier part numbers, manufacturer details, and any custom attributes Alex tracks like "preferred for new designs" or "bulk pricing available."
+
+This gives jBOM the pool of available parts that can satisfy the component requirements extracted from KiCad projects.
 
 
 ### Scenario: `[Search.Suppliers]`
-Search supplier catalogs for products that match the electro-mechanical attributes of the item
-@Steps:
+Find parts using configured supplier catalogs
 
-@Documentation:
- - octopart/Nexar, Digikey, Mouser and LCSC provide official, real-time API for businesses that offers various features including keyword search, item details, and ordering. Access requires an account and API approval.
- - Catalog Profiles provide the details
-@End
+Alex has inventory items missing supplier details or encounters new components not in his inventory. Rather than manually browsing Mouser, Digikey, or LCSC websites, Alex needs the system to search supplier catalogs automatically using component specifications.
+
+The system should use Alex's configured supplier APIs (Mouser REST, Digikey OAuth, LCSC databases) to find parts matching electrical and mechanical requirements. For a "1kΩ, 0603, 5%" resistor, it should return candidate parts with full supplier details, stock levels, and pricing.
+
+This lets Alex quickly expand his inventory with real, orderable parts rather than doing repetitive manual research for every new component.
 
 ### Scenario: `[Select.Items]`
-Use heuristics to identify a small pool of candidate parts for that item
-@Steps:
-@Documentation:
-Parts catalogs contain thousands of parts from hundreds of manufacturers.
-Heuristics and filtering can be used to narrow down desirable candidates, but a human often needs to provide final selection guidance.  A middle ground is to have the search engine select a limited ordered set of qualified candidates and let the user choose to use or discard each.
+Narrow supplier search results to reasonable candidate parts
 
-Some hueristics that may be interesting:
- - Price
- - Quantity in stock - larger implies higher usage, active design usage
- - Minimum order quantity - does the design usage times board quantity meet the MOQ?
- - lifecycle status - prefer active, a negative tiebreaker if not recommended for new design or end-of-life product
-@End
+Supplier catalogs return thousands of parts for "1kΩ resistor" - different manufacturers, packages, tolerances, power ratings, prices. Alex doesn't want to manually review hundreds of options; he needs the system to identify a manageable set of good candidates.
+
+The system should apply heuristics to rank and filter results: prefer active parts over obsolete, higher stock quantities suggest popular/reliable parts, reasonable pricing, minimum order quantities that make sense for Alex's typical volumes.
+
+Alex gets a short, ranked list of suitable candidates with clear explanations of why each was selected. He can quickly approve good options or reject unsuitable ones, building his inventory efficiently without endless catalog browsing.
 
 
 ## Data processing - Heuristics and filtering
 ### Scenario: `[Filter.Items]`
-Filter inventory to match profile's supplier ecosystem
-@Steps:
-@Description
-If I'm generating a BOM for JLC, I need to use supplier part numbers optimal for JLC.  Same for PCBWay, etc
+Prioritize inventory items based on supply chain context
 
-While all can use manufacturer name and manufacturer part numbers to cross reference into their catalogs, it is sometimes beneficial to use a supplier-specific second-source.  JLC calls these "Basic Parts", common items that are kept loaded into their pick-and-place assembly lines.
+Alex generates BOMs for different fabricators with different supplier ecosystems. When targeting JLCPCB, Alex wants to prefer LCSC parts and especially "Basic Parts" that are pre-loaded in their assembly lines for faster/cheaper assembly. When targeting PCBWay, Alex wants to prefer Mouser parts for broader selection.
 
-While this concept is conceptually named "filtering", in reality it is simply a first order ranking, such that the preferred items (if they exist) are chosen; if their are none, then the non-supplier-specific items are available for use.
-@End
+The system should apply supply chain context to prioritize suitable inventory items. For JLCPCB BOMs, rank LCSC parts higher than Mouser parts. For company projects, prioritize approved manufacturers over random alternatives.
+
+This isn't hard filtering (eliminating options) but intelligent ranking so Alex gets the most suitable parts for his chosen fabricator while keeping fallback options available when preferred parts aren't available.
 
 ### Scenario: `[Match.Components]`
-Compare KiCad project components with inventory items to identify matches
-@Steps:
-@Description
-The concept is that the components found in a KiCad project have attributes that describe loosely described design constraints (electrical types, values, tolerances, ratings...), while inventory items have fully described design capabilities AND supply chain details.
-(e.g., a KiCad component may be
-- [R1, 1k, resistor, 100mW, 10%, 0603]
-while an inventory may have several items:
-[RES_5%_100mW_0603_1k, SMD, 1k,	thick film, 100mW,  75V, ±100ppm/℃, 5%,	0603,	JLC,	   C25585,	           UNI-ROYAL. 0603WAJ0102T5E,	Device:R_US,	SPCoast:0603-RES]
-[RES_5%_100mW_0603_1k, SMD, 1k,	thick film, 100mW,  75V, ±100ppm/℃, 5%,	0603,	Mouser,  603-RC0603JR-071KL,	Yageo, RC0603JR-071KL,   	Device:R_US,	SPCoast:0603-RES]
-)
+Find inventory items that can satisfy each KiCad component requirement
 
-Matching is a fuzzy heuristic that tries to find a "best match" between the incompletely specified component in the design and candidate items in the inventory.  It uses [Filter.Items], [Grade.Items] and [Rank.Items]
+Alex's KiCad design specifies "R1: 1kΩ, 0603, 5%" but his inventory contains specific supplier parts with full specifications. The system needs to intelligently match loose design requirements with precise inventory capabilities.
 
-Filtering can be used to disqualify obviously incompatable candidates, but can't be used to refine compatable ones - it needs to weed out unsuitable items
+A KiCad "1kΩ, 5%" requirement could be satisfied by inventory items with 1% tolerance (better than required) but not 10% tolerance (worse than required). "1K" in KiCad should match "1000Ω" or "1k0" in inventory through value normalization.
 
-Grading is a way of quantifying the answer to "Does this item meet the criteria that the designer articulated via the component's attributes?"
-
-Ranking is a way to show a preference between multiple otherwise interchangible items (such as inventory lots, geographic location...)
-
-@End
+The system orchestrates multiple sub-processes: normalize values for comparison, filter obviously incompatible items, grade how well each candidate meets requirements, and rank equally-suitable options by supply chain preferences. Alex gets clear match results with confidence levels and explanations.
 
 
 ### Scenario: `[Resolve.Conflicts]`
-Resolve ambiguous matches and missing components
-@Steps:
-@Description
-Matching results in a list of candidate items that have a ranking associated with them that indicates the confidence that this Item matches the component's provided attributes.
-In the best case, there is only one candidate, and it has a high confidence match score.
-It is good to have a definitive "nothing found" result as well; this list of not-founds is where the supplier catalog search feature comes into play.
-In between these two, deciding what to do is difficult, which is the basis for the design audit capability and [Identify.Ambiguous]
+Handle uncertain component matches and missing inventory items
 
-The workflows associated with this resolution involve KiCad project rework, supplier catalog searching and Inventory maintenance
-@End
+Matching doesn't always produce clear winners. Sometimes Alex gets multiple equally-good candidates, sometimes low-confidence matches that might not be suitable, sometimes no matches at all for components not in his inventory.
+
+The system should present these situations clearly to Alex with actionable options. For ambiguous matches, show the candidates with explanations of differences. For low-confidence matches, explain what requirements aren't well-satisfied. For missing matches, suggest supplier catalog searches to find suitable parts.
+
+This gives Alex the information needed to make informed decisions: update KiCad component specifications, search for better inventory options, or accept suggested matches with understanding of any compromises.
 
 
-
-## Data processing - Heuristics and filtering
-### Scenario: `[Filter.Items]`
-Filter inventory to match profile's supplier ecosystem
-@Steps:
-@Description
-Course filtering can be done to triage the candidate pool:
- - a specific IPN attribute
- - the component's type: derived from the Footprint, Symbol or explicit type attribute
- - the package: either explicit or derived from the Footprint name
- - some fabs have in house parts that are beneficial to use, but unavailable to users of other fabs
-
-
-@End
 
 ### Scenario: `[Grade.Items]`
-Grading candidate items is a way to quantify confidence in the "electro-mechanical" match between the KiCad component and the Inventory Item's attributes
-@Steps:
-@Description
-A "100%" confidence implies that this Item meets all of the designer's stated requirements.
-Less than 100% leads to warnings to the user that there is a potential issue if this item is used in this application.
+Quantify how well inventory items satisfy component requirements
 
-Fine grained confidence grading comes from nuances relating to value and supply chain preferences
- - values need to be normalized: 1,000 -vs- 1000 -vs- 1K -vs- 1k -vs- 102 ...
- - Tolerances need to be taken into account:  a 10% tolerance component can be substituted with a higher tolerance item (i.e., 5%, 1%); due to volume pricing, it is often true that a 1% resistor is significantly cheaper than a 10%...
- - Resistor values follow an eia decade pattern across the various orders of magnitude: E6 20% tolerance, E12 10%, E24 5%, E96 1%, ...
- - Equivalence may be nuanced:  LEDs emit in a range of wavelengths: is Green the same as Emerald?  How much blue-green is OK?  Brightness may be "similar mcd values", though "beam angle". lumens and mcd ratings are confusing
-@End
+Alex needs to understand match quality when the system suggests inventory items for his components. A "perfect match" means the inventory item meets or exceeds all requirements. Lower grades indicate potential issues that Alex should review.
+
+The system should provide confidence scores with clear explanations. A 1% resistor matching a 5% requirement gets high confidence ("tolerance upgrade"). A 10% resistor matching 5% requirement gets low confidence ("tolerance downgrade - verify if acceptable"). Value mismatches, package incompatibilities, or missing specifications reduce confidence.
+
+This helps Alex make informed decisions about whether suggested matches are suitable for his design or if he needs to search for better alternatives.
 
 ### Scenario: `[Rank.Items]`
-Ranking is a way to show a preference between multiple otherwise interchangible items
+Manage inventory priorities to optimize cost and avoid waste
 
-@Steps:
-@Description
- - old -vs- new stock and first-in-first-out policies
- - geographic location or stock availability
- - taking advantage of pricing incentives
+Alex has real inventory management challenges: expensive parts already purchased that need to be used up before ordering cheaper alternatives, partial reels that shouldn't be wasted, preferred suppliers for consistency, and evolving cost optimization as market conditions change.
+
+For example, Alex bought an expensive reel of resistors from LCSC for JLC assembly, then found cheaper equivalents. He wants to rank the expensive reel as Priority 1 (use first) and the basic part as Priority 2 (use after expensive stock is consumed). Later, when the expensive parts are used up, he can flip the priorities.
+
+The system should respect Alex's explicit inventory priorities while providing flexibility to adjust rankings as business needs evolve. This prevents waste of already-purchased parts while enabling long-term cost optimization.
 
 ## Data classification
 ### Scenario: `[Identify.Ambiguous]`
-BOM content: Identify ambiguous project components that matched multiple inventory items
-@Steps:
-@Description
-While it is possible to do some good guessing, it is better to inform the user and let them resolve things:
-  - Many times an exact match isn't possible; how many and which candidates should be provided?
-  - if only 1 candidate exists, but it has a low ranking score, what is the user to make of the result?  There is a good chance that the suggested component isn't really suitable, or that the KiCad component wasn't sufficiently annotated - though it would be good to quantify this with real examples...
-  - a small number of candidates may indicate an over-constrained component combined with an incomplete inventory.  Both will require iterating.
-  - there should be a way for the user to indicate how many candidates to return.
+Flag components with unclear or multiple inventory matches
 
-@End
+Alex needs to know when component matching produces uncertain results that require his attention. Sometimes multiple inventory items match equally well, sometimes the single match has low confidence, sometimes the component specification is too vague or too restrictive.
+
+The system should clearly identify ambiguous situations: "R5 matched 3 equally-suitable 1kΩ resistors - choose preferred supplier" or "C12 has only one low-confidence match - verify 25V rating is sufficient for 12V design" or "U3 found no matches - specifications may be incomplete."
+
+This validation feedback helps Alex decide whether his BOM is fabrication-ready or needs component specification improvements, inventory updates, or supplier searches.
 
 
 ### Scenario: `[Identify.Gaps]`
-Identify items that lack supply chain details
-@Steps:
-@Description
-This is an audit of the inventory itself.
-It asks whether the search results for this item contain desirable or required fields that aren't in the inventory: power ratings, max voltages and currents,
-@End
+Audit inventory completeness for fabrication readiness
+
+Alex's inventory may have components that lack critical supply chain details needed for ordering or fabrication. Components might be missing manufacturer part numbers, supplier information, or key specifications that fabricators require.
+
+The system should identify inventory gaps that could block fabrication: "10 components missing supplier part numbers - cannot generate fabricator BOM" or "5 items lack power ratings - verify specifications before high-power applications."
+
+This inventory audit helps Alex prioritize which components need supplier research (`[Search.Suppliers]`) to find complete part specifications and update his inventory for fabrication readiness.
 
 
 ### Scenario: `[Identify.Obsolete]`
-BOM content: Identify obsolete project components that matched retired inventory items
-@Steps:
-@Description
-Supplier catalogs sometimes indicate whether this item is active, not recommended for new products, or obsolete.  Pruning out unobtaniun is a task that is difficult to do manually, but easy if automated.
-Inventory items may become undesirable for many reasons other than obsolescence - price, reliability, etc
+Warn about components using discontinued or problematic inventory items
 
-This feature is about finding out what KiCad projects are impacted by inventory changes.
-@End
+Alex's inventory may contain parts that are no longer suitable - supplier catalogs mark them as obsolete, not recommended for new designs, or they've become too expensive. Alex needs to know which current projects use these problematic parts before committing to fabrication.
+
+The system should identify lifecycle issues: "R12, C5 using discontinued LCSC parts - find alternatives before production" or "U7 marked 'not recommended for new designs' - consider upgrade" or "Q3 price increased 300% - evaluate cheaper alternatives."
+
+This proactive warning helps Alex update his designs and inventory before supply chain problems block fabrication or inflate costs.
 
 
 ### Scenario: `[Identify.Orphans]`
-BOM content: Identify orphan project components that didn't match inventory items
-@Steps:
-@Description
-This feature is about finding the components in a KiCad project that `[Match.Components]` fails to find a matching inventory item for
-@End
+Highlight project components with no inventory matches
+
+Alex needs to know which components in his project have no corresponding inventory items. These orphaned components block BOM generation and fabrication until Alex finds suitable supplier options.
+
+The system should clearly list unmatched components: "5 components need inventory: U4 (STM32F103), C15 (22pF, NP0), D3 (Schottky, SOD-123)" with enough detail for Alex to search supplier catalogs effectively.
+
+This orphan list becomes the input for supplier catalog searches (`[Search.Suppliers]` → `[Select.Items]`) to find suitable parts and expand Alex's inventory to cover all project requirements.
 
 
 
 ## Create artifacts
 ### Scenario: `[Create.BOM]`
-Annotated BOM using inventory data
-@Steps:
-@Description
-A KiCad BOM (Bill of Materials) is a comprehensive list of all electronic components, footprints, and, often, manufacturer part numbers (like Digi-Key or Mouser) required to assemble a PCB, typically exported as a CSV or HTML file. It acts as a crucial, customized purchasing list generated from either the schematic (Eeschema) or PCB layout.
+Generate fabricator-ready bill of materials with supplier details
 
-Purpose: Lists every part needed (reference designators, quantities, values, footprints) to turn a design into a physical board.
-Customization:
-  - Can expose custom component fields from your schematic, pcb and/or inventory files (e.g., vendor, cost, manufacturer part number) to ensure the generated BOM is ready for procurement.
-  - Can order the fields/columns in any arbitrary order
-  - Can specify an arbitrary name for columns in the BOM
-  - supply chain profiles can provide custom field lists, column naming and remapping  (e.g., a JLC profile may specify that the inventory field named "Supplier Part Number" be presented in the BOM as "LCSC" for components sourced from LCSC)
-Integration with KiCad: KiCad provides a robust BOM subsystem under eeschema's "Generate BOM" heading as well as its integrated "Symbol Fields Table".  jBOM's KiCad integration should integrate tightly with these tools.
-@End
+Alex needs BOMs that fabricators can process directly for assembly - not generic "1kΩ resistor" entries but real supplier part numbers they can order and place. Different fabricators need different formats: JLCPCB wants "LCSC" columns with LCSC part numbers, PCBWay wants "Mouser PN" columns.
+
+The system should generate BOMs using matched inventory data and profile-specific formatting. For JLCPCB assembly, map inventory "Supplier Part Number" to BOM column "LCSC" for LCSC-sourced parts. Include all required fabricator fields: reference designators, quantities, values, footprints, and supplier details.
+
+This produces complete fabrication packages that Alex can submit directly to assembly houses without manual BOM editing or part number lookup.
 
 
 ### Scenario: `[Create.CAM]`
-Fabricator-compatible Gerber and drill files
-@Steps:
-@Description
-To fabricate a PCB using KiCad, you primarily need to generate Gerber files (RS-274X or X2 format) for the layers and Excellon Drill files for hole data, usually zipped together. Essential layers include copper, solder mask, silkscreen, and board outline.
-Required Files for PCB Fabrication (Bare Board)
-Gerber Files: These describe each layer.
- - Copper Layers: Top (.GTL), Bottom (.GBL), and internal layers if applicable.
- - Solder Mask: Top (.GTS) and Bottom (.GBS).
- - Silkscreen: Top (.GTO) and Bottom (.GBO).
- - Board Outline: Edge.Cuts (.gm1 or similar).
- - Drill Files (.drl or .txt): Separate files for plated (PTH) and non-plated (NPTH) holes, often containing "PTH" or "NPTH" in the filename.
+Generate PCB fabrication files using fabricator-specific settings
 
-Integration with KiCad: KiCad has robust support for creating assembly files:
-Open Board Editor: Go to File > Plot.
-Select Layers: Ensure F.Cu, B.Cu, F.Paste, B.Paste, F.SilkS, B.SilkS, F.Mask, B.Mask, and Edge.Cuts are selected.
-Settings: Use X2 or RS-274X format. Check "Plot footprint references" and "Force plotting invisible values".
-Generate Drills: Click "Generate Drill File(s)", ensuring "Map file" is unchecked and "Oval holes" are set to "Use route command".
-Archive: Zip all generated files into a single .zip file for the manufacturer.
+Alex needs complete, correctly-formatted fabrication file packages for PCB manufacturers. Different fabricators have different requirements: file naming conventions, Gerber format preferences, drill file specifications, and packaging standards.
 
-BOM's KiCad integration should integrate tightly with these tools.
+The system should orchestrate KiCad's plotting capabilities with profile-defined fabricator requirements. For JLCPCB, generate X2 Gerber format with specific layer naming. For PCBWay, use different drill file settings. Package everything in properly-named ZIP archives that fabricators can process directly.
 
-@End
+This automates the complex, error-prone process of generating fabrication files, ensuring Alex gets manufacturer-ready packages without remembering dozens of fabricator-specific settings.
 
 
 ### Scenario: `[Create.CPL]`
-Fabricator-compatible component placement file
-@Steps:
-@Description
-A KiCad CPL (Component Placement List) or Position file is a text-based, manufacturing output file that provides the exact X/Y coordinates, rotation, and board side (top/bottom) for every component that will be assembled on a PCB. It is essential for automated assembly, telling pick-and-place machines where to place components.
+Generate component placement files for automated assembly
 
-CPL files follow a naming pattern (that can be defined in a supply chain profile).  Examples include {projectname}.CPL.csv and {projectname}.pos
+Alex needs accurate component placement files for pick-and-place machines. Different assembly houses have different CPL format requirements: column naming, coordinate systems, file splitting (top/bottom), and units (mm vs inches).
 
-Key Aspects of CPL Files
-Purpose: The file allows assembly houses to automate the placement of surface-mount (SMD) and through-hole components.
-Data Included: Usually contains Reference Designator (RefDes), Mid-X, Mid-Y, Rotation, and Layer.
-Format: Typically exported as a CSV file for compatibility with manufacturers.
-Important Options: When exporting, it is recommended to select "CSV," "mm" units, and "One file per side" (for separate top/bottom files).
-Verification: It is crucial to verify the orientation in the manufacturer's preview, as rotation discrepancies (e.g., 180°) can occur. Many fabricators offer an engineering pre-check to identify and remediate this type of problem.
+The system should generate CPL files using PCB layout data and profile-specific formatting. Include precise component coordinates, rotations, reference designators, and any custom fields needed for assembly. Handle fabricator differences: JLCPCB wants specific column names, PCBWay uses different coordinate origins.
 
-Customization:
-  - Can expose custom component fields from your pcb and/or inventory files to ensure the generated CPL is ready for procurement.
-  - Can order the fields/columns in any arbitrary order
-  - Can specify an arbitrary name for columns in the CPL
-  - supply chain profiles can provide custom field lists, column naming and remapping
-  -
-Integration with KiCad: KiCad's PCB Editor provides a robust CPL subsystem in File > Fabrication Outputs > Footprint Position (.pos) File.
-jBOM's KiCad integration should integrate tightly with these tools.
-
-@End
+This ensures Alex's placement files work correctly with automated assembly equipment, preventing costly placement errors and assembly delays.
 
 
 ### Scenario: `[Create.Docs]`
-Special instructions, board stack ups, silk screen / mask colors...
-@Steps:
-@Description
-KiCad board stackup details are stored within the main .kicad_pcb board file and the project's .kicad_pro project file.
+Generate fabricator documentation and special requirements
 
-Within the KiCad Project Files
-.kicad_pcb file: The physical layer stackup information (material, thickness, etc.) is primarily defined and stored in the board file itself. This file is a human-readable S-expression text file, and the stackup information can be found in a dedicated section.
-.kicad_pro file: Some project-specific settings, such as custom layer visibility presets, are stored in the project file.
-This project-centric storage method ensures that the stackup details are self-contained within the project, making it easier to share the complete design with others without missing information.
+Alex's projects may have special fabrication requirements beyond standard Gerbers: specific stackup materials, solder mask colors, silkscreen specifications, controlled impedance requirements, or special assembly instructions.
 
-Accessing the Stackup Details
-You can access and manage the stackup details through the KiCad interface:
-Open the PCB Editor.
-Go to File > Board Setup.
-Navigate to the Board Stackup section.
-From here, you have several options for managing the data:
- - View and edit: You can directly modify the physical stackup, layer names, and types.
- - Export: KiCad provides an "Export to clipboard" button to copy the stackup details as a text/CSV format for use in external documentation for manufacturers. The data is also included in a JSON format in the Gerber job file when you generate fabrication outputs.
- - Import: You can import stackup settings from another KiCad project file using the "Import settings from another board" button in the Board Setup dialog.
- - Place a table on the board: You can use Place > Add Stackup Table to place a visual, automatically-generated table of the stackup on a user-defined layer within the PCB editor itself, which can then be included in fabrication drawings. @End
+The system should extract documentation from KiCad project files (stackup tables, design rules, special layers) and profile-specific templates to create fabricator documentation. Include stackup specifications, material requirements, color preferences, and any custom assembly notes Alex needs to communicate.
 
+This ensures fabricators have complete project requirements, reducing back-and-forth clarifications and fabrication errors from missing specifications.
+
+
+### Scenario: `[Manage.Inventory]`
+Handle inventory file operations and data management
+
+Alex's inventory files need robust handling: reading/writing multiple formats (CSV, Excel, Numbers), validating data integrity, enforcing schema requirements, generating consistent IPNs for new components, handling file corruption gracefully, and maintaining backups.
+
+The system should provide reliable inventory file operations regardless of format or data completeness. Handle format conversions, data validation, error recovery, and maintain data consistency across all inventory operations.
+
+This foundational capability supports all inventory workflows - creation, updates, repairs, and expansions.
 
 ### Scenario: `[Create.Inventory]`
-Create an inventory with supply chain details
-@Steps:
-@Description
-When starting out using jBOM, the user may not have any inventory files.
-One way of creating inventory files is to extract the unique components from one or more KiCad projects, interactively search supply chain catalogs for matching and desirable parts, and expoer the resule into an inventory.
+Create new inventory from KiCad projects and supplier sources
 
-After using inventories and jBOM for a while, one might wish to update an existing inventory with unmatched components from a KiCad project, using a method similar to the above.
+Alex needs to bootstrap inventory from scratch or merge multiple sources into new inventory files. Starting with KiCad project components, empty inventory templates, or combining existing inventory sources into consolidated files.
 
-@End
+The system should extract unique components from KiCad projects, set up proper inventory file structures, and merge multiple inventory sources intelligently. Uses `[Manage.Inventory]` for all file operations and data handling.
+
+This gives Alex the ability to create inventory foundations from his existing KiCad projects and consolidate inventory sources as his operations grow.
+
+### Scenario: `[Update.Inventory]`
+Add supplier details and components to existing inventory
+
+Alex needs to enhance existing inventory with new supplier information, add components from new projects, or fill gaps identified by validation processes. The key is preserving existing inventory data while adding new information.
+
+The system should match new components against existing inventory items, add supplier details from search results (`[Search.Suppliers]` → `[Select.Items]`), and incrementally expand inventory without data loss. Uses `[Manage.Inventory]` for all file operations.
+
+This enables Alex to continuously improve his inventory as he encounters new components and finds better supplier options.
