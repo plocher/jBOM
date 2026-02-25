@@ -1,13 +1,22 @@
-# Phase 2+: Remaining Work to Complete jbom-new
+# jBOM-new: Complete Roadmap
 
-**Status**: Planning
+**Status**: Phase 1 ✅ Complete | Phase 2 🚧 In Progress
 **Date**: 2026-02-25
-**Context**: Phase 1 complete - sophisticated matcher extracted and tested
+**Last Updated**: After PR #58 merge
 
 ## Overview
-With Phase 1 complete, jbom-new has a proven sophisticated matching algorithm in a clean architecture. This document outlines the remaining work to make jbom-new feature-complete and production-ready.
+This is the master roadmap for completing jbom-new. Phase 1 delivered a sophisticated matching algorithm in clean architecture. Phases 2-9 add fabricator selection, integration, and production readiness.
+
+**Progress:**
+- ✅ **Phase 1 Complete**: Sophisticated matcher (PR #57, Issue #48, 122 tests passing)
+- 🚧 **Phase 2 Active**: Fabricator selection (Issues #59, #60)
+- ⏳ **Phases 3-9**: Planned (76-109 hours remaining)
 
 ## Phase 2: Fabricator-Aware Inventory Selection (ADR 0001)
+
+**Status**: 🚧 Active
+**Issues**: #59 (schema), #60 (consignment)
+**Tactical Details**: See `../PHASE_2_TASKS.md` for actionable task breakdown
 
 ### Goal
 Implement the fabricator selection layer that works with the Phase 1 matcher.

@@ -117,7 +117,7 @@ This design allows the same inventory to serve multiple fabricators with differe
 
 See tactical task breakdown with file paths, tests, and dependency order:
 - **`docs/workflow/PHASE_2_TASKS.md`** (actionable tasks for sub-agents)
-- `docs/workflow/planning/PHASE_2_REMAINING_WORK.md` (strategic planning)
+- `docs/workflow/planning/JBOM_NEW_ROADMAP.md` (master roadmap: all phases)
 
 **Phase 2 ordering invariant**: `(preference_tier, item.priority, -score)`
 
@@ -130,4 +130,5 @@ Our tests and discussion clarified an important design nuance:
 ## SEE ALSO
 - `docs/architecture/adr/0001-fabricator-inventory-selection-vs-matcher.md`
 - `docs/architecture/anti-patterns.md`
-- `docs/workflow/planning/PHASE_2_REMAINING_WORK.md`
+- `docs/workflow/planning/JBOM_NEW_ROADMAP.md` (complete roadmap)
+- `docs/workflow/PHASE_2_TASKS.md` (Phase 2 tactical tasks)
