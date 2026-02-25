@@ -12,6 +12,40 @@ With Phase 1 complete, jbom-new has a proven sophisticated matching algorithm in
 ### Goal
 Implement the fabricator selection layer that works with the Phase 1 matcher.
 
+### Prerequisite: Fabricator Config Schema Refactoring (Issue #59)
+**Estimated**: 3-4 hours
+
+**Problem**: Current `priority_fields` conflates field name synonyms with tier preferences.
+
+**Solution**: Separate into two schema elements:
+```yaml
+# Before (implicit, conflated)
+part_number:
+  priority_fields: ["LCSC", "LCSC Part", "JLC", "MPN"]
+
+# After (explicit, separated)
+field_synonyms:
+  lcsc: ["LCSC", "LCSC Part", "JLC"]
+  mpn: ["MPN", "MFGPN"]
+
+part_number_source_tiers:
+  0: [lcsc]  # Catalog
+  1: [mpn]   # Crossref
+```
+
+**Tasks**:
+1. Update fabricator YAML schema
+2. Migrate existing configs (jlc.fab.yaml, pcbway.fab.yaml, generic.fab.yaml, seeed.fab.yaml)
+3. Update `FabricatorConfig` dataclass to parse new schema
+4. Add tests for synonym resolution
+5. Update documentation
+
+**Benefits**:
+- Eliminates semantic collision with `item.priority`
+- Makes tier assignments explicit (not implicit by position)
+- Enables reusable synonym mappings across all fields
+- Cleaner foundation for Phase 2.1 implementation
+
 ### Tasks
 
 #### 2.1: FabricatorInventorySelector Service
