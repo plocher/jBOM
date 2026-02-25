@@ -68,12 +68,13 @@
 
 ### Completed Tasks
 - ✅ Task 1.1: Document anti-patterns (`docs/architecture/anti-patterns.md`)
+- ✅ Task 1.2: Extract value parsing utilities (`src/jbom/common/value_parsing.py`)
+- ✅ Task 1.2b: Unit test value parsing (`tests/unit/test_value_parsing.py`)
 
 ### In Progress Tasks
 None
 
 ### Upcoming Tasks
-- [ ] Task 1.2: Extract value_parsing.py
 - [ ] Task 1.3: Extract package_matching.py
 - [ ] Task 1.4: Extract component_classification.py
 - [ ] Task 1.5: Create sophisticated_inventory_matcher.py
@@ -89,6 +90,47 @@ None
 
 ### Questions/Blockers
 None yet
+
+---
+
+## 2026-02-25
+
+### Session 4: Task 1.2 Extract Value Parsing Utilities
+**Duration**: ~45 minutes
+**Agent**: Oz (Warp auto)
+
+**Goal**: Port legacy value parsing helpers into jbom-new to prepare for the sophisticated matcher extraction.
+
+**What Happened**:
+- Reviewed legacy implementation in `src/jbom/common/values.py`.
+- Created `src/jbom/common/value_parsing.py` in jbom-new with type hints and docstrings.
+- Performed a basic import + sanity check via `PYTHONPATH=... python -c ...`.
+
+**Output**:
+- Files: `src/jbom/common/value_parsing.py`
+- Tests: Not added yet (next task: 1.2b)
+
+**Course Corrections**:
+- Kept scope to a faithful port + documentation; no refactors of matcher services yet.
+
+**Next**: Task 1.2b (Unit test value_parsing.py)
+
+### Session 5: Task 1.2b Unit Test Value Parsing
+**Duration**: ~20 minutes
+**Agent**: Oz (Warp auto)
+
+**Goal**: Add unit tests for the ported value parsing utilities to support future behavior-level work.
+
+**What Happened**:
+- Created `tests/unit/test_value_parsing.py`.
+- Covered positive cases, negative/malformed input, and edge cases (case/whitespace/μ-symbol variants).
+- Verified tests pass: `pytest -q tests/unit/test_value_parsing.py`.
+
+**Output**:
+- Files: `tests/unit/test_value_parsing.py`
+- Tests: 76 passed
+
+**Next**: Task 1.3 (Extract package_matching.py)
 
 ---
 
