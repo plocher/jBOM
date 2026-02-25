@@ -12,6 +12,37 @@ With Phase 1 complete, jbom-new has a proven sophisticated matching algorithm in
 ### Goal
 Implement the fabricator selection layer that works with the Phase 1 matcher.
 
+### Testing Strategy Note
+**Key Insight**: `generic` fabricator is the **explicit default**, not absence-of-fabricator.
+
+CLI behavior:
+```bash
+jbom bom project.kicad_sch  # Implicitly: --fabricator generic
+```
+
+**Benefits for testing:**
+1. **Reproducible default**: All tests have well-defined baseline behavior
+2. **Isolation**: Feature tests assume generic default, override only when testing fabricator-specific logic
+3. **Composition**: Features stack cleanly (matching → catalog preference → consignment → project filtering)
+4. **No hardcoded assumptions**: "No fabricator specified" behavior is defined in `generic.fab.yaml`, not code
+
+**BDD Test Pattern:**
+```gherkin
+# Base tests use implicit generic default
+Scenario: Component matches inventory
+  Given inventory with standard items
+  When I generate a BOM  # Uses generic fabricator
+  Then component matches by MPN
+
+# Fabricator-specific tests override explicitly
+Scenario: JLC prefers catalog over crossref
+  Given fabricator "jlc"
+  When I generate a BOM with fabricator "jlc"
+  Then catalog item (tier 0) beats crossref (tier 1)
+```
+
+This makes `generic.fab.yaml` the **reference implementation** for all baseline testing.
+
 ### Prerequisite: Fabricator Config Schema Refactoring (Issue #59)
 **Estimated**: 3-4 hours
 
