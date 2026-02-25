@@ -13,10 +13,19 @@ Design constraints:
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from typing import List, Optional
 
+from jbom.common.component_classification import get_component_type
+from jbom.common.constants import ComponentType
+from jbom.common.package_matching import extract_package_from_footprint
 from jbom.common.types import Component, InventoryItem
+from jbom.common.value_parsing import (
+    parse_cap_to_farad,
+    parse_ind_to_henry,
+    parse_res_to_ohms,
+)
 
 
 @dataclass(frozen=True)
@@ -49,15 +58,99 @@ class MatchResult:
 class SophisticatedInventoryMatcher:
     """Matches a single :class:`~jbom.common.types.Component` against inventory.
 
-    This service will eventually port the legacy multi-stage algorithm (primary
-    filtering + scoring + priority ordering). For Phase 1 Task 1.5 we only define
-    the interface.
+    Phase 1 extraction plan:
+    - Task 1.5: define the service interface
+    - Task 1.5b: port primary filtering (fast rejection)
+    - Task 1.5c: port scoring + ordering and implement :meth:`find_matches`
     """
 
     def __init__(self, options: MatchingOptions):
         """Create a matcher with a fixed configuration."""
 
         self._options = options
+
+    @staticmethod
+    def _normalize_value(value: str) -> str:
+        """Normalize a value string for non-numeric comparisons.
+
+        This is a legacy-compatible normalization used for primary filtering of
+        non-passive components.
+        """
+
+        t = (value or "").strip().lower()
+        t = re.sub(r"[Ωω]|ohm", "", t)
+        t = t.replace("μ", "u")
+        t = re.sub(r"\s+", "", t)
+        return t
+
+    def _passes_primary_filters(
+        self, component: Component, item: InventoryItem
+    ) -> bool:
+        """Return True if an inventory item is eligible for scoring.
+
+        Ported from legacy jBOM's `_passes_primary_filters`.
+
+        Filters (in order):
+        1) Type/category match (when component type can be determined)
+        2) Package match (when a package can be extracted from footprint)
+        3) Value match:
+           - Numeric equality for RES/CAP/IND
+           - Otherwise normalized string equality
+        """
+
+        comp_type = get_component_type(component.lib_id, component.footprint)
+        comp_pkg = extract_package_from_footprint(component.footprint)
+        comp_val_norm = (
+            self._normalize_value(component.value) if component.value else ""
+        )
+
+        # 1) Type/category must match if we could determine it.
+        if comp_type:
+            cat = (item.category or "").upper()
+            if comp_type not in cat:
+                return False
+
+        # 2) Package must match when we can extract it.
+        if comp_pkg:
+            ipkg = (item.package or "").lower()
+            if comp_pkg not in ipkg:
+                return False
+
+        # 3) Value match by type (numeric for RES/CAP/IND).
+        if comp_val_norm:
+            if comp_type == ComponentType.RESISTOR:
+                comp_num = parse_res_to_ohms(component.value)
+                inv_num = parse_res_to_ohms(item.value)
+                if (
+                    comp_num is None
+                    or inv_num is None
+                    or abs(comp_num - inv_num) > 1e-12
+                ):
+                    return False
+            elif comp_type == ComponentType.CAPACITOR:
+                comp_num = parse_cap_to_farad(component.value)
+                inv_num = parse_cap_to_farad(item.value)
+                if (
+                    comp_num is None
+                    or inv_num is None
+                    or abs(comp_num - inv_num) > 1e-18
+                ):
+                    return False
+            elif comp_type == ComponentType.INDUCTOR:
+                comp_num = parse_ind_to_henry(component.value)
+                inv_num = parse_ind_to_henry(item.value)
+                if (
+                    comp_num is None
+                    or inv_num is None
+                    or abs(comp_num - inv_num) > 1e-18
+                ):
+                    return False
+            else:
+                inv_val_norm = self._normalize_value(item.value) if item.value else ""
+                if not inv_val_norm or inv_val_norm != comp_val_norm:
+                    return False
+
+        return True
 
     def find_matches(
         self, component: Component, inventory: List[InventoryItem]
@@ -73,12 +166,13 @@ class SophisticatedInventoryMatcher:
             ordering rules (priority, then score).
 
         Raises:
-            NotImplementedError: Until Task 1.5b/1.5c ports the legacy behavior.
+            NotImplementedError: The scoring + ordering implementation is added
+                in Task 1.5c.
         """
 
         raise NotImplementedError(
-            "SophisticatedInventoryMatcher is interface-only (Task 1.5). "
-            "Implementation is introduced in Task 1.5b/1.5c."
+            "SophisticatedInventoryMatcher.find_matches is not implemented yet "
+            "(Task 1.5c ports scoring + ordering)."
         )
 
 
