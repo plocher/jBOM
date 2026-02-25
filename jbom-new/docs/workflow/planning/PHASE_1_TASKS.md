@@ -218,7 +218,7 @@ Same paired pattern as 1.2:
 ---
 
 ## Task 1.5b: Implement Primary Filtering ⏱️ 60-90 min
-**Status**: 🔴 Not started
+**Status**: ✅ Complete (commits 3a63bad, 66bed7a)
 **Depends on**: Task 1.5
 
 **What You Do**:

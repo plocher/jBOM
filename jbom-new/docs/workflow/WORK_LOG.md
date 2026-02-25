@@ -239,6 +239,31 @@ None yet
 
 **Next**: Task 1.5b (Implement primary filtering)
 
+### Session 10: Task 1.5b Implement Primary Filtering
+**Duration**: ~30 minutes
+**Agent**: Oz (Warp auto)
+
+**Goal**: Port legacy matcher primary filtering into `SophisticatedInventoryMatcher` as a fast-rejection step before scoring.
+
+**What Happened**:
+- Implemented legacy-compatible primary filtering in `src/jbom/services/sophisticated_inventory_matcher.py`:
+  - Type/category filter using `jbom.common.component_classification.get_component_type()`
+  - Package extraction + filter using `jbom.common.package_matching.extract_package_from_footprint()`
+  - Numeric equality checks for RES/CAP/IND using `jbom.common.value_parsing`
+  - Legacy-compatible normalization fallback for non-passives
+- Added unit tests:
+  - `tests/unit/test_sophisticated_inventory_matcher_primary_filtering.py`
+
+**Output**:
+- Commits:
+  - 3a63bad "feat: port matcher primary filtering"
+  - 66bed7a "test: add unit tests for matcher primary filtering"
+
+**Course Corrections**:
+- Kept scope to primary filtering only; scoring + ordering deferred to Task 1.5c.
+
+**Next**: Task 1.5c (Implement scoring algorithm)
+
 ---
 
 ## Session Template
