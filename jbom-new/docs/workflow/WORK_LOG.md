@@ -43,11 +43,34 @@
 
 **Next**: Phase 1 Task 1.1 with Sonnet
 
+## 2026-02-24
+
+### Session 3: Task 1.1 Document Anti-Patterns
+**Duration**: ~30 minutes
+**Agent**: Oz (Warp auto)
+
+**Goal**: Document the architectural anti-patterns in old-jbom before extracting the sophisticated matcher into jbom-new.
+
+**What Happened**:
+- Reviewed legacy matcher and BOM plumbing in:
+  - `src/jbom/processors/inventory_matcher.py`
+  - `src/jbom/generators/bom.py`
+  - `src/jbom/cli/commands/builtin/bom.py`
+- Captured concrete anti-patterns with proposed jbom-new alternatives.
+
+**Output**:
+- Created: `docs/architecture/anti-patterns.md`
+
+**Course Corrections**:
+- Kept scope to documentation only (no extraction/refactor yet).
+
+**Next**: Task 1.2 (Extract value_parsing.py)
+
 ### Completed Tasks
-None yet
+- ✅ Task 1.1: Document anti-patterns (`docs/architecture/anti-patterns.md`)
 
 ### In Progress Tasks
-- [ ] Task 1.1: Document anti-patterns
+None
 
 ### Upcoming Tasks
 - [ ] Task 1.2: Extract value_parsing.py
@@ -57,7 +80,12 @@ None yet
 - [ ] Task 1.6: Unit tests for matcher
 
 ### Decisions Made
-None yet
+- Phase 1 extraction guardrails:
+  - Domain services must not perform file I/O during construction; inventory loading is separate from matching.
+  - Domain services return structured diagnostics; no debug-string assembly or printing in domain logic.
+  - Replace unstructured “result dicts” with typed result objects (dataclasses) as public contracts.
+  - Shared helpers live as domain-model pure functions; avoid calling other objects’ private methods.
+  - Prefer decomposition of scoring logic into small testable functions (no rule engine in Phase 1).
 
 ### Questions/Blockers
 None yet
