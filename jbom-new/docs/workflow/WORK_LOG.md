@@ -71,17 +71,17 @@
 - ✅ Task 1.2: Extract value parsing utilities (`src/jbom/common/value_parsing.py`)
 - ✅ Task 1.2b: Unit test value parsing (`tests/unit/test_value_parsing.py`)
 - ✅ Task 1.3: Extract package matching utilities (`src/jbom/common/package_matching.py`)
-
-### Completed Tasks (Session 7)
 - ✅ Task 1.3b: Unit test package matching (`tests/unit/test_package_matching.py`)
+- ✅ Task 1.4: Extract component classification (`src/jbom/common/component_classification.py`) (pending commit)
+- ✅ Task 1.4b: Unit test component classification (`tests/unit/test_component_classification.py`) (pending commit)
 
 ### In Progress Tasks
-- [ ] Task 1.4: Extract component_classification.py (next)
+- [ ] Task 1.5: Design matcher service interface (next)
 
 ### Upcoming Tasks
-- [ ] Task 1.4b: Unit test component classification
-- [ ] Task 1.5: Create sophisticated_inventory_matcher.py
-- [ ] Task 1.6: Unit tests for matcher
+- [ ] Task 1.5b: Implement primary filtering
+- [ ] Task 1.5c: Implement scoring algorithm
+- [ ] Task 1.6: Integration tests for matcher
 
 ### Decisions Made
 - Phase 1 extraction guardrails:
@@ -186,6 +186,32 @@ None yet
 - Handled pre-commit hook fixes by re-adding and committing modified files.
 
 **Next**: Task 1.4 (Extract component_classification.py)
+
+### Session 8: Task 1.4 + 1.4b Component Classification
+**Duration**: ~20 minutes
+**Agent**: Oz (Warp auto)
+
+**Goal**: Port component classification helpers into jbom-new and introduce a ComponentClassifier concept to host future sophistication.
+
+**What Happened**:
+- Created `src/jbom/common/component_classification.py`:
+  - Ported legacy categorization helpers (normalize/type-to-fields/value interpretation).
+  - Introduced `ComponentClassifier` protocol + default `HeuristicComponentClassifier` implementation.
+- Updated `src/jbom/common/component_utils.py` to delegate to `component_classification` (compatibility shim).
+- Created unit tests: `tests/unit/test_component_classification.py`.
+- Verified tests pass: `pytest -q jbom-new/tests/unit/test_component_classification.py` (13 passed).
+
+**Output**:
+- Files:
+  - `src/jbom/common/component_classification.py`
+  - `src/jbom/common/component_utils.py`
+  - `tests/unit/test_component_classification.py`
+- Commits: (pending)
+
+**Course Corrections**:
+- Kept behavior equivalent to the existing POC heuristic, while adding an explicit extension point for future rule/config-driven classification.
+
+**Next**: Task 1.5 (Design matcher service interface)
 
 ---
 

@@ -1,7 +1,7 @@
 # What to Do Next
 
 ## Current Task
-**Task 1.4: Extract Component Classification** (Ready to start)
+**Task 1.5: Design Matcher Service Interface** (Ready to start)
 
 **Previous Tasks**:
 - ✅ Doc Cleanup (Haiku agent, 13 commits)
@@ -9,6 +9,8 @@
 - ✅ Task 1.2: Value Parsing (commit aaf79ec, 76 tests)
 - ✅ Task 1.3: Package Matching (commit 7fab2d2)
 - ✅ Task 1.3b: Package Matching Tests (commit ceaf62a, 20 tests)
+- ✅ Task 1.4: Component Classification (pending commit)
+- ✅ Task 1.4b: Component Classification Tests (pending commit)
 
 ## Current Branch
 `feature/phase-1-extract-matcher`
@@ -19,26 +21,26 @@ Utilities extraction in progress:
 - ✅ Task 1.2: value_parsing (complete)
 - ✅ Task 1.3: package_matching (complete)
 - ✅ Task 1.3b: package_matching tests (complete)
-- → Task 1.4: component_classification (current)
+- ✅ Task 1.4: component_classification (complete)
+- → Task 1.5: matcher service interface (current)
 
-## Files to Extract
-**Target**: `src/jbom/common/component_classification.py`
-**Source**: `src/jbom/processors/component_types.py`
+## Target
+**File**: `src/jbom/services/sophisticated_inventory_matcher.py`
 
-## What to Extract
-Component classification functions:
-- get_component_type(): Classify components based on lib_id (e.g., "Device:R" → "RES")
-- get_category_fields(): Get relevant fields for component categories
-- ComponentType constants: Standard component type identifiers
+## What to Do
+Design a clean service interface (no implementation yet):
+- MatchingOptions dataclass
+- SophisticatedInventoryMatcher class skeleton
+- Method signatures + return dataclasses for results
 
 ## Success Criteria
-- [ ] File: `src/jbom/common/component_classification.py` created
-- [ ] Functions: get_component_type(), get_category_fields()
-- [ ] ComponentType constants ported
-- [ ] Import works: `from jbom.common.component_classification import get_component_type`
+- [ ] Clear constructor: `__init__(self, options: MatchingOptions)`
+- [ ] Main method accepts domain objects (not file paths)
+- [ ] Return type is structured (dataclass), not tuples/dicts
+- [ ] No file I/O in the service interface
 
 ## Estimated Time
-45 minutes
+45-60 minutes
 
 ## Notes
-Port component classification utilities from legacy jbom to support sophisticated matcher extraction.
+This is a Phase 1 checkpoint: the interface will drive all later matcher ports. Keep it simple and faithful to legacy behavior (no new features).
