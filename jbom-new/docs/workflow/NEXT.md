@@ -111,11 +111,15 @@ This design allows the same inventory to serve multiple fabricators with differe
 - **Consignment relationships** (fab-specific vs generic stock)
 - **Part number schemas** (LCSC vs distributor catalogs vs manufacturer data)
 
-Primary reference for Phase 2 planning:
-- `docs/workflow/planning/PHASE_2_REMAINING_WORK.md`
+## Next Action: Start Phase 2 Implementation
 
-Expected Phase 2 ordering invariant:
-- `(preference_tier, item.priority, -score)`
+**Ready to start**: Task 2.0 (Fabricator Config Schema Migration)
+
+See tactical task breakdown with file paths, tests, and dependency order:
+- **`docs/workflow/PHASE_2_TASKS.md`** (actionable tasks for sub-agents)
+- `docs/workflow/planning/PHASE_2_REMAINING_WORK.md` (strategic planning)
+
+**Phase 2 ordering invariant**: `(preference_tier, item.priority, -score)`
 
 ## Phase 1 design note (keep)
 Our tests and discussion clarified an important design nuance:
