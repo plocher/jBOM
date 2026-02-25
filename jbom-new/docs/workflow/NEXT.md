@@ -15,12 +15,10 @@
 
 ## Context
 Phase 1: Extract sophisticated matcher utilities.
-Anti-patterns documented ✅ (see docs/architecture/anti-patterns.md).
-
-Now extracting shared utilities before the main matcher service:
-- ✅ Task 1.2: value_parsing (resistors, capacitors, inductors)
-- ✅ Task 1.2b: unit tests for value_parsing
-- Task 1.3: package_matching (footprint → package extraction)
+Utilities extraction in progress:
+- ✅ Task 1.2: value_parsing (complete)
+- → Task 1.3: package_matching (current)
+- Task 1.4: component_classification (next)
 - Task 1.4: component_classification (type detection)
 
 ## Files to Extract From
