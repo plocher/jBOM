@@ -1,7 +1,7 @@
 # What to Do Next
 
 ## Current Task
-**Task 1.5: Design Matcher Service Interface** (Ready to start)
+**Task 1.5b: Implement Primary Filtering** (Ready to start)
 
 **Previous Tasks**:
 - ✅ Doc Cleanup (Haiku agent, 13 commits)
@@ -11,6 +11,7 @@
 - ✅ Task 1.3b: Package Matching Tests (commit ceaf62a, 20 tests)
 - ✅ Task 1.4: Component Classification (pending commit)
 - ✅ Task 1.4b: Component Classification Tests (pending commit)
+- ✅ Task 1.5: Matcher Service Interface (commit 40b7106)
 
 ## Current Branch
 `feature/phase-1-extract-matcher`
@@ -22,25 +23,26 @@ Utilities extraction in progress:
 - ✅ Task 1.3: package_matching (complete)
 - ✅ Task 1.3b: package_matching tests (complete)
 - ✅ Task 1.4: component_classification (complete)
-- → Task 1.5: matcher service interface (current)
+- ✅ Task 1.5: matcher service interface (complete)
+- → Task 1.5b: primary filtering (current)
 
 ## Target
 **File**: `src/jbom/services/sophisticated_inventory_matcher.py`
 
 ## What to Do
-Design a clean service interface (no implementation yet):
-- MatchingOptions dataclass
-- SophisticatedInventoryMatcher class skeleton
-- Method signatures + return dataclasses for results
+Implement primary filtering from legacy matcher `_passes_primary_filters`:
+- Type/category matching
+- Package matching
+- Value normalization and numeric comparisons for RES/CAP/IND
+- Add unit tests for filtering behavior
 
 ## Success Criteria
-- [ ] Clear constructor: `__init__(self, options: MatchingOptions)`
-- [ ] Main method accepts domain objects (not file paths)
-- [ ] Return type is structured (dataclass), not tuples/dicts
-- [ ] No file I/O in the service interface
+- [ ] Filtering logic ported accurately
+- [ ] Tests demonstrate filtering behavior
+- [ ] No "enhancements" added
 
 ## Estimated Time
-45-60 minutes
+60-90 minutes
 
 ## Notes
-This is a Phase 1 checkpoint: the interface will drive all later matcher ports. Keep it simple and faithful to legacy behavior (no new features).
+Keep scope tight: port behavior, not structure. No file I/O; accept domain objects.

@@ -213,6 +213,32 @@ None yet
 
 **Next**: Task 1.5 (Design matcher service interface)
 
+### Session 9: Task 1.5 Design Matcher Service Interface
+**Duration**: ~20 minutes
+**Agent**: Oz (Warp auto)
+
+**Goal**: Define a clean domain-service interface for the sophisticated matcher (no implementation yet) that ports desired behavior, not legacy structure.
+
+**What Happened**:
+- Added `src/jbom/services/sophisticated_inventory_matcher.py` with:
+  - `MatchingOptions` configuration dataclass
+  - `MatchResult` output dataclass
+  - `SophisticatedInventoryMatcher` skeleton with typed `find_matches()`
+- Confirmed no file I/O or CLI concerns in the service interface.
+- Ran targeted Phase 1 unit tests:
+  - `pytest tests/unit/test_package_matching.py tests/unit/test_component_classification.py`
+- Ran full BDD suite:
+  - `python -m behave --format progress`
+
+**Output**:
+- Commit: 40b7106 "feat: add sophisticated inventory matcher interface"
+- File: `src/jbom/services/sophisticated_inventory_matcher.py`
+
+**Course Corrections**:
+- Kept scope to interface only; implementation deferred to Task 1.5b/1.5c.
+
+**Next**: Task 1.5b (Implement primary filtering)
+
 ---
 
 ## Session Template
