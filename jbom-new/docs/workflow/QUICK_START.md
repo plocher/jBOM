@@ -7,26 +7,32 @@
 cat jbom-new/docs/workflow/NEXT.md
 
 # 2. Read the full task card
-cat jbom-new/docs/workflow/planning/PHASE_1_TASKS.md | less
-# (search for the task in NEXT.md)
+cat jbom-new/docs/workflow/planning/PHASE_x_TASKS.md
+# (You should find the task mentioned in NEXT.md)
 
-# 3. Open Warp, start working
+# 3. Open Warp, start working with the sub-agent
 ```
 
-## The Paired Pattern (Copy-Paste to Agent)
+## The Paired Pattern (Copy-Paste to Sub-Agent)
+
+Ready to start? Open Warp and say:
 
 ```
-Let's work on Task 1.X - [task name]
+/agent You are a python software developer and a systems architect helping me to address tech debt in an existing code base.  We are refactoring an electronic design tool called jBOM into a modular and better defined jbom-new.
 
-Here's what I understand:
-- We're [what we're doing]
-- Success means [criteria from task card]
-- I want to watch for [any concerns]
+We are in the jBOM git repo: `~/Dropbox/KiCad/jBOM` with a remote github origin, and should be doing our work in a feature branch.
+We are in the directory `jbom-new/docs/workflow`
+The big picture is in `./planning/PHASE_2_TASKS.md`.
+
+We will focus on the task found in the colaboration document `./NEXT.md`
+
+Use the markdown documents in `./planning/ [README.md, QUICK_START.md, GIT_WORKFLOW.md]` and `../architecture/*` to guide your work
+Update `./WORK_LOG.md` to reflect what has been completed.
 
 Show me your plan before you start.
 ```
 
-## Your Review Questions (Ask Yourself)
+## Review Questions (Ask Yourself)
 
 ✅ **Is it SIMPLE?** No "improvements", no extra features
 ✅ **Do I UNDERSTAND it?** Can I explain it to someone?
@@ -52,7 +58,7 @@ Include co-author line:
 Co-Authored-By: Warp <agent@warp.dev>
 ```
 
-Then **you update**:
+Then **ysub-agent updates**:
 1. `jbom-new/docs/WORK_LOG.md` - add session entry
 2. `jbom-new/docs/workflow/NEXT.md` - point to next task
 3. `jbom-new/docs/PHASE_1_TASKS.md` - mark task done
@@ -60,7 +66,7 @@ Then **you update**:
 ## Files You Need
 
 📄 **docs/workflow/NEXT.md** - What to do right now
-📄 **docs/PHASE_1_TASKS.md** - All tasks with checklists
+📄 **docs/PHASE_2_TASKS.md** - All tasks with checklists
 📄 **docs/HUMAN_WORKFLOW.md** - Detailed workflow guide
 📄 **docs/WORK_LOG.md** - Session history
 
@@ -70,22 +76,3 @@ Then **you update**:
 **Slow is smooth** - Review prevents rewrites
 **Simple beats clever** - Understand > elegant
 **Stop when stuck** - Clarity before speed
-
----
-
-## First Task: Task 1.1
-
-Ready to start? Open Warp and say:
-
-```
-Let's work on Task 1.1 - document anti-patterns from old-jbom
-
-Here's what I understand:
-- We're analyzing old-jbom code to identify architectural problems
-- Success means creating anti-patterns.md with 3-5 concrete examples
-- I want to watch for: actual code examples, clear explanations
-
-Show me your plan before you start.
-```
-
-Then follow the paired pattern above. Good luck! 🚀
