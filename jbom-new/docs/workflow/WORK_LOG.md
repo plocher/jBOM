@@ -264,6 +264,38 @@ None yet
 
 **Next**: Task 1.5c (Implement scoring algorithm)
 
+### Session 11: Task 1.5c Implement Scoring + Ordering
+**Duration**: ~40 minutes
+**Agent**: Oz (Warp auto)
+
+**Goal**: Port legacy `_calculate_match_score` behavior into `SophisticatedInventoryMatcher` and implement deterministic ordering.
+
+**What Happened**:
+- Implemented scoring + ordering in `src/jbom/services/sophisticated_inventory_matcher.py`:
+  - Type match (+50)
+  - Value match (+40)
+  - Footprint/package match (+30)
+  - Property bonus for tolerance/voltage/wattage
+  - Keyword bonus (+10)
+- Implemented `find_matches()`:
+  - Uses `_passes_primary_filters` fast rejection
+  - Sorts exactly by: `(item.priority asc, score desc)` (per ADR 0001 Option A)
+  - Does not modify `item.priority`
+  - Documents that fabricator-specific filtering is caller responsibility
+- Added unit tests:
+  - `tests/unit/test_sophisticated_inventory_matcher_scoring_and_ordering.py`
+- Verified BDD suite still passes.
+
+**Output**:
+- Commits:
+  - ca5bb30 "feat: implement matcher scoring and ordering"
+  - 099ead2 "test: add unit tests for matcher scoring and ordering"
+
+**Course Corrections**:
+- Followed ADR 0001: kept matcher fabricator-agnostic; no fabricator params.
+
+**Next**: Task 1.6 (Integration tests for matcher)
+
 ---
 
 ## Session Template

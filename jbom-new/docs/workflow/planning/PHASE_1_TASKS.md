@@ -244,7 +244,7 @@ Same paired pattern as 1.2:
 ---
 
 ## Task 1.5c: Implement Scoring Algorithm ⏱️ 60-90 min
-**Status**: 🔴 Not started
+**Status**: ✅ Complete (commits ca5bb30, 099ead2)
 **Depends on**: Task 1.5b
 
 **What You Do**: Same careful review

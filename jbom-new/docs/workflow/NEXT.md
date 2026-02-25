@@ -1,7 +1,7 @@
 # What to Do Next
 
 ## Current Task
-**Task 1.5c: Implement Scoring Algorithm** (Ready to start)
+**Task 1.6: Integration Tests for Matcher** (Ready to start)
 
 **Previous Tasks**:
 - ✅ Doc Cleanup (Haiku agent, 13 commits)
@@ -13,6 +13,7 @@
 - ✅ Task 1.4b: Component Classification Tests (pending commit)
 - ✅ Task 1.5: Matcher Service Interface (commit 40b7106)
 - ✅ Task 1.5b: Primary Filtering (commits 3a63bad, 66bed7a)
+- ✅ Task 1.5c: Scoring + Ordering (commits ca5bb30, 099ead2)
 
 ## Current Branch
 `feature/phase-1-extract-matcher`
@@ -26,28 +27,25 @@ Utilities extraction in progress:
 - ✅ Task 1.4: component_classification (complete)
 - ✅ Task 1.5: matcher service interface (complete)
 - ✅ Task 1.5b: primary filtering (complete)
-- → Task 1.5c: scoring + ordering (current)
+- ✅ Task 1.5c: scoring + ordering (complete)
+- → Task 1.6: integration tests (current)
 
 ## Target
 **File**: `src/jbom/services/sophisticated_inventory_matcher.py`
 
 ## What to Do
-Implement scoring + ordering from legacy matcher `_calculate_match_score`:
-- Type match weight (50)
-- Value match weight (40)
-- Footprint/package match weight (30)
-- Property matching (tolerance/voltage/wattage)
-- Final ordering: priority ascending, then score descending
-- Add unit tests for scoring weights + ordering
+Create integration tests validating the Phase 1 sophisticated matcher behavior:
+- Use representative components + inventory items
+- Confirm primary filtering + scoring results are equivalent to legacy for key cases
+- Confirm ordering is exactly: (item.priority asc, score desc)
 
 ## Success Criteria
-- [ ] Scoring produces same outcomes as legacy matcher for representative cases
-- [ ] Ordering matches legacy: (priority asc, score desc)
-- [ ] Tests demonstrate scoring weights + ordering behavior
-- [ ] No "enhancements" added
+- [ ] Real components match correctly
+- [ ] Results equivalent to old-jbom
+- [ ] Integration tests pass
 
 ## Estimated Time
 60-90 minutes
 
 ## Notes
-Keep scope tight: port behavior, not structure. No file I/O; accept domain objects.
+This is the first end-to-end verification of the Phase 1 matcher port. Keep it focused on equivalence.
