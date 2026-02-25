@@ -1,6 +1,110 @@
 # CHANGELOG
 
 
+## v6.4.0 (2026-02-25)
+
+### Features
+
+* feat: implement matcher scoring and ordering
+
+Implement Task 1.5c in SophisticatedInventoryMatcher:
+- score weights: type (50), value (40), footprint/package (30)
+- property bonus: tolerance/voltage/wattage
+- keyword bonus (+10)
+- ordering exactly: (item.priority asc, score desc)
+
+Per ADR 0001, matcher is fabricator-agnostic; caller supplies pre-selected inventory.
+
+Co-Authored-By: Oz <oz-agent@warp.dev>
+Co-Authored-By: Warp <agent@warp.dev> ([`ca5bb30`](https://github.com/plocher/jBOM/commit/ca5bb30d38a81f459b1c5c53d241391acdd41c96))
+
+* feat: port matcher primary filtering
+
+Implement Task 1.5b primary filtering helpers in SophisticatedInventoryMatcher:
+- type/category filter
+- package extraction + filter
+- numeric equality for RES/CAP/IND via value_parsing
+- legacy-compatible value normalization fallback
+
+Scoring + ordering remain in Task 1.5c.
+
+Co-Authored-By: Oz <oz-agent@warp.dev>
+Co-Authored-By: Warp <agent@warp.dev> ([`3a63bad`](https://github.com/plocher/jBOM/commit/3a63bad2d8621c74612949b3786774eaf054b50e))
+
+* feat: add sophisticated inventory matcher interface
+
+Define the Task 1.5 service contract for Phase 1 matcher extraction:
+- MatchingOptions and MatchResult dataclasses
+- SophisticatedInventoryMatcher skeleton with typed find_matches()
+
+Interface-only (no implementation, no file I/O).
+
+Co-Authored-By: Oz <oz-agent@warp.dev>
+Co-Authored-By: Warp <agent@warp.dev> ([`40b7106`](https://github.com/plocher/jBOM/commit/40b710674fbc7282eba0f33c703e2a59a6f77444))
+
+* feat: extract component classification utilities
+
+Port component type detection from old-jbom with extension point:
+- normalize_component_type() - Maps lib_id to category (RES, CAP, IC, etc.)
+- get_category_fields() - Returns relevant fields per component type
+- get_value_interpretation() - Indicates how to parse values
+- ComponentClassifier protocol - Extension point for future sophistication
+- HeuristicComponentClassifier - Default pure implementation
+- get_component_type() - Main classification function
+
+Source: src/jbom/processors/component_types.py
+Target: jbom-new/src/jbom/common/component_classification.py
+
+Updated component_utils.py to delegate to new module (compat shim).
+Follows protocol pattern for future extensibility while keeping Phase 1 simple.
+
+Resolves Task 1.4 (Phase 1).
+
+Co-Authored-By: Warp <agent@warp.dev> ([`34aaebb`](https://github.com/plocher/jBOM/commit/34aaebb7516818f2a54e70b964d48d9b0c2e563a))
+
+* feat: extract package matching utilities from legacy jbom
+
+- Port PackageType constants and SMD/through-hole package lists
+- Add extract_package_from_footprint() function for KiCad footprint parsing
+- Add footprint_matches_package() function for inventory matching
+- Include comprehensive type hints and docstrings with examples
+- Support dash-variant package naming (e.g., sot-23 vs sot23)
+- All functions are pure (no side effects, no I/O)
+
+Co-Authored-By: Warp <agent@warp.dev> ([`7fab2d2`](https://github.com/plocher/jBOM/commit/7fab2d2a2aca3170452dd15c70a65b70ce811f2f))
+
+* feat: extract value parsing utilities from old-jbom
+
+Port value parsing functions with EIA standard support:
+- parse_res_to_ohms() - Resistor value parsing (10K, 2M2, 0R22)
+- parse_cap_to_farad() - Capacitor value parsing (100nF, 1u0, 220pF)
+- parse_ind_to_henry() - Inductor value parsing (10uH, 2m2)
+- ohms_to_eia(), farad_to_eia(), henry_to_eia() - EIA converters
+- cap_unit_multiplier(), ind_unit_multiplier() - Unit conversion
+
+Source: src/jbom/common/values.py
+Target: jbom-new/src/jbom/common/value_parsing.py
+
+All functions are pure (no side effects, no I/O) per AP-4.
+Added comprehensive type hints and docstrings.
+
+Resolves Task 1.2 (Phase 1).
+
+Co-Authored-By: Warp <agent@warp.dev> ([`aaf79ec`](https://github.com/plocher/jBOM/commit/aaf79ecaebf68cb2091029c4de0134624a20cb6b))
+
+### Unknown
+
+* Merge pull request #57 from plocher/feature/phase-1-extract-matcher
+
+Phase 1: Extract Sophisticated Matcher from Legacy jBOM ([`9e1e4f7`](https://github.com/plocher/jBOM/commit/9e1e4f7b22b63b834533243a973f02e4c0accc54))
+
+* Merge pull request #55 from plocher/feature/test-architecture-rebuild
+
+docs: comprehensive user stories and functional requirements for jBOM architecture ([`e9401c8`](https://github.com/plocher/jBOM/commit/e9401c8720dc16e451244ca443f7decdcc3c9d11))
+
+* doc: brainstorming on user requirements ([`dc5d67d`](https://github.com/plocher/jBOM/commit/dc5d67d185ba7b2f899bb82718f46a16a0363d13))
+
+
 ## v6.3.1 (2026-01-26)
 
 ### Bug Fixes
