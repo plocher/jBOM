@@ -22,7 +22,10 @@ When generating a BOM for assembly, different fabricators have different supply 
 - `item.fabricator == ""` → generic, available to any fabricator
 
 **Fabricator configs declare part number preferences** (Issue #59 - schema refactoring):
-- `field_synonyms`: Map field name variants to canonical names (e.g., "LCSC", "LCSC Part", "JLC" → `lcsc`)
+- `field_synonyms`: Three-level field name design
+  - **Canonical name**: Internal identifier used in code and tier definitions
+  - **Synonyms**: Variant column names accepted from inventory CSVs
+  - **Display name**: What appears in BOM output column headers
 - `part_number_source_tiers`: Explicit tier definitions using canonical names
   - Tier 0: Native catalog (preferred)
   - Tier 1+: Crossref/fallback sources
@@ -53,8 +56,12 @@ When generating a BOM for assembly, different fabricators have different supply 
 - **JLCPCB**
   ```yaml
   field_synonyms:
-    lcsc: ["LCSC", "LCSC Part", "JLC"]
-    mpn: ["MPN", "MFGPN"]
+    lcsc:
+      synonyms: ["LCSC", "LCSC Part", "LCSC Part #", "JLC"]
+      display_name: "LCSC Part Number"
+    mpn:
+      synonyms: ["MPN", "MFGPN"]
+      display_name: "MPN"
   part_number_source_tiers:
     0: [lcsc]   # Catalog
     1: [mpn]    # Crossref
@@ -67,9 +74,15 @@ When generating a BOM for assembly, different fabricators have different supply 
 - **PCBWay**
   ```yaml
   field_synonyms:
-    pcbway: ["PCBWay", "PCBWay Part"]
-    mouser: ["Mouser", "Mouser Part Number"]
-    mpn: ["MPN", "MFGPN"]
+    pcbway:
+      synonyms: ["PCBWay", "PCBWay Part"]
+      display_name: "PCBWay Part Number"
+    mouser:
+      synonyms: ["Mouser", "Mouser Part Number"]
+      display_name: "Mouser P/N"
+    mpn:
+      synonyms: ["MPN", "MFGPN"]
+      display_name: "MPN"
   part_number_source_tiers:
     0: [pcbway]        # Native catalog
     1: [mouser, digikey]  # Preferred distributors
@@ -83,7 +96,9 @@ When generating a BOM for assembly, different fabricators have different supply 
 - **Generic**
   ```yaml
   field_synonyms:
-    mpn: ["MPN", "MFGPN", "Part Number", "P/N"]
+    mpn:
+      synonyms: ["MPN", "MFGPN", "Part Number", "P/N"]
+      display_name: "Part Number"
   part_number_source_tiers:
     0: [mpn]  # All manufacturer data equal
   ```

@@ -17,7 +17,7 @@ Implement the fabricator selection layer that works with the Phase 1 matcher.
 
 **Problem**: Current `priority_fields` conflates field name synonyms with tier preferences.
 
-**Solution**: Separate into two schema elements:
+**Solution**: Separate into two schema elements with three-level field design:
 ```yaml
 # Before (implicit, conflated)
 part_number:
@@ -25,11 +25,15 @@ part_number:
 
 # After (explicit, separated)
 field_synonyms:
-  lcsc: ["LCSC", "LCSC Part", "JLC"]
-  mpn: ["MPN", "MFGPN"]
+  lcsc:  # Canonical name (internal)
+    synonyms: ["LCSC", "LCSC Part", "LCSC Part #", "JLC"]
+    display_name: "LCSC Part Number"  # BOM output header
+  mpn:
+    synonyms: ["MPN", "MFGPN"]
+    display_name: "MPN"
 
 part_number_source_tiers:
-  0: [lcsc]  # Catalog
+  0: [lcsc]  # Catalog (uses canonical name)
   1: [mpn]   # Crossref
 ```
 
