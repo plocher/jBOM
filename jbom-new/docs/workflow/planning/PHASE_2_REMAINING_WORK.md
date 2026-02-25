@@ -12,6 +12,75 @@ With Phase 1 complete, jbom-new has a proven sophisticated matching algorithm in
 ### Goal
 Implement the fabricator selection layer that works with the Phase 1 matcher.
 
+### Testing Strategy Note
+**Key Insight**: `generic` fabricator is the **explicit default**, not absence-of-fabricator.
+
+CLI behavior:
+```bash
+jbom bom project.kicad_sch  # Implicitly: --fabricator generic
+```
+
+**Benefits for testing:**
+1. **Reproducible default**: All tests have well-defined baseline behavior
+2. **Isolation**: Feature tests assume generic default, override only when testing fabricator-specific logic
+3. **Composition**: Features stack cleanly (matching → catalog preference → consignment → project filtering)
+4. **No hardcoded assumptions**: "No fabricator specified" behavior is defined in `generic.fab.yaml`, not code
+
+**BDD Test Pattern:**
+```gherkin
+# Base tests use implicit generic default
+Scenario: Component matches inventory
+  Given inventory with standard items
+  When I generate a BOM  # Uses generic fabricator
+  Then component matches by MPN
+
+# Fabricator-specific tests override explicitly
+Scenario: JLC prefers catalog over crossref
+  Given fabricator "jlc"
+  When I generate a BOM with fabricator "jlc"
+  Then catalog item (tier 0) beats crossref (tier 1)
+```
+
+This makes `generic.fab.yaml` the **reference implementation** for all baseline testing.
+
+### Prerequisite: Fabricator Config Schema Refactoring (Issue #59)
+**Estimated**: 3-4 hours
+
+**Problem**: Current `priority_fields` conflates field name synonyms with tier preferences.
+
+**Solution**: Separate into two schema elements with three-level field design:
+```yaml
+# Before (implicit, conflated)
+part_number:
+  priority_fields: ["LCSC", "LCSC Part", "JLC", "MPN"]
+
+# After (explicit, separated)
+field_synonyms:
+  lcsc:  # Canonical name (internal)
+    synonyms: ["LCSC", "LCSC Part", "LCSC Part #", "JLC"]
+    display_name: "LCSC Part Number"  # BOM output header
+  mpn:
+    synonyms: ["MPN", "MFGPN"]
+    display_name: "MPN"
+
+part_number_source_tiers:
+  0: [lcsc]  # Catalog (uses canonical name)
+  1: [mpn]   # Crossref
+```
+
+**Tasks**:
+1. Update fabricator YAML schema
+2. Migrate existing configs (jlc.fab.yaml, pcbway.fab.yaml, generic.fab.yaml, seeed.fab.yaml)
+3. Update `FabricatorConfig` dataclass to parse new schema
+4. Add tests for synonym resolution
+5. Update documentation
+
+**Benefits**:
+- Eliminates semantic collision with `item.priority`
+- Makes tier assignments explicit (not implicit by position)
+- Enables reusable synonym mappings across all fields
+- Cleaner foundation for Phase 2.1 implementation
+
 ### Tasks
 
 #### 2.1: FabricatorInventorySelector Service

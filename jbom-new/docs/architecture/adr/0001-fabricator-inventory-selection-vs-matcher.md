@@ -16,7 +16,9 @@ This implies a *multi-step policy*:
 - Eligibility/pruning: keep items that have *either* a native catalog part number *or* a manufacturer part number.
 - Preference/ranking: prefer items with native catalog IDs over items that only have manufacturer IDs.
 
-We already have fabricator configuration with `part_number.priority_fields` (e.g., in `src/jbom/config/fabricators/*.fab.yaml`) that expresses which identifiers are preferred.
+We have fabricator configuration in `src/jbom/config/fabricators/*.fab.yaml`. As of Issue #59, the schema is being refactored to separate two concerns:
+- `field_synonyms`: Map field name variants to canonical names ("LCSC", "LCSC Part" → `lcsc`)
+- `part_number_source_tiers`: Explicit tier definitions using canonical names (0=catalog, 1=crossref)
 
 ## Decision Drivers
 - Preserve domain-centric boundaries (no CLI/I/O concerns in domain services).
@@ -105,7 +107,7 @@ These are distinct concepts that must NOT be conflated:
    - Purpose: Fabricator prefers native catalog items over crossref items
    - Example: JLCPCB prefers LCSC catalog items, falls back to MPN crossref
    - Semantics: Tier 0=catalog (best), Tier 1=crossref, Tier 2=fallback
-   - Set by: Fabricator config YAML (priority_fields order)
+   - Set by: Fabricator config YAML (`part_number_source_tiers` - Issue #59)
    - Scope: Fabricator-specific
    - Used in: Selection eligibility + matcher sorting (primary key)
 
@@ -135,7 +137,7 @@ class EligibleInventoryItem:
     """Inventory item with fabricator selection metadata."""
     item: InventoryItem
     preference_tier: int  # 0=catalog, 1=crossref, 2=fallback
-    matched_field: str    # Which priority_field matched ("LCSC", "MPN", etc.)
+    matched_canonical_field: str  # Which canonical field matched ("lcsc", "mpn", etc.)
 
 class FabricatorInventorySelector:
     """Selects eligible inventory for a fabricator."""
@@ -149,9 +151,13 @@ class FabricatorInventorySelector:
     ) -> List[EligibleInventoryItem]:
         """Filter inventory and annotate with preference tier.
 
-        Returns items that have at least one field from priority_fields.
-        Annotates each with preference_tier based on which field matched.
+        Three-stage process:
+        1. Fabricator affinity filter: item.fabricator == target or ""
+        2. Field synonym normalization: resolve variants to canonical names
+        3. Preference tiering: look up tier from part_number_source_tiers
+
         Does NOT modify item.priority (user's stock management).
+        See Issue #59 for config schema refactoring.
         """
 ```
 
