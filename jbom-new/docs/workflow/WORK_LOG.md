@@ -70,12 +70,12 @@
 - ✅ Task 1.1: Document anti-patterns (`docs/architecture/anti-patterns.md`)
 - ✅ Task 1.2: Extract value parsing utilities (`src/jbom/common/value_parsing.py`)
 - ✅ Task 1.2b: Unit test value parsing (`tests/unit/test_value_parsing.py`)
+- ✅ Task 1.3: Extract package matching utilities (`src/jbom/common/package_matching.py`)
 
 ### In Progress Tasks
-None
+- [ ] Task 1.3b: Unit test package matching
 
 ### Upcoming Tasks
-- [ ] Task 1.3: Extract package_matching.py
 - [ ] Task 1.4: Extract component_classification.py
 - [ ] Task 1.5: Create sophisticated_inventory_matcher.py
 - [ ] Task 1.6: Unit tests for matcher
@@ -131,6 +131,32 @@ None yet
 - Tests: 76 passed
 
 **Next**: Task 1.3 (Extract package_matching.py)
+
+### Session 6: Task 1.3 Extract Package Matching Utilities
+**Duration**: ~25 minutes
+**Agent**: Oz (Warp auto)
+
+**Goal**: Port package matching utilities from legacy jbom to support sophisticated matcher extraction.
+
+**What Happened**:
+- Reviewed legacy implementation in `src/jbom/processors/inventory_matcher.py` and `src/jbom/common/packages.py`.
+- Created `src/jbom/common/package_matching.py` with:
+  - PackageType constants (SMD_PACKAGES, THROUGH_HOLE_PACKAGES)
+  - extract_package_from_footprint() function for KiCad footprint parsing
+  - footprint_matches_package() function with dash-variant support
+- Added comprehensive type hints and docstrings with examples.
+- Verified import and function behavior with sample test cases.
+- Fixed pre-commit linting issues (removed unused import).
+
+**Output**:
+- Files: `src/jbom/common/package_matching.py`
+- Commit: 7fab2d2 "feat: extract package matching utilities from legacy jbom"
+- Tests: Manual verification with sample data
+
+**Course Corrections**:
+- Removed unused `typing.List` import to satisfy flake8.
+
+**Next**: Task 1.3b (Unit test package_matching.py)
 
 ---
 
