@@ -30,17 +30,35 @@ Migrate existing fabricator configs to new schema with field_synonyms and explic
 **New schema structure:**
 ```yaml
 field_synonyms:
-  lcsc:
-    synonyms: ["LCSC", "LCSC Part", "JLC"]
+  fab_pn:
+    synonyms: ["LCSC", "LCSC Part", "JLC Part"]
     display_name: "LCSC Part Number"
   mpn:
     synonyms: ["MPN", "MFGPN"]
     display_name: "MPN"
 
-part_number_source_tiers:
-  0: [lcsc]
-  1: [mpn]
+tier_rules:
+  0:
+    conditions:
+      - field: "Consigned"
+        operator: "exists"
+  1:
+    conditions:
+      - field: "Preferred"
+        operator: "exists"
+      - field: "fab_pn"
+        operator: "exists"
+  2:
+    conditions:
+      - field: "fab_pn"
+        operator: "exists"
+  3:
+    conditions:
+      - field: "mpn"
+        operator: "exists"
 ```
+
+**Key change**: Tiers are based on inventory item properties (Consigned, Preferred), not which field name exists. After field synonym normalization, all LCSC variants → `fab_pn`.
 
 **Action items:**
 1. Update `generic.fab.yaml` first (simplest - single tier)
@@ -73,11 +91,39 @@ class FieldSynonym:
     display_name: str
 
 @dataclass
+class TierCondition:
+    """Condition for tier matching."""
+    field: str
+    operator: str  # "exists", "equals", "not_empty"
+    value: Optional[str] = None
+
+@dataclass
+class TierRule:
+    """Rule for assigning a tier."""
+    conditions: List[TierCondition]
+
+    def matches(self, item: InventoryItem) -> bool:
+        """All conditions must be true (AND logic)."""
+        for cond in self.conditions:
+            field_value = item.raw_data.get(cond.field, "")
+
+            if cond.operator == "exists":
+                if not field_value:
+                    return False
+            elif cond.operator == "not_empty":
+                if not field_value.strip():
+                    return False
+            elif cond.operator == "equals":
+                if field_value != cond.value:
+                    return False
+        return True
+
+@dataclass
 class FabricatorConfig:
     # ... existing fields ...
 
     field_synonyms: Dict[str, FieldSynonym]  # canonical -> synonym config
-    part_number_source_tiers: Dict[int, List[str]]  # tier -> canonical names
+    tier_rules: Dict[int, TierRule]          # tier number -> rule
 
     @staticmethod
     def from_yaml(yaml_dict: dict) -> 'FabricatorConfig':
@@ -90,15 +136,22 @@ class FabricatorConfig:
                 display_name=config['display_name']
             )
 
-        # Parse part_number_source_tiers
-        tiers = {
-            int(tier): canonical_list
-            for tier, canonical_list in yaml_dict.get('part_number_source_tiers', {}).items()
-        }
+        # Parse tier_rules
+        tier_rules = {}
+        for tier_num, rule_config in yaml_dict.get('tier_rules', {}).items():
+            conditions = [
+                TierCondition(
+                    field=c['field'],
+                    operator=c['operator'],
+                    value=c.get('value')
+                )
+                for c in rule_config.get('conditions', [])
+            ]
+            tier_rules[int(tier_num)] = TierRule(conditions=conditions)
 
         return FabricatorConfig(
             field_synonyms=field_synonyms,
-            part_number_source_tiers=tiers,
+            tier_rules=tier_rules,
             # ... other fields ...
         )
 
@@ -172,15 +225,14 @@ class FabricatorInventorySelector:
                 continue
 
             # Stage 3 & 4: Normalize fields and assign tier
-            tier_result = self._assign_tier(item)
-            if tier_result is None:
-                continue  # No usable part number
+            tier = self._assign_tier(item)
+            if tier is None:
+                continue  # No tier matched
 
-            tier, canonical_field = tier_result
             eligible.append(EligibleInventoryItem(
                 item=item,
                 preference_tier=tier,
-                matched_canonical_field=canonical_field
+                matched_canonical_field=""  # Not needed with tier_rules
             ))
 
         return eligible
@@ -211,25 +263,21 @@ class FabricatorInventorySelector:
     def _assign_tier(
         self,
         item: InventoryItem
-    ) -> Optional[tuple[int, str]]:
-        """Normalize fields and assign tier. Returns (tier, canonical_field) or None."""
-        # Build map of canonical names that exist for this item
-        item_fields = {}
-        for field_name, field_value in item.raw_data.items():
-            if not field_value:
-                continue
-            canonical = self._config.resolve_field_synonym(field_name)
-            if canonical:
-                item_fields[canonical] = field_value
-
+    ) -> Optional[int]:
+        """Assign tier using fabricator's tier_rules."""
         # Check tiers in order (0, 1, 2, ...)
-        for tier in sorted(self._config.part_number_source_tiers.keys()):
-            canonical_list = self._config.part_number_source_tiers[tier]
-            for canonical in canonical_list:
-                if canonical in item_fields:
-                    return (tier, canonical)
+        for tier_num in sorted(self._config.tier_rules.keys()):
+            rule = self._config.tier_rules[tier_num]
 
-        return None  # No usable field found
+            # Empty conditions = match all (generic fab)
+            if not rule.conditions:
+                return tier_num
+
+            # Check if item matches all conditions
+            if rule.matches(item):
+                return tier_num
+
+        return None  # No tier matched
 ```
 
 **Tests to add:**
