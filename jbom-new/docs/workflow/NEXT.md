@@ -5,7 +5,8 @@
 
 **Previous Tasks**:
 - ✅ Doc Cleanup (Haiku agent, 13 commits)
-- ✅ Task 1.1: Document Anti-Patterns (anti-patterns.md created)
+- ✅ Task 1.1: Document Anti-Patterns (commit a4db0eb)
+- ✅ Task 1.2: Value Parsing (commit aaf79ec, 76 tests passing)
 - ✅ Task 1.2: Extract Value Parsing Utilities (value_parsing.py created)
 - ✅ Task 1.2b: Unit Test Value Parsing (tests added)
 
