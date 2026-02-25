@@ -19,7 +19,10 @@ from typing import List, Optional
 
 from jbom.common.component_classification import get_component_type
 from jbom.common.constants import ComponentType
-from jbom.common.package_matching import extract_package_from_footprint
+from jbom.common.package_matching import (
+    extract_package_from_footprint,
+    footprint_matches_package,
+)
 from jbom.common.types import Component, InventoryItem
 from jbom.common.value_parsing import (
     parse_cap_to_farad,
@@ -35,6 +38,10 @@ class MatchingOptions:
     Attributes:
         include_debug_info: If True, matcher may populate :attr:`MatchResult.debug_info`.
             This should remain domain-safe diagnostic text (no printing).
+
+    Notes:
+        Per ADR 0001 (Option A), the matcher stays fabricator-agnostic in Phase 1.
+        Fabricator-specific inventory selection is the caller's responsibility.
     """
 
     include_debug_info: bool = False
@@ -89,6 +96,9 @@ class SophisticatedInventoryMatcher:
         """Return True if an inventory item is eligible for scoring.
 
         Ported from legacy jBOM's `_passes_primary_filters`.
+
+        This filter is fabricator-agnostic (ADR 0001). The caller must pass an
+        already fabricator-selected inventory list to :meth:`find_matches`.
 
         Filters (in order):
         1) Type/category match (when component type can be determined)
@@ -152,28 +162,168 @@ class SophisticatedInventoryMatcher:
 
         return True
 
+    @staticmethod
+    def _parse_tolerance_percent(tolerance: str) -> Optional[float]:
+        """Parse tolerance strings like '±5%' or '5%' into a percent float."""
+
+        if not tolerance:
+            return None
+
+        t = tolerance.strip().replace("±", "").replace("%", "").strip()
+        try:
+            return float(t)
+        except ValueError:
+            return None
+
+    def _values_match(self, component: Component, item: InventoryItem) -> bool:
+        """Return True if component and item values match (legacy rules)."""
+
+        if not component.value or not item.value:
+            return False
+
+        comp_type = get_component_type(component.lib_id, component.footprint)
+
+        if comp_type == ComponentType.RESISTOR:
+            comp_num = parse_res_to_ohms(component.value)
+            inv_num = parse_res_to_ohms(item.value)
+            return (
+                comp_num is not None
+                and inv_num is not None
+                and abs(comp_num - inv_num) <= 1e-12
+            )
+
+        if comp_type == ComponentType.CAPACITOR:
+            comp_num = parse_cap_to_farad(component.value)
+            inv_num = parse_cap_to_farad(item.value)
+            return (
+                comp_num is not None
+                and inv_num is not None
+                and abs(comp_num - inv_num) <= 1e-18
+            )
+
+        if comp_type == ComponentType.INDUCTOR:
+            comp_num = parse_ind_to_henry(component.value)
+            inv_num = parse_ind_to_henry(item.value)
+            return (
+                comp_num is not None
+                and inv_num is not None
+                and abs(comp_num - inv_num) <= 1e-18
+            )
+
+        return self._normalize_value(component.value) == self._normalize_value(
+            item.value
+        )
+
+    def _match_properties(self, component: Component, item: InventoryItem) -> int:
+        """Return property match bonus score.
+
+        This ports the Phase 1 property scoring behavior from legacy jBOM:
+        tolerance, voltage, and wattage/power.
+        """
+
+        score = 0
+        properties = component.properties or {}
+
+        # Tolerance matching.
+        if (tol := properties.get("Tolerance")) and item.tolerance:
+            comp_tol = self._parse_tolerance_percent(tol)
+            item_tol = self._parse_tolerance_percent(item.tolerance)
+            if comp_tol is not None and item_tol is not None:
+                if comp_tol == item_tol:
+                    score += 15
+                elif item_tol < comp_tol:
+                    score += 10
+
+        # Voltage matching.
+        for field in ("Voltage", "V"):
+            if (v := properties.get(field)) and item.voltage:
+                if v in item.voltage:
+                    score += 10
+                    break
+
+        # Power / wattage matching.
+        for field in ("Wattage", "Power", "W", "P"):
+            if (w := properties.get(field)) and item.wattage:
+                if w in item.wattage:
+                    score += 10
+                    break
+
+        return score
+
+    def _calculate_match_score(self, component: Component, item: InventoryItem) -> int:
+        """Calculate match score (ported from legacy jBOM).
+
+        Weights:
+        - Type match: +50
+        - Value match: +40
+        - Footprint/package match: +30
+        - Property match bonus: varies
+        - Keyword match: +10
+        """
+
+        score = 0
+
+        comp_type = get_component_type(component.lib_id, component.footprint)
+        if comp_type and comp_type in (item.category or ""):
+            score += 50
+
+        if self._values_match(component, item):
+            score += 40
+
+        if component.footprint and item.package:
+            if footprint_matches_package(component.footprint, item.package):
+                score += 30
+
+        score += self._match_properties(component, item)
+
+        if component.value and item.keywords and component.value in item.keywords:
+            score += 10
+
+        return score
+
     def find_matches(
         self, component: Component, inventory: List[InventoryItem]
     ) -> List[MatchResult]:
         """Find matching inventory items for a single component.
 
+        Notes:
+            Per ADR 0001 (Option A), this matcher is fabricator-agnostic. The
+            caller must supply a pre-selected inventory list appropriate for the
+            intended fabricator.
+
+            Ordering is exactly legacy: `(item.priority asc, score desc)`.
+            This method must NOT modify `item.priority`.
+
         Args:
             component: The schematic component to match.
-            inventory: Candidate inventory items to consider.
+            inventory: Candidate inventory items (pre-selected by caller).
 
         Returns:
-            Matches sorted best-to-worst according to the legacy algorithm's
-            ordering rules (priority, then score).
-
-        Raises:
-            NotImplementedError: The scoring + ordering implementation is added
-                in Task 1.5c.
+            Matches sorted by `(item.priority, -score)`.
         """
 
-        raise NotImplementedError(
-            "SophisticatedInventoryMatcher.find_matches is not implemented yet "
-            "(Task 1.5c ports scoring + ordering)."
-        )
+        if not inventory:
+            return []
+
+        results: List[MatchResult] = []
+        for item in inventory:
+            if not self._passes_primary_filters(component, item):
+                continue
+
+            score = self._calculate_match_score(component, item)
+            if score <= 0:
+                continue
+
+            debug_info = None
+            if self._options.include_debug_info:
+                debug_info = f"ipn={item.ipn}, priority={item.priority}, score={score}"
+
+            results.append(
+                MatchResult(inventory_item=item, score=score, debug_info=debug_info)
+            )
+
+        results.sort(key=lambda r: (r.inventory_item.priority, -r.score))
+        return results
 
 
 __all__ = [
