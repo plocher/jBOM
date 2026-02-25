@@ -1,7 +1,19 @@
 # What to Do Next
 
 ## Current Task
-**Task 1.6: Integration Tests for Matcher** (Ready to start)
+**Checkpoint: Phase 1 Complete**
+
+Phase 1 implementation is complete. Next steps are workflow hygiene:
+- Ensure all changes are committed
+- Update WORK_LOG.md with Task 1.6 completion details
+- Push branch and open PR for review
+- Close the Phase 1 tracking issue(s)
+
+## Note for Future Work
+Our tests and discussion clarified an important design nuance:
+- The *exact numeric scoring* is not inherently valuable; it is a mechanism to achieve good ranking and to eliminate unsuitable matches.
+- Longer term, we may want to evolve matching heuristics toward expressing intent more directly (e.g., “correct type/value/package always beats anything else”, and priority is applied as a first-class ordering constraint), instead of relying on opaque point totals.
+- If we do replace the scoring mechanism in the future, preserve the behavioral contracts: filtering correctness + ordering invariants (priority-first, then best-fit ranking).
 
 **Previous Tasks**:
 - ✅ Doc Cleanup (Haiku agent, 13 commits)

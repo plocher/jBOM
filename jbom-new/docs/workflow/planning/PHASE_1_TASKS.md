@@ -265,7 +265,7 @@ Same paired pattern as 1.2:
 ---
 
 ## Task 1.6: Integration Tests for Matcher ⏱️ 60 min
-**Status**: 🔴 Not started
+**Status**: ✅ Complete
 **Depends on**: Task 1.5c
 
 **What You Do**:

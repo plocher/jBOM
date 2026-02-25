@@ -296,6 +296,42 @@ None yet
 
 **Next**: Task 1.6 (Integration tests for matcher)
 
+### Session 12: Task 1.6 Integration Tests for Matcher
+**Duration**: ~45 minutes
+**Agent**: Oz (Warp auto)
+
+**Goal**: Add end-to-end verification for the Phase 1 sophisticated matcher while distinguishing code regressions from inventory data drift.
+
+**What Happened**:
+- Implemented two complementary integration test suites:
+  - **Self-contained integration tests** (deterministic, no file I/O):
+    - `tests/integration/test_sophisticated_matcher_self_contained.py`
+    - Validates primary filtering, numeric equivalence, ordering, and edge cases.
+  - **Targeted inventory contract tests** (real inventory, drift-aware):
+    - `tests/integration/test_target_inventory_contract.py`
+    - Loads inventory via `InventoryReader` and validates a small set of sentinel expectations.
+    - Differentiates failures:
+      - If expected IPN is present but no longer matched → **MATCH REGRESSION (code failure)**
+      - If expected IPN is missing → **CONTRACT FAILURE (data drift)**
+- Added `tests/conftest.py` to ensure `src/` is on `sys.path` so tests run without external PYTHONPATH setup.
+- Registered the `contract` marker in `pytest.ini`.
+- Refined contract-test failure messages to include component details, whether the expected IPN is present, and a top-candidates preview to speed root-cause analysis.
+
+**Output**:
+- Files:
+  - `tests/integration/test_sophisticated_matcher_self_contained.py`
+  - `tests/integration/test_target_inventory_contract.py`
+  - `tests/conftest.py`
+  - `pytest.ini`
+- Tests:
+  - `pytest -q tests/integration/test_sophisticated_matcher_self_contained.py` (pass)
+  - `pytest -q tests/integration/test_target_inventory_contract.py` (pass)
+
+**Course Corrections**:
+- Avoided relying on mutable example inventories for core regression coverage by keeping deterministic tests self-contained.
+
+**Next**: Checkpoint: Phase 1 Complete
+
 ---
 
 ## Session Template
