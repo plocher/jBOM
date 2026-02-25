@@ -1,14 +1,13 @@
 # What to Do Next
 
 ## Current Task
-**Task 1.3b: Unit Test Package Matching** (Ready to start)
+**Task 1.3b: Unit Tests for Package Matching** (Ready to start)
 
 **Previous Tasks**:
 - ✅ Doc Cleanup (Haiku agent, 13 commits)
 - ✅ Task 1.1: Document Anti-Patterns (commit a4db0eb)
-- ✅ Task 1.2: Value Parsing (commit aaf79ec, 76 tests passing)
-- ✅ Task 1.2: Extract Value Parsing Utilities (value_parsing.py created)
-- ✅ Task 1.2b: Unit Test Value Parsing (tests added)
+- ✅ Task 1.2: Value Parsing (commit aaf79ec, 76 tests)
+- ✅ Task 1.3: Package Matching (commit 7fab2d2)
 - ✅ Task 1.3: Extract Package Matching Utilities (commit 7fab2d2)
 
 ## Current Branch
