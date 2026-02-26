@@ -1,6 +1,90 @@
 # CHANGELOG
 
 
+## v6.5.0 (2026-02-26)
+
+### Bug Fixes
+
+* fix: stabilize schematic loading and resolver errors
+
+- Add services.readers import path for patchable parser helpers
+- Make SchematicReader permissive; defer filtering to component_filters
+- Improve resolver missing-file errors (still include 'File not found' for unit tests)
+- Restore --units token for pos --help compatibility
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`bb4b1e3`](https://github.com/plocher/jBOM/commit/bb4b1e3dc035cf49d598f7b70c2f02a084189b62))
+
+* fix: add workflow registry module
+
+Provides jbom.workflows.registry (register/get/clear) for lightweight workflow lookup.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`5bf25bb`](https://github.com/plocher/jBOM/commit/5bf25bbc96b307d6ca0999ed4cfbe473e65db279))
+
+* fix: add generalized CLI tabular formatting
+
+Implements Column/print_table/print_tabular_data to support consistent console tables.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`5bf6e93`](https://github.com/plocher/jBOM/commit/5bf6e932a23788ec994cdcb343d4c7fad3236835))
+
+### Features
+
+* feat: sort matcher results by preference tier
+
+Accept EligibleInventoryItem inventory inputs and order matches by:
+(preference_tier, item.priority, -score).
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`face70d`](https://github.com/plocher/jBOM/commit/face70de28cbf9d78857b49d6c4775896c3511dc))
+
+* feat: add fabricator inventory selector service (Task 2.2)
+
+Implements Phase 2 fabricator-aware selection as a separate domain service:
+- Fabricator affinity filter (generic or matching fabricator id)
+- Project restriction via optional Projects field (basename normalized)
+- Field synonym normalization (internal only; InventoryItem.raw_data not mutated)
+- Tier assignment via fabricator tier_rules (ascending tier order)
+
+Adds unit coverage for affinity, project filtering, synonym-driven tiering,
+consignment tier, and ineligible items.
+
+Tests: pytest tests/unit/test_fabricator_inventory_selector.py -v
+
+Co-Authored-By: Oz <oz-agent@warp.dev>
+Co-Authored-By: Warp <agent@warp.dev> ([`639d5da`](https://github.com/plocher/jBOM/commit/639d5dacd7b5f68f0c96de4f780f76c3e049d9c5))
+
+* feat: implement field_synonyms and tier_rules schema (Tasks 2.0 + 2.1)
+
+Task 2.0: Migrate fabricator configs to new schema
+- Update generic.fab.yaml, jlc.fab.yaml, pcbway.fab.yaml, seeed.fab.yaml
+- Replace part_number.priority_fields with field_synonyms + tier_rules
+- Tier assignment now condition-based, not field-existence-based
+
+Task 2.1: Extend FabricatorConfig to parse new schema
+- Add FieldSynonym, TierCondition, TierRule dataclasses
+- Implement resolve_field_synonym() (case-insensitive, trimmed)
+- Add from_yaml_dict() for centralized parsing + validation
+- Unit tests: test_fabricator_config_schema.py
+
+All 4 fabricator configs parse correctly.
+Tests pass: fabricator config loading + schema validation.
+
+Issues: #59 (schema design), #60 (consignment support)
+
+Co-Authored-By: Oz <oz-agent@warp.dev>
+Co-Authored-By: Warp <agent@warp.dev> ([`8d13c53`](https://github.com/plocher/jBOM/commit/8d13c535bd85f09126f5091738d140d5305f2122))
+
+### Unknown
+
+* Merge pull request #61 from plocher/feature/issue-59-fabricator-schema-migration
+
+feat: Phase 2 - Fabricator-aware inventory selection (Issues #59, #60) ([`e8beb91`](https://github.com/plocher/jBOM/commit/e8beb91c0386b1a45deb187565264a79a2490961))
+
+* doc: explicit agent permission for git commits ([`d7a0996`](https://github.com/plocher/jBOM/commit/d7a0996432d34293370b245ffaf2135eaf7eb19b))
+
+* Merge pull request #58 from plocher/docs/phase-1-completion-updates
+
+docs: Update workflow documentation for Phase 1 completion ([`d4623d5`](https://github.com/plocher/jBOM/commit/d4623d5a98e2d86777626b922e1f45eb65e280a1))
+
+
 ## v6.4.0 (2026-02-25)
 
 ### Features
