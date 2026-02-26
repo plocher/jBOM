@@ -66,8 +66,6 @@ class SupplierConfig:
             )
 
         part_number_cfg = data.get("part_number") or {}
-        if part_number_cfg is None:
-            part_number_cfg = {}
 
         if not isinstance(part_number_cfg, dict):
             raise ValueError(f"Supplier '{sid}' part_number must be a mapping")
