@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from jbom.common.types import Component, InventoryItem
+from jbom.services.fabricator_inventory_selector import EligibleInventoryItem
 from jbom.services.sophisticated_inventory_matcher import (
     MatchingOptions,
     SophisticatedInventoryMatcher,
@@ -123,6 +124,46 @@ def test_find_matches_orders_by_priority_then_score_desc() -> None:
     )
 
     assert [r.inventory_item.ipn for r in results] == ["LOWER-SCORE", "HIGH-SCORE"]
+
+
+def test_find_matches_orders_by_preference_tier_then_priority_then_score() -> None:
+    matcher = SophisticatedInventoryMatcher(MatchingOptions())
+
+    component = _make_component(
+        lib_id="Device:R",
+        value="10K",
+        footprint="R_0603_1608Metric",
+        properties={"Tolerance": "5%"},
+    )
+
+    tier_0_high_priority = _make_inventory_item(
+        ipn="TIER0",
+        category="RES",
+        value="10k",
+        package="0603",
+        priority=99,
+        keywords="",
+        tolerance="",
+    )
+    tier_1_low_priority = _make_inventory_item(
+        ipn="TIER1",
+        category="RES",
+        value="10k",
+        package="0603",
+        priority=1,
+        keywords="foo 10K bar",
+        tolerance="5%",
+    )
+
+    results = matcher.find_matches(
+        component,
+        [
+            EligibleInventoryItem(item=tier_1_low_priority, preference_tier=1),
+            EligibleInventoryItem(item=tier_0_high_priority, preference_tier=0),
+        ],
+    )
+
+    assert [r.inventory_item.ipn for r in results] == ["TIER0", "TIER1"]
 
 
 def test_debug_info_optional() -> None:

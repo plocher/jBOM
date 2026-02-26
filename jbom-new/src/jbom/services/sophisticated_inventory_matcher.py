@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List, Optional, Sequence, Union
 
 from jbom.common.component_classification import get_component_type
 from jbom.common.constants import ComponentType
@@ -29,6 +29,7 @@ from jbom.common.value_parsing import (
     parse_ind_to_henry,
     parse_res_to_ohms,
 )
+from jbom.services.fabricator_inventory_selector import EligibleInventoryItem
 
 
 @dataclass(frozen=True)
@@ -282,31 +283,46 @@ class SophisticatedInventoryMatcher:
         return score
 
     def find_matches(
-        self, component: Component, inventory: List[InventoryItem]
+        self,
+        component: Component,
+        inventory: Sequence[Union[InventoryItem, EligibleInventoryItem]],
     ) -> List[MatchResult]:
         """Find matching inventory items for a single component.
 
         Notes:
-            Per ADR 0001 (Option A), this matcher is fabricator-agnostic. The
-            caller must supply a pre-selected inventory list appropriate for the
-            intended fabricator.
+            Per ADR 0001 (Option A), this matcher remains fabricator-agnostic.
+            Fabricator-specific policy lives in the selection layer.
 
-            Ordering is exactly legacy: `(item.priority asc, score desc)`.
-            This method must NOT modify `item.priority`.
+            However, Phase 2 introduces a preference-tier hint via
+            :class:`~jbom.services.fabricator_inventory_selector.EligibleInventoryItem`.
+            When present, ordering is:
+
+            `(preference_tier asc, item.priority asc, score desc)`
+
+            Plain :class:`~jbom.common.types.InventoryItem` values are treated as
+            `preference_tier=0` for backward compatibility.
 
         Args:
             component: The schematic component to match.
-            inventory: Candidate inventory items (pre-selected by caller).
+            inventory: Candidate inventory items (plain or eligible-wrapped).
 
         Returns:
-            Matches sorted by `(item.priority, -score)`.
+            Matches sorted by `(preference_tier, item.priority, -score)`.
         """
 
         if not inventory:
             return []
 
-        results: List[MatchResult] = []
-        for item in inventory:
+        results: list[tuple[int, MatchResult]] = []
+
+        for candidate in inventory:
+            if isinstance(candidate, EligibleInventoryItem):
+                item = candidate.item
+                preference_tier = candidate.preference_tier
+            else:
+                item = candidate
+                preference_tier = 0
+
             if not self._passes_primary_filters(component, item):
                 continue
 
@@ -316,14 +332,22 @@ class SophisticatedInventoryMatcher:
 
             debug_info = None
             if self._options.include_debug_info:
-                debug_info = f"ipn={item.ipn}, priority={item.priority}, score={score}"
+                debug_info = (
+                    f"ipn={item.ipn}, tier={preference_tier}, "
+                    f"priority={item.priority}, score={score}"
+                )
 
             results.append(
-                MatchResult(inventory_item=item, score=score, debug_info=debug_info)
+                (
+                    preference_tier,
+                    MatchResult(
+                        inventory_item=item, score=score, debug_info=debug_info
+                    ),
+                )
             )
 
-        results.sort(key=lambda r: (r.inventory_item.priority, -r.score))
-        return results
+        results.sort(key=lambda t: (t[0], t[1].inventory_item.priority, -t[1].score))
+        return [mr for _tier, mr in results]
 
 
 __all__ = [
