@@ -1,6 +1,27 @@
 # CHANGELOG
 
 
+## v6.7.0 (2026-02-26)
+
+### Bug Fixes
+
+* fix: remove dead code in suppliers.py
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`fa6d4d7`](https://github.com/plocher/jBOM/commit/fa6d4d7041f6e79e9602d2a2e05cfca02f192923))
+
+### Features
+
+* feat: add supplier profiles config + url resolver
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`fc1417f`](https://github.com/plocher/jBOM/commit/fc1417f50464fc0e2c92807a903e20285d779c0d))
+
+### Unknown
+
+* Merge pull request #64 from plocher/feature/phase4s-supplier-profiles
+
+Phase 4S: Supplier Profiles (config loader + URL resolver) ([`f9ff00c`](https://github.com/plocher/jBOM/commit/f9ff00cd0313cfef7fb77fd156e0a9a99b6ee138))
+
+
 ## v6.6.0 (2026-02-26)
 
 ### Features
