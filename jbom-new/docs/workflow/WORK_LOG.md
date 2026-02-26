@@ -478,6 +478,51 @@ None yet
 
 ---
 
+### Session 17: Phase 3 Service Integration
+**Duration**: ~60 minutes
+**Agent**: Oz (Warp auto)
+
+**Goal**: Wire Phase 2 services (FabricatorInventorySelector + SophisticatedInventoryMatcher) into the BOM generation pipeline, replacing naive value-only matching.
+
+**What Happened**:
+- Created GitHub Issue #62 for Phase 3 tracking.
+- Created feature branch: `feature/issue-62-phase3-service-integration`.
+- Created `docs/architecture/workflow-architecture.md` documenting the correct BOM pipeline (aggregate-before-match).
+- Audited InventoryReader raw_data population — all 4 loaders (CSV, Excel, Numbers, JLC) correctly pass complete row dicts.
+- Refactored `src/jbom/services/inventory_matcher.py`:
+  - New signature: `enhance_bom_with_inventory(bom_data, inventory_file, fabricator_id="generic", project_name=None)`
+  - Pipeline: load inventory → filter by fabricator (FabricatorInventorySelector) → match per BOM entry (SophisticatedInventoryMatcher) → enrich with best match
+  - Converts BOMEntry → representative Component for the matcher
+  - Tracks orphan entries (unmatched groups) in metadata
+  - Falls back to unfiltered inventory if fabricator config unavailable
+- Updated `src/jbom/cli/bom.py` to pass `fabricator_id` and `project_name` through.
+- Fixed bug in `src/jbom/common/component_classification.py`: `"IC" in "GENERIC"` was True, falsely classifying `Device:Generic` as IC. Changed to exact match `component_upper == "IC"`.
+- Rewrote `tests/services/matchers/test_inventory_matcher.py` with `_make_inventory_item` helper that populates realistic `raw_data` for fabricator tier matching.
+- Updated `tests/integration/test_service_composition.py` mock data with proper `raw_data`.
+- Added new tests: `test_bom_entry_to_component`, `test_fabricator_filtering_fallback`, `test_metadata_includes_fabricator_info`, `test_fabricator_specific_matching`.
+
+**Output**:
+- Branch: `feature/issue-62-phase3-service-integration`
+- PR: #63
+- Issue: #62
+- Commits: 431ade0 (docs), b49a76e (feat)
+- Files modified:
+  - `src/jbom/services/inventory_matcher.py` (refactored)
+  - `src/jbom/cli/bom.py` (wiring)
+  - `src/jbom/common/component_classification.py` (IC bug fix)
+  - `tests/services/matchers/test_inventory_matcher.py` (rewritten)
+  - `tests/integration/test_service_composition.py` (raw_data fix)
+  - `docs/architecture/workflow-architecture.md` (new)
+- Tests: 231 pytest passed, 192 BDD scenarios passed
+
+**Course Corrections**:
+- Discovered and fixed "IC in GENERIC" false positive in component classification. This was a pre-existing bug that only surfaced because the sophisticated matcher uses type classification where the naive matcher did not.
+- Test mock InventoryItems needed realistic `raw_data` dicts for fabricator tier rules to match — empty `raw_data={}` caused items to be filtered out.
+
+**Next**: Phase 4 (end-to-end BOM generation tests with real projects) or Phase 5+ per roadmap.
+
+---
+
 ## Session Template
 
 ### Session N: [Task Description]

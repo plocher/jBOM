@@ -2,8 +2,9 @@
 
 ## Status (as of 2026-02-26)
 **Phase 1**: ✅ Complete (merged to main via PR #57)
-**Phase 2**: ✅ Complete (ready to merge from feature branch)
-**Phase 3**: ⏳ Ready to start
+**Phase 2**: ✅ Complete (merged to main via PR #61)
+**Phase 3**: ✅ Complete (PR #63, Issue #62)
+**Phase 4**: ⏳ Ready — Cleanup, Integration & End-to-End Validation
 
 ### Phase 1 Deliverables
 - Sophisticated inventory matcher (Issue #48)
@@ -17,18 +18,29 @@
 - Matcher integration with `preference_tier` sorting
 - 229 unit tests + 192 BDD scenarios passing
 
-## Phase 3 Kickoff: Service Integration
+### Phase 3 Deliverables
+- Sophisticated matcher wired into BOM generation pipeline (PR #63, Issue #62)
+- `InventoryMatcher.enhance_bom_with_inventory()` uses FabricatorInventorySelector + SophisticatedInventoryMatcher
+- CLI `jbom bom --fabricator` passes through to sophisticated pipeline
+- Bug fix: `"IC" in "GENERIC"` false positive in component classification
+- 231 unit tests + 192 BDD scenarios passing
 
-**Goal**: Wire FabricatorInventorySelector into existing BOM generation workflow.
+---
 
-**Current state**: Phase 2 delivered the selector service, but it's not yet used by CLI commands or workflows.
+## Phase 4: Cleanup, Integration & End-to-End Validation
 
-**Next steps**: Integrate selector into:
-1. InventoryReader workflow
-2. BOM generation pipeline
-3. CLI commands (`jbom bom`, `jbom inventory`)
+**Goal**: Complete the migration to sophisticated matching across all CLI commands, remove dead code, and validate with real KiCad projects.
 
-See `docs/workflow/planning/JBOM_NEW_ROADMAP.md` Phase 3 for detailed tasks.
+**Current state**: `jbom bom` uses the sophisticated pipeline, but `jbom inventory` still uses the old `ComponentInventoryMatcher`. Skipped tests reference non-existent modules. No end-to-end testing with real projects.
+
+**Task document**: `docs/workflow/PHASE_4_TASKS.md`
+
+**Tasks** (all delegatable to sub-agents):
+1. **Task 4.1**: Delete stale skipped test files
+2. **Task 4.2**: Migrate `inventory` CLI to sophisticated matching pipeline
+3. **Task 4.3**: Retire `ComponentInventoryMatcher` (dead code removal)
+4. **Task 4.4**: End-to-end validation with real KiCad projects
+5. **Task 4.5**: Match diagnostics CLI (`--debug` flag on `bom` command)
 
 ---
 
@@ -145,13 +157,14 @@ Completed on `feature/issue-59-fabricator-schema-migration`:
 - ✅ Task 2.4: Matcher updated for `(preference_tier, item.priority, -score)` ordering
 - ⏭ Task 2.3: Integration tests (deferred - covered by unit tests + BDD)
 
-## Next Action: Start Phase 3
+## Next Action: Start Phase 4
 
-**Primary task**: Integrate `FabricatorInventorySelector` into BOM generation workflow.
+**Primary task**: Complete migration + validate with real projects.
 
 **References**:
-- `docs/workflow/planning/JBOM_NEW_ROADMAP.md` - Phase 3 tasks (service integration)
-- `docs/workflow/PHASE_2_TASKS.md` - Phase 2 implementation details (reference)
+- `docs/workflow/PHASE_4_TASKS.md` - Phase 4 task breakdown (sub-agent ready)
+- `docs/workflow/planning/JBOM_NEW_ROADMAP.md` - Overall roadmap
+- `docs/workflow/completed/PHASE_3_TASKS.md` - Phase 3 implementation details
 
 ## Phase 1 design note (keep)
 Our tests and discussion clarified an important design nuance:

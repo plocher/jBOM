@@ -143,7 +143,9 @@ def _get_component_type_heuristic(lib_id: str, footprint: str = "") -> Optional[
         return ComponentType.LED
     if component_upper.startswith("LM"):  # Common IC prefix (LM358, etc.)
         return ComponentType.INTEGRATED_CIRCUIT
-    if "IC" in component_upper:  # Generic IC designation
+    if (
+        component_upper == "IC"
+    ):  # Exact IC designation (avoid false positive in GENERIC, etc.)
         return ComponentType.INTEGRATED_CIRCUIT
     if component_upper.startswith("74"):  # Logic IC family (74HC00, etc.)
         return ComponentType.INTEGRATED_CIRCUIT

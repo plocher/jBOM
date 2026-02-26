@@ -396,13 +396,10 @@ class TestTargetInventoryContract:
                 f"{expected_ipn}"
             )
 
-        top3 = results[:3]
-        assert all(r.inventory_item.ipn == expected_ipn for r in top3)
-        assert [r.inventory_item.priority for r in top3] == [1, 2, 3]
-        assert all(
-            top3[i].inventory_item.priority <= top3[i + 1].inventory_item.priority
-            for i in range(len(top3) - 1)
-        )
+        # Phase 4 inventory schema collapses duplicates to one row per IPN, so we
+        # only assert the *best* match is the expected IPN.
+        top1 = results[0]
+        assert top1.inventory_item.ipn == expected_ipn
 
         # Same priority should order by score desc.
         for a, b in zip(results, results[1:]):

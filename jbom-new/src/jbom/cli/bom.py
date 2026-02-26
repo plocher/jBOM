@@ -245,7 +245,12 @@ def handle_bom(args: argparse.Namespace) -> int:
                 )
 
             matcher = InventoryMatcher()
-            bom_data = matcher.enhance_bom_with_inventory(bom_data, inventory_file)
+            bom_data = matcher.enhance_bom_with_inventory(
+                bom_data,
+                inventory_file,
+                fabricator_id=fabricator,
+                project_name=project_name,
+            )
 
         # Handle output
         return _output_bom(bom_data, args.output, selected_fields, fabricator)
