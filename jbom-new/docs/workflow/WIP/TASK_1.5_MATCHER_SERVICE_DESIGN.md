@@ -25,7 +25,7 @@ Per `anti-patterns.md`:
 
 1. **Hardcoded fabricator ID checks** (config_fabricators.py:89):
    - Legacy: `if self.config.id == "generic": return True`
-   - jbom-new: Empty `priority_fields` = match all (declarative)
+   - jbom-new: Generic behavior is fully declarative in `generic.fab.yaml` (no ID checks in code)
 
 2. **File I/O in matcher constructor** (inventory_matcher.py:38-43):
    - Legacy: `__init__(inventory_path)` loads files
@@ -106,16 +106,16 @@ class InventoryMatcherService:
         self,
         component: Component,
         *,
-        fabricator: Optional[ConfigurableFabricator] = None,
-        min_score: int = 0,
+            fabricator: Optional[ConfigurableFabricator] = None,
+            min_score: int = 0,
     ) -> MatchResult:
         """Find matching inventory items for a component.
 
         Args:
             component: Component to match
             fabricator: Optional fabricator config (YAML-driven).
-                       Filters items based on priority_fields (LCSC, MPN, etc.)
-                       from fabricator configuration. NOT a lambda - uses declarative config.
+                       Fabricator-specific selection is based on `field_synonyms` + `tier_rules`.
+                       (Phase 2 keeps that selection as a separate step from matching; see ADR 0001.)
             min_score: Minimum score threshold (default: return all candidates)
 
         Returns:
@@ -170,13 +170,11 @@ Already extracted (Tasks 1.2-1.4):
 
 ## Key Design Questions
 
-1. **Fabricator filtering**: Pass as lambda or use ConfigurableFabricator?
-   - **Decision**: Use `ConfigurableFabricator` (ports legacy behavior, MINUS tech debt)
-   - Rationale: Legacy uses YAML-driven `fabricator.matches(item)` with `priority_fields`
-   - NOT hardcoded lambdas - configuration-driven filtering
-   - **Tech debt fix**: Legacy hardcodes `if id == "generic": return True`
-     - jbom-new: Empty `priority_fields` list = match all items (declarative)
-     - No special-case string matching on fabricator ID
+1. **Fabricator filtering**: Pass as lambda or declarative config?
+   - **Decision**: Use declarative fabricator config (no lambdas) and keep selection separate from matching (ADR 0001).
+   - Rationale: Catalog creators evolve their column names; `field_synonyms` normalizes that.
+   - Fabricator preference is policy-based: `tier_rules` defines ordering/tie-breaks without hardcoding.
+   - **Tech debt fix**: Avoid fabricator-ID special cases; generic behavior is defined in `generic.fab.yaml`.
 
 2. **Multi-inventory handling**: Matcher or separate orchestration?
    - **Decision**: Caller merges inventories before passing to matcher

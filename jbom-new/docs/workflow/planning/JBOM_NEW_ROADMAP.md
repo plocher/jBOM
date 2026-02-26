@@ -57,7 +57,7 @@ This makes `generic.fab.yaml` the **reference implementation** for all baseline 
 
 **Problem**: Current `priority_fields` conflates field name synonyms with tier preferences.
 
-**Solution**: Separate into two schema elements with three-level field design:
+**Solution**: Separate into two schema elements with three-level field design and policy-based tiering:
 ```yaml
 # Before (implicit, conflated)
 part_number:
@@ -65,16 +65,39 @@ part_number:
 
 # After (explicit, separated)
 field_synonyms:
-  lcsc:  # Canonical name (internal)
+  fab_pn:  # Canonical name (internal)
     synonyms: ["LCSC", "LCSC Part", "LCSC Part #", "JLC"]
-    display_name: "LCSC Part Number"  # BOM output header
+    display_name: "Fabricator Catalog Part Number"  # BOM output header
+  supplier_pn:
+    synonyms: ["DPN", "Distributor Part Number", "Mouser Part Number", "DigiKey Part Number"]
+    display_name: "Supplier Part Number"
   mpn:
     synonyms: ["MPN", "MFGPN"]
     display_name: "MPN"
 
-part_number_source_tiers:
-  0: [lcsc]  # Catalog (uses canonical name)
-  1: [mpn]   # Crossref
+tier_rules:
+  0:
+    conditions:
+      - field: "Consigned"
+        operator: "truthy"
+  1:
+    conditions:
+      - field: "Preferred"
+        operator: "truthy"
+      - field: "fab_pn"
+        operator: "exists"
+  2:
+    conditions:
+      - field: "fab_pn"
+        operator: "exists"
+  3:
+    conditions:
+      - field: "supplier_pn"
+        operator: "exists"
+  4:
+    conditions:
+      - field: "mpn"
+        operator: "exists"
 ```
 
 **Tasks**:
@@ -101,29 +124,27 @@ Create `jbom/services/fabricator_inventory_selector.py`:
 class EligibleInventoryItem:
     """Inventory item with fabricator metadata."""
     item: InventoryItem
-    preference_tier: int  # 0=catalog, 1=crossref, 2=fallback
-    matched_field: str    # Which priority_field matched
+    preference_tier: int
 
 class FabricatorInventorySelector:
     """Filters and annotates inventory for a fabricator."""
+
     def select_eligible(
         inventory: List[InventoryItem],
         fabricator_config: FabricatorConfig
     ) -> List[EligibleInventoryItem]:
-        """Filter by priority_fields, annotate with tier."""
+        """Filter by affinity/project and assign tier via tier_rules."""
 ```
 
 **Key Behaviors:**
-- Read `fabricator_config.part_number.priority_fields` (e.g., ["LCSC", "MPN"])
-- Item eligible if ANY priority_field exists
-- Tier 0 = first field (LCSC for JLC)
-- Tier 1 = second field (MPN for JLC)
-- Tier 2+ = remaining fields
+- Normalize evolving inventory column names using `fabricator_config.field_synonyms`.
+- Assign a preference tier by evaluating `fabricator_config.tier_rules` (policy-based, not positional list ordering).
+- Output ordering is later applied as: `(preference_tier, item.priority, -score)`.
 
 **Tests:**
-- JLC config: LCSC items get tier 0, MPN-only get tier 1
-- Generic config: All items eligible (no filtering)
-- Multi-source inventory: Correctly identifies which field matched
+- JLC config: Tier rules assign lower tiers to better identifiers/flags (consigned/preferred/catalog).
+- Generic config: Default tier rules behave as configured.
+- Multi-source inventory: Synonym normalization ensures evolving catalog column names resolve to canonical fields.
 
 #### 2.2: Update Matcher to Accept EligibleInventoryItem
 **Estimated**: 2-3 hours

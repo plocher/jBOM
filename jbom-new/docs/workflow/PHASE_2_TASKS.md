@@ -33,6 +33,9 @@ field_synonyms:
   fab_pn:
     synonyms: ["LCSC", "LCSC Part", "JLC Part"]
     display_name: "LCSC Part Number"
+  supplier_pn:
+    synonyms: ["DPN", "Distributor Part Number", "Mouser Part Number", "DigiKey Part Number"]
+    display_name: "Supplier Part Number"
   mpn:
     synonyms: ["MPN", "MFGPN"]
     display_name: "MPN"
@@ -41,11 +44,11 @@ tier_rules:
   0:
     conditions:
       - field: "Consigned"
-        operator: "exists"
+        operator: "truthy"
   1:
     conditions:
       - field: "Preferred"
-        operator: "exists"
+        operator: "truthy"
       - field: "fab_pn"
         operator: "exists"
   2:
@@ -54,11 +57,17 @@ tier_rules:
         operator: "exists"
   3:
     conditions:
+      - field: "supplier_pn"
+        operator: "exists"
+  4:
+    conditions:
       - field: "mpn"
         operator: "exists"
 ```
 
 **Key change**: Tiers are based on inventory item properties (Consigned, Preferred), not which field name exists. After field synonym normalization, all LCSC variants → `fab_pn`.
+
+**Note**: Inventory items that match no tier are **not eligible** for that fabricator profile (they have no actionable identifier/policy for that fabricator).
 
 **Action items:**
 1. Update `generic.fab.yaml` first (simplest - single tier)
@@ -94,7 +103,7 @@ class FieldSynonym:
 class TierCondition:
     """Condition for tier matching."""
     field: str
-    operator: str  # "exists", "equals", "not_empty"
+    operator: str  # "exists", "truthy", "equals", "not_empty"
     value: Optional[str] = None
 
 @dataclass

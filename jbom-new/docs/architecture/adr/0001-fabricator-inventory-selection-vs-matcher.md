@@ -17,8 +17,8 @@ This implies a *multi-step policy*:
 - Preference/ranking: prefer items with native catalog IDs over items that only have manufacturer IDs.
 
 We have fabricator configuration in `src/jbom/config/fabricators/*.fab.yaml`. As of Issue #59, the schema is being refactored to separate two concerns:
-- `field_synonyms`: Map field name variants to canonical names ("LCSC", "LCSC Part" → `lcsc`)
-- `part_number_source_tiers`: Explicit tier definitions using canonical names (0=catalog, 1=crossref)
+- `field_synonyms`: Map evolving catalog column-name variants to canonical names (e.g., many historical LCSC/JLC headers → `fab_pn`)
+- `tier_rules`: Explicit, policy-based tier assignment (stable even as synonyms change)
 
 ## Decision Drivers
 - Preserve domain-centric boundaries (no CLI/I/O concerns in domain services).
@@ -50,7 +50,7 @@ Cons:
 
 
 ### Option B: Add a fabricator parameter/policy to the matcher
-Extend the matcher configuration (e.g., `MatchingOptions`) to include a fabricator policy derived from `FabricatorConfig.part_number.priority_fields`.
+Extend the matcher configuration (e.g., `MatchingOptions`) to include a fabricator policy derived from fabricator config (`field_synonyms` + `tier_rules`).
 
 Matcher performs:
 - fabricator eligibility pruning (and/or preference tiering)
@@ -82,7 +82,7 @@ Cons:
 - Where should the catalog-vs-crossref preference be applied?
   - Convert to `effective_priority` during selection?
   - Or add a tie-break layer in matcher ordering: `(priority asc, preference_tier asc, score desc)`?
-- Should eligibility be "any of priority_fields" or a stricter rule per fabricator?
+- Should eligibility be driven by `tier_rules` only, or should there be an additional explicit eligibility filter per fabricator?
 - Do we need to preserve legacy ordering exactly, or is adding a preference tier acceptable in Phase 1?
 
 ## Decision
@@ -107,7 +107,7 @@ These are distinct concepts that must NOT be conflated:
    - Purpose: Fabricator prefers native catalog items over crossref items
    - Example: JLCPCB prefers LCSC catalog items, falls back to MPN crossref
    - Semantics: Tier 0=catalog (best), Tier 1=crossref, Tier 2=fallback
-   - Set by: Fabricator config YAML (`part_number_source_tiers` - Issue #59)
+   - Set by: Fabricator config YAML (`tier_rules` - Issue #59)
    - Scope: Fabricator-specific
    - Used in: Selection eligibility + matcher sorting (primary key)
 
@@ -137,7 +137,7 @@ class EligibleInventoryItem:
     """Inventory item with fabricator selection metadata."""
     item: InventoryItem
     preference_tier: int  # 0=catalog, 1=crossref, 2=fallback
-    matched_canonical_field: str  # Which canonical field matched ("lcsc", "mpn", etc.)
+    matched_canonical_field: str  # Which canonical field matched ("fab_pn", "supplier_pn", "mpn", etc.)
 
 class FabricatorInventorySelector:
     """Selects eligible inventory for a fabricator."""
@@ -154,7 +154,7 @@ class FabricatorInventorySelector:
         Three-stage process:
         1. Fabricator affinity filter: item.fabricator == target or ""
         2. Field synonym normalization: resolve variants to canonical names
-        3. Preference tiering: look up tier from part_number_source_tiers
+        3. Tier assignment: evaluate tier_rules in ascending order
 
         Does NOT modify item.priority (user's stock management).
         See Issue #59 for config schema refactoring.
@@ -200,8 +200,8 @@ def find_matches(
 A: As separate `preference_tier` dimension during selection (primary sort key).
 Does NOT modify user's `item.priority`.
 
-**Q: Should eligibility be "any of priority_fields" or stricter?**
-A: "Any of" (matches legacy behavior: item is eligible if ANY priority_field exists).
+**Q: Should eligibility be driven by tiers or a separate rule?**
+A: Use `tier_rules` as the eligibility boundary: items that match no tier are not eligible for that fabricator profile.
 
 **Q: Do we need exact legacy ordering?**
 A: No. Adding preference_tier as explicit dimension is better than legacy's

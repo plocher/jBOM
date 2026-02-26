@@ -21,90 +21,92 @@ When generating a BOM for assembly, different fabricators have different supply 
 - `item.fabricator == "PCBWay"` → consigned/dedicated to PCBWay
 - `item.fabricator == ""` → generic, available to any fabricator
 
-**Fabricator configs declare part number preferences** (Issue #59 - schema refactoring):
+**Fabricator configs declare identifier normalization + preference policy** (Issue #59 - schema refactoring):
 - `field_synonyms`: Three-level field name design
   - **Canonical name**: Internal identifier used in code and tier definitions
   - **Synonyms**: Variant column names accepted from inventory CSVs
   - **Display name**: What appears in BOM output column headers
-- `part_number_source_tiers`: Explicit tier definitions using canonical names
-  - Tier 0: Native catalog (preferred)
-  - Tier 1+: Crossref/fallback sources
+- `tier_rules`: Explicit, fabricator-defined tier assignment rules (policy-based)
+  - Evaluated *after* field synonym normalization
+  - Designed to remain stable even as catalog creators evolve column names
 
-**Selection mechanics** (three-stage: filter → normalize → tier):
+**Selection mechanics** (four-stage: affinity → normalize → tier → order):
 1. **Fabricator affinity filter**:
    - Keep: `item.fabricator == target_fabricator` OR `item.fabricator == ""`
    - Prune: `item.fabricator == other_fabricator`
-   - Example: Building for JLC → keep JLC-specific + generic, prune PCBWay-specific
 
 2. **Field synonym normalization**:
-   - Resolve field name variants to canonical names using `field_synonyms`
-   - Example: item with "LCSC Part" field → normalized to `lcsc` canonical name
+   - Resolve inventory column-name variants to canonical names using `field_synonyms`
+   - Example: "LCSC Part #" → canonical `fab_pn`
    - Enables reusable synonym mappings across all fields (not just part numbers)
 
-3. **Preference tiering** (among normalized fields):
-   - Look up canonical field names in `part_number_source_tiers`
-   - Tier = explicit tier number for first matching canonical field
-   - Example JLC: item with `lcsc` field → Tier 0, item with only `mpn` → Tier 1
-   - No matching tier → item has no usable part number (warning)
+3. **Tier assignment** (policy-based):
+   - Evaluate fabricator `tier_rules` in ascending tier order (0, 1, 2, ...)
+   - Tier = first rule whose conditions all match
+   - If no rule matches, the item is **not eligible** for that fabricator profile
 
-3. **Final ordering**: `(preference_tier, item.priority, -score)`
-   - Fabricator catalog preference first
+4. **Final ordering**: `(preference_tier, item.priority, -score)`
+   - Fabricator preference first
    - User stock management second
    - Match quality third
 
-**Examples** (using new schema from Issue #59):
+**Examples** (schema: `field_synonyms` + `tier_rules`):
 - **JLCPCB**
   ```yaml
   field_synonyms:
-    lcsc:
-      synonyms: ["LCSC", "LCSC Part", "LCSC Part #", "JLC"]
+    fab_pn:
+      synonyms: ["LCSC", "LCSC Part", "LCSC Part #", "JLC", "JLC Part"]
       display_name: "LCSC Part Number"
+    supplier_pn:
+      synonyms: ["DPN", "Distributor Part Number", "Mouser Part Number", "DigiKey Part Number"]
+      display_name: "Supplier Part Number"
     mpn:
-      synonyms: ["MPN", "MFGPN"]
+      synonyms: ["MPN", "MFGPN", "Manufacturer Part Number"]
       display_name: "MPN"
-  part_number_source_tiers:
-    0: [lcsc]   # Catalog
-    1: [mpn]    # Crossref
+  tier_rules:
+    0:
+      conditions:
+        - field: "Consigned"
+          operator: "truthy"
+    1:
+      conditions:
+        - field: "Preferred"
+          operator: "truthy"
+        - field: "fab_pn"
+          operator: "exists"
+    2:
+      conditions:
+        - field: "fab_pn"
+          operator: "exists"
+    3:
+      conditions:
+        - field: "supplier_pn"
+          operator: "exists"
+    4:
+      conditions:
+        - field: "mpn"
+          operator: "exists"
   ```
-  - Items with `fabricator=="JLC"` + `lcsc` field → Tier 0 (consigned catalog - best)
-  - Items with `fabricator==""` + `lcsc` field → Tier 0 (catalog available to JLC)
-  - Items with `fabricator==""` + only `mpn` → Tier 1 (crossref via manufacturer)
-  - Items with `fabricator=="PCBWay"` → pruned (competitor's consignment)
-
-- **PCBWay**
-  ```yaml
-  field_synonyms:
-    pcbway:
-      synonyms: ["PCBWay", "PCBWay Part"]
-      display_name: "PCBWay Part Number"
-    mouser:
-      synonyms: ["Mouser", "Mouser Part Number"]
-      display_name: "Mouser P/N"
-    mpn:
-      synonyms: ["MPN", "MFGPN"]
-      display_name: "MPN"
-  part_number_source_tiers:
-    0: [pcbway]        # Native catalog
-    1: [mouser, digikey]  # Preferred distributors
-    2: [mpn]           # Crossref
-  ```
-  - Items with `fabricator=="PCBWay"` + `pcbway` → Tier 0 (consigned catalog)
-  - Items with `fabricator==""` + `mouser` → Tier 1 (distributor)
-  - Items with `fabricator==""` + only `mpn` → Tier 2 (crossref/self-source)
-  - Items with `fabricator=="JLC"` → pruned (competitor's warehouse)
 
 - **Generic**
   ```yaml
   field_synonyms:
-    mpn:
-      synonyms: ["MPN", "MFGPN", "Part Number", "P/N"]
+    supplier_pn:
+      synonyms: ["Part Number", "P/N", "Distributor Part Number", "DPN"]
       display_name: "Part Number"
-  part_number_source_tiers:
-    0: [mpn]  # All manufacturer data equal
+    mpn:
+      synonyms: ["MPN", "MFGPN"]
+      display_name: "MPN"
+  tier_rules:
+    0:
+      conditions:
+        - field: "supplier_pn"
+          operator: "exists"
+    1:
+      conditions:
+        - field: "mpn"
+          operator: "exists"
   ```
-  - All items with `fabricator==""` eligible (no fab-specific consignment)
-  - Items with fab-specific values pruned (consigned elsewhere)
-  - User controls all sourcing via `item.priority` (no fabricator preference)
 
 This design allows the same inventory to serve multiple fabricators with different:
 - **Supply chain models** (catalog vs crossref vs self-source)
@@ -113,7 +115,7 @@ This design allows the same inventory to serve multiple fabricators with differe
 
 ## Next Action: Start Phase 2 Implementation
 
-**Ready to start**: Task 2.0 (Fabricator Config Schema Migration)
+**Ready to start**: Task 2.1 (Update FabricatorConfig dataclass)
 
 See tactical task breakdown with file paths, tests, and dependency order:
 - **`docs/workflow/PHASE_2_TASKS.md`** (actionable tasks for sub-agents)
