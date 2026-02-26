@@ -1,6 +1,73 @@
 # jBOM-new: Complete Roadmap
+- [jBOM-new: Complete Roadmap](#jbom-new-complete-roadmap)
+  - [Overview](#overview)
+  - [Phase 2: Fabricator-Aware Inventory Selection (ADR 0001)](#phase-2-fabricator-aware-inventory-selection-adr-0001)
+    - [Goal](#goal)
+    - [Testing Strategy Note](#testing-strategy-note)
+    - [Prerequisite: Fabricator Config Schema Refactoring (Issue #59)](#prerequisite-fabricator-config-schema-refactoring-issue-59)
+    - [Tasks](#tasks)
+      - [2.1: FabricatorInventorySelector Service](#21-fabricatorinventoryselector-service)
+      - [2.2: Update Matcher to Accept EligibleInventoryItem](#22-update-matcher-to-accept-eligibleinventoryitem)
+      - [2.3: Integration Tests with Real Fabricator Configs](#23-integration-tests-with-real-fabricator-configs)
+    - [Deliverables](#deliverables)
+  - [Phase 3: Wire Up to Existing jbom-new Services](#phase-3-wire-up-to-existing-jbom-new-services)
+    - [Goal](#goal-1)
+    - [Tasks](#tasks-1)
+      - [3.1: Integrate with InventoryReader](#31-integrate-with-inventoryreader)
+      - [3.2: Replace Simple Matcher in inventory\_matcher.py](#32-replace-simple-matcher-in-inventory_matcherpy)
+      - [3.3: Update BOM Generator Workflow](#33-update-bom-generator-workflow)
+      - [3.4: Integration Tests - End-to-End BOM Generation](#34-integration-tests---end-to-end-bom-generation)
+    - [Deliverables](#deliverables-1)
+  - [Phase 4: CLI Integration](#phase-4-cli-integration)
+    - [Goal](#goal-2)
+    - [Tasks](#tasks-2)
+      - [4.1: Add --fabricator Flag to BOM Command](#41-add---fabricator-flag-to-bom-command)
+      - [4.2: Match Diagnostics Command](#42-match-diagnostics-command)
+      - [4.3: Inventory Validation Command](#43-inventory-validation-command)
+    - [Deliverables](#deliverables-2)
+  - [Phase 5: Advanced Property Matching](#phase-5-advanced-property-matching)
+    - [Goal](#goal-3)
+    - [Tasks](#tasks-3)
+      - [5.1: LED-Specific Properties](#51-led-specific-properties)
+      - [5.2: Oscillator-Specific Properties](#52-oscillator-specific-properties)
+      - [5.3: IC-Specific Properties](#53-ic-specific-properties)
+    - [Deliverables](#deliverables-3)
+  - [Phase 6: Multi-Inventory Federation](#phase-6-multi-inventory-federation)
+    - [Goal](#goal-4)
+    - [Tasks](#tasks-4)
+      - [6.1: InventoryRepository Implementation](#61-inventoryrepository-implementation)
+      - [6.2: Source Tracking in Match Results](#62-source-tracking-in-match-results)
+      - [6.3: Federated Inventory Tests](#63-federated-inventory-tests)
+    - [Deliverables](#deliverables-4)
+  - [Phase 7: Performance \& Scale](#phase-7-performance--scale)
+    - [Goal](#goal-5)
+    - [Tasks](#tasks-5)
+      - [7.1: Benchmark Current Performance](#71-benchmark-current-performance)
+      - [7.2: Optimize Primary Filtering](#72-optimize-primary-filtering)
+      - [7.3: Parallel Matching](#73-parallel-matching)
+    - [Deliverables](#deliverables-5)
+  - [Phase 8: Production Readiness](#phase-8-production-readiness)
+    - [Goal](#goal-6)
+    - [Tasks](#tasks-6)
+      - [8.1: Error Handling \& User Messages](#81-error-handling--user-messages)
+      - [8.2: Logging \& Diagnostics](#82-logging--diagnostics)
+      - [8.3: Migration Guide from Legacy jBOM](#83-migration-guide-from-legacy-jbom)
+      - [8.4: User Documentation](#84-user-documentation)
+    - [Deliverables](#deliverables-6)
+  - [Phase 9: Deprecate Legacy jBOM](#phase-9-deprecate-legacy-jbom)
+    - [Goal](#goal-7)
+    - [Tasks](#tasks-7)
+      - [9.1: Feature Parity Verification](#91-feature-parity-verification)
+      - [9.2: Side-by-Side Comparison Tests](#92-side-by-side-comparison-tests)
+      - [9.3: Deprecation Announcement](#93-deprecation-announcement)
+      - [9.4: Archive Legacy Code](#94-archive-legacy-code)
+    - [Deliverables](#deliverables-7)
+  - [Estimated Total Effort](#estimated-total-effort)
+  - [Priority Ranking](#priority-ranking)
+  - [Success Criteria](#success-criteria)
+  - [Notes](#notes)
 
-**Status**: Phase 1 ✅ Complete | Phase 2 🚧 In Progress
+**Status**: Phase 1 ✅ Complete | Phase 2 ✅ Complete | Phase 3 ⏳ Ready
 **Date**: 2026-02-25
 **Last Updated**: After PR #58 merge
 
@@ -9,14 +76,15 @@ This is the master roadmap for completing jbom-new. Phase 1 delivered a sophisti
 
 **Progress:**
 - ✅ **Phase 1 Complete**: Sophisticated matcher (PR #57, Issue #48, 122 tests passing)
-- 🚧 **Phase 2 Active**: Fabricator selection (Issues #59, #60)
-- ⏳ **Phases 3-9**: Planned (76-109 hours remaining)
+- ✅ **Phase 2 Complete**: Fabricator selection (Issues #59, #60, 229 tests passing)
+- ⏳ **Phase 3 Ready**: Service integration
+- ⏳ **Phases 4-9**: Planned
 
 ## Phase 2: Fabricator-Aware Inventory Selection (ADR 0001)
 
-**Status**: 🚧 Active
-**Issues**: #59 (schema), #60 (consignment)
-**Tactical Details**: See `../PHASE_2_TASKS.md` for actionable task breakdown
+**Status**: ✅ Complete
+**Issues**: #59 (schema), #60 (consignment) - implemented
+**Delivered**: FabricatorInventorySelector + tier_rules schema + matcher integration
 
 ### Goal
 Implement the fabricator selection layer that works with the Phase 1 matcher.
