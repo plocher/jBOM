@@ -29,6 +29,8 @@ We will focus on the task found in the colaboration document `./NEXT.md`
 Use the markdown documents in `./planning/ [README.md, QUICK_START.md, GIT_WORKFLOW.md]` and `../architecture/*` to guide your work
 Update `./WORK_LOG.md` to reflect what has been completed.
 
+You are authorized to perform git commits with a reasonable conventional message in this branch, after pre-commit and the specified tests pass. If that is a problem, you can always ask me to do the commit
+
 Show me your plan before you start.
 ```
 
