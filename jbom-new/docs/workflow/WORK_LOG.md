@@ -334,6 +334,150 @@ None yet
 
 ---
 
+## 2026-02-25
+
+### Session 13: Phase 2 Task 2.0 Fabricator Config Schema Migration
+**Duration**: ~45 minutes
+**Agent**: Oz (Warp auto)
+
+**Goal**: Migrate built-in fabricator configs away from `part_number.priority_fields` to Issue #59 schema: `field_synonyms` + `tier_rules`, and keep docs in sync.
+
+**What Happened**:
+- Created feature branch: `feature/issue-59-fabricator-schema-migration`.
+- Migrated built-in fabricator configs:
+  - Removed `part_number.priority_fields`.
+  - Added `field_synonyms` with canonical identifiers (`fab_pn`, `supplier_pn`, `mpn`) and synonym lists to accommodate evolving catalog column names.
+  - Added `tier_rules` with `truthy` and `exists` operators.
+- Updated Phase 2 docs to consistently reference `tier_rules` (not `part_number_source_tiers`).
+- Verified YAML parsing for all migrated `.fab.yaml` files.
+
+**Output**:
+- Branch: `feature/issue-59-fabricator-schema-migration`
+- Files:
+  - `jbom-new/src/jbom/config/fabricators/generic.fab.yaml`
+  - `jbom-new/src/jbom/config/fabricators/jlc.fab.yaml`
+  - `jbom-new/src/jbom/config/fabricators/pcbway.fab.yaml`
+  - `jbom-new/src/jbom/config/fabricators/seeed.fab.yaml`
+  - `jbom-new/docs/workflow/NEXT.md`
+  - `jbom-new/docs/workflow/PHASE_2_TASKS.md`
+  - `jbom-new/docs/workflow/planning/JBOM_NEW_ROADMAP.md`
+  - `jbom-new/docs/architecture/adr/0001-fabricator-inventory-selection-vs-matcher.md`
+  - `jbom-new/docs/workflow/WIP/TASK_1.5_MATCHER_SERVICE_DESIGN.md`
+- Validation:
+  - YAML parse OK for all 4 configs (`python -c 'import yaml; yaml.safe_load(...)'`).
+
+**Course Corrections**:
+- Clarified that tiers are primarily an ordering/tie-break mechanism and that unmatched components are a normal workflow result (inventory needs updates).
+
+**Next**: Task 2.1 (Update `FabricatorConfig` parsing + unit tests)
+
+---
+
+## 2026-02-26
+
+### Session 14: Phase 2 Task 2.1 Update FabricatorConfig Schema Parsing
+**Duration**: ~45 minutes
+**Agent**: Oz (Warp auto)
+
+**Goal**: Update `FabricatorConfig` parsing to support the new Phase 2 schema (`field_synonyms` + `tier_rules`) with typed accessors and unit tests.
+
+**What Happened**:
+- Extended `src/jbom/config/fabricators.py`:
+  - Added typed schema dataclasses: `FieldSynonym`, `TierCondition`, `TierRule`.
+  - Added `FabricatorConfig.from_yaml_dict()` to centralize YAML parsing + validation.
+  - Added forgiving `resolve_field_synonym()` (case-insensitive, trimmed).
+  - Added parsing + validation for `field_synonyms` and `tier_rules`.
+  - Added a guardrail error for deprecated `part_number.priority_fields`.
+- Updated the legacy unittest expectation for JLC config name.
+- Added pytest unit tests for schema parsing and validation.
+
+**Output**:
+- Files:
+  - `src/jbom/config/fabricators.py`
+  - `tests/unit/test_fabricator_config_schema.py`
+  - `tests/test_fabricators.py`
+- Tests:
+  - `pytest -q tests/test_fabricators.py tests/unit/test_fabricator_config_schema.py` (pass)
+  - `python -m behave --format progress` (pass)
+  - Note: full `pytest -q` currently fails during collection due to unrelated import errors in:
+    - `tests/test_cli_formatting.py` (missing `Column` export)
+    - `tests/test_workflow_registry.py` (missing `jbom.workflows` module)
+
+**Course Corrections**:
+- Kept changes localized to `src/jbom/config/fabricators.py` to avoid refactor churn (per Task 2.1 guidance).
+
+**Next**: Task 2.2 (FabricatorInventorySelector service)
+
+---
+
+### Session 15: Phase 2 Task 2.2 FabricatorInventorySelector Service
+**Duration**: ~45 minutes
+**Agent**: Oz (Warp auto)
+
+**Goal**: Implement the fabricator-aware inventory selection layer (affinity → project → normalize → tier) as a pure domain service.
+
+**What Happened**:
+- Added `src/jbom/services/fabricator_inventory_selector.py`:
+  - Implements the four-stage selection filter:
+    1) Fabricator affinity (generic or matching fabricator)
+    2) Project restriction via optional `Projects` field (comma-separated)
+    3) Internal-only field synonym normalization (does not mutate InventoryItem.raw_data)
+    4) Tier assignment via `FabricatorConfig.tier_rules` (ascending tier order)
+  - Preserves input order.
+  - Normalizes `project_name` and `Projects` entries to basename (no extension) for consistent matching across `.kicad_sch` / `.kicad_pcb`.
+- Added unit tests: `tests/unit/test_fabricator_inventory_selector.py`.
+
+**Output**:
+- Files:
+  - `src/jbom/services/fabricator_inventory_selector.py`
+  - `tests/unit/test_fabricator_inventory_selector.py`
+- Tests:
+  - `pytest tests/unit/test_fabricator_inventory_selector.py -v` (pass)
+
+**Course Corrections**:
+- Kept normalization internal-only (no mutation) to ensure InventoryItem objects remain stable across selector calls.
+
+**Next**: Task 2.4 (Update SophisticatedInventoryMatcher ordering to include preference_tier) or Task 2.3 (integration tests), depending on desired dependency order.
+
+---
+
+### Session 16: Phase 2 Task 2.4 + Test Suite Repair
+**Duration**: ~90 minutes
+**Agent**: Oz (Warp auto)
+
+**Goal**:
+- Unblock full test execution (pytest collection + BDD)
+- Implement Phase 2 Task 2.4 ordering invariant in the matcher
+
+**What Happened**:
+- Restored missing console formatting API used by tests:
+  - Added generalized `Column`, `print_table`, and `print_tabular_data` to `src/jbom/cli/formatting.py`.
+- Added missing workflow registry module expected by unit tests:
+  - `src/jbom/workflows/registry.py` (`register/get/clear`).
+- Stabilized schematic parsing test seams:
+  - Added `src/jbom/services/readers/schematic_reader.py` so unit tests can patch parsing helpers.
+- Corrected component filtering responsibilities:
+  - Made `SchematicReader` permissive; BOM/parts filtering now consistently happens via `jbom.common.component_filters`.
+- Improved ProjectFileResolver messages and base-name handling:
+  - Missing `.kicad_sch` now emits "No schematic file found" (and includes "File not found" for unit test stability).
+- Re-added `--units` flag token to POS help for compatibility.
+- Implemented Phase 2 ordering:
+  - Updated `SophisticatedInventoryMatcher.find_matches()` to accept `EligibleInventoryItem` and sort by `(preference_tier, item.priority, -score)`.
+
+**Output**:
+- Commits:
+  - 5bf6e93 "fix: add generalized CLI tabular formatting"
+  - 5bf25bb "fix: add workflow registry module"
+  - bb4b1e3 "fix: stabilize schematic loading and resolver errors"
+  - face70d "feat: sort matcher results by preference tier"
+- Tests:
+  - `pytest -q` (pass)
+  - `python -m behave --format progress` (pass)
+
+**Next**: Task 2.3 (Integration tests with real fabricator configs)
+
+---
+
 ## Session Template
 
 ### Session N: [Task Description]

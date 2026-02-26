@@ -88,11 +88,11 @@ class TestSchematicReader:
             assert components[0].reference == "R1"
             assert components[0].value == "10K"
 
-    def test_should_include_component_filters(self):
-        """Test component filtering logic."""
+    def test_should_include_component_is_permissive(self):
+        """SchematicReader should not enforce BOM/parts filtering policy."""
+
         reader = SchematicReader()
 
-        # Component included
         good_component = Component(
             reference="R1",
             lib_id="Device:R",
@@ -106,7 +106,8 @@ class TestSchematicReader:
         )
         assert reader._should_include_component(good_component) is True
 
-        # Component excluded - not in BOM
+        # Filtering policies (DNP, in_bom, virtual symbols) are applied later by
+        # jbom.common.component_filters based on CLI flags.
         not_in_bom = Component(
             reference="R1",
             lib_id="Device:R",
@@ -118,9 +119,8 @@ class TestSchematicReader:
             exclude_from_sim=False,
             dnp=False,
         )
-        assert reader._should_include_component(not_in_bom) is False
+        assert reader._should_include_component(not_in_bom) is True
 
-        # Component excluded - DNP
         dnp_component = Component(
             reference="R1",
             lib_id="Device:R",
@@ -132,9 +132,8 @@ class TestSchematicReader:
             exclude_from_sim=False,
             dnp=True,
         )
-        assert reader._should_include_component(dnp_component) is False
+        assert reader._should_include_component(dnp_component) is True
 
-        # Component excluded - reference starts with #
         hash_component = Component(
             reference="#PWR01",
             lib_id="power:GND",
@@ -146,4 +145,4 @@ class TestSchematicReader:
             exclude_from_sim=False,
             dnp=False,
         )
-        assert reader._should_include_component(hash_component) is False
+        assert reader._should_include_component(hash_component) is True

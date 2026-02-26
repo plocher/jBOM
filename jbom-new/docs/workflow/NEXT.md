@@ -1,17 +1,41 @@
 # What to Do Next
 
-## Status (as of 2026-02-25)
-Phase 1 is complete and merged to `main` (PR #57; Issue #48 closed).
+## Status (as of 2026-02-26)
+**Phase 1**: ✅ Complete (merged to main via PR #57)
+**Phase 2**: ✅ Complete (ready to merge from feature branch)
+**Phase 3**: ⏳ Ready to start
 
-Phase 1 delivered the sophisticated inventory matcher extraction into jbom-new's clean architecture, including:
+### Phase 1 Deliverables
+- Sophisticated inventory matcher (Issue #48)
 - 122 passing tests (112 unit + 10 integration)
-- extracted utility modules in `src/jbom/common/`
-- ADR 0001 documenting the Phase 2 fabricator-selection design
+- Extracted utility modules in `src/jbom/common/`
+- ADR 0001 documenting fabricator-selection design
 
-## Phase 2 Kickoff: Fabricator-aware inventory selection
-Phase 2 implements the selection layer described in ADR 0001. Two independent priority concepts must be preserved:
-- `item.priority`: user's stock-management ordering (Phase 1 behavior, fabricator-agnostic)
-- `preference_tier`: fabricator's catalog/crossref preference (Phase 2 behavior, fabricator-specific)
+### Phase 2 Deliverables
+- FabricatorInventorySelector service (4-stage filter)
+- `field_synonyms` + `tier_rules` schema (Issues #59, #60)
+- Matcher integration with `preference_tier` sorting
+- 229 unit tests + 192 BDD scenarios passing
+
+## Phase 3 Kickoff: Service Integration
+
+**Goal**: Wire FabricatorInventorySelector into existing BOM generation workflow.
+
+**Current state**: Phase 2 delivered the selector service, but it's not yet used by CLI commands or workflows.
+
+**Next steps**: Integrate selector into:
+1. InventoryReader workflow
+2. BOM generation pipeline
+3. CLI commands (`jbom bom`, `jbom inventory`)
+
+See `docs/workflow/planning/JBOM_NEW_ROADMAP.md` Phase 3 for detailed tasks.
+
+---
+
+## Phase 2 Summary (for reference)
+Phase 2 implemented fabricator-aware inventory selection with two independent priority concepts:
+- `item.priority`: user's stock-management ordering (fabricator-agnostic)
+- `preference_tier`: fabricator's catalog/crossref preference (fabricator-specific)
 
 ### Use Case: Generate BOM for Specific Fabricator
 When generating a BOM for assembly, different fabricators have different supply chain constraints:
@@ -21,101 +45,113 @@ When generating a BOM for assembly, different fabricators have different supply 
 - `item.fabricator == "PCBWay"` → consigned/dedicated to PCBWay
 - `item.fabricator == ""` → generic, available to any fabricator
 
-**Fabricator configs declare part number preferences** (Issue #59 - schema refactoring):
+**Fabricator configs declare identifier normalization + preference policy** (Issue #59 - schema refactoring):
 - `field_synonyms`: Three-level field name design
   - **Canonical name**: Internal identifier used in code and tier definitions
   - **Synonyms**: Variant column names accepted from inventory CSVs
   - **Display name**: What appears in BOM output column headers
-- `part_number_source_tiers`: Explicit tier definitions using canonical names
-  - Tier 0: Native catalog (preferred)
-  - Tier 1+: Crossref/fallback sources
+- `tier_rules`: Explicit, fabricator-defined tier assignment rules (policy-based)
+  - Evaluated *after* field synonym normalization
+  - Designed to remain stable even as catalog creators evolve column names
 
-**Selection mechanics** (three-stage: filter → normalize → tier):
+**Selection mechanics** (four-stage: affinity → normalize → tier → order):
 1. **Fabricator affinity filter**:
    - Keep: `item.fabricator == target_fabricator` OR `item.fabricator == ""`
    - Prune: `item.fabricator == other_fabricator`
-   - Example: Building for JLC → keep JLC-specific + generic, prune PCBWay-specific
 
 2. **Field synonym normalization**:
-   - Resolve field name variants to canonical names using `field_synonyms`
-   - Example: item with "LCSC Part" field → normalized to `lcsc` canonical name
+   - Resolve inventory column-name variants to canonical names using `field_synonyms`
+   - Example: "LCSC Part #" → canonical `fab_pn`
    - Enables reusable synonym mappings across all fields (not just part numbers)
 
-3. **Preference tiering** (among normalized fields):
-   - Look up canonical field names in `part_number_source_tiers`
-   - Tier = explicit tier number for first matching canonical field
-   - Example JLC: item with `lcsc` field → Tier 0, item with only `mpn` → Tier 1
-   - No matching tier → item has no usable part number (warning)
+3. **Tier assignment** (policy-based):
+   - Evaluate fabricator `tier_rules` in ascending tier order (0, 1, 2, ...)
+   - Tier = first rule whose conditions all match
+   - If no rule matches, the item is **not eligible** for that fabricator profile
 
-3. **Final ordering**: `(preference_tier, item.priority, -score)`
-   - Fabricator catalog preference first
+4. **Final ordering**: `(preference_tier, item.priority, -score)`
+   - Fabricator preference first
    - User stock management second
    - Match quality third
 
-**Examples** (using new schema from Issue #59):
+**Examples** (schema: `field_synonyms` + `tier_rules`):
 - **JLCPCB**
   ```yaml
   field_synonyms:
-    lcsc:
-      synonyms: ["LCSC", "LCSC Part", "LCSC Part #", "JLC"]
+    fab_pn:
+      synonyms: ["LCSC", "LCSC Part", "LCSC Part #", "JLC", "JLC Part"]
       display_name: "LCSC Part Number"
+    supplier_pn:
+      synonyms: ["DPN", "Distributor Part Number", "Mouser Part Number", "DigiKey Part Number"]
+      display_name: "Supplier Part Number"
     mpn:
-      synonyms: ["MPN", "MFGPN"]
+      synonyms: ["MPN", "MFGPN", "Manufacturer Part Number"]
       display_name: "MPN"
-  part_number_source_tiers:
-    0: [lcsc]   # Catalog
-    1: [mpn]    # Crossref
+  tier_rules:
+    0:
+      conditions:
+        - field: "Consigned"
+          operator: "truthy"
+    1:
+      conditions:
+        - field: "Preferred"
+          operator: "truthy"
+        - field: "fab_pn"
+          operator: "exists"
+    2:
+      conditions:
+        - field: "fab_pn"
+          operator: "exists"
+    3:
+      conditions:
+        - field: "supplier_pn"
+          operator: "exists"
+    4:
+      conditions:
+        - field: "mpn"
+          operator: "exists"
   ```
-  - Items with `fabricator=="JLC"` + `lcsc` field → Tier 0 (consigned catalog - best)
-  - Items with `fabricator==""` + `lcsc` field → Tier 0 (catalog available to JLC)
-  - Items with `fabricator==""` + only `mpn` → Tier 1 (crossref via manufacturer)
-  - Items with `fabricator=="PCBWay"` → pruned (competitor's consignment)
-
-- **PCBWay**
-  ```yaml
-  field_synonyms:
-    pcbway:
-      synonyms: ["PCBWay", "PCBWay Part"]
-      display_name: "PCBWay Part Number"
-    mouser:
-      synonyms: ["Mouser", "Mouser Part Number"]
-      display_name: "Mouser P/N"
-    mpn:
-      synonyms: ["MPN", "MFGPN"]
-      display_name: "MPN"
-  part_number_source_tiers:
-    0: [pcbway]        # Native catalog
-    1: [mouser, digikey]  # Preferred distributors
-    2: [mpn]           # Crossref
-  ```
-  - Items with `fabricator=="PCBWay"` + `pcbway` → Tier 0 (consigned catalog)
-  - Items with `fabricator==""` + `mouser` → Tier 1 (distributor)
-  - Items with `fabricator==""` + only `mpn` → Tier 2 (crossref/self-source)
-  - Items with `fabricator=="JLC"` → pruned (competitor's warehouse)
 
 - **Generic**
   ```yaml
   field_synonyms:
-    mpn:
-      synonyms: ["MPN", "MFGPN", "Part Number", "P/N"]
+    supplier_pn:
+      synonyms: ["Part Number", "P/N", "Distributor Part Number", "DPN"]
       display_name: "Part Number"
-  part_number_source_tiers:
-    0: [mpn]  # All manufacturer data equal
+    mpn:
+      synonyms: ["MPN", "MFGPN"]
+      display_name: "MPN"
+  tier_rules:
+    0:
+      conditions:
+        - field: "supplier_pn"
+          operator: "exists"
+    1:
+      conditions:
+        - field: "mpn"
+          operator: "exists"
   ```
-  - All items with `fabricator==""` eligible (no fab-specific consignment)
-  - Items with fab-specific values pruned (consigned elsewhere)
-  - User controls all sourcing via `item.priority` (no fabricator preference)
 
 This design allows the same inventory to serve multiple fabricators with different:
 - **Supply chain models** (catalog vs crossref vs self-source)
 - **Consignment relationships** (fab-specific vs generic stock)
 - **Part number schemas** (LCSC vs distributor catalogs vs manufacturer data)
 
-Primary reference for Phase 2 planning:
-- `docs/workflow/planning/PHASE_2_REMAINING_WORK.md`
+## Phase 2 Completed Tasks
+Completed on `feature/issue-59-fabricator-schema-migration`:
+- ✅ Task 2.0: Schema migration (`field_synonyms` + `tier_rules`)
+- ✅ Task 2.1: `FabricatorConfig` parsing + validation
+- ✅ Task 2.2: `FabricatorInventorySelector` service (4-stage filter)
+- ✅ Task 2.4: Matcher updated for `(preference_tier, item.priority, -score)` ordering
+- ⏭ Task 2.3: Integration tests (deferred - covered by unit tests + BDD)
 
-Expected Phase 2 ordering invariant:
-- `(preference_tier, item.priority, -score)`
+## Next Action: Start Phase 3
+
+**Primary task**: Integrate `FabricatorInventorySelector` into BOM generation workflow.
+
+**References**:
+- `docs/workflow/planning/JBOM_NEW_ROADMAP.md` - Phase 3 tasks (service integration)
+- `docs/workflow/PHASE_2_TASKS.md` - Phase 2 implementation details (reference)
 
 ## Phase 1 design note (keep)
 Our tests and discussion clarified an important design nuance:
@@ -126,4 +162,5 @@ Our tests and discussion clarified an important design nuance:
 ## SEE ALSO
 - `docs/architecture/adr/0001-fabricator-inventory-selection-vs-matcher.md`
 - `docs/architecture/anti-patterns.md`
-- `docs/workflow/planning/PHASE_2_REMAINING_WORK.md`
+- `docs/workflow/planning/JBOM_NEW_ROADMAP.md` (complete roadmap)
+- `docs/workflow/PHASE_2_TASKS.md` (Phase 2 tactical tasks)

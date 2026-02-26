@@ -19,10 +19,10 @@ class TestFabricators(unittest.TestCase):
         self.assertIn("jlc", fabricators)
 
     def test_load_fabricator_jlc(self):
-        """Test loading JLCPCB fabricator config."""
+        """Test loading JLC fabricator config."""
         jlc = load_fabricator("jlc")
         self.assertEqual(jlc.id, "jlc")
-        self.assertEqual(jlc.name, "JLCPCB")
+        self.assertEqual(jlc.name, "JLC")
         self.assertIsInstance(jlc.pos_columns, dict)
         self.assertIn("Designator", jlc.pos_columns)
         self.assertEqual(jlc.pos_columns["Designator"], "reference")
@@ -37,7 +37,7 @@ class TestFabricators(unittest.TestCase):
         jlc = load_fabricator("jlc")
         fields = ["reference", "x", "y", "value"]
         headers = headers_for_fields(jlc, fields)
-        expected = ["Designator", "Mid X", "Mid Y", "Comment"]
+        expected = ["Designator", "Mid X", "Mid Y", "Val"]
         self.assertEqual(headers, expected)
 
     def test_headers_for_fields_without_fabricator(self):

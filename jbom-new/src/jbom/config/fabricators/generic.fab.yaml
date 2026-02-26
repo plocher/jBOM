@@ -6,12 +6,43 @@ name_source: "manufacturer"
 
 part_number:
   header: "Part Number"
-  priority_fields:
-    - "Part Number"
-    - "P/N"
-    - "MPN"
-    - "MFGPN"
 
+field_synonyms:
+  supplier_pn:
+    synonyms:
+      - "Part Number"
+      - "P/N"
+      - "Part #"
+      - "Supplier Part Number"
+      - "Supplier P/N"
+      - "Distributor Part Number"
+      - "DPN"
+      - "Distributor SKU"
+      - "SKU"
+      - "Mouser Part Number"
+      - "DigiKey Part Number"
+      - "Stock Code"
+      - "LCSC"
+      - "LCSC Part"
+      - "LCSC Part #"
+      - "LCSC Part Number"
+    display_name: "Part Number"
+  mpn:
+    synonyms:
+      - "MPN"
+      - "MFGPN"
+      - "Manufacturer Part Number"
+    display_name: "MPN"
+
+tier_rules:
+  0:
+    conditions:
+      - field: "supplier_pn"
+        operator: "exists"
+  1:
+    conditions:
+      - field: "mpn"
+        operator: "exists"
 bom_columns:
   "Reference": "reference"
   "Quantity": "quantity"

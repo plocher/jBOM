@@ -122,14 +122,27 @@ class ProjectFileResolver:
 
         # Step 3: Check if the resolved path exists
         if not resolved_path.exists():
-            if input_path.suffix in (".kicad_sch", ".kicad_pcb", ".kicad_pro", ".pro"):
-                # Provide context-aware error messages for explicit files
-                if input_path.suffix == ".kicad_sch":
-                    raise FileNotFoundError("No schematic file found")
-                elif input_path.suffix == ".kicad_pcb":
-                    raise FileNotFoundError("No PCB file found")
-                elif input_path.suffix in (".kicad_pro", ".pro"):
-                    raise FileNotFoundError("Project file not found")
+            # Explicit file paths should produce user-friendly errors.
+            # Keep the "File not found" substring for unit tests.
+            if input_path.suffix == ".kicad_sch":
+                raise FileNotFoundError(
+                    f"No schematic file found (File not found: {resolved_path})"
+                )
+            if input_path.suffix == ".kicad_pcb":
+                raise FileNotFoundError(
+                    f"No PCB file found (File not found: {resolved_path})"
+                )
+            if input_path.suffix in (".kicad_pro", ".pro"):
+                raise FileNotFoundError(
+                    f"Project file not found (File not found: {resolved_path})"
+                )
+
+            # If the user provided a bare base name (no suffix, no directory
+            # components), attempt project base-name resolution in the current
+            # working directory.
+            if input_path.suffix == "" and input_path.parent == Path("."):
+                return self._resolve_base_name(input_path.name, Path.cwd())
+
             raise FileNotFoundError(f"Path does not exist: {resolved_path}")
 
         # Use the resolved path from here on
@@ -147,22 +160,20 @@ class ProjectFileResolver:
         try:
             project_context = self._discover_kicad_project(project_dir)
         except ValueError as e:
-            # For empty directories, always say "No project files found"
-            # For directories with files but missing target type, use specific message
+            # For empty directories, preserve ValueError semantics.
+            # For directories with files but missing target type, use specific message.
             if "No project files found" in str(e):
-                # Check if directory is truly empty
                 any_files = any(project_dir.glob("*"))
                 if not any_files:
-                    # Empty directory - always use generic message
-                    raise FileNotFoundError("No project files found")
-                else:
-                    # Directory has files but missing target - use specific message
-                    if self.target_file_type == "schematic":
-                        raise FileNotFoundError("No schematic file found")
-                    elif self.target_file_type == "pcb":
-                        raise FileNotFoundError("No PCB file found")
-                    else:
-                        raise FileNotFoundError("No project files found")
+                    raise ValueError("No project files found")
+
+                if self.target_file_type == "schematic":
+                    raise FileNotFoundError("No schematic file found")
+                if self.target_file_type == "pcb":
+                    raise FileNotFoundError("No PCB file found")
+
+                raise ValueError("No project files found")
+
             raise e
 
         # Step 6: If user provided explicit file, validate it belongs to project
