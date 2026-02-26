@@ -23,6 +23,11 @@ search_url_template: "https://www.lcsc.com/search?q={query}"
 
 ### Supplier Profiles to Create
 
+**Generic** (`generic.supplier.yaml`):
+- No-op supplier profile (fallback for unknown suppliers)
+- `url_template`: null
+- `search_url_template`: null
+
 **LCSC** (`lcsc.supplier.yaml`):
 - `inventory_column`: "LCSC"
 - `part_number.pattern`: `^C\d+$`
@@ -37,17 +42,20 @@ search_url_template: "https://www.lcsc.com/search?q={query}"
 
 **DigiKey** (`digikey.supplier.yaml`):
 - `inventory_column`: "DigiKey"
-- `url_template`: `https://www.digikey.com/en/products/detail/-/-/{pn}`
-- `search_url_template`: `https://www.digikey.com/en/products/result?keywords={query}`
+- Direct product URLs are not reliably derivable from a bare PN without additional identifiers
+- `url_template`: null (explicitly unsupported)
+- `search_url_template`: `https://www.digikey.com/en/products?keywords={query}`
 
 ## Implementation
 
 ### 1. Config infrastructure
 
 **New files**:
-- `src/jbom/config/suppliers/` — directory for supplier YAML files
-- `src/jbom/config/suppliers/__init__.py`
+- `src/jbom/config/__init__.py` — make `jbom.config` a regular package
+- `src/jbom/config/suppliers/` — directory for supplier YAML files (data-only; no `__init__.py`)
 - `src/jbom/config/suppliers.py` — loader module (parallel to `fabricators.py`)
+
+Note: `src/jbom/config/suppliers/__init__.py` is intentionally NOT created because it would conflict with importing `jbom.config.suppliers` (which is the loader module).
 
 **SupplierConfig dataclass** in `suppliers.py`:
 ```python
@@ -85,19 +93,19 @@ This replaces the dropped `DPNLink` column — URLs are derived, not stored.
 
 ### 3. Part number validation
 Optional validation using `part_number.pattern`:
-- `validate_part_number(supplier_id: str, pn: str) -> bool`
+- `validate_part_number(supplier: SupplierConfig, pn: str) -> bool`
 - Useful for inventory validation CLI (`jbom validate-inventory`)
 - Not blocking for BOM generation — validation is advisory
 
 ### 4. Tests
+Phase 4S scope is unit tests only:
 - Unit tests for `SupplierConfig` loading and parsing
-- Unit tests for URL generation (template substitution)
+- Unit tests for URL generation (template substitution + encoding behavior)
 - Unit tests for PN validation (regex matching)
-- BDD scenario: given an inventory with LCSC codes, supplier URL is derivable
 
 ## Relationship to Fabricator Profiles
 Fabricator profiles and supplier profiles are **orthogonal**:
-- Fab profiles reference suppliers implicitly through `field_synonyms` column names (e.g., JLC's `fab_pn` synonyms include "LCSC")
+- Fab profiles reference suppliers implicitly through inventory column names (e.g., JLC's `fab_pn` synonyms include "LCSC")
 - Supplier profiles define what those column names *mean* and what capabilities they enable
 - A fabricator can use any combination of suppliers
 - Adding a new supplier = add a `*.supplier.yaml` + optionally add column to inventory
@@ -111,6 +119,7 @@ These are NOT in scope for Phase 4S but supplier profiles enable them:
 - **Catalog search CLI**: `jbom search "0603 100nF" --supplier lcsc` uses `search_url_template`
 - **Inventory validation**: `jbom validate-inventory` checks PN formats against `part_number.pattern`
 - **Multi-supplier price comparison**: Future feature using supplier APIs
+- **Hierarchical config discovery**: Allow user overrides/extensions beyond factory defaults
 
 ## Reference Implementation
 Follow the patterns established in `src/jbom/config/fabricators.py`:
@@ -121,21 +130,19 @@ Follow the patterns established in `src/jbom/config/fabricators.py`:
 
 ## Execution Order
 1. Create `suppliers.py` config loader + `SupplierConfig` dataclass
-2. Create LCSC, Mouser, DigiKey supplier YAML files
+2. Create Generic, LCSC, Mouser, DigiKey supplier YAML files
 3. Create `SupplierUrlResolver` service
 4. Add unit tests for loader, URL resolver, PN validation
-5. Update architecture docs (`domain-centric-design.md`, `workflow-architecture.md`)
 
 ## Validation
 ```bash
 PYTHONPATH=/Users/jplocher/Dropbox/KiCad/jBOM/jbom-new/src python -c "
-from jbom.config.suppliers import load_supplier
-s = load_supplier('lcsc')
-print(s.url_template.format(pn='C25231'))
-# https://www.lcsc.com/product-detail/C25231.html
+from jbom.services.supplier_url_resolver import SupplierUrlResolver
+r = SupplierUrlResolver()
+print(r.resolve_url('lcsc','C25231'))
+print(r.resolve_search_url('lcsc','0603 100nF'))
 "
 PYTHONPATH=/Users/jplocher/Dropbox/KiCad/jBOM/jbom-new/src python -m pytest tests/ -q --tb=short
-python -m behave --format progress
 ```
 
 ## Estimated Effort

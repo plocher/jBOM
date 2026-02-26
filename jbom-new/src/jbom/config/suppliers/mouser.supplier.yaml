@@ -1,0 +1,10 @@
+name: "Mouser"
+id: "mouser"
+description: "Mouser Electronics"
+website: "https://www.mouser.com"
+inventory_column: "Mouser"
+part_number:
+  pattern: "^\\d{3}-.*$"
+  example: "595-TPS62133DQCR"
+url_template: "https://www.mouser.com/ProductDetail/{pn}"
+search_url_template: "https://www.mouser.com/c/?q={query}"
