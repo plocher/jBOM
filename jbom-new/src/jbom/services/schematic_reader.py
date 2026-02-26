@@ -1,11 +1,13 @@
-"""SchematicReader Service - Pure business logic for loading KiCad schematic files."""
+"""SchematicReader Service - pure business logic for loading KiCad schematics."""
+
+from __future__ import annotations
 
 from pathlib import Path
 from typing import List, Optional
 
-from jbom.common.types import Component
-from jbom.common.sexp_parser import load_kicad_file, walk_nodes
 from jbom.common.options import GeneratorOptions
+from jbom.common.types import Component
+from jbom.services.readers import schematic_reader
 
 
 class SchematicReader:
@@ -49,10 +51,10 @@ class SchematicReader:
 
     def _parse_schematic(self, schematic_file: Path) -> List[Component]:
         """Parse schematic file using S-expression parser."""
-        sexp = load_kicad_file(schematic_file)
-        components = []
+        sexp = schematic_reader.load_kicad_file(schematic_file)
+        components: List[Component] = []
 
-        for symbol_node in walk_nodes(sexp, "symbol"):
+        for symbol_node in schematic_reader.walk_nodes(sexp, "symbol"):
             component = self._parse_symbol(symbol_node)
             if component and self._should_include_component(component):
                 components.append(component)
@@ -127,10 +129,13 @@ class SchematicReader:
         )
 
     def _should_include_component(self, component: Component) -> bool:
-        """Determine if component should be included based on options.
+        """Return True if a parsed component should be included.
 
-        Note: All filtering (DNP, virtual symbols, etc.) is handled by the component_filters
-        module based on user flags, so we load all valid components here.
+        SchematicReader is intentionally permissive: it loads components and
+        preserves their flags (DNP, in_bom, virtual symbols, etc.).
+
+        Filtering policy is applied later via `jbom.common.component_filters`
+        based on CLI flags (e.g. --include-dnp, --include-excluded, --include-all).
         """
-        # Load all components - filtering is handled by component_filters module
+
         return True

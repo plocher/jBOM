@@ -62,7 +62,14 @@ def register_command(subparsers) -> None:
         help="Include only components on specified layer",
     )
 
-    # Unit options removed: POS always uses mm and echoes raw tokens from PCB
+    # Units flag retained for backward compatible CLI help and UX tests.
+    # POS currently always uses mm internally.
+    parser.add_argument(
+        "--units",
+        choices=["mm"],
+        default="mm",
+        help="Units for POS output (mm only)",
+    )
 
     # Origin options
     parser.add_argument(
