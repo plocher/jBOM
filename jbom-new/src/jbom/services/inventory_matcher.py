@@ -1,67 +1,103 @@
-"""Inventory matcher service that enhances BOM entries with inventory data."""
+"""Inventory matcher service that enhances BOM entries with inventory data.
 
+This service implements the core matching pipeline:
+1. Load inventory items from file(s)
+2. Filter/rank inventory by fabricator profile (FabricatorInventorySelector)
+3. Match each aggregated BOM group to filtered inventory (SophisticatedInventoryMatcher)
+4. Enrich BOM entries with best-match inventory data
+"""
+
+import logging
 from typing import List, Optional
 from pathlib import Path
 
+from jbom.common.types import Component, InventoryItem
+from jbom.config.fabricators import load_fabricator
 from jbom.services.bom_generator import BOMEntry, BOMData
-from jbom.common.types import InventoryItem
+from jbom.services.fabricator_inventory_selector import FabricatorInventorySelector
 from jbom.services.inventory_reader import InventoryReader
+from jbom.services.sophisticated_inventory_matcher import (
+    MatchingOptions,
+    SophisticatedInventoryMatcher,
+)
+
+logger = logging.getLogger(__name__)
 
 
 class InventoryMatcher:
     """Service that matches BOM entries to inventory items and enhances them."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the inventory matcher."""
-        pass
 
     def enhance_bom_with_inventory(
-        self, bom_data: BOMData, inventory_file: Path
+        self,
+        bom_data: BOMData,
+        inventory_file: Path,
+        fabricator_id: str = "generic",
+        project_name: Optional[str] = None,
     ) -> BOMData:
         """Enhance BOM data with inventory information.
 
-        The matching function's scope is to find inventory items that satisfy the
-        electrical/physical requirements of partially specified KiCad components.
-
-        Matching Strategy:
-        1. Happy Path: component.IPN == inventory.IPN (exact match)
-        2. Heuristic matching: value-based matching (case-insensitive)
-        3. Higher confidence: value + package matching
-        4. Worst Case: Insufficient component specification → no match
+        Pipeline steps:
+        1. Load raw inventory items from file
+        2. Filter inventory through fabricator profile (affinity → project → tier)
+        3. For each BOM entry, construct a representative Component and match
+           against the filtered inventory using SophisticatedInventoryMatcher
+        4. Enrich matched entries with inventory data
 
         Args:
             bom_data: BOM data to enhance
-            inventory_file: Path to inventory CSV file
+            inventory_file: Path to inventory file
+            fabricator_id: Fabricator profile ID (default: "generic")
+            project_name: Optional project name for project-restricted items
 
         Returns:
             Enhanced BOM data with inventory information
         """
-        # Load inventory data
+        # Step 1: Load inventory
         inventory_items = self._load_inventory(inventory_file)
         if not inventory_items:
-            return bom_data  # Return original if no inventory
+            return bom_data
 
-        # Enhance each BOM entry
+        # Step 2: Filter inventory through fabricator profile
+        eligible_items = self._filter_by_fabricator(
+            inventory_items, fabricator_id, project_name
+        )
+
+        # Step 3+4: Match and enrich each BOM entry
+        matcher = SophisticatedInventoryMatcher(MatchingOptions())
         enhanced_entries = []
-        for entry in bom_data.entries:
-            enhanced_entry = self._enhance_entry_with_inventory(entry, inventory_items)
-            enhanced_entries.append(enhanced_entry)
+        matched_count = 0
+        orphan_refs: List[str] = []
 
-        # Create enhanced BOM data
+        for entry in bom_data.entries:
+            component = self._bom_entry_to_component(entry)
+            matches = matcher.find_matches(component, eligible_items)
+
+            if matches:
+                best = matches[0]
+                enhanced_entry = self._enrich_entry(entry, best.inventory_item)
+                enhanced_entries.append(enhanced_entry)
+                matched_count += 1
+            else:
+                enhanced_entries.append(entry)
+                orphan_refs.append(entry.references_string)
+
+        # Build enhanced metadata
         enhanced_metadata = bom_data.metadata.copy()
         enhanced_metadata.update(
             {
                 "inventory_file": str(inventory_file),
                 "inventory_items_loaded": len(inventory_items),
-                "matched_entries": len(
-                    [
-                        e
-                        for e in enhanced_entries
-                        if e.attributes.get("inventory_matched")
-                    ]
-                ),
+                "fabricator_id": fabricator_id,
+                "eligible_items": len(eligible_items),
+                "matched_entries": matched_count,
+                "orphan_entries": len(orphan_refs),
             }
         )
+        if orphan_refs:
+            enhanced_metadata["orphan_references"] = orphan_refs
 
         return BOMData(
             project_name=bom_data.project_name,
@@ -79,59 +115,84 @@ class InventoryMatcher:
             inventory_items, _ = loader.load()
             return inventory_items
         except Exception:
-            # If we can't load inventory, return empty list
             return []
 
-    def _enhance_entry_with_inventory(
+    def _filter_by_fabricator(
         self,
-        entry: BOMEntry,
         inventory_items: List[InventoryItem],
-    ) -> BOMEntry:
-        """Enhance a single BOM entry with inventory data."""
-        # Try to find matching inventory item
-        inventory_item = self._find_matching_inventory_item(entry, inventory_items)
+        fabricator_id: str,
+        project_name: Optional[str],
+    ) -> list:
+        """Filter inventory through fabricator profile.
 
-        if not inventory_item:
-            # No match found, return original entry
-            return entry
+        Returns EligibleInventoryItem list when a fabricator config is found,
+        or the raw InventoryItem list as fallback.
+        """
+        try:
+            config = load_fabricator(fabricator_id)
+            selector = FabricatorInventorySelector(config)
+            return selector.select_eligible(inventory_items, project_name)
+        except (ValueError, Exception) as exc:
+            logger.debug(
+                "Fabricator '%s' config unavailable (%s); using unfiltered inventory",
+                fabricator_id,
+                exc,
+            )
+            return inventory_items
 
-        # Create enhanced attributes
+    @staticmethod
+    def _bom_entry_to_component(entry: BOMEntry) -> Component:
+        """Construct a representative Component from a BOM entry.
+
+        Since all components in an aggregated group have identical
+        electro-mechanical specs by definition, any member is representative.
+        The BOMEntry carries lib_id, value, footprint, and merged attributes
+        from the group — exactly what the sophisticated matcher needs.
+        """
+        return Component(
+            reference=entry.references[0] if entry.references else "",
+            lib_id=entry.lib_id,
+            value=entry.value,
+            footprint=entry.footprint,
+            properties=entry.attributes,
+        )
+
+    @staticmethod
+    def _enrich_entry(entry: BOMEntry, item: InventoryItem) -> BOMEntry:
+        """Enrich a BOM entry with data from the best-matching inventory item."""
         enhanced_attributes = entry.attributes.copy()
         enhanced_attributes.update(
             {
-                # Inventory match metadata
                 "inventory_matched": True,
-                "inventory_ipn": inventory_item.ipn,
-                # Enhanced component data
-                "manufacturer": inventory_item.manufacturer
-                if inventory_item.manufacturer
+                "inventory_ipn": item.ipn,
+                "manufacturer": item.manufacturer
+                if item.manufacturer
                 else enhanced_attributes.get("manufacturer", ""),
-                "manufacturer_part": inventory_item.mfgpn
-                if inventory_item.mfgpn
+                "manufacturer_part": item.mfgpn
+                if item.mfgpn
                 else enhanced_attributes.get("manufacturer_part", ""),
-                "description": inventory_item.description
-                if inventory_item.description
+                "description": item.description
+                if item.description
                 else enhanced_attributes.get("description", ""),
-                "datasheet": inventory_item.datasheet
-                if inventory_item.datasheet
+                "datasheet": item.datasheet
+                if item.datasheet
                 else enhanced_attributes.get("datasheet", ""),
-                "lcsc_part": inventory_item.lcsc
-                if inventory_item.lcsc
+                "lcsc_part": item.lcsc
+                if item.lcsc
                 else enhanced_attributes.get("lcsc_part", ""),
-                "tolerance": inventory_item.tolerance
-                if inventory_item.tolerance
+                "tolerance": item.tolerance
+                if item.tolerance
                 else enhanced_attributes.get("tolerance", ""),
-                "voltage": inventory_item.voltage
-                if inventory_item.voltage
+                "voltage": item.voltage
+                if item.voltage
                 else enhanced_attributes.get("voltage", ""),
-                "wattage": inventory_item.wattage
-                if inventory_item.wattage
+                "wattage": item.wattage
+                if item.wattage
                 else enhanced_attributes.get("wattage", ""),
             }
         )
 
-        # Create enhanced BOM entry
-        enhanced_entry = BOMEntry(
+        return BOMEntry(
             references=entry.references,
             value=entry.value,
             footprint=entry.footprint,
@@ -139,58 +200,3 @@ class InventoryMatcher:
             quantity=entry.quantity,
             attributes=enhanced_attributes,
         )
-
-        return enhanced_entry
-
-    def _find_matching_inventory_item(
-        self,
-        entry: BOMEntry,
-        inventory_items: List[InventoryItem],
-    ) -> Optional[InventoryItem]:
-        """Find matching inventory item for a BOM entry using simple heuristics."""
-        # First check if entry has explicit IPN (rare but possible)
-        entry_ipn = entry.attributes.get("ipn")
-        if entry_ipn:
-            for item in inventory_items:
-                if entry_ipn == item.ipn:
-                    return item
-
-        # Use heuristic matching on electro-mechanical attributes
-        # Try value-based matching (case-insensitive)
-        for item in inventory_items:
-            if entry.value.upper() == item.value.upper():
-                return item
-
-        # Try value + package matching for higher confidence
-        package = self._extract_package(entry.footprint)
-        if package:
-            for item in inventory_items:
-                if (
-                    entry.value.upper() == item.value.upper()
-                    and package == item.package
-                ):
-                    return item
-
-        return None
-
-    def _extract_package(self, footprint: str) -> str:
-        """Extract package size from footprint (simplified)."""
-        if not footprint:
-            return ""
-
-        # Look for common package patterns
-        import re
-
-        patterns = [
-            r"(\d{4})_\d{4}Metric",  # 0603_1608Metric -> 0603
-            r"(SOT-\d+)",  # SOT-23, SOT-223
-            r"(SOIC-\d+)",  # SOIC-8, SOIC-14
-        ]
-
-        for pattern in patterns:
-            match = re.search(pattern, footprint)
-            if match:
-                return match.group(1)
-
-        # Fallback - return footprint as-is
-        return footprint

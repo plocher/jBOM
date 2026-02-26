@@ -218,7 +218,8 @@ class TestServiceComposition:
             ),
         ]
 
-        # Mock inventory items
+        # Mock inventory items — raw_data must mirror CSV columns so
+        # fabricator tier rules can match (e.g. generic looks for MFGPN/LCSC).
         mock_inventory_items = [
             InventoryItem(
                 ipn="RES_10K",
@@ -242,9 +243,17 @@ class TestServiceComposition:
                 uuid="",
                 fabricator="",
                 priority=DEFAULT_PRIORITY,
-                source="",
+                source="CSV",
                 source_file=None,
-                raw_data={},
+                raw_data={
+                    "IPN": "RES_10K",
+                    "Category": "RES",
+                    "Value": "10K",
+                    "Package": "0603",
+                    "MFGPN": "RC0603FR-0710KL",
+                    "Manufacturer": "Yageo",
+                    "Tolerance": "1%",
+                },
             ),
             InventoryItem(
                 ipn="CAP_100nF",
@@ -268,9 +277,17 @@ class TestServiceComposition:
                 uuid="",
                 fabricator="",
                 priority=DEFAULT_PRIORITY,
-                source="",
+                source="CSV",
                 source_file=None,
-                raw_data={},
+                raw_data={
+                    "IPN": "CAP_100nF",
+                    "Category": "CAP",
+                    "Value": "100nF",
+                    "Package": "0603",
+                    "MFGPN": "GRM188R71C104KA01D",
+                    "Manufacturer": "Murata",
+                    "Voltage": "16V",
+                },
             ),
         ]
 
