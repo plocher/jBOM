@@ -297,27 +297,24 @@ class InventoryReader:
                 voltage=row.get("V", ""),
                 amperage=row.get("A", ""),
                 wattage=row.get("W", ""),
-                lcsc=self._get_first_value(
-                    row, ["LCSC", "LCSC Part", "LCSC Part #", "DPN"]
-                ),
+                # Phase 4 inventory schema: LCSC is an explicit column (no DPN fallback).
+                lcsc=self._get_first_value(row, ["LCSC", "LCSC Part", "LCSC Part #"]),
                 manufacturer=row.get("Manufacturer", ""),
-                mfgpn=row.get("MFGPN", ""),
-                datasheet=row.get("Datasheet", ""),
-                package=row.get("Package", ""),
-                distributor=self._get_first_value(
-                    row, ["Distributor", "Supplier", "Vendor"]
-                ),
-                distributor_part_number=self._get_first_value(
+                # MPN header varies across inventories; treat these as synonyms.
+                mfgpn=self._get_first_value(
                     row,
                     [
-                        "Distributor Part Number",
-                        "Distributor SKU",
-                        "SKU",
-                        "DigiKey Part Number",
-                        "Mouser Part Number",
-                        "Stock Code",
+                        "MFGPN",
+                        "MPN",
+                        "Manufacturer Part Number",
                     ],
                 ),
+                datasheet=row.get("Datasheet", ""),
+                package=row.get("Package", ""),
+                # Phase 4 inventory schema: distributor-specific part numbers should remain
+                # in raw_data for field_synonyms resolution (e.g. Mouser/DigiKey columns).
+                distributor="",
+                distributor_part_number="",
                 uuid=row.get("UUID", ""),
                 priority=self._parse_priority(
                     row.get("Priority", str(DEFAULT_PRIORITY))

@@ -7,12 +7,17 @@ from pathlib import Path
 from datetime import datetime
 import shutil
 
-from jbom.services.project_inventory import ProjectInventoryGenerator
-from jbom.services.schematic_reader import SchematicReader
-from jbom.services.project_file_resolver import ProjectFileResolver
-from jbom.services.component_inventory_matcher import ComponentInventoryMatcher
+from jbom.common.types import Component, InventoryItem
 from jbom.common.options import GeneratorOptions
 from jbom.cli.formatting import print_inventory_table
+from jbom.services.inventory_reader import InventoryReader
+from jbom.services.project_file_resolver import ProjectFileResolver
+from jbom.services.project_inventory import ProjectInventoryGenerator
+from jbom.services.schematic_reader import SchematicReader
+from jbom.services.sophisticated_inventory_matcher import (
+    MatchingOptions,
+    SophisticatedInventoryMatcher,
+)
 
 
 def register_command(subparsers) -> None:
@@ -151,15 +156,18 @@ def _handle_generate_inventory(args: argparse.Namespace) -> int:
         )
         return 1
 
+    # Apply inventory filtering (component-level) if requested.
+    if args.inventory_files or args.filter_matches:
+        components = _filter_components_by_existing_inventory(
+            components,
+            inventory_files=args.inventory_files,
+            filter_matches=args.filter_matches,
+            verbose=args.verbose,
+        )
+
     # Generate inventory
     generator = ProjectInventoryGenerator(components)
     inventory_items, field_names = generator.load()
-
-    # Apply inventory filtering if requested
-    if args.inventory_files or args.filter_matches:
-        inventory_items = _apply_inventory_filtering(
-            inventory_items, args.inventory_files, args.filter_matches, args.verbose
-        )
 
     # Handle output using same pattern as BOM command
     return _output_inventory(
@@ -167,20 +175,28 @@ def _handle_generate_inventory(args: argparse.Namespace) -> int:
     )
 
 
-def _apply_inventory_filtering(
-    inventory_items, inventory_files, filter_matches, verbose
-):
-    """Apply inventory filtering based on existing inventory matches.
+def _filter_components_by_existing_inventory(
+    components: list[Component],
+    *,
+    inventory_files: list[Path] | None,
+    filter_matches: bool,
+    verbose: bool,
+) -> list[Component]:
+    """Filter project components based on whether they match an existing inventory.
+
+    This is used by `jbom inventory` to show only "new" components not already
+    represented in an inventory file.
 
     Args:
-        inventory_items: List of inventory items from the project
-        inventory_files: List of paths to existing inventory CSV files
-        filter_matches: If True, filter OUT matched components (show only new ones)
-        verbose: Enable verbose output
+        components: Components loaded from schematic(s).
+        inventory_files: Inventory CSV file paths.
+        filter_matches: If True, exclude components that match (show only new).
+        verbose: Emit diagnostic match info to stderr.
 
     Returns:
-        Filtered list of inventory items
+        Filtered component list.
     """
+    inventory_files = inventory_files or []
     if not inventory_files:
         if filter_matches:
             print(
@@ -188,121 +204,101 @@ def _apply_inventory_filtering(
                 file=sys.stderr,
             )
             raise SystemExit(1)
-        return inventory_items
+        return components
 
-    # Initialize matcher with merged inventory from multiple sources
-    try:
-        matcher = ComponentInventoryMatcher()
-        merged_inventory = []
-        seen_ipns = set()  # Track IPNs to avoid duplicates
-        total_files_loaded = 0
+    # Load and merge inventory files (first occurrence of each IPN wins).
+    merged_inventory: list[InventoryItem] = []
+    seen_ipns: set[str] = set()
 
-        if verbose:
+    if verbose:
+        print(
+            f"Loading {len(inventory_files)} inventory file(s):",
+            file=sys.stderr,
+        )
+
+    missing_file_detected = False
+    total_files_loaded = 0
+
+    for i, inventory_file in enumerate(inventory_files):
+        if not inventory_file.exists():
+            missing_file_detected = True
             print(
-                f"Loading {len(inventory_files)} inventory file(s):",
+                f"Error: Inventory file not found: {inventory_file}",
                 file=sys.stderr,
             )
+            continue
 
-        # Load files in order - first occurrence of each IPN is used
-        missing_file_detected = False
-        for i, inventory_file in enumerate(inventory_files):
-            try:
-                from jbom.services.inventory_reader import InventoryReader
+        try:
+            reader = InventoryReader(inventory_file)
+            file_inventory, _ = reader.load()
 
-                reader = InventoryReader(inventory_file)
-                file_inventory, _ = reader.load()
+            added_count = 0
+            for item in file_inventory:
+                if item.ipn not in seen_ipns:
+                    merged_inventory.append(item)
+                    seen_ipns.add(item.ipn)
+                    added_count += 1
 
-                added_count = 0
-                for item in file_inventory:
-                    if item.ipn not in seen_ipns:  # First occurrence wins
-                        merged_inventory.append(item)
-                        seen_ipns.add(item.ipn)
-                        added_count += 1
-
-                total_files_loaded += 1
-                if verbose:
-                    file_desc = f"file {i+1}"
-                    print(
-                        f"  {file_desc}: {inventory_file} ({added_count}/{len(file_inventory)} items added)",
-                        file=sys.stderr,
-                    )
-
-            except FileNotFoundError:
-                missing_file_detected = True
+            total_files_loaded += 1
+            if verbose:
+                file_desc = f"file {i + 1}"
                 print(
-                    f"Error: Inventory file not found: {inventory_file}",
+                    f"  {file_desc}: {inventory_file} ({added_count}/{len(file_inventory)} items added)",
                     file=sys.stderr,
                 )
-            except Exception as e:
-                print(f"Error loading {inventory_file}: {e}", file=sys.stderr)
 
-        if missing_file_detected:
-            # Fail-fast with a non-zero exit when any inventory file is missing
-            raise SystemExit(1)
+        except Exception as e:
+            print(f"Error loading {inventory_file}: {e}", file=sys.stderr)
 
-        if not merged_inventory:
-            print("Error: No inventory items loaded from any file", file=sys.stderr)
-            raise SystemExit(1)
+    if missing_file_detected:
+        raise SystemExit(1)
 
-        # Set the merged inventory in the matcher
-        matcher.set_inventory(merged_inventory)
+    if not merged_inventory:
+        print("Error: No inventory items loaded from any file", file=sys.stderr)
+        raise SystemExit(1)
 
-        if verbose:
-            print(
-                f"Merged inventory: {len(merged_inventory)} total items from {total_files_loaded} file(s)",
-                file=sys.stderr,
-            )
+    if verbose:
+        print(
+            f"Merged inventory: {len(merged_inventory)} total items from {total_files_loaded} file(s)",
+            file=sys.stderr,
+        )
 
-    except Exception as e:
-        print(f"Error loading inventories: {e}", file=sys.stderr)
-        return inventory_items
+    matcher = SophisticatedInventoryMatcher(MatchingOptions(include_debug_info=verbose))
 
-    # Apply filtering logic
-    filtered_items = []
+    filtered_components: list[Component] = []
     matched_count = 0
 
-    for item in inventory_items:
-        # Convert inventory item to component data format for matching
-        component_data = {
-            "value": item.value or "",
-            "footprint": "",  # inventory items don't have footprint info
-            "lib_id": f"{item.category}:{item.value}"
-            if item.category and item.value
-            else "",
-            "properties": {},
-        }
-
-        # Find matches using sophisticated logic
-        matches = matcher.find_matches(component_data, debug=verbose)
+    for comp in components:
+        matches = matcher.find_matches(comp, merged_inventory)
 
         if matches:
             matched_count += 1
             if verbose:
-                best_match = matches[0]
-                print(f"Matched {item.ipn}: {best_match.debug_info}", file=sys.stderr)
+                print(
+                    f"Matched {comp.reference}: {matches[0].debug_info}",
+                    file=sys.stderr,
+                )
 
-            # If filter_matches=True, exclude matched items (show only new ones)
             if not filter_matches:
-                filtered_items.append(item)
+                filtered_components.append(comp)
         else:
-            # No match found
             if verbose:
-                print(f"No match for {item.ipn} ({item.value})", file=sys.stderr)
-
-            # If filter_matches=True, include unmatched items (new ones)
-            # If filter_matches=False, include all items
-            filtered_items.append(item)
+                print(
+                    f"No match for {comp.reference} ({comp.lib_id} {comp.value} {comp.footprint})",
+                    file=sys.stderr,
+                )
+            filtered_components.append(comp)
 
     if verbose:
-        total = len(inventory_items)
-        filtered = len(filtered_items)
-        action = "filtered out" if filter_matches else "included"
+        total = len(components)
+        filtered = len(filtered_components)
+        action = "kept" if filter_matches else "included"
         print(
             f"\nInventory filtering: {matched_count}/{total} matched, {filtered} {action}",
             file=sys.stderr,
         )
 
-    return filtered_items
+    return filtered_components
 
 
 def _output_inventory(
@@ -407,8 +403,6 @@ def _print_console_table(inventory_items, field_names) -> None:
 
 def _print_csv(inventory_items, field_names) -> None:
     """Print inventory as CSV to stdout."""
-    import csv
-
     writer = csv.DictWriter(sys.stdout, fieldnames=field_names)
     writer.writeheader()
 

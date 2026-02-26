@@ -8,11 +8,11 @@ This service implements the core matching pipeline:
 """
 
 import logging
-from typing import List, Optional
+from typing import Dict, List, Optional
 from pathlib import Path
 
 from jbom.common.types import Component, InventoryItem
-from jbom.config.fabricators import load_fabricator
+from jbom.config.fabricators import FabricatorConfig, load_fabricator
 from jbom.services.bom_generator import BOMEntry, BOMData
 from jbom.services.fabricator_inventory_selector import FabricatorInventorySelector
 from jbom.services.inventory_reader import InventoryReader
@@ -61,7 +61,7 @@ class InventoryMatcher:
             return bom_data
 
         # Step 2: Filter inventory through fabricator profile
-        eligible_items = self._filter_by_fabricator(
+        eligible_items, fabricator_config = self._filter_by_fabricator(
             inventory_items, fabricator_id, project_name
         )
 
@@ -77,7 +77,12 @@ class InventoryMatcher:
 
             if matches:
                 best = matches[0]
-                enhanced_entry = self._enrich_entry(entry, best.inventory_item)
+                enhanced_entry = self._enrich_entry(
+                    entry,
+                    best.inventory_item,
+                    fabricator_id=fabricator_id,
+                    fabricator_config=fabricator_config,
+                )
                 enhanced_entries.append(enhanced_entry)
                 matched_count += 1
             else:
@@ -122,23 +127,31 @@ class InventoryMatcher:
         inventory_items: List[InventoryItem],
         fabricator_id: str,
         project_name: Optional[str],
-    ) -> list:
+    ) -> tuple[list, Optional[FabricatorConfig]]:
         """Filter inventory through fabricator profile.
 
-        Returns EligibleInventoryItem list when a fabricator config is found,
-        or the raw InventoryItem list as fallback.
+        Returns:
+            (eligible_items, fabricator_config)
+
+        eligible_items:
+            - List[EligibleInventoryItem] when a fabricator config is found
+            - List[InventoryItem] as fallback when no config is available
+
+        fabricator_config:
+            - Loaded config when available
+            - None when falling back
         """
         try:
             config = load_fabricator(fabricator_id)
             selector = FabricatorInventorySelector(config)
-            return selector.select_eligible(inventory_items, project_name)
+            return selector.select_eligible(inventory_items, project_name), config
         except (ValueError, Exception) as exc:
             logger.debug(
                 "Fabricator '%s' config unavailable (%s); using unfiltered inventory",
                 fabricator_id,
                 exc,
             )
-            return inventory_items
+            return inventory_items, None
 
     @staticmethod
     def _bom_entry_to_component(entry: BOMEntry) -> Component:
@@ -158,9 +171,80 @@ class InventoryMatcher:
         )
 
     @staticmethod
-    def _enrich_entry(entry: BOMEntry, item: InventoryItem) -> BOMEntry:
+    def _normalized_raw_data(
+        config: FabricatorConfig, raw_data: Dict[str, str]
+    ) -> Dict[str, str]:
+        """Return a raw_data mapping augmented with canonical keys.
+
+        This mirrors the normalization behavior in FabricatorInventorySelector but
+        is used during enrichment because EligibleInventoryItem does not mutate
+        InventoryItem.raw_data.
+        """
+        raw = raw_data or {}
+        normalized: Dict[str, str] = dict(raw)
+
+        for header, value in raw.items():
+            canonical = config.resolve_field_synonym(header)
+            if canonical is None:
+                continue
+
+            existing = str(normalized.get(canonical, ""))
+            if existing.strip():
+                continue
+
+            normalized[canonical] = str(value)
+
+        return normalized
+
+    @staticmethod
+    def _resolve_fabricator_part_number(
+        *,
+        item: InventoryItem,
+        fabricator_id: str,
+        fabricator_config: Optional[FabricatorConfig],
+    ) -> str:
+        """Resolve fabricator_part_number using fabricator field_synonyms.
+
+        Phase 4 inventory schema uses explicit supplier columns (LCSC/Mouser/etc)
+        and fabricator configs supply tolerant synonym lists.
+        """
+        if fabricator_config is None:
+            return item.lcsc or item.distributor_part_number or item.mfgpn
+
+        normalized = InventoryMatcher._normalized_raw_data(
+            fabricator_config, item.raw_data
+        )
+
+        fid = (fabricator_id or "").strip().lower()
+        precedence = ["fab_pn", "supplier_pn", "mpn"]
+        if fid == "pcbway":
+            # PCBWay wants MPN as the primary identifier.
+            precedence = ["mpn", "supplier_pn", "fab_pn"]
+
+        for canonical in precedence:
+            v = str(normalized.get(canonical, "")).strip()
+            if v:
+                return v
+
+        return ""
+
+    @staticmethod
+    def _enrich_entry(
+        entry: BOMEntry,
+        item: InventoryItem,
+        *,
+        fabricator_id: str,
+        fabricator_config: Optional[FabricatorConfig],
+    ) -> BOMEntry:
         """Enrich a BOM entry with data from the best-matching inventory item."""
         enhanced_attributes = entry.attributes.copy()
+
+        fabricator_part_number = InventoryMatcher._resolve_fabricator_part_number(
+            item=item,
+            fabricator_id=fabricator_id,
+            fabricator_config=fabricator_config,
+        )
+
         enhanced_attributes.update(
             {
                 "inventory_matched": True,
@@ -177,9 +261,8 @@ class InventoryMatcher:
                 "datasheet": item.datasheet
                 if item.datasheet
                 else enhanced_attributes.get("datasheet", ""),
-                "lcsc_part": item.lcsc
-                if item.lcsc
-                else enhanced_attributes.get("lcsc_part", ""),
+                # Canonical attribute key used by CLI field system.
+                "lcsc": item.lcsc if item.lcsc else enhanced_attributes.get("lcsc", ""),
                 "tolerance": item.tolerance
                 if item.tolerance
                 else enhanced_attributes.get("tolerance", ""),
@@ -189,6 +272,13 @@ class InventoryMatcher:
                 "wattage": item.wattage
                 if item.wattage
                 else enhanced_attributes.get("wattage", ""),
+                "package": item.package
+                if item.package
+                else enhanced_attributes.get("package", ""),
+                "smd": item.smd if item.smd else enhanced_attributes.get("smd", ""),
+                "fabricator_part_number": fabricator_part_number
+                if fabricator_part_number
+                else enhanced_attributes.get("fabricator_part_number", ""),
             }
         )
 

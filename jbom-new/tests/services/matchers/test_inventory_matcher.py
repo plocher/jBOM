@@ -221,8 +221,9 @@ class TestInventoryMatcher:
         ]
 
         # Non-existent fabricator → fallback to raw items
-        result = matcher._filter_by_fabricator(items, "nonexistent_fab", None)
-        assert len(result) == len(items)
+        eligible, config = matcher._filter_by_fabricator(items, "nonexistent_fab", None)
+        assert config is None
+        assert len(eligible) == len(items)
 
     def test_metadata_includes_fabricator_info(self) -> None:
         """Enhanced metadata includes fabricator and eligible item counts."""

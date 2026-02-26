@@ -5,11 +5,10 @@ items to those usable for a specific fabricator and annotates them with a
 fabricator preference tier.
 
 Selection pipeline (in order):
-1) Fabricator affinity: keep items dedicated to this fabricator or generic items.
-2) Project restriction: honor optional `Projects` field (comma-separated).
-3) Field normalization: map evolving CSV header variants to canonical names using
+1) Project restriction: honor optional `Projects` field (comma-separated).
+2) Field normalization: map evolving CSV header variants to canonical names using
    FabricatorConfig.field_synonyms.
-4) Tier assignment: evaluate FabricatorConfig.tier_rules in ascending tier order.
+3) Tier assignment: evaluate FabricatorConfig.tier_rules in ascending tier order.
 
 This service is intentionally *stateless* with respect to InventoryItem objects:
 - It does NOT mutate InventoryItem.raw_data.
@@ -67,9 +66,6 @@ class FabricatorInventorySelector:
         eligible: List[EligibleInventoryItem] = []
 
         for item in inventory:
-            if not self._passes_fabricator_filter(item):
-                continue
-
             if not self._passes_project_filter(item, project_name):
                 continue
 
@@ -87,20 +83,6 @@ class FabricatorInventorySelector:
             )
 
         return eligible
-
-    def _passes_fabricator_filter(self, item: InventoryItem) -> bool:
-        """Return True if the item is available to this fabricator.
-
-        Keep if:
-        - item.fabricator is empty (generic stock), OR
-        - item.fabricator matches this fabricator id (case-insensitive).
-        """
-
-        item_fab = (item.fabricator or "").strip()
-        if not item_fab:
-            return True
-
-        return item_fab.lower() == self._config.id.strip().lower()
 
     def _passes_project_filter(
         self, item: InventoryItem, project_name: Optional[str]

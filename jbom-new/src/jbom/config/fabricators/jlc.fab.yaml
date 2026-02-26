@@ -28,13 +28,17 @@ field_synonyms:
     display_name: "LCSC Part Number"
   supplier_pn:
     synonyms:
-      - "DPN"
       - "Distributor Part Number"
       - "Distributor Part #"
       - "Distributor SKU"
       - "SKU"
+      - "Mouser"
       - "Mouser Part Number"
+      - "DigiKey"
       - "DigiKey Part Number"
+      - "Arrow"
+      - "Farnell"
+      - "Newark"
       - "Stock Code"
     display_name: "Supplier Part Number"
   mpn:

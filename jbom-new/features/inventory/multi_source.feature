@@ -46,7 +46,9 @@ Feature: Multi-Source Inventory
     Then the command should fail
 
   Scenario: Three inventory files with multiple matching options
-    # Validate remaining unmatched after three inventories (LED may remain)
+    # Phase 4 matcher can resolve more component types (including LEDs), so with a
+    # tertiary inventory providing the 22k resistor, everything matches and the
+    # filtered output is empty (headers only).
     Given an inventory file "tertiary_inventory.csv" that contains:
       | IPN                  | Category  | Value | Description         | Package | Manufacturer | MFGPN           |
       | RES-10K-0603-E96     | RESISTOR  | 10k   | Tertiary resistor   | 0603    | Panasonic    | ERJ-3EKF1002V   |
@@ -54,6 +56,4 @@ Feature: Multi-Source Inventory
       | IC-LM358-SOIC8-STD   | IC        | LM358 | Dual Op-Amp         | SOIC-8  | TI           | LM358DR         |
     When I run jbom command "inventory --inventory primary_inventory.csv --inventory secondary_inventory.csv --inventory tertiary_inventory.csv --filter-matches -o -"
     Then the command should succeed
-    And the CSV output has components where:
-      | Category | Value |
-      | LED      | RED   |
+    And the CSV output row count is 0

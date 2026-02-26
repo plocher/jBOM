@@ -4,25 +4,22 @@ description: "PCBWay Bill of Materials"
 website: "https://www.pcbway.com/helpcenter/assembly_help/How_to_place_an_assembly_order.html"
 
 part_number:
-  header: "Distributor Part Number"
+  header: "Manufacturer Part Number"
 
 field_synonyms:
-  fab_pn:
-    synonyms:
-      - "PCBWay"
-      - "PCBWay Part"
-      - "PCBWay Part #"
-      - "PCBWay Part Number"
-    display_name: "PCBWay Part Number"
   supplier_pn:
     synonyms:
       - "Distributor Part Number"
       - "Distributor Part #"
-      - "DPN"
       - "Distributor SKU"
       - "SKU"
+      - "Mouser"
       - "Mouser Part Number"
+      - "DigiKey"
       - "DigiKey Part Number"
+      - "Arrow"
+      - "Farnell"
+      - "Newark"
       - "Stock Code"
     display_name: "Supplier Part Number"
   mpn:
@@ -61,7 +58,7 @@ bom_columns:
   "Value": "value"
   "Comment": "description"
   "Package": "i:package"
-  "Distributor Part Number": "fabricator_part_number"
+  "Manufacturer Part Number": "fabricator_part_number"
 
 pos_columns:
   "Designator": "reference"

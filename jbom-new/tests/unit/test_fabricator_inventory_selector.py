@@ -42,9 +42,7 @@ def _make_item(
     )
 
 
-def test_affinity_filter_keeps_generic_and_target_prunes_other_preserves_order() -> (
-    None
-):
+def test_selector_does_not_filter_by_item_fabricator_field_preserves_order() -> None:
     config = load_fabricator("jlc")
     selector = FabricatorInventorySelector(config)
 
@@ -68,7 +66,7 @@ def test_affinity_filter_keeps_generic_and_target_prunes_other_preserves_order()
 
     eligible = selector.select_eligible(items)
 
-    assert [e.item.ipn for e in eligible] == ["GEN", "JLC"]
+    assert [e.item.ipn for e in eligible] == ["GEN", "JLC", "OTHER"]
     assert all(isinstance(e, EligibleInventoryItem) for e in eligible)
 
     # Selector must not mutate raw_data.

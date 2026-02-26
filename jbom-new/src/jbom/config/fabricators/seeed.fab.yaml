@@ -21,10 +21,14 @@ field_synonyms:
     synonyms:
       - "Distributor Part Number"
       - "Distributor Part #"
-      - "DPN"
       - "Distributor SKU"
+      - "Mouser"
       - "Mouser Part Number"
+      - "DigiKey"
       - "DigiKey Part Number"
+      - "Arrow"
+      - "Farnell"
+      - "Newark"
       - "Stock Code"
     display_name: "Supplier Part Number"
   mpn:
