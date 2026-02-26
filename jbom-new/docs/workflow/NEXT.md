@@ -1,7 +1,8 @@
 # What to Do Next
 
-## Status (as of 2026-02-25)
+## Status (as of 2026-02-26)
 Phase 1 is complete and merged to `main` (PR #57; Issue #48 closed).
+Phase 2 is in progress on feature branches.
 
 Phase 1 delivered the sophisticated inventory matcher extraction into jbom-new's clean architecture, including:
 - 122 passing tests (112 unit + 10 integration)
@@ -113,15 +114,21 @@ This design allows the same inventory to serve multiple fabricators with differe
 - **Consignment relationships** (fab-specific vs generic stock)
 - **Part number schemas** (LCSC vs distributor catalogs vs manufacturer data)
 
-## Next Action: Start Phase 2 Implementation
+## Phase 2 Progress (current branch)
+On `feature/issue-59-fabricator-schema-migration`, the Phase 2 foundation is in place:
+- ✅ Task 2.0: Fabricator config schema migration (`field_synonyms` + `tier_rules`)
+- ✅ Task 2.1: `FabricatorConfig` parsing + validation + unit tests
+- ✅ Task 2.2: `FabricatorInventorySelector` service + unit tests
+- ✅ Task 2.4: `SophisticatedInventoryMatcher` ordering updated to `(preference_tier, item.priority, -score)`
 
-**Ready to start**: Task 2.1 (Update FabricatorConfig dataclass)
+## Next Action
+**Do next**: Task 2.3 (Integration tests with real fabricator configs)
 
 See tactical task breakdown with file paths, tests, and dependency order:
-- **`docs/workflow/PHASE_2_TASKS.md`** (actionable tasks for sub-agents)
-- `docs/workflow/planning/JBOM_NEW_ROADMAP.md` (master roadmap: all phases)
+- **`docs/workflow/PHASE_2_TASKS.md`** (actionable tasks)
+- `docs/workflow/planning/JBOM_NEW_ROADMAP.md` (master roadmap)
 
-**Phase 2 ordering invariant**: `(preference_tier, item.priority, -score)`
+**Phase 2 ordering invariant**: `(preference_tier, item.priority, -score)` (implemented in matcher ordering)
 
 ## Phase 1 design note (keep)
 Our tests and discussion clarified an important design nuance:
