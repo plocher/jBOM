@@ -1,0 +1,10 @@
+name: "LCSC"
+id: "lcsc"
+description: "LCSC Electronics (JLCPCB parts catalog)"
+website: "https://www.lcsc.com"
+inventory_column: "LCSC"
+part_number:
+  pattern: "^C\\d+$"
+  example: "C25231"
+url_template: "https://www.lcsc.com/product-detail/{pn}.html"
+search_url_template: "https://www.lcsc.com/search?q={query}"

@@ -1,0 +1,8 @@
+name: "Generic"
+id: "generic"
+description: "No-op supplier profile (fallback / unknown supplier)"
+website: ""
+inventory_column: "Supplier"
+url_template: null
+search_url_template: null
+part_number: {}
