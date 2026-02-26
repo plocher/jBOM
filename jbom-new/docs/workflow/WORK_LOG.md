@@ -410,6 +410,37 @@ None yet
 
 ---
 
+### Session 15: Phase 2 Task 2.2 FabricatorInventorySelector Service
+**Duration**: ~45 minutes
+**Agent**: Oz (Warp auto)
+
+**Goal**: Implement the fabricator-aware inventory selection layer (affinity → project → normalize → tier) as a pure domain service.
+
+**What Happened**:
+- Added `src/jbom/services/fabricator_inventory_selector.py`:
+  - Implements the four-stage selection filter:
+    1) Fabricator affinity (generic or matching fabricator)
+    2) Project restriction via optional `Projects` field (comma-separated)
+    3) Internal-only field synonym normalization (does not mutate InventoryItem.raw_data)
+    4) Tier assignment via `FabricatorConfig.tier_rules` (ascending tier order)
+  - Preserves input order.
+  - Normalizes `project_name` and `Projects` entries to basename (no extension) for consistent matching across `.kicad_sch` / `.kicad_pcb`.
+- Added unit tests: `tests/unit/test_fabricator_inventory_selector.py`.
+
+**Output**:
+- Files:
+  - `src/jbom/services/fabricator_inventory_selector.py`
+  - `tests/unit/test_fabricator_inventory_selector.py`
+- Tests:
+  - `pytest tests/unit/test_fabricator_inventory_selector.py -v` (pass)
+
+**Course Corrections**:
+- Kept normalization internal-only (no mutation) to ensure InventoryItem objects remain stable across selector calls.
+
+**Next**: Task 2.4 (Update SophisticatedInventoryMatcher ordering to include preference_tier) or Task 2.3 (integration tests), depending on desired dependency order.
+
+---
+
 ## Session Template
 
 ### Session N: [Task Description]
