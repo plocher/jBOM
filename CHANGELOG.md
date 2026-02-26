@@ -1,6 +1,51 @@
 # CHANGELOG
 
 
+## v6.6.0 (2026-02-26)
+
+### Features
+
+* feat: phase 4 inventory schema and enrichment pipeline
+
+Pivot example inventory to explicit supplier columns and one-row-per-IPN model.
+Update fabricator configs and enrichment to resolve fabricator_part_number via field synonyms.
+Migrate inventory CLI filtering to SophisticatedInventoryMatcher; retire ComponentInventoryMatcher.
+Remove stale integration tests and align BDD expectations.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`8abfe85`](https://github.com/plocher/jBOM/commit/8abfe85c6c254f1815f36f89d9a9506654232d8e))
+
+* feat: wire FabricatorInventorySelector + SophisticatedInventoryMatcher into BOM pipeline
+
+Replace naive value-only InventoryMatcher with the Phase 2 sophisticated
+matching pipeline:
+
+- InventoryMatcher.enhance_bom_with_inventory() now accepts fabricator_id
+  and project_name parameters
+- Loads fabricator config and filters inventory via FabricatorInventorySelector
+- Matches each BOM entry against filtered inventory using
+  SophisticatedInventoryMatcher (type+value+package+properties scoring)
+- CLI bom.py passes fabricator and project_name through to the matcher
+- Fix overly greedy "IC" substring check in component_classification that
+  falsely classified "Device:Generic" as IC (IC in GENERIC)
+- Update unit tests for new interface; add _make_inventory_item helper
+  with realistic raw_data for fabricator tier matching
+- Update integration test mock data with raw_data for tier rules
+
+All 231 pytest tests pass, all 192 BDD scenarios pass.
+
+Closes #62
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`b49a76e`](https://github.com/plocher/jBOM/commit/b49a76e8cdb3bfeffdf08969a432367812ec08e3))
+
+### Unknown
+
+* Merge pull request #63 from plocher/feature/issue-62-phase3-service-integration
+
+Phase 3: Wire FabricatorInventorySelector + SophisticatedInventoryMatcher into BOM pipeline ([`e09dd07`](https://github.com/plocher/jBOM/commit/e09dd07b9be48986087666782af31a03c238299c))
+
+* phase2 is complete ([`6673d88`](https://github.com/plocher/jBOM/commit/6673d88068e324712295879b73958320f25aca57))
+
+
 ## v6.5.0 (2026-02-26)
 
 ### Bug Fixes
