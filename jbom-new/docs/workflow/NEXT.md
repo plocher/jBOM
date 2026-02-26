@@ -1,18 +1,41 @@
 # What to Do Next
 
 ## Status (as of 2026-02-26)
-Phase 1 is complete and merged to `main` (PR #57; Issue #48 closed).
-Phase 2 is in progress on feature branches.
+**Phase 1**: ✅ Complete (merged to main via PR #57)
+**Phase 2**: ✅ Complete (ready to merge from feature branch)
+**Phase 3**: ⏳ Ready to start
 
-Phase 1 delivered the sophisticated inventory matcher extraction into jbom-new's clean architecture, including:
+### Phase 1 Deliverables
+- Sophisticated inventory matcher (Issue #48)
 - 122 passing tests (112 unit + 10 integration)
-- extracted utility modules in `src/jbom/common/`
-- ADR 0001 documenting the Phase 2 fabricator-selection design
+- Extracted utility modules in `src/jbom/common/`
+- ADR 0001 documenting fabricator-selection design
 
-## Phase 2 Kickoff: Fabricator-aware inventory selection
-Phase 2 implements the selection layer described in ADR 0001. Two independent priority concepts must be preserved:
-- `item.priority`: user's stock-management ordering (Phase 1 behavior, fabricator-agnostic)
-- `preference_tier`: fabricator's catalog/crossref preference (Phase 2 behavior, fabricator-specific)
+### Phase 2 Deliverables
+- FabricatorInventorySelector service (4-stage filter)
+- `field_synonyms` + `tier_rules` schema (Issues #59, #60)
+- Matcher integration with `preference_tier` sorting
+- 229 unit tests + 192 BDD scenarios passing
+
+## Phase 3 Kickoff: Service Integration
+
+**Goal**: Wire FabricatorInventorySelector into existing BOM generation workflow.
+
+**Current state**: Phase 2 delivered the selector service, but it's not yet used by CLI commands or workflows.
+
+**Next steps**: Integrate selector into:
+1. InventoryReader workflow
+2. BOM generation pipeline
+3. CLI commands (`jbom bom`, `jbom inventory`)
+
+See `docs/workflow/planning/JBOM_NEW_ROADMAP.md` Phase 3 for detailed tasks.
+
+---
+
+## Phase 2 Summary (for reference)
+Phase 2 implemented fabricator-aware inventory selection with two independent priority concepts:
+- `item.priority`: user's stock-management ordering (fabricator-agnostic)
+- `preference_tier`: fabricator's catalog/crossref preference (fabricator-specific)
 
 ### Use Case: Generate BOM for Specific Fabricator
 When generating a BOM for assembly, different fabricators have different supply chain constraints:
@@ -114,21 +137,21 @@ This design allows the same inventory to serve multiple fabricators with differe
 - **Consignment relationships** (fab-specific vs generic stock)
 - **Part number schemas** (LCSC vs distributor catalogs vs manufacturer data)
 
-## Phase 2 Progress (current branch)
-On `feature/issue-59-fabricator-schema-migration`, the Phase 2 foundation is in place:
-- ✅ Task 2.0: Fabricator config schema migration (`field_synonyms` + `tier_rules`)
-- ✅ Task 2.1: `FabricatorConfig` parsing + validation + unit tests
-- ✅ Task 2.2: `FabricatorInventorySelector` service + unit tests
-- ✅ Task 2.4: `SophisticatedInventoryMatcher` ordering updated to `(preference_tier, item.priority, -score)`
+## Phase 2 Completed Tasks
+Completed on `feature/issue-59-fabricator-schema-migration`:
+- ✅ Task 2.0: Schema migration (`field_synonyms` + `tier_rules`)
+- ✅ Task 2.1: `FabricatorConfig` parsing + validation
+- ✅ Task 2.2: `FabricatorInventorySelector` service (4-stage filter)
+- ✅ Task 2.4: Matcher updated for `(preference_tier, item.priority, -score)` ordering
+- ⏭ Task 2.3: Integration tests (deferred - covered by unit tests + BDD)
 
-## Next Action
-**Do next**: Task 2.3 (Integration tests with real fabricator configs)
+## Next Action: Start Phase 3
 
-See tactical task breakdown with file paths, tests, and dependency order:
-- **`docs/workflow/PHASE_2_TASKS.md`** (actionable tasks)
-- `docs/workflow/planning/JBOM_NEW_ROADMAP.md` (master roadmap)
+**Primary task**: Integrate `FabricatorInventorySelector` into BOM generation workflow.
 
-**Phase 2 ordering invariant**: `(preference_tier, item.priority, -score)` (implemented in matcher ordering)
+**References**:
+- `docs/workflow/planning/JBOM_NEW_ROADMAP.md` - Phase 3 tasks (service integration)
+- `docs/workflow/PHASE_2_TASKS.md` - Phase 2 implementation details (reference)
 
 ## Phase 1 design note (keep)
 Our tests and discussion clarified an important design nuance:
