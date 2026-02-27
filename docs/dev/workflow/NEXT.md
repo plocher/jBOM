@@ -29,12 +29,6 @@ All shell commands use the **repo root** as `pwd`:
 ```
 `jbom-new/` is a subdirectory of the repo root, not a separate repo.
 
-## Co-author Line
-Every commit message must end with:
-```
-Co-Authored-By: Oz <oz-agent@warp.dev>
-```
-
 ---
 
 ## Step 0: Pre-flight Verification
@@ -104,8 +98,6 @@ git commit -m "refactor: archive legacy src, tests, and features to legacy/
 Preserves legacy jBOM 6.8.0 implementation for reference during Phase 7 cutover.
 Git history retains full change history; legacy/ provides direct file access.
 Closes no issues — preparatory step for Phase 7.
-
-Co-Authored-By: Oz <oz-agent@warp.dev>"
 ```
 
 ---
@@ -140,8 +132,6 @@ Moves the Phase 1-6 implementation from jbom-new/ to the standard repo layout:
 - src/jbom/  (new implementation)
 - tests/     (254 pytest tests)
 - features/  (194 BDD scenarios)
-
-Co-Authored-By: Oz <oz-agent@warp.dev>"
 ```
 
 ---
@@ -180,8 +170,6 @@ Moves architecture, workflow, guides, examples, tutorial, and requirements
 from jbom-new/ to the repo root docs/ directory.
 Legacy docs/ content (configuration guides, design notes, man pages) is
 preserved in place for audit by a higher-capability agent.
-
-Co-Authored-By: Oz <oz-agent@warp.dev>"
 ```
 
 ---
@@ -220,8 +208,6 @@ git commit -m "chore: remove jbom-new/ skeleton after promotion to root
 All content has been moved to standard repo locations.
 Dev artifacts (behave.ini, pytest.ini, CHANGELOG.md, README.md) removed;
 config lives in pyproject.toml, changelogs in root CHANGELOG.md.
-
-Co-Authored-By: Oz <oz-agent@warp.dev>"
 ```
 
 ---
@@ -294,8 +280,6 @@ git commit -m "feat: update pyproject.toml for 7.0.0 cutover
 - Update pytest testpaths and pythonpath to repo root layout
 - Update behave paths to repo root layout
 - Fix semantic_release version_variables to __init__.py
-
-Co-Authored-By: Oz <oz-agent@warp.dev>"
 ```
 
 ---
@@ -328,8 +312,6 @@ git commit -m "feat: set version to 7.0.0, remove legacy __version__.py
 
 New implementation uses __init__.py for version string.
 Legacy __version__.py (which set 6.8.0) is no longer imported.
-
-Co-Authored-By: Oz <oz-agent@warp.dev>"
 ```
 
 ---
@@ -380,8 +362,6 @@ git commit -m "ci: update test.yml for pytest + behave, drop Python 3.9
 - Add pip install behave to install step
 - Drop Python 3.9 from matrix (union type syntax requires 3.10+)
 - Update coverage step to use pytest-cov on 3.10
-
-Co-Authored-By: Oz <oz-agent@warp.dev>"
 ```
 
 ---

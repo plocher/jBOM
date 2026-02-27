@@ -400,8 +400,6 @@ git commit -m "feat(cli): add POS command for component placement files
 - Support SMD filtering and layer selection
 - Output in CSV format with coordinate transformation
 - Integrate with existing PCB reader service
-
-Co-Authored-By: Warp <agent@warp.dev>"
 ```
 
 ## Integration Benefits

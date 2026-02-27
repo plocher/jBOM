@@ -30,10 +30,7 @@ I will treat you as a trusted collaborator, and I expect to be treated the same 
   - `test:` for adding/updating tests
   - `docs:` for documentation changes
   - `refactor:` for code refactoring
-- **Include co-author line** in every commit message:
-  ```
-  Co-Authored-By: Warp <agent@warp.dev>
-  ```
+
 
 ### C) FINISH - GitHub PR and Issue Closure
 - **Run behave** and address all failures and missing step definitions

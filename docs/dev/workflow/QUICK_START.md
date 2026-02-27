@@ -55,9 +55,6 @@ Show me your plan before you start.
 ```
 This looks good. Let's commit with message:
 'feat: [what we accomplished]'
-
-Include co-author line:
-Co-Authored-By: Warp <agent@warp.dev>
 ```
 
 Then **ysub-agent updates**:

@@ -242,8 +242,6 @@ Use simple language and concrete examples."
 
 Approved. Let's commit with message:
 'feat: [what was accomplished]'
-
-Co-Authored-By: Warp <agent@warp.dev>
 "
 ```
 
