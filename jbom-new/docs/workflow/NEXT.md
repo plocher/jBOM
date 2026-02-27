@@ -32,6 +32,11 @@ All source paths are relative to `~/Dropbox/KiCad/jBOM/src/jbom/`:
 - **`cli/commands/builtin/inventory_search.py`** — `inventory-search` CLI command (~590 lines, includes scoring, reporting, CSV export)
 - **`processors/search_result_scorer.py`** — Priority scoring for search results against inventory items
 
+
+### non-functional constraints
+
+- Web APIs like Mouser's have restrictive rate and bandwidth limits that are easy to trigger, especially during development.  For that reason, agressive caching, local query pre-optimization and strategic query engineering are high priorities.
+
 ### jbom-new Target Architecture
 
 Active development directory: `~/Dropbox/KiCad/jBOM/jbom-new`
