@@ -8,7 +8,7 @@ jbom — jBOM Plugin for KiCad Eeschema
 
 jBOM integrates with KiCad's Eeschema via the "Generate BOM" plugin system. This allows you to generate a BOM directly from the schematic editor without using the command line.
 
-The integration uses the `kicad_jbom_plugin.py` wrapper script, which translates KiCad's plugin interface to the jBOM library API.
+The integration uses the `kicad_jbom_plugin.py` wrapper script, which translates KiCad's plugin interface to the `jbom bom` subcommand.
 
 ## SETUP
 
@@ -20,7 +20,7 @@ Register jBOM as a BOM plugin in KiCad:
 4. Enter a name: `jBOM` (or similar)
 5. Enter the command:
    ```
-   python3 /absolute/path/to/kicad_jbom_plugin.py %I -i /absolute/path/to/INVENTORY.xlsx -o %O
+   python3 /absolute/path/to/kicad_jbom_plugin.py %I --inventory /absolute/path/to/INVENTORY.xlsx -o %O
    ```
 
 **Important:**
@@ -42,18 +42,17 @@ Once registered:
 ## COMMAND SYNTAX
 
 ```
-python3 /path/to/kicad_jbom_plugin.py SCHEMATIC -i INVENTORY -o OUTPUT [FLAGS]
+python3 /path/to/kicad_jbom_plugin.py SCHEMATIC --inventory INVENTORY -o OUTPUT [FLAGS]
 ```
 
 **SCHEMATIC** — Input schematic file (provided by KiCad as `%I`)
 
-**-i, --inventory INVENTORY** — Path to inventory file (required)
+**--inventory INVENTORY** — Path to inventory file (required; can be specified multiple times)
 
 **-o, --output OUTPUT** — Output CSV path (provided by KiCad as `%O`)
 
 **FLAGS** (optional):
 - `-v, --verbose` — Include Match_Quality and Priority columns
-- `-d, --debug` — Emit detailed diagnostics to stderr
 - `-f, --fields FIELDS` — Field selection: use presets (+standard, +jlc, +minimal, +all) or comma-separated field list
 - `--jlc` — Use JLCPCB fabricator configuration and field preset
 - `--pcbway` — Use PCBWay fabricator configuration and field preset
@@ -64,53 +63,48 @@ python3 /path/to/kicad_jbom_plugin.py SCHEMATIC -i INVENTORY -o OUTPUT [FLAGS]
 
 **Minimal (quick generation - standard preset):**
 ```
-python3 /path/to/kicad_jbom_plugin.py %I -i /path/to/inventory.csv -o %O
+python3 /path/to/kicad_jbom_plugin.py %I --inventory /path/to/inventory.csv -o %O
 ```
 
 **With JLC fabricator (recommended for JLCPCB):**
 ```
-python3 /path/to/kicad_jbom_plugin.py %I -i /path/to/inventory.csv -o %O --jlc
+python3 /path/to/kicad_jbom_plugin.py %I --inventory /path/to/inventory.csv -o %O --jlc
 ```
 
 **With PCBWay fabricator:**
 ```
-python3 /path/to/kicad_jbom_plugin.py %I -i /path/to/inventory.csv -o %O --pcbway
+python3 /path/to/kicad_jbom_plugin.py %I --inventory /path/to/inventory.csv -o %O --pcbway
 ```
 
 **With Seeed Studio fabricator:**
 ```
-python3 /path/to/kicad_jbom_plugin.py %I -i /path/to/inventory.csv -o %O --seeed
+python3 /path/to/kicad_jbom_plugin.py %I --inventory /path/to/inventory.csv -o %O --seeed
 ```
 
 **With generic fabricator (manufacturer-based):**
 ```
-python3 /path/to/kicad_jbom_plugin.py %I -i /path/to/inventory.csv -o %O --generic
+python3 /path/to/kicad_jbom_plugin.py %I --inventory /path/to/inventory.csv -o %O --generic
 ```
 
-**Legacy field presets (still supported):**
+**With field presets:**
 ```
-python3 /path/to/kicad_jbom_plugin.py %I -i /path/to/inventory.csv -o %O -f +jlc
-python3 /path/to/kicad_jbom_plugin.py %I -i /path/to/inventory.csv -o %O -f +minimal
+python3 /path/to/kicad_jbom_plugin.py %I --inventory /path/to/inventory.csv -o %O -f +jlc
+python3 /path/to/kicad_jbom_plugin.py %I --inventory /path/to/inventory.csv -o %O -f +minimal
 ```
 
 **With matching scores and priorities (verbose):**
 ```
-python3 /path/to/kicad_jbom_plugin.py %I -i /path/to/inventory.csv -o %O -v
-```
-
-**For troubleshooting (debug output):**
-```
-python3 /path/to/kicad_jbom_plugin.py %I -i /path/to/inventory.xlsx -o %O -d
+python3 /path/to/kicad_jbom_plugin.py %I --inventory /path/to/inventory.csv -o %O -v
 ```
 
 **Custom output fields (JLCPCB-friendly):**
 ```
-python3 /path/to/kicad_jbom_plugin.py %I -i /path/to/inventory.csv -o %O -f "Reference,Quantity,LCSC,Value,Footprint"
+python3 /path/to/kicad_jbom_plugin.py %I --inventory /path/to/inventory.csv -o %O -f "Reference,Quantity,LCSC,Value,Footprint"
 ```
 
 ## ENVIRONMENT REQUIREMENTS
 
-- Python 3.9 or newer
+- Python 3.10 or newer
 - `sexpdata` package (`pip install sexpdata`)
 - Optional: `openpyxl` for Excel support (`pip install openpyxl`)
 - Optional: `numbers-parser` for Numbers support (`pip install numbers-parser`)
@@ -125,7 +119,6 @@ The plugin writes a CSV file to the location specified in the KiCad Generate BOM
 - **With `--seeed`**: Reference, Quantity, Value, Package, Fabricator, Seeed Part Number, SMD
 - **With `--generic`**: Reference, Quantity, Description, Value, Footprint, Manufacturer, MFGPN, Fabricator, Part Number, SMD
 - **With `-v`**: adds Match_Quality, Priority columns
-- **With `-d`**: Notes field contains debugging information
 
 Exit code is returned to KiCad (0=success, non-zero=error). Errors are logged to stderr.
 
@@ -134,7 +127,7 @@ Exit code is returned to KiCad (0=success, non-zero=error). Errors are logged to
 **Plugin doesn't appear in the list**
 : Verify the command path is correct and Python is accessible from the command line. Test manually:
 : ```bash
-: python3 /path/to/kicad_jbom_plugin.py /path/to/test.kicad_sch -i /path/to/inventory.csv -o /tmp/test_bom.csv
+: python3 /path/to/kicad_jbom_plugin.py /path/to/test.kicad_sch --inventory /path/to/inventory.csv -o /tmp/test_bom.csv
 : ```
 
 **"Inventory file not found"**
@@ -165,7 +158,7 @@ Exit code is returned to KiCad (0=success, non-zero=error). Errors are logged to
 : Verify that:
 - Inventory file has required columns (IPN, Category, Value, Package, LCSC, Priority)
 - Schematic components have Reference, Value, and Footprint properties set
-- Use `-d` flag to see detailed matching diagnostics
+- Use `-v` flag to see match quality information
 
 **Schematic symbols are hierarchical but BOM is incomplete**
 : jBOM automatically detects and processes hierarchical sheets. If some components are missing, verify that:

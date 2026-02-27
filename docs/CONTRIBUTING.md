@@ -5,7 +5,7 @@ Thank you for your interest in contributing to jBOM! This document provides guid
 ## Development Setup
 
 ### Prerequisites
-- Python 3.9 or newer
+- Python 3.10 or newer
 - Git
 
 ### Installation for Development
@@ -44,28 +44,22 @@ For detailed information about pre-commit hooks, see [PRE_COMMIT_SETUP.md](../re
 
 ## Running Tests
 
-Run the full test suite:
+Run the full unit test suite:
 ```bash
-python -m pytest tests/ -v
-# or using unittest:
-python -m unittest tests.test_jbom -v
+PYTHONPATH=src python -m pytest tests/ -v
 ```
 
-Run a specific test class:
+Run the BDD functional test suite (must pass before opening any PR):
 ```bash
-python -m unittest tests.test_jbom.TestResistorParsing -v
+python -m behave --format progress
 ```
 
-Run a specific test method:
+Run BDD scenarios by tag during development:
 ```bash
-python -m unittest tests.test_jbom.TestResistorParsing.test_parse_res_to_ohms -v
+python -m behave --tags @regression
 ```
 
-All 98 tests should pass (with 3 skipped for optional dependencies):
-```
-Ran 98 tests in 0.037s
-OK (skipped=3)
-```
+All unit tests and BDD scenarios must pass before committing or opening a PR.
 
 ## Code Style
 
@@ -104,37 +98,46 @@ def normalize_field_name(field: str) -> str:
 ```
 jBOM/
 ├── src/jbom/
-│   ├── __init__.py           # Package initialization
-│   ├── __version__.py        # Version source of truth
-│   ├── __main__.py           # CLI entry point
-│   └── jbom.py              # Core module (~2700 lines)
-├── tests/
-│   ├── __init__.py
-│   └── test_jbom.py         # Test suite (~2200 lines, 98 tests)
-├── pyproject.toml           # Modern Python packaging config
-├── setup.py                 # Legacy compatibility
-├── README.md                # User documentation
-├── CHANGELOG.md             # Version history
-└── CONTRIBUTING.md          # This file
+│   ├── cli/              # CLI commands (thin wrappers over services)
+│   ├── common/           # Shared domain types, utilities, constants
+│   ├── config/           # Fabricator and supplier configuration
+│   ├── services/         # Business logic (reader, matcher, generator)
+│   └── workflows/        # Workflow registry (extension point)
+├── tests/                # pytest unit tests
+├── features/             # Behave BDD scenarios (Gherkin)
+│   └── steps/            # Step definitions
+├── docs/                 # User-facing documentation (man pages)
+├── legacy/               # Archived v6 source (read-only reference)
+├── pyproject.toml        # Python packaging config
+├── kicad_jbom_plugin.py  # KiCad Eeschema integration wrapper
+├── README.md             # Quick start
+└── docs/CHANGELOG.md     # Version history
 ```
 
 ## Key Modules and Classes
 
-### Core Data Classes
+### Core Data Classes (`common/types.py`)
 - `Component` - Schematic component (ref, lib_id, value, footprint, properties)
 - `InventoryItem` - Inventory entry (ipn, category, value, package, attributes)
 - `BOMEntry` - Output BOM row (reference, quantity, matched fields, notes)
 
-### Main Classes
-- `KiCadParser` - S-expression parsing for KiCad schematics
-- `InventoryMatcher` - Component-to-inventory matching engine
-- `BOMGenerator` - BOM generation and CSV output
-- `GenerateOptions` - Options for BOM generation
+### Services (`services/`)
+- `SchematicReader` - Parse .kicad_sch files (including hierarchical designs)
+- `InventoryReader` - Load CSV/Excel/Numbers inventory files
+- `InventoryMatcher` - Match schematic components to inventory items
+- `BOMGenerator` - Generate BOM CSV output
+- `POSGenerator` - Generate CPL/placement output
+- `ProjectFileResolver` - Resolve input paths to project files
 
-### Key Functions
+### Configuration (`config/`)
+- `fabricators.py` - Fabricator column presets (jlc, pcbway, seeed, generic)
+- `suppliers.py` - Supplier URL and part number configuration
+
+### Common Utilities (`common/`)
+- `get_component_type()` - Classify component from lib_id and footprint
 - `normalize_field_name()` - Convert field names to canonical snake_case
 - `field_to_header()` - Convert field names to Title Case headers
-- `generate_bom_api()` - Public API for programmatic use
+- `GeneratorOptions` - Options dataclass for generator services
 
 ## Making Changes
 
@@ -151,10 +154,11 @@ git checkout -b feature/your-feature-name
 
 ### 3. Run Tests
 ```bash
-python -m unittest tests.test_jbom -v
+PYTHONPATH=src python -m pytest tests/ -v
+python -m behave --format progress
 ```
 
-Ensure all tests pass before submitting.
+All unit tests and BDD scenarios must pass before submitting.
 
 ### 4. Commit Your Changes
 Write clear, descriptive commit messages:
@@ -178,78 +182,93 @@ Then create a pull request on GitHub.
 
 ### Adding a New Component Type
 
-1. Add type constant to `ComponentType` class
-2. Update `_get_component_type()` method to detect the type
-3. Add category-specific fields to `CATEGORY_FIELDS` dictionary
-4. Implement matching logic in `_match_properties()`
-5. Add tests to `TestComponentTypeDetection` and related test classes
+1. Add the type constant to `ComponentType` in `src/jbom/common/constants.py`
+2. Extend `COMPONENT_TYPE_MAPPING` for new type aliases (e.g., `"XFMR": "XFMR"`)
+3. Add category-specific scoring fields to `CATEGORY_FIELDS` in `constants.py`
+4. Add tests covering the new type detection and matching
 
 ### Extending Matching Algorithms
 
-1. Modify `_match_properties()` for new scoring
-2. Update `_parse_*()` methods for new value formats
+1. Modify `services/inventory_matcher.py` or `services/sophisticated_inventory_matcher.py`
+2. Update value parsing in `common/value_parsing.py` for new value formats
 3. Adjust tolerance substitution rules if needed
-4. Add corresponding test cases
+4. Add corresponding pytest tests and BDD scenarios
 
 ### Adding Spreadsheet Format Support
 
-1. Add optional import with try/except
-2. Create `_load_FORMAT_inventory()` method
-3. Call `_process_inventory_data()` with normalized data
-4. Add test cases for the new format
+1. Add optional import with try/except in `services/inventory_reader.py`
+2. Add file extension to the detection logic
+3. Implement a reader returning normalized row dicts
+4. Add pytest and BDD test coverage for the new format
 
-### Adding Output Fields
+### Adding a New CLI Command
 
-1. Extend `get_available_fields()`
-2. Implement field extraction in `_get_field_value()`
-3. Handle both inventory and component fields with I:/C: prefixes
-4. Add tests for field discovery and output
+1. Create `src/jbom/cli/mycommand.py` with `register_command(subparsers)` and `handle_mycommand(args)`
+2. Import and register in `src/jbom/cli/main.py`
+3. Add BDD scenarios in `features/` describing expected behavior
+4. See `docs/README.developer.md` for a worked example
 
 ## Testing Guidelines
 
 ### Test Organization
-Tests are organized into 27 test classes covering:
-- Core parsing (resistors, capacitors, inductors)
-- Matching algorithms (inventory matching, scoring, sorting)
-- Field system (normalization, disambiguation)
-- Advanced features (hierarchical schematics, SMD filtering)
-- Output formatting (CSV, custom fields)
-- Spreadsheet support (CSV, Excel, Numbers)
 
-### Writing New Tests
+**Unit tests** (`tests/`) cover key internal abstractions using pytest:
+- Value parsing (resistors, capacitors, inductors)
+- Inventory matching algorithms and scoring
+- Field name normalization and disambiguation
+- SMD detection, hierarchical schematics
+
+**BDD scenarios** (`features/`) describe user-facing behavior using Gherkin:
+- Each command (bom, inventory, pos, parts, search, inventory-search)
+- Error handling and edge cases
+- End-to-end workflow scenarios
+
+Behave scenarios MUST pass before any PR is opened.
+
+### Writing a New pytest Test
 
 ```python
-class TestNewFeature(unittest.TestCase):
-    """Test description"""
+import pytest
+from jbom.common.value_parsing import parse_res_to_ohms
 
-    def setUp(self):
-        """Set up test fixtures"""
-        # Create temporary files if needed
-        self.temp_inv = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.csv')
-        # ... initialize test data
 
-    def tearDown(self):
-        """Clean up after tests"""
-        Path(self.temp_inv.name).unlink()
+def test_specific_behavior():
+    """Test description - what should happen"""
+    # Arrange: set up test data
+    # Act: perform the action
+    result = parse_res_to_ohms("10K")
+    # Assert: verify the result
+    assert result == 10000.0
+```
 
-    def test_specific_behavior(self):
-        """Test description - what should happen"""
-        # Arrange: set up test data
-        # Act: perform the action
-        # Assert: verify the result
-        self.assertEqual(actual, expected)
+### Writing a New BDD Scenario
+
+```gherkin
+# features/myfeature/mycommand.feature
+Feature: My new command
+
+  Scenario: Basic usage
+    Given a KiCad project at "examples/AltmillSwitches"
+    When I run "jbom mycommand examples/AltmillSwitches"
+    Then the exit code is 0
+    And the output contains "success"
 ```
 
 ## Version Management
 
-Version information is stored in a single location: `src/jbom/__version__.py`
+Versioning is fully automated via GitHub Actions and `python-semantic-release`. **Do not manually bump version files.**
 
-When making a release:
-1. Update version in `__version__.py`
-2. Update `CHANGELOG.md` with changes
-3. Commit with message: "Bump version to X.Y.Z"
-4. Create git tag: `git tag -a vX.Y.Z -m "Description"`
-5. Build and upload to PyPI (see packaging instructions below)
+When commits are merged to `main`, the CI pipeline:
+1. Analyzes conventional commit messages (`feat:`, `fix:`, `feat!:`, etc.)
+2. Determines the correct semantic version bump (MAJOR/MINOR/PATCH)
+3. Updates `src/jbom/__version__.py` and `pyproject.toml`
+4. Creates a git tag and GitHub Release
+5. Publishes to PyPI
+
+To trigger a release: use conventional commit messages and merge to `main`. The commit type drives the version bump:
+- `fix:` → patch
+- `feat:` → minor
+- `feat!:` or `BREAKING CHANGE:` → major
 
 ## Package Distribution
 
