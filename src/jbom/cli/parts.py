@@ -35,7 +35,7 @@ def register_command(subparsers) -> None:
     parser.add_argument(
         "-o",
         "--output",
-        help='Output file path, "stdout" for stdout, or "console" for formatted table',
+        help='Output destination: omit for console table, use "console" for table, "-" for CSV to stdout, or a file path',
     )
 
     # Enhancement options
@@ -196,20 +196,30 @@ def _output_parts(
 ) -> int:
     """Output Parts List data in the requested format.
 
-    Special cases:
-    - output in {None, "stdout", "-"} => CSV to stdout
-    - output == "console" => formatted table to stdout
+    Human-first defaults (UX consistency with bom/pos/inventory):
+    - output is None or "console" => formatted table to stdout
+    - output == "-" => CSV to stdout
+    - output == "stdout" => error (use "-" instead)
     - otherwise => treat as file path
     """
-    if output == "console":
+    if output is None or output == "console":
         _print_console_table(parts_data)
-    elif output in (None, "stdout", "-"):
-        _print_csv(parts_data)
-    else:
-        output_path = Path(output)
-        _write_csv(parts_data, output_path)
-        print(f"Parts list written to {output_path}")
+        return 0
 
+    if output == "-":
+        _print_csv(parts_data)
+        return 0
+
+    if output == "stdout":
+        print(
+            "Error: -o stdout is no longer supported. Use -o - for CSV to stdout.",
+            file=sys.stderr,
+        )
+        return 1
+
+    output_path = Path(output)
+    _write_csv(parts_data, output_path)
+    print(f"Parts list written to {output_path}")
     return 0
 
 
