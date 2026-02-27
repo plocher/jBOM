@@ -1,6 +1,80 @@
 # CHANGELOG
 
 
+## v6.9.0 (2026-02-27)
+
+### Bug Fixes
+
+* fix: dry-run inventory-search fails in CI without MOUSER_API_KEY
+
+filter_searchable_items() is pure logic with no network access.
+Convert it to a @staticmethod and call it before provider creation,
+so --dry-run never attempts to instantiate MouserProvider (which
+raises ValueError when MOUSER_API_KEY env var is absent).
+
+Fixes CI failure on features/search/inventory_search.feature:6
+
+Co-Authored-By: Oz <oz-agent@warp.dev>
+Co-Authored-By: Warp <agent@warp.dev> ([`53a278f`](https://github.com/plocher/jBOM/commit/53a278fa4d8263179fcca3673b0e81f4578aea0a))
+
+* fix: update steps/__init__.py for Python 3.12 compatibility
+
+find_module/load_module were removed in Python 3.12 (deprecated since 3.4).
+Replace with find_spec/module_from_spec/exec_module (importlib.util API).
+Preserves subdirectory step discovery behaviour; 186 BDD scenarios still pass.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`627a688`](https://github.com/plocher/jBOM/commit/627a6884cdc87721bd321d6422b4fb55248aa526))
+
+### Features
+
+* feat: update pyproject.toml, version, and CI for 7.0.0 cutover
+
+pyproject.toml:
+- Bump version to 7.0.0
+- Require Python >=3.10 (union type syntax)
+- Drop Python 3.9 classifier
+- Add config/presets and config/suppliers to package-data
+- Update pytest testpaths=[tests] pythonpath=[src]
+- Update behave paths=[features]
+- Fix semantic_release version_variables to __init__.py
+
+src/jbom/__init__.py:
+- Set __version__ = 7.0.0
+
+.github/workflows/test.yml:
+- Drop Python 3.9 from matrix
+- Replace unittest discover with pytest + behave
+- Add pip install behave
+- Update coverage step to pytest-cov on 3.10
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`190b958`](https://github.com/plocher/jBOM/commit/190b9582938bc78e7ee50cdc9024f858ff4d5d03))
+
+* feat: promote jbom-new src, tests, and features to repo root
+
+Moves the Phase 1-6 implementation from jbom-new/ to the standard repo layout:
+- src/jbom/  (new implementation)
+- tests/     (254 pytest tests)
+- features/  (194 BDD scenarios)
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`34b2329`](https://github.com/plocher/jBOM/commit/34b23295d97304fe67509ff9c3baa5ce9c975529))
+
+### Refactoring
+
+* refactor: archive legacy src, tests, and features to legacy/
+
+Preserves legacy jBOM 6.8.0 implementation for reference during Phase 7 cutover.
+Git history retains full change history; legacy/ provides direct file access.
+Closes no issues — preparatory step for Phase 7.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`b207d7e`](https://github.com/plocher/jBOM/commit/b207d7e40285859e61385bb84004f7e313220b34))
+
+### Unknown
+
+* Merge pull request #73 from plocher/feature/issue-72-phase-7-cutover
+
+feat: Phase 7 cutover — promote jbom-new to root (v7.0.0) ([`410a850`](https://github.com/plocher/jBOM/commit/410a850c06a438f14d71f490b9cf376161e1a551))
+
+
 ## v6.8.0 (2026-02-27)
 
 ### Bug Fixes
