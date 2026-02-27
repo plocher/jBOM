@@ -242,6 +242,79 @@ class TestBOMGenerator:
         assert len(bom_data.entries) == 1
         assert bom_data.entries[0].references == ["R1"]
 
+    def test_multiunit_component_deduplication(self):
+        """Test that multi-unit components (e.g. dual op-amps) are deduplicated.
+
+        A dual op-amp like LM6132A has 3 symbol instances in KiCad (unit A,
+        unit B, power unit) all with reference IC1. The BOM should show IC1
+        once with quantity 1, not IC1 three times.
+        """
+        generator = BOMGenerator()
+        # Simulate a dual op-amp: 3 symbol instances, same reference
+        components = [
+            Component(
+                reference="IC1",
+                lib_id="Amplifier_Operational:LM6132",
+                value="LM6132A",
+                footprint="Package_SO:SO-8",
+                uuid="uuid-ic1a",
+                properties={},
+                in_bom=True,
+                exclude_from_sim=False,
+                dnp=False,
+            ),
+            Component(
+                reference="IC1",
+                lib_id="Amplifier_Operational:LM6132",
+                value="LM6132A",
+                footprint="Package_SO:SO-8",
+                uuid="uuid-ic1b",
+                properties={},
+                in_bom=True,
+                exclude_from_sim=False,
+                dnp=False,
+            ),
+            Component(
+                reference="IC1",
+                lib_id="Amplifier_Operational:LM6132",
+                value="LM6132A",
+                footprint="Package_SO:SO-8",
+                uuid="uuid-ic1c",
+                properties={},
+                in_bom=True,
+                exclude_from_sim=False,
+                dnp=False,
+            ),
+            Component(
+                reference="R1",
+                lib_id="Device:R",
+                value="10K",
+                footprint="R_0603_1608Metric",
+                uuid="uuid-r1",
+                properties={},
+                in_bom=True,
+                exclude_from_sim=False,
+                dnp=False,
+            ),
+        ]
+
+        bom_data = generator.generate_bom_data(components)
+
+        # IC1 should appear once with quantity 1
+        ic_entries = [e for e in bom_data.entries if "IC1" in e.references]
+        assert len(ic_entries) == 1
+        assert ic_entries[0].references == ["IC1"]
+        assert ic_entries[0].quantity == 1
+
+        # R1 should appear once with quantity 1
+        r_entries = [e for e in bom_data.entries if "R1" in e.references]
+        assert len(r_entries) == 1
+        assert r_entries[0].quantity == 1
+
+        # Total: 2 line items, 2 components
+        assert bom_data.total_line_items == 2
+        assert bom_data.total_components == 2
+
     def test_aggregation_strategy_value_only(self):
         """Test aggregation by value only (ignoring footprint)."""
         generator = BOMGenerator("value_only")

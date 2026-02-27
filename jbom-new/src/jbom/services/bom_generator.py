@@ -125,8 +125,9 @@ class BOMGenerator:
         # Use the first component as the base
         base_component = components[0]
 
-        # Collect all references
-        references = [comp.reference for comp in components]
+        # Collect unique references (multi-unit components like dual op-amps
+        # produce multiple symbol instances with the same reference)
+        references = list(dict.fromkeys(comp.reference for comp in components))
 
         # Merge properties from all components
         merged_attributes = {}
