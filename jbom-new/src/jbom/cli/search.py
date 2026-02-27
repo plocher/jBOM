@@ -171,7 +171,7 @@ def _print_csv(results: list[SearchResult]) -> None:
     writer = csv.DictWriter(sys.stdout, fieldnames=_csv_headers())
     writer.writeheader()
     for r in results:
-        writer.writerow(_row_for_result(r))
+        writer.writerow(_csv_row_for_result(r))
 
 
 def _write_csv(results: list[SearchResult], path: Path) -> None:
@@ -179,24 +179,41 @@ def _write_csv(results: list[SearchResult], path: Path) -> None:
         writer = csv.DictWriter(f, fieldnames=_csv_headers())
         writer.writeheader()
         for r in results:
-            writer.writerow(_row_for_result(r))
+            writer.writerow(_csv_row_for_result(r))
 
 
 def _csv_headers() -> list[str]:
+    # House style: human-readable headers (Title Case / abbreviations) similar to
+    # other jbom-new CSV outputs.
     return [
-        "manufacturer",
-        "mpn",
-        "distributor",
-        "distributor_part_number",
-        "availability",
-        "stock_quantity",
-        "price",
-        "lifecycle_status",
-        "details_url",
+        "Manufacturer",
+        "MPN",
+        "Distributor",
+        "Distributor PN",
+        "Availability",
+        "Stock",
+        "Price",
+        "Lifecycle",
+        "Details URL",
     ]
 
 
+def _csv_row_for_result(r: SearchResult) -> dict[str, str]:
+    return {
+        "Manufacturer": r.manufacturer,
+        "MPN": r.mpn,
+        "Distributor": r.distributor,
+        "Distributor PN": r.distributor_part_number,
+        "Availability": r.availability,
+        "Stock": str(r.stock_quantity),
+        "Price": r.price,
+        "Lifecycle": r.lifecycle_status,
+        "Details URL": r.details_url,
+    }
+
+
 def _row_for_result(r: SearchResult) -> dict[str, str]:
+    # Internal row mapping used by console output.
     return {
         "manufacturer": r.manufacturer,
         "mpn": r.mpn,

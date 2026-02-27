@@ -79,7 +79,7 @@ def test_search_csv_stdout(monkeypatch, capsys):
     assert rc == 0
 
     out = capsys.readouterr().out.splitlines()
-    assert out[0].startswith("manufacturer,mpn,distributor")
+    assert out[0].startswith("Manufacturer,MPN,Distributor")
     assert any("Yageo" in line for line in out[1:])
 
 
@@ -108,5 +108,5 @@ def test_search_csv_file(monkeypatch, tmp_path):
     assert rc == 0
 
     text = outpath.read_text(encoding="utf-8")
-    assert text.splitlines()[0].startswith("manufacturer,mpn,distributor")
+    assert text.splitlines()[0].startswith("Manufacturer,MPN,Distributor")
     assert "Yageo" in text
