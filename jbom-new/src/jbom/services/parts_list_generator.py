@@ -76,10 +76,19 @@ class PartsListGenerator:
     def _create_individual_entries(
         self, components: List[Component]
     ) -> List[PartsListEntry]:
-        """Create individual PartsListEntry objects (1:1 with components)."""
+        """Create individual PartsListEntry objects (1:1 with unique components).
+
+        Multi-unit components (e.g. dual op-amps) produce multiple symbol
+        instances with the same reference. We deduplicate by reference so
+        each physical component appears only once.
+        """
+        seen_refs: set[str] = set()
         entries = []
 
         for component in components:
+            if component.reference in seen_refs:
+                continue
+            seen_refs.add(component.reference)
             entry = PartsListEntry(
                 reference=component.reference,
                 value=component.value,
