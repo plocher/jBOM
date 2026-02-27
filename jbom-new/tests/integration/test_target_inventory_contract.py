@@ -301,8 +301,8 @@ class TestTargetInventoryContract:
     ) -> None:
         sentinel_ipns = {
             "RES_5%_100mW_0603_10k",
-            "CAP_0.1uF_X7R_0603",
-            "LED_Red _0603",
+            "CAP_0.1uF_X5R_0603_25V",
+            "LED_Red_0603_20mA",
         }
 
         missing = {
@@ -345,8 +345,8 @@ class TestTargetInventoryContract:
                     value="100nF",
                     footprint="C_0603_1608Metric",
                 ),
-                # The contract says 100nF should match the existing 0.1uF X7R option.
-                expected_ipn="CAP_0.1uF_X7R_0603",
+                # The contract says 100nF should match the 0.1uF X5R 25V option (priority 1).
+                expected_ipn="CAP_0.1uF_X5R_0603_25V",
                 expected_package="0603",
             ),
             ExpectedMatch(
@@ -357,7 +357,7 @@ class TestTargetInventoryContract:
                     value="Red",
                     footprint="LED_0603_1608Metric",
                 ),
-                expected_ipn="LED_Red _0603",
+                expected_ipn="LED_Red_0603_20mA",
                 expected_package="0603",
             ),
         ]

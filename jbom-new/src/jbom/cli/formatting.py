@@ -20,12 +20,7 @@ from typing import (
     Mapping,
     Optional,
     Sequence,
-    TYPE_CHECKING,
 )
-
-
-if TYPE_CHECKING:
-    from jbom.services.bom_generator import BOMData
 
 
 @dataclass(frozen=True)
@@ -244,80 +239,6 @@ def print_tabular_data(
         print(summary_line)
 
 
-def print_bom_table(bom_data: "BOMData") -> None:
-    """Pretty-print BOM as a formatted table to stdout."""
-
-    print(f"\n{bom_data.project_name} - Bill of Materials")
-    print("=" * 60)
-
-    if not bom_data.entries:
-        print("No components found.")
-        return
-
-    print(f"{'References':<15} {'Value':<12} {'Footprint':<20} {'Qty':<4}")
-    print("-" * 60)
-
-    for entry in bom_data.entries:
-        refs = entry.references_string
-        if len(refs) > 14:
-            refs = refs[:14] + "..."
-        value = entry.value
-        if len(value) > 11:
-            value = value[:11] + "..."
-        footprint = entry.footprint
-        if len(footprint) > 19:
-            footprint = footprint[:19] + "..."
-        print(f"{refs:<15} {value:<12} {footprint:<20} {entry.quantity:<4}")
-
-    print(
-        f"\nTotal: {bom_data.total_components} components, {bom_data.total_line_items} unique items"
-    )
-
-    if "matched_entries" in bom_data.metadata:
-        matched = bom_data.metadata["matched_entries"]
-        print(
-            f"Inventory enhanced: {matched}/{bom_data.total_line_items} items matched"
-        )
-
-
-def print_pos_table(pos_data: List[dict]) -> None:
-    """Pretty-print POS data as a formatted table to stdout (always mm units)."""
-
-    print(f"\nComponent Placement Data ({len(pos_data)} components)")
-    print("=" * 80)
-
-    if not pos_data:
-        print("No components found.")
-        return
-
-    print(
-        f"{'Ref':<10} {'X(mm)':<12} {'Y(mm)':<12} {'Rot':<6} {'Side':<6} {'Package':<15}"
-    )
-    print("-" * 80)
-
-    for e in pos_data:
-        # Use raw tokens if available, otherwise format mm values
-        if e.get("x_raw"):
-            x = str(e["x_raw"])
-        else:
-            x = f"{e['x_mm']:.3f}"
-        if e.get("y_raw"):
-            y = str(e["y_raw"])
-        else:
-            y = f"{e['y_mm']:.3f}"
-        ref = e["reference"]
-        if len(ref) > 9:
-            ref = ref[:9] + "..."
-        pkg = e["package"]
-        if len(pkg) > 14:
-            pkg = pkg[:14] + "..."
-        print(
-            f"{ref:<10} {x:<12} {y:<12} {e['rotation']:<6.1f} {e['side']:<6} {pkg:<15}"
-        )
-
-    print(f"\nTotal: {len(pos_data)} components")
-
-
 def print_inventory_table(items: Iterable[dict], fieldnames: List[str]) -> None:
     """Pretty-print inventory rows as a compact table to stdout.
 
@@ -364,7 +285,5 @@ __all__ = [
     "Column",
     "print_table",
     "print_tabular_data",
-    "print_bom_table",
-    "print_pos_table",
     "print_inventory_table",
 ]
