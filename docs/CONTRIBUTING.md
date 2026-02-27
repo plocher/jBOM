@@ -161,14 +161,60 @@ python -m behave --format progress
 All unit tests and BDD scenarios must pass before submitting.
 
 ### 4. Commit Your Changes
-Write clear, descriptive commit messages:
-```bash
-git commit -m "Brief description of changes
 
-More detailed explanation if needed:
-- What was changed
-- Why it was changed
-- Any relevant context"
+Write commit messages using the [Conventional Commits](https://www.conventionalcommits.org/) specification. The CI/CD pipeline parses these to automate version bumps and changelogs.
+
+**Format:**
+```
+type(scope): subject
+
+body (optional — what and why)
+
+footer (optional — breaking changes, issue references)
+```
+
+**Common types:**
+
+| Type | Description | Version bump |
+|------|-------------|-------------|
+| `feat` | New user-facing feature | minor |
+| `fix` | Bug fix | patch |
+| `docs` | Documentation only | none |
+| `test` | Add or update tests | none |
+| `refactor` | Code change with no feature/fix | none |
+| `style` | Formatting, whitespace (no logic change) | none |
+| `perf` | Performance improvement | patch |
+| `chore` | Maintenance, dependency updates | none |
+| `ci` | CI/CD pipeline changes | none |
+| `build` | Build system changes | none |
+
+**Scope** is optional and names the subsystem: `cli`, `bom`, `pos`, `inventory`, `search`, `matcher`, `docs`, etc.
+
+**Breaking changes** — append `!` to the type or add a `BREAKING CHANGE:` footer (triggers a **major** version bump):
+```bash
+feat!: rename --inventory flag to --inventory-file
+```
+or
+```bash
+feat(cli): add --dry-run to bom command
+
+BREAKING CHANGE: --output now defaults to stdout instead of a file
+```
+
+**Examples:**
+```bash
+git commit -m 'feat(cli): add inventory-search command'
+git commit -m 'fix(matcher): handle empty package field gracefully'
+git commit -m 'docs: update man1 with correct --inventory flag'
+git commit -m 'test(bom): add BDD scenario for multi-source inventory'
+git commit -m 'refactor(services): extract filter logic to component_filters.py'
+```
+
+Always include the co-author attribution line:
+```bash
+git commit -m 'feat: add foo
+
+Co-Authored-By: Warp <agent@warp.dev>'
 ```
 
 ### 5. Push and Create Pull Request
