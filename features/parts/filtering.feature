@@ -4,7 +4,8 @@ Feature: Parts List Filtering
   So that I can customize the parts list for different assembly scenarios
 
   Background:
-    Given the generic fabricator is selected
+    Given a jBOM CSV sandbox
+    And the generic fabricator is selected
 
   Scenario: Exclude DNP components by default
     Given a schematic that contains:
@@ -12,7 +13,7 @@ Feature: Parts List Filtering
       | R1        | 10K   | R_0805_2012 | No    |
       | R2        | 10K   | R_0805_2012 | Yes   |
       | C1        | 100nF | C_0603_1608 | No    |
-    When I run jbom command "parts -o -"
+    When I run jbom command "parts"
     Then the command should succeed
     And the CSV output has rows where:
       | Reference | Value |
@@ -28,7 +29,7 @@ Feature: Parts List Filtering
       | R1        | 10K   | R_0805_2012 | No    |
       | R2        | 10K   | R_0805_2012 | Yes   |
       | C1        | 100nF | C_0603_1608 | No    |
-    When I run jbom command "parts --include-dnp -o -"
+    When I run jbom command "parts --include-dnp"
     Then the command should succeed
     And the CSV output has rows where:
       | Reference | Value |
@@ -42,7 +43,7 @@ Feature: Parts List Filtering
       | R1        | 10K   | R_0805_2012 | No             |
       | R2        | 10K   | R_0805_2012 | Yes            |
       | C1        | 100nF | C_0603_1608 | No             |
-    When I run jbom command "parts -o -"
+    When I run jbom command "parts"
     Then the command should succeed
     And the CSV output has rows where:
       | Reference | Value |
@@ -58,7 +59,7 @@ Feature: Parts List Filtering
       | R1        | 10K   | R_0805_2012 | No             |
       | R2        | 10K   | R_0805_2012 | Yes            |
       | C1        | 100nF | C_0603_1608 | No             |
-    When I run jbom command "parts --include-excluded -o -"
+    When I run jbom command "parts --include-excluded"
     Then the command should succeed
     And the CSV output has rows where:
       | Reference | Value |
@@ -73,7 +74,7 @@ Feature: Parts List Filtering
       | #PWR01    | GND   |             |
       | #PWR02    | VCC   |             |
       | C1        | 100nF | C_0603_1608 |
-    When I run jbom command "parts -o -"
+    When I run jbom command "parts"
     Then the command should succeed
     And the CSV output has rows where:
       | Reference | Value |
@@ -91,7 +92,7 @@ Feature: Parts List Filtering
       | #PWR01    | GND   |             |
       | #PWR02    | VCC   |             |
       | C1        | 100nF | C_0603_1608 |
-    When I run jbom command "parts --include-all -o -"
+    When I run jbom command "parts --include-all"
     Then the command should succeed
     And the CSV output has rows where:
       | Reference | Value |
@@ -107,7 +108,7 @@ Feature: Parts List Filtering
       | R2        | 10K   | R_0805_2012 | Yes   | No             |
       | R3        | 10K   | R_0805_2012 | No    | Yes            |
       | C1        | 100nF | C_0603_1608 | No    | No             |
-    When I run jbom command "parts --include-dnp --include-excluded -o -"
+    When I run jbom command "parts --include-dnp --include-excluded"
     Then the command should succeed
     And the CSV output has rows where:
       | Reference | Value |
@@ -122,7 +123,7 @@ Feature: Parts List Filtering
       | R1        | 10K   | R_0805_2012 | No    | No             |
       | R2        | 10K   | R_0805_2012 | Yes   | No             |
       | R3        | 10K   | R_0805_2012 | No    | Yes            |
-    When I run jbom command "parts --include-dnp -o -"
+    When I run jbom command "parts --include-dnp"
     Then the command should succeed
     And the CSV output has rows where:
       | Reference | Value |
@@ -138,7 +139,7 @@ Feature: Parts List Filtering
       | R1        | 10K   | R_0805_2012 | No    | No             |
       | R2        | 10K   | R_0805_2012 | Yes   | No             |
       | R3        | 10K   | R_0805_2012 | No    | Yes            |
-    When I run jbom command "parts --include-excluded -o -"
+    When I run jbom command "parts --include-excluded"
     Then the command should succeed
     And the CSV output has rows where:
       | Reference | Value |
