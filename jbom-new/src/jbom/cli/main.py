@@ -5,7 +5,7 @@ import sys
 from typing import List, Optional
 
 from jbom import __version__
-from jbom.cli import bom, inventory, pos, parts, search
+from jbom.cli import bom, inventory, pos, parts, search, inventory_search
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -41,6 +41,7 @@ def create_parser() -> argparse.ArgumentParser:
     pos.register_command(subparsers)
     parts.register_command(subparsers)
     search.register_command(subparsers)
+    inventory_search.register_command(subparsers)
 
     return parser
 

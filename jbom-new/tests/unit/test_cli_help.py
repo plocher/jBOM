@@ -66,3 +66,8 @@ def test_inventory_help_shows_inventory_interface_tokens():
 def test_root_help_includes_search_command():
     out = run_help([]).lower()
     assert "search" in out
+
+
+def test_root_help_includes_inventory_search_command():
+    out = run_help([]).lower()
+    assert "inventory-search" in out
