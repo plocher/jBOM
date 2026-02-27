@@ -1,32 +1,22 @@
-"""
-BDD step definitions package for jBOM.
+"""Step definitions for jBOM BDD tests.
 
-Implements the QC Analytics systematic approach for behave step loading:
-https://qc-analytics.com/2019/10/importing-behave-python-steps-from-subdirectories/
-
-Domains:
-- shared.py: Cross-domain step definitions
-- annotate/: Back-annotation step definitions
-- bom/: Bill of Materials step definitions
-- error_handling/: Error handling step definitions
-- inventory/: Inventory management step definitions
-- pos/: Pick-and-place step definitions
-- search/: Part search step definitions
+This module enables behave to discover step definitions in subdirectories.
+See: docs/development_notes/BEHAVE_SUBDIRECTORY_LOADING.md
 """
 
+import importlib.util
 import os
 import pkgutil
+import sys
 
 __all__ = []
 PATH = [os.path.dirname(__file__)]
 
-for loader, module_name, is_pkg in pkgutil.walk_packages(PATH):
+for _finder, module_name, is_pkg in pkgutil.walk_packages(PATH):
     __all__.append(module_name)
-    try:
-        _module = loader.find_module(module_name).load_module(module_name)
+    _spec = _finder.find_spec(module_name)
+    if _spec is not None:
+        _module = importlib.util.module_from_spec(_spec)
+        sys.modules[module_name] = _module
+        _spec.loader.exec_module(_module)
         globals()[module_name] = _module
-    except Exception as e:
-        # Log import errors but continue with other modules
-        import warnings
-
-        warnings.warn(f"Failed to import step module '{module_name}': {e}")

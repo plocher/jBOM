@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "jbom"
-version = "6.8.0"
+version = "7.0.0"
 description = "Intelligent KiCad Bill of Materials generator with inventory matching"
 readme = "README.md"
 license = "AGPL-3.0-only"
@@ -17,7 +17,6 @@ classifiers = [
     "Intended Audience :: Manufacturing",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -25,7 +24,7 @@ classifiers = [
     "Topic :: Office/Business",
     "Topic :: Utilities",
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "sexpdata>=0.0.3",
     "PyYAML>=5.4.0",
@@ -63,6 +62,8 @@ package-dir = {"" = "src"}
 jbom = [
     "config/*.yaml",
     "config/fabricators/*.yaml",
+    "config/presets/*.yaml",
+    "config/suppliers/*.yaml",
 ]
 
 # Python Semantic Release v9 configuration
@@ -70,7 +71,7 @@ jbom = [
 [tool.semantic_release]
 # Version management
 version_toml = ["pyproject.toml:project.version"]
-version_variables = ["src/jbom/__version__.py:__version__"]
+version_variables = ["src/jbom/__init__.py:__version__"]
 
 # Build configuration
 build_command = "pip install build && python -m build"
@@ -106,9 +107,7 @@ upload_to_repository = true
 [tool.behave]
 default_tags = ["-wip"]
 paths = [
-    "features",                           # Core functional tests
-    "jbom-new/features",                  # New system core tests
-    "jbom-new/src/jbom/plugins/*/features",  # Plugin functional tests
+    "features",
 ]
 default_format = "pretty"
 show_timings = true
@@ -118,10 +117,9 @@ stderr_capture = false
 # Pytest configuration for jbom-new (new workflow system)
 [tool.pytest.ini_options]
 testpaths = [
-    "jbom-new/tests",
-    "jbom-new/src/jbom/plugins",
+    "tests",
 ]
-pythonpath = ["jbom-new/src"]
+pythonpath = ["src"]
 addopts = [
     "--verbose",
     "--strict-markers",

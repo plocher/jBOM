@@ -1,8 +1,4 @@
-"""Field normalization and formatting utilities.
-
-Provides functions to normalize field names to canonical format and convert
-them back to human-readable headers for CSV output.
-"""
+"""Field normalization and formatting utilities."""
 from __future__ import annotations
 from typing import List, Dict
 
@@ -46,16 +42,10 @@ KNOWN_ACRONYMS = {
 
 
 def normalize_field_name(field: str) -> str:
-    """Normalize field names to canonical snake_case format.
-
+    """
+    Normalize field names to canonical snake_case format.
     Accepts: snake_case, Title Case, CamelCase, spaces, mixed formats.
     Examples: 'match_quality', 'Match Quality', 'MatchQuality', 'MATCH_QUALITY' -> 'match_quality'
-
-    Args:
-        field: Field name to normalize
-
-    Returns:
-        Normalized field name in snake_case
     """
     if not field:
         return ""
@@ -89,20 +79,14 @@ def normalize_field_name(field: str) -> str:
 
 
 def field_to_header(field: str) -> str:
-    """Convert normalized field name to human-readable header for CSV.
-
+    """
+    Convert normalized field name to human-readable header for CSV.
     Uses Title Case with special handling for known acronyms.
     Examples:
         'match_quality' -> 'Match Quality'
         'lcsc' -> 'LCSC'
         'i:package' -> 'I:Package'
         'mfgpn' -> 'MFGPN'
-
-    Args:
-        field: Normalized field name
-
-    Returns:
-        Human-readable header string
     """
     if not field:
         return ""
@@ -197,9 +181,7 @@ FIELD_PRESETS = {
 }
 
 
-def preset_fields(
-    preset: str, include_verbose: bool = False, any_notes: bool = False
-) -> List[str]:
+def preset_fields(preset: str, include_verbose: bool, any_notes: bool) -> List[str]:
     """Build a preset field list with optional verbose/notes fields.
 
     Args:
@@ -216,36 +198,92 @@ def preset_fields(
     preset = (preset or "default").lower()
 
     if preset not in FIELD_PRESETS:
-        available = ", ".join(FIELD_PRESETS.keys())
-        raise ValueError(f"Unknown preset '{preset}'. Available: {available}")
-
-    preset_def = FIELD_PRESETS[preset]
-    if preset_def["fields"] is None:
-        # Special case for "all" - would need to be populated by caller
-        # with all available fields from the component data
         raise ValueError(
-            "'all' preset requires component data to determine available fields"
+            f"Unknown preset: {preset} (valid: {', '.join(FIELD_PRESETS.keys())})"
         )
 
-    fields = preset_def["fields"].copy()
+    preset_def = FIELD_PRESETS[preset]
 
-    # Add optional fields
+    if preset_def["fields"] is None:
+        # Placeholder, will be expanded in parse_fields_argument
+        return []
+
+    result = list(preset_def["fields"])
+
     if include_verbose:
-        if "match_quality" not in fields:
-            fields.append("match_quality")
-        if "priority" not in fields:
-            fields.append("priority")
+        result.append("match_quality")
+    if any_notes:
+        result.append("notes")
+    if include_verbose:
+        result.append("priority")
 
-    if any_notes and "notes" not in fields:
-        fields.append("notes")
-
-    return fields
+    return result
 
 
-def get_available_presets() -> Dict[str, str]:
-    """Get all available preset names and descriptions.
-
-    Returns:
-        Dict mapping preset names to their descriptions
+def parse_fields_argument(
+    fields_arg: str,
+    available_fields: Dict[str, str],
+    include_verbose: bool,
+    any_notes: bool,
+) -> List[str]:
     """
-    return {name: info["description"] for name, info in FIELD_PRESETS.items()}
+    Parse --fields argument which can contain:
+    1. Preset names with + prefix: +jlc, +standard, +minimal, +all
+    2. Comma-separated field names (case-insensitive, various formats)
+    3. Mix of presets and fields: +jlc,CustomField1,CustomField2
+
+    User input is normalized: snake_case, Title Case, CamelCase, spaces all accepted.
+    Returns expanded field list (normalized snake_case) or raises ValueError for invalid fields/presets.
+    """
+    if not fields_arg:
+        return preset_fields("default", include_verbose, any_notes)
+
+    tokens = [t.strip() for t in fields_arg.split(",") if t.strip()]
+    result = []
+    known_presets = set(FIELD_PRESETS.keys())
+
+    for token in tokens:
+        if token.startswith("+"):
+            # This is a preset expansion
+            preset_name = token[1:].lower()
+            if preset_name not in known_presets:
+                valid = ", ".join("+" + p for p in sorted(known_presets))
+                raise ValueError(f"Unknown preset: +{preset_name} (valid: {valid})")
+
+            # Handle special case: +all expands to all available fields
+            if preset_name == "all":
+                result.extend(sorted(available_fields.keys()))
+            else:
+                # Expand preset inline
+                preset_fields_list = preset_fields(
+                    preset_name, include_verbose, any_notes
+                )
+                result.extend(preset_fields_list)
+        else:
+            # This is a field name - normalize and validate it
+            normalized_token = normalize_field_name(token)
+            if normalized_token not in available_fields:
+                raise ValueError(
+                    f"Unknown field: {token}. Use --list-fields to see available fields."
+                )
+            result.append(normalized_token)
+
+    # Remove duplicates while preserving order
+    seen = set()
+    deduped = []
+    for f in result:
+        if f not in seen:
+            seen.add(f)
+            deduped.append(f)
+
+    return deduped if deduped else preset_fields("default", include_verbose, any_notes)
+
+
+__all__ = [
+    "KNOWN_ACRONYMS",
+    "normalize_field_name",
+    "field_to_header",
+    "FIELD_PRESETS",
+    "preset_fields",
+    "parse_fields_argument",
+]

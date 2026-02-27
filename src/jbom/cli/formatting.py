@@ -1,260 +1,289 @@
-"""CLI formatting utilities for console output.
+"""Shared console formatting utilities for CLI pretty printing.
 
-Provides functions to format BOM and POS data as console tables.
+Avoids DRY across bom/pos/inventory commands.
+
+This module also provides a small generalized table formatter used by multiple
+commands.
 """
+
 from __future__ import annotations
-import shutil
-from typing import List
 
-from jbom.common.types import BOMEntry
+import csv
+import sys
+import textwrap
+from dataclasses import dataclass
+from typing import (
+    Any,
+    Callable,
+    Iterable,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+)
 
-__all__ = [
-    "print_bom_table",
-]
+
+@dataclass(frozen=True)
+class Column:
+    """Column definition for console tables."""
+
+    header: str
+    key: str
+    preferred_width: Optional[int] = None
+    wrap: bool = False
+    fixed: bool = False
+    align: str = "left"  # "left" or "right"
 
 
-def print_bom_table(
-    bom_entries: List[BOMEntry],
-    fields: List[str] = None,
-    generator=None,
-    verbose: bool = False,
-    include_mfg: bool = False,
-):
-    """Print BOM entries as a formatted console table with word wrapping and URL shortening.
+def _format_cell(text: str, *, width: int, align: str) -> str:
+    if align == "right":
+        return text.rjust(width)
+    return text.ljust(width)
 
-    Args:
-        bom_entries: List of BOM entries to display
-        fields: Optional list of field names to display (uses same format as CSV output)
-        generator: Optional BOM generator for field value extraction
-        verbose: Include verbose columns (deprecated if fields provided)
-        include_mfg: Include manufacturer columns (deprecated if fields provided)
-    """
-    if not bom_entries:
-        print("No BOM entries to display.")
-        return
 
-    # Get terminal width for intelligent column sizing
-    terminal_width = shutil.get_terminal_size(fallback=(120, 24)).columns
+def _wrap_text(text: str, *, width: int) -> list[str]:
+    if width <= 0:
+        return [""]
 
-    # Determine columns to display
-    if fields and generator:
-        # Use fabricator-aware field mapping
-        from jbom.generators.bom import field_to_header
+    if not text:
+        return [""]
 
-        # Get column mapping from fabricator (if available)
-        column_map = {}
-        if generator.fabricator:
-            for fab_header, field in generator.fabricator.get_bom_columns().items():
-                column_map[field] = fab_header
+    # `textwrap.wrap` handles both word-wrapping and unbreakable strings.
+    return textwrap.wrap(
+        text,
+        width=width,
+        break_long_words=True,
+        break_on_hyphens=False,
+        drop_whitespace=True,
+    ) or [""]
 
-        # Convert fields to headers
-        headers = []
-        normalized_fields = []
-        for field in fields:
-            if field in column_map:
-                headers.append(column_map[field])
-            elif field == "fabricator_part_number" and generator.fabricator:
-                headers.append(generator.fabricator.config.part_number_header)
-            else:
-                headers.append(field_to_header(field))
-            normalized_fields.append(field)
-    else:
-        # Legacy behavior
-        headers = ["Reference", "Qty", "Value", "Footprint", "LCSC"]
-        if include_mfg:
-            headers.extend(["Manufacturer", "MFGPN"])
-        headers.extend(["Datasheet", "SMD"])
-        if verbose:
-            headers.extend(["Match_Quality", "Priority"])
-        normalized_fields = None
 
-    # Check if any entries have notes (only for legacy mode)
-    if normalized_fields is None:
-        any_notes = any((e.notes or "").strip() for e in bom_entries)
-        if any_notes:
-            headers.append("Notes")
+def _truncate(text: str, *, width: int, align: str) -> str:
+    if width <= 0:
+        return ""
 
-    # Set preferred column widths for wrapping guidance
-    # These will be adjusted based on terminal width
-    preferred_widths = {
-        "Reference": 60,  # Allow long reference lists
-        "Qty": 5,
-        "Value": 12,
-        "Footprint": 20,
-        "LCSC": 10,
-        "Manufacturer": 15,
-        "MFGPN": 18,
-        "Datasheet": 35,  # URLs get special handling
-        "SMD": 5,
-        "Match_Quality": 13,
-        "Priority": 8,
-        "Notes": 50,
-    }
+    if len(text) <= width:
+        return text
 
-    # Calculate total preferred width including separators (" | ")
-    separator_width = len(" | ") * (len(headers) - 1)
-    total_preferred = (
-        sum(preferred_widths.get(h, 20) for h in headers) + separator_width
+    # If we must truncate, prefer keeping the side nearest the alignment.
+    if align == "right":
+        return text[-width:]
+    return text[:width]
+
+
+def _column_min_width(col: Column) -> int:
+    # Non-fixed columns must be allowed to shrink below header length.
+    # Tests rely on preserving fixed-width numeric columns when shrinking.
+    return 3
+
+
+def _desired_width(col: Column, rows: Sequence[Mapping[str, Any]]) -> int:
+    if col.preferred_width is not None:
+        return max(1, col.preferred_width)
+
+    # If no preferred width, size to header/data (bounded for sanity).
+    max_data = 0
+    for r in rows:
+        v = str(r.get(col.key, ""))
+        max_data = max(max_data, len(v))
+
+    return max(1, min(max(len(col.header), max_data), 50))
+
+
+def _compute_widths(
+    *,
+    columns: Sequence[Column],
+    rows: Sequence[Mapping[str, Any]],
+    terminal_width: Optional[int],
+) -> list[int]:
+    widths = [max(1, _desired_width(c, rows)) for c in columns]
+
+    # Ensure fixed columns are at least their header width.
+    for i, c in enumerate(columns):
+        widths[i] = max(widths[i], len(c.header))
+
+    if terminal_width is None:
+        return widths
+
+    if not columns:
+        return []
+
+    sep_width = 3 * (len(columns) - 1)  # " | " between columns
+    max_cols_width = max(0, terminal_width - sep_width)
+
+    # Fast path: already fits.
+    if sum(widths) <= max_cols_width:
+        return widths
+
+    # Shrink only non-fixed columns first.
+    min_widths = [
+        (_column_min_width(c) if not c.fixed else widths[i])
+        for i, c in enumerate(columns)
+    ]
+
+    # As a last resort, allow fixed columns to shrink too (down to header width)
+    # if the terminal is extremely small.
+    for i, c in enumerate(columns):
+        if c.fixed:
+            min_widths[i] = max(1, len(c.header))
+
+    def total() -> int:
+        return sum(widths)
+
+    # 1) Shrink non-fixed columns as much as needed (down to min_widths).
+    while total() > max_cols_width and any(
+        (not c.fixed and widths[i] > min_widths[i]) for i, c in enumerate(columns)
+    ):
+        for i, c in enumerate(columns):
+            if c.fixed:
+                continue
+            if widths[i] > min_widths[i] and total() > max_cols_width:
+                widths[i] -= 1
+
+    # 2) If still too wide, shrink fixed columns too (rare; extremely small terminal).
+    while total() > max_cols_width and any(
+        widths[i] > min_widths[i] for i in range(len(columns))
+    ):
+        for i in range(len(columns)):
+            if widths[i] > min_widths[i] and total() > max_cols_width:
+                widths[i] -= 1
+
+    return widths
+
+
+def print_table(
+    rows: Sequence[Mapping[str, Any]],
+    columns: Sequence[Column],
+    *,
+    terminal_width: Optional[int] = None,
+    title: Optional[str] = None,
+) -> None:
+    """Print a list of row mappings as a formatted console table."""
+
+    rows_list = list(rows)
+    col_list = list(columns)
+
+    widths = _compute_widths(
+        columns=col_list, rows=rows_list, terminal_width=terminal_width
     )
 
-    # If preferred width exceeds terminal, scale down proportionally for flexible columns
-    max_widths = preferred_widths.copy()
-    if total_preferred > terminal_width:
-        # Fixed-width columns that shouldn't shrink
-        fixed_columns = {"Qty", "SMD", "LCSC", "Priority"}
-        fixed_total = sum(
-            preferred_widths.get(h, 20) for h in headers if h in fixed_columns
-        )
+    header_parts = [
+        _format_cell(_truncate(c.header, width=w, align="left"), width=w, align="left")
+        for c, w in zip(col_list, widths)
+    ]
+    header_line = " | ".join(header_parts)
 
-        # Available width for flexible columns
-        available = (
-            terminal_width - fixed_total - separator_width - 10
-        )  # -10 for safety margin
-        flexible_total = sum(
-            preferred_widths.get(h, 20) for h in headers if h not in fixed_columns
-        )
+    if title:
+        underline_len = min(len(title), max(20, len(header_line)))
+        print(title)
+        print("=" * underline_len)
 
-        if available > 0 and flexible_total > 0:
-            scale_factor = available / flexible_total
-            for h in headers:
-                if h not in fixed_columns:
-                    max_widths[h] = max(
-                        10, int(preferred_widths.get(h, 20) * scale_factor)
-                    )
-
-    def wrap_text(text: str, width: int) -> List[str]:
-        """Wrap text to fit within width, breaking on whitespace."""
-        if not text or len(text) <= width:
-            return [text] if text else [""]
-        lines = []
-        words = text.split()
-        current_line = words[0]
-        for word in words[1:]:
-            if len(current_line) + 1 + len(word) <= width:
-                current_line += " " + word
-            else:
-                lines.append(current_line)
-                current_line = word
-        if current_line:
-            lines.append(current_line)
-        return lines
-
-    def shorten_url(url: str, max_width: int) -> str:
-        """Shorten URL by removing protocol and truncating if needed."""
-        if not url:
-            return ""
-        # Remove http:// or https://
-        shortened = url.replace("https://", "").replace("http://", "")
-        if len(shortened) > max_width:
-            # Keep start and end, use ... in middle
-            keep_chars = (max_width - 3) // 2
-            shortened = shortened[:keep_chars] + "..." + shortened[-keep_chars:]
-        return shortened
-
-    def format_value(entry: BOMEntry, field: str) -> str:
-        """Extract and format value for given field.
-
-        Args:
-            entry: BOM entry
-            field: Normalized field name (snake_case)
-        """
-        if fields and generator and normalized_fields:
-            # Use generator's field extraction (fabricator-aware)
-            # Find component and inventory item for this entry
-            first_ref = entry.reference.replace("ALT: ", "").split(", ")[0]
-            component = None
-            inventory_item = None
-
-            for comp in generator.components:
-                if comp.reference == first_ref:
-                    component = comp
-                    break
-
-            if entry.lcsc:
-                for item in generator.matcher.inventory:
-                    if item.lcsc == entry.lcsc:
-                        inventory_item = item
-                        break
-
-            if component:
-                value = generator._get_field_value(
-                    field, entry, component, inventory_item
-                )
-                # Special handling for datasheet URLs
-                if "datasheet" in field.lower() and value:
-                    return shorten_url(value, max_widths.get(field, 35))
-                return value or ""
-            return ""
-        else:
-            # Legacy hardcoded behavior
-            if field == "Reference":
-                return entry.reference
-            elif field == "Qty":
-                return str(entry.quantity)
-            elif field == "Value":
-                return entry.value or ""
-            elif field == "Footprint":
-                return entry.footprint or ""
-            elif field == "LCSC":
-                return entry.lcsc or ""
-            elif field == "Manufacturer":
-                return entry.manufacturer or ""
-            elif field == "MFGPN":
-                return entry.mfgpn or ""
-            elif field == "Datasheet":
-                url = entry.datasheet or ""
-                return shorten_url(url, max_widths.get("Datasheet", 35))
-            elif field == "SMD":
-                return "Yes" if entry.smd else "No"
-            elif field == "Match_Quality":
-                return entry.match_quality if entry.match_quality else ""
-            elif field == "Priority":
-                return str(entry.priority) if entry.priority else ""
-            elif field == "Notes":
-                return entry.notes or ""
-            return ""
-
-    # Build rows with wrapped text
-    table_rows = []
-    for entry in bom_entries:
-        # Create a row dict with wrapped lines for each column
-        row_data = {}
-        max_lines = 1
-        for idx, header in enumerate(headers):
-            # Use normalized field if available, otherwise use header for legacy mode
-            field = normalized_fields[idx] if normalized_fields else header
-            value = format_value(entry, field)
-            width = max_widths.get(header, 20)
-            lines = wrap_text(value, width)
-            row_data[header] = lines
-            max_lines = max(max_lines, len(lines))
-        table_rows.append((row_data, max_lines))
-
-    # Calculate actual column widths based on content
-    # Use actual content width even if it exceeds max_widths suggestion
-    # (max_widths is for wrapping guidance, not hard caps on column width)
-    col_widths = {}
-    for header in headers:
-        max_width = len(header)  # At least as wide as header
-        for row_data, _ in table_rows:
-            for line in row_data[header]:
-                max_width = max(max_width, len(line))
-        # Use actual max width (don't cap if content can't be wrapped smaller)
-        col_widths[header] = max_width
-
-    # Print header
-    header_line = " | ".join(h.ljust(col_widths[h]) for h in headers)
     print(header_line)
-    print("-" * len(header_line))
 
-    # Print rows
-    for row_data, max_lines in table_rows:
-        for line_idx in range(max_lines):
-            line_parts = []
-            for header in headers:
-                lines = row_data[header]
-                if line_idx < len(lines):
-                    line_parts.append(lines[line_idx].ljust(col_widths[header]))
-                else:
-                    line_parts.append(" " * col_widths[header])
-            print(" | ".join(line_parts))
+    if len(col_list) == 1:
+        print("-" * widths[0])
+    else:
+        sep_parts = ["-" * w for w in widths]
+        print("-+-".join(sep_parts))
+
+    for row in rows_list:
+        # Build per-column wrapped cell lines.
+        per_col_lines: list[list[str]] = []
+        for c, w in zip(col_list, widths):
+            raw = str(row.get(c.key, ""))
+            if c.wrap:
+                lines = _wrap_text(raw, width=w)
+            else:
+                lines = [_truncate(raw, width=w, align=c.align)]
+            per_col_lines.append(lines)
+
+        row_height = max((len(lines) for lines in per_col_lines), default=1)
+
+        for line_idx in range(row_height):
+            parts: list[str] = []
+            for c, w, lines in zip(col_list, widths, per_col_lines):
+                cell_text = lines[line_idx] if line_idx < len(lines) else ""
+                parts.append(_format_cell(cell_text, width=w, align=c.align))
+            print(" | ".join(parts))
+
+
+def print_tabular_data(
+    data: Sequence[Any],
+    columns: Sequence[Column],
+    *,
+    row_transformer: Optional[Callable[[Any], Mapping[str, Any]]] = None,
+    sort_key: Optional[Callable[[Any], Any]] = None,
+    terminal_width: Optional[int] = None,
+    title: Optional[str] = None,
+    summary_line: Optional[str] = None,
+) -> None:
+    """Print arbitrary tabular data with optional transformation and sorting."""
+
+    items = list(data)
+    if sort_key is not None:
+        items.sort(key=sort_key)
+
+    if row_transformer is None:
+        rows = [
+            (item if isinstance(item, Mapping) else {"value": str(item)})
+            for item in items
+        ]
+    else:
+        rows = [row_transformer(item) for item in items]
+
+    print("")
+    print_table(rows, columns, terminal_width=terminal_width, title=title)
+    print("")
+
+    if summary_line:
+        print(summary_line)
+
+
+def print_inventory_table(items: Iterable[dict], fieldnames: List[str]) -> None:
+    """Pretty-print inventory rows as a compact table to stdout.
+
+    Shows a curated subset if available; otherwise falls back to CSV to stdout.
+    """
+
+    items_list = list(items)
+
+    subset = [
+        f
+        for f in ("IPN", "Category", "Value", "Description", "Package")
+        if f in fieldnames
+    ]
+    if not subset:
+        writer = csv.DictWriter(sys.stdout, fieldnames=fieldnames)
+        writer.writeheader()
+        for row in items_list:
+            writer.writerow(row)
+        return
+
+    width_defaults = {
+        "IPN": 20,
+        "Category": 15,
+        "Value": 15,
+        "Description": 40,
+        "Package": 15,
+    }
+
+    cols = [
+        Column(
+            header=f,
+            key=f,
+            preferred_width=width_defaults.get(f, 15),
+            wrap=True,
+        )
+        for f in subset
+    ]
+
+    print(f"\nInventory: {len(items_list)} items")
+    print_table(items_list, cols, terminal_width=100)
+
+
+__all__ = [
+    "Column",
+    "print_table",
+    "print_tabular_data",
+    "print_inventory_table",
+]

@@ -1,0 +1,43 @@
+name: "Seeed Studio"
+id: "seeed"
+description: "Seeed Studio Fusion PCBA"
+website: "https://www.seeedstudio.com/fusion_pcb.html"
+
+part_number:
+  header: "Seeed Part Number"
+  priority_fields:
+    - "Seeed"
+    - "Seeed Part"
+    - "Seeed Part #"
+    - "Seeed Studio"
+    - "Seeed SKU"
+    - "SKU"
+    - "MPN"
+    - "MFGPN"
+
+bom_columns:
+  "Designator": "reference"
+  "Quantity": "quantity"
+  "Value": "value"
+  "Package": "i:package"
+  "Seeed Part Number": "fabricator_part_number"
+
+pos_columns:
+  "Designator": "reference"
+  "Mid X": "x"
+  "Mid Y": "y"
+  "Layer": "side"
+  "Rotation": "rotation"
+
+presets:
+  default:
+    description: "Standard Seeed format"
+    fields:
+      - "reference"
+      - "quantity"
+      - "i:package"
+      - "fabricator_part_number"
+
+cli_aliases:
+  flags: ["--seeed"]
+  presets: ["+seeed"]

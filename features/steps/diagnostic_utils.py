@@ -5,7 +5,6 @@ when test assertions fail, making it easier to understand what went wrong.
 """
 
 from typing import Any, Optional
-from pathlib import Path
 
 
 def format_execution_context(context, include_files: bool = True) -> str:
@@ -24,77 +23,22 @@ def format_execution_context(context, include_files: bool = True) -> str:
     lines.append("=" * 80)
 
     # Command executed
-    if hasattr(context, "last_command_output") or hasattr(context, "cli_command"):
+    if hasattr(context, "last_command"):
         lines.append("\n--- COMMAND EXECUTED ---")
-        if hasattr(context, "cli_command"):
-            lines.append(f"CLI: {context.cli_command}")
+        lines.append(f"Command: {context.last_command}")
 
     # Exit code
-    if hasattr(context, "last_command_exit_code"):
-        lines.append(f"\nExit Code: {context.last_command_exit_code}")
+    if hasattr(context, "last_exit_code"):
+        lines.append(f"\nExit Code: {context.last_exit_code}")
 
-    # Standard output
-    if hasattr(context, "last_command_output"):
-        output = context.last_command_output or "(empty)"
-        lines.append(f"\n--- STDOUT ---\n{output}")
-
-    # Standard error
-    if hasattr(context, "last_command_error"):
-        error = context.last_command_error or "(empty)"
-        lines.append(f"\n--- STDERR ---\n{error}")
-
-    # Multi-modal results (CLI, API, Plugin)
-    if hasattr(context, "results"):
-        lines.append("\n--- MULTI-MODAL RESULTS ---")
-        for method, result in context.results.items():
-            lines.append(f"\n{method}:")
-            lines.append(f"  Exit Code: {result.get('exit_code', 'N/A')}")
-
-            output_text = result.get("output", "(empty)")
-            if len(output_text) > 200:
-                lines.append(f"  Output: {output_text[:200]}...")
-            else:
-                lines.append(f"  Output: {output_text}")
-
-            if "error_message" in result:
-                error_text = result.get("error_message", "(empty)")
-                if len(error_text) > 200:
-                    lines.append(f"  Error: {error_text[:200]}...")
-                else:
-                    lines.append(f"  Error: {error_text}")
+    # Output (stdout + stderr combined)
+    if hasattr(context, "last_output"):
+        output = context.last_output or "(empty)"
+        lines.append(f"\n--- OUTPUT ---\n{output}")
 
     # Working directory
-    if hasattr(context, "scenario_temp_dir"):
-        lines.append(f"\n--- WORKING DIRECTORY ---\n{context.scenario_temp_dir}")
-
-    # BOM output file (if expected)
-    if hasattr(context, "bom_output_file"):
-        lines.append("\n--- BOM OUTPUT FILE ---")
-        bom_file = Path(context.bom_output_file)
-        if bom_file.exists():
-            size = bom_file.stat().st_size
-            lines.append(f"  {bom_file.name}: EXISTS ({size} bytes)")
-        else:
-            lines.append(f"  {bom_file.name}: NOT FOUND")
-            lines.append(f"  Expected at: {bom_file}")
-
-    # Files generated
-    if include_files and hasattr(context, "scenario_temp_dir"):
-        lines.append("\n--- FILES GENERATED ---")
-        try:
-            temp_dir = Path(context.scenario_temp_dir)
-            if temp_dir.exists():
-                files = list(temp_dir.rglob("*"))
-                if files:
-                    for file in sorted(files)[:20]:  # Limit to 20 files
-                        if file.is_file():
-                            size = file.stat().st_size
-                            rel_path = file.relative_to(temp_dir)
-                            lines.append(f"  {rel_path} ({size} bytes)")
-                else:
-                    lines.append("  (no files generated)")
-        except Exception as e:
-            lines.append(f"  (error listing files: {e})")
+    if hasattr(context, "project_root"):
+        lines.append(f"\n--- WORKING DIRECTORY ---\n{context.project_root}")
 
     lines.append("\n" + "=" * 80 + "\n")
     return "\n".join(lines)

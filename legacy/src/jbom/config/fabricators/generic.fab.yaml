@@ -1,0 +1,48 @@
+name: "Generic"
+id: "generic"
+description: "Generic fabricator template"
+dynamic_name: true
+name_source: "manufacturer"
+
+part_number:
+  header: "Part Number"
+  priority_fields:
+    - "Part Number"
+    - "P/N"
+    - "MPN"
+    - "MFGPN"
+
+bom_columns:
+  "Reference": "reference"
+  "Quantity": "quantity"
+  "Description": "description"
+  "Value": "value"
+  "Package": "package"
+  "Footprint": "footprint"
+  "Manufacturer": "manufacturer"
+  "Part Number": "fabricator_part_number"
+
+pos_columns:
+  "Designator": "reference"
+  "Mid X": "x"
+  "Mid Y": "y"
+  "Layer": "side"
+  "Rotation": "rotation"
+  "Package": "package"
+
+presets:
+  default:
+    description: "Generic BOM format"
+    fields:
+      - "reference"
+      - "quantity"
+      - "description"
+      - "value"
+      - "package"
+      - "footprint"
+      - "manufacturer"
+      - "fabricator_part_number"
+
+cli_aliases:
+  flags: ["--generic"]
+  presets: ["+generic"]
