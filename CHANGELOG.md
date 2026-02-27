@@ -1,6 +1,34 @@
 # CHANGELOG
 
 
+## v6.7.2 (2026-02-27)
+
+### Bug Fixes
+
+* fix: deduplicate multi-unit component references in BOM and parts list
+
+Multi-unit components like dual op-amps (LM6132A) produce multiple
+symbol instances in KiCad schematics sharing the same reference.
+The BOM generator was counting each unit separately, inflating
+quantities (e.g. IC1 showing quantity 3 instead of 1).
+
+Fixed by deduplicating references in both BOMGenerator._create_bom_entry
+and PartsListGenerator._create_individual_entries.
+
+Validated against 11 real KiCad production projects:
+- 5 projects match exactly (ignoring sort order and footprint prefix)
+- Remaining differences are expected (schematic changes, DNP filtering,
+  footprint naming conventions)
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`14f3523`](https://github.com/plocher/jBOM/commit/14f35239243ad75c8412e166c6396ddca1996128))
+
+### Unknown
+
+* Merge pull request #67 from plocher/feature/fix-multiunit-dedup
+
+fix: deduplicate multi-unit component references in BOM and parts list ([`0c508ba`](https://github.com/plocher/jBOM/commit/0c508ba95ba1cd41ca49c04cdf78321185514c6e))
+
+
 ## v6.7.1 (2026-02-27)
 
 ### Bug Fixes
