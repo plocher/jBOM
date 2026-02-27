@@ -9,7 +9,7 @@ Most BOM tools force you to hardcode specific part numbers (like "LCSC:C123456")
 **jBOM solves this** by separating part selection from circuit design. You design with generic values ("10kΩ resistor, 0603"), maintain a separate inventory file with your available parts, and jBOM intelligently matches them at BOM generation time.
 
 ## Installation
-Requires Python 3.9 or newer.
+Requires Python 3.10 or newer.
 
 **From PyPI (recommended):**
 
@@ -40,10 +40,10 @@ Refer to the full command line documentation found in [docs/README.man1.md](docs
 Run jBOM to extract a prototype inventory from the components used in your project:
 
 ```bash
-jbom inventory --jlc MyProject/ -o my_new_inventory.csv
+jbom inventory MyProject/ -o my_new_inventory.csv
 ```
 
-This creates a CSV file listing all the parts found in your schematics (Resistors, Capacitors, ICs, etc.) with their values and packages. Adding `--jlc` ensures the columns for JLCPCB part numbers are included.
+This creates a CSV file listing all the parts found in your schematics (Resistors, Capacitors, ICs, etc.) with their values and packages.
 
 ### 2. Edit/Update your inventory
 
@@ -52,7 +52,7 @@ This new `my_new_inventory.csv` inventory is missing some fabrication details ne
 1.  Open the file in Excel, Numbers, or a text editor.
 2.  **Crucial**: If your schematic symbols were generic, fill in the missing **Value** and **Package** columns now.
 3.  Fill in the **LCSC** column (or **MFGPN**) for the parts you want to buy.
-    *   **Pro Tip**: You can export your existing JLC private library into a file and load it alongside your project inventory: `jbom bom ... -i project_inv.csv -i jlc_private_lib.xlsx`
+    *   **Pro Tip**: You can export your existing JLC private library into a file and load it alongside your project inventory: `jbom bom ... --inventory project_inv.csv --inventory jlc_private_lib.xlsx`
     *   **Export Instructions**: Login to JLCPCB -> User Center -> My Inventory -> My Parts Lib -> Click "Export".
     *   **Search**: Use `jbom search "part description" --provider mouser` to find parts.
 4.  (Optional) Add your own parts from other sources (e.g., local stock).
@@ -64,11 +64,11 @@ Now run jBOM to verify your inventory and generate the manufacturing files.
 **Generate BOM:**
 ```bash
 # BOM with JLCPCB-optimized columns
-jbom bom MyProject/ --jlc -i my_new_inventory.csv
+jbom bom MyProject/ --jlc --inventory my_new_inventory.csv
 
 # Or from within the project directory (defaults to current directory)
 cd MyProject
-jbom bom --jlc -i my_new_inventory.csv
+jbom bom --jlc --inventory my_new_inventory.csv
 ```
 
 **Generate Placement (CPL):**
@@ -90,72 +90,23 @@ jbom pos MyProject.kicad_sch --jlc
 jbom inventory MyProject/ -o my_new_inventory.csv
 ```
 
+**Generate Parts List** (one row per component, no aggregation):
+```bash
+jbom parts MyProject/ -o parts.csv
+```
+
 **Search for Parts:**
 ```bash
-# Search Mouser for parts
 jbom search "10k 0603 resistor" --limit 5
 ```
 
-## 🧪 Inventory Enhancement POC
-
-**New!** We're developing distributor-based inventory enhancement capabilities. See [`poc/inventory-enhancement/`](poc/inventory-enhancement/) for:
-
-- **Automated inventory upgrading** with distributor data
-- **Multi-distributor support** (Mouser, LCSC, DigiKey)
-- **Smart search optimization** with 100% success rate
-- **Interactive workflow planning** for production integration
-
-**Status**: POC complete, production integration in planning.
-
-### 4. (Optional) Back-Annotate to KiCad
-
-If you updated component values or packages in your inventory CSV (Step 2), your schematic is now out of sync. You can push these changes back to KiCad to keep your schematic as the single source of truth.
-
+**Bulk Inventory Search** (find supplier part numbers for your inventory):
 ```bash
-jbom annotate MyProject/ -i my_new_inventory.csv
-
-# Or from within the project directory
-cd MyProject
-jbom annotate -i my_new_inventory.csv
+export MOUSER_API_KEY=your_api_key
+jbom inventory-search my_new_inventory.csv -o enriched.csv
 ```
 
-This updates your `.kicad_sch` files with the correct Value, Footprint, and LCSC part numbers found in your inventory.
-
-## Quick Start - using the Python API
-
-Refer to the full API documentation found in [docs/README.man3.md](docs/README.man3.md).
-
-jBOM exposes a clean Python API for integrating into custom scripts or CI/CD pipelines.
-
-```python
-from jbom.api import generate_bom, generate_pos, back_annotate, BOMOptions, POSOptions
-
-# Generate BOM
-result = generate_bom(
-    input='MyProject/',
-    inventory='my_inventory.csv',
-    options=BOMOptions(verbose=True)
-)
-
-# Generate Placement
-pos_result = generate_pos(
-    input='MyProject/',
-    options=POSOptions(smd_only=True)
-)
-
-# Back-Annotate
-anno_result = back_annotate(
-    project='MyProject/',
-    inventory='updated_inventory.csv',
-    dry_run=True
-)
-
-# Search Parts
-parts = search_parts(
-    query="10k 0603 resistor",
-    limit=5
-)
-```
+> **Note:** The `annotate` command (back-annotate schematics from inventory) is available in `legacy/` and is planned for v8.x.
 
 ## Quick Start - integrating into KiCad
 
@@ -166,7 +117,7 @@ You can run jBOM directly from KiCad's **Generate BOM** dialog:
 1.  In KiCad Eeschema, go to `Tools` → `Generate BOM`.
 2.  Add a new plugin with the command:
     ```
-    python3 /path/to/kicad_jbom_plugin.py "%I" -i /path/to/inventory.csv -o "%O" --jlc
+    python3 /path/to/kicad_jbom_plugin.py "%I" --inventory /path/to/inventory.csv -o "%O" --jlc
     ```
 3.  Click `Generate`.
 
@@ -257,8 +208,8 @@ The `id` field in fabricator configs automatically generates CLI flags (`--{id}`
 
 Detailed documentation is available in the `docs/` directory:
 
-- [**docs/README.man1.md**](docs/README.man1.md) — CLI reference
-- [**docs/README.man3.md**](docs/README.man3.md) — Python library API
+- [**docs/README.man1.md**](docs/README.man1.md) — CLI reference (all 6 commands)
+- [**docs/README.man3.md**](docs/README.man3.md) — Python library API (planned for v8.x)
 - [**docs/README.man4.md**](docs/README.man4.md) — KiCad plugin setup
 - [**docs/README.man5.md**](docs/README.man5.md) — Inventory file format
 - [**docs/README.developer.md**](docs/README.developer.md) — Technical architecture
@@ -270,7 +221,7 @@ Contributions are welcome! jBOM is developed on GitHub at [github.com/plocher/jB
 To contribute:
 1. Fork the repository
 2. Create a feature branch
-3. Run tests: behave feature --`python -m unittest discover -s tests -v`
+3. Run tests: `pytest && python -m behave --format progress`
 4. Submit a pull request
 
 See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for details.

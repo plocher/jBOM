@@ -2,508 +2,203 @@
 
 ## NAME
 
-jbom — Python library for KiCad bill of materials generation
+jbom — Python library for KiCad bill of materials generation (planned for v8.x)
 
 ## SYNOPSIS
 
 ```python
-from jbom.api import (
-    generate_bom, generate_pos, generate_enriched_inventory,
-    back_annotate, search_parts, BOMOptions, POSOptions, InventoryOptions
-)
-from pathlib import Path
+# NOTE: A stable public Python API is planned for jBOM v8.x.
+# In v7.x, the CLI is the stable interface. See jbom(1).
 ```
 
 ## DESCRIPTION
 
-The jBOM library provides programmatic access to bill-of-materials generation, placement file generation, schematic back-annotation, and part searching.
+jBOM v7.x does not expose a stable public Python API. The primary interface is the CLI (`jbom bom`, `jbom pos`, etc.), which is stable and fully documented in [jbom(1)](README.man1.md).
 
-## PUBLIC API
+A Python API is planned for v8.x to support:
+- Programmatic BOM and placement file generation from Python scripts
+- Integration with the KiCad Python scripting environment
+- Back-annotation of schematics (`annotate` command, currently in `legacy/`)
 
-### Function: generate_bom()
+For design inspiration, see `legacy/src/jbom/api.py` — the legacy API module that informed this plan.
 
-**Signature**
+For production use today, call the CLI from Python using `subprocess.run(["jbom", "bom", ...])`.
+
+## DATA MODEL
+
+The following types are defined in `src/jbom/common/types.py` and are expected to form the core of the planned v8.x API surface.
+
+### Component
+
+Represents a component from the KiCad schematic.
+
+```python
+@dataclass
+class Component:
+    reference: str               # e.g., "R1", "C2"
+    lib_id: str                  # e.g., "Device:R"
+    value: str                   # e.g., "10k", "100nF"
+    footprint: str               # e.g., "Resistor_SMD:R_0603_1608Metric"
+    uuid: str                    # KiCad UUID
+    properties: Dict[str, str]   # Custom properties from schematic
+    in_bom: bool                 # Whether to include in BOM
+    exclude_from_sim: bool       # Exclude from simulation flag
+    dnp: bool                    # Do Not Populate flag
+```
+
+### InventoryItem
+
+Represents an entry from the inventory file.
+
+```python
+@dataclass
+class InventoryItem:
+    ipn: str                     # Internal part number
+    keywords: str                # Search keywords
+    category: str                # Component type (RES, CAP, LED, etc.)
+    description: str             # Human-readable description
+    smd: str                     # SMD indicator (SMD/PTH/TH)
+    value: str                   # Component value
+    type: str                    # Component type description
+    tolerance: str               # Tolerance specification
+    voltage: str                 # Voltage rating
+    amperage: str                # Current rating
+    wattage: str                 # Power rating
+    lcsc: str                    # LCSC part number
+    manufacturer: str            # Manufacturer name
+    mfgpn: str                   # Manufacturer part number
+    datasheet: str               # Datasheet URL
+    package: str                 # Physical package (0603, SOT-23, etc.)
+    distributor: str             # Distributor name
+    distributor_part_number: str # Distributor SKU
+    uuid: str                    # KiCad UUID for back-annotation
+    fabricator: str              # Target fabricator (e.g. "jlc", "seeed")
+    priority: int                # Selection priority (1=preferred, higher=less)
+    source: str                  # Source tracking ("CSV", "JLC-Private", etc.)
+    source_file: Optional[Path]  # Path to the file where this item was found
+    raw_data: Dict[str, str]     # Original row data from inventory
+```
+
+### BOMEntry
+
+Represents a bill of materials line item (aggregated by value+package).
+
+```python
+@dataclass
+class BOMEntry:
+    reference: str               # Component reference(s), e.g., "R1, R2"
+    quantity: int                # Total quantity
+    value: str                   # Component value
+    footprint: str               # Package footprint
+    lcsc: str                    # Matched LCSC part number
+    manufacturer: str            # Matched manufacturer
+    mfgpn: str                   # Matched manufacturer part number
+    description: str             # Matched description
+    datasheet: str               # Matched datasheet URL
+    smd: str                     # SMD indicator (SMD/PTH)
+    distributor: str             # Distributor name
+    distributor_part_number: str # Distributor SKU
+    match_quality: str           # Match quality indicator
+    notes: str                   # Matching notes/diagnostics
+    fabricator: str              # Fabricator ID
+    fabricator_part_number: str  # Fabricator-specific part number
+    priority: int                # Priority of selected part (verbose mode)
+```
+
+## PLANNED API (v8.x)
+
+The following API is planned and subject to change. It is documented here to inform integrators and guide implementation.
+
+### generate_bom()
+
 ```python
 def generate_bom(
     input: Union[str, Path],
     inventory: Optional[Union[str, Path, List[Union[str, Path]]]] = None,
     output: Optional[Union[str, Path]] = None,
-    options: Optional[BOMOptions] = None
+    fabricator: str = "generic",
+    fields: Optional[List[str]] = None,
+    verbose: bool = False,
 ) -> Dict[str, Any]
 ```
 
-**Description**
-: Generates a bill of materials for a KiCad project. Parses schematics, matches components against inventory, and returns structured data.
+Returns a dict with `bom_entries` (list of `BOMEntry`), `component_count`, `unmatched_count`, `exit_code`.
 
-**Parameters**
-: **input** — Path to project directory or .kicad_sch file
-: **inventory** — Path(s) to inventory file(s) (.csv, .xlsx, .xls, .numbers)
-: **output** — Output path (optional)
-: **options** — BOMOptions instance or None
+### generate_pos()
 
-**Return value** (dict)
-: **bom_entries** — List of BOMEntry objects
-: **inventory_count** — Number of items in inventory
-: **excluded_count** — Count of excluded components (e.g. non-SMD)
-: **debug_diagnostics** — Diagnostic data list
-: **components** — List of Component objects from schematics
-: **available_fields** — Dict of {fieldname: description}
-
-### Function: generate_pos()
-
-**Signature**
 ```python
 def generate_pos(
     input: Union[str, Path],
     output: Optional[Union[str, Path]] = None,
-    options: Optional[POSOptions] = None
+    fabricator: str = "generic",
+    fields: Optional[List[str]] = None,
+    smd_only: bool = False,
+    layer: Optional[str] = None,
+    origin: str = "board",
 ) -> Dict[str, Any]
 ```
 
-**Description**
-: Generates a component placement file (CPL/POS) for a KiCad project.
+Returns a dict with `entries` (list of placement rows), `component_count`.
 
-**Parameters**
-: **input** — Path to project directory or .kicad_pcb file
-: **output** — Output path (optional)
-: **options** — POSOptions instance
+### generate_inventory()
 
-**Return value** (dict)
-: **board** — BoardModel object
-: **entries** — List of PcbComponent objects
-: **component_count** — Number of components found
-
-### Function: back_annotate()
-
-**Signature**
 ```python
-def back_annotate(
-    project: Union[str, Path],
-    inventory: Union[str, Path],
-    dry_run: bool = False
-) -> Dict[str, Any]
-```
-
-**Description**
-: Updates KiCad schematic files with data from an inventory file (Value, Footprint, LCSC, etc.) by matching UUIDs.
-
-**Parameters**
-: **project** — Path to project directory or .kicad_sch file
-: **inventory** — Path to inventory file containing updates
-: **dry_run** — If True, reports changes without writing to file
-
-**Return value** (dict)
-: **success** — Boolean success status
-: **updated_count** — Number of components updated
-: **updates** — List of update details
-: **modified** — Boolean indicating if file was changed
-: **error** — Error message string (if success=False)
-
-**Example**
-```python
-from jbom.api import generate_bom, BOMOptions
-
-# Generate BOM with JLC fabricator
-opts = BOMOptions(verbose=True, fabricator='jlc')
-result = generate_bom(input='MyProject/', inventory='inventory.xlsx', options=opts)
-
-if result['bom_entries']:
-    for entry in result['bom_entries']:
-        print(f"{entry.reference}: {entry.value} -> {entry.lcsc}")
-        print(f"  Fabricator: {entry.fabricator}, Part: {entry.fabricator_part_number}")
-```
-
-### Function: generate_enriched_inventory()
-
-**Signature**
-```python
-def generate_enriched_inventory(
-    *,
+def generate_inventory(
     input: Union[str, Path],
     output: Optional[Union[str, Path]] = None,
-    options: Optional[InventoryOptions] = None,
+    existing_inventory: Optional[Union[str, Path]] = None,
+    filter_matches: bool = False,
 ) -> Dict[str, Any]
 ```
 
-**Description**
-: Generates an enriched inventory with optional automated search integration. Creates an inventory from project components and optionally searches for matching parts from distributors.
+Returns a dict with `inventory_items` (list of `InventoryItem`), `field_names`.
 
-**Parameters**
-: **input** — Path to KiCad project directory or .kicad_sch file
-: **output** — Optional output path. Special values: "-"/"stdout" for stdout, "console" for formatted table
-: **options** — InventoryOptions instance for search configuration
+### search_parts()
 
-**Return value** (dict)
-: **success** — Boolean indicating operation success
-: **inventory_items** — List of InventoryItem objects (including search results)
-: **field_names** — List of field names in the inventory
-: **component_count** — Number of components processed
-: **search_stats** — Search statistics (if search enabled)
-: **components** — Original Component objects from schematics
-
-**Example**
-```python
-import os
-from jbom.api import generate_enriched_inventory, InventoryOptions
-
-# Generate basic inventory
-result = generate_enriched_inventory(input='MyProject/')
-
-# Generate inventory with search enrichment (using environment variable)
-os.environ['MOUSER_API_KEY'] = 'your_mouser_api_key'
-opts = InventoryOptions(
-    search=True,
-    provider='mouser',
-    limit=3
-)
-result = generate_enriched_inventory(
-    input='MyProject/',
-    output='enriched_inventory.csv',
-    options=opts
-)
-
-# Alternative: explicit API key (overrides environment variable)
-opts = InventoryOptions(
-    search=True,
-    provider='mouser',
-    limit=3,
-    api_key='your_mouser_api_key'
-)
-
-if result['success']:
-    print(f"Generated {len(result['inventory_items'])} inventory items")
-    if opts.search:
-        stats = result['search_stats']
-        print(f"Performed {stats['searches_performed']} searches")
-```
-
-### Function: search_parts()
-
-**Signature**
 ```python
 def search_parts(
     query: str,
     provider: str = "mouser",
     limit: int = 10,
     api_key: Optional[str] = None,
-    filter_parametric: bool = True
 ) -> List[SearchResult]
 ```
 
-**Description**
-: Search for parts from external distributors (e.g., Mouser).
-
-**Parameters**
-: **query** — Search query string (keyword, MPN, etc.)
-: **provider** — Provider name (default: "mouser"). Currently supports "mouser".
-: **limit** — Maximum results to return
-: **api_key** — Optional API key (overrides provider-specific environment variables)
-: **filter_parametric** — Enable smart parametric filtering
-
-**Return value** (list)
-: List of **SearchResult** objects
-
-### Class: BOMOptions
-
-**Signature**
-```python
-@dataclass
-class BOMOptions:
-    verbose: bool = False
-    debug: bool = False
-    smd_only: bool = False
-    fields: Optional[List[str]] = None
-    fabricator: Optional[str] = None
-```
-
-**Attributes**
-: **verbose** — Include Match_Quality and Priority in output
-: **debug** — Emit detailed matching diagnostics
-: **smd_only** — Filter to surface-mount components only
-: **fields** — List of output field names (None = use defaults)
-: **fabricator** — Target fabricator ID (e.g. "jlc", "pcbway", "seeed", "generic") for part number lookup
-
-### Class: POSOptions
-
-**Signature**
-```python
-@dataclass
-class POSOptions:
-    units: str = "mm"
-    origin: str = "board"
-    smd_only: bool = True
-    layer_filter: Optional[str] = None
-    fields: Optional[List[str]] = None
-    fabricator: Optional[str] = None
-```
-
-**Attributes**
-: **units** — Coordinate units ("mm" or "inch")
-: **origin** — Coordinate origin ("board" or "aux")
-: **smd_only** — Filter to surface-mount components only
-: **layer_filter** — Filter by side ("TOP" or "BOTTOM")
-: **fields** — List of output field names
-: **fabricator** — Target fabricator ID (e.g. "jlc") for default presets
-
-### Class: InventoryOptions
-
-**Signature**
-```python
-@dataclass
-class InventoryOptions:
-    search: bool = False
-    provider: str = "mouser"
-    api_key: Optional[str] = None
-    limit: int = 1
-    interactive: bool = False
-    fields: Optional[List[str]] = None
-```
-
-**Attributes**
-: **search** — Enable automated part searching from distributors
-: **provider** — Search provider to use (default: "mouser"). Currently supports "mouser".
-: **api_key** — API key for search provider (overrides provider-specific environment variables like MOUSER_API_KEY)
-: **limit** — Maximum search results per component (1=single result, None=unlimited)
-: **interactive** — Enable interactive candidate selection
-: **fields** — List of output field names for inventory
-
-### Class: SearchResult
-
-Represents a part search result.
-
-**Attributes**
-```python
-manufacturer: str            # Manufacturer name
-mpn: str                    # Manufacturer part number
-description: str            # Part description
-price: Optional[float]      # Unit price
-availability: str           # Availability string (e.g., "In Stock")
-distributor_part_number: str # Distributor SKU
-datasheet: Optional[str]    # Datasheet URL
-attributes: Dict[str, str]  # Technical attributes (Value, Tolerance, etc.)
-```
-
-### Class: Component
-
-Represents a component from the KiCad schematic.
-
-**Attributes**
-```python
-reference: str              # e.g., "R1", "C2"
-lib_id: str                # e.g., "Device:R"
-value: str                 # e.g., "10k", "100nF"
-footprint: str             # e.g., "Resistor_SMD:R_0603_1608Metric"
-properties: Dict[str, str] # Custom properties from schematic
-in_bom: bool              # Whether to include in BOM
-dnp: bool                 # Do not populate flag
-exclude_from_sim: bool    # Exclude from simulation flag
-```
-
-### Class: InventoryItem
-
-Represents an entry from the inventory file.
-
-**Attributes**
-```python
-ipn: str                    # Internal part number
-keywords: str               # Search keywords
-category: str               # Component type (RES, CAP, LED, etc.)
-description: str            # Human-readable description
-smd: str                    # SMD indicator (SMD/PTH/TH)
-value: str                  # Component value
-type: str                   # Component type description
-tolerance: str              # Tolerance specification
-voltage: str                # Voltage rating
-amperage: str               # Current rating
-wattage: str                # Power rating
-lcsc: str                   # LCSC part number
-manufacturer: str           # Manufacturer name
-mfgpn: str                  # Manufacturer part number
-datasheet: str              # Datasheet URL
-package: str                # Physical package (0603, SOT-23, etc.)
-priority: int               # Selection priority (1=preferred, higher=less)
-raw_data: Dict[str, str]   # Original row data from inventory
-```
-
-### Class: BOMEntry
-
-Represents a bill-of-materials line item.
-
-**Attributes**
-```python
-reference: str             # Component reference(s) e.g., "R1, R2"
-quantity: int              # Total quantity
-value: str                 # Component value
-footprint: str             # Package footprint
-lcsc: str                  # Matched LCSC part number
-manufacturer: str          # Matched manufacturer
-mfgpn: str                 # Matched manufacturer part number
-description: str           # Matched description
-datasheet: str             # Matched datasheet URL
-smd: str                   # SMD indicator (SMD/PTH)
-match_quality: str         # Match quality indicator
-notes: str                 # Matching notes/diagnostics
-priority: int              # Priority of selected part
-```
-
-### Class: InventoryMatcher
-
-Loads inventory and performs component matching.
-
-**Constructor**
-```python
-matcher = InventoryMatcher(inventory_path: Path)
-```
-
-**Methods**
-```python
-find_matches(component: Component, debug: bool = False)
-    -> List[Tuple[InventoryItem, int, Optional[str]]]
-```
-: Returns up to 3 matches: (inventory_item, score, debug_info_or_none)
-
-### Class: BOMGenerator
-
-Generates BOMs from components and inventory matcher.
-
-**Constructor**
-```python
-gen = BOMGenerator(components: List[Component], matcher: InventoryMatcher)
-```
-
-**Methods**
-```python
-generate_bom(verbose: bool = False, debug: bool = False, smd_only: bool = False)
-    -> Tuple[List[BOMEntry], int, List]
-```
-: Returns (bom_entries, smd_excluded_count, debug_diagnostics)
+### back_annotate() (planned for v8.x)
 
 ```python
-write_bom_csv(entries: List[BOMEntry], output_path: Path, fields: List[str])
+def back_annotate(
+    project: Union[str, Path],
+    inventory: Union[str, Path],
+    dry_run: bool = False,
+) -> Dict[str, Any]
 ```
-: Writes BOM to CSV file with specified columns.
+
+The `annotate` command is currently available in `legacy/src/jbom/cli/commands/builtin/annotate.py` and is planned to be re-implemented as part of the v8.x public API.
+
+## WORKAROUND FOR v7.x
+
+Until the Python API is available, call the CLI from Python:
 
 ```python
-get_available_fields(components: List[Component]) -> Dict[str, str]
+import subprocess
+
+result = subprocess.run(
+    ["jbom", "bom", "MyProject/", "--inventory", "inventory.csv", "--jlc", "-o", "bom.csv"],
+    check=True,
+)
 ```
-: Returns available output field names and descriptions.
 
 ## FABRICATOR CONFIGURATION
 
-The fabricator system is fully configurable via YAML files. Available fabricators are loaded from the configuration hierarchy:
+The fabricator system is configurable via YAML files. See the Configuration section in [README.md](../README.md) for the full hierarchy and customization guide.
 
-### Built-in Fabricators
-- **jlc** — JLCPCB fabrication and assembly
-- **pcbway** — PCBWay fabrication requirements
-- **seeed** — Seeed Studio Fusion PCBA
-- **generic** — Generic fabricator with dynamic manufacturer names
-
-### Configuration Hierarchy
-1. **Package defaults** — Built-in fabricator configurations
-2. **System configs** — OS-specific system-wide settings
-   - macOS: `/Library/Application Support/jbom/config.yaml`
-   - Windows: `%PROGRAMDATA%\jbom\config.yaml`
-   - Linux: `/etc/jbom/config.yaml`
-3. **User configs** — Per-user customizations
-   - macOS: `~/Library/Application Support/jbom/config.yaml`
-   - Windows: `%APPDATA%\jbom\config.yaml`
-   - Linux: `~/.config/jbom/config.yaml`
-4. **Project configs** — Project-specific overrides
-   - `.jbom/config.yaml` or `jbom.yaml` in project directory
-
-### Custom Fabricators
-
-Create custom fabricator configurations by copying and modifying existing ones:
-
-```yaml
-fabricators:
-  - name: "My Custom Fab"
-    id: "mycustom"
-    based_on: "jlc"  # Inherit from JLC configuration
-    description: "Custom fabricator based on JLC"
-    part_number:
-      header: "Custom Part Number"
-      priority_fields:
-        - "CUSTOM_PN"
-        - "LCSC"
-    bom_columns:
-      "Reference": "reference"
-      "Qty": "quantity"
-      "Custom Part Number": "fabricator_part_number"
-```
-
-Then use in Python API:
-
-```python
-opts = BOMOptions(fabricator='mycustom')
-result = generate_bom('MyProject/', options=opts)
-```
-
-## WORKFLOW EXAMPLE
-
-```python
-from jbom import (
-    generate_bom_api, GenerateOptions, BOMGenerator,
-    InventoryMatcher, Component, InventoryItem
-)
-from pathlib import Path
-
-# Option 1: High-level API (recommended for most use cases)
-opts = BOMOptions(
-    verbose=True,
-    fabricator='pcbway',  # Use PCBWay fabricator
-    fields=['reference', 'quantity', 'value', 'lcsc', 'manufacturer']
-)
-result = generate_bom('MyProject/', 'inventory.xlsx', options=opts)
-
-if result['exit_code'] == 0:
-    # Process BOM entries
-    for entry in result['bom_entries']:
-        print(f"{entry.reference}: {entry.lcsc}")
-
-    # Access diagnostics
-    if result['debug_diagnostics']:
-        for diagnostic in result['debug_diagnostics']:
-            print(f"Note: {diagnostic}")
-
-# Option 2: Low-level API (for custom workflows)
-matcher = InventoryMatcher(Path('inventory.xlsx'))
-gen = BOMGenerator([], matcher)  # components loaded separately
-
-# Custom component processing
-for component in custom_components:
-    matches = matcher.find_matches(component, debug=True)
-    if matches:
-        best_match, score, debug_info = matches[0]
-        print(f"{component.reference} → {best_match.ipn}")
-```
-
-## EXIT CODES
-
-The library does not raise exceptions for normal validation errors. Instead, check the `exit_code` field in the result dict:
-
-- **0** — Success, all components matched
-- **1** — Error (file not found, unsupported format, etc.)
-- **2** — Warning (one or more components unmatched, but BOM was generated)
-
-## EXCEPTIONS
-
-The library may raise:
-- **FileNotFoundError** — Project or inventory file does not exist
-- **ValueError** — Unsupported file format or invalid options
-- **ImportError** — Optional packages (openpyxl, numbers-parser) not installed
-
-## CONSTANTS
-
-**ComponentType** — Component category constants (RES, CAP, IND, LED, DIO, IC, MCU, Q, CON, SWI, RLY, REG, OSC)
-
-**DiagnosticIssue** — Diagnostic issue types (TYPE_UNKNOWN, NO_TYPE_MATCH, NO_VALUE_MATCH, PACKAGE_MISMATCH, NO_MATCH)
-
-**CommonFields** — Common field name constants (VOLTAGE, AMPERAGE, WATTAGE, TOLERANCE, POWER, TEMPERATURE_COEFFICIENT)
+Built-in fabricators: `jlc`, `pcbway`, `seeed`, `generic`.
 
 ## SEE ALSO
 
 - [**README.md**](../README.md) — Overview and quick start
 - [**README.man1.md**](README.man1.md) — Command-line interface reference
 - [**README.man4.md**](README.man4.md) — KiCad Eeschema plugin integration
-- [**README.developer.md**](README.developer.md) — Matching algorithms and internals
+- [**README.man5.md**](README.man5.md) — Inventory file format
+- [**README.developer.md**](README.developer.md) — Architecture and internals

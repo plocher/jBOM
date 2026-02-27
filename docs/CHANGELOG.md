@@ -4,6 +4,36 @@ All notable changes to jBOM are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.0.0] - 2026-02-27
+
+### Breaking Changes
+- **Python 3.10+ required** (dropped 3.9). Union type syntax (`X | Y`) used throughout.
+- **Architecture overhaul**: codebase promoted from `jbom-new/` to repo root. Previous
+  implementation archived to `legacy/` for reference; full history retained in git.
+- **No stable Python API**: `jbom.api` (from legacy) is not exposed in v7.x. The CLI
+  is the stable public interface. A clean API for KiCad plugin integration is planned for v8.x.
+
+### Added
+- **`parts` command**: generate a per-reference parts list (unaggregated) from a KiCad
+  schematic, with optional inventory enrichment.
+- **`inventory-search` command**: bulk catalog search against an inventory CSV to find
+  candidate supplier part numbers. Includes `--dry-run` for validation without API calls.
+- **Service-Command architecture**: clean separation of business logic (`services/`),
+  shared types (`common/`), and thin CLI wrappers (`cli/`). No circular imports.
+- **Sophisticated inventory matcher**: score-based matching with tolerance-aware substitution,
+  priority-based tie-breaking, and category-specific field handling.
+- **Supplier profiles**: YAML-defined supplier configs for Mouser, LCSC, DigiKey, and Generic.
+
+### Changed
+- All commands now use `--inventory` (repeatable for `bom`; single for `inventory`/`parts`).
+- `pos --units` accepts `mm` only (was `mm` and `inch`; inch output removed).
+- `bom` always aggregates by value+package (procurement view). Use `parts` for
+  per-reference output.
+
+### Deferred
+- **`annotate` command** (back-annotation to KiCad schematics): implementation is in
+  `legacy/src/jbom/cli/commands/builtin/annotate.py` and is planned for promotion in v8.x.
+
 ## [3.6.0] - 2025-12-21
 
 ### Added
