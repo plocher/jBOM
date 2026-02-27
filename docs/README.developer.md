@@ -12,62 +12,76 @@ jBOM is a comprehensive fabrication tool that provides two main capabilities:
 
 ### Module Structure
 
-jBOM follows a data-flow architecture (v3.0 refactoring, Dec 2024):
+jBOM uses a Service-Command architecture (v7.0, 2025):
 
 ```
 src/jbom/
-├── api.py               # High-level API (generate_bom, BOMOptions)
+├── cli/                 # Command-line interface (thin wrappers over services)
+│   ├── main.py          # Argparse dispatcher and subcommand registration
+│   ├── discovery.py     # Command auto-discovery
+│   ├── formatting.py    # Console output formatting
+│   ├── bom.py           # bom command
+│   ├── inventory.py     # inventory command
+│   ├── inventory_search.py  # inventory-search command
+│   ├── parts.py         # parts command
+│   ├── pos.py           # pos command
+│   └── search.py        # search command
 │
-├── cli/                 # Command-line interface
-│   ├── main.py          # Argparse dispatcher with plugin discovery
-│   ├── commands/        # Plugin command infrastructure
-│   │   ├── __init__.py  # CommandRegistry and discover_commands()
-│   │   ├── base.py      # Base Command class, CommandMetadata, OutputMode
-│   │   └── builtin/     # Built-in command plugins
-│   │       ├── bom.py   # BOM command plugin
-│   │       ├── pos.py   # POS command plugin
-│   │       ├── inventory.py    # Inventory command plugin
-│   │       ├── search.py       # Search command plugin
-│   │       ├── annotate.py     # Annotate command plugin
-│   │       └── inventory_search.py # Inventory search command plugin
-│   └── formatting.py    # Console output formatting
-│
-├── common/              # Shared utilities and data types
+├── common/              # Shared domain types and utilities
 │   ├── types.py         # Data classes: Component, InventoryItem, BOMEntry
-│   ├── constants.py     # Enums: ComponentType, ScoreWeights, etc.
-│   ├── fields.py        # Field name normalization and formatting
-│   ├── fields_system.py # Field discovery and category-specific fields
-│   ├── values.py        # Value parsing (resistors, capacitors, inductors)
-│   ├── packages.py      # Package type detection from footprints
-│   ├── sexp_parser.py   # S-expression parsing utilities
-│   ├── utils.py         # File discovery and hierarchical schematics
-│   ├── options.py       # BOMOptions dataclass
-│   ├── output.py        # Output path resolution
-│   └── generator.py     # Base generator utilities
+│   ├── constants.py     # Enums and shared constants
+│   ├── fields.py        # Field presets and field-to-header conversion
+│   ├── field_parser.py  # Field argument parsing and validation
+│   ├── options.py       # GeneratorOptions dataclass
+│   ├── cli_fabricator.py        # Fabricator CLI argument helpers
+│   ├── component_classification.py  # Component type classification
+│   ├── component_filters.py     # DNP/exclude/include-all filtering
+│   ├── component_utils.py       # Component utility functions
+│   ├── package_matching.py      # Package extraction and matching
+│   ├── packages.py              # Package type definitions
+│   ├── pcb_types.py             # PCB component data structures
+│   ├── sexp_parser.py           # S-expression parsing
+│   └── value_parsing.py         # Value parsing (R, C, L numeric comparison)
 │
-├── loaders/             # Input file parsing
-│   ├── schematic.py     # SchematicLoader: Parse .kicad_sch files
-│   ├── pcb.py           # PCBLoader: Parse .kicad_pcb files
-│   ├── pcb_model.py     # BoardModel and PcbComponent data structures
-│   └── inventory.py     # InventoryLoader: CSV/Excel/Numbers
+├── config/              # Configuration: fabricators and suppliers
+│   ├── fabricators.py   # Fabricator definitions and column presets
+│   └── suppliers.py     # Supplier URL and part number configuration
 │
-├── processors/          # Business logic
-│   ├── component_types.py    # Component type detection and categorization
-│   └── inventory_matcher.py  # InventoryMatcher: Match components to inventory
+├── services/            # Business logic
+│   ├── schematic_reader.py          # Parse .kicad_sch files (hierarchical)
+│   ├── pcb_reader.py                # Parse .kicad_pcb files
+│   ├── inventory_reader.py          # Load CSV/Excel/Numbers inventory files
+│   ├── inventory_matcher.py         # Match schematic components to inventory
+│   ├── inventory_validator.py       # Inventory data validation
+│   ├── bom_generator.py             # Generate BOM CSV output
+│   ├── pos_generator.py             # Generate CPL/POS placement output
+│   ├── parts_list_generator.py      # Generate parts list output
+│   ├── fabricator_inventory_selector.py  # Fabricator-aware part selection
+│   ├── project_context.py           # Project file context
+│   ├── project_discovery.py         # Discover project files in directory
+│   ├── project_file_resolver.py     # Resolve input paths to project files
+│   ├── project_inventory.py         # Per-project inventory management
+│   ├── supplier_url_resolver.py     # Resolve supplier URLs from part numbers
+│   └── search/                      # Online component search
+│       ├── models.py                # Search result data models
+│       ├── provider.py              # Abstract search provider interface
+│       ├── mouser_provider.py       # Mouser Electronics API integration
+│       ├── filtering.py             # Search result filtering
+│       ├── cache.py                 # Search result caching
+│       └── inventory_search_service.py  # Orchestrate inventory-wide search
 │
-└── generators/          # Output file creation
-    ├── bom.py           # BOMGenerator: Generate BOM CSV files
-    └── pos.py           # POSGenerator: Generate placement CSV files
+└── workflows/           # Workflow registry (extension point)
+    └── registry.py
 ```
 
 **Key Design Principles:**
-- **Data-Flow Architecture**: Input (loaders) → Processing (processors) → Output (generators)
-- **Separation by Function**: CLI, loaders, processors, generators are independent
-- **Type Safety**: Extensive use of type hints and dataclasses throughout
-- **Plugin Architecture**: CLI commands auto-register via plugin discovery
-- **Command Pattern**: CLI uses subcommands with shared base class and metadata
-- **No Circular Dependencies**: Clean import hierarchy from common → loaders → processors → generators
-- **Consistent Naming**: Loaders parse files, Processors transform data, Generators write output
+- **Service-Command Pattern**: CLI (`cli/`) is a thin presentation layer; all business logic lives in `services/`
+- **Shared Domain Types**: `common/types.py` defines `Component`, `InventoryItem`, `BOMEntry` shared across all layers
+- **Configuration-Driven**: Fabricator column presets in `config/`; component classifier rules in `common/component_classification.py`
+- **No Circular Dependencies**: Clean import hierarchy: `common` → `config` → `services` → `cli`
+- **Simple Registration**: CLI subcommands each implement `register_command(subparsers)` and are explicitly imported in `main.py`
+- **Type Safety**: Type hints and dataclasses throughout
+- **Consistent Naming**: Services are named for what they do (`_reader`, `_matcher`, `_generator`)
 
 ## Key Features (Technical)
 
@@ -92,10 +106,9 @@ src/jbom/
   - Automatic field discovery from inventory CSV and component properties
   - I:/C: prefix system for disambiguating inventory vs component fields
   - Custom field selection with `-f` option
-- **Advanced debug functionality**
-  - `-d/--debug` option provides detailed matching information in Notes column
-  - Shows component analysis, filtering statistics, and alternative matches
-  - Shows detailed component analysis and matching statistics
+- **Verbose output**
+  - `-v/--verbose` adds Match_Quality and Priority columns to the BOM
+  - Unmatched components emit console warnings with diagnostic details (type, package, value)
 - **Organized BOM output**
   - Sorted by component category (C, D, LED, R, U, etc.) then by component number.
   - Natural number sorting: R1, R2, R3, R10.
@@ -105,12 +118,11 @@ src/jbom/
     - Capacitors: 100nF, 1uF, 220pF (always trailing F)
     - Inductors: 10uH, 2m2H, 100nH (always trailing H)
 - **Flexible output columns**
-  - Always includes: Reference, Quantity, Description, Value, Footprint, LCSC, Datasheet.
-  - `-m/--manufacturer` adds Manufacturer and MFGPN columns.
-  - `-v/--verbose` adds Match Quality (score) and debug columns.
-  - `-f/--fields` allows custom field selection with I:/C: prefixes.
-  - `--list-fields` shows all available fields.
-  - Notes column describes BOM generation warnings or issues.
+  - Default columns determined by fabricator preset (or standard fields if none specified).
+  - `-v/--verbose` adds Match_Quality and Priority columns.
+  - `-f/--fields` allows custom field selection or preset override with I:/C: prefixes.
+  - `--list-fields` shows all available fields from the inventory and schematic.
+  - Notes column describes unmatched components and tolerance warnings.
 
 ## Hierarchical Schematic Support
 
@@ -137,7 +149,7 @@ Core-ESP32/
   └── LevelShifters.kicad_sch         # Sub-sheet 2
 
 # Results in:
-% python3 jbom.py  Core-ESP32  -i SPCoast-INVENTORY.numbers
+% jbom bom Core-ESP32  --inventory SPCoast-INVENTORY.numbers
 WARNING: Using autosave file _autosave-Core-ESP32.kicad_sch as it contains the hierarchical root (may be incomplete).
 Hierarchical schematic set:
     0 Components      _autosave-Core-ESP32.kicad_sch (Warning: autosave file may be incomplete!)
@@ -206,21 +218,25 @@ BOM:
     *  Through-hole indicators: dip, through-hole, axial, radial
   4) Conservative default: Includes components when uncertain (better to include than exclude)
 
-## BOMGenerator Class (`generators/bom.py`)
+## BOMGenerator Class (`services/bom_generator.py`)
 
 The `BOMGenerator` class is responsible for generating bill of materials from parsed components and inventory matches.
 
 ### Initialization
 
 ```python
-from jbom.generators.bom import BOMGenerator
-from jbom.processors.inventory_matcher import InventoryMatcher
+from jbom.services.bom_generator import BOMGenerator
+from jbom.services.inventory_matcher import InventoryMatcher
+from jbom.services.schematic_reader import SchematicReader
 from pathlib import Path
 
-# Create BOM generator with components and matcher
-components = [...] # from SchematicLoader
+# Load components from schematic
+reader = SchematicReader()
+components = reader.load_components(Path('project.kicad_sch'))
+
+# Create matcher and generator
 matcher = InventoryMatcher(Path('inventory.xlsx'))
-generator = BOMGenerator(components, matcher)
+generator = BOMGenerator("value_footprint")  # BOM always aggregates by value+package
 ```
 
 ### Core Methods
@@ -338,7 +354,7 @@ All field names are normalized internally to canonical snake_case, allowing flex
 Use `--list-fields` to see all available fields from your inventory and schematic:
 
 ```bash
-python3 jbom.py AltmillSwitches -i SPCoast-INVENTORY.csv --list-fields
+jbom bom AltmillSwitches --inventory SPCoast-INVENTORY.csv --list-fields
 ```
 
 This shows:
@@ -360,37 +376,24 @@ When inventory and component properties have the same name, use prefixes:
 
 ```bash
 # Basic custom fields
-python3 jbom.py project -i SPCoast-INVENTORY.csv -f "Reference,Value,LCSC,Manufacturer"
+jbom bom project --inventory SPCoast-INVENTORY.csv -f "Reference,Value,LCSC,Manufacturer"
 
 # Using prefixes to disambiguate
-python3 jbom.py project -i SPCoast-INVENTORY.csv -f "Reference,Value,I:Package,I:Category,C:Tolerance"
+jbom bom project --inventory SPCoast-INVENTORY.csv -f "Reference,Value,I:Package,I:Category,C:Tolerance"
 
 # Ambiguous fields auto-expand to separate columns
-python3 jbom.py project -i SPCoast-INVENTORY.csv -f "Reference,Value,Tolerance"
+jbom bom project --inventory SPCoast-INVENTORY.csv -f "Reference,Value,Tolerance"
 # Creates: Reference, Value, I:Tolerance, C:Tolerance
 ```
 
-## Debug Functionality
+## Diagnostic Output
 
-The `-d/--debug` option provides comprehensive matching information:
+Unmatched components emit diagnostic warnings to the console. Use `-v/--verbose` to add Match_Quality and Priority columns to the BOM CSV.
 
-### Debug Information Includes
+### Console Warnings
 
-1. **Component Analysis**:
-   - Component reference and library ID
-   - Detected component type (RES, CAP, IND, etc.)
-   - Package extraction from footprint
-   - Component value
+When components cannot be matched to inventory, jBOM prints a warning showing the detected type, package, and the specific issue (value mismatch, package not stocked, etc.):
 
-2. **Issue Diagnosis**:
-   - Specific reasons why components cannot be matched to inventory
-   - Package mismatches with available alternatives
-   - Missing component types or values in inventory
-   - Component type detection issues
-
-### Debug Output Example
-
-**Console Warnings:**
 ```
 Warnings:
 ============================================================
@@ -401,66 +404,52 @@ Warnings:
     Issue: No leds with value 'G' in inventory
 ```
 
-**BOM File Debug Notes:**
+### BOM Notes Column
+
+Unmatched component details also appear in the Notes column of the BOM CSV:
+
 ```
 No inventory match found Component: C3 (Core-ESP32-eagle-import:CAP0603) is a 10uF 0603 Capacitor; Issue: Value '10uF' available in 1206 packages, but not 0603
 ```
 
-# Component Classification Engine
+# Component Classification
 
-jBOM uses a configuration-driven rule engine to determine the component type (RES, CAP, LED, etc.) from KiCad data. This allows users to customize classification logic without modifying source code.
+Component type (RES, CAP, LED, etc.) is determined by `get_component_type()` in `src/jbom/common/component_classification.py`.
 
 ## Classification Logic
 
-The `ClassificationEngine` (`src/jbom/processors/classifier.py`) evaluates a list of classifiers defined in the configuration.
+The `HeuristicComponentClassifier` uses pattern matching against the component's `lib_id` and `footprint`:
 
-1.  **Iterate**: The engine iterates through the configured `component_classifiers` list in order.
-2.  **Evaluate**: For each classifier, it checks its list of `rules`.
-3.  **Match**: If **ANY** rule in a classifier matches the component, that type is assigned (Boolean OR logic).
-4.  **First Win**: The first classifier to match determines the component type.
+1. **Direct mapping lookup**: Checks the component name against `COMPONENT_TYPE_MAPPING` in `constants.py`
+2. **Footprint-based IC detection**: Recognizes IC footprints (SOIC, QFN, BGA, DIP, etc.)
+3. **Pattern-based detection**: Matches prefixes and keywords (LED, LM\*, 74\*, R, C, L, D, Q, U, J, SW)
+4. **First match wins**: Returns the first matching type, or `None` if unrecognized
 
-## Rule Format
+## Public API
 
-Rules are defined as simple strings in `config.yaml` with the format:
-`"<field> <operator> <value>"`
+```python
+from jbom.common.component_classification import get_component_type
 
-### Fields
-- `lib_id`: The component's library identifier (e.g., "Device:R", "MyLib:WS2812").
-- `footprint`: The component's footprint name (e.g., "R_0603", "LED_5050").
+comp_type = get_component_type(lib_id="Device:R", footprint="R_0603")
+# Returns: "RES"
 
-### Operators
-All matching is **case-insensitive**.
-
-| Operator | Description | Example |
-| :--- | :--- | :--- |
-| `contains` | Field contains substring | `"lib_id contains resistor"` |
-| `startswith` | Field starts with prefix | `"lib_id startswith device:"` |
-| `endswith` | Field ends with suffix | `"lib_id endswith :r"` |
-| `eq` | Field exactly equals value | `"lib_id eq device:r"` |
-| `matches` | Field matches Regex | `"lib_id matches :q.*$"` |
-
-## Configuration Example
-
-```yaml
-component_classifiers:
-  - type: "RES"
-    rules:
-      - "lib_id contains resistor"
-      - "footprint contains res"
-
-  - type: "LED"
-    rules:
-      - "lib_id contains led"
-      - "lib_id contains ws2812"
+comp_type = get_component_type(lib_id="Device:LED", footprint="LED_0603")
+# Returns: "LED"
 ```
 
-# Component Type Detection in jBOM
+The classifier follows the `ComponentClassifier` Protocol, so a custom classifier can be injected for specialized library naming conventions:
 
-The script determines `comp_type` using the `get_component_type()` method in `src/jbom/processors/component_types.py`.
+```python
+from jbom.common.component_classification import get_component_type, ComponentClassifier
 
-This method now delegates entirely to the `ClassificationEngine`, which uses the rules defined in `defaults.yaml` (and any user overrides).
+class MyClassifier:
+    def classify(self, lib_id: str, footprint: str = "") -> str | None:
+        if "mylib" in lib_id.lower():
+            return "IC"
+        return None  # fall through to default
 
-This approach allows the system to work with both standard KiCad libraries and custom library naming conventions, making it quite flexible for different PCB design workflows.
+comp_type = get_component_type("MyLib:Widget", classifier=MyClassifier())
+```
 
 ## PCB Module Architecture
 
@@ -552,299 +541,68 @@ The tool supports multiple inventory file formats through a unified architecture
 - Consistent field name cleaning and normalization
 - Identical component matching logic regardless of input format
 
-## Creating Command Plugins
+## Adding a New CLI Command
 
-jBOM uses a plugin architecture for CLI commands that enables automatic discovery and registration. New commands can be added without modifying `main.py`.
+New commands follow a simple registration pattern. There is no plugin registry — commands are explicit modules imported directly by `main.py`.
 
-### Plugin Architecture Overview
-
-**Key Components:**
-- `Command` base class: Abstract base for all commands
-- `CommandMetadata`: Declarative metadata (name, help text, category)
-- `CommandRegistry`: Central registry with auto-registration
-- `discover_commands()`: Package scanning for automatic plugin loading
-
-**Auto-Registration**: Commands register themselves via `__init_subclass__()` hook when the class is defined.
-
-### Creating a New Command Plugin
-
-**Step 1: Create the command file**
-
-Create a new file in `src/jbom/cli/commands/builtin/` (e.g., `validate.py`):
+**Step 1: Create the command file** in `src/jbom/cli/` (e.g., `validate.py`):
 
 ```python
-"""Validate command implementation."""
-from __future__ import annotations
+"""Validate command — thin CLI wrapper."""
 import argparse
 import sys
-
-from jbom.cli.commands.base import Command, CommandMetadata
-
-
-class ValidateCommand(Command):
-    """Validate KiCad schematic against design rules."""
-
-    # Metadata for auto-registration and CLI help
-    metadata = CommandMetadata(
-        name="validate",
-        help_text="Validate KiCad schematic against design rules",
-        category="utility",
-    )
-
-    def setup_parser(self, parser: argparse.ArgumentParser) -> None:
-        """Configure command-specific arguments.
-
-        Args:
-            parser: Subparser for this command
-        """
-        # Use helper methods from base class
-        self.add_project_argument(parser)
-
-        # Add command-specific arguments
-        parser.add_argument(
-            "-r", "--rules",
-            metavar="FILE",
-            help="Path to rules file (default: use built-in rules)",
-        )
-        parser.add_argument(
-            "--strict",
-            action="store_true",
-            help="Enable strict validation mode",
-        )
-
-    def execute(self, args: argparse.Namespace) -> int:
-        """Execute the validation command.
-
-        Args:
-            args: Parsed command-line arguments
-
-        Returns:
-            Exit code (0 for success, non-zero for error)
-        """
-        # Implementation here
-        print(f"Validating project: {args.project}")
-
-        # Use jBOM loaders and utilities
-        from jbom.loaders.schematic import SchematicLoader
-        from pathlib import Path
-
-        loader = SchematicLoader(Path(args.project))
-        components = loader.load()
-
-        # Validation logic...
-        issues = []
-        for comp in components:
-            # Check rules...
-            pass
-
-        if issues:
-            for issue in issues:
-                print(f"Error: {issue}", file=sys.stderr)
-            return 1
-
-        print(f"Validation passed: {len(components)} components checked")
-        return 0
-```
-
-**Step 2: That's it!**
-
-The command is automatically discovered and registered when jBOM starts. No changes to `main.py` needed.
-
-### Command Base Class API
-
-The `Command` base class provides helper methods:
-
-**Argument Helpers:**
-```python
-# Add optional project argument (defaults to current directory)
-self.add_project_argument(parser, arg_name="project", help_text=None)
-
-# Add standard output arguments (-o/--output)
-self.add_common_output_args(parser)
-
-# Add fabricator field arguments (-f/--fields with dynamic flags)
-self.add_fabricator_field_args(parser, field_help="...")
-```
-
-**Output Handling:**
-```python
-# Determine output mode from -o argument
-output_mode, output_path = self.determine_output_mode(args.output)
-
-# Output modes: OutputMode.FILE, OutputMode.CONSOLE, OutputMode.STDOUT
-if output_mode == OutputMode.CONSOLE:
-    # Print to console
-    pass
-elif output_mode == OutputMode.STDOUT:
-    # Write to stdout (for piping)
-    pass
-else:
-    # Write to file
-    pass
-```
-
-**Error Handling:**
-```python
-# The handle_errors() wrapper catches common exceptions automatically
-# Just raise exceptions in execute() and they'll be handled properly
-raise FileNotFoundError(f"Project not found: {path}")
-raise ValueError(f"Invalid configuration: {msg}")
-```
-
-### CommandMetadata Fields
-
-```python
-@dataclass
-class CommandMetadata:
-    name: str          # CLI command name (e.g., "validate")
-    help_text: str     # Short description for --help
-    category: str      # Grouping (e.g., "core", "utility", "analysis")
-```
-
-**Categories:**
-- `"core"`: Essential commands (bom, pos, inventory)
-- `"utility"`: Helper commands (search, annotate, validate)
-- `"analysis"`: Analysis commands (inventory-search)
-- `"export"`: Export/conversion commands
-
-### Common Patterns
-
-**Pattern 1: Load schematic and inventory**
-```python
-from jbom.loaders.schematic import SchematicLoader
-from jbom.loaders.inventory import InventoryLoader
 from pathlib import Path
 
-schematic_loader = SchematicLoader(Path(args.project))
-components = schematic_loader.load()
+from jbom.services.schematic_reader import SchematicReader
 
-inventory_loader = InventoryLoader(Path(args.inventory))
-inventory_items, field_names = inventory_loader.load()
+
+def register_command(subparsers) -> None:
+    """Register validate command with argument parser."""
+    parser = subparsers.add_parser(
+        "validate",
+        help="Validate KiCad schematic against design rules",
+    )
+    parser.add_argument(
+        "input",
+        nargs="?",
+        default=".",
+        help="Path to schematic or project directory (default: current directory)",
+    )
+    parser.add_argument("-o", "--output", help="Output file path")
+    parser.set_defaults(handler=handle_validate)
+
+
+def handle_validate(args: argparse.Namespace) -> int:
+    """Handle validate command."""
+    try:
+        reader = SchematicReader()
+        components = reader.load_components(Path(args.input))
+        # ... validation logic ...
+        print(f"Validated {len(components)} components", file=sys.stderr)
+        return 0
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
 ```
 
-**Pattern 2: Use the high-level API**
+**Step 2: Register it in `src/jbom/cli/main.py`:**
+
 ```python
-from jbom.api import generate_bom, BOMOptions
+from jbom.cli import bom, inventory, pos, parts, search, inventory_search, validate
 
-opts = BOMOptions(
-    verbose=args.verbose,
-    debug=args.debug,
-    smd_only=args.smd_only,
-)
-result = generate_bom(input=args.project, inventory=args.inventory, options=opts)
+# In create_parser():
+validate.register_command(subparsers)
 ```
 
-**Pattern 3: Output handling with success messages**
-```python
-import sys
-
-# Determine output mode
-output_mode, output_path = self.determine_output_mode(args.output)
-
-if output_mode == OutputMode.STDOUT:
-    # Write data to stdout
-    write_data_to_stdout(data)
-    # Success message to stderr (doesn't interfere with piping)
-    print(f"Successfully processed {count} items", file=sys.stderr)
-else:
-    # Write to file
-    write_data_to_file(data, output_path)
-    print(f"Output written to: {output_path}", file=sys.stderr)
-```
-
-### Testing Your Command
-
-**Unit tests** in `tests/unit/test_cli_YOURCOMMAND.py`:
-```python
-import unittest
-from unittest.mock import patch
-import argparse
-
-from jbom.cli.commands.builtin.validate import ValidateCommand
-
-class TestValidateCommand(unittest.TestCase):
-    def setUp(self):
-        self.command = ValidateCommand()
-        self.parser = argparse.ArgumentParser()
-        self.command.setup_parser(self.parser)
-
-    def test_setup_parser(self):
-        args = self.parser.parse_args(["project/"])
-        self.assertEqual(args.project, "project/")
-
-    @patch("jbom.cli.commands.builtin.validate.SchematicLoader")
-    def test_execute_success(self, mock_loader):
-        # Mock loader behavior
-        mock_loader.return_value.load.return_value = []
-
-        args = self.parser.parse_args(["project/"])
-        result = self.command.execute(args)
-        self.assertEqual(result, 0)
-```
-
-**Functional tests** in `tests/functional/test_functional_validate.py`:
-```python
-import unittest
-from jbom.cli.main import main
-
-class TestValidateCommandFunctional(unittest.TestCase):
-    def test_validate_help(self):
-        with self.assertRaises(SystemExit) as cm:
-            main(["validate", "--help"])
-        self.assertEqual(cm.exception.code, 0)
-
-    def test_validate_with_project(self):
-        result = main(["validate", "tests/fixtures/simple_project"])
-        self.assertEqual(result, 0)
-```
-
-### Command Discovery Process
-
-1. **`main.py` calls**: `discover_commands("jbom.cli.commands.builtin")`
-2. **Package scanning**: Imports all `.py` files in `builtin/` directory
-3. **Class definition**: When `ValidateCommand` is defined, `__init_subclass__()` runs
-4. **Auto-registration**: `CommandRegistry.register(ValidateCommand)` is called automatically
-5. **CLI setup**: `main.py` iterates registered commands to create subparsers
-
-**Debug registration**:
-```python
-from jbom.cli.commands import CommandRegistry
-
-print(CommandRegistry.list_commands())
-# Output: ['annotate', 'bom', 'inventory', 'inventory-search', 'pos', 'search', 'validate']
-
-cmd_class = CommandRegistry.get('validate')
-print(cmd_class.metadata.help_text)
-# Output: 'Validate KiCad schematic against design rules'
-```
-
-### Best Practices
-
-1. **Use descriptive names**: Command name should be a verb (validate, export, analyze)
-2. **Provide good help text**: Users rely on `--help` for guidance
-3. **Follow output conventions**: Success messages to stderr, data to stdout for piping
-4. **Reuse base class helpers**: Don't duplicate argument handling
-5. **Write tests**: Both unit and functional tests
-6. **Handle errors gracefully**: Let base class `handle_errors()` catch common exceptions
-7. **Document your command**: Add docstring and examples in epilog
-
-### Example: Complete Command with All Features
-
-See `src/jbom/cli/commands/builtin/bom.py` for a comprehensive example showing:
-- Complex argument parsing
-- Fabricator flag handling
-- Multiple output modes
-- Error handling
-- Success messages
-- Verbose and debug modes
+That's it. Look at any existing command module (e.g., `cli/bom.py`) for a complete example of argument handling, fabricator flags, and output modes.
 
 ## Extension Points
 
 ### Adding New File Formats
-1. Add optional import with try/except block
-2. Add file extension to detection logic in `_load_inventory()`
-3. Create new `_load_FORMAT_inventory()` method
-4. Call `_process_inventory_data()` with normalized data
+1. Add optional import with try/except in `services/inventory_reader.py`
+2. Add file extension to detection logic
+3. Implement reader returning a list of normalized row dicts
+4. Add test coverage in `tests/`
 
 ### Adding New Package Types
 **Fully Automatic**: The footprint matching system now uses automatic dash removal, eliminating the need for manual mappings. The architecture is maximally simplified:
@@ -878,95 +636,14 @@ SMD_PACKAGES = [..., 'wlcsp']
 - Dash variants handled automatically in matching logic
 
 ### Customizing Component Matching
-- Modify `_get_component_type()` for new component detection rules
-- Extend `COMPONENT_TYPE_MAPPING` for new type aliases
-- Add category-specific fields in `CATEGORY_FIELDS`
-- Implement custom scoring in `_match_properties()`
+- Extend `COMPONENT_TYPE_MAPPING` in `common/constants.py` for new type aliases
+- Add category-specific fields in `CATEGORY_FIELDS` in `common/constants.py`
+- Provide a custom `ComponentClassifier` via the `classifier=` parameter (see Component Classification section above)
 
 ### Output Customization
-- Add new fields to `get_available_fields()`
-- Extend `_get_field_value()` for custom field processing
-- Modify `write_bom_csv()` for different output formats
-
-## Project Structure
-
-```
-src/jbom/
-  ├── api.py               # High-level API (generate_bom, BOMOptions)
-  ├── __init__.py          # Public re-exports
-  ├── cli/                 # CLI interface with plugin architecture
-  │   ├── main.py          # Argparse dispatcher with plugin discovery
-  │   ├── commands/        # Command plugin infrastructure
-  │   │   ├── __init__.py  # CommandRegistry and discover_commands()
-  │   │   ├── base.py      # Base Command class, CommandMetadata, OutputMode
-  │   │   └── builtin/     # Built-in command plugins
-  │   │       ├── bom.py         # BOM command plugin
-  │   │       ├── pos.py         # POS command plugin
-  │   │       ├── inventory.py   # Inventory command plugin
-  │   │       ├── annotate.py    # Annotate command plugin
-  │   │       ├── search.py      # Search command plugin
-  │   │       └── inventory_search.py  # Inventory search plugin
-  │   └── formatting.py    # Console output
-  ├── common/              # Shared utilities and data types
-  │   ├── types.py         # Data classes (Component, InventoryItem, BOMEntry)
-  │   ├── constants.py     # Enums (ComponentType, ScoreWeights)
-  │   ├── fields.py        # Field normalization
-  │   ├── fields_system.py # Field discovery
-  │   ├── values.py        # Value parsing (R/C/L)
-  │   ├── packages.py      # Package detection
-  │   ├── utils.py         # File utilities
-  │   └── ... (output.py, options.py, generator.py)
-  ├── loaders/             # Input file parsing
-  │   ├── schematic.py     # SchematicLoader (.kicad_sch)
-  │   ├── pcb.py           # PCBLoader (.kicad_pcb)
-  │   ├── pcb_model.py     # Board/component models
-  │   └── inventory.py     # InventoryLoader (CSV/Excel/Numbers)
-  ├── processors/          # Business logic
-  │   ├── component_types.py    # Type detection
-  │   └── inventory_matcher.py  # Component matching
-  └── generators/          # Output file creation
-      ├── bom.py           # BOMGenerator (CSV output)
-      └── pos.py           # POSGenerator (placement files)
-```
-
-See [docs/README.arch.md](README.arch.md) for details.
-
-### Import paths
-- High-level API: `from jbom.api import generate_bom, BOMOptions`
-- Loaders: `from jbom.loaders.schematic import SchematicLoader`
-- Loaders: `from jbom.loaders.pcb import PCBLoader`
-- Loaders: `from jbom.loaders.inventory import InventoryLoader`
-- Processors: `from jbom.processors.inventory_matcher import InventoryMatcher`
-- Generators: `from jbom.generators.bom import BOMGenerator`
-- Generators: `from jbom.generators.pos import POSGenerator`
-- Shared helpers: `from jbom.common.values import parse_res_to_ohms, farad_to_eia`
-
-### Main Files
-
-**jbom.py** (~2700 lines):
-- KiCad S-expression parser (`KiCadParser`)
-- Inventory loader supporting CSV, Excel, Numbers (`InventoryMatcher`)
-- Component matching engine with intelligent scoring (`InventoryMatcher.find_matches`)
-- BOM generation and output formatting (`BOMGenerator`)
-- CLI entrypoint with argument parsing and output modes
-
-**test_jbom.py** (~2200 lines, 74 tests):
-- Unit tests across 14 test classes
-- Coverage of parsing, matching, output formatting, and error handling
-- Integration tests with real inventory files
-
-**kicad_jbom_plugin.py** (~70 lines):
-- KiCad Eeschema plugin wrapper
-- Translates KiCad plugin interface to library API
-- Handles file I/O and error reporting for plugin context
-
-**Documentation**:
-- [README.md](README.md): Entry point with installation and quick start
-- [README.man1.md](README.man1.md): Complete CLI reference
-- [README.man3.md](README.man3.md): Python library API reference
-- [README.man4.md](README.man4.md): KiCad plugin setup and integration guide
-- [README.man5.md](README.man5.md): Inventory file format
-- [README.developer.md](README.developer.md): This file - technical deep dive and extension points
+- Define fabricator column presets in `config/fabricators.py`
+- Add new field presets to `FIELD_PRESETS` in `common/fields.py`
+- Extend `services/bom_generator.py` for custom aggregation strategies
 
 ## Automated Releases with Semantic Versioning
 

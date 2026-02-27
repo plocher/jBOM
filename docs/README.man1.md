@@ -1,319 +1,366 @@
-# jbom(1) — jBOM CLI (BOM and POS)
+# jbom(1) — jBOM CLI Reference
 
 ## NAME
 
-jbom — generate Bill of Materials (BOM) and Component Placement (CPL/POS)
+jbom — generate Bill of Materials, Placement Files, and Parts Lists from KiCad projects
 
 ## SYNOPSIS
 
 ```
-jbom bom [PROJECT] -i INVENTORY [-o OUTPUT] [BOM OPTIONS]
+jbom [-q] [--version]
+jbom bom [PROJECT] [--inventory FILE ...] [-o OUTPUT] [BOM OPTIONS]
 jbom pos [PROJECT] [-o OUTPUT] [POS OPTIONS]
 jbom inventory [PROJECT] [-o OUTPUT] [INVENTORY OPTIONS]
+jbom parts [PROJECT] [-o OUTPUT] [PARTS OPTIONS]
 jbom search QUERY [SEARCH OPTIONS]
-jbom annotate [PROJECT] -i INVENTORY [ANNOTATE OPTIONS]
+jbom inventory-search INVENTORY_FILE [OPTIONS]
 ```
 
 ## DESCRIPTION
 
-jBOM provides five subcommands:
-- `bom` — generate a BOM from KiCad schematics by matching components against an inventory file
-- `pos` — generate component placement (CPL/POS) from KiCad PCB files for manufacturing
-- `inventory` — generate an initial inventory file from KiCad schematic components
-- `search` — search for parts from external distributors (e.g., Mouser)
-- `annotate` — back-annotate inventory data (Value, Footprint, LCSC) to KiCad schematics
+jBOM (version 7) provides six subcommands:
 
-The BOM flow keeps designs supplier-neutral by matching at generation time rather than hardcoding part numbers in schematics.
+- `bom` — generate a procurement BOM from KiCad schematics matched against an inventory file
+- `pos` — generate component placement files (CPL/POS) from KiCad PCB files
+- `inventory` — generate an initial inventory template from schematic components
+- `parts` — generate an unaggregated parts list (one row per component) from schematics
+- `search` — search external distributor catalogs (e.g. Mouser) by keyword or part number
+- `inventory-search` — bulk-search distributor catalogs to find part numbers for existing inventory items
 
-## BOM ARGUMENTS
+The `annotate` command (back-annotate schematic from inventory) is available in `legacy/` and is planned for v8.x.
 
-**PROJECT** (optional, defaults to current directory)
-: KiCad project directory or a specific .kicad_sch file. If a directory is given, jBOM auto-detects the root schematic and processes hierarchical sheets. If omitted, uses the current directory.
+The BOM workflow keeps designs supplier-neutral: components carry generic values in the schematic; an inventory file maps those values to specific supplier part numbers at generation time.
 
-**-i, --inventory FILE**
-: Inventory file (required). Supported: .csv, .xlsx, .xls, .numbers.
-: Can be specified multiple times to load from multiple sources (e.g., `-i local.csv -i jlc_export.xlsx`).
+## GLOBAL OPTIONS
 
-## BOM OPTIONS
+**-q, --quiet**
+: Suppress informational guidance messages (diagnostics). Errors are still emitted.
 
-**--jlc**
-Imply `+jlc` field preset (prepends `+jlc` to `-f` if provided, or uses it by default when `-f` is omitted).
+**--version**
+: Print jBOM version and exit.
+
+## BOM COMMAND
+
+```
+jbom bom [PROJECT] [--inventory FILE ...] [-o OUTPUT] [OPTIONS]
+```
+
+Generates a Bill of Materials aggregated by value+package for procurement. Matches schematic components against an inventory file to produce fabrication-ready output.
+
+**PROJECT** (optional, default: current directory)
+: Path to .kicad_sch file, project directory, or base name. Hierarchical schematics are processed automatically when a project directory is given.
+
+**--inventory FILE**
+: Inventory file for BOM matching. Supported: .csv, .xlsx, .xls, .numbers. May be repeated to load from multiple sources: `--inventory project.csv --inventory jlc_export.xlsx`
 
 **-o, --output FILE**
-Output CSV file path. If omitted, generates `<PROJECT>_bom.csv` in the project directory. Special values: `-`, `console`, `stdout` for terminal output.
-
-**--outdir DIR**
-Directory for output files when `-o` is not specified. Useful for redirecting BOMs to a separate folder.
-
-**-v, --verbose**
-Include Match_Quality and Priority columns. Shows detailed scoring information.
-
-**-d, --debug**
-Emit detailed matching diagnostics to stderr. Helpful for troubleshooting missing or mismatched components.
-
-**-f, --fields FIELDS**
-Specify output columns. Use either:
-- Preset name with `+` prefix: `+standard`, `+jlc`, `+minimal`, or `+all`
-- Comma-separated field list: `Reference,Quantity,Value,LCSC,I:Tolerance`
-- Mix both: `+jlc,CustomField,I:Tolerance` expands jlc preset then adds custom fields
-
-Default (if omitted): standard preset. Use `--list-fields` to see available fields.
-
-**--multi-format FORMATS**
-Emit multiple BOM formats in one run. Pass a comma-separated list (e.g., `jlc,standard`). Output files are named `<project>_bom.FORMAT.csv`. When used with `-f`, the same field list applies to all formats.
-
-**--list-fields**
-Print all available fields (standard BOM, inventory, component properties) and exit. Useful for building custom field lists.
-
-**--smd**
-Emit only SMD (surface mount device) components in the BOM. Filters out through-hole and mixed components.
-
-**--quiet**
-Suppress non-essential console output. Useful for CI pipelines.
-
-**--json-report FILE**
-Write a JSON report to FILE with statistics (entry count, unmatched count, format, etc.).
-
-## POS ARGUMENTS
-
-**PROJECT** (optional, defaults to current directory)
-: KiCad project directory, a specific .kicad_pcb file, or a .kicad_sch file. If a directory is given, jBOM auto-detects the PCB file (prefers files matching the directory name). If a .kicad_sch file is passed, jBOM attempts to use the matching .kicad_pcb file (same base name). If omitted, uses the current directory.
-
-## POS OPTIONS
-
-**--jlc**
-Imply `+jlc` field preset for JLCPCB-compatible placement output. This preset includes: Designator, Mid X, Mid Y, Layer, Rotation columns in the order expected by JLCPCB's assembly service.
+: Output CSV path. Default: `<project>_bom.csv`. Special values: `-`, `stdout`, `console` (formatted table).
 
 **--fabricator NAME**
-: Target fabricator for output format (e.g., `jlc`, `pcbway`). Used to select default field presets and formatting.
+: PCB fabricator for field presets and part number lookup. Choices: `jlc`, `pcbway`, `seeed`, `generic`. Default: `generic`.
 
-**-o, --output FILE**
-: Output CSV path. If omitted, generates `<PROJECT>_pos.csv` in the project directory. File will contain component placement data.
+**--jlc / --pcbway / --seeed / --generic**
+: Shorthand fabricator flags (equivalent to `--fabricator NAME`).
 
 **-f, --fields FIELDS**
-: Column selection for CPL/POS output. Use presets with `+` prefix or a comma-separated list of field names.
-- Presets:
-  - `+kicad_pos`: Reference, X, Y, Rotation, Side, Footprint (KiCad-style format)
-  - `+jlc`: Designator, Mid X, Mid Y, Layer, Rotation (JLCPCB format)
-  - `+minimal`: Reference, X, Y (bare minimum)
-  - `+all`: All available fields from PCB
-- Custom: `Reference,X,Y,Rotation,Side,Footprint` or any combination
-- Fields are case-insensitive and can use various formats
+: Output columns. Use a preset with `+` prefix (`+standard`, `+jlc`, `+minimal`, `+all`, `+generic`, `+default`), a comma-separated field list, or both: `+jlc,CustomField`.
 
-**--units {mm,inch}**
-: Output coordinate units. Default: `mm`. Most pick-and-place machines expect millimeters.
+**--list-fields**
+: List available fields and presets, then exit (no project needed).
 
-**--origin {board,aux}**
-: Coordinate origin reference point.
-- `board`: Use board's lower-left corner (0,0)
-- `aux`: Use auxiliary axis origin if defined in PCB, otherwise falls back to board origin
+**--include-dnp**
+: Include "Do Not Populate" components (excluded by default).
 
-**--smd-only**
-: Include only SMD (surface mount) components in output. Filters out through-hole parts. Uses footprint heuristics to detect component type.
+**--include-excluded**
+: Include components marked "Exclude from BOM" (excluded by default).
 
-**--layer {TOP,BOTTOM}**
-: Filter components by board side. Only include components on specified layer.
-
-**--loader {auto,pcbnew,sexp}**
-: PCB file loading method.
-- `auto`: Try pcbnew Python API first, fall back to S-expression parser (recommended)
-- `pcbnew`: Use KiCad's pcbnew Python API (requires KiCad Python environment)
-- `sexp`: Use built-in S-expression parser (works without KiCad installation)
+**--include-all**
+: Include all components: DNP, excluded from BOM, and virtual symbols.
 
 **-v, --verbose**
-: Enable verbose output and diagnostics in console mode.
+: Include Match_Quality, Priority, and Notes columns in output.
 
-**-d, --debug**
-: Enable debug diagnostics; include detailed loader fallbacks in output.
+## POS COMMAND
 
-## INVENTORY ARGUMENTS
+```
+jbom pos [PROJECT] [-o OUTPUT] [OPTIONS]
+```
 
-**PROJECT** (optional, defaults to current directory)
-: KiCad project directory or a specific .kicad_sch file. If omitted, uses the current directory.
+Generates a component placement file (CPL/POS) from a KiCad PCB for pick-and-place assembly.
 
-## INVENTORY OPTIONS
+**PROJECT** (optional, default: current directory)
+: Path to .kicad_pcb file, project directory, or base name. If a .kicad_sch file is given, jBOM looks for the matching .kicad_pcb.
 
 **-o, --output FILE**
-: Output CSV path. If omitted, generates `<PROJECT>_inventory.csv` in the project directory.
+: Output CSV path. Default: `<project>_pos.csv`. Special values: `-`, `stdout`, `console`.
 
-**--outdir DIR**
-: Directory for output files when `-o` is not specified.
+**--fabricator NAME**
+: Target fabricator for field preset selection. Choices: `jlc`, `pcbway`, `seeed`, `generic`.
 
-### Search Enhancement
+**--jlc / --pcbway / --seeed / --generic**
+: Shorthand fabricator flags.
 
-**--search**
-: Enable automated part searching from distributors during inventory generation. When enabled, jBOM will automatically search for each component and add matching part information to the inventory.
+**-f, --fields FIELDS**
+: Column selection. Use a preset (`+jlc`, `+minimal`, `+standard`, `+all`) or a comma-separated list: `Reference,X,Y,Footprint,Side`.
 
-**--provider {mouser}**
-: Search provider to use (default: mouser). Currently supports Mouser Electronics.
+**--list-fields**
+: List available POS fields and presets, then exit.
 
-**--api-key KEY**
-: API key for search provider (overrides environment variables). Required for search functionality. For Mouser, either set the MOUSER_API_KEY environment variable or provide the key with this option.
+**--smd-only**
+: Include only SMD components. Filters out through-hole parts.
 
-**--limit N**
-: Maximum search results per component (default: 1). Use 'none' for unlimited results. Multiple results are ranked by priority (1=best).
+**--layer {TOP,BOTTOM}**
+: Filter to components on the specified board side only.
 
-**--interactive**
-: Enable interactive candidate selection when multiple results are found. Allows manual review and selection of preferred parts.
+**--units {mm}**
+: Output coordinate units. Currently `mm` only.
 
-## SEARCH ARGUMENTS
+**--origin {board,aux}**
+: Coordinate origin. `board` = board lower-left corner; `aux` = auxiliary axis origin (falls back to board if not defined).
+
+**--include-dnp**
+: Include DNP components in the placement file (excluded by default since they are not assembled).
+
+**-v, --verbose**
+: Enable verbose diagnostic output.
+
+## INVENTORY COMMAND
+
+```
+jbom inventory [PROJECT] [-o OUTPUT] [OPTIONS]
+```
+
+Generates an initial inventory template from schematic components. The output is a CSV with IPN, Category, Value, Package, and other fields partially filled, ready for manual editing or distributor enrichment.
+
+**PROJECT** (optional, default: current directory)
+: Path to .kicad_sch file, project directory, or base name.
+
+**-o, --output FILE**
+: Output path. Default: `part-inventory.csv`. Special values: `console`, `-`.
+
+**--inventory FILE**
+: Existing inventory file for merge operations. May be repeated.
+
+**--filter-matches**
+: When used with `--inventory`, exclude components that already match items in the existing inventory (show only new/unmatched components).
+
+**--force**
+: Overwrite an existing output file without confirmation.
+
+**-v, --verbose**
+: Show loading and processing diagnostics.
+
+## PARTS COMMAND
+
+```
+jbom parts [PROJECT] [-o OUTPUT] [OPTIONS]
+```
+
+Generates an unaggregated parts list — one row per component reference — from schematics. Unlike `bom`, `parts` does not aggregate by value+package and does not require an inventory file. Useful for checking component counts or exporting for use in another tool.
+
+**PROJECT** (optional, default: current directory)
+: Path to .kicad_sch file, project directory, or base name.
+
+**-o, --output FILE**
+: Output path. Default: stdout CSV. Special values: `console`, `-`.
+
+**--inventory FILE**
+: Optional. Enhance the parts list with inventory data.
+
+**--fabricator NAME**
+: Fabricator for field presets. Choices: `jlc`, `pcbway`, `seeed`, `generic`.
+
+**--jlc / --pcbway / --seeed / --generic**
+: Shorthand fabricator flags.
+
+**--include-dnp**
+: Include DNP components (excluded by default).
+
+**--include-excluded**
+: Include BOM-excluded components (excluded by default).
+
+**--include-all**
+: Include all components: DNP, excluded, and virtual symbols.
+
+**-v, --verbose**
+: Verbose output.
+
+## SEARCH COMMAND
+
+```
+jbom search QUERY [OPTIONS]
+```
+
+Searches distributor catalogs for parts matching a keyword or part number.
 
 **QUERY**
-: Search query (keyword, part number, description).
+: Search query (keyword, part number, description). Required.
 
-## SEARCH OPTIONS
+**--provider {mouser}**
+: Search provider to use (default: mouser). Set `MOUSER_API_KEY` environment variable or use `--api-key`.
+
+**--limit N**
+: Maximum results to display (default: 10).
+
+**--api-key KEY**
+: API key, overrides provider-specific environment variables.
+
+**--all**
+: Disable default filters. Shows out-of-stock and obsolete results.
+
+**--no-parametric**
+: Disable smart parametric filtering derived from the query text.
+
+**-o, --output FILE**
+: Output destination. Default: `console` (formatted table). Use `-` for CSV to stdout or a file path.
+
+## INVENTORY-SEARCH COMMAND
+
+```
+jbom inventory-search INVENTORY_FILE [OPTIONS]
+```
+
+Bulk-searches distributor catalogs using items from an existing inventory file to find candidate supplier part numbers. Useful for backfilling missing LCSC/MFGPN fields.
+
+**INVENTORY_FILE**
+: Path to inventory file (.csv, .xlsx, .numbers). Required.
+
+**-o, --output FILE**
+: Write enhanced inventory CSV (original columns plus search candidates) to this file.
+
+**--report FILE**
+: Write analysis report to this file. Default: stdout.
 
 **--provider {mouser}**
 : Search provider to use (default: mouser).
 
 **--limit N**
-: Maximum number of results to return (default: 10).
+: Maximum candidates per inventory item (default: 3).
 
 **--api-key KEY**
-: API Key for the provider (overrides environment variables).
+: API key, overrides provider-specific environment variables.
 
-**--all**
-: Disable all filters (show out of stock/obsolete).
+**--dry-run**
+: Validate input and show which items are searchable without performing API calls.
 
-**--no-parametric**
-: Disable smart parametric filtering (e.g. strict value matching).
-
-## ANNOTATE ARGUMENTS
-
-**PROJECT**
-: KiCad project directory or a specific .kicad_sch file.
-
-## ANNOTATE OPTIONS
-
-**-i, --inventory FILE**
-: Inventory file containing updated component data (required).
-
-**-n, --dry-run**
-: Show what would be updated without modifying files.
+**--categories LIST**
+: Comma-separated list of categories to search (e.g., `RES,CAP,IC`). Filters which inventory items are queried.
 
 ## OUTPUT
 
-**BOM CSV File**
-: Default name `<ProjectName>_bom.csv`. Contains component reference, quantity, and matched supplier info with columns like Reference, Quantity, Value, LCSC, Footprint, Description, etc.
+**BOM CSV**
+: Default name `<ProjectName>_bom.csv`. Aggregated by value+package. Columns depend on `-f` and fabricator preset.
 
-**POS CSV File**
-: Specified by `-o` option. Contains component placement data with columns like Reference, X, Y, Rotation, Side, Footprint (or Designator, Mid X, Mid Y, Layer, Rotation for JLCPCB format). Coordinates are in specified units (mm or inches).
+**POS CSV**
+: Default name `<ProjectName>_pos.csv`. One row per component. Coordinates in mm.
 
-**Console Output**
-: Summary line with schematic statistics, inventory count, and BOM entry count. For POS files, shows component count and layer distribution. Use `-d` to see detailed diagnostics.
+**Inventory CSV**
+: Default name `part-inventory.csv`. Template with IPN, Category, Value, Package, and related columns.
 
-**Exit Code**
-: 0 on success (all components matched or user accepted matches)
-: 2 on warning (one or more components unmatched; BOM written)
-: 1 on error (file not found, invalid option, etc.)
+**Parts CSV**
+: Default: stdout. One row per component reference, not aggregated.
+
+**Exit Codes**
+: 0 — success
+: 1 — error (file not found, invalid option, etc.)
+: 2 — warning (one or more BOM components unmatched; BOM was still written)
 
 ## BOM FIELD PRESETS
 
-Use `-f "+PRESET"`.
+Use `-f "+PRESET"` or shorthand fabricator flags (`--jlc`, etc.) to imply a preset.
 
-**+standard**
-: Reference, Quantity, Description, Value, Footprint, LCSC, Datasheet, SMD, [Match_Quality], [Notes], [Priority]
-: Comprehensive set with all standard BOM fields.
+**+default**
+: Reference, Quantity, Description, Value, Footprint, Manufacturer, MFGPN, Fabricator, Fabricator Part Number, Datasheet, SMD. Alias: `+standard`.
 
 **+jlc**
-: Reference, Quantity, LCSC, Value, Footprint, Description, Datasheet, SMD, [Match_Quality], [Notes], [Priority]
-: Column set optimized for JLCPCB uploads (LCSC part number first).
+: Reference, Quantity, Value, Description, LCSC/Fabricator Part Number, SMD. JLCPCB column order. Enabled by `--jlc`.
+
+**+pcbway**
+: PCBWay-compatible column set. Enabled by `--pcbway`.
+
+**+seeed**
+: Seeed Studio Fusion PCBA column set. Enabled by `--seeed`.
+
+**+generic**
+: Reference, Quantity, Description, Value, Package, Footprint, Manufacturer, Part Number. Enabled by `--generic`.
 
 **+minimal**
-: Reference, Quantity, Value, LCSC
-: Bare minimum: reference, quantity, component value, and LCSC part number only.
+: Reference, Quantity, Value, LCSC. Bare minimum for quick exports.
 
 **+all**
-: Includes every available field from inventory and schematic components (sorted alphabetically).
-: Useful for debugging or exporting complete data for external tools.
+: Every available field from schematic and inventory, sorted alphabetically.
 
 ## EXAMPLES
 
+Generate BOM with JLCPCB columns:
+```
+jbom bom MyProject/ --inventory inventory.csv --jlc
+```
+
 BOM from multiple inventory sources:
 ```
-jbom bom MyProject/ -i local_stock.csv -i "Parts Inventory on JLCPCB.xlsx"
+jbom bom MyProject/ --inventory local.csv --inventory jlc_export.xlsx
 ```
 
-BOM with JLCPCB-optimized fields (using JLC Private Export):
+BOM with custom fields:
 ```
-jbom bom MyProject/ -i "Parts Inventory on JLCPCB.xlsx" --jlc
-```
-
-BOM JLC preset:
-```
-jbom bom MyProject/ -i inventory.csv -f +jlc
+jbom bom MyProject/ --inventory inventory.csv -f "+jlc,CustomField"
 ```
 
-BOM all fields:
+BOM with verbose match scoring:
 ```
-jbom bom MyProject/ -i inventory.csv -f +all
-```
-
-POS (auto-detect from project directory):
-```
-jbom pos MyProject/
+jbom bom MyProject/ --inventory inventory.csv -v
 ```
 
-POS (JLCPCB-style with --jlc flag):
+List available BOM fields:
+```
+jbom bom --list-fields --jlc
+```
+
+POS for JLCPCB (auto-detect PCB in project directory):
 ```
 jbom pos MyProject/ --jlc
 ```
 
-POS (SMD only, top side):
+POS SMD-only, top side only:
 ```
 jbom pos MyProject/ --smd-only --layer TOP
 ```
 
-POS (custom fields and explicit PCB file):
+POS with custom field list:
 ```
-jbom pos MyBoard.kicad_pcb -o MyBoard.csv -f "Reference,X,Y,Footprint,Side"
-```
-
-POS (specific output location):
-```
-jbom pos MyProject/ -o fabrication/placement.csv
+jbom pos MyBoard.kicad_pcb -o placement.csv -f "Reference,X,Y,Footprint,Side"
 ```
 
-Generate inventory:
+Generate inventory template:
 ```
-jbom inventory MyProject/ -o inventory.csv
-```
-
-Generate inventory with automated part search (using MOUSER_API_KEY env var):
-```
-export MOUSER_API_KEY=your_mouser_api_key
-jbom inventory MyProject/ -o enriched_inventory.csv --search --provider mouser --limit 1
+jbom inventory MyProject/ -o my_inventory.csv
 ```
 
-Generate inventory with multiple search results per component (explicit API key):
+Show only components not yet in an existing inventory:
 ```
-jbom inventory MyProject/ --search --limit 3 --api-key YOUR_MOUSER_KEY
-```
-
-Generate inventory with unlimited search results (using env var):
-```
-export MOUSER_API_KEY=your_mouser_api_key
-jbom inventory MyProject/ --search --limit none
+jbom inventory MyProject/ --inventory existing.csv --filter-matches -o new_parts.csv
 ```
 
-Search for parts:
+Parts list (one row per reference, no aggregation):
+```
+jbom parts MyProject/ -o parts.csv
+```
+
+Search Mouser for a part:
 ```
 jbom search "10k 0603 resistor" --limit 5
 ```
 
-Back-annotate schematic from inventory:
+Bulk inventory search — dry run to preview searchable items:
 ```
-jbom annotate MyProject/ -i inventory.csv --dry-run
-```
-
-Verbose BOM scoring:
-```
-jbom bom MyProject/ -i inventory.csv -v
+jbom inventory-search inventory.csv --dry-run
 ```
 
-Debug BOM run:
+Bulk inventory search — write enriched output and report:
 ```
-jbom bom MyProject/ -i inventory.csv -d
+export MOUSER_API_KEY=your_api_key
+jbom inventory-search inventory.csv -o enriched.csv --report report.txt
 ```
 
 ## FIELDS
@@ -321,7 +368,7 @@ jbom bom MyProject/ -i inventory.csv -d
 Use `--list-fields` to see the complete list. Common fields include:
 
 **Standard BOM fields**
-: Reference, Quantity, Description, Value, Footprint, LCSC, Datasheet, SMD, Priority, Match_Quality
+: Reference, Quantity, Description, Value, Footprint, LCSC, Datasheet, SMD, Priority, Match_Quality, Fabricator, Fabricator_Part_Number
 
 **Inventory fields** (prefix with `I:` to disambiguate from component properties)
 : Category, Package, Manufacturer, MFGPN, Tolerance, V, A, W, mcd, Wavelength, Angle, Frequency, Stability, Load, Family, Type, Pitch, Form
@@ -344,9 +391,9 @@ All formats are normalized internally. CSV headers in output always use Title Ca
 
 Example (all equivalent):
 ```bash
-python jbom.py project -i inv.csv -f "Reference,Match Quality,I:PACKAGE"
-python jbom.py project -i inv.csv -f "reference,match_quality,i:package"
-python jbom.py project -i inv.csv -f "REFERENCE,MATCH_QUALITY,I:PACKAGE"
+jbom bom project --inventory inv.csv -f "Reference,Match Quality,I:PACKAGE"
+jbom bom project --inventory inv.csv -f "reference,match_quality,i:package"
+jbom bom project --inventory inv.csv -f "REFERENCE,MATCH_QUALITY,I:PACKAGE"
 ```
 
 ## INVENTORY FILE FORMAT
@@ -373,15 +420,18 @@ See [README.man5.md](README.man5.md) for complete column definitions and example
 : `pip install openpyxl numbers-parser`
 
 **Components not matching**
-: Run with `-d` to see detailed diagnostics. Check that inventory Category, Package, and Value fields match component attributes.
+: Run with `-v` to see Match_Quality and Notes columns. Check that inventory Category, Package, and Value fields match component attributes.
 
 **Import errors for Excel/Numbers**
 : Install: `pip install openpyxl` (for .xlsx, .xls) or `pip install numbers-parser` (for .numbers).
 
+**Search commands require API key**
+: Set `MOUSER_API_KEY` environment variable or pass `--api-key KEY`.
+
 ## SEE ALSO
 
 - [**README.md**](../README.md) — Overview and quick start
-- [**README.man3.md**](README.man3.md) — Python library API reference
+- [**README.man3.md**](README.man3.md) — Python library API (planned for v8.x)
 - [**README.man4.md**](README.man4.md) — KiCad Eeschema plugin integration
 - [**README.man5.md**](README.man5.md) — Inventory file format
-- [**README.developer.md**](README.developer.md) — Architecture and matching algorithms
+- [**README.developer.md**](README.developer.md) — Architecture and internals
