@@ -210,13 +210,6 @@ git commit -m 'test(bom): add BDD scenario for multi-source inventory'
 git commit -m 'refactor(services): extract filter logic to component_filters.py'
 ```
 
-Always include the co-author attribution line:
-```bash
-git commit -m 'feat: add foo
-
-Co-Authored-By: Warp <agent@warp.dev>'
-```
-
 ### 5. Push and Create Pull Request
 ```bash
 git push origin feature/your-feature-name
@@ -354,7 +347,7 @@ Authentication uses `~/.pypirc` with API tokens.
 - Check existing issues and documentation
 - Look at test cases for usage examples
 - Review the README files for high-level context
-- Check WARP.md for architectural guidance
+- Check docs/dev/* for architectural guidance
 
 ## Code of Conduct
 
