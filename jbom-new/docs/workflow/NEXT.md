@@ -1,179 +1,112 @@
 # What to Do Next
 
-## Status (as of 2026-02-26)
-**Phase 1**: ✅ Complete (merged to main via PR #57)
-**Phase 2**: ✅ Complete (merged to main via PR #61)
-**Phase 3**: ✅ Complete (PR #63, Issue #62)
-**Phase 4**: ⏳ Ready — Cleanup, Integration & End-to-End Validation
+## Current Status (2026-02-27)
 
-### Phase 1 Deliverables
-- Sophisticated inventory matcher (Issue #48)
-- 122 passing tests (112 unit + 10 integration)
-- Extracted utility modules in `src/jbom/common/`
-- ADR 0001 documenting fabricator-selection design
+jbom-new has reached feature parity with legacy jBOM for core BOM generation:
+- **Phases 1–5** complete and merged to main (PRs #57, #61, #63, #64, #66, #67)
+- All CLI commands working: `bom`, `pos`, `parts`, `inventory`
+- Fabricator profiles (JLC, PCBWay, generic) with field synonyms and tier rules
+- Sophisticated inventory matching with priority ordering
+- Field system with presets, custom field selection, and consistent CSV/console output
+- Validated against 11 real KiCad production projects (see `docs/architecture/workflow-architecture.md`)
+- 243 pytest tests + 192 BDD scenarios passing
 
-### Phase 2 Deliverables
-- FabricatorInventorySelector service (4-stage filter)
-- `field_synonyms` + `tier_rules` schema (Issues #59, #60)
-- Matcher integration with `preference_tier` sorting
-- 229 unit tests + 192 BDD scenarios passing
+**Remaining for feature parity**: Harvest `search` and `inventory-search` commands from legacy jBOM.
 
-### Phase 3 Deliverables
-- Sophisticated matcher wired into BOM generation pipeline (PR #63, Issue #62)
-- `InventoryMatcher.enhance_bom_with_inventory()` uses FabricatorInventorySelector + SophisticatedInventoryMatcher
-- CLI `jbom bom --fabricator` passes through to sophisticated pipeline
-- Bug fix: `"IC" in "GENERIC"` false positive in component classification
-- 231 unit tests + 192 BDD scenarios passing
+**Explicitly out of scope**: The `annotate` command (back-annotation to schematics) is deferred to a future phase.
 
 ---
 
-## Phase 4: Cleanup, Integration & End-to-End Validation
+## Phase 6: Search Command Harvest
 
-**Goal**: Complete the migration to sophisticated matching across all CLI commands, remove dead code, and validate with real KiCad projects.
+**Goal**: Port the Mouser API search and inventory-search capabilities from legacy jBOM into jbom-new's architecture, integrated with the supplier profile system.
 
-**Current state**: `jbom bom` uses the sophisticated pipeline, but `jbom inventory` still uses the old `ComponentInventoryMatcher`. Skipped tests reference non-existent modules. No end-to-end testing with real projects.
+### Legacy Code to Harvest
 
-**Task document**: `docs/workflow/PHASE_4_TASKS.md`
+All source paths are relative to `~/Dropbox/KiCad/jBOM/src/jbom/`:
 
-**Tasks** (all delegatable to sub-agents):
-1. **Task 4.1**: Delete stale skipped test files
-2. **Task 4.2**: Migrate `inventory` CLI to sophisticated matching pipeline
-3. **Task 4.3**: Retire `ComponentInventoryMatcher` (dead code removal)
-4. **Task 4.4**: End-to-end validation with real KiCad projects
-5. **Task 4.5**: Match diagnostics CLI (`--debug` flag on `bom` command)
+- **`search/__init__.py`** — `SearchProvider` ABC and `SearchResult` dataclass (~50 lines, clean abstractions)
+- **`search/mouser.py`** — `MouserProvider` with Mouser keyword API integration (~170 lines)
+- **`search/filter.py`** — `SearchFilter` (parametric filtering) and `SearchSorter` (stock/price ranking) (~100 lines)
+- **`cli/commands/builtin/search.py`** — `search` CLI command (~150 lines)
+- **`cli/commands/builtin/inventory_search.py`** — `inventory-search` CLI command (~590 lines, includes scoring, reporting, CSV export)
+- **`processors/search_result_scorer.py`** — Priority scoring for search results against inventory items
+
+### jbom-new Target Architecture
+
+Active development directory: `~/Dropbox/KiCad/jBOM/jbom-new`
+PYTHONPATH: `~/Dropbox/KiCad/jBOM/jbom-new/src`
+
+**Where new code should go:**
+- `src/jbom/services/search/` — Search provider abstraction, Mouser provider, filtering/scoring
+- `src/jbom/cli/search.py` — `jbom search` CLI command
+- `src/jbom/cli/inventory_search.py` — `jbom inventory-search` CLI command
+- `tests/services/search/` — Unit tests for search services
+- `features/search/` — BDD scenarios for search commands
+
+**Integration points:**
+- `src/jbom/cli/main.py` — Register new subcommands
+- `src/jbom/config/fabricators.py` — Supplier profiles may inform search context (e.g., which distributor to search)
+- `src/jbom/common/types.py` — May need `SearchResult` type or similar
+
+### Deliverables
+
+#### 6.1: Search Provider Infrastructure
+- Port `SearchProvider` ABC and `SearchResult` dataclass to `src/jbom/services/search/`
+- Port `MouserProvider` (Mouser API integration)
+- Port `SearchFilter` and `SearchSorter`
+- Requires `MOUSER_API_KEY` environment variable
+- Unit tests that work WITHOUT an API key (mock the API)
+
+#### 6.2: `jbom search` Command
+- Simple keyword search: `jbom search "10k resistor 0603"`
+- Options: `--provider`, `--limit`, `--api-key`, `--all` (disable filters), `--no-parametric`
+- Console table output with manufacturer, MPN, price, availability
+- BDD scenarios for CLI integration
+
+#### 6.3: `jbom inventory-search` Command
+- Bulk search: `jbom inventory-search SPCoast-INVENTORY.csv`
+- Options: `--output`, `--report`, `--provider`, `--limit`, `--api-key`, `--dry-run`, `--categories`
+- Dry-run mode (validates input, shows what would be searched, no API calls)
+- Scoring/ranking of search results against inventory items
+- Analysis report generation (category breakdown, success rates, failure analysis)
+- Enhanced inventory CSV export with search candidates
+- BDD scenarios including dry-run validation
+
+### Testing Constraints
+
+- **Unit tests**: Must work without API key (use mocks/fixtures for Mouser responses)
+- **Dry-run mode**: Enables integration testing without API calls
+- **API tests**: Gate behind `MOUSER_API_KEY` environment variable (skip if not set)
+- **BDD**: Gherkin scenarios for CLI behavior, not API integration
+- Run `python -m behave --format progress` from `jbom-new/` — all scenarios must pass
+- Run `python -m pytest tests/` — all tests must pass
+
+### Architecture Conventions (follow existing patterns)
+
+- **Type hints required** on all functions
+- **Docstrings required** for public methods
+- **Dataclasses** for structured data
+- **Services** contain business logic; CLI provides thin wrappers
+- **Single responsibility** per service
+- See `src/jbom/cli/bom.py` and `src/jbom/services/bom_generator.py` for the pattern
+
+### Workflow
+
+Follow the A-B-C pattern from `WARP.md`:
+- **A**: Create feature branch from main (e.g., `feature/phase-6-search-harvest`)
+- **B**: Frequent commits with semantic messages, co-author attribution
+- **C**: Create PR with comprehensive description, link deliverables
 
 ---
 
-## Phase 2 Summary (for reference)
-Phase 2 implemented fabricator-aware inventory selection with two independent priority concepts:
-- `item.priority`: user's stock-management ordering (fabricator-agnostic)
-- `preference_tier`: fabricator's catalog/crossref preference (fabricator-specific)
+## Future Phases (not in scope for Phase 6)
 
-### Use Case: Generate BOM for Specific Fabricator
-When generating a BOM for assembly, different fabricators have different supply chain constraints:
-
-**Inventory items declare fabricator affinity** via `item.fabricator` field:
-- `item.fabricator == "JLC"` → consigned/dedicated to JLCPCB
-- `item.fabricator == "PCBWay"` → consigned/dedicated to PCBWay
-- `item.fabricator == ""` → generic, available to any fabricator
-
-**Fabricator configs declare identifier normalization + preference policy** (Issue #59 - schema refactoring):
-- `field_synonyms`: Three-level field name design
-  - **Canonical name**: Internal identifier used in code and tier definitions
-  - **Synonyms**: Variant column names accepted from inventory CSVs
-  - **Display name**: What appears in BOM output column headers
-- `tier_rules`: Explicit, fabricator-defined tier assignment rules (policy-based)
-  - Evaluated *after* field synonym normalization
-  - Designed to remain stable even as catalog creators evolve column names
-
-**Selection mechanics** (four-stage: affinity → normalize → tier → order):
-1. **Fabricator affinity filter**:
-   - Keep: `item.fabricator == target_fabricator` OR `item.fabricator == ""`
-   - Prune: `item.fabricator == other_fabricator`
-
-2. **Field synonym normalization**:
-   - Resolve inventory column-name variants to canonical names using `field_synonyms`
-   - Example: "LCSC Part #" → canonical `fab_pn`
-   - Enables reusable synonym mappings across all fields (not just part numbers)
-
-3. **Tier assignment** (policy-based):
-   - Evaluate fabricator `tier_rules` in ascending tier order (0, 1, 2, ...)
-   - Tier = first rule whose conditions all match
-   - If no rule matches, the item is **not eligible** for that fabricator profile
-
-4. **Final ordering**: `(preference_tier, item.priority, -score)`
-   - Fabricator preference first
-   - User stock management second
-   - Match quality third
-
-**Examples** (schema: `field_synonyms` + `tier_rules`):
-- **JLCPCB**
-  ```yaml
-  field_synonyms:
-    fab_pn:
-      synonyms: ["LCSC", "LCSC Part", "LCSC Part #", "JLC", "JLC Part"]
-      display_name: "LCSC Part Number"
-    supplier_pn:
-      synonyms: ["DPN", "Distributor Part Number", "Mouser Part Number", "DigiKey Part Number"]
-      display_name: "Supplier Part Number"
-    mpn:
-      synonyms: ["MPN", "MFGPN", "Manufacturer Part Number"]
-      display_name: "MPN"
-  tier_rules:
-    0:
-      conditions:
-        - field: "Consigned"
-          operator: "truthy"
-    1:
-      conditions:
-        - field: "Preferred"
-          operator: "truthy"
-        - field: "fab_pn"
-          operator: "exists"
-    2:
-      conditions:
-        - field: "fab_pn"
-          operator: "exists"
-    3:
-      conditions:
-        - field: "supplier_pn"
-          operator: "exists"
-    4:
-      conditions:
-        - field: "mpn"
-          operator: "exists"
-  ```
-
-- **Generic**
-  ```yaml
-  field_synonyms:
-    supplier_pn:
-      synonyms: ["Part Number", "P/N", "Distributor Part Number", "DPN"]
-      display_name: "Part Number"
-    mpn:
-      synonyms: ["MPN", "MFGPN"]
-      display_name: "MPN"
-  tier_rules:
-    0:
-      conditions:
-        - field: "supplier_pn"
-          operator: "exists"
-    1:
-      conditions:
-        - field: "mpn"
-          operator: "exists"
-  ```
-
-This design allows the same inventory to serve multiple fabricators with different:
-- **Supply chain models** (catalog vs crossref vs self-source)
-- **Consignment relationships** (fab-specific vs generic stock)
-- **Part number schemas** (LCSC vs distributor catalogs vs manufacturer data)
-
-## Phase 2 Completed Tasks
-Completed on `feature/issue-59-fabricator-schema-migration`:
-- ✅ Task 2.0: Schema migration (`field_synonyms` + `tier_rules`)
-- ✅ Task 2.1: `FabricatorConfig` parsing + validation
-- ✅ Task 2.2: `FabricatorInventorySelector` service (4-stage filter)
-- ✅ Task 2.4: Matcher updated for `(preference_tier, item.priority, -score)` ordering
-- ⏭ Task 2.3: Integration tests (deferred - covered by unit tests + BDD)
-
-## Next Action: Start Phase 4
-
-**Primary task**: Complete migration + validate with real projects.
-
-**References**:
-- `docs/workflow/PHASE_4_TASKS.md` - Phase 4 task breakdown (sub-agent ready)
-- `docs/workflow/planning/JBOM_NEW_ROADMAP.md` - Overall roadmap
-- `docs/workflow/completed/PHASE_3_TASKS.md` - Phase 3 implementation details
-
-## Phase 1 design note (keep)
-Our tests and discussion clarified an important design nuance:
-- The exact numeric scoring is not inherently valuable; it is a mechanism to achieve good ranking and to eliminate unsuitable matches.
-- Longer term, we may want to evolve matching heuristics toward expressing intent more directly (e.g., "correct type/value/package always beats anything else", and priority is applied as a first-class ordering constraint), instead of relying on opaque point totals.
-- If we do replace the scoring mechanism in the future, preserve the behavioral contracts: filtering correctness + ordering invariants.
+- **Phase 7**: `annotate` command — back-annotate inventory data to KiCad schematics (round-trip workflow)
+- **Phase 8**: Advanced property matching — IPN conflict detection, tolerance/voltage-aware scoring
+- **Match diagnostics** — `--debug` flag showing why components matched (or didn't) specific inventory items
 
 ## SEE ALSO
-- `docs/architecture/adr/0001-fabricator-inventory-selection-vs-matcher.md`
-- `docs/architecture/anti-patterns.md`
-- `docs/workflow/planning/JBOM_NEW_ROADMAP.md` (complete roadmap)
-- `docs/workflow/PHASE_2_TASKS.md` (Phase 2 tactical tasks)
+- `docs/architecture/workflow-architecture.md` — Pipeline architecture, service mapping, real-project validation results
+- `docs/architecture/adr/0001-fabricator-inventory-selection-vs-matcher.md` — ADR on fabricator selection design
+- `docs/architecture/anti-patterns.md` — Patterns to avoid

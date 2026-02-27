@@ -166,23 +166,111 @@ When no inventory file is provided (`jbom bom project.kicad_sch` without `--inve
 
 This produces the same minimal BOM that KiCad itself would generate — useful for review, but insufficient for fabrication.
 
-## Service Mapping
+## Service Mapping (as of 2026-02-27)
 
-| Pipeline Step | Service | Status |
-|---|---|---|
-| Extract.Components | `SchematicReader` | ✅ Implemented |
-| Aggregate | `BOMGenerator` | ✅ Implemented (value+footprint grouping) |
-| Extract.Items | `InventoryReader` | ✅ Implemented |
-| Filter.Items | `FabricatorInventorySelector` | ✅ Implemented (Phase 2) |
-| Match.Components | `SophisticatedInventoryMatcher` | ✅ Implemented (Phase 1) |
-| Resolve.Conflicts | — | ⏳ Phase 3 |
-| Create.BOM | `BOMGenerator` + CLI formatting | ✅ Partially implemented |
+### Core Pipeline Services
+- **Extract.Components** → `SchematicReader` — ✅ Implemented
+- **Aggregate** → `BOMGenerator` — ✅ Implemented (value+footprint grouping, multi-unit dedup)
+- **Extract.Items** → `InventoryReader` — ✅ Implemented (CSV, Excel, Numbers)
+- **Filter.Items** → `FabricatorInventorySelector` — ✅ Implemented (4-stage: affinity → normalize → tier → order)
+- **Match.Components** → `SophisticatedInventoryMatcher` — ✅ Implemented (scoring + priority ordering)
+- **Resolve.Conflicts** → Integrated into `InventoryMatcher.enhance_bom_with_inventory()` — ✅ Implemented
+- **Create.BOM** → `BOMGenerator` + CLI formatting — ✅ Implemented (CSV, console, field presets)
 
-**Phase 3 integration goal**: Wire the implemented services together in the correct pipeline sequence within the CLI's `handle_bom()` function.
+### CLI Commands
+- `jbom bom` — ✅ BOM generation with optional inventory matching and fabricator profiles
+- `jbom pos` — ✅ Placement file generation from PCB data
+- `jbom parts` — ✅ Individual parts list (no aggregation)
+- `jbom inventory` — ✅ Component inventory generation from project
+
+### Supporting Services
+- `ProjectDiscovery` / `ProjectFileResolver` / `ProjectContext` — ✅ Project-centric file resolution
+- `FabricatorConfig` (in `config/fabricators.py`) — ✅ Profile loading, field synonyms, tier rules
+- `PCBReader` — ✅ KiCad PCB file parsing for placement data
+- `POSGenerator` — ✅ Placement file generation
+- `PartsListGenerator` — ✅ Individual parts listing (with multi-unit dedup)
+- `SupplierUrlResolver` — ✅ LCSC/supplier URL generation
+
+### Not Yet Implemented (from legacy jBOM)
+- `search` command — Mouser API keyword search (see `docs/workflow/NEXT.md`)
+- `inventory-search` command — Bulk distributor search against inventory
+- `annotate` command — Back-annotate inventory data to KiCad schematics
+
+## Real-Project Validation (2026-02-27)
+
+Validated jbom-new BOM output against production BOMs from 11 real KiCad projects
+(in `~/Dropbox/KiCad/projects/`). This validation surfaced one bug and confirmed
+that the remaining differences are expected.
+
+### Projects Tested
+AltmillSwitchController, AltmillSwitchRemote, Brakeman-BLUE, Brakeman-RED,
+Core-ESP32, Core-wt32-eth0, cpOD, cpOD-updated, LEDStripDriver,
+Signal-ColorLight-Dual, Signal-ColorLight-Dwarf
+
+### Step 1: No-Inventory BOM Comparison
+Compared `jbom bom -f reference,footprint,quantity,value` output against
+each project's `production/bom.csv` (format: `Designator,Footprint,Quantity,Value,LCSC Part #`).
+
+**Normalization required for comparison:**
+- Strip footprint library prefix (`SPCoast:0603-CAP` → `0603-CAP`)
+- Normalize designator sort within groups (natural sort, not alphabetical)
+- Ignore row ordering differences
+- Ignore LCSC column (not available without inventory)
+
+**Results: 5 exact match, 6 expected differences**
+- ✅ AltmillSwitchRemote, Brakeman-BLUE, Brakeman-RED, Core-ESP32, Core-wt32-eth0
+- AltmillSwitchController: BOARD1 removed from schematic since production; SW3 has `in_bom=False`
+- LEDStripDriver: Uses KiCad standard footprints (`C_0603_1608Metric`) vs production short names (`0603`) — different library conventions, not a jbom bug
+- Signal-ColorLight-Dual/Dwarf: Extra connectors in jbom (through-hole, manually excluded from production BOMs)
+- cpOD/cpOD-updated: Schematics changed since production BOMs (IC values, footprint names, DNP components)
+
+### Bug Found: Multi-Unit Component Deduplication (PR #67)
+Multi-unit components (e.g., LM6132A dual op-amp = 3 symbol instances for units A, B, and power)
+were counted per-unit instead of per-component. IC1 showed as `IC1, IC1, IC1` with quantity 3.
+
+**Root cause**: `BOMGenerator._create_bom_entry()` collected all references without deduplication.
+KiCad creates separate `(symbol ...)` nodes for each unit of a multi-unit component, all sharing
+the same reference designator.
+
+**Fix**: Deduplicate references using `dict.fromkeys()` in both `BOMGenerator` and `PartsListGenerator`.
+
+### Step 2: Inventory LCSC Comparison
+Ran `jbom bom --inventory SPCoast-INVENTORY.csv -f reference,footprint,quantity,value,lcsc`
+and compared LCSC values against production BOMs.
+
+**Results: Zero LCSC mismatches across all 11 projects.**
+- Where both production and jbom have LCSC values, they agree perfectly
+- Several projects gained LCSC values from inventory that weren't in original production BOMs
+- Signal-ColorLight-Dwarf: 3 LEDs with terse schematic values (`R`, `Y`, `G`) don't match
+  inventory entries (`Red`, `Green Emerald`, etc.) — schematic labeling issue, not a jbom bug
+
+### Key Findings
+1. **Production BOMs are point-in-time snapshots** — schematics evolve after production, so exact matching against old BOMs isn't always meaningful
+2. **Footprint naming varies by library** — SPCoast uses short names (`0603-CAP`), KiCad standard uses descriptive names (`C_0603_1608Metric`). jbom correctly outputs what's in the schematic.
+3. **Production BOMs may include manual curation** — some components were hand-added/removed from production BOMs
+4. **LCSC values from inventory match production** — validates that the matcher + inventory pipeline produces correct supply chain data
+
+## Design Notes
+
+### Scoring as a Mechanism, Not a Goal
+The exact numeric matching score is not inherently valuable — it is a mechanism to achieve
+good ranking and eliminate unsuitable matches. Longer-term, matching heuristics may evolve
+toward expressing intent more directly (e.g., "correct type/value/package always beats
+anything else"), instead of relying on opaque point totals.
+
+If the scoring mechanism is replaced in the future, preserve the behavioral contracts:
+filtering correctness + ordering invariants.
+
+### Fabricator Selection: Two Independent Priority Concepts
+- `item.priority`: User's stock-management ordering (fabricator-agnostic)
+- `preference_tier`: Fabricator's catalog/crossref preference (fabricator-specific)
+
+Final ordering is `(preference_tier, item.priority, -match_score)` — fabricator preference
+first, user priority second, match quality third.
 
 ## See Also
 
 - `requirements/0-User-Scenarios.md` — User scenarios defining the pipeline steps
 - `requirements/1-Functional-Scenarios.md` — Functional scenario details
 - `docs/architecture/adr/0001-fabricator-inventory-selection-vs-matcher.md` — ADR on fabricator selection design
-- `docs/workflow/NEXT.md` — Current development status and next steps
+- `docs/workflow/NEXT.md` — Current task queue and next steps
