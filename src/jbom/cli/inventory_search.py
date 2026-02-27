@@ -84,20 +84,22 @@ def handle_inventory_search(args: argparse.Namespace) -> int:
             print("Error: No inventory items found in file", file=sys.stderr)
             return 1
 
-        cache = InMemorySearchCache()
+        # filter_searchable_items is pure logic — no provider or API key needed.
+        searchable = InventorySearchService.filter_searchable_items(
+            items, categories=args.categories
+        )
 
+        if args.dry_run:
+            _print_dry_run_summary(searchable)
+            return 0
+
+        cache = InMemorySearchCache()
         provider = _create_provider(args.provider, api_key=args.api_key, cache=cache)
         service = InventorySearchService(
             provider,
             candidate_limit=args.limit,
             request_delay_seconds=0.2,
         )
-
-        searchable = service.filter_searchable_items(items, categories=args.categories)
-
-        if args.dry_run:
-            _print_dry_run_summary(searchable)
-            return 0
 
         records = service.search(searchable)
 

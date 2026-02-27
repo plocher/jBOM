@@ -90,10 +90,15 @@ class InventorySearchService:
         self._request_delay_seconds = max(0.0, float(request_delay_seconds))
         self._matcher = SophisticatedInventoryMatcher(MatchingOptions())
 
+    @staticmethod
     def filter_searchable_items(
-        self, items: list[InventoryItem], *, categories: str | None
+        items: list[InventoryItem], *, categories: str | None
     ) -> list[InventoryItem]:
-        """Filter to items suitable for catalog search."""
+        """Filter to items suitable for catalog search.
+
+        Pure logic — no provider or network access required.
+        Safe to call without instantiating the service (e.g. dry-run mode).
+        """
 
         default_searchable = {
             "RES",
