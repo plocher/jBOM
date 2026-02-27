@@ -1,6 +1,33 @@
 # CHANGELOG
 
 
+## v6.7.1 (2026-02-27)
+
+### Bug Fixes
+
+* fix: field system cleanup and contract test updates
+
+- Move --list-fields before input resolution in bom.py (no project needed)
+- Replace fragile sys.stdout redirect in _write_csv with proper csv.writer
+- Remove duplicate return statement in _get_field_value
+- Remove dead print_bom_table/print_pos_table and unused BOMData import from formatting.py
+- Update inventory contract test sentinels for renamed IPNs
+
+Validated against real projects:
+- Console and CSV headers match for all fabricators (jlc, pcbway, generic)
+- Field presets (+minimal, +all, +jlc) expand correctly
+- Custom field lists (-f reference,value,lcsc) work correctly
+- fabricator_part_number resolves correctly per fabricator
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`b68339b`](https://github.com/plocher/jBOM/commit/b68339b43b18980d29558f2afc3938314b3f572f))
+
+### Unknown
+
+* Merge pull request #66 from plocher/feature/issue-50-56-field-system-validation
+
+fix: Field system validation and cleanup (closes #50, #56) ([`06f91f8`](https://github.com/plocher/jBOM/commit/06f91f8deed3424e4eadddf36b13762272a08f11))
+
+
 ## v6.7.0 (2026-02-26)
 
 ### Bug Fixes
