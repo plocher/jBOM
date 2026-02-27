@@ -1,6 +1,37 @@
 # CHANGELOG
 
 
+## v6.8.0 (2026-02-27)
+
+### Bug Fixes
+
+* fix: align search CSV headers with house style
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`d97e971`](https://github.com/plocher/jBOM/commit/d97e97195bf708de9b96ba0127b606416e91160b))
+
+### Features
+
+* feat: add jbom inventory-search command
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`67cc913`](https://github.com/plocher/jBOM/commit/67cc91346f7ec1dc07b6e1bd914454b4766f60bb))
+
+* feat: add jbom search command
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`f27815c`](https://github.com/plocher/jBOM/commit/f27815cd3d6a8f81011b29c4bcaba132c8543370))
+
+* feat: add search provider infrastructure
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`7bcaf8e`](https://github.com/plocher/jBOM/commit/7bcaf8e406bf89e96d89cba7181b50809641585c))
+
+### Unknown
+
+* Merge pull request #70 from plocher/feature/phase-6-search-harvest
+
+feat: Phase 6 catalog search + inventory-search ([`f8477b2`](https://github.com/plocher/jBOM/commit/f8477b221ae6ecb2b6b83f5c192d2ac754adbd5a))
+
+* docs:trailing spaces ([`7a57da3`](https://github.com/plocher/jBOM/commit/7a57da33a8cac25a858c8a950cdaf12290d788b3))
+
+
 ## v6.7.2 (2026-02-27)
 
 ### Bug Fixes
