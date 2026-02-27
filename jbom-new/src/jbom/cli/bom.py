@@ -97,6 +97,25 @@ def register_command(subparsers) -> None:
 def handle_bom(args: argparse.Namespace) -> int:
     """Handle BOM command with project-centric input resolution."""
     try:
+        # Determine effective fabricator early (needed for --list-fields)
+        fabricator = args.fabricator
+        if not fabricator:
+            if args.jlc:
+                fabricator = "jlc"
+            elif args.pcbway:
+                fabricator = "pcbway"
+            elif args.seeed:
+                fabricator = "seeed"
+            elif args.generic:
+                fabricator = "generic"
+        if not fabricator:
+            fabricator = "generic"
+
+        # Handle --list-fields before input resolution (no project needed)
+        if args.list_fields:
+            _list_available_fields(fabricator)
+            return 0
+
         # Create options
         options = GeneratorOptions(verbose=args.verbose) if args.verbose else None
 
@@ -172,25 +191,6 @@ def handle_bom(args: argparse.Namespace) -> int:
         else:
             # Load components from single schematic
             components = reader.load_components(schematic_file)
-
-        # Determine effective fabricator (default generic)
-        fabricator = args.fabricator
-        if not fabricator:
-            if args.jlc:
-                fabricator = "jlc"
-            elif args.pcbway:
-                fabricator = "pcbway"
-            elif args.seeed:
-                fabricator = "seeed"
-            elif args.generic:
-                fabricator = "generic"
-        if not fabricator:
-            fabricator = "generic"
-
-        # Handle --list-fields before processing
-        if args.list_fields:
-            _list_available_fields(fabricator)
-            return 0
 
         # Parse field selection
         fabricator_presets = get_fabricator_presets(fabricator)
@@ -433,11 +433,11 @@ def _write_csv(
 ) -> None:
     """Write BOM as CSV to file with dynamic fields."""
     with open(output_path, "w", newline="", encoding="utf-8") as csvfile:
-        # Use the same logic as stdout
-        old_stdout = sys.stdout
-        sys.stdout = csvfile
-        _print_csv(bom_data, selected_fields, headers)
-        sys.stdout = old_stdout
+        writer = csv.writer(csvfile)
+        writer.writerow(headers)
+        for entry in bom_data.entries:
+            row = [_get_field_value(entry, field) for field in selected_fields]
+            writer.writerow(row)
 
 
 def _get_field_value(entry, field: str) -> str:
@@ -475,7 +475,5 @@ def _get_field_value(entry, field: str) -> str:
     if field in field_mapping:
         return field_mapping[field](entry)
 
-    # Fall back to attribute lookup for unknown fields
-    return entry.attributes.get(field, "")
     # Fall back to attribute lookup for unknown fields
     return entry.attributes.get(field, "")
