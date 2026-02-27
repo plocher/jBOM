@@ -199,8 +199,10 @@ def _output_parts(
     Human-first defaults (UX consistency with bom/pos/inventory):
     - output is None or "console" => formatted table to stdout
     - output == "-" => CSV to stdout
-    - output == "stdout" => error (use "-" instead)
     - otherwise => treat as file path
+
+    Note: "stdout" is not a special value. If provided (e.g. `-o stdout`), it is treated
+    as a literal filename.
     """
     if output is None or output == "console":
         _print_console_table(parts_data)
@@ -209,13 +211,6 @@ def _output_parts(
     if output == "-":
         _print_csv(parts_data)
         return 0
-
-    if output == "stdout":
-        print(
-            "Error: -o stdout is no longer supported. Use -o - for CSV to stdout.",
-            file=sys.stderr,
-        )
-        return 1
 
     output_path = Path(output)
     _write_csv(parts_data, output_path)

@@ -40,11 +40,11 @@ Feature: CLI Parts Output Semantics
     Then the command should succeed
     And a file named "TestProject.parts.csv" should exist
 
-  Scenario: Reject legacy -o stdout option
+  Scenario: Output file named stdout is treated as a literal filename
     When I run jbom command "parts -o stdout"
-    Then the command should fail
-    And the output should contain "no longer supported"
-    And the output should contain "Use -o -"
+    Then the command should succeed
+    And a file named "stdout" should exist
+    And the file "stdout" should contain "R1"
 
   Scenario: Handle empty schematic with console output
     Given a schematic that contains:
