@@ -50,7 +50,8 @@ def parse_res_to_ohms(value: str) -> Optional[float]:
         return None
 
     t = value.strip()
-    t = t.replace("Ω", "").replace("ω", "").replace("ohm", "").replace("OHM", "")
+    t = t.replace("Ω", "").replace("ω", "")
+    t = re.sub(r"(?i)ohms?", "", t)
     t = t.replace(" ", "")
     t = t.upper()
 
