@@ -13,6 +13,7 @@ Feature: CLI Basics
     And the output should contain "bom"
     And the output should contain "pos"
     And the output should contain "inventory"
+    And the output should contain "search"
 
   Scenario: Show version
     When I run jbom command "--version"

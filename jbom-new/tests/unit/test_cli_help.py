@@ -61,3 +61,8 @@ def test_inventory_help_shows_inventory_interface_tokens():
     tokens_current = ["--inventory", "--filter-matches", "-o", "--output"]
     for token in tokens_current:
         assert token in out
+
+
+def test_root_help_includes_search_command():
+    out = run_help([]).lower()
+    assert "search" in out
