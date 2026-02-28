@@ -48,13 +48,20 @@ jbom bom [PROJECT] [--inventory FILE ...] [-o OUTPUT] [OPTIONS]
 Generates a Bill of Materials aggregated by value+package for procurement. Matches schematic components against an inventory file to produce fabrication-ready output.
 
 **PROJECT** (optional, default: current directory)
-: Path to .kicad_sch file, project directory, or base name. Hierarchical schematics are processed automatically when a project directory is given.
+: Path to a KiCad project directory, `.kicad_pro`, `.kicad_sch`, or a base name. The project directory must contain exactly one `*.kicad_pro` file. Hierarchical schematics are processed automatically when a project directory is given.
 
 **--inventory FILE**
 : Inventory file for BOM matching. Supported: .csv, .xlsx, .xls, .numbers. May be repeated to load from multiple sources: `--inventory project.csv --inventory jlc_export.xlsx`
 
-**-o, --output FILE**
-: Output CSV path. Default: `<project>_bom.csv`. Special values: `-`, `stdout`, `console` (formatted table).
+**-o, --output OUTPUT**
+: Output destination.
+  - Omit `-o` to write `${project}.bom.csv` in the discovered project directory.
+  - Use `-o console` for a formatted table.
+  - Use `-o -` for CSV to stdout.
+  - Otherwise, treat the value as a file path.
+
+**-F, --force, --Force**
+: Overwrite an existing output file.
 
 **--fabricator NAME**
 : PCB fabricator for field presets and part number lookup. Choices: `jlc`, `pcbway`, `seeed`, `generic`. Default: `generic`.
@@ -91,8 +98,15 @@ Generates a component placement file (CPL/POS) from a KiCad PCB for pick-and-pla
 **PROJECT** (optional, default: current directory)
 : Path to .kicad_pcb file, project directory, or base name. If a .kicad_sch file is given, jBOM looks for the matching .kicad_pcb.
 
-**-o, --output FILE**
-: Output CSV path. Default: `<project>_pos.csv`. Special values: `-`, `stdout`, `console`.
+**-o, --output OUTPUT**
+: Output destination.
+  - Omit `-o` to write `${project}.pos.csv` in the discovered project directory.
+  - Use `-o console` for a formatted table.
+  - Use `-o -` for CSV to stdout.
+  - Otherwise, treat the value as a file path.
+
+**-F, --force, --Force**
+: Overwrite an existing output file.
 
 **--fabricator NAME**
 : Target fabricator for field preset selection. Choices: `jlc`, `pcbway`, `seeed`, `generic`.
@@ -135,8 +149,15 @@ Generates an initial inventory template from schematic components. The output is
 **PROJECT** (optional, default: current directory)
 : Path to .kicad_sch file, project directory, or base name.
 
-**-o, --output FILE**
-: Output path. Default: `part-inventory.csv`. Special values: `console`, `-`.
+**-o, --output OUTPUT**
+: Output destination.
+  - Omit `-o` to write `part-inventory.csv` in the current working directory.
+  - Use `-o console` for a formatted table.
+  - Use `-o -` for CSV to stdout.
+  - Otherwise, treat the value as a file path.
+
+**-F, --force, --Force**
+: Overwrite an existing output file (also creates a timestamped backup if the file exists).
 
 **--inventory FILE**
 : Existing inventory file for merge operations. May be repeated.
@@ -144,8 +165,6 @@ Generates an initial inventory template from schematic components. The output is
 **--filter-matches**
 : When used with `--inventory`, exclude components that already match items in the existing inventory (show only new/unmatched components).
 
-**--force**
-: Overwrite an existing output file without confirmation.
 
 **-v, --verbose**
 : Show loading and processing diagnostics.
@@ -161,8 +180,15 @@ Generates an unaggregated parts list — one row per component reference — fro
 **PROJECT** (optional, default: current directory)
 : Path to .kicad_sch file, project directory, or base name.
 
-**-o, --output FILE**
-: Output destination. Default: `console` (formatted table). Use `-` for CSV to stdout, or provide a file path.
+**-o, --output OUTPUT**
+: Output destination.
+  - Omit `-o` to write `${project}.parts.csv` in the discovered project directory.
+  - Use `-o console` for a formatted table.
+  - Use `-o -` for CSV to stdout.
+  - Otherwise, treat the value as a file path.
+
+**-F, --force, --Force**
+: Overwrite an existing output file.
 
 **--inventory FILE**
 : Optional. Enhance the parts list with inventory data.
@@ -211,8 +237,14 @@ Searches distributor catalogs for parts matching a keyword or part number.
 **--no-parametric**
 : Disable smart parametric filtering derived from the query text.
 
-**-o, --output FILE**
-: Output destination. Default: `console` (formatted table). Use `-` for CSV to stdout or a file path.
+**-o, --output OUTPUT**
+: Output destination. Default: `console` (formatted table).
+  - Use `-o console` (or omit `-o`) for a formatted table.
+  - Use `-o -` for CSV to stdout.
+  - Otherwise, treat the value as a file path.
+
+**-F, --force, --Force**
+: Overwrite an existing output file.
 
 ## INVENTORY-SEARCH COMMAND
 
@@ -225,8 +257,14 @@ Bulk-searches distributor catalogs using items from an existing inventory file t
 **INVENTORY_FILE**
 : Path to inventory file (.csv, .xlsx, .numbers). Required.
 
-**-o, --output FILE**
-: Write enhanced inventory CSV (original columns plus search candidates) to this file.
+**-o, --output OUTPUT**
+: Enhanced inventory CSV output destination.
+  - Omit `-o` (or use `-o console`) to skip writing the enhanced CSV.
+  - Use `-o -` to write the enhanced CSV to stdout (the human report is written to stderr unless `--report` is provided).
+  - Otherwise, treat the value as a file path.
+
+**-F, --force, --Force**
+: Overwrite an existing output file.
 
 **--report FILE**
 : Write analysis report to this file. Default: stdout.
@@ -249,16 +287,16 @@ Bulk-searches distributor catalogs using items from an existing inventory file t
 ## OUTPUT
 
 **BOM CSV**
-: Default name `<ProjectName>_bom.csv`. Aggregated by value+package. Columns depend on `-f` and fabricator preset.
+: Default name `${ProjectName}.bom.csv` (written in the project directory when `-o` is omitted). Aggregated by value+package. Columns depend on `-f` and fabricator preset.
 
 **POS CSV**
-: Default name `<ProjectName>_pos.csv`. One row per component. Coordinates in mm.
+: Default name `${ProjectName}.pos.csv` (written in the project directory when `-o` is omitted). One row per component. Coordinates in mm.
 
 **Inventory CSV**
-: Default name `part-inventory.csv`. Template with IPN, Category, Value, Package, and related columns.
+: Default name `part-inventory.csv` (written in the current working directory when `-o` is omitted). Template with IPN, Category, Value, Package, and related columns.
 
-**Parts**
-: Default: console table. One row per component reference, not aggregated. Use `-o -` for CSV to stdout.
+**Parts CSV**
+: Default name `${ProjectName}.parts.csv` (written in the project directory when `-o` is omitted). One row per component reference, not aggregated. Use `-o -` for CSV to stdout.
 
 **Exit Codes**
 : 0 — success
