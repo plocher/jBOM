@@ -1,6 +1,51 @@
 # CHANGELOG
 
 
+## v6.10.0 (2026-02-28)
+
+### Bug Fixes
+
+* fix: separate cache TTL from API timeout defaults
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`a8af5d5`](https://github.com/plocher/jBOM/commit/a8af5d504ba457ec12d592930d1516bb3bda9d37))
+
+* fix: default cache TTL when supplier profile missing
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`dda24a2`](https://github.com/plocher/jBOM/commit/dda24a2a090e0b720c6c1a0add934fed19d24e48))
+
+### Features
+
+* feat: read Mouser retry/backoff settings from supplier profile
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`40b5cf9`](https://github.com/plocher/jBOM/commit/40b5cf93dab43d736ba54fdec679fa22c6c0e8d1))
+
+* feat: read search cache TTL from supplier profile
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`3da1ea9`](https://github.com/plocher/jBOM/commit/3da1ea97ebe0a498804a7ef65932c8ceaa9e7cfa))
+
+* feat: add CLI cache flags and default disk cache
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`f6a0195`](https://github.com/plocher/jBOM/commit/f6a01956fe80c421f57877262780de4935e2d310))
+
+* feat: add Mouser retry/backoff parameters
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`ab1adbc`](https://github.com/plocher/jBOM/commit/ab1adbcf6b3d2b8e5e2535ade5fa37685f83c9b8))
+
+* feat: add DiskSearchCache for persistent search results
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`7111e61`](https://github.com/plocher/jBOM/commit/7111e61c1c57f84d1bf000f3c805c74ea89dd651))
+
+### Unknown
+
+* Merge pull request #87 from plocher/feature/issue-80-search-cache-resiliency
+
+Search: disk cache w/ TTL + Mouser retry/backoff + cache flags ([`b4f80a1`](https://github.com/plocher/jBOM/commit/b4f80a10673a8548f3484c098de4c36045aaeb49))
+
+* Merge pull request #86 from plocher/feature/issue-79-search-fixtures
+
+Search fixtures + Mouser contract/integration tests ([`76de19b`](https://github.com/plocher/jBOM/commit/76de19b77829dd4705cf0ab0a984dea4c27d57e8))
+
+
 ## v6.9.2 (2026-02-28)
 
 ### Bug Fixes
