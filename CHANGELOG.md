@@ -1,6 +1,21 @@
 # CHANGELOG
 
 
+## v6.11.0 (2026-02-28)
+
+### Features
+
+* feat: deduplicate inventory-search queries
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`3362aa8`](https://github.com/plocher/jBOM/commit/3362aa8f9abf61a295c25342511cd552d33c0db4))
+
+### Unknown
+
+* Merge pull request #88 from plocher/feature/issue-81-search-deduplication
+
+Search: deduplicate inventory-search requests ([`6f4a5f0`](https://github.com/plocher/jBOM/commit/6f4a5f02257b45a984ec8fa3f4d6aeb292aee67a))
+
+
 ## v6.10.0 (2026-02-28)
 
 ### Bug Fixes
