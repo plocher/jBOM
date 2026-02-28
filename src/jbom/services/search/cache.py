@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import os
 import shutil
 from dataclasses import dataclass
@@ -17,6 +18,8 @@ from typing import Any, Optional, Protocol
 
 from jbom.config.suppliers import resolve_supplier_by_id
 from jbom.services.search.models import SearchResult
+
+logger = logging.getLogger(__name__)
 
 
 def normalize_query(query: str) -> str:
@@ -141,11 +144,28 @@ class DiskSearchCache:
             ttl_hours = (
                 supplier.search_cache_ttl_hours if supplier is not None else None
             )
+
             if ttl_hours is None:
-                raise ValueError(
-                    "DiskSearchCache requires a ttl, or supplier profile must define search.cache.ttl_hours"
+                logger.warning(
+                    "Supplier profile '%s' missing search.cache.ttl_hours; defaulting DiskSearchCache TTL to 10s",
+                    self._provider_id,
                 )
-            ttl = timedelta(hours=float(ttl_hours))
+                ttl = timedelta(seconds=10)
+            else:
+                try:
+                    ttl_hours_f = float(ttl_hours)
+                except (TypeError, ValueError):
+                    ttl_hours_f = 0.0
+
+                if ttl_hours_f <= 0:
+                    logger.warning(
+                        "Supplier profile '%s' has invalid search.cache.ttl_hours=%r; defaulting DiskSearchCache TTL to 10s",
+                        self._provider_id,
+                        ttl_hours,
+                    )
+                    ttl = timedelta(seconds=10)
+                else:
+                    ttl = timedelta(hours=ttl_hours_f)
 
         self._ttl = ttl
 
