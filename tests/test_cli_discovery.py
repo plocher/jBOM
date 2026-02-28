@@ -43,10 +43,10 @@ class TestDiscovery(unittest.TestCase):
         out = default_output_name(self.tmpdir, project, pcb, "pos.csv")
         self.assertEqual(out.name, "proj.pos.csv")
 
-    def test_legacy_project(self):
+    def test_legacy_project_is_not_supported(self):
         legacy = self.tmpdir / "legacy.pro"
         legacy.write_text("legacy\n")
-        self.assertEqual(find_project(self.tmpdir), legacy)
+        self.assertIsNone(find_project(self.tmpdir))
 
     def test_directory_matching_preferred(self):
         # Create two pcb files, prefer one whose stem matches directory name
