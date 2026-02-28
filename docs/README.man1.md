@@ -162,7 +162,7 @@ Generates an unaggregated parts list — one row per component reference — fro
 : Path to .kicad_sch file, project directory, or base name.
 
 **-o, --output FILE**
-: Output path. Default: stdout CSV. Special values: `console`, `-`.
+: Output destination. Default: `console` (formatted table). Use `-` for CSV to stdout, or provide a file path.
 
 **--inventory FILE**
 : Optional. Enhance the parts list with inventory data.
@@ -257,8 +257,8 @@ Bulk-searches distributor catalogs using items from an existing inventory file t
 **Inventory CSV**
 : Default name `part-inventory.csv`. Template with IPN, Category, Value, Package, and related columns.
 
-**Parts CSV**
-: Default: stdout. One row per component reference, not aggregated.
+**Parts**
+: Default: console table. One row per component reference, not aggregated. Use `-o -` for CSV to stdout.
 
 **Exit Codes**
 : 0 — success
