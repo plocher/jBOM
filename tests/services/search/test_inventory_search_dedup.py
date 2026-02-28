@@ -114,3 +114,57 @@ def test_inventory_search_service_deduplicates_provider_calls_and_fans_out() -> 
 
     report = svc.generate_report(records)
     assert "Unique queries dispatched: 3 (of 10 items)" in report
+
+
+def test_inventory_search_service_fans_out_provider_errors_to_all_items() -> None:
+    err_msg = "provider unavailable"
+
+    def _fake_search(query: str, *, limit: int = 10) -> list[SearchResult]:
+        if "10k" in query.lower():
+            raise RuntimeError(err_msg)
+        return [_sr()]
+
+    provider = Mock(spec=SearchProvider)
+    provider.search = Mock(side_effect=_fake_search)
+
+    svc = InventorySearchService(provider, candidate_limit=1, request_delay_seconds=0.0)
+
+    items = [
+        _inv_item(
+            ipn="R10K-1",
+            category="RES",
+            value="10K",
+            package="0603",
+            tolerance="1%",
+        ),
+        _inv_item(
+            ipn="R10K-2",
+            category="RES",
+            value="10K",
+            package="0603",
+            tolerance="1%",
+        ),
+        _inv_item(
+            ipn="R1K-1",
+            category="RES",
+            value="1K",
+            package="0603",
+            tolerance="1%",
+        ),
+    ]
+
+    records = svc.search(items)
+
+    # 2 unique queries: one fails, one succeeds.
+    assert provider.search.call_count == 2
+
+    by_ipn = {r.inventory_item.ipn: r for r in records}
+
+    assert by_ipn["R10K-1"].candidates == []
+    assert by_ipn["R10K-1"].error == err_msg
+
+    assert by_ipn["R10K-2"].candidates == []
+    assert by_ipn["R10K-2"].error == err_msg
+
+    assert by_ipn["R1K-1"].candidates
+    assert by_ipn["R1K-1"].error is None
