@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
+import time
 from typing import Any, Optional
 
 from jbom.services.search.cache import SearchCache, SearchCacheKey
@@ -24,13 +25,22 @@ class MouserProvider(SearchProvider):
     BASE_URL = "https://api.mouser.com/api/v1/search"
 
     def __init__(
-        self, *, api_key: Optional[str] = None, cache: Optional[SearchCache] = None
-    ):
+        self,
+        *,
+        api_key: Optional[str] = None,
+        cache: Optional[SearchCache] = None,
+        timeout: float = 10.0,
+        max_retries: int = 3,
+        retry_delay: float = 1.0,
+    ) -> None:
         """Create a provider.
 
         Args:
             api_key: Mouser API key. Defaults to MOUSER_API_KEY environment variable.
             cache: Optional cache used to reduce repeated API calls.
+            timeout: Request timeout in seconds.
+            max_retries: Max retry attempts for transient failures (connection/5xx).
+            retry_delay: Initial delay (seconds) before retry; uses exponential backoff.
 
         Raises:
             ValueError: When api_key is not provided and MOUSER_API_KEY is not set.
@@ -43,6 +53,9 @@ class MouserProvider(SearchProvider):
             )
 
         self._cache = cache
+        self._timeout = max(0.0, float(timeout))
+        self._max_retries = max(0, int(max_retries))
+        self._retry_delay = max(0.0, float(retry_delay))
 
     @property
     def provider_id(self) -> str:
@@ -81,21 +94,92 @@ class MouserProvider(SearchProvider):
             }
         }
 
-        try:
-            response = requests.post(
-                url,
-                params={"apiKey": self._api_key},
-                json=payload,
-                headers={
-                    "Content-Type": "application/json",
-                    "Accept": "application/json",
-                },
-                timeout=10,
-            )
-            response.raise_for_status()
-            data = response.json()
-        except Exception as exc:
-            logger.error("Mouser API request failed: %s", exc)
+        req_excs = getattr(requests, "exceptions", None)
+        request_exc_type: type[BaseException] | tuple[
+            type[BaseException], ...
+        ] = Exception
+        if req_excs is not None:
+            candidate = getattr(req_excs, "RequestException", None)
+            if isinstance(candidate, type):
+                request_exc_type = candidate
+            elif isinstance(candidate, tuple) and all(
+                isinstance(t, type) for t in candidate
+            ):
+                request_exc_type = candidate
+
+        data: dict[str, Any] | None = None
+
+        for attempt in range(self._max_retries + 1):
+            try:
+                response = requests.post(
+                    url,
+                    params={"apiKey": self._api_key},
+                    json=payload,
+                    headers={
+                        "Content-Type": "application/json",
+                        "Accept": "application/json",
+                    },
+                    timeout=self._timeout,
+                )
+
+                status_raw = getattr(response, "status_code", 200)
+                try:
+                    status = int(status_raw)  # type: ignore[arg-type]
+                except Exception:
+                    status = 200
+                if 400 <= status < 500:
+                    logger.error(
+                        "Mouser API request failed (client error %s): %s",
+                        status,
+                        response.text,
+                    )
+                    return []
+
+                if status >= 500:
+                    raise RuntimeError(f"Mouser API server error {status}")
+
+                response.raise_for_status()
+                data = response.json()
+                break
+
+            except Exception as exc:
+                status = 0
+                exc_resp = getattr(exc, "response", None)
+                if exc_resp is not None:
+                    status_raw = getattr(exc_resp, "status_code", 0)
+                    try:
+                        status = int(status_raw)  # type: ignore[arg-type]
+                    except Exception:
+                        status = 0
+
+                if 400 <= status < 500:
+                    logger.error(
+                        "Mouser API request failed (client error %s): %s", status, exc
+                    )
+                    return []
+
+                retryable = False
+                if status >= 500:
+                    retryable = True
+                elif isinstance(exc, request_exc_type):
+                    # Connection/timeout/etc.
+                    retryable = True
+
+                if not retryable or attempt >= self._max_retries:
+                    logger.error("Mouser API request failed: %s", exc)
+                    return []
+
+                delay = self._retry_delay * (2**attempt)
+                logger.debug(
+                    "Mouser API request failed; retrying %s/%s in %.2fs: %s",
+                    attempt + 1,
+                    self._max_retries,
+                    delay,
+                    exc,
+                )
+                time.sleep(delay)
+
+        if data is None:
             return []
 
         # Mouser embeds error strings inside the JSON body.
