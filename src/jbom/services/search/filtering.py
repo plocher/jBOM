@@ -13,15 +13,48 @@ from __future__ import annotations
 import re
 from typing import Iterable
 
-from jbom.common.value_parsing import parse_res_to_ohms
+from jbom.common.component_classification import normalize_component_type
+from jbom.common.value_parsing import parse_res_to_ohms, parse_value_to_normal
 from jbom.services.search.models import SearchResult
+
+
+def _parse_voltage_to_volts(value: str) -> float | None:
+    if not value:
+        return None
+
+    t = str(value).strip().lower().replace(" ", "")
+    t = t.replace("μ", "u").replace("µ", "u")
+
+    m = re.match(r"^([0-9]*\.?[0-9]+)(mv|v)$", t)
+    if not m:
+        return None
+
+    try:
+        num = float(m.group(1))
+    except ValueError:
+        return None
+
+    unit = m.group(2)
+    if unit == "mv":
+        return num * 1e-3
+    return num
+
+
+def _close_enough(a: float, b: float, *, rel_tol: float = 0.001) -> bool:
+    if a == b:
+        return True
+    if b == 0:
+        return abs(a) < rel_tol
+    return abs(a - b) <= abs(b) * rel_tol
 
 
 class SearchFilter:
     """Client-side filtering helpers."""
 
     @staticmethod
-    def filter_by_query(results: list[SearchResult], query: str) -> list[SearchResult]:
+    def filter_by_query(
+        results: list[SearchResult], query: str, *, category: str = ""
+    ) -> list[SearchResult]:
         """Filter results based on query terms matching parametric attributes.
 
         Current behavior mirrors legacy jBOM's implementation for resistors:
@@ -35,16 +68,36 @@ class SearchFilter:
 
         filtered: list[SearchResult] = []
 
-        # Resistance target.
-        # Queries are usually multi-token (e.g. "10K resistor 0603"), while the
-        # value parser expects a single value token.
-        target_ohms = None
-        for token in re.split(r"[\s,]+", query or ""):
-            if not token:
-                continue
-            target_ohms = parse_res_to_ohms(token)
-            if target_ohms is not None:
-                break
+        cat = normalize_component_type(category or "")
+
+        # Primary numeric target (category-specific). If category is not provided,
+        # preserve legacy behavior: resistance matching only.
+        target_value: float | None = None
+        if cat:
+            for token in re.split(r"[\s,]+", query or ""):
+                if not token:
+                    continue
+                target_value = parse_value_to_normal(cat, token)
+                if target_value is not None:
+                    break
+        else:
+            for token in re.split(r"[\s,]+", query or ""):
+                if not token:
+                    continue
+                target_value = parse_res_to_ohms(token)
+                if target_value is not None:
+                    cat = "RES"
+                    break
+
+        # Optional capacitor voltage rating target.
+        target_volts: float | None = None
+        if cat == "CAP":
+            for token in re.split(r"[\s,]+", query or ""):
+                if not token:
+                    continue
+                target_volts = _parse_voltage_to_volts(token)
+                if target_volts is not None:
+                    break
 
         # Tolerance target (e.g. "1%", "5%")
         target_tol: float | None = None
@@ -62,13 +115,29 @@ class SearchFilter:
 
             keep = True
 
-            if target_ohms is not None:
-                res_attr = r.attributes.get("Resistance", "")
-                if res_attr:
-                    attr_ohms = parse_res_to_ohms(res_attr)
-                    if attr_ohms is None or abs(attr_ohms - target_ohms) > (
-                        target_ohms * 0.001
-                    ):
+            if target_value is not None:
+                attr_name_by_cat = {
+                    "RES": "Resistance",
+                    "CAP": "Capacitance",
+                    "IND": "Inductance",
+                    "REG": "Output Voltage",
+                }
+                attr_name = attr_name_by_cat.get(cat, "")
+                if attr_name:
+                    raw_attr = r.attributes.get(attr_name, "")
+                    if raw_attr:
+                        attr_value = parse_value_to_normal(cat, raw_attr)
+                        if attr_value is None or not _close_enough(
+                            attr_value, target_value
+                        ):
+                            keep = False
+
+            if keep and cat == "CAP" and target_volts is not None:
+                vr_attr = r.attributes.get("Voltage Rating", "")
+                if vr_attr:
+                    attr_volts = _parse_voltage_to_volts(vr_attr)
+                    # Interpret voltage rating as a minimum requirement.
+                    if attr_volts is None or attr_volts + 1e-12 < target_volts:
                         keep = False
 
             if keep and target_tol is not None:
@@ -119,10 +188,19 @@ class SearchSorter:
     """Sorting utilities."""
 
     @staticmethod
-    def rank(results: list[SearchResult]) -> list[SearchResult]:
-        """Rank by stock (desc) then price (asc)."""
+    def rank(results: list[SearchResult], *, category: str = "") -> list[SearchResult]:
+        """Rank by stock (desc), price (asc), then category value (asc)."""
 
-        def sort_key(r: SearchResult) -> tuple[int, float]:
+        cat = normalize_component_type(category or "")
+        attr_name_by_cat = {
+            "RES": "Resistance",
+            "CAP": "Capacitance",
+            "IND": "Inductance",
+            "REG": "Output Voltage",
+        }
+        attr_name = attr_name_by_cat.get(cat, "")
+
+        def sort_key(r: SearchResult) -> tuple[int, float, float]:
             stock = r.stock_quantity
             try:
                 price_clean = (
@@ -135,7 +213,16 @@ class SearchSorter:
                 price_value = float(price_clean)
             except ValueError:
                 price_value = float("inf")
-            return (-stock, price_value)
+
+            canonical = float("inf")
+            if attr_name and r.attributes:
+                raw = r.attributes.get(attr_name, "")
+                if raw:
+                    v = parse_value_to_normal(cat, raw)
+                    if v is not None:
+                        canonical = v
+
+            return (-stock, price_value, canonical)
 
         return sorted(results, key=sort_key)
 

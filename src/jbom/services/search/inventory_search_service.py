@@ -135,7 +135,8 @@ class InventorySearchService:
             if cat_norm in excluded:
                 continue
 
-            if not item.value or len(str(item.value).strip()) < 2:
+            min_value_len = 1 if cat_norm == "LED" else 2
+            if not item.value or len(str(item.value).strip()) < min_value_len:
                 continue
 
             if any(_category_matches(cat_raw, s) for s in selectors):

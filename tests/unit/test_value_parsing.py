@@ -19,6 +19,7 @@ from jbom.common.value_parsing import (  # noqa: E402
     parse_cap_to_farad,
     parse_ind_to_henry,
     parse_res_to_ohms,
+    parse_value_to_normal,
 )
 
 
@@ -209,3 +210,31 @@ def test_resistor_round_trip_examples() -> None:
         parsed = parse_res_to_ohms(s)
         assert parsed is not None
         assert parse_res_to_ohms(ohms_to_eia(parsed)) == pytest.approx(parsed)
+
+
+def test_parse_value_to_normal_res() -> None:
+    assert parse_value_to_normal("RES", "10K") == pytest.approx(10000.0)
+
+
+def test_parse_value_to_normal_cap() -> None:
+    assert parse_value_to_normal("CAP", "100nF") == pytest.approx(1e-7)
+
+
+def test_parse_value_to_normal_ind() -> None:
+    assert parse_value_to_normal("IND", "100µH") == pytest.approx(1e-4)
+
+
+def test_parse_value_to_normal_regulator_output_voltage() -> None:
+    assert parse_value_to_normal("REG", "3.3V") == pytest.approx(3.3)
+
+
+def test_parse_value_to_normal_led_is_none() -> None:
+    assert parse_value_to_normal("LED", "R") is None
+
+
+def test_parse_value_to_normal_unknown_category_is_none() -> None:
+    assert parse_value_to_normal("UNKNOWN", "10K") is None
+
+
+def test_parse_value_to_normal_unparseable_is_none() -> None:
+    assert parse_value_to_normal("CAP", "garbage") is None
