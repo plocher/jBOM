@@ -18,6 +18,7 @@ from jbom.common.component_classification import normalize_component_type
 
 __all__ = [
     "parse_res_to_ohms",
+    "parse_voltage_to_volts",
     "parse_value_to_normal",
     "ohms_to_eia",
     "cap_unit_multiplier",
@@ -31,7 +32,7 @@ __all__ = [
 _OHM_RE = re.compile(r"^\s*([0-9]*\.?[0-9]+)\s*([kKmMrR]?)\s*\+?\s*$")
 
 
-def _parse_voltage_to_volts(value: str) -> Optional[float]:
+def parse_voltage_to_volts(value: str) -> Optional[float]:
     """Parse a voltage string into volts.
 
     Examples:
@@ -89,7 +90,7 @@ def parse_value_to_normal(category: str, text: str) -> Optional[float]:
     if cat == "IND":
         return parse_ind_to_henry(text)
     if cat == "REG":
-        return _parse_voltage_to_volts(text)
+        return parse_voltage_to_volts(text)
 
     return None
 

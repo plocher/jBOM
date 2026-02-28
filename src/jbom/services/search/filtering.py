@@ -14,30 +14,20 @@ import re
 from typing import Iterable
 
 from jbom.common.component_classification import normalize_component_type
-from jbom.common.value_parsing import parse_res_to_ohms, parse_value_to_normal
+from jbom.common.value_parsing import (
+    parse_res_to_ohms,
+    parse_value_to_normal,
+    parse_voltage_to_volts,
+)
 from jbom.services.search.models import SearchResult
 
 
-def _parse_voltage_to_volts(value: str) -> float | None:
-    if not value:
-        return None
-
-    t = str(value).strip().lower().replace(" ", "")
-    t = t.replace("μ", "u").replace("µ", "u")
-
-    m = re.match(r"^([0-9]*\.?[0-9]+)(mv|v)$", t)
-    if not m:
-        return None
-
-    try:
-        num = float(m.group(1))
-    except ValueError:
-        return None
-
-    unit = m.group(2)
-    if unit == "mv":
-        return num * 1e-3
-    return num
+_CATEGORY_ATTR_NAME: dict[str, str] = {
+    "RES": "Resistance",
+    "CAP": "Capacitance",
+    "IND": "Inductance",
+    "REG": "Output Voltage",
+}
 
 
 def _close_enough(a: float, b: float, *, rel_tol: float = 0.001) -> bool:
@@ -95,7 +85,7 @@ class SearchFilter:
             for token in re.split(r"[\s,]+", query or ""):
                 if not token:
                     continue
-                target_volts = _parse_voltage_to_volts(token)
+                target_volts = parse_voltage_to_volts(token)
                 if target_volts is not None:
                     break
 
@@ -116,13 +106,7 @@ class SearchFilter:
             keep = True
 
             if target_value is not None:
-                attr_name_by_cat = {
-                    "RES": "Resistance",
-                    "CAP": "Capacitance",
-                    "IND": "Inductance",
-                    "REG": "Output Voltage",
-                }
-                attr_name = attr_name_by_cat.get(cat, "")
+                attr_name = _CATEGORY_ATTR_NAME.get(cat, "")
                 if attr_name:
                     raw_attr = r.attributes.get(attr_name, "")
                     if raw_attr:
@@ -135,7 +119,7 @@ class SearchFilter:
             if keep and cat == "CAP" and target_volts is not None:
                 vr_attr = r.attributes.get("Voltage Rating", "")
                 if vr_attr:
-                    attr_volts = _parse_voltage_to_volts(vr_attr)
+                    attr_volts = parse_voltage_to_volts(vr_attr)
                     # Interpret voltage rating as a minimum requirement.
                     if attr_volts is None or attr_volts + 1e-12 < target_volts:
                         keep = False
@@ -192,13 +176,7 @@ class SearchSorter:
         """Rank by stock (desc), price (asc), then category value (asc)."""
 
         cat = normalize_component_type(category or "")
-        attr_name_by_cat = {
-            "RES": "Resistance",
-            "CAP": "Capacitance",
-            "IND": "Inductance",
-            "REG": "Output Voltage",
-        }
-        attr_name = attr_name_by_cat.get(cat, "")
+        attr_name = _CATEGORY_ATTR_NAME.get(cat, "")
 
         def sort_key(r: SearchResult) -> tuple[int, float, float]:
             stock = r.stock_quantity
