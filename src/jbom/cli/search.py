@@ -129,7 +129,7 @@ def handle_search(
 
 def _build_cache(args: argparse.Namespace) -> SearchCache:
     if getattr(args, "clear_cache", False):
-        DiskSearchCache(args.provider).clear()
+        DiskSearchCache.clear_provider(args.provider)
 
     if getattr(args, "no_cache", False):
         return InMemorySearchCache()

@@ -7,6 +7,7 @@ import os
 import time
 from typing import Any, Optional
 
+from jbom.config.suppliers import resolve_supplier_by_id
 from jbom.services.search.cache import SearchCache, SearchCacheKey
 from jbom.services.search.models import SearchResult
 from jbom.services.search.provider import SearchProvider
@@ -29,18 +30,18 @@ class MouserProvider(SearchProvider):
         *,
         api_key: Optional[str] = None,
         cache: Optional[SearchCache] = None,
-        timeout: float = 10.0,
-        max_retries: int = 3,
-        retry_delay: float = 1.0,
+        timeout: float | None = None,
+        max_retries: int | None = None,
+        retry_delay: float | None = None,
     ) -> None:
         """Create a provider.
 
         Args:
             api_key: Mouser API key. Defaults to MOUSER_API_KEY environment variable.
             cache: Optional cache used to reduce repeated API calls.
-            timeout: Request timeout in seconds.
-            max_retries: Max retry attempts for transient failures (connection/5xx).
-            retry_delay: Initial delay (seconds) before retry; uses exponential backoff.
+            timeout: Request timeout in seconds (defaults to supplier profile).
+            max_retries: Max retry attempts for transient failures (defaults to supplier profile).
+            retry_delay: Initial delay (seconds) before retry; uses exponential backoff (defaults to supplier profile).
 
         Raises:
             ValueError: When api_key is not provided and MOUSER_API_KEY is not set.
@@ -53,6 +54,23 @@ class MouserProvider(SearchProvider):
             )
 
         self._cache = cache
+
+        supplier = resolve_supplier_by_id(self.provider_id)
+
+        if timeout is None:
+            timeout = supplier.search_timeout_seconds if supplier is not None else None
+        if max_retries is None:
+            max_retries = supplier.search_max_retries if supplier is not None else None
+        if retry_delay is None:
+            retry_delay = (
+                supplier.search_retry_delay_seconds if supplier is not None else None
+            )
+
+        if timeout is None or max_retries is None or retry_delay is None:
+            raise ValueError(
+                "Mouser search settings must be configured via supplier profile 'mouser.supplier.yaml' (search.api.*)"
+            )
+
         self._timeout = max(0.0, float(timeout))
         self._max_retries = max(0, int(max_retries))
         self._retry_delay = max(0.0, float(retry_delay))
