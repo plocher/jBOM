@@ -109,7 +109,8 @@ def handle_search(args: argparse.Namespace) -> int:
     results = SearchSorter.rank(results)
     results = results[:display_limit]
 
-    return _output_results(results, output=args.output, force=args.force)
+    force = bool(getattr(args, "force", False))
+    return _output_results(results, output=args.output, force=force)
 
 
 def _create_provider(
