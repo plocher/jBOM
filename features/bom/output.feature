@@ -13,6 +13,13 @@ Feature: BOM Output Options
       | C1        | 100nF | C_0603_1608       |
       | U1        | LM358 | SOIC-8_3.9x4.9mm |
 
+  Scenario: Default output writes a project-named CSV file
+    When I run jbom command "bom"
+    Then the command should succeed
+    And a file named "project.bom.csv" should exist
+    And the file "project.bom.csv" should contain "R1"
+    And the file "project.bom.csv" should contain "10K"
+
   Scenario: Console table output with default options (human-first)
     When I run jbom command "bom -o console"
     Then the command should succeed

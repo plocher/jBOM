@@ -22,7 +22,7 @@ Feature: UX Consistency Across Commands
       | CAP_100nF | CAP      | 100nF | 100nF capacitor  | 0603    |
       | IC_LM358  | IC       | LM358 | Op-amp           | SOIC-8  |
 
-  Scenario: bom/pos/inventory default to file output
+  Scenario: bom/pos/parts/inventory default to file output
     When I run jbom command "bom"
     Then the command should succeed
     And a file named "project.bom.csv" should exist
@@ -30,6 +30,10 @@ Feature: UX Consistency Across Commands
     When I run jbom command "pos"
     Then the command should succeed
     And a file named "project.pos.csv" should exist
+
+    When I run jbom command "parts"
+    Then the command should succeed
+    And a file named "project.parts.csv" should exist
 
     When I run jbom command "inventory"
     Then the command should succeed
