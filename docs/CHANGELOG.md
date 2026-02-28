@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 - Mouser provider now supports configurable timeout + retry/backoff for transient failures.
+- `inventory-search` now deduplicates identical queries within a run to reduce provider API calls.
 
 ## [7.0.0] - 2026-02-27
 

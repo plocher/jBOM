@@ -13,10 +13,12 @@ from __future__ import annotations
 
 import re
 import time
+from collections import defaultdict
 from dataclasses import dataclass
 
 from jbom.common.component_classification import normalize_component_type
 from jbom.common.types import Component, InventoryItem
+from jbom.services.search.cache import normalize_query
 from jbom.services.search.filtering import SearchSorter, apply_default_filters
 from jbom.services.search.models import SearchResult
 from jbom.services.search.provider import SearchProvider
@@ -178,12 +180,50 @@ class InventorySearchService:
         return " ".join(p for p in parts if p).strip()
 
     def search(self, items: list[InventoryItem]) -> list[InventorySearchRecord]:
-        """Search for candidates for each inventory item."""
+        """Search for candidates for each inventory item.
 
-        records: list[InventorySearchRecord] = []
+        This implementation deduplicates provider calls by normalized query so that
+        repeated inventory rows do not burn additional API quota.
+        """
+
+        # Phase 6.3 behavior: limit is purely service configuration.
+        provider_limit = max(10, self._candidate_limit * 3)
+
+        query_groups: dict[str, list[tuple[InventoryItem, str]]] = defaultdict(list)
+        per_item_query: list[tuple[InventoryItem, str, str]] = []
 
         for item in items:
             query = self.build_query(item)
+            key = normalize_query(query)
+            per_item_query.append((item, query, key))
+
+            if query:
+                query_groups[key].append((item, query))
+
+        # Dispatch unique queries.
+        ranked_by_query: dict[str, list[SearchResult]] = {}
+        error_by_query: dict[str, str] = {}
+
+        for key, group in query_groups.items():
+            # Keep the original (non-normalized) query string for the provider call.
+            provider_query = group[0][1]
+
+            try:
+                raw_results = self._provider.search(
+                    provider_query, limit=provider_limit
+                )
+                filtered = apply_default_filters(raw_results)
+                ranked_by_query[key] = SearchSorter.rank(filtered)
+            except Exception as exc:
+                error_by_query[key] = str(exc)
+
+            # Be conservative with public APIs (configurable for tests).
+            if self._request_delay_seconds > 0:
+                time.sleep(self._request_delay_seconds)
+
+        # Fan-out per-item scoring.
+        records: list[InventorySearchRecord] = []
+        for item, query, key in per_item_query:
             if not query:
                 records.append(
                     InventorySearchRecord(
@@ -195,25 +235,18 @@ class InventorySearchService:
                 )
                 continue
 
-            try:
-                raw_results = self._provider.search(
-                    query,
-                    limit=max(10, self._candidate_limit * 3),
-                )
-            except Exception as exc:
+            if key in error_by_query:
                 records.append(
                     InventorySearchRecord(
                         inventory_item=item,
                         query=query,
                         candidates=[],
-                        error=str(exc),
+                        error=error_by_query[key],
                     )
                 )
                 continue
 
-            filtered = apply_default_filters(raw_results)
-            ranked = SearchSorter.rank(filtered)
-
+            ranked = ranked_by_query.get(key, [])
             candidates = self._score_candidates(item, ranked)
             records.append(
                 InventorySearchRecord(
@@ -222,10 +255,6 @@ class InventorySearchService:
                     candidates=candidates[: self._candidate_limit],
                 )
             )
-
-            # Be conservative with public APIs (configurable for tests).
-            if self._request_delay_seconds > 0:
-                time.sleep(self._request_delay_seconds)
 
         return records
 
@@ -320,6 +349,10 @@ class InventorySearchService:
         successes = sum(1 for r in records if r.candidates)
         failures = total - successes
 
+        unique_queries = {
+            normalize_query(r.query) for r in records if (r.query or "").strip()
+        }
+
         by_cat: dict[str, dict[str, int]] = {}
         for r in records:
             cat = (r.inventory_item.category or "").strip().upper() or "(missing)"
@@ -333,6 +366,9 @@ class InventorySearchService:
         lines.append(f"Generated: {time.strftime('%Y-%m-%d %H:%M:%S')}")
         lines.append("")
         lines.append(f"Total searchable items: {total}")
+        lines.append(
+            f"Unique queries dispatched: {len(unique_queries)} (of {total} items)"
+        )
         if total:
             lines.append(
                 f"Successful searches: {successes} ({successes/total*100:.1f}%)"
