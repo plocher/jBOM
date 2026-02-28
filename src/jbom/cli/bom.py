@@ -6,6 +6,14 @@ import sys
 from pathlib import Path
 from typing import Optional
 
+from jbom.cli.output import (
+    OutputDestination,
+    OutputKind,
+    OutputRefusedError,
+    add_force_argument,
+    open_output_text_file,
+    resolve_output_destination,
+)
 from jbom.services.schematic_reader import SchematicReader
 from jbom.services.bom_generator import BOMGenerator, BOMData
 from jbom.services.inventory_matcher import InventoryMatcher
@@ -48,8 +56,9 @@ def register_command(subparsers) -> None:
     parser.add_argument(
         "-o",
         "--output",
-        help='Output file path, "stdout" for stdout, or "console" for formatted table',
+        help='Output destination: omit for default file output, use "console" for table, "-" for CSV to stdout, or a file path',
     )
+    add_force_argument(parser)
 
     # Enhancement options
     parser.add_argument(
@@ -159,11 +168,14 @@ def handle_bom(args: argparse.Namespace) -> int:
 
         schematic_file = resolved_input.resolved_path
 
-        # Determine project name from context or file
-        if resolved_input.project_context:
-            project_name = resolved_input.project_context.project_base_name
-        else:
-            project_name = schematic_file.stem
+        if not resolved_input.project_context:
+            raise ValueError("No project context available")
+
+        project_context = resolved_input.project_context
+        project_name = project_context.project_base_name
+        default_output_path = (
+            project_context.project_directory / f"{project_name}.bom.csv"
+        )
 
         # Use services directly - no workflow abstraction needed
         reader = SchematicReader(options)
@@ -253,7 +265,14 @@ def handle_bom(args: argparse.Namespace) -> int:
             )
 
         # Handle output
-        return _output_bom(bom_data, args.output, selected_fields, fabricator)
+        return _output_bom(
+            bom_data,
+            args.output,
+            selected_fields,
+            fabricator,
+            default_output_path=default_output_path,
+            force=args.force,
+        )
 
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
@@ -338,30 +357,47 @@ def _output_bom(
     output: Optional[str],
     selected_fields: list[str],
     fabricator: str,
+    *,
+    default_output_path: Path,
+    force: bool,
 ) -> int:
-    """Output BOM data in the requested format with field customization.
+    """Output BOM data in the requested format with field customization."""
 
-    Args:
-        bom_data: BOM data to output
-        output: Output destination (None/"console" for table, "-" for CSV, path for file)
-        selected_fields: List of fields to include in output
-        fabricator: Fabricator ID for column mapping
-
-    Returns:
-        Exit code (0 for success)
-    """
-    # Apply fabricator-specific column mapping to get headers
     headers = apply_fabricator_column_mapping(fabricator, "bom", selected_fields)
 
-    if output is None or output == "console":
-        _print_console_table(bom_data, selected_fields, headers)
-    elif output == "-":
-        _print_csv(bom_data, selected_fields, headers)
-    else:
-        output_path = Path(output)
-        _write_csv(bom_data, output_path, selected_fields, headers)
-        print(f"BOM written to {output_path}")
+    dest = resolve_output_destination(
+        output,
+        default_destination=OutputDestination(
+            OutputKind.FILE, path=default_output_path
+        ),
+    )
 
+    if dest.kind == OutputKind.CONSOLE:
+        _print_console_table(bom_data, selected_fields, headers)
+        return 0
+
+    if dest.kind == OutputKind.STDOUT:
+        _print_csv(bom_data, selected_fields, headers)
+        return 0
+
+    if not dest.path:
+        raise ValueError("Internal error: file output selected but no path provided")
+
+    output_path = dest.path
+    refused = f"Error: Output file '{output_path}' already exists. Use -F/--force to overwrite."
+
+    try:
+        with open_output_text_file(
+            output_path,
+            force=force,
+            refused_message=refused,
+        ) as f:
+            _write_csv_handle(bom_data, f, selected_fields, headers)
+    except OutputRefusedError as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
+
+    print(f"BOM written to {output_path}")
     return 0
 
 
@@ -413,31 +449,23 @@ def _print_csv(
     bom_data: BOMData, selected_fields: list[str], headers: list[str]
 ) -> None:
     """Print BOM as CSV to stdout with dynamic fields."""
-    writer = csv.writer(sys.stdout)
 
-    # Write dynamic headers
-    writer.writerow(headers)
-
-    # Write data rows
-    for entry in bom_data.entries:
-        row = []
-        for field in selected_fields:
-            value = _get_field_value(entry, field)
-            row.append(value)
-
-        writer.writerow(row)
+    _write_csv_handle(bom_data, sys.stdout, selected_fields, headers)
 
 
-def _write_csv(
-    bom_data: BOMData, output_path: Path, selected_fields: list[str], headers: list[str]
+def _write_csv_handle(
+    bom_data: BOMData,
+    f,
+    selected_fields: list[str],
+    headers: list[str],
 ) -> None:
-    """Write BOM as CSV to file with dynamic fields."""
-    with open(output_path, "w", newline="", encoding="utf-8") as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow(headers)
-        for entry in bom_data.entries:
-            row = [_get_field_value(entry, field) for field in selected_fields]
-            writer.writerow(row)
+    """Write BOM as CSV to a file-like object."""
+
+    writer = csv.writer(f)
+    writer.writerow(headers)
+    for entry in bom_data.entries:
+        row = [_get_field_value(entry, field) for field in selected_fields]
+        writer.writerow(row)
 
 
 def _get_field_value(entry, field: str) -> str:

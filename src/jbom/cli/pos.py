@@ -4,7 +4,16 @@ import argparse
 import csv
 import sys
 from pathlib import Path
+from typing import TextIO
 
+from jbom.cli.output import (
+    OutputDestination,
+    OutputKind,
+    OutputRefusedError,
+    add_force_argument,
+    open_output_text_file,
+    resolve_output_destination,
+)
 from jbom.services.pcb_reader import DefaultKiCadReaderService
 from jbom.services.pos_generator import POSGenerator
 from jbom.services.project_file_resolver import ProjectFileResolver
@@ -46,8 +55,9 @@ def register_command(subparsers) -> None:
     parser.add_argument(
         "-o",
         "--output",
-        help='Output file path, "stdout" for stdout, or "console" for formatted table',
+        help='Output destination: omit for default file output, use "console" for table, "-" for CSV to stdout, or a file path',
     )
+    add_force_argument(parser)
 
     # Filtering options
     parser.add_argument(
@@ -151,6 +161,15 @@ def handle_pos(args: argparse.Namespace) -> int:
 
         pcb_file = resolved_input.resolved_path
 
+        if not resolved_input.project_context:
+            raise ValueError("No project context available")
+
+        project_context = resolved_input.project_context
+        project_name = project_context.project_base_name
+        default_output_path = (
+            project_context.project_directory / f"{project_name}.pos.csv"
+        )
+
         # If project has hierarchical schematics, emit a helpful diagnostic (tests expect this)
         if resolved_input.project_context:
             try:
@@ -239,7 +258,13 @@ def handle_pos(args: argparse.Namespace) -> int:
 
         # Handle output
         return _output_pos(
-            pos_data, args.output, fabricator, selected_fields, user_specified_fields
+            pos_data,
+            args.output,
+            fabricator,
+            selected_fields,
+            user_specified_fields,
+            default_output_path=default_output_path,
+            force=args.force,
         )
 
     except Exception as e:
@@ -293,27 +318,15 @@ def _list_available_pos_fields(fabricator: str) -> None:
 
 def _output_pos(
     pos_data: list,
-    output: str,
+    output: str | None,
     fabricator: str = "generic",
-    selected_fields: list = None,
+    selected_fields: list | None = None,
     user_specified_fields: bool = False,
+    *,
+    default_output_path: Path,
+    force: bool,
 ) -> int:
-    """Output position data in the requested format.
-
-    Human-first defaults (BREAKING CHANGE for UX consistency):
-    - output is None => formatted table to stdout (human exploration)
-    - output == "console" => formatted table to stdout (explicit)
-    - output == "-" => CSV to stdout (machine readable)
-    - "stdout" removed (legacy compatibility)
-    - otherwise => treat as file path
-
-    Args:
-        pos_data: List of position data dictionaries
-        output: Output destination
-        fabricator: Fabricator ID for column mapping
-        selected_fields: List of selected field names to include
-        user_specified_fields: Whether fields were explicitly specified by user
-    """
+    """Output position data in the requested format."""
     # Use default fields if none selected
     if not selected_fields:
         # Try to get fabricator default fields, fall back to standard set
@@ -339,15 +352,39 @@ def _output_pos(
         # Fabricator preset - use fabricator-specific column names
         headers = apply_fabricator_column_mapping(fabricator, "pos", selected_fields)
 
-    if output is None or output == "console":
-        _print_console_table(pos_data, selected_fields, headers)
-    elif output == "-":
-        _print_csv(pos_data, selected_fields, headers)
-    else:
-        output_path = Path(output)
-        _write_csv(pos_data, output_path, selected_fields, headers)
-        print(f"Position file written to {output_path}")
+    dest = resolve_output_destination(
+        output,
+        default_destination=OutputDestination(
+            OutputKind.FILE, path=default_output_path
+        ),
+    )
 
+    if dest.kind == OutputKind.CONSOLE:
+        _print_console_table(pos_data, selected_fields, headers)
+        return 0
+
+    if dest.kind == OutputKind.STDOUT:
+        _print_csv(pos_data, selected_fields, headers, out=sys.stdout)
+        return 0
+
+    if not dest.path:
+        raise ValueError("Internal error: file output selected but no path provided")
+
+    output_path = dest.path
+    refused = f"Error: Output file '{output_path}' already exists. Use -F/--force to overwrite."
+
+    try:
+        with open_output_text_file(
+            output_path,
+            force=force,
+            refused_message=refused,
+        ) as f:
+            _print_csv(pos_data, selected_fields, headers, out=f)
+    except OutputRefusedError as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
+
+    print(f"Position file written to {output_path}")
     return 0
 
 
@@ -401,9 +438,16 @@ def _print_console_table(pos_data: list, selected_fields: list, headers: list) -
     print(f"\nTotal: {len(pos_data)} components")
 
 
-def _print_csv(pos_data: list, selected_fields: list, headers: list) -> None:
-    """Print position data as CSV to stdout."""
-    writer = csv.writer(sys.stdout)
+def _print_csv(
+    pos_data: list,
+    selected_fields: list,
+    headers: list,
+    *,
+    out: TextIO,
+) -> None:
+    """Print position data as CSV to a file-like object."""
+
+    writer = csv.writer(out)
 
     # Use headers exactly as provided by fabricator column mapping
     writer.writerow(headers)
@@ -457,18 +501,3 @@ def _get_pos_field_value(entry: dict, field: str) -> str:
 
     # Fallback for unknown fields
     return str(entry.get(field, ""))
-
-
-def _write_csv(
-    pos_data: list,
-    output_path: Path,
-    selected_fields: list = None,
-    headers: list = None,
-) -> None:
-    """Write position data as CSV to file."""
-    with open(output_path, "w", newline="", encoding="utf-8") as csvfile:
-        # Use the same logic as stdout
-        old_stdout = sys.stdout
-        sys.stdout = csvfile
-        _print_csv(pos_data, selected_fields, headers)
-        sys.stdout = old_stdout

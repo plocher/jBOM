@@ -93,7 +93,7 @@ Feature: BOM Field System and Output Customization
 
   @regression @current-broken
   Scenario: Console table respects field selection
-    When I run jbom command "bom -f Reference,Value,LCSC"
+    When I run jbom command "bom -f Reference,Value,LCSC -o console"
     Then the command should succeed
     And the console table headers should be "Reference Value LCSC"
     And the console table should not contain "Footprint"

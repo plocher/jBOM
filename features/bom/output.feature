@@ -14,7 +14,7 @@ Feature: BOM Output Options
       | U1        | LM358 | SOIC-8_3.9x4.9mm |
 
   Scenario: Console table output with default options (human-first)
-    When I run jbom command "bom"
+    When I run jbom command "bom -o console"
     Then the command should succeed
     And the output should contain "R1"
     And the output should contain "10K"
@@ -24,7 +24,7 @@ Feature: BOM Output Options
     And the output should contain "LM358"
 
   Scenario: BOM with aggregated components
-    When I run jbom command "bom"
+    When I run jbom command "bom -o console"
     Then the command should succeed
     And the output should contain "R1"
     And the output should contain "R2"
@@ -39,7 +39,7 @@ Feature: BOM Output Options
     And the output should contain "C1"
 
   Scenario: Verbose output
-    When I run jbom command "bom -v"
+    When I run jbom command "bom -v -o console"
     Then the command should succeed
     And the output should contain "R1"
     And the output should contain "10K"

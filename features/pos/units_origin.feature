@@ -11,7 +11,7 @@ Feature: POS Units and Origin
       | Reference | X | Y | Side | Footprint   |
       | R1        | 10| 5 | TOP  | R_0805_2012 |
       | C1        | 15| 8 | TOP  | C_0603_1608 |
-    When I run jbom command "pos --origin aux"
+    When I run jbom command "pos --origin aux -o console"
     Then the command should succeed
     And the output should contain "R1"
     And the output should contain "C1"

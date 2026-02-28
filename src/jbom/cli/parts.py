@@ -4,8 +4,16 @@ import argparse
 import csv
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Optional, TextIO
 
+from jbom.cli.output import (
+    OutputDestination,
+    OutputKind,
+    OutputRefusedError,
+    add_force_argument,
+    open_output_text_file,
+    resolve_output_destination,
+)
 from jbom.services.schematic_reader import SchematicReader
 from jbom.services.parts_list_generator import PartsListGenerator, PartsListData
 from jbom.services.project_file_resolver import ProjectFileResolver
@@ -35,8 +43,9 @@ def register_command(subparsers) -> None:
     parser.add_argument(
         "-o",
         "--output",
-        help='Output destination: omit for console table, use "console" for table, "-" for CSV to stdout, or a file path',
+        help='Output destination: omit for default file output, use "console" for table, "-" for CSV to stdout, or a file path',
     )
+    add_force_argument(parser)
 
     # Enhancement options
     parser.add_argument(
@@ -109,11 +118,14 @@ def handle_parts(args: argparse.Namespace) -> int:
 
         schematic_file = resolved_input.resolved_path
 
-        # Determine project name from context or file
-        if resolved_input.project_context:
-            project_name = resolved_input.project_context.project_base_name
-        else:
-            project_name = schematic_file.stem
+        if not resolved_input.project_context:
+            raise ValueError("No project context available")
+
+        project_context = resolved_input.project_context
+        project_name = project_context.project_base_name
+        default_output_path = (
+            project_context.project_directory / f"{project_name}.parts.csv"
+        )
 
         # Use services directly - no workflow abstraction needed
         reader = SchematicReader(options)
@@ -174,7 +186,13 @@ def handle_parts(args: argparse.Namespace) -> int:
             parts_data = _enhance_parts_with_inventory(parts_data, inventory_file)
 
         # Handle output
-        return _output_parts(parts_data, args.output, project_name)
+        return _output_parts(
+            parts_data,
+            args.output,
+            project_name,
+            default_output_path=default_output_path,
+            force=args.force,
+        )
 
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
@@ -192,28 +210,46 @@ def _enhance_parts_with_inventory(
 
 
 def _output_parts(
-    parts_data: PartsListData, output: Optional[str], project_name: str
+    parts_data: PartsListData,
+    output: Optional[str],
+    project_name: str,
+    *,
+    default_output_path: Path,
+    force: bool,
 ) -> int:
-    """Output Parts List data in the requested format.
+    """Output Parts List data in the requested format."""
+    dest = resolve_output_destination(
+        output,
+        default_destination=OutputDestination(
+            OutputKind.FILE, path=default_output_path
+        ),
+    )
 
-    Human-first defaults (UX consistency with bom/pos/inventory):
-    - output is None or "console" => formatted table to stdout
-    - output == "-" => CSV to stdout
-    - otherwise => treat as file path
-
-    Note: "stdout" is not a special value. If provided (e.g. `-o stdout`), it is treated
-    as a literal filename.
-    """
-    if output is None or output == "console":
+    if dest.kind == OutputKind.CONSOLE:
         _print_console_table(parts_data)
         return 0
 
-    if output == "-":
-        _print_csv(parts_data)
+    if dest.kind == OutputKind.STDOUT:
+        _print_csv(parts_data, out=sys.stdout)
         return 0
 
-    output_path = Path(output)
-    _write_csv(parts_data, output_path)
+    if not dest.path:
+        raise ValueError("Internal error: file output selected but no path provided")
+
+    output_path = dest.path
+    refused = f"Error: Output file '{output_path}' already exists. Use -F/--force to overwrite."
+
+    try:
+        with open_output_text_file(
+            output_path,
+            force=force,
+            refused_message=refused,
+        ) as f:
+            _print_csv(parts_data, out=f)
+    except OutputRefusedError as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
+
     print(f"Parts list written to {output_path}")
     return 0
 
@@ -252,9 +288,10 @@ def _print_console_table(parts_data: PartsListData) -> None:
         )
 
 
-def _print_csv(parts_data: PartsListData) -> None:
-    """Print Parts List as CSV to stdout."""
-    writer = csv.writer(sys.stdout)
+def _print_csv(parts_data: PartsListData, *, out: TextIO) -> None:
+    """Print Parts List as CSV to a file-like object."""
+
+    writer = csv.writer(out)
 
     # Headers
     headers = ["Reference", "Value", "Footprint"]
@@ -281,13 +318,3 @@ def _print_csv(parts_data: PartsListData) -> None:
             )
 
         writer.writerow(row)
-
-
-def _write_csv(parts_data: PartsListData, output_path: Path) -> None:
-    """Write Parts List as CSV to file."""
-    with open(output_path, "w", newline="", encoding="utf-8") as csvfile:
-        # Use the same logic as stdout
-        old_stdout = sys.stdout
-        sys.stdout = csvfile
-        _print_csv(parts_data)
-        sys.stdout = old_stdout

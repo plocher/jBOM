@@ -6,7 +6,16 @@ import argparse
 import csv
 import sys
 from pathlib import Path
+from typing import TextIO
 
+from jbom.cli.output import (
+    OutputDestination,
+    OutputKind,
+    OutputRefusedError,
+    add_force_argument,
+    open_output_text_file,
+    resolve_output_destination,
+)
 from jbom.services.inventory_reader import InventoryReader
 from jbom.services.search.cache import InMemorySearchCache
 from jbom.services.search.inventory_search_service import InventorySearchService
@@ -30,8 +39,9 @@ def register_command(subparsers) -> None:
     parser.add_argument(
         "-o",
         "--output",
-        help="Output file for enhanced inventory with search candidates (CSV)",
+        help="Output destination for enhanced inventory CSV: omit/console for none, '-' for stdout, or a file path",
     )
+    add_force_argument(parser)
 
     parser.add_argument(
         "--report",
@@ -103,13 +113,21 @@ def handle_inventory_search(args: argparse.Namespace) -> int:
 
         records = service.search(searchable)
 
+        dest = resolve_output_destination(
+            args.output,
+            default_destination=OutputDestination(OutputKind.CONSOLE),
+        )
+
         report = service.generate_report(records)
         if args.report:
             Path(args.report).write_text(report, encoding="utf-8")
         else:
-            print(report)
+            # If the user asked for CSV to stdout, keep stdout machine-readable by
+            # emitting the human report to stderr.
+            report_stream = sys.stderr if dest.kind == OutputKind.STDOUT else sys.stdout
+            print(report, file=report_stream)
 
-        if args.output:
+        if dest.kind == OutputKind.FILE or dest.kind == OutputKind.STDOUT:
             header_order = _load_header_order(inventory_path)
             enhanced_rows = service.enhance_inventory_rows(
                 items,
@@ -118,14 +136,29 @@ def handle_inventory_search(args: argparse.Namespace) -> int:
             )
             out_fields = header_order + service.enhanced_csv_columns()
 
-            out_path = Path(args.output)
-            with open(out_path, "w", newline="", encoding="utf-8") as f:
-                writer = csv.DictWriter(f, fieldnames=out_fields)
-                writer.writeheader()
-                for row in enhanced_rows:
-                    writer.writerow(row)
+            if dest.kind == OutputKind.STDOUT:
+                _write_enhanced_csv(enhanced_rows, out_fields, out=sys.stdout)
+            else:
+                if not dest.path:
+                    raise ValueError(
+                        "Internal error: file output selected but no path provided"
+                    )
 
-            print(f"Enhanced inventory written to {out_path}")
+                out_path = dest.path
+                refused = f"Error: Output file '{out_path}' already exists. Use -F/--force to overwrite."
+
+                try:
+                    with open_output_text_file(
+                        out_path,
+                        force=args.force,
+                        refused_message=refused,
+                    ) as f:
+                        _write_enhanced_csv(enhanced_rows, out_fields, out=f)
+                except OutputRefusedError as exc:
+                    print(str(exc), file=sys.stderr)
+                    return 1
+
+                print(f"Enhanced inventory written to {out_path}")
 
         return 0
 
@@ -155,6 +188,13 @@ def _print_dry_run_summary(items) -> None:
         print("By category:")
         for cat, count in sorted(by_cat.items()):
             print(f"  {cat}: {count}")
+
+
+def _write_enhanced_csv(rows: list[dict], fields: list[str], *, out: TextIO) -> None:
+    writer = csv.DictWriter(out, fieldnames=fields)
+    writer.writeheader()
+    for row in rows:
+        writer.writerow(row)
 
 
 def _load_header_order(path: Path) -> list[str]:

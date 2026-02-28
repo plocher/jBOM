@@ -11,8 +11,8 @@ Feature: BOM Generation (Core Functionality)
       | C1        | 100nF | C_0603_1608       |
       | U1        | LM358 | SOIC-8_3.9x4.9mm |
 
-  Scenario: Generate basic BOM with default console output (human-first)
-    When I run jbom command "bom"
+  Scenario: Generate basic BOM with console output (human-first)
+    When I run jbom command "bom -o console"
     Then the command should succeed
     And the output should contain "R1"
     And the output should contain "10K"

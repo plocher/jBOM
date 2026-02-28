@@ -12,7 +12,7 @@ Feature: POS Generation (Core Functionality)
       | R1        | 10| 5 | 0        | TOP  | R_0805_2012       |
       | C1        | 15| 8 | 90       | TOP  | C_0603_1608       |
       | U1        | 25|12 | 180      | TOP  | SOIC-8_3.9x4.9mm |
-    When I run jbom command "pos"
+    When I run jbom command "pos -o console"
     Then the command should succeed
     And the output should contain "Component Placement Data"
     And the output should contain "R1"

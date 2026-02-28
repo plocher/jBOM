@@ -22,23 +22,18 @@ Feature: UX Consistency Across Commands
       | CAP_100nF | CAP      | 100nF | 100nF capacitor  | 0603    |
       | IC_LM358  | IC       | LM358 | Op-amp           | SOIC-8  |
 
-  Scenario: All commands default to human-readable console output
+  Scenario: bom/pos/inventory default to file output
     When I run jbom command "bom"
     Then the command should succeed
-    And the output should contain "Bill of Materials"
-    And the output should contain "R1"
-    And the output should contain "10k"
+    And a file named "project.bom.csv" should exist
 
     When I run jbom command "pos"
     Then the command should succeed
-    And the output should contain "Component Placement Data"
-    And the output should contain "R1"
-    And the output should contain "5"
+    And a file named "project.pos.csv" should exist
 
-    When I run jbom command "inventory --inventory test_inventory.csv"
+    When I run jbom command "inventory"
     Then the command should succeed
-    And the output should contain "Generated inventory"
-    And the IPN for component "R1" should be consistent
+    And a file named "part-inventory.csv" should exist
 
   Scenario: All commands support -o - for CSV stdout
     When I run jbom command "bom -o -"
@@ -115,11 +110,11 @@ Feature: UX Consistency Across Commands
       | Reference | X | Y | Side |
     And an inventory file "test_inventory.csv" that contains:
       | IPN       | Category | Value | Description      | Package |
-    When I run jbom command "bom"
+    When I run jbom command "bom -o console"
     Then the command should succeed
     And the output should contain "No components found"
 
-    When I run jbom command "pos"
+    When I run jbom command "pos -o console"
     Then the command should succeed
     And the output should contain "No components found"
 
