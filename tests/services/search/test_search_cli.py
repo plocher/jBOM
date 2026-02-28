@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 
 from jbom.cli.search import handle_search
+from jbom.services.search.cache import InMemorySearchCache
 from jbom.services.search.models import SearchResult
 
 
@@ -48,7 +49,7 @@ def test_search_console_output(monkeypatch, capsys):
         output="console",
     )
 
-    rc = handle_search(args)
+    rc = handle_search(args, _cache=InMemorySearchCache())
     assert rc == 0
 
     out = capsys.readouterr().out
@@ -75,7 +76,7 @@ def test_search_csv_stdout(monkeypatch, capsys):
         output="-",
     )
 
-    rc = handle_search(args)
+    rc = handle_search(args, _cache=InMemorySearchCache())
     assert rc == 0
 
     out = capsys.readouterr().out.splitlines()
@@ -104,7 +105,7 @@ def test_search_csv_file(monkeypatch, tmp_path):
         output=str(outpath),
     )
 
-    rc = handle_search(args)
+    rc = handle_search(args, _cache=InMemorySearchCache())
     assert rc == 0
 
     text = outpath.read_text(encoding="utf-8")

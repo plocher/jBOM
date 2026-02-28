@@ -16,7 +16,7 @@ from jbom.cli.output import (
     open_output_text_file,
     resolve_output_destination,
 )
-from jbom.services.search.cache import InMemorySearchCache, SearchCache
+from jbom.services.search.cache import DiskSearchCache, InMemorySearchCache, SearchCache
 from jbom.services.search.filtering import (
     SearchFilter,
     SearchSorter,
@@ -57,6 +57,18 @@ def register_command(subparsers) -> None:
     parser.add_argument("--api-key", help="API key (overrides env vars)")
 
     parser.add_argument(
+        "--no-cache",
+        action="store_true",
+        help="Disable persistent disk cache for this run",
+    )
+
+    parser.add_argument(
+        "--clear-cache",
+        action="store_true",
+        help="Clear persistent cache entries for this provider before running",
+    )
+
+    parser.add_argument(
         "--all",
         action="store_true",
         help="Disable default filters (show out-of-stock/obsolete results)",
@@ -78,10 +90,12 @@ def register_command(subparsers) -> None:
     parser.set_defaults(handler=handle_search)
 
 
-def handle_search(args: argparse.Namespace) -> int:
+def handle_search(
+    args: argparse.Namespace, *, _cache: SearchCache | None = None
+) -> int:
     """Handle `jbom search` command."""
 
-    cache = InMemorySearchCache()
+    cache = _cache if _cache is not None else _build_cache(args)
 
     try:
         provider = _create_provider(args.provider, api_key=args.api_key, cache=cache)
@@ -111,6 +125,16 @@ def handle_search(args: argparse.Namespace) -> int:
 
     force = bool(getattr(args, "force", False))
     return _output_results(results, output=args.output, force=force)
+
+
+def _build_cache(args: argparse.Namespace) -> SearchCache:
+    if getattr(args, "clear_cache", False):
+        DiskSearchCache(args.provider).clear()
+
+    if getattr(args, "no_cache", False):
+        return InMemorySearchCache()
+
+    return DiskSearchCache(args.provider)
 
 
 def _create_provider(
