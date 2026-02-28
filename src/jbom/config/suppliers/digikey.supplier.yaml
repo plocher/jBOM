@@ -11,4 +11,4 @@ part_number: {}
 
 search:
   cache:
-    ttl_seconds: 10
+    ttl_hours: 24

@@ -11,4 +11,4 @@ search_url_template: "https://www.lcsc.com/search?q={query}"
 
 search:
   cache:
-    ttl_seconds: 10
+    ttl_hours: 24

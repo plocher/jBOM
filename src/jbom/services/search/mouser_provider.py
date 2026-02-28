@@ -66,10 +66,25 @@ class MouserProvider(SearchProvider):
                 supplier.search_retry_delay_seconds if supplier is not None else None
             )
 
-        if timeout is None or max_retries is None or retry_delay is None:
-            raise ValueError(
-                "Mouser search settings must be configured via supplier profile 'mouser.supplier.yaml' (search.api.*)"
+        # Keep behavior robust if the supplier profile is incomplete.
+        if timeout is None:
+            logger.warning(
+                "Supplier profile '%s' missing search.api.timeout_seconds; defaulting to 10s",
+                self.provider_id,
             )
+            timeout = 10.0
+        if max_retries is None:
+            logger.warning(
+                "Supplier profile '%s' missing search.api.max_retries; defaulting to 3",
+                self.provider_id,
+            )
+            max_retries = 3
+        if retry_delay is None:
+            logger.warning(
+                "Supplier profile '%s' missing search.api.retry_delay_seconds; defaulting to 1s",
+                self.provider_id,
+            )
+            retry_delay = 1.0
 
         self._timeout = max(0.0, float(timeout))
         self._max_retries = max(0, int(max_retries))

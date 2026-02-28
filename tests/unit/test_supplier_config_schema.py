@@ -36,8 +36,7 @@ def test_load_supplier_lcsc() -> None:
     assert lcsc.search_url_template
     assert lcsc.part_number_pattern
 
-    # Search cache TTL defaults are expressed in seconds for readability.
-    assert lcsc.search_cache_ttl_seconds == 10
+    assert lcsc.search_cache_ttl_hours == 24
 
 
 def test_load_unknown_supplier_raises() -> None:

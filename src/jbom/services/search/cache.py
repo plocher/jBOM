@@ -141,34 +141,16 @@ class DiskSearchCache:
 
         if ttl is None:
             supplier = resolve_supplier_by_id(self._provider_id)
-            ttl_seconds = (
-                supplier.search_cache_ttl_seconds if supplier is not None else None
-            )
             ttl_hours = (
                 supplier.search_cache_ttl_hours if supplier is not None else None
             )
 
-            if ttl_seconds is None and ttl_hours is None:
+            if ttl_hours is None:
                 logger.warning(
-                    "Supplier profile '%s' missing search.cache.ttl_seconds/ttl_hours; defaulting DiskSearchCache TTL to 10s",
+                    "Supplier profile '%s' missing search.cache.ttl_hours; defaulting DiskSearchCache TTL to 24h",
                     self._provider_id,
                 )
-                ttl = timedelta(seconds=10)
-            elif ttl_seconds is not None:
-                try:
-                    ttl_seconds_f = float(ttl_seconds)
-                except (TypeError, ValueError):
-                    ttl_seconds_f = 0.0
-
-                if ttl_seconds_f <= 0:
-                    logger.warning(
-                        "Supplier profile '%s' has invalid search.cache.ttl_seconds=%r; defaulting DiskSearchCache TTL to 10s",
-                        self._provider_id,
-                        ttl_seconds,
-                    )
-                    ttl = timedelta(seconds=10)
-                else:
-                    ttl = timedelta(seconds=ttl_seconds_f)
+                ttl = timedelta(hours=24)
             else:
                 try:
                     ttl_hours_f = float(ttl_hours)
@@ -177,11 +159,11 @@ class DiskSearchCache:
 
                 if ttl_hours_f <= 0:
                     logger.warning(
-                        "Supplier profile '%s' has invalid search.cache.ttl_hours=%r; defaulting DiskSearchCache TTL to 10s",
+                        "Supplier profile '%s' has invalid search.cache.ttl_hours=%r; defaulting DiskSearchCache TTL to 24h",
                         self._provider_id,
                         ttl_hours,
                     )
-                    ttl = timedelta(seconds=10)
+                    ttl = timedelta(hours=24)
                 else:
                     ttl = timedelta(hours=ttl_hours_f)
 
