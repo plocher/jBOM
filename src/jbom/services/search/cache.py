@@ -15,6 +15,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Optional, Protocol
 
+from jbom.config.suppliers import resolve_supplier_by_id
 from jbom.services.search.models import SearchResult
 
 
@@ -134,7 +135,19 @@ class DiskSearchCache:
         cache_root: Path | None = None,
     ) -> None:
         self._provider_id = (provider_id or "").strip().lower()
-        self._ttl = ttl if ttl is not None else timedelta(hours=24)
+
+        if ttl is None:
+            supplier = resolve_supplier_by_id(self._provider_id)
+            ttl_hours = (
+                supplier.search_cache_ttl_hours if supplier is not None else None
+            )
+            if ttl_hours is None:
+                raise ValueError(
+                    "DiskSearchCache requires a ttl, or supplier profile must define search.cache.ttl_hours"
+                )
+            ttl = timedelta(hours=float(ttl_hours))
+
+        self._ttl = ttl
 
         root = cache_root if cache_root is not None else Path("~/.cache/jbom/search")
         self._root = Path(root).expanduser()
@@ -144,11 +157,21 @@ class DiskSearchCache:
     def provider_id(self) -> str:
         return self._provider_id
 
+    @staticmethod
+    def clear_provider(provider_id: str, *, cache_root: Path | None = None) -> None:
+        """Delete all cached entries for provider_id."""
+
+        pid = (provider_id or "").strip().lower()
+        root = cache_root if cache_root is not None else Path("~/.cache/jbom/search")
+        provider_dir = Path(root).expanduser() / pid
+
+        if provider_dir.exists():
+            shutil.rmtree(provider_dir)
+
     def clear(self) -> None:
         """Delete all cached entries for this provider."""
 
-        if self._provider_dir.exists():
-            shutil.rmtree(self._provider_dir)
+        DiskSearchCache.clear_provider(self._provider_id, cache_root=self._root)
 
     def _key_filename(self, key: SearchCacheKey) -> str:
         token = f"{key.provider_id}{key.query}{key.limit}"

@@ -8,3 +8,11 @@ part_number:
   example: "595-TPS62133DQCR"
 url_template: "https://www.mouser.com/ProductDetail/{pn}"
 search_url_template: "https://www.mouser.com/c/?q={query}"
+
+search:
+  cache:
+    ttl_hours: 24
+  api:
+    timeout_seconds: 10.0
+    max_retries: 3
+    retry_delay_seconds: 1.0

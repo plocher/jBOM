@@ -35,6 +35,12 @@ class SupplierConfig:
     part_number_pattern: Optional[str] = None
     part_number_example: Optional[str] = None
 
+    # Search behavior tuning (optional).
+    search_cache_ttl_hours: Optional[float] = None
+    search_timeout_seconds: Optional[float] = None
+    search_max_retries: Optional[int] = None
+    search_retry_delay_seconds: Optional[float] = None
+
     @staticmethod
     def from_yaml_dict(data: Dict[str, Any], *, default_id: str) -> "SupplierConfig":
         """Parse a SupplierConfig from a YAML dict.
@@ -87,6 +93,49 @@ class SupplierConfig:
         if url_template is not None and not isinstance(url_template, str):
             raise ValueError(f"Supplier '{sid}' url_template must be a string or null")
 
+        # Optional search behavior tuning.
+        search_cfg = data.get("search") or {}
+        if not isinstance(search_cfg, dict):
+            raise ValueError(f"Supplier '{sid}' search must be a mapping")
+
+        cache_cfg = search_cfg.get("cache") or {}
+        if not isinstance(cache_cfg, dict):
+            raise ValueError(f"Supplier '{sid}' search.cache must be a mapping")
+
+        cache_ttl_hours = cache_cfg.get("ttl_hours")
+        if cache_ttl_hours is not None and not isinstance(
+            cache_ttl_hours, (int, float)
+        ):
+            raise ValueError(
+                f"Supplier '{sid}' search.cache.ttl_hours must be a number or null"
+            )
+
+        api_cfg = search_cfg.get("api") or {}
+        if not isinstance(api_cfg, dict):
+            raise ValueError(f"Supplier '{sid}' search.api must be a mapping")
+
+        timeout_seconds = api_cfg.get("timeout_seconds")
+        if timeout_seconds is not None and not isinstance(
+            timeout_seconds, (int, float)
+        ):
+            raise ValueError(
+                f"Supplier '{sid}' search.api.timeout_seconds must be a number or null"
+            )
+
+        max_retries = api_cfg.get("max_retries")
+        if max_retries is not None and not isinstance(max_retries, int):
+            raise ValueError(
+                f"Supplier '{sid}' search.api.max_retries must be an int or null"
+            )
+
+        retry_delay_seconds = api_cfg.get("retry_delay_seconds")
+        if retry_delay_seconds is not None and not isinstance(
+            retry_delay_seconds, (int, float)
+        ):
+            raise ValueError(
+                f"Supplier '{sid}' search.api.retry_delay_seconds must be a number or null"
+            )
+
         search_url_template = data.get("search_url_template")
         if search_url_template is not None and not isinstance(search_url_template, str):
             raise ValueError(
@@ -120,6 +169,16 @@ class SupplierConfig:
             search_url_template=search_url_template,
             part_number_pattern=pattern,
             part_number_example=example,
+            search_cache_ttl_hours=(
+                float(cache_ttl_hours) if cache_ttl_hours is not None else None
+            ),
+            search_timeout_seconds=(
+                float(timeout_seconds) if timeout_seconds is not None else None
+            ),
+            search_max_retries=(int(max_retries) if max_retries is not None else None),
+            search_retry_delay_seconds=(
+                float(retry_delay_seconds) if retry_delay_seconds is not None else None
+            ),
         )
 
 
