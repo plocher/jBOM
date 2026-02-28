@@ -1,0 +1,6193 @@
+{
+  "Errors": [],
+  "SearchResults": {
+    "NumberOfResult": 1596,
+    "Parts": [
+      {
+        "Availability": "17964 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Thin Film Resistors - SMD MCT 0603-50 1% P5 10K2",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/vishay/images/MCT0603_series_SPL.jpg",
+        "Category": "Thin Film Resistors - SMD",
+        "LeadTime": "63 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Vishay / Beyschlag",
+        "ManufacturerPartNumber": "MCT06030C1022FP500",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "594-MCT06030C1022FP5",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "5000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.16",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.074",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.041",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.034",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.03",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.026",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.023",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25000,
+            "Price": "$0.017",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Vishay-Beyschlag/MCT06030C1022FP500?qs=hjSuqQECij%252BwfccFNIpVsA%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant By Exemption",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 2e-06
+        },
+        "AvailabilityInStock": "17964",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 14 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533211000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "5975 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Thin Film Resistors - SMD MCT 0603-25 0.1% AT P5 10K5",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/vishay/images/MCT_MCU_MCS_MCA_series_DSL.JPG",
+        "Category": "Thin Film Resistors - SMD",
+        "LeadTime": "70 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Vishay / Beyschlag",
+        "ManufacturerPartNumber": "MCT0603MD1052BP500",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "594-MCT0603MD1052BP5",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "5000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.49",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.353",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.247",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.212",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.186",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.17",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.155",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10000,
+            "Price": "$0.135",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Vishay-Beyschlag/MCT0603MD1052BP500?qs=17u8i%2FzlE883pCG3RQV5%2Fw%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "5975",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533211000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "20000 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Thick Film Resistors - SMD CRG0603 1% 1M0 10K RL",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/tycoelectronics/images/crg0.jpg",
+        "Category": "Thick Film Resistors - SMD",
+        "LeadTime": "66 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "TE Connectivity / Holsworthy",
+        "ManufacturerPartNumber": "CRG0603F1M0/10",
+        "Min": "10000",
+        "Mult": "10000",
+        "MouserPartNumber": "279-CRG0603F1M0/10",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "10000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 10000,
+            "Price": "$0.005",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 20000,
+            "Price": "$0.004",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/TE-Connectivity-Holsworthy/CRG0603F1M0-10?qs=s1WWODT2SXVmMRw54xD%2FMg%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant By Exemption",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 2e-06
+        },
+        "AvailabilityInStock": "20000",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533211000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "722 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Thin Film Resistors - SMD MCT 0603-50 1% VG01 P1 10K",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/vishay/images/mcs.JPG",
+        "Category": "Thin Film Resistors - SMD",
+        "LeadTime": "70 Days",
+        "LifecycleStatus": "New at Mouser",
+        "Manufacturer": "Vishay / Beyschlag",
+        "ManufacturerPartNumber": "MCT0603HC1002FP100",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "594-MCT0603HC1002FP1",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "1000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.81",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.572",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.387",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.369",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.353",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.335",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.333",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25000,
+            "Price": "$0.307",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Vishay-Beyschlag/MCT0603HC1002FP100?qs=qwSSGa6Vz%252B7PwDjErIH6Jg%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 2e-06
+        },
+        "AvailabilityInStock": "722",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 14 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "9228 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Thin Film Resistors - SMD MCT 0603-25 0.1% PW 10K",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/vishay/images/MCS04020D4021BE000_DSL.jpg",
+        "Category": "Thin Film Resistors - SMD",
+        "LeadTime": "77 Days",
+        "LifecycleStatus": "New at Mouser",
+        "Manufacturer": "Vishay / Beyschlag",
+        "ManufacturerPartNumber": "MCT06030D1002BPW00",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "594-MCT06030D1002BPW",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "20000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.39",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.20",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.118",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.10",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.087",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.077",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.064",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10000,
+            "Price": "$0.06",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 20000,
+            "Price": "$0.053",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Vishay-Beyschlag/MCT06030D1002BPW00?qs=17u8i%2FzlE8%252Ba%2FPOkVIgBOQ%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "9228",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 14 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533211000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "889 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Thin Film Resistors - SMD PTN0603 25PPM 10K 0.1% S T0 e1",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/vishay/images/PTN_series_DSL.jpg",
+        "Category": "Thin Film Resistors - SMD",
+        "LeadTime": "112 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Vishay / Thin Film",
+        "ManufacturerPartNumber": "PTN0603E1002BST0",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "71-PTN0603E1002BST0",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "100"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.79",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.56",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.378",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 300,
+            "Price": "$0.35",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.326",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.303",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25000,
+            "Price": "$0.28",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Vishay-Thin-Film/PTN0603E1002BST0?qs=Mv7BduZupUizTfGgcLJ4nA%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "889",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533211000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "400 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Thick Film Resistors - SMD 12.5mWatts 10Kohms1% 1% 230 C Op Temp",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/vishay/images/CHPHT_series.jpg",
+        "Category": "Thick Film Resistors - SMD",
+        "LeadTime": "112 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Vishay / Sfernice",
+        "ManufacturerPartNumber": "CHPHT0603K1002FGT",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "71-CHPHT0603K1002FGT",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "500"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$12.32",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$8.19",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 50,
+            "Price": "$7.91",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$7.53",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$6.62",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$6.11",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Vishay-Sfernice/CHPHT0603K1002FGT?qs=hcpCFr%252B3G5Pwu6l3MBe29g%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant By Exemption",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 2e-06
+        },
+        "AvailabilityInStock": "400",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 14 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533211000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "19058 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/40/1/chp_a.pdf",
+        "Description": "Thick Film Resistors - SMD ResHighPowerA 0603 100k 1% 1/3W TC100",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/bourns/images/CHP_series_DSL_t.jpg",
+        "Category": "Thick Film Resistors - SMD",
+        "LeadTime": "98 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Bourns",
+        "ManufacturerPartNumber": "CHP0603AFX-1003ELF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "652-CHP0603AFX1003EL",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "5000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.34",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.125",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.109",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.099",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.093",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.086",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.073",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10000,
+            "Price": "$0.065",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25000,
+            "Price": "$0.063",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Bourns/CHP0603AFX-1003ELF?qs=BJlw7L4Cy79KOrxkyd9dmw%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant By Exemption",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 2e-06
+        },
+        "AvailabilityInStock": "19058",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533211000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "8388 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Thin Film Resistors - SMD 150mW 10kohm 0.1% 25PPM 0603",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/vishay/images/PAT_Series_DSL.jpg",
+        "Category": "Thin Film Resistors - SMD",
+        "LeadTime": "91 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Vishay / Thin Film",
+        "ManufacturerPartNumber": "PAT0603E1002BST1",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "71-PAT0603E1002BST1",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "1000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.65",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.475",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.449",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.419",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.399",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.361",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.349",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10000,
+            "Price": "$0.34",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Vishay-Thin-Film/PAT0603E1002BST1?qs=Bakm8ERcljqvBn%2FqxsRhBQ%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 2e-06
+        },
+        "AvailabilityInStock": "8388",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533211000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "897 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Thin Film Resistors - SMD MCT 0603-50 1% VG01 P5 10K",
+        "FactoryStock": "0",
+        "ImagePath": null,
+        "Category": "Thin Film Resistors - SMD",
+        "LeadTime": "70 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Vishay / Beyschlag",
+        "ManufacturerPartNumber": "MCT0603HC1002FP500",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "594-MCT0603HC1002FP5",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "5000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.46",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.331",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.231",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.199",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.175",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.159",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.125",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10000,
+            "Price": "$0.124",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Vishay-Beyschlag/MCT0603HC1002FP500?qs=17u8i%2FzlE8%2Fy4riIF6%2FJNA%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant By Exemption",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "897",
+        "AvailabilityOnOrder": [
+          {
+            "Quantity": 5000,
+            "Date": "2026-03-10T00:00:00"
+          }
+        ],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 14 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533211000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "1312 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Thin Film Resistors - SMD .1watt 10.7Kohms .1%",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/vishay/images/MCT0603_series_SPL.jpg",
+        "Category": "Thin Film Resistors - SMD",
+        "LeadTime": "63 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Vishay / Beyschlag",
+        "ManufacturerPartNumber": "MCT06030D1072BP100",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "594-MCT06030D1072BP1",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "1000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.61",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.432",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.299",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.267",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.241",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.233",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.22",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Vishay-Beyschlag/MCT06030D1072BP100?qs=hjSuqQECij9XfVHOmNFy6w%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant By Exemption",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 2e-06
+        },
+        "AvailabilityInStock": "1312",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 14 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533211000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "997 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Thin Film Resistors - SMD 150mW 10Kohms .1% 25ppm",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/vishay/images/p-ns.JPG",
+        "Category": "Thin Film Resistors - SMD",
+        "LeadTime": "91 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Vishay / Thin Film",
+        "ManufacturerPartNumber": "PNM0603E1002BST1",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "71-PNM0603E1002BST1",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "1000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$2.40",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.74",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$1.56",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$1.46",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$1.09",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2000,
+            "Price": "$1.07",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$1.02",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Vishay-Thin-Film/PNM0603E1002BST1?qs=GmxlWZd7RPKLOZBCHoq5GA%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 2e-06
+        },
+        "AvailabilityInStock": "997",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533211000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "28 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Thin Film Resistors - SMD P 0603 E 1002 B N TR e2",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/vishay/images/P-series_SPL.JPG",
+        "Category": "Thin Film Resistors - SMD",
+        "LeadTime": "112 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Vishay / Sfernice",
+        "ManufacturerPartNumber": "P0603E1002BNT",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "72-P0603E1002BNT",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Waffle"
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "1"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$7.94",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$6.21",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$5.97",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 50,
+            "Price": "$5.54",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$4.78",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$4.65",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Vishay-Sfernice/P0603E1002BNT?qs=uSBwRNbpOOKLTkjZiY1mRA%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 2e-06
+        },
+        "AvailabilityInStock": "28",
+        "AvailabilityOnOrder": [
+          {
+            "Quantity": 100,
+            "Date": "2026-06-26T00:00:00"
+          }
+        ],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 14 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "4283 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Thin Film Resistors - SMD 25ppm 10Kohms .1%",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/vishay/images/PTN_series_DSL.jpg",
+        "Category": "Thin Film Resistors - SMD",
+        "LeadTime": "112 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Vishay / Thin Film",
+        "ManufacturerPartNumber": "PTN0603E1002BBTF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "71-PTN0603E1002BBTF",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "5000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.56",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.411",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.389",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.36",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.341",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.328",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.305",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10000,
+            "Price": "$0.286",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25000,
+            "Price": "$0.284",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Vishay-Thin-Film/PTN0603E1002BBTF?qs=q3SJ8jb5d6YkLl%252BVOSlXIg%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "REACH-SVHC": [
+          "Lead (7439-92-1)"
+        ],
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 2e-06
+        },
+        "AvailabilityInStock": "4283",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533211000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "20000 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Thick Film Resistors - SMD RMC 0603 1/10W 0.5% T/R-5000",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/royalohm/images/Gen_Purpose_Thick_film_DSL.jpg",
+        "Category": "Thick Film Resistors - SMD",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Royalohm",
+        "ManufacturerPartNumber": "0603WAD1002T5E",
+        "Min": "5000",
+        "Mult": "5000",
+        "MouserPartNumber": "303-0603WAD1002T5E",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "5000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 5000,
+            "Price": "$0.004",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25000,
+            "Price": "$0.003",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Royalohm/0603WAD1002T5E?qs=e8oIoAS2J1SIj9xt36q40A%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant By Exemption",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 2e-06
+        },
+        "AvailabilityInStock": "20000",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "27500 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Thick Film Resistors - SMD RMC 0603 1/10W 5% T/R-10000",
+        "FactoryStock": "0",
+        "ImagePath": null,
+        "Category": "Thick Film Resistors - SMD",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "Royalohm",
+        "ManufacturerPartNumber": "0603WAJ0103TCE",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "303-0603WAJ0103TCE",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "10000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.10",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.007",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.004",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.003",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.002",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10000,
+            "Price": "$0.001",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Royalohm/0603WAJ0103TCE?qs=jcD%2FCkGBYeOF%252BjMul0vyoA%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "27500",
+        "AvailabilityOnOrder": [
+          {
+            "Quantity": 100000,
+            "Date": "2026-03-06T00:00:00"
+          }
+        ],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "6898 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/5925/1/1.pdf",
+        "Description": "Thick Film Resistors - SMD RMC 0603 1/10W-S 1% S/B-5000",
+        "FactoryStock": "0",
+        "ImagePath": null,
+        "Category": "Thick Film Resistors - SMD",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "Royalohm",
+        "ManufacturerPartNumber": "0603SAF1002P5E",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "303-0603SAF1002P5E",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "5000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.22",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.041",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.021",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.014",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.012",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.008",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10000,
+            "Price": "$0.007",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25000,
+            "Price": "$0.006",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 50000,
+            "Price": "$0.005",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Royalohm/0603SAF1002P5E?qs=jcD%2FCkGBYeNKcbtPL7aaQw%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "6898",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "20000 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Thick Film Resistors - SMD RMC 0603 1/16W 1% T/R-5000",
+        "FactoryStock": "0",
+        "ImagePath": null,
+        "Category": "Thick Film Resistors - SMD",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Royalohm",
+        "ManufacturerPartNumber": "0603WGF1002T5E",
+        "Min": "5000",
+        "Mult": "5000",
+        "MouserPartNumber": "303-0603WGF1002T5E",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "5000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 5000,
+            "Price": "$0.001",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Royalohm/0603WGF1002T5E?qs=By6Nw2ByBD2xMz1psGTSig%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant By Exemption",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "20000",
+        "AvailabilityOnOrder": [
+          {
+            "Quantity": 100000,
+            "Date": "2026-04-10T00:00:00"
+          }
+        ],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "3933 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Thin Film Resistors - SMD MCT 0603-05 0.1% AT P5 10K",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/vishay/images/MCx_series_DSL.jpg",
+        "Category": "Thin Film Resistors - SMD",
+        "LeadTime": "70 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Vishay / Beyschlag",
+        "ManufacturerPartNumber": "MCT0603MG1002BP500",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "594-MCT0603MG1002BP5",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "5000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.48",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.23",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$1.08",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$1.02",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.956",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.912",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.886",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.852",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Vishay-Beyschlag/MCT0603MG1002BP500?qs=Y0Uzf4wQF3kTztUxcSxY1w%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "3933",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533211000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "4211 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Thin Film Resistors - SMD MCT 0603-10 0.1% P5 10K",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/vishay/images/MCT0603_series_SPL.jpg",
+        "Category": "Thin Film Resistors - SMD",
+        "LeadTime": "70 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Vishay / Beyschlag",
+        "ManufacturerPartNumber": "MCT06030F1002BP500",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "594-MCT06030F1002BP5",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "5000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.16",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.687",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.535",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.451",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.425",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.373",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10000,
+            "Price": "$0.37",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Vishay-Beyschlag/MCT06030F1002BP500?qs=ipmmcVavBGcvVRYYh5jc9g%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 2e-06
+        },
+        "AvailabilityInStock": "4211",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533211000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "21059 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/catalog/specsheets/Bourns_08052024_CRT-A_Datasheet.pdf",
+        "Description": "Thin Film Resistors - SMD ResThinFilm 0603 10kR 0.5% 100mW TC25",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/bourns/images/CRT-ST_DSL.jpg",
+        "Category": "Thin Film Resistors - SMD",
+        "LeadTime": "91 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "Bourns",
+        "ManufacturerPartNumber": "CRT0603ADY-1002ELF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "652-CRT0603ADY-1002E",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "5000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.10",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.035",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.034",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.031",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.029",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.028",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.027",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25000,
+            "Price": "$0.023",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Bourns/CRT0603ADY-1002ELF?qs=IKkN%2F947nfCsFm5FPHOU%252Bw%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "21059",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533211000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "61689 In Stock",
+        "DataSheetUrl": "",
+        "Description": "NTC Thermistors 10Kohms 1% SMD",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/vishay/images/NTCSxxxxE3.JPG",
+        "Category": "NTC Thermistors",
+        "LeadTime": "70 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Vishay / BC Components",
+        "ManufacturerPartNumber": "NTCS0603E3103FLT",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "594-NTCS0603E3103FLT",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "4000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.61",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.575",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$0.531",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 50,
+            "Price": "$0.512",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.454",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.445",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.407",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.38",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 4000,
+            "Price": "$0.338",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Vishay-BC-Components/NTCS0603E3103FLT?qs=%2FWiulJ9oly66lfIcr%252B1Bpw%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant By Exemption",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 1.2e-06
+        },
+        "AvailabilityInStock": "61689",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 14 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533408070"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533400000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533400000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853340000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533409000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533401000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533409102"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85334011"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "28505 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Thin Film Resistors - SMD MCT 0603-50 1% PW 10K",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/vishay/images/MCT0603_series_SPL.jpg",
+        "Category": "Thin Film Resistors - SMD",
+        "LeadTime": "77 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Vishay / Beyschlag",
+        "ManufacturerPartNumber": "MCT06030C1002FPW00",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "594-MCT06030C1002FPW",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "20000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.10",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.024",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.023",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.021",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.02",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.019",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.017",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10000,
+            "Price": "$0.016",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 20000,
+            "Price": "$0.015",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Vishay-Beyschlag/MCT06030C1002FPW00?qs=hjSuqQECij96RPJROgBN0Q%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 2e-06
+        },
+        "AvailabilityInStock": "28505",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 14 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533211000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "29024 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/40/1/cr_a_as.pdf",
+        "Description": "Thick Film Resistors - SMD ResA-AS 0603 10k 1% 100mW TC100",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/bourns/images/CRxxxxA-AS_series_t.jpg",
+        "Category": "Thick Film Resistors - SMD",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Bourns",
+        "ManufacturerPartNumber": "CR0603AFX-1002EAS",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "652-CR0603AFX1002EAS",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "5000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.10",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.02",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.016",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.013",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.011",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.009",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.005",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10000,
+            "Price": "$0.004",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Bourns/CR0603AFX-1002EAS?qs=PzGy0jfpSMvnIWl2FjD7DQ%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant By Exemption",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 2e-06
+        },
+        "AvailabilityInStock": "29024",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533211000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "113382 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Thin Film Resistors - SMD .1W 10Kohms 1% 0603 50ppm Auto",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/vishay/images/MCT0603_series_SPL.jpg",
+        "Category": "Thin Film Resistors - SMD",
+        "LeadTime": "77 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Vishay / Beyschlag",
+        "ManufacturerPartNumber": "MCT06030C1002FP500",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "594-MCT06030C1002FP5",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "5000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.10",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.024",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.023",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.021",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.02",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.019",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.016",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10000,
+            "Price": "$0.015",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25000,
+            "Price": "$0.014",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Vishay-Beyschlag/MCT06030C1002FP500?qs=Wvg1umJc15zoHgIjwqoGHw%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 2e-06
+        },
+        "AvailabilityInStock": "113382",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 14 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533211000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "37377 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/80/9/ENG_CD_1622886_BA.pdf",
+        "Description": "Thick Film Resistors - SMD CRG0603 1% 22K 10K RL",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/tycoelectronics/images/crg0.jpg",
+        "Category": "Thick Film Resistors - SMD",
+        "LeadTime": "66 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "TE Connectivity / Holsworthy",
+        "ManufacturerPartNumber": "CRG0603F22K/10",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "279-CRG0603F22K/10",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "10000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.10",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.02",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.016",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.013",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.011",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.01",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.007",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10000,
+            "Price": "$0.003",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/TE-Connectivity-Holsworthy/CRG0603F22K-10?qs=9ylKvqdyudmQ1ZF2LQQoZA%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant By Exemption",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 2e-06
+        },
+        "AvailabilityInStock": "37377",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533211000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "6202 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Thin Film Resistors - SMD .1W 10Kohms .1% 0603 15ppm",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/vishay/images/MCT0603_series_SPL.jpg",
+        "Category": "Thin Film Resistors - SMD",
+        "LeadTime": "70 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Vishay / Beyschlag",
+        "ManufacturerPartNumber": "MCT06030E1002BP100",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "594-MCT06030E1002BP1",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "1000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.60",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.427",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.384",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.366",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.341",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.327",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.316",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10000,
+            "Price": "$0.275",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": [
+          {
+            "APMfrPN": "MCT06030E1002BP500"
+          }
+        ],
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Vishay-Beyschlag/MCT06030E1002BP100?qs=hjSuqQECij8a4wyJBhoGbA%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 2e-06
+        },
+        "AvailabilityInStock": "6202",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533211000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "28506 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/40/1/CRT.pdf",
+        "Description": "Thin Film Resistors - SMD CHIP RESISTOR Precision",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/bourns/images/CRT_series_SPL.jpg",
+        "Category": "Thin Film Resistors - SMD",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Bourns",
+        "ManufacturerPartNumber": "CRT0603-FY-1002ELF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "652-CRT0603FY1002ELF",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "5000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.15",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.056",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.039",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.032",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.028",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.024",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.021",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25000,
+            "Price": "$0.02",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Bourns/CRT0603-FY-1002ELF?qs=oyIm%2F3giSj4uSkUsV8azlw%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 2e-06
+        },
+        "AvailabilityInStock": "28506",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533211000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "723 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Thin Film Resistors - SMD 150mW 10kOHM 0.05% 0603 5PPM",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/vishay/images/plt.jpg",
+        "Category": "Thin Film Resistors - SMD",
+        "LeadTime": "112 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Vishay / Thin Film",
+        "ManufacturerPartNumber": "PLT0603Z1002AST5",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "71-PLT0603Z1002AST5",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "500"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$3.79",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$3.28",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$3.06",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$2.82",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$2.72",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$2.44",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Vishay-Thin-Film/PLT0603Z1002AST5?qs=oBjDkOCjPF3IytMPQai%2F5g%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 2e-06
+        },
+        "AvailabilityInStock": "723",
+        "AvailabilityOnOrder": [
+          {
+            "Quantity": 500,
+            "Date": "2026-03-16T00:00:00"
+          }
+        ],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533211000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "64649 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/40/1/CRT.pdf",
+        "Description": "Thin Film Resistors - SMD CHIP RESISTOR Precision",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/bourns/images/CRT_series_SPL.jpg",
+        "Category": "Thin Film Resistors - SMD",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Bourns",
+        "ManufacturerPartNumber": "CRT0603-FZ-1002ELF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "652-CRT0603FZ1002ELF",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "5000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.10",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.038",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.024",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.02",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.018",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.015",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.013",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Bourns/CRT0603-FZ-1002ELF?qs=oyIm%2F3giSj6U5mW%252Br09LDQ%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 2e-06
+        },
+        "AvailabilityInStock": "64649",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533211000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "19580 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/40/1/CRT.pdf",
+        "Description": "Thin Film Resistors - SMD 1/10watts 10K .1%",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/bourns/images/CRT_series_SPL.jpg",
+        "Category": "Thin Film Resistors - SMD",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Bourns",
+        "ManufacturerPartNumber": "CRT0603-BY-1002ELF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "652-CRT0603BY1002ELF",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "5000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.10",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.066",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.065",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.059",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.049",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10000,
+            "Price": "$0.045",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25000,
+            "Price": "$0.043",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Bourns/CRT0603-BY-1002ELF?qs=LKPZbmhlTxgzUffbGyQsfg%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 2e-06
+        },
+        "AvailabilityInStock": "19580",
+        "AvailabilityOnOrder": [
+          {
+            "Quantity": 25000,
+            "Date": "2026-05-08T00:00:00"
+          }
+        ],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533211000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "769858 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/40/1/cr.pdf",
+        "Description": "Thick Film Resistors - SMD 10K 1% 1/10W",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/bourns/images/chpreztr.jpg",
+        "Category": "Thick Film Resistors - SMD",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Bourns",
+        "ManufacturerPartNumber": "CR0603-FX-1002ELF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "652-CR0603FX-1002ELF",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "5000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.10",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.011",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.009",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.007",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.006",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.005",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.002",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Bourns/CR0603-FX-1002ELF?qs=K5ddiUFZPT6XHG0dQH96QA%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant By Exemption",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 2e-06
+        },
+        "AvailabilityInStock": "769858",
+        "AvailabilityOnOrder": [
+          {
+            "Quantity": 800000,
+            "Date": "2026-05-20T00:00:00"
+          }
+        ],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533211000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "8574 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/40/1/CRT.pdf",
+        "Description": "Thin Film Resistors - SMD CHIP RESISTOR Precision",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/bourns/images/CRT_series_SPL.jpg",
+        "Category": "Thin Film Resistors - SMD",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Bourns",
+        "ManufacturerPartNumber": "CRT0603-FX-1002ELF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "652-CRT0603FX1002ELF",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "5000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.15",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.113",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.111",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.103",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.09",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.087",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.071",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10000,
+            "Price": "$0.065",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25000,
+            "Price": "$0.06",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Bourns/CRT0603-FX-1002ELF?qs=9fn1gpisni7scx1VGwVssQ%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 2e-06
+        },
+        "AvailabilityInStock": "8574",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533211000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "35964 In Stock",
+        "DataSheetUrl": "",
+        "Description": "NTC Thermistors 10Kohms 1%",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/vishay/images/NTCSxxxxE3.JPG",
+        "Category": "NTC Thermistors",
+        "LeadTime": "70 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Vishay / BC Components",
+        "ManufacturerPartNumber": "NTCS0603E3103FMT",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "594-NTCS0603E3103FMT",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "4000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.61",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.575",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$0.538",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 50,
+            "Price": "$0.512",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.474",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.414",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.382",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 4000,
+            "Price": "$0.333",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Vishay-BC-Components/NTCS0603E3103FMT?qs=%2FWiulJ9oly7Ouwyz2sB2aA%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 1.2e-06
+        },
+        "AvailabilityInStock": "35964",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 14 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533408070"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533400000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533401000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533400000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853340000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533409000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533409102"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85334011"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "5066 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/40/1/crt_as.pdf",
+        "Description": "Thin Film Resistors - SMD 10K OHMS 0.1% 0603 Anti-Sulfur",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/bourns/images/CRT_series_SPL.jpg",
+        "Category": "Thin Film Resistors - SMD",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Bourns",
+        "ManufacturerPartNumber": "CRT0603-BY-1002EAS",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "652-CRT0603BY1002EAS",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "5000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.16",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.108",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.101",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.089",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.081",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.072",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.07",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10000,
+            "Price": "$0.053",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Bourns/CRT0603-BY-1002EAS?qs=EvbCu83THBCh1lt9vIhMzA%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 1.83e-06
+        },
+        "AvailabilityInStock": "5066",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533211000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "3084 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Thin Film Resistors - SMD .375watt 10Kohm .1% 25PPM",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/vishay/images/PHP_series.jpg",
+        "Category": "Thin Film Resistors - SMD",
+        "LeadTime": "91 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Vishay / Thin Film",
+        "ManufacturerPartNumber": "PHP00603E1002BST1",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "71-PHP00603E1002BST1",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "1000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.41",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.16",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$0.977",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.842",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.829",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.818",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.781",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2000,
+            "Price": "$0.737",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.733",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Vishay-Thin-Film/PHP00603E1002BST1?qs=gtRTXsew4b93R3AaiVx9Kw%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 2e-06
+        },
+        "AvailabilityInStock": "3084",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533211000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "10765 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/40/1/chp_a.pdf",
+        "Description": "Thick Film Resistors - SMD 10K   OHM   1% 1/3W",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/bourns/images/CHP_series_DSL_t.jpg",
+        "Category": "Thick Film Resistors - SMD",
+        "LeadTime": "98 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Bourns",
+        "ManufacturerPartNumber": "CHP0603AFX-1002ELF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "652-CHP0603AFX1002EL",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "5000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.34",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.133",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.11",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.101",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.093",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.086",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.073",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10000,
+            "Price": "$0.065",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25000,
+            "Price": "$0.063",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Bourns/CHP0603AFX-1002ELF?qs=BJlw7L4Cy7%252Bn%2FM7sjC7LSA%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 2e-06
+        },
+        "AvailabilityInStock": "10765",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533211000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "9814 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/catalog/specsheets/Bourns_CMP_Datasheet_05.28.20.pdf",
+        "Description": "Thick Film Resistors - SMD 10K   OHM   1%",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/bourns/images/CMP_CMP-A_series_t.jpg",
+        "Category": "Thick Film Resistors - SMD",
+        "LeadTime": "98 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Bourns",
+        "ManufacturerPartNumber": "CMP0603-FX-1002ELF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "652-CMP0603-FX-1002L",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "5000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.16",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.053",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.041",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.036",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.033",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.029",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.022",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10000,
+            "Price": "$0.021",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25000,
+            "Price": "$0.019",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Bourns/CMP0603-FX-1002ELF?qs=TiOZkKH1s2RjiDXhjsUTgw%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant By Exemption",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 2e-06
+        },
+        "AvailabilityInStock": "9814",
+        "AvailabilityOnOrder": [
+          {
+            "Quantity": 5000,
+            "Date": "2026-05-27T00:00:00"
+          }
+        ],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533211000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "8383 In Stock",
+        "DataSheetUrl": "",
+        "Description": "NTC Thermistors 10K OHM 10%",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/vishay/images/NTCSxxxxE3.JPG",
+        "Category": "NTC Thermistors",
+        "LeadTime": "70 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Vishay / BC Components",
+        "ManufacturerPartNumber": "NTCS0603E3103HMT",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "594-2381-615-36103",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "4000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.38",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.362",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$0.316",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.299",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.274",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.262",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 4000,
+            "Price": "$0.253",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 8000,
+            "Price": "$0.237",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 24000,
+            "Price": "$0.206",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Vishay-BC-Components/NTCS0603E3103HMT?qs=T%2FnZg7%2FCwxOGMrQuHMfIyA%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant By Exemption",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 1.2e-06
+        },
+        "AvailabilityInStock": "8383",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 14 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533408070"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533400000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533400000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853340000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533409000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533401000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533409102"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85334011"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "2535 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Thin Film Resistors - SMD .15watt 10Kohm .1%",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/vishay/images/patt.jpg",
+        "Category": "Thin Film Resistors - SMD",
+        "LeadTime": "91 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Vishay / Thin Film",
+        "ManufacturerPartNumber": "PATT0603E1002BGT1",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "71-PATT0603E1002BGT1",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "1000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.82",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.682",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$0.599",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.567",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.555",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.55",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.467",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Vishay-Thin-Film/PATT0603E1002BGT1?qs=zxTme0yW%2FbZOYzveCP7Tjg%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 2e-06
+        },
+        "AvailabilityInStock": "2535",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533211000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "7869 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Thin Film Resistors - SMD MCT 0603-25 0.1% P5 10K2",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/vishay/images/MCT0603_series_SPL.jpg",
+        "Category": "Thin Film Resistors - SMD",
+        "LeadTime": "70 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Vishay / Beyschlag",
+        "ManufacturerPartNumber": "MCT06030D1022BP500",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "594-MCT06030D1022BP5",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "5000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.11",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.079",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.074",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.069",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.065",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.062",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.061",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10000,
+            "Price": "$0.052",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25000,
+            "Price": "$0.051",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Vishay-Beyschlag/MCT06030D1022BP500?qs=wTZ%2FFzl837a7xmYDePLgqQ%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 2e-06
+        },
+        "AvailabilityInStock": "7869",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "1728 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Thin Film Resistors - SMD .032W 10Kohm 0.1% 0603 25ppm",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/vishay/images/MCT0603_series_SPL.jpg",
+        "Category": "Thin Film Resistors - SMD",
+        "LeadTime": "77 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Vishay / Beyschlag",
+        "ManufacturerPartNumber": "MCT06030D1002BP500",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "594-MCT06030D1002BP5",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "5000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.13",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.099",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.094",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.087",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.082",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.075",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.059",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10000,
+            "Price": "$0.057",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25000,
+            "Price": "$0.053",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": [
+          {
+            "APMfrPN": "MCT06030D1002BP100"
+          }
+        ],
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Vishay-Beyschlag/MCT06030D1002BP500?qs=ncxkyCpAYDAJSzgYSRSsnA%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 2e-06
+        },
+        "AvailabilityInStock": "1728",
+        "AvailabilityOnOrder": [
+          {
+            "Quantity": 25000,
+            "Date": "2026-12-14T00:00:00"
+          }
+        ],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 14 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533211000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "258403 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/40/1/cr.pdf",
+        "Description": "Thick Film Resistors - SMD 10.7K 1% 1/10W",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/bourns/images/chpreztr.jpg",
+        "Category": "Thick Film Resistors - SMD",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Bourns",
+        "ManufacturerPartNumber": "CR0603-FX-1072ELF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "652-CR0603FX-1072ELF",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "5000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.10",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.019",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.009",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.006",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.005",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Bourns/CR0603-FX-1072ELF?qs=e7cxVwPieurQbFfS6uM%252BCQ%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant By Exemption",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 2e-06
+        },
+        "AvailabilityInStock": "258403",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533211000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "345487 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/40/1/cr.pdf",
+        "Description": "Thick Film Resistors - SMD 10.5K 1% 1/10W",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/bourns/images/chpreztr.jpg",
+        "Category": "Thick Film Resistors - SMD",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Bourns",
+        "ManufacturerPartNumber": "CR0603-FX-1052ELF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "652-CR0603FX-1052ELF",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "5000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.10",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.019",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.009",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.006",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.005",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Bourns/CR0603-FX-1052ELF?qs=e7cxVwPieuqJRhSHkc5uMQ%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant By Exemption",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 2e-06
+        },
+        "AvailabilityInStock": "345487",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533211000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "3662 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Thin Film Resistors - SMD .125W 10Kohms 0.1% 0603 SMD 25ppm",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/vishay/images/MCT0603_series_SPL.jpg",
+        "Category": "Thin Film Resistors - SMD",
+        "LeadTime": "70 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Vishay / Beyschlag",
+        "ManufacturerPartNumber": "MCT0603MD1002BP100",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "594-MCT0603MD1002BP1",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "1000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.47",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.343",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.324",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.302",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.287",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.268",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.259",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10000,
+            "Price": "$0.244",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": [
+          {
+            "APMfrPN": "MCT0603MD1002BP500"
+          }
+        ],
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Vishay-Beyschlag/MCT0603MD1002BP100?qs=oBjDkOCjPF3pqK8R7NBaMQ%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 2e-06
+        },
+        "AvailabilityInStock": "3662",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 14 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533211000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "31710 In Stock",
+        "DataSheetUrl": "",
+        "Description": "NTC Thermistors 0603 10K 3% B 4000 55/125/56",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/tdk/images/B57371V_DSL.jpg",
+        "Category": "NTC Thermistors",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "EPCOS / TDK",
+        "ManufacturerPartNumber": "B57321V2103H60",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "871-B57321V2103H60",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "4000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.32",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.276",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$0.244",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.195",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.146",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.136",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 4000,
+            "Price": "$0.115",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 8000,
+            "Price": "$0.104",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 24000,
+            "Price": "$0.098",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/EPCOS-TDK/B57321V2103H60?qs=jkF2ZuEVxWCYB2UAz9%252B1hQ%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 6e-06
+        },
+        "AvailabilityInStock": "31710",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533408070"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533400000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533400000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853340000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533409000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533401000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533409102"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85334011"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "9073 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Thin Film Resistors - SMD .250W 10Kohms .5% 0603 25ppm Hi Power",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/vishay/images/MCT0603_series_SPL.jpg",
+        "Category": "Thin Film Resistors - SMD",
+        "LeadTime": "70 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Vishay / Beyschlag",
+        "ManufacturerPartNumber": "MCT0603PD1002DP500",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "594-MCT0603PD1002DP5",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "5000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.16",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.118",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.111",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.103",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.098",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.093",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.088",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10000,
+            "Price": "$0.083",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25000,
+            "Price": "$0.081",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Vishay-Beyschlag/MCT0603PD1002DP500?qs=5aG0NVq1C4wm%252BTUxfCiPtw%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant By Exemption",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 1.9e-06
+        },
+        "AvailabilityInStock": "9073",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 14 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533211000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "26886 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Thick Film Resistors - SMD .1watt 4.99kohms 1% 0603 100ppm",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/vishay/images/20047-pt-medium.jpg",
+        "Category": "Thick Film Resistors - SMD",
+        "LeadTime": "98 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Vishay / Draloric",
+        "ManufacturerPartNumber": "RCG06034K99FKEA",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "71-RCG06034K99FKEA",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "5000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.14",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.043",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.036",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.029",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.026",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.023",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.016",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10000,
+            "Price": "$0.014",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25000,
+            "Price": "$0.013",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Vishay-Draloric/RCG06034K99FKEA?qs=vOeJqewp7jAUzEhm8V8GiQ%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 2e-06
+        },
+        "AvailabilityInStock": "26886",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 10 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533211000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "25169 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/40/1/cmp_a.pdf",
+        "Description": "Thick Film Resistors - SMD 10K   OHM   1%",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/bourns/images/CMP_CMP-A_series_t.jpg",
+        "Category": "Thick Film Resistors - SMD",
+        "LeadTime": "98 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Bourns",
+        "ManufacturerPartNumber": "CMP0603AFX-1002ELF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "652-CMP0603AFX-1002L",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "5000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.21",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.072",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.06",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.052",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.047",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.043",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.031",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10000,
+            "Price": "$0.029",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Bourns/CMP0603AFX-1002ELF?qs=TiOZkKH1s2Q14lKL9rbzLg%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 2e-06
+        },
+        "AvailabilityInStock": "25169",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533211000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "13237 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Thin Film Resistors - SMD .15W 10Kohms 1% 0603 50ppm Auto",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/vishay/images/MCT0603_series_SPL.jpg",
+        "Category": "Thin Film Resistors - SMD",
+        "LeadTime": "70 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Vishay / Beyschlag",
+        "ManufacturerPartNumber": "MCT0603MC1002FP500",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "594-MCT0603MC1002FP5",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "5000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.10",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.037",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.036",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.036",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Vishay-Beyschlag/MCT0603MC1002FP500?qs=OMDV80DKjRoKmiwn8yr64w%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant By Exemption",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 2e-06
+        },
+        "AvailabilityInStock": "13237",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 14 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8533210030"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8533211000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853321000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8533219000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8533210000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8533210100"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85332120"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      }
+    ]
+  }
+}

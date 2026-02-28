@@ -1,0 +1,6278 @@
+{
+  "Errors": [],
+  "SearchResults": {
+    "NumberOfResult": 2358,
+    "Parts": [
+      {
+        "Availability": "2308 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Power Inductors - SMD IND HPA 100uH 3.5A 2 PADS SMT",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/eatoncorporation/images/hcma0703_SPL.jpg",
+        "Category": "Power Inductors - SMD",
+        "LeadTime": "127 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "Eaton Electronics",
+        "ManufacturerPartNumber": "HPAL1V1260-101-R",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "504-HPAL1V1260-101-R",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "500"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.52",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.443",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$0.406",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.329",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.31",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.271",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2500,
+            "Price": "$0.264",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Eaton-Electronics/HPAL1V1260-101-R?qs=3GbUB62Nf7dwlNZyo1xFDQ%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "2308",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 44 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "850450000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8504500090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509199"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "2459 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Power Inductors - SMD IND HPA 100uH 4.0A 2 PADS SMT",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/eatoncorporation/images/hcma0703_SPL.jpg",
+        "Category": "Power Inductors - SMD",
+        "LeadTime": "98 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "Eaton Electronics",
+        "ManufacturerPartNumber": "HPAL1V1265-101-R",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "504-HPAL1V1265-101-R",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "500"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.52",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.443",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$0.406",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.329",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.31",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.271",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2500,
+            "Price": "$0.264",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Eaton-Electronics/HPAL1V1265-101-R?qs=3GbUB62Nf7eeAxo8W0VDmA%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "2459",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 44 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "850450000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8504500090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509199"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "3092 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/995/1/pcv.pdf",
+        "Description": "Power Inductors - Leaded 100uH UnShld 10% 10.1A 32mOhms",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/coilcraft/images/PCV_2_SPL.jpg",
+        "Category": "Power Inductors - Leaded",
+        "LeadTime": "35 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Coilcraft",
+        "ManufacturerPartNumber": "PCV-2-104-10L",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "994-PCV-2-104-10L",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Tray"
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "49"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$8.34",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$6.98",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 49,
+            "Price": "$5.93",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 98,
+            "Price": "$5.66",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 294,
+            "Price": "$5.56",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 539,
+            "Price": "$5.38",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Coilcraft/PCV-2-104-10L?qs=ZYnrCdKdyefP3nhtpjw9RA%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 0.0466
+        },
+        "AvailabilityInStock": "3092",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 36 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "850450000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504502090"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8504500090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509199"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "33238 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/995/1/mss6132t.pdf",
+        "Description": "Power Inductors - SMD 100uH Shld 20% 0.69A 660mOhms",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/coilcraft/images/MSS6132_series_DSL.jpg",
+        "Category": "Power Inductors - SMD",
+        "LeadTime": "49 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Coilcraft",
+        "ManufacturerPartNumber": "MSS6132T-104MLC",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "994-MSS6132T-104MLC",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "500"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$2.03",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.73",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$1.59",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$1.19",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$1.16",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$1.02",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$1.00",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2500,
+            "Price": "$0.981",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.947",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": [
+          {
+            "APMfrPN": "MSS6132T-104MLB"
+          }
+        ],
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Coilcraft/MSS6132T-104MLC?qs=qSfuJ%252Bfl%2Fd430mL0sMQ5xw%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 0.00038
+        },
+        "AvailabilityInStock": "33238",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 10 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "850450000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504502090"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8504500090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509199"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "3826 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/184/1/ACMS_Q3222F.pdf",
+        "Description": "Common Mode Chokes / Filters CMC 100uH 0.15A 2500mOhm",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/abracon/images/ACMP-Q3226_SPL.jpg",
+        "Category": "Common Mode Chokes / Filters",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "ABRACON",
+        "ManufacturerPartNumber": "ACMS-Q3222F-101-T",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "815-ACMS-Q3222F-101T",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "4000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.08",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.891",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.733",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.731",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.704",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.627",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2000,
+            "Price": "$0.575",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 4000,
+            "Price": "$0.529",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/ABRACON/ACMS-Q3222F-101-T?qs=Znm5pLBrcALqJsph8x9NiA%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "3826",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 10 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8548000000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8548000000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "854800000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "941 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/995/1/mss1583.pdf",
+        "Description": "Power Inductors - SMD 100uH Shld 10% 4.8A 103mOhms",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/coilcraft/images/MSS1583_DSL.jpg",
+        "Category": "Power Inductors - SMD",
+        "LeadTime": "59 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Coilcraft",
+        "ManufacturerPartNumber": "MSS1583-104KED",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "994-MSS1583-104KED",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "300"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$3.03",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$2.54",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$2.32",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$2.09",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 300,
+            "Price": "$1.77",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 600,
+            "Price": "$1.66",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": [
+          {
+            "APMfrPN": "MSS1583-104KEB"
+          }
+        ],
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Coilcraft/MSS1583-104KED?qs=ZYnrCdKdyeeVa6Ur7wpePw%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 0.0044
+        },
+        "AvailabilityInStock": "941",
+        "AvailabilityOnOrder": [
+          {
+            "Quantity": 1500,
+            "Date": "2026-04-10T00:00:00"
+          }
+        ],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 36 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "850450000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504502090"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8504500090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509199"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "50396 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Power Inductors - SMD 100uH 760mA 10% 5.6x5mmSMDAECQ200",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/tdk/images/B82442T.jpg",
+        "Category": "Power Inductors - SMD",
+        "LeadTime": "42 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "EPCOS / TDK",
+        "ManufacturerPartNumber": "B82442T1104K050",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "871-B82442T1104K050",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "1500"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.99",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.865",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$0.80",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.711",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.681",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.643",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.575",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1500,
+            "Price": "$0.549",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/EPCOS-TDK/B82442T1104K050?qs=x3Z3TaiycduVzHqGgYB07A%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 0.00048
+        },
+        "AvailabilityInStock": "50396",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "850450000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504502090"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8504500090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509199"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "2993 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/995/1/lps4018.pdf",
+        "Description": "Power Inductors - SMD 100uH Shld 20% 370mA 1.4 Ohms",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/coilcraft/images/LPS4018_series_DSL.jpg",
+        "Category": "Power Inductors - SMD",
+        "LeadTime": "62 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Coilcraft",
+        "ManufacturerPartNumber": "LPS4018-104MRC",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "994-LPS4018-104MRC",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "1000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.46",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$1.23",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.796",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.796",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.726",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": [
+          {
+            "APMfrPN": "LPS4018-104MRB"
+          }
+        ],
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Coilcraft/LPS4018-104MRC?qs=QQJxVsr8EGaQieW13bMEOg%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 0.0001
+        },
+        "AvailabilityInStock": "2993",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "850450000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504502090"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8504500090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509199"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "2191 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/995/1/do1608c.pdf",
+        "Description": "Power Inductors - SMD 100uH Shld 20% 0.5A 1.27Ohms",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/coilcraft/images/DO1608_series_DSL.jpg",
+        "Category": "Power Inductors - SMD",
+        "LeadTime": "65 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Coilcraft",
+        "ManufacturerPartNumber": "DO1608C-104MLC",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "994-DO1608C-104MLC",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "750"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.82",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.55",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$1.52",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$1.46",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 750,
+            "Price": "$1.36",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2250,
+            "Price": "$1.01",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 4500,
+            "Price": "$0.975",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": [
+          {
+            "APMfrPN": "DO1608C-104MLB"
+          }
+        ],
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Coilcraft/DO1608C-104MLC?qs=zCSbvcPd3paQXXto9lqb7A%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 0.00013
+        },
+        "AvailabilityInStock": "2191",
+        "AvailabilityOnOrder": [
+          {
+            "Quantity": 1500,
+            "Date": "2026-04-17T00:00:00"
+          },
+          {
+            "Quantity": 5250,
+            "Date": "2026-05-04T00:00:00"
+          }
+        ],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "850450000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504502090"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8504500090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509199"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "6103 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/184/1/ACMS-Q3225.pdf",
+        "Description": "Common Mode Chokes / Filters CMC 100uH 0.15A 1500mOhm",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/abracon/images/ACMS-Q3225_SPL.jpg",
+        "Category": "Common Mode Chokes / Filters",
+        "LeadTime": "112 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "ABRACON",
+        "ManufacturerPartNumber": "ACMS-Q3225-101-T",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "815-ACMS-Q3225-101-T",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "2000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.57",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.467",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.384",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.364",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.306",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2000,
+            "Price": "$0.279",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 4000,
+            "Price": "$0.276",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/ABRACON/ACMS-Q3225-101-T?qs=Znm5pLBrcALMx6OfC27mmQ%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "6103",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8548000000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8548000000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "854800000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "8687 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/995/1/do3316p.pdf",
+        "Description": "Power Inductors - SMD 100uH Unshld 20% 1.3A 280mOhms",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/coilcraft/images/DO3316_series_t.jpg",
+        "Category": "Power Inductors - SMD",
+        "LeadTime": "56 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Coilcraft",
+        "ManufacturerPartNumber": "DO3316P-104MLD",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "994-DO3316P-104MLD",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "1000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$2.15",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.83",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$1.46",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$1.46",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": [
+          {
+            "APMfrPN": "DO3316P-104MLB"
+          }
+        ],
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Coilcraft/DO3316P-104MLD?qs=zCSbvcPd3pbgNGEz7ZAmHQ%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 0.001
+        },
+        "AvailabilityInStock": "8687",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "850450000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504502090"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8504500090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509199"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "50606 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Power Inductors - SMD WE-PD 100uH 1.9A DCR=140mOhms AEC-Q200",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/wurthelectronics/images/7447706015_WES_t.jpg",
+        "Category": "Power Inductors - SMD",
+        "LeadTime": "0 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Wurth Elektronik",
+        "ManufacturerPartNumber": "7447706101",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "710-7447706101",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "500"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.24",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.14",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 50,
+            "Price": "$1.10",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.928",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Wurth-Elektronik/7447706101?qs=GBLSl2AkirvKlHtMoOoomg%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 0.003009
+        },
+        "AvailabilityInStock": "50606",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 40 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "850450000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504502090"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8504500090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509199"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "947 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Power Inductors - SMD 100uH 15%",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/vishay/images/IHSM_7832_DSL.jpg",
+        "Category": "Power Inductors - SMD",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Vishay / Dale",
+        "ManufacturerPartNumber": "IHSM7832ER101L",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "70-IHSM7832ER101L",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "500"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$2.55",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$2.49",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$2.36",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$2.35",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$2.03",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2500,
+            "Price": "$2.01",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Vishay-Dale/IHSM7832ER101L?qs=XQ00FSfuEDAWDXtSu3JRSg%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant By Exemption",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 0.004549
+        },
+        "AvailabilityInStock": "947",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "850450000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504502090"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8504500090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509199"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "3406 In Stock",
+        "DataSheetUrl": "",
+        "Description": "RF Inductors - SMD 100uH 10%",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/vishay/images/ISC_1210_SPL.jpg",
+        "Category": "RF Inductors - SMD",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Vishay / Dale",
+        "ManufacturerPartNumber": "ISC1210ER101K",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "70-ISC1210ER101K",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "2000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.74",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.65",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.625",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.622",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2000,
+            "Price": "$0.621",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Vishay-Dale/ISC1210ER101K?qs=z4MKnX0KyNznP2dSiXehrA%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant By Exemption",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 5e-05
+        },
+        "AvailabilityInStock": "3406",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 10 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "850450000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504502090"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8504500090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509199"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "7695 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/76/2/JELF243A_9157.pdf",
+        "Description": "RF Inductors - SMD",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/murata/images/LQH2HNH-series_SPL.jpg",
+        "Category": "RF Inductors - SMD",
+        "LeadTime": "70 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Murata Electronics",
+        "ManufacturerPartNumber": "LQH2HNH101J03L",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "81-LQH2HNH101J03L",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "3000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.40",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.33",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.272",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.271",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.22",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 3000,
+            "Price": "$0.202",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 6000,
+            "Price": "$0.186",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 9000,
+            "Price": "$0.183",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Murata-Electronics/LQH2HNH101J03L?qs=t7xnP681wgVMHYq5XfcGGA%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "7695",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 10 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "850450000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504502090"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8504500090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509199"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "5037 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Power Inductors - SMD WE-PD2 5848 100uH .57A .65Ohm",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/wurthelectronics/images/WE_PD2_SPL.jpg",
+        "Category": "Power Inductors - SMD",
+        "LeadTime": "20 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Wurth Elektronik",
+        "ManufacturerPartNumber": "74477420",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "710-74477420",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "1500"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.87",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.79",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 50,
+            "Price": "$1.61",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$1.49",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$1.43",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$1.31",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1500,
+            "Price": "$1.19",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Wurth-Elektronik/74477420?qs=rS3zZhy2AQMRbX1Obdv9xw%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 0.000491
+        },
+        "AvailabilityInStock": "5037",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 40 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "850450000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504502090"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8504500090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509199"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "1951 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/184/1/ACMS_Q4526C.pdf",
+        "Description": "Common Mode Chokes / Filters CMC 100uH 0.2A 2000mOhm",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/abracon/images/ACMP-Q3226_SPL.jpg",
+        "Category": "Common Mode Chokes / Filters",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "ABRACON",
+        "ManufacturerPartNumber": "ACMS-Q4526C-101-T",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "815-ACMS-Q4526C-101T",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "2000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.82",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.672",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.553",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.546",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.516",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.455",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2000,
+            "Price": "$0.415",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 4000,
+            "Price": "$0.404",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/ABRACON/ACMS-Q4526C-101-T?qs=Znm5pLBrcAKwmqQGtdwT9A%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "1951",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 10 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8548000000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8548000000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "854800000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "3587 In Stock",
+        "DataSheetUrl": "",
+        "Description": "RF Inductors - SMD 100uH 2.2ohms 55mA +/-10%",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/tdk/images/NLF32-EF_SPL.jpg",
+        "Category": "RF Inductors - SMD",
+        "LeadTime": "70 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "TDK",
+        "ManufacturerPartNumber": "NLFV32T-101K-EFT",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "810-NLFV32T-101K-EFT",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "2000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.35",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.279",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$0.258",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.209",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.202",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.153",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2000,
+            "Price": "$0.137",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 4000,
+            "Price": "$0.133",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10000,
+            "Price": "$0.122",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/TDK/NLFV32T-101K-EFT?qs=U%2FZX79kHR%2FldD1gsbJC6WA%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 5e-05
+        },
+        "AvailabilityInStock": "3587",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 15 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "850450000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504502090"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8504500090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509199"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "7 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/995/1/pcv.pdf",
+        "Description": "Power Inductors - Leaded 100uH UnShld 4.4A 80mOhms",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/coilcraft/images/PCV_2_SPL.jpg",
+        "Category": "Power Inductors - Leaded",
+        "LeadTime": "35 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Coilcraft",
+        "ManufacturerPartNumber": "PCV-2-104-03L",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "994-PCV-2-104-03L",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Tray"
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "49"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$6.26",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$5.08",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$4.51",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 49,
+            "Price": "$4.26",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 98,
+            "Price": "$3.95",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 294,
+            "Price": "$3.89",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 539,
+            "Price": "$3.64",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1029,
+            "Price": "$3.51",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Coilcraft/PCV-2-104-03L?qs=ZYnrCdKdyee98Uihcc87SA%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 0.0192
+        },
+        "AvailabilityInStock": "7",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 36 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "8504500001"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504509090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509102"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "3091 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Coupled Inductors WE-DD SMD Size 7345 100uH 1.029Ohm Strt",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/wurthelectronics/images/744877001_SPL.JPG",
+        "Category": "Coupled Inductors",
+        "LeadTime": "36 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Wurth Elektronik",
+        "ManufacturerPartNumber": "744877101",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "710-744877101",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "1000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$2.53",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$2.41",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 50,
+            "Price": "$2.24",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$2.06",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$1.89",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$1.46",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2000,
+            "Price": "$1.45",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Wurth-Elektronik/744877101?qs=%252B97ACBfLqz9DcktmtuoDuQ%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 0.000805
+        },
+        "AvailabilityInStock": "3091",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 40 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "850450000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504509010"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8504500090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509199"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "10419 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Power Inductors - SMD WE-PD 100uH 620mA DCR=790mOhms AEC-Q200",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/wurthelectronics/images/ITP_710-74477820_t.jpg",
+        "Category": "Power Inductors - SMD",
+        "LeadTime": "17 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Wurth Elektronik",
+        "ManufacturerPartNumber": "74477820",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "710-74477820",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "1000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$2.51",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$2.24",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 50,
+            "Price": "$2.08",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$2.00",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$1.92",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$1.48",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Wurth-Elektronik/74477820?qs=u16ybLDytRbv8rOkX2Ni7Q%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 0.000618
+        },
+        "AvailabilityInStock": "10419",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 40 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "850450000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504502090"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8504500090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509199"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "585 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/995/1/msd1514.pdf",
+        "Description": "Coupled Inductors 100uH Shld 10% 5.15A 126mOhms",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/coilcraft/images/MSD1514_SPL.jpg",
+        "Category": "Coupled Inductors",
+        "LeadTime": "49 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Coilcraft",
+        "ManufacturerPartNumber": "MSD1514-104KED",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "994-MSD1514-104KED",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "175"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$3.78",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$3.16",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$2.89",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$2.59",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 175,
+            "Price": "$2.20",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 350,
+            "Price": "$2.07",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 875,
+            "Price": "$2.00",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2450,
+            "Price": "$1.93",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 4900,
+            "Price": "$1.83",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": [
+          {
+            "APMfrPN": "MSD1514-104KEB"
+          }
+        ],
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Coilcraft/MSD1514-104KED?qs=0gpYmj5HUPLkayo5Wr2%2F1A%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 1.18e-05
+        },
+        "AvailabilityInStock": "585",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 10 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "850450000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504502090"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8504500090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509199"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "2425 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/catalog/specsheets/Vishay_ihle-5050fh-5a.pdf",
+        "Description": "Power Inductors - SMD 100uH 20% w/E-Field Shield",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/vishay/images/IHLE5050FHR_SPL.jpg",
+        "Category": "Power Inductors - SMD",
+        "LeadTime": "70 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Vishay / Dale",
+        "ManufacturerPartNumber": "IHLE5050FHER101M51",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "70-IHLE5050FHR101M51",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "500"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$4.09",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$3.42",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$3.12",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$2.45",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$2.38",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$2.07",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$1.98",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$1.97",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Vishay-Dale/IHLE5050FHER101M51?qs=CT2LuZh%2F7ENxGbzP8rTeZw%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "2425",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 41 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "850450000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504502090"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8504500090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509199"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "6658 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Power Inductors - SMD 100uH 0.45A 20 % 7.3x7.3mm SMD",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/tdk/images/b82462.jpg",
+        "Category": "Power Inductors - SMD",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "EPCOS / TDK",
+        "ManufacturerPartNumber": "B82472G4104M",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "871-B82472G4104M",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "1000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.82",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.672",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.553",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.552",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.544",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.431",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2000,
+            "Price": "$0.403",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.394",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/EPCOS-TDK/B82472G4104M?qs=Gus83tocK7s2lGjeaVCg4Q%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 0.0015
+        },
+        "AvailabilityInStock": "6658",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 36 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "850450000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504502090"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8504500090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509199"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "266 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/995/1/msd1048.pdf",
+        "Description": "Coupled Inductors 100uH Shld 20% 1.2A 387mOhms",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/coilcraft/images/MSD1048_SPL.jpg",
+        "Category": "Coupled Inductors",
+        "LeadTime": "49 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Coilcraft",
+        "ManufacturerPartNumber": "MSD1048-104MED",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "994-MSD1048-104MED",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "800"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$2.42",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$2.07",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$1.90",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$1.42",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$1.38",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$1.36",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 800,
+            "Price": "$1.15",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 4800,
+            "Price": "$1.03",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": [
+          {
+            "APMfrPN": "MSD1048-104MEB"
+          }
+        ],
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Coilcraft/MSD1048-104MED?qs=W%252BCsJ1hlA%252BeYaxMSBYmJ8w%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "266",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "850450000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504509090"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8504500090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509199"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "575 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Power Inductors - SMD 100uH 11MHz DCR=6.98Ohms +/-20% AEC-Q200",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/coilcraft/images/XFL2010-series_SPL.jpg",
+        "Category": "Power Inductors - SMD",
+        "LeadTime": "70 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Coilcraft",
+        "ManufacturerPartNumber": "XFL2010-104MEC",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "994-XFL2010-104MEC",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "2000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$2.72",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$2.32",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$2.14",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$1.60",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$1.32",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$1.17",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$1.02",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2000,
+            "Price": "$0.994",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 4000,
+            "Price": "$0.975",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Coilcraft/XFL2010-104MEC?qs=T%252BzbugeAwjhC%2FmItjLxn%252BQ%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "575",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "850450000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504502090"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8504500090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509199"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "467 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/995/1/rfc0807.pdf",
+        "Description": "Power Inductors - Leaded 100uH UnShld 10% 1.25A 355mOhms",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/coilcraft/images/RFC0807_SPL.jpg",
+        "Category": "Power Inductors - Leaded",
+        "LeadTime": "58 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Coilcraft",
+        "ManufacturerPartNumber": "RFC0807B-104KE",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "994-RFC0807B-104KE",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Tray"
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "150"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.02",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.861",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$0.783",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.612",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 300,
+            "Price": "$0.564",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 600,
+            "Price": "$0.533",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1050,
+            "Price": "$0.486",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2550,
+            "Price": "$0.47",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5100,
+            "Price": "$0.454",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Coilcraft/RFC0807B-104KE?qs=ZYnrCdKdyecdMzG%2Fs7JD%252Bg%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 0.0023
+        },
+        "AvailabilityInStock": "467",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "8504500001"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504509090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509102"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "145 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/995/1/do3308p.pdf",
+        "Description": "Power Inductors - SMD 100uH Unshld 20% 0.87A 690mOhms",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/coilcraft/images/DO3308P_series_DSL.jpg",
+        "Category": "Power Inductors - SMD",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Coilcraft",
+        "ManufacturerPartNumber": "DO3308P-104MLD",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "994-DO3308P-104MLD",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "1000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.98",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$1.71",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$1.66",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$1.49",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$1.44",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2000,
+            "Price": "$1.41",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$1.36",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": [
+          {
+            "APMfrPN": "DO3308P-104MLB"
+          }
+        ],
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Coilcraft/DO3308P-104MLD?qs=ZYnrCdKdyee7Z7coM9Kijg%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 0.0006
+        },
+        "AvailabilityInStock": "145",
+        "AvailabilityOnOrder": [
+          {
+            "Quantity": 500,
+            "Date": "2026-04-16T00:00:00"
+          }
+        ],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 10 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "850450000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504502090"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8504500090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509199"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "6882 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/265/1/CDRH127LD__en_.pdf",
+        "Description": "Power Inductors - SMD 100uH 2.1A",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/sumida/images/CDRH127.jpg",
+        "Category": "Power Inductors - SMD",
+        "LeadTime": "164 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Sumida",
+        "ManufacturerPartNumber": "CDRH127/LDNP-101MC",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "851-CDRH127LDNP101MC",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "500"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.21",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.01",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$0.977",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.789",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.777",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.646",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.601",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2500,
+            "Price": "$0.568",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.563",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Sumida/CDRH127-LDNP-101MC?qs=MBofh%252Bwah4wcOUegW5kDiA%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "REACH-SVHC": [
+          "Dechlorane plus",
+          "Dechlorane+",
+          "1,6,7,8,9,14,15,16,17,17,18,18-dodecachloropentacyclo[12.2.1.16,9.02,13.05,10]octadeca-7,15-diene (13560-89-9)"
+        ],
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 0.0036
+        },
+        "AvailabilityInStock": "6882",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "850450000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504502090"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8504500090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509199"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "206 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Power Inductors - Leaded 100uH 20%",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/vishay/images/IHTH-1125KZ-5A%203P.jpg",
+        "Category": "Power Inductors - Leaded",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Vishay / Dale",
+        "ManufacturerPartNumber": "IHTH1125KZEB101M5A",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "70-IHTH1125KZEB101M5",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "50"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$9.05",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$7.46",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$6.92",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 50,
+            "Price": "$6.70",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$6.29",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$6.23",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$6.16",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Vishay-Dale/IHTH1125KZEB101M5A?qs=%252BW0qg7sgkX%252BOb2eQkaU4ug%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "206",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 41 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "850450000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504502090"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8504500090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509199"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "479 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Power Inductors - SMD 100uH Shld 20% 270mA 2.4 Ohms",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/coilcraft/images/LPS4012_series_DSL.jpg",
+        "Category": "Power Inductors - SMD",
+        "LeadTime": "49 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Coilcraft",
+        "ManufacturerPartNumber": "LPS4012-104MRC",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "994-LPS4012-104MRC",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "1000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.46",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$1.22",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$1.12",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.796",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.703",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2000,
+            "Price": "$0.691",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.68",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": [
+          {
+            "APMfrPN": "LPS4012-104MRB"
+          }
+        ],
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Coilcraft/LPS4012-104MRC?qs=QQJxVsr8EGYzE3Q1Yk1Z0g%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 6.4e-05
+        },
+        "AvailabilityInStock": "479",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "850450000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504502090"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8504500090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509199"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "500 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/995/1/lps4414.pdf",
+        "Description": "Power Inductors - SMD 100uH Shld 20% 285mA 1.9 Ohms",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/coilcraft/images/LPS4414_series_DSL.jpg",
+        "Category": "Power Inductors - SMD",
+        "LeadTime": "70 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Coilcraft",
+        "ManufacturerPartNumber": "LPS4414-104MRC",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "994-LPS4414-104MRC",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "1000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.41",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.20",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$1.09",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.847",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.792",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.674",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2000,
+            "Price": "$0.652",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.56",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": [
+          {
+            "APMfrPN": "LPS4414-104MRB"
+          }
+        ],
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Coilcraft/LPS4414-104MRC?qs=QQJxVsr8EGaKvtK0U7uwkg%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 8.9e-05
+        },
+        "AvailabilityInStock": "500",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "8504500001"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504509090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509102"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "180 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Power Inductors - SMD 100uH Shld 20% 240mA 2.75 Ohms",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/coilcraft/images/LPS3314_series_DSL.jpg",
+        "Category": "Power Inductors - SMD",
+        "LeadTime": "42 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Coilcraft",
+        "ManufacturerPartNumber": "LPS3314-104MRC",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "994-LPS3314-104MRC",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "1000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.52",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.29",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$1.19",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.915",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.892",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.758",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2000,
+            "Price": "$0.733",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.707",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": [
+          {
+            "APMfrPN": "LPS3314-104MRB"
+          }
+        ],
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Coilcraft/LPS3314-104MRC?qs=QQJxVsr8EGb811e%2FtyWY1A%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 5.1e-05
+        },
+        "AvailabilityInStock": "180",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "8504500001"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504509090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509102"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "18494 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/265/1/CDR6D23MN.pdf",
+        "Description": "Power Inductors - SMD 100uH 0.55A 0.723ohm",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/sumida/images/CDR6D23MN.jpg",
+        "Category": "Power Inductors - SMD",
+        "LeadTime": "138 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Sumida",
+        "ManufacturerPartNumber": "CDR6D23MNNP-101NC",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "851-CDR6D23MNNP101NC",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "1500"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.97",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.864",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$0.812",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.699",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.668",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.647",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.613",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1500,
+            "Price": "$0.591",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 3000,
+            "Price": "$0.572",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Sumida/CDR6D23MNNP-101NC?qs=ttApTud31JZEGG5v%2Fc02Jw%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 0.0003
+        },
+        "AvailabilityInStock": "18494",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 36 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "850450000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504502090"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8504500090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509199"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "476 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/995/1/dr0608.pdf",
+        "Description": "Power Inductors - Leaded 100uH Unshld 10% 1.3A 380mOhms",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/coilcraft/images/DR0608_series_SPL.jpg",
+        "Category": "Power Inductors - Leaded",
+        "LeadTime": "49 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Coilcraft",
+        "ManufacturerPartNumber": "DR0608-104L",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "994-DR0608-104L",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Tray"
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "300"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.02",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.878",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$0.806",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.652",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 300,
+            "Price": "$0.616",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 600,
+            "Price": "$0.528",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1200,
+            "Price": "$0.469",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5100,
+            "Price": "$0.454",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Coilcraft/DR0608-104L?qs=ZYnrCdKdyefdNsWKKNSV6w%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 0.0013
+        },
+        "AvailabilityInStock": "476",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "850450000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504502090"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8504500090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509199"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "150 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/995/1/lps8045b.pdf",
+        "Description": "Power Inductors - SMD 100uH Shld 20% 780mA 342mOhms",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/coilcraft/images/LPS8045B_SPL.jpg",
+        "Category": "Power Inductors - SMD",
+        "LeadTime": "48 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Coilcraft",
+        "ManufacturerPartNumber": "LPS8045B-104MRC",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "994-LPS8045B-104MRC",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "250"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$2.92",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$2.44",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$2.23",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$2.00",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$1.70",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$1.60",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$1.54",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2500,
+            "Price": "$1.49",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$1.37",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": [
+          {
+            "APMfrPN": "LPS8045B-104MRB"
+          }
+        ],
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Coilcraft/LPS8045B-104MRC?qs=W38ilblRkRn%2FNelYYtPZ9Q%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 0.00084
+        },
+        "AvailabilityInStock": "150",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 36 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "850450000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504502090"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8504500090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509199"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "406 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/995/1/pcv.pdf",
+        "Description": "Power Inductors - Leaded 100uH UnShld 10% 5.5A 55mOhms",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/coilcraft/images/PCV_0_SPL.jpg",
+        "Category": "Power Inductors - Leaded",
+        "LeadTime": "35 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Coilcraft",
+        "ManufacturerPartNumber": "PCV-0-104-05L",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "994-PCV-0-104-05L",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Tray"
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "98"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$4.34",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$3.63",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$3.31",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 50,
+            "Price": "$3.06",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 98,
+            "Price": "$2.60",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 294,
+            "Price": "$2.53",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 588,
+            "Price": "$2.37",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1078,
+            "Price": "$2.29",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2548,
+            "Price": "$2.21",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Coilcraft/PCV-0-104-05L?qs=ZYnrCdKdyedkoapwnEL7mA%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 0.0213
+        },
+        "AvailabilityInStock": "406",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 36 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "850450000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504502090"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8504500090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509199"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "60 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/995/1/rfb.pdf",
+        "Description": "Power Inductors - Leaded 100uH UnShld 10% 1.3A 400mOhms AECQ2",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/coilcraft/images/RFB0807_SPL.jpg",
+        "Category": "Power Inductors - Leaded",
+        "LeadTime": "49 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Coilcraft",
+        "ManufacturerPartNumber": "RFB0807-101L",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "994-RFB0807-101L",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Tray"
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "150"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.28",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.09",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$0.985",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.769",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 300,
+            "Price": "$0.709",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 600,
+            "Price": "$0.67",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1050,
+            "Price": "$0.611",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2550,
+            "Price": "$0.591",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5100,
+            "Price": "$0.572",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Coilcraft/RFB0807-101L?qs=ZYnrCdKdyedu6A5abBf11g%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 0.00146
+        },
+        "AvailabilityInStock": "60",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 36 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "850450000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504502090"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8504500090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509199"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "215 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/995/1/msd1583.pdf",
+        "Description": "Coupled Inductors 100uH Shld 10% 1.75A 260mOhms",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/coilcraft/images/msd1583.jpg",
+        "Category": "Coupled Inductors",
+        "LeadTime": "49 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Coilcraft",
+        "ManufacturerPartNumber": "MSD1583-104KED",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "994-MSD1583-104KED",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "300"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$3.37",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$2.82",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$2.57",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$2.31",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 300,
+            "Price": "$1.96",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 600,
+            "Price": "$1.84",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 900,
+            "Price": "$1.78",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2400,
+            "Price": "$1.72",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 4800,
+            "Price": "$1.58",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": [
+          {
+            "APMfrPN": "MSD1583-104KEB"
+          }
+        ],
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Coilcraft/MSD1583-104KED?qs=zCSbvcPd3pbv9OIfWwkrsw%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "215",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 10 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "850450000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504509090"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8504500090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509199"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "639 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Power Inductors - SMD 100uH Shld 20% 135mA 12.25Ohms",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/coilcraft/images/XFL2006_series_DSL.jpg",
+        "Category": "Power Inductors - SMD",
+        "LeadTime": "70 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Coilcraft",
+        "ManufacturerPartNumber": "XFL2006-104MEC",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "994-XFL2006-104MEC",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "2000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$2.33",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.98",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$1.82",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$1.40",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$1.32",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.98",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.856",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2000,
+            "Price": "$0.841",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 4000,
+            "Price": "$0.827",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": [
+          {
+            "APMfrPN": "XFL2006-104MEB"
+          }
+        ],
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Coilcraft/XFL2006-104MEC?qs=zCSbvcPd3pb3RD7ERwzYpg%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant By Exemption",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "639",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 10 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "850450000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504502090"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8504500090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509199"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "355 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Power Inductors - SMD 100uH Shld 20% 560mA 800mOhms",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/coilcraft/images/MOS6020_series_DSL.jpg",
+        "Category": "Power Inductors - SMD",
+        "LeadTime": "42 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Coilcraft",
+        "ManufacturerPartNumber": "MOS6020-104MLC",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "994-MOS6020-104MLC",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "500"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$2.02",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.72",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$1.58",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$1.28",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$1.08",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$1.01",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2500,
+            "Price": "$0.981",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.87",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": [
+          {
+            "APMfrPN": "MOS6020-104MLB"
+          }
+        ],
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Coilcraft/MOS6020-104MLC?qs=zCSbvcPd3pbsZyXmUPFLiw%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 0.00021
+        },
+        "AvailabilityInStock": "355",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 10 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "850450000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504502090"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8504500090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509199"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "3460 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/40/1/pm5022_series.pdf",
+        "Description": "Power Inductors - SMD 100uH 20%",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/bourns/images/PM5022_series_SPL.jpg",
+        "Category": "Power Inductors - SMD",
+        "LeadTime": "112 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Bourns",
+        "ManufacturerPartNumber": "PM5022-101M-RC",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "542-PM5022-101M-RC",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "250"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.60",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.533",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$0.517",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.46",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.436",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.408",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.403",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.402",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Bourns/PM5022-101M-RC?qs=7QcrjDbQYDcI%252BDYrjk3%2Fbg%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "652-CM322522-R39KL",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 0.0044
+        },
+        "AvailabilityInStock": "3460",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 27 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "850450000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504509090"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8504500090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509199"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "2007 In Stock",
+        "DataSheetUrl": "",
+        "Description": "RF Inductors - SMD 100uH 5%",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/vishay/images/IMC_1210_series_SPL.jpg",
+        "Category": "RF Inductors - SMD",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Vishay / Dale",
+        "ManufacturerPartNumber": "IMC1210ER101J",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "70-IMC1210ER101J",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "2000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.42",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.21",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$1.10",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.857",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.791",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.747",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.681",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2000,
+            "Price": "$0.622",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Vishay-Dale/IMC1210ER101J?qs=gUBhq%2ForQ06aaJB7LjXUSA%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 5e-05
+        },
+        "AvailabilityInStock": "2007",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 14 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "850450000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504502090"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8504500090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509199"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "24 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/995/1/msd1278.pdf",
+        "Description": "Coupled Inductors 100uH Shld 20% 1.59A 300mOhms",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/coilcraft/images/msd1278.jpg",
+        "Category": "Coupled Inductors",
+        "LeadTime": "71 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Coilcraft",
+        "ManufacturerPartNumber": "MSD1278-104MLD",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "994-MSD1278-104MLD",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "500"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$2.54",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$2.17",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$2.00",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$1.60",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$1.36",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$1.28",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2500,
+            "Price": "$1.24",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$1.10",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": [
+          {
+            "APMfrPN": "MSD1278-104MLB"
+          }
+        ],
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Coilcraft/MSD1278-104MLD?qs=zCSbvcPd3paefSQC7WLuMQ%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 0.0044
+        },
+        "AvailabilityInStock": "24",
+        "AvailabilityOnOrder": [
+          {
+            "Quantity": 500,
+            "Date": "2026-04-24T00:00:00"
+          }
+        ],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 10 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "850450000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504509090"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8504500090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509199"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "1963 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/184/1/ACMS_Q3225C.pdf",
+        "Description": "Common Mode Chokes / Filters CMC 100uH 0.15A 2200mOhm",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/abracon/images/ACMS-Q3225_SPL.jpg",
+        "Category": "Common Mode Chokes / Filters",
+        "LeadTime": "98 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "ABRACON",
+        "ManufacturerPartNumber": "ACMS-Q3225C-101-T",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "815-ACMS-Q3225C-101T",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "2000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.96",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.792",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.606",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.605",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.551",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2000,
+            "Price": "$0.478",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 4000,
+            "Price": "$0.475",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/ABRACON/ACMS-Q3225C-101-T?qs=Znm5pLBrcALVQUNva6g6Uw%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "1963",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 10 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8548000000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8548000000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "854800000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "311 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Coupled Inductors 100uH Shld 20% 1.5A 322mOhms",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/coilcraft/images/msd1260.jpg",
+        "Category": "Coupled Inductors",
+        "LeadTime": "49 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Coilcraft",
+        "ManufacturerPartNumber": "MSD1260-104MLD",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "994-MSD1260-104MLD",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "500"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$2.45",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$2.09",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$1.93",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$1.54",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$1.31",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$1.23",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2500,
+            "Price": "$1.19",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$1.06",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": [
+          {
+            "APMfrPN": "MSD1260-104MLB"
+          }
+        ],
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Coilcraft/MSD1260-104MLD?qs=zCSbvcPd3pZE%252BQlO263eDg%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 0.0032
+        },
+        "AvailabilityInStock": "311",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 36 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "850450000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504502090"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8504500090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509199"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "355 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/995/1/rfs1113.pdf",
+        "Description": "Power Inductors - Leaded 100uH Shld 20% 1.55A 200mOhms",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/coilcraft/images/RFS1113_SPL.jpg",
+        "Category": "Power Inductors - Leaded",
+        "LeadTime": "59 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Coilcraft",
+        "ManufacturerPartNumber": "RFS1113-104ME",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "994-RFS1113-104ME",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Tray"
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "169"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.94",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.65",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$1.52",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$1.14",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 169,
+            "Price": "$1.10",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 507,
+            "Price": "$1.04",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1014,
+            "Price": "$0.97",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2535,
+            "Price": "$0.938",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5070,
+            "Price": "$0.905",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Coilcraft/RFS1113-104ME?qs=W38ilblRkRmIvTNPDCunCw%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 0.0033
+        },
+        "AvailabilityInStock": "355",
+        "AvailabilityOnOrder": [
+          {
+            "Quantity": 338,
+            "Date": "2026-04-17T00:00:00"
+          }
+        ],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "850450000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504502090"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8504500090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509199"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "2926 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/76/1/kmp_2400.pdf",
+        "Description": "Power Inductors - SMD SMD Inductor 100uH 0.52A",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/murata/images/2400_SPL.jpg",
+        "Category": "Power Inductors - SMD",
+        "LeadTime": "88 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Murata Power Solutions",
+        "ManufacturerPartNumber": "24101C",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "580-24101C",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "1500"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.58",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1500,
+            "Price": "$0.58",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Murata-Power-Solutions/24101C?qs=5CKLVr1iF0njZfJuE8uwNw%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 0.00043
+        },
+        "AvailabilityInStock": "2926",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 36 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "850450000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504502090"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8504500090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509199"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "9029 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Power Inductors - SMD WE-PD 100uH 790mA DCR=290mOhms AEC-Q200",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/wurthelectronics/images/ITP_710-74477720_t.jpg",
+        "Category": "Power Inductors - SMD",
+        "LeadTime": "0 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Wurth Elektronik",
+        "ManufacturerPartNumber": "74477720",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "710-74477720",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "1000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$2.37",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$2.11",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 50,
+            "Price": "$1.96",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$1.89",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$1.81",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$1.66",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Wurth-Elektronik/74477720?qs=u16ybLDytRb05rQCixKVTQ%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 0.000793
+        },
+        "AvailabilityInStock": "9029",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 40 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "850450000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504502090"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8504500090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509199"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "1114 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/184/1/ATCASeries.pdf",
+        "Description": "Power Inductors - Leaded IND 100.00 uH 2.000 A 81.00 mOhm",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/abracon/images/atca_01_v_SPL.jpg",
+        "Category": "Power Inductors - Leaded",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "ABRACON",
+        "ManufacturerPartNumber": "ATCA-01-101M-V",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "815-ATCA-01-101M-V",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Tray"
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "150"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$2.28",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2550,
+            "Price": "$2.15",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/ABRACON/ATCA-01-101M-V?qs=AvgxZrxb8y1jrboQ6dH3zQ%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 0.0006
+        },
+        "AvailabilityInStock": "1114",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 10 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8504508000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8504500000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "850450000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8504502090"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8504500090"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8504509199"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85045000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      }
+    ]
+  }
+}
