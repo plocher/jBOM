@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import logging
 import os
+import time
 from typing import Any, Optional
 
+from jbom.config.suppliers import resolve_supplier_by_id
 from jbom.services.search.cache import SearchCache, SearchCacheKey
 from jbom.services.search.models import SearchResult
 from jbom.services.search.provider import SearchProvider
@@ -24,13 +26,22 @@ class MouserProvider(SearchProvider):
     BASE_URL = "https://api.mouser.com/api/v1/search"
 
     def __init__(
-        self, *, api_key: Optional[str] = None, cache: Optional[SearchCache] = None
-    ):
+        self,
+        *,
+        api_key: Optional[str] = None,
+        cache: Optional[SearchCache] = None,
+        timeout: float | None = None,
+        max_retries: int | None = None,
+        retry_delay: float | None = None,
+    ) -> None:
         """Create a provider.
 
         Args:
             api_key: Mouser API key. Defaults to MOUSER_API_KEY environment variable.
             cache: Optional cache used to reduce repeated API calls.
+            timeout: Request timeout in seconds (defaults to supplier profile).
+            max_retries: Max retry attempts for transient failures (defaults to supplier profile).
+            retry_delay: Initial delay (seconds) before retry; uses exponential backoff (defaults to supplier profile).
 
         Raises:
             ValueError: When api_key is not provided and MOUSER_API_KEY is not set.
@@ -43,6 +54,41 @@ class MouserProvider(SearchProvider):
             )
 
         self._cache = cache
+
+        supplier = resolve_supplier_by_id(self.provider_id)
+
+        if timeout is None:
+            timeout = supplier.search_timeout_seconds if supplier is not None else None
+        if max_retries is None:
+            max_retries = supplier.search_max_retries if supplier is not None else None
+        if retry_delay is None:
+            retry_delay = (
+                supplier.search_retry_delay_seconds if supplier is not None else None
+            )
+
+        # Keep behavior robust if the supplier profile is incomplete.
+        if timeout is None:
+            logger.warning(
+                "Supplier profile '%s' missing search.api.timeout_seconds; defaulting to 10s",
+                self.provider_id,
+            )
+            timeout = 10.0
+        if max_retries is None:
+            logger.warning(
+                "Supplier profile '%s' missing search.api.max_retries; defaulting to 3",
+                self.provider_id,
+            )
+            max_retries = 3
+        if retry_delay is None:
+            logger.warning(
+                "Supplier profile '%s' missing search.api.retry_delay_seconds; defaulting to 1s",
+                self.provider_id,
+            )
+            retry_delay = 1.0
+
+        self._timeout = max(0.0, float(timeout))
+        self._max_retries = max(0, int(max_retries))
+        self._retry_delay = max(0.0, float(retry_delay))
 
     @property
     def provider_id(self) -> str:
@@ -81,21 +127,80 @@ class MouserProvider(SearchProvider):
             }
         }
 
-        try:
-            response = requests.post(
-                url,
-                params={"apiKey": self._api_key},
-                json=payload,
-                headers={
-                    "Content-Type": "application/json",
-                    "Accept": "application/json",
-                },
-                timeout=10,
-            )
-            response.raise_for_status()
-            data = response.json()
-        except Exception as exc:
-            logger.error("Mouser API request failed: %s", exc)
+        data: dict[str, Any] | None = None
+
+        for attempt in range(self._max_retries + 1):
+            try:
+                response = requests.post(
+                    url,
+                    params={"apiKey": self._api_key},
+                    json=payload,
+                    headers={
+                        "Content-Type": "application/json",
+                        "Accept": "application/json",
+                    },
+                    timeout=self._timeout,
+                )
+            except Exception as exc:
+                if attempt >= self._max_retries:
+                    logger.error("Mouser API request failed: %s", exc)
+                    return []
+
+                delay = self._retry_delay * (2**attempt)
+                logger.debug(
+                    "Mouser API request failed; retrying %s/%s in %.2fs: %s",
+                    attempt + 1,
+                    self._max_retries,
+                    delay,
+                    exc,
+                )
+                time.sleep(delay)
+                continue
+
+            status_raw = getattr(response, "status_code", 200)
+            try:
+                status = int(status_raw)  # type: ignore[arg-type]
+            except Exception:
+                status = 200
+
+            if 400 <= status < 500:
+                logger.error(
+                    "Mouser API request failed (client error %s): %s",
+                    status,
+                    response.text,
+                )
+                return []
+
+            if status >= 500:
+                if attempt >= self._max_retries:
+                    logger.error(
+                        "Mouser API request failed (server error %s): %s",
+                        status,
+                        response.text,
+                    )
+                    return []
+
+                delay = self._retry_delay * (2**attempt)
+                logger.debug(
+                    "Mouser API request failed (server error %s); retrying %s/%s in %.2fs",
+                    status,
+                    attempt + 1,
+                    self._max_retries,
+                    delay,
+                )
+                time.sleep(delay)
+                continue
+
+            try:
+                response.raise_for_status()
+                data = response.json()
+                break
+            except Exception as exc:
+                # Non-retryable at this point.
+                logger.error("Mouser API request failed: %s", exc)
+                return []
+
+        if data is None:
             return []
 
         # Mouser embeds error strings inside the JSON body.

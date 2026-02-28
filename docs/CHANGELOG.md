@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 - Mouser search fixtures and offline contract/integration test scaffolding.
+- Persistent disk-backed search cache (default, 24h TTL) with `--no-cache` and `--clear-cache` flags.
+
+### Changed
+- Mouser provider now supports configurable timeout + retry/backoff for transient failures.
 
 ## [7.0.0] - 2026-02-27
 

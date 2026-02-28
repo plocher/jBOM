@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import argparse
 
+from jbom.cli.search import _build_cache as _build_search_cache
 from jbom.cli.search import handle_search
+from jbom.services.search.cache import DiskSearchCache, InMemorySearchCache
 from jbom.services.search.models import SearchResult
 
 
@@ -28,6 +30,28 @@ def _sr(**kw) -> SearchResult:
     return SearchResult(**base)
 
 
+def test_build_cache_no_cache_flag_returns_inmemory(monkeypatch) -> None:
+    args = argparse.Namespace(provider="mouser", no_cache=True, clear_cache=False)
+    cache = _build_search_cache(args)
+    assert isinstance(cache, InMemorySearchCache)
+
+
+def test_build_cache_clear_cache_flag_calls_clear_provider(monkeypatch) -> None:
+    calls: dict[str, str] = {}
+
+    def _clear_provider(provider_id: str, *, cache_root=None) -> None:
+        calls["provider_id"] = provider_id
+
+    monkeypatch.setattr(
+        DiskSearchCache, "clear_provider", staticmethod(_clear_provider)
+    )
+
+    args = argparse.Namespace(provider="mouser", no_cache=True, clear_cache=True)
+    cache = _build_search_cache(args)
+    assert isinstance(cache, InMemorySearchCache)
+    assert calls["provider_id"] == "mouser"
+
+
 def test_search_console_output(monkeypatch, capsys):
     # Avoid any network calls.
     from jbom.services.search import mouser_provider
@@ -48,7 +72,7 @@ def test_search_console_output(monkeypatch, capsys):
         output="console",
     )
 
-    rc = handle_search(args)
+    rc = handle_search(args, _cache=InMemorySearchCache())
     assert rc == 0
 
     out = capsys.readouterr().out
@@ -75,7 +99,7 @@ def test_search_csv_stdout(monkeypatch, capsys):
         output="-",
     )
 
-    rc = handle_search(args)
+    rc = handle_search(args, _cache=InMemorySearchCache())
     assert rc == 0
 
     out = capsys.readouterr().out.splitlines()
@@ -104,7 +128,7 @@ def test_search_csv_file(monkeypatch, tmp_path):
         output=str(outpath),
     )
 
-    rc = handle_search(args)
+    rc = handle_search(args, _cache=InMemorySearchCache())
     assert rc == 0
 
     text = outpath.read_text(encoding="utf-8")

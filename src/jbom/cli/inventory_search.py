@@ -17,7 +17,7 @@ from jbom.cli.output import (
     resolve_output_destination,
 )
 from jbom.services.inventory_reader import InventoryReader
-from jbom.services.search.cache import InMemorySearchCache
+from jbom.services.search.cache import DiskSearchCache, InMemorySearchCache, SearchCache
 from jbom.services.search.inventory_search_service import InventorySearchService
 from jbom.services.search.mouser_provider import MouserProvider
 
@@ -68,6 +68,18 @@ def register_command(subparsers) -> None:
     )
 
     parser.add_argument(
+        "--no-cache",
+        action="store_true",
+        help="Disable persistent disk cache for this run",
+    )
+
+    parser.add_argument(
+        "--clear-cache",
+        action="store_true",
+        help="Clear persistent cache entries for this provider before running",
+    )
+
+    parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Validate input and compute searchable items without performing API calls",
@@ -81,7 +93,9 @@ def register_command(subparsers) -> None:
     parser.set_defaults(handler=handle_inventory_search)
 
 
-def handle_inventory_search(args: argparse.Namespace) -> int:
+def handle_inventory_search(
+    args: argparse.Namespace, *, _cache: SearchCache | None = None
+) -> int:
     try:
         inventory_path = Path(args.inventory_file)
         if not inventory_path.exists():
@@ -103,7 +117,7 @@ def handle_inventory_search(args: argparse.Namespace) -> int:
             _print_dry_run_summary(searchable)
             return 0
 
-        cache = InMemorySearchCache()
+        cache = _cache if _cache is not None else _build_cache(args)
         provider = _create_provider(args.provider, api_key=args.api_key, cache=cache)
         service = InventorySearchService(
             provider,
@@ -167,7 +181,19 @@ def handle_inventory_search(args: argparse.Namespace) -> int:
         return 1
 
 
-def _create_provider(provider_id: str, *, api_key: str | None, cache) -> MouserProvider:
+def _build_cache(args: argparse.Namespace) -> SearchCache:
+    if getattr(args, "clear_cache", False):
+        DiskSearchCache.clear_provider(args.provider)
+
+    if getattr(args, "no_cache", False):
+        return InMemorySearchCache()
+
+    return DiskSearchCache(args.provider)
+
+
+def _create_provider(
+    provider_id: str, *, api_key: str | None, cache: SearchCache
+) -> MouserProvider:
     pid = (provider_id or "").strip().lower()
     if pid == "mouser":
         return MouserProvider(api_key=api_key, cache=cache)

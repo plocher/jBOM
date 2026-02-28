@@ -8,3 +8,7 @@ inventory_column: "DigiKey"
 url_template: null
 search_url_template: "https://www.digikey.com/en/products?keywords={query}"
 part_number: {}
+
+search:
+  cache:
+    ttl_hours: 24

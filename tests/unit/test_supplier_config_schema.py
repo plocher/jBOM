@@ -36,6 +36,8 @@ def test_load_supplier_lcsc() -> None:
     assert lcsc.search_url_template
     assert lcsc.part_number_pattern
 
+    assert lcsc.search_cache_ttl_hours == 24
+
 
 def test_load_unknown_supplier_raises() -> None:
     with pytest.raises(ValueError, match=r"Unknown supplier"):
