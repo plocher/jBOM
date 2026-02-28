@@ -1,6 +1,31 @@
 # CHANGELOG
 
 
+## v6.9.1 (2026-02-28)
+
+### Bug Fixes
+
+* fix: treat -o stdout as literal filename
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`b170e38`](https://github.com/plocher/jBOM/commit/b170e38e01a2f19dc89c373061c8a1a9bf7f322a))
+
+* fix: align parts output semantics with house style
+
+Closes #68
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`1eb8902`](https://github.com/plocher/jBOM/commit/1eb8902ad9dde85d972fc82e80e0e34a5e4fed41))
+
+### Unknown
+
+* Merge pull request #76 from plocher/feature/issue-68-parts-output-style
+
+fix: align parts output semantics with house style (closes #68) ([`cf73755`](https://github.com/plocher/jBOM/commit/cf7375556b22adbd8665d599fd1cf4492765cb58))
+
+* Merge pull request #75 from plocher/feature/issue-docs-cleanup-v7
+
+docs: clean up and restructure documentation for v7 accuracy ([`809dd07`](https://github.com/plocher/jBOM/commit/809dd07060c1e39f6558b3669f79171331149862))
+
+
 ## v6.9.0 (2026-02-27)
 
 ### Bug Fixes
