@@ -1,6 +1,29 @@
 # CHANGELOG
 
 
+## v6.9.2 (2026-02-28)
+
+### Bug Fixes
+
+* fix: make search handle missing force attr
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`218b2b9`](https://github.com/plocher/jBOM/commit/218b2b9dd455d90b2218a2cb889970dd11122057))
+
+* fix: default bom/pos/parts to project CSV outputs
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`2c48ec2`](https://github.com/plocher/jBOM/commit/2c48ec2116ed39a05d72c673084214e26f3d0bc3))
+
+* fix: require exactly one .kicad_pro per project directory
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`c8cfecd`](https://github.com/plocher/jBOM/commit/c8cfecdc0f03da4434fb5491ab4c4a5e12f01cf9))
+
+### Unknown
+
+* Merge pull request #78 from plocher/feature/issue-69-77-cli-output-defaults
+
+Fix CLI output defaults; unify -o semantics and force overwrite ([`b9ed3a2`](https://github.com/plocher/jBOM/commit/b9ed3a24a12e376c4517441f7981ca1d295a3393))
+
+
 ## v6.9.1 (2026-02-28)
 
 ### Bug Fixes
