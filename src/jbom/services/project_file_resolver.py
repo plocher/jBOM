@@ -132,7 +132,7 @@ class ProjectFileResolver:
                 raise FileNotFoundError(
                     f"No PCB file found (File not found: {resolved_path})"
                 )
-            if input_path.suffix in (".kicad_pro", ".pro"):
+            if input_path.suffix == ".kicad_pro":
                 raise FileNotFoundError(
                     f"Project file not found (File not found: {resolved_path})"
                 )
@@ -200,7 +200,7 @@ class ProjectFileResolver:
                 raise FileNotFoundError("No schematic file found")
             if file_path.suffix == ".kicad_pcb":
                 raise FileNotFoundError("No PCB file found")
-            if file_path.suffix in (".kicad_pro", ".pro"):
+            if file_path.suffix == ".kicad_pro":
                 raise FileNotFoundError("Project file not found")
             raise FileNotFoundError(f"File not found: {file_path}")
 
