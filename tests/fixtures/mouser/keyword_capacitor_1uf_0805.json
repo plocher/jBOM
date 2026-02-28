@@ -1,0 +1,6128 @@
+{
+  "Errors": [],
+  "SearchResults": {
+    "NumberOfResult": 763,
+    "Parts": [
+      {
+        "Availability": "25981 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT KGM21AR71H105JU NEW GLOBAL PN 50V 1uF X7 A 581-KGM21AR71H105JU",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/kyoceraelectronicdevices/images/MLCC-SnPb_SPL.jpg",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "KYOCERA AVX",
+        "ManufacturerPartNumber": "08055C105JAT2A",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "581-08055C105JAT2A",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "3000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.59",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.582",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 3000,
+            "Price": "$0.582",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/KYOCERA-AVX/08055C105JAT2A?qs=tIBUQlZETBw4JiKO8J7C1w%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "581-KGM21AR71H105JU",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 6.168762004e-06
+        },
+        "AvailabilityInStock": "25981",
+        "AvailabilityOnOrder": [
+          {
+            "Quantity": 15000,
+            "Date": "2026-06-15T00:00:00"
+          }
+        ],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 10 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8532240400"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "2475 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 6.3V 1uF X5R 0805 10 % A 581-08056D105KAT4A",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/kyoceraelectronicdevices/images/MLCC_SPL.jpg",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "KYOCERA AVX",
+        "ManufacturerPartNumber": "08056D105KAT2A",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "581-08056D105KAT2A",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "3000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.24",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.137",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.083",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.066",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.056",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 3000,
+            "Price": "$0.048",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 6000,
+            "Price": "$0.044",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": [
+          {
+            "APMfrPN": "08056D105KAT4A"
+          }
+        ],
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/KYOCERA-AVX/08056D105KAT2A?qs=ykEKLGTiBcwM6Pzmu5POiw%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "581-08056D105KAT4A",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 5.5e-06
+        },
+        "AvailabilityInStock": "2475",
+        "AvailabilityOnOrder": [
+          {
+            "Quantity": 6000,
+            "Date": "2026-06-09T00:00:00"
+          }
+        ],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8532240400"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "187298 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT KGM21AR71C105KU NEW GLOBAL PN 16V 1uF X7 A 581-KGM21AR71C105KU",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/kyoceraelectronicdevices/images/MLCC-SnPb_SPL.jpg",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "KYOCERA AVX",
+        "ManufacturerPartNumber": "0805YC105KAT2A",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "581-0805YC105KAT2A",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "3000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.10",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.049",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.043",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.036",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.033",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 3000,
+            "Price": "$0.029",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 6000,
+            "Price": "$0.025",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 9000,
+            "Price": "$0.022",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": [
+          {
+            "APMfrPN": "0805YC105KAT4A"
+          }
+        ],
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/KYOCERA-AVX/0805YC105KAT2A?qs=Ppq%252BQS%252B9qgKbltvIecMi5g%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant By Exemption",
+        "SuggestedReplacement": "581-KGM21AR71C105KU",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 5.5e-06
+        },
+        "AvailabilityInStock": "187298",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8532240400"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "6112 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/catalog/specsheets/avx_04122018_part number explanation.pdf",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 25V 1uF Y5V 0805 20%",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/kyoceraelectronicdevices/images/MLCC_SPL.jpg",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "KYOCERA AVX",
+        "ManufacturerPartNumber": "08053G105MAT2A",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "581-08053G105MAT2A",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "4000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.21",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.137",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.071",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.057",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.051",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2000,
+            "Price": "$0.046",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 4000,
+            "Price": "$0.04",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 8000,
+            "Price": "$0.037",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 24000,
+            "Price": "$0.036",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/KYOCERA-AVX/08053G105MAT2A?qs=%252BdQmOuGyFcFhHccwoblzEQ%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 6.168762004e-06
+        },
+        "AvailabilityInStock": "6112",
+        "AvailabilityOnOrder": [
+          {
+            "Quantity": 8000,
+            "Date": "2026-06-29T00:00:00"
+          }
+        ],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 10 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8532400000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "87287 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 0805 1uF 10volts X7R 10%",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/vishay/images/VJ_W1BC_series.jpg",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "126 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Vishay / Vitramon",
+        "ManufacturerPartNumber": "VJ0805Y105KXQTW1BC",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "77-VJ0805Y105KXQTBC",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "3000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.17",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.066",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.057",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.043",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.04",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 3000,
+            "Price": "$0.031",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 9000,
+            "Price": "$0.026",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": [
+          {
+            "APMfrPN": "VJ0805Y105KXQRW1BC"
+          }
+        ],
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Vishay-Vitramon/VJ0805Y105KXQTW1BC?qs=F2lBERbFaaHnNHh23%2Flzkg%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 5.5e-06
+        },
+        "AvailabilityInStock": "87287",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 41 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8532240400"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "6169 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 6.3V 1uF X7R 0805 20 %",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/kyoceraelectronicdevices/images/MLCC_SPL.jpg",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "KYOCERA AVX",
+        "ManufacturerPartNumber": "08056C105MAT2A",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "581-08056C105MAT2A",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "3000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.34",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.206",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.134",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.108",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.099",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 3000,
+            "Price": "$0.09",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 6000,
+            "Price": "$0.08",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/KYOCERA-AVX/08056C105MAT2A?qs=ykEKLGTiBczQmPFL2Pr3Kg%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 5.5e-06
+        },
+        "AvailabilityInStock": "6169",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 10 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8532240400"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "3976 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/72/1/C0805T105K4RACTU.pdf",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 16V 1uF X7R 0805 10%",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/yageo/images/SMD_MLCC_series_SPL.JPG",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "364 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "KEMET",
+        "ManufacturerPartNumber": "C0805T105K4RACTU",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "80-C0805T105K4RACTU",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "4000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.98",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.40",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 50,
+            "Price": "$1.20",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$1.04",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.909",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.831",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2000,
+            "Price": "$0.769",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 4000,
+            "Price": "$0.729",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 8000,
+            "Price": "$0.714",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/KEMET/C0805T105K4RACTU?qs=MdyXZ7FdW%2F5TQ%2FwGkCt4PQ%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 5.5e-06
+        },
+        "AvailabilityInStock": "3976",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "462 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 6.3V 1uF X7R 0805 5% Tol FLEX",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/kyoceraelectronicdevices/images/MLCC_SPL.jpg",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "KYOCERA AVX",
+        "ManufacturerPartNumber": "08056C105JAZ2A",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "581-08056C105JAZ2A",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "2000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.73",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.19",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.889",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.753",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.705",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2000,
+            "Price": "$0.617",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 4000,
+            "Price": "$0.609",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10000,
+            "Price": "$0.607",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/KYOCERA-AVX/08056C105JAZ2A?qs=G2E3TvrFun38e5oIaHmBpQ%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 5.5e-06
+        },
+        "AvailabilityInStock": "462",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8532240400"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "14071 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/72/1/C0805C105J4RAC7210.pdf",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 16V 1uF X7R 0805 5%",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/yageo/images/SMD_MLCC_series_SPL.JPG",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "91 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "KEMET",
+        "ManufacturerPartNumber": "C0805C105J4RAC7210",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "80-C0805C105J4RACLR",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "10000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.25",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.159",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.094",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.075",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.068",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2500,
+            "Price": "$0.063",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.055",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10000,
+            "Price": "$0.054",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 20000,
+            "Price": "$0.05",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/KEMET/C0805C105J4RAC7210?qs=7zB%252BIQS%2FKOJG%252BUtduyFhHw%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 5.5e-06
+        },
+        "AvailabilityInStock": "14071",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8532240400"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "21679 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/508/1/KEM_C1002_X7R_SMD.pdf",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 25V 1uF X7R 0805 10%",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/yageo/images/SMD_MLCC_series_SPL.JPG",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "KEMET",
+        "ManufacturerPartNumber": "C0805C105K3RACTM",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "80-C0805C105K3RACTM",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "2500"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.16",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.095",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.06",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.058",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2500,
+            "Price": "$0.053",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.049",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10000,
+            "Price": "$0.029",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25000,
+            "Price": "$0.023",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/KEMET/C0805C105K3RACTM?qs=2uRfZzjKWaneMR%2FyjdUOBQ%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 5.5e-06
+        },
+        "AvailabilityInStock": "21679",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8532240400"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "1394 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 25V 1uF X7R 0805 5% Tol FLEX",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/kyoceraelectronicdevices/images/MLCC_SPL.jpg",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "KYOCERA AVX",
+        "ManufacturerPartNumber": "08053C105JAZ2A",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "581-08053C105JAZ2A",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "2000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$2.04",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.44",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$1.08",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.93",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.85",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2000,
+            "Price": "$0.75",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 4000,
+            "Price": "$0.745",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/KYOCERA-AVX/08053C105JAZ2A?qs=bb%252B1MDm7h6L%2FlQm5NeIcJA%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 5.5e-06
+        },
+        "AvailabilityInStock": "1394",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8532240400"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "184 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/72/1/KEM_C1008_X8L_150C_SMD.pdf",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 10V 1uF X8L 0805 10% AEC-Q200",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/yageo/images/SMD_MLCC_series_SPL.JPG",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "KEMET",
+        "ManufacturerPartNumber": "C0805C105K8NACAUTO",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "80-C0805C105K8NAUTO",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "2500"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.03",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.686",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.495",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.408",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.379",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2500,
+            "Price": "$0.33",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/KEMET/C0805C105K8NACAUTO?qs=KosDah%252BIqW9fFjto7gIw4Q%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 5.5e-06
+        },
+        "AvailabilityInStock": "184",
+        "AvailabilityOnOrder": [
+          {
+            "Quantity": 2500,
+            "Date": "2026-08-11T00:00:00"
+          }
+        ],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "413 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 10V 1uF X7R 0805 10% TOL",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/kyoceraelectronicdevices/images/MLCC_SPL.jpg",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "KYOCERA AVX",
+        "ManufacturerPartNumber": "0805ZC105K4Z2A",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "581-0805ZC105K4Z2A",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "2000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.98",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.617",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.436",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.413",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.38",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2000,
+            "Price": "$0.314",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10000,
+            "Price": "$0.313",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 24000,
+            "Price": "$0.309",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/KYOCERA-AVX/0805ZC105K4Z2A?qs=Xu68utgrSJ%252B9PdUnrILYTQ%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 5.5e-06
+        },
+        "AvailabilityInStock": "413",
+        "AvailabilityOnOrder": [
+          {
+            "Quantity": 2000,
+            "Date": "2026-05-20T00:00:00"
+          }
+        ],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8532240400"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "4757 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT KAM21KR71E105JU NEW GLOBAL PN 25V 1uF X7 A 581-KAM21KR71E105JU",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/kyoceraelectronicdevices/images/MLCC_SPL.jpg",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "98 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "KYOCERA AVX",
+        "ManufacturerPartNumber": "08053C105J4T2A",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "581-08053C105J4T2A",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "2000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.35",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.756",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.652",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.566",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.532",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2000,
+            "Price": "$0.494",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 4000,
+            "Price": "$0.466",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/KYOCERA-AVX/08053C105J4T2A?qs=6N9RIo5FA54sS8G6gtoDaA%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "581-KAM21KR71E105JU",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 6.168762004e-06
+        },
+        "AvailabilityInStock": "4757",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8532240400"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "8600 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/508/1/KEM_C1090_X7R_ESD.pdf",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 16V 1uF X7R 0805 20%",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/yageo/images/SMD_MLCC_series_SPL.JPG",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "91 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "KEMET",
+        "ManufacturerPartNumber": "C0805C105M4REC7210",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "80-C0805C105M4RECLR",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "10000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.26",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.147",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.089",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.071",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.06",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.053",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10000,
+            "Price": "$0.042",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/KEMET/C0805C105M4REC7210?qs=55YtniHzbhBUNgNmKPKUmg%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 6.168762004e-06
+        },
+        "AvailabilityInStock": "8600",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "5576 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT KGM21AR51E105MU NEW GLOBAL PN 25V 1uF X5 A 581-KGM21AR51E105MU",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/kyoceraelectronicdevices/images/MLCC-SnPb_SPL.jpg",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "KYOCERA AVX",
+        "ManufacturerPartNumber": "08053D105MAT2A",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "581-08053D105MAT2A",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "3000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.54",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.25",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.224",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.182",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.169",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 3000,
+            "Price": "$0.123",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/KYOCERA-AVX/08053D105MAT2A?qs=ZsCFEZsLLL0uU7AQ31HnTw%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "581-KGM21AR51E105MU",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 5.5e-06
+        },
+        "AvailabilityInStock": "5576",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 10 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8532240400"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "1885 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/72/1/KEM_C1008_X8L_150C_SMD.pdf",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 10V 1uF X8L 0805 10%",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/yageo/images/SMD_MLCC_series_SPL.JPG",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "105 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "KEMET",
+        "ManufacturerPartNumber": "C0805X105K8NACTU",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "80-C0805X105K8NACTU",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "2500"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.13",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.763",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.555",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.46",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.428",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2500,
+            "Price": "$0.362",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/KEMET/C0805X105K8NACTU?qs=d7up6SOEJDNM0%252BIw4nFXgA%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 5.5e-06
+        },
+        "AvailabilityInStock": "1885",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "2106 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/317/1/WTC_MLCC_General_Purpose.pdf",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 0805 MLCC X7R 1 uF, +/- 5% 16 V T&R GP",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/kamaya/images/MLCC.jpg",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "120 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Walsin",
+        "ManufacturerPartNumber": "0805B105J160CT",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "791-0805B105J160CT",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "3000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.11",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.061",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.037",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.029",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.026",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 3000,
+            "Price": "$0.018",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Walsin/0805B105J160CT?qs=fIkAfuXiAQJryshggw2bXw%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 6.168762004e-06
+        },
+        "AvailabilityInStock": "2106",
+        "AvailabilityOnOrder": [
+          {
+            "Quantity": 6000,
+            "Date": "2026-06-25T00:00:00"
+          }
+        ],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "5950 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/317/1/WTC_MLCC_General_Purpose.pdf",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 0805 MLCC X7R 1 uF, +/- 20% 50 V T&R GP",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/kamaya/images/MLCC.jpg",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "114 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Walsin",
+        "ManufacturerPartNumber": "0805B105M500CT",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "791-0805B105M500CT",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "3000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.11",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.057",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.034",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.027",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.024",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 3000,
+            "Price": "$0.016",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Walsin/0805B105M500CT?qs=u16ybLDytRa2ocGSmaywWg%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 6.168762004e-06
+        },
+        "AvailabilityInStock": "5950",
+        "AvailabilityOnOrder": [
+          {
+            "Quantity": 9000,
+            "Date": "2026-05-04T00:00:00"
+          }
+        ],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "221 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/72/1/KEM_C1078_X7R_FT_CAP_AUTO_SMD.pdf",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 16V 1uF X7R 0805 5% Flex AEC-Q200",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/yageo/images/SMD_MLCC_series_SPL.JPG",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "105 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "KEMET",
+        "ManufacturerPartNumber": "C0805X105J4RACAUTO",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "80-C0805X105J4RAUTO",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "4000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.24",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.843",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.613",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.509",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.473",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2000,
+            "Price": "$0.44",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 4000,
+            "Price": "$0.407",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/KEMET/C0805X105J4RACAUTO?qs=Mv7BduZupUicclHcCfiTew%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 6.168762004e-06
+        },
+        "AvailabilityInStock": "221",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "5006 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 50V 1uF X5R 0805 10%",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/kyoceraelectronicdevices/images/MLCC-SnPb_SPL.jpg",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "KYOCERA AVX",
+        "ManufacturerPartNumber": "KGM21AR51H105KU",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "581-KGM21AR51H105KU",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "3000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.56",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.367",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.229",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.184",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.17",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 3000,
+            "Price": "$0.128",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/KYOCERA-AVX/KGM21AR51H105KU?qs=Jm2GQyTW%2FbhaiLr0BvUsEA%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "5006",
+        "AvailabilityOnOrder": [
+          {
+            "Quantity": 3000,
+            "Date": "2026-06-09T00:00:00"
+          }
+        ],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 10 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "6568 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/72/1/C0805C105M4RACAUTO.pdf",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 16V 1uF X7R 0805 20% AEC-Q200",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/yageo/images/SMD_MLCC_series_SPL.JPG",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "91 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "KEMET",
+        "ManufacturerPartNumber": "C0805C105M4RACAUTO",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "80-C0805C105M4RAUTO",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "4000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.22",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.126",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.076",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.061",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.052",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2000,
+            "Price": "$0.051",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 4000,
+            "Price": "$0.051",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 8000,
+            "Price": "$0.046",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 24000,
+            "Price": "$0.043",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/KEMET/C0805C105M4RACAUTO?qs=zDkSFN9STR%2FQblumrygq6Q%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 5.5e-06
+        },
+        "AvailabilityInStock": "6568",
+        "AvailabilityOnOrder": [
+          {
+            "Quantity": 8000,
+            "Date": "2026-04-21T00:00:00"
+          }
+        ],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8532240400"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "9627 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 25V 1uF X7R 0805 5%",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/kyoceraelectronicdevices/images/MLCC-SnPb_SPL.jpg",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "KYOCERA AVX",
+        "ManufacturerPartNumber": "KGM21AR71E105JU",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "581-KGM21AR71E105JU",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "3000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.48",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.277",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.167",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.134",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.097",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 3000,
+            "Price": "$0.093",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 6000,
+            "Price": "$0.085",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/KYOCERA-AVX/KGM21AR71E105JU?qs=Jm2GQyTW%2FbgnlYTD8j%2FQ8g%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "9627",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 10 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "9304 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 0805 MLCC X5R 1 uF, +/- 20% 16 V T&R GP",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/kamaya/images/MLCC.jpg",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "128 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Walsin",
+        "ManufacturerPartNumber": "0805X105M160CT",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "791-0805X105M160CT",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "3000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.10",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.052",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.031",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.025",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.022",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 3000,
+            "Price": "$0.019",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 6000,
+            "Price": "$0.018",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Walsin/0805X105M160CT?qs=u16ybLDytRZ8ct%2FwMvsviw%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 6.168762004e-06
+        },
+        "AvailabilityInStock": "9304",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "8310 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 1.0uF +-10% 25V",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/kamaya/images/MLCC.jpg",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "131 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Walsin",
+        "ManufacturerPartNumber": "0805X105K250CT",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "791-0805X105K250CT",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "3000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.10",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.052",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.031",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.025",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.022",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 3000,
+            "Price": "$0.019",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 6000,
+            "Price": "$0.018",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Walsin/0805X105K250CT?qs=ZrPdAQfJ6DNIatdME91eIw%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 6.168762004e-06
+        },
+        "AvailabilityInStock": "8310",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "3344 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 25V 1uF X5R 0805 20%",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/kyoceraelectronicdevices/images/MLCC-SnPb_SPL.jpg",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "KYOCERA AVX",
+        "ManufacturerPartNumber": "KGM21AR51E105MU",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "581-KGM21AR51E105MU",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "3000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.60",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.408",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.278",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.227",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.21",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 3000,
+            "Price": "$0.191",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 6000,
+            "Price": "$0.178",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/KYOCERA-AVX/KGM21AR51E105MU?qs=OcgtsXO%252B3gtm958g9lYdiA%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "3344",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 10 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "15929 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/508/1/KEM_C1090_X7R_ESD.pdf",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 25V 1uF X7R 0805 5% AEC-Q200",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/yageo/images/SMD_MLCC_series_SPL.JPG",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "91 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "KEMET",
+        "ManufacturerPartNumber": "C0805C105J3RECAUTO7210",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "80-C0805C105J3REAULR",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "10000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.39",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.225",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.136",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.109",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.092",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2500,
+            "Price": "$0.091",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.08",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10000,
+            "Price": "$0.075",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 20000,
+            "Price": "$0.065",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": [
+          {
+            "APMfrPN": "C0805C105J3RECAUTO"
+          }
+        ],
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/KEMET/C0805C105J3RECAUTO7210?qs=55YtniHzbhAOX3yRELGunA%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 6.168762004e-06
+        },
+        "AvailabilityInStock": "15929",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8532240400"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "3800 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/72/1/KEM_C1013_X7R_FT_CAP_SMD.pdf",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 6.3V 1uF X7R 0805 10%",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/yageo/images/SMD_MLCC_series_SPL.JPG",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "105 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "KEMET",
+        "ManufacturerPartNumber": "C0805X105K9RACTU",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "80-C0805X105K9R",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "4000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.35",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.346",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 4000,
+            "Price": "$0.161",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 8000,
+            "Price": "$0.08",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/KEMET/C0805X105K9RACTU?qs=BMjR8U9V8eZo8EloG%2FM4ng%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 5.5e-06
+        },
+        "AvailabilityInStock": "3800",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "8864 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/317/1/WTC_MLCC_General_Purpose.pdf",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 0805 MLCC X7R 1 uF, +/- 5% 25 V T&R GP",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/kamaya/images/MLCC.jpg",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "120 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Walsin",
+        "ManufacturerPartNumber": "0805B105J250CT",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "791-0805B105J250CT",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "3000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.11",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.061",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.037",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.029",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.026",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 3000,
+            "Price": "$0.022",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 6000,
+            "Price": "$0.018",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Walsin/0805B105J250CT?qs=fIkAfuXiAQInwtoPwtp3Vg%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 6.168762004e-06
+        },
+        "AvailabilityInStock": "8864",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8532240400"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "5747 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/72/1/C0805X105K8RACTU.pdf",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 10V 1uF X7R 0805 10% Flex Soft",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/yageo/images/SMD_MLCC_series_SPL.JPG",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "105 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "KEMET",
+        "ManufacturerPartNumber": "C0805X105K8RACTU",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "80-C0805X105K8R",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "4000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.71",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.453",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.377",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.23",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.216",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 4000,
+            "Price": "$0.215",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": [
+          {
+            "APMfrPN": "C0805X105K8RAC"
+          }
+        ],
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/KEMET/C0805X105K8RACTU?qs=p6yRp5s%252B%2FXRBx6%252BCsmrxtg%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 5.5e-06
+        },
+        "AvailabilityInStock": "5747",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "18152 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT KAF21KR71H105KL NW G LOB PN 50V 1uF X7R 0 A 581-KAF21KR71H105KL",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/kyoceraelectronicdevices/images/MLCC-SnPb_SPL.jpg",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "98 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "KYOCERA AVX",
+        "ManufacturerPartNumber": "08055C105K4Z4A",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "581-08055C105K4Z4A",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "10000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.33",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.144",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.128",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.101",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.092",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2500,
+            "Price": "$0.084",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.078",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10000,
+            "Price": "$0.077",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 20000,
+            "Price": "$0.071",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": [
+          {
+            "APMfrPN": "08055C105K4Z2A"
+          }
+        ],
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/KYOCERA-AVX/08055C105K4Z4A?qs=%252BdQmOuGyFcEU%252Bou2MKEfDQ%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "581-KAF21KR71H105KL",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 6.168762004e-06
+        },
+        "AvailabilityInStock": "18152",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 10 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8532240400"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "5837 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/2614/1/Comm_Chip_X7R_16V_10kVdc.pdf",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 1uF25V10%Tol X7R0805",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/knowlescorporation/images/1825_DSL.jpg",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "119 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Knowles Novacap",
+        "ManufacturerPartNumber": "0805B104K250NT",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "767-0805B104K250NT",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "3000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$2.46",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.67",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$1.66",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 3000,
+            "Price": "$1.35",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Knowles-Novacap/0805B104K250NT?qs=W2iVYWQZWNBvd1Qhwur%2Fiw%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant By Exemption",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 5.5e-06
+        },
+        "AvailabilityInStock": "5837",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 36 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "7352 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 16V 1uF X7R 0805 5%",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/kyoceraelectronicdevices/images/MLCC-SnPb_SPL.jpg",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "KYOCERA AVX",
+        "ManufacturerPartNumber": "KGM21AR71C105JU",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "581-KGM21AR71C105JU",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "3000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.26",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.165",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.098",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.078",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.071",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 3000,
+            "Price": "$0.064",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 6000,
+            "Price": "$0.056",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/KYOCERA-AVX/KGM21AR71C105JU?qs=Jm2GQyTW%2FbgRn%252Bi87%2FZsQQ%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "7352",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 10 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "42286 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 25V 1uF X5R 0805 10%",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/kyoceraelectronicdevices/images/MLCC-SnPb_SPL.jpg",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "KYOCERA AVX",
+        "ManufacturerPartNumber": "KGM21AR51E105KU",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "581-KGM21AR51E105KU",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "3000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.21",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.134",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.069",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.055",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.05",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 3000,
+            "Price": "$0.035",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 6000,
+            "Price": "$0.032",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/KYOCERA-AVX/KGM21AR51E105KU?qs=Jm2GQyTW%2FbiM5gP12t4YVA%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "42286",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 10 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8532240400"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "2520 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT R102 HIGH CV",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/kyoceraelectronicdevices/images/MLCC_SPL.jpg",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "KYOCERA AVX",
+        "ManufacturerPartNumber": "KGF21KR71H105KU",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "581-KGF21KR71H105KU",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "3000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.66",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.657",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 3000,
+            "Price": "$0.594",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 6000,
+            "Price": "$0.583",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/KYOCERA-AVX/KGF21KR71H105KU?qs=Jm2GQyTW%2FbgpIvuKLmoCtg%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "2520",
+        "AvailabilityOnOrder": [
+          {
+            "Quantity": 3000,
+            "Date": "2026-03-10T00:00:00"
+          },
+          {
+            "Quantity": 3000,
+            "Date": "2026-06-09T00:00:00"
+          }
+        ],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 10 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "5838 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/72/1/C0805F105K4RACAUTO.pdf",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 16V 1uF X7R 0805 10% Open Mode AEC-Q200",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/yageo/images/SMD_MLCC_series_SPL.JPG",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "77 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "KEMET",
+        "ManufacturerPartNumber": "C0805F105K4RACAUTO",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "80-C0805F105K4RAUTO",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "2500"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.31",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.132",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.117",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.092",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.084",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2500,
+            "Price": "$0.075",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.074",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/KEMET/C0805F105K4RACAUTO?qs=yc9RBI4tIAK03YGbagZsnA%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 1.605e-05
+        },
+        "AvailabilityInStock": "5838",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8532240400"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "1909 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 16V 1uF X7R 0805 10% AEC-Q200",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/kyoceraelectronicdevices/images/MLCC_SPL.jpg",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "98 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "KYOCERA AVX",
+        "ManufacturerPartNumber": "KAM21KR71C105KU",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "581-KAM21KR71C105KU",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "2000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.77",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.504",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.361",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.296",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.283",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2000,
+            "Price": "$0.24",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 4000,
+            "Price": "$0.234",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/KYOCERA-AVX/KAM21KR71C105KU?qs=Jm2GQyTW%2FbhXd2hn%252BVAs5w%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "1909",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 10 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8532240400"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "5838 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/72/1/C0805J105K4RACAUTO.pdf",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 16V 1uF X7R 0805 10% Open Mode AEC-Q200",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/yageo/images/SMD_MLCC_series_SPL.JPG",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "91 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "KEMET",
+        "ManufacturerPartNumber": "C0805J105K4RACAUTO",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "80-C0805J105K4RAUTO",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "2500"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.38",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.17",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.152",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.121",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.111",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2500,
+            "Price": "$0.10",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.099",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/KEMET/C0805J105K4RACAUTO?qs=yc9RBI4tIALjaJ4YcDiHlg%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 1.605e-05
+        },
+        "AvailabilityInStock": "5838",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8532240400"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "6816 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT Automotive MLCC 1uF, 10%, X7R, 50VDC",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/kyoceraelectronicdevices/images/MLCC_SPL.jpg",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "98 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "KYOCERA AVX",
+        "ManufacturerPartNumber": "KAM21KR71H105KL",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "581-KAM21KR71H105KL",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "10000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.32",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.209",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.119",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.092",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.085",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2500,
+            "Price": "$0.078",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.069",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10000,
+            "Price": "$0.065",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 20000,
+            "Price": "$0.061",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/KYOCERA-AVX/KAM21KR71H105KL?qs=Jm2GQyTW%2FbhahfzttUK9QA%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "6816",
+        "AvailabilityOnOrder": [
+          {
+            "Quantity": 10000,
+            "Date": "2026-05-26T00:00:00"
+          }
+        ],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 10 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8532240400"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "15385 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 25V 1uF X7R 0805 10% AEC-Q200 FLEXITERM",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/kyoceraelectronicdevices/images/MLCC_SPL.jpg",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "98 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "KYOCERA AVX",
+        "ManufacturerPartNumber": "KAF21KR71E105KL",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "581-KAF21KR71E105KL",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "10000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.38",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.219",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.132",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.106",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.09",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2500,
+            "Price": "$0.089",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.078",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10000,
+            "Price": "$0.073",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 20000,
+            "Price": "$0.063",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/KYOCERA-AVX/KAF21KR71E105KL?qs=Jm2GQyTW%2FbjzDmXmrHnoLQ%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "15385",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 10 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8532240400"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "1728 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 50V 1uF Y5V 0805 +80 -20%",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/kyoceraelectronicdevices/images/MLCC-SnPb_SPL.jpg",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "KYOCERA AVX",
+        "ManufacturerPartNumber": "KGM21AV51H105ZU",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "581-KGM21AV51H105ZU",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "3000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.21",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.126",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.076",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.061",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.051",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 3000,
+            "Price": "$0.05",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 6000,
+            "Price": "$0.044",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/KYOCERA-AVX/KGM21AV51H105ZU?qs=Jm2GQyTW%2FbgC6k4YwVndlA%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "1728",
+        "AvailabilityOnOrder": [
+          {
+            "Quantity": 6000,
+            "Date": "2026-03-11T00:00:00"
+          },
+          {
+            "Quantity": 9000,
+            "Date": "2026-06-09T00:00:00"
+          }
+        ],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 10 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8532240400"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "2000 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 16V 1uF X5R 0805 10%",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/kyoceraelectronicdevices/images/MLCC-SnPb_SPL.jpg",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "KYOCERA AVX",
+        "ManufacturerPartNumber": "KGM21AR51C105KU",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "581-KGM21AR51C105KU",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "3000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.23",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.134",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.081",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.064",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.058",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 3000,
+            "Price": "$0.051",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 6000,
+            "Price": "$0.047",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/KYOCERA-AVX/KGM21AR51C105KU?qs=OcgtsXO%252B3gthj5jOmIx2Xw%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "2000",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 10 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "477 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/72/1/C0805K105K8RML.pdf",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 10V 1 uF X7R 0805 10% SMD MIL X7R PRF32535",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/yageo/images/SMD_MLCC_series_SPL.JPG",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "434 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "KEMET",
+        "ManufacturerPartNumber": "M3253504E2X105KZMB",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "80-M325354E2X105KZMB",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Waffle"
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "130"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$13.89",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$10.54",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$9.60",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/KEMET/M3253504E2X105KZMB?qs=F5EMLAvA7ICi%252B2CbVGuHMA%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "No",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "477",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8532240400"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "133254 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/508/1/UPY_GPHC_X7R_6_3V_TO_250V.pdf",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 16V 1uF X7R 0805 10% HI CV",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/yageo/images/AC_capacitor_SPL.jpg",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "112 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "YAGEO",
+        "ManufacturerPartNumber": "CC0805KKX7R7BB105",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "603-CC805KKX7R7BB105",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "3000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.13",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.05",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.044",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.033",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.029",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 3000,
+            "Price": "$0.02",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 6000,
+            "Price": "$0.019",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": [
+          {
+            "APMfrPN": "CC0805KFX7R7BB105"
+          }
+        ],
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/YAGEO/CC0805KKX7R7BB105?qs=AgBp2OyFlx%2FM8WCHgVQGuw%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 5.5e-06
+        },
+        "AvailabilityInStock": "133254",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 20 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8532240400"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "102857 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/508/1/UPY_GPHC_X7R_6_3V_TO_250V.pdf",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 50V 1uF X7R 0805 10% HI CV",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/yageo/images/AC_capacitor_SPL.jpg",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "112 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "YAGEO",
+        "ManufacturerPartNumber": "CC0805KKX7R9BB105",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "603-CC805KKX7R9BB105",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "3000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.23",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.095",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.084",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.065",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.059",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 3000,
+            "Price": "$0.042",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": [
+          {
+            "APMfrPN": "CC0805KFX7R9BB105"
+          }
+        ],
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/YAGEO/CC0805KKX7R9BB105?qs=57cj7OiSijnrKSvL75vdbQ%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 6.4e-06
+        },
+        "AvailabilityInStock": "102857",
+        "AvailabilityOnOrder": [
+          {
+            "Quantity": 126000,
+            "Date": "2026-04-01T00:00:00"
+          }
+        ],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 20 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8532240400"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "251363 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT KGM21AR71E105KU NEW GLOBAL PN 25V 1uF X7 A 581-KGM21AR71E105KU",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/kyoceraelectronicdevices/images/MLCC-SnPb_SPL.jpg",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "KYOCERA AVX",
+        "ManufacturerPartNumber": "08053C105KAT2A",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "581-08053C105KAT2A",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "3000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.18",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.084",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.065",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.052",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.047",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 3000,
+            "Price": "$0.034",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 6000,
+            "Price": "$0.033",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": [
+          {
+            "APMfrPN": "08053C105KAT4A"
+          }
+        ],
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/KYOCERA-AVX/08053C105KAT2A?qs=85uWm5%252BqJhX0Bt9byAHA4A%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant By Exemption",
+        "SuggestedReplacement": "581-KGM21AR71E105KU",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 6.4e-06
+        },
+        "AvailabilityInStock": "251363",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 10 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8532240400"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "49403 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT KGM21AR51H105KU NEW GLOBAL PN 50V 1uF X5 A 581-KGM21AR51H105KU",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/kyoceraelectronicdevices/images/MLCC-SnPb_SPL.jpg",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "KYOCERA AVX",
+        "ManufacturerPartNumber": "08055D105KAT2A",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "581-08055D105K",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "3000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.47",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.196",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.16",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.128",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.113",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 3000,
+            "Price": "$0.088",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 6000,
+            "Price": "$0.083",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 24000,
+            "Price": "$0.077",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/KYOCERA-AVX/08055D105KAT2A?qs=0ZUpllj3bsbqxjCAZGkcjQ%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant By Exemption",
+        "SuggestedReplacement": "581-KGM21AR51H105KU",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 5.5e-06
+        },
+        "AvailabilityInStock": "49403",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 10 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8532240400"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "213770 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT KGM21AR71A105KU NEW GLOBAL PN 10V 1uF X7 A 581-KGM21AR71A105KU",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/kyoceraelectronicdevices/images/MLCC-SnPb_SPL.jpg",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "KYOCERA AVX",
+        "ManufacturerPartNumber": "0805ZC105KAT2A",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "581-0805ZC105K",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "3000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.16",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.063",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.055",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.041",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.037",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 3000,
+            "Price": "$0.031",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 6000,
+            "Price": "$0.027",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": [
+          {
+            "APMfrPN": "0805ZC105KAT4A"
+          }
+        ],
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/KYOCERA-AVX/0805ZC105KAT2A?qs=xgF8L8qeT4CdIRVv939gnA%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "581-KGM21AR71A105KU",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 5.5e-06
+        },
+        "AvailabilityInStock": "213770",
+        "AvailabilityOnOrder": [
+          {
+            "Quantity": 81000,
+            "Date": "2026-04-13T00:00:00"
+          }
+        ],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 10 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8532240400"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "76848 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT KGM21AR71H105KU NEW GLOBAL PN 50V 1uF X7 A 581-KGM21AR71H105KU",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/kyoceraelectronicdevices/images/MLCC_SPL.jpg",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "KYOCERA AVX",
+        "ManufacturerPartNumber": "08055C105KAT2A",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "581-08055C105KAT2A",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "3000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.26",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.128",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.106",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.088",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.081",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 3000,
+            "Price": "$0.062",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 6000,
+            "Price": "$0.058",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 9000,
+            "Price": "$0.056",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 24000,
+            "Price": "$0.049",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": [
+          {
+            "APMfrPN": "08055C105KAT4A"
+          }
+        ],
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/KYOCERA-AVX/08055C105KAT2A?qs=2ujN4bDBNE9BNQHBgLvfKA%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "581-KGM21AR71H105KU",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 6.4e-06
+        },
+        "AvailabilityInStock": "76848",
+        "AvailabilityOnOrder": [
+          {
+            "Quantity": 54000,
+            "Date": "2026-05-12T00:00:00"
+          },
+          {
+            "Quantity": 41500,
+            "Date": "2026-06-01T00:00:00"
+          }
+        ],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8532240400"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "139915 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/72/1/C0805C105K5RACTU.pdf",
+        "Description": "Multilayer Ceramic Capacitors MLCC - SMD/SMT 50V 1uF X7R 0805 10%",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/yageo/images/SMD_MLCC_series_SPL.JPG",
+        "Category": "Multilayer Ceramic Capacitors MLCC - SMD/SMT",
+        "LeadTime": "84 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "KEMET",
+        "ManufacturerPartNumber": "C0805C105K5RACTU",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "80-C0805C105K5R",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "MouseReel",
+            "AttributeCost": "$7.00 MouseReel\u2122 fee will be added and calculated in your shopping cart. All MouseReel\u2122 orders are non-cancellable and non-returnable."
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "2500"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.38",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.211",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.153",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.125",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.11",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2500,
+            "Price": "$0.10",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.088",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/KEMET/C0805C105K5RACTU?qs=iP0bYSAMAFrBrUflcErrLQ%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 6.4e-06
+        },
+        "AvailabilityInStock": "139915",
+        "AvailabilityOnOrder": [
+          {
+            "Quantity": 272500,
+            "Date": "2026-06-04T00:00:00"
+          }
+        ],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8532240020"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8532241000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8532240010"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853224000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8532240000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8532240400"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85322410"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      }
+    ]
+  }
+}

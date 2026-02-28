@@ -1,0 +1,5193 @@
+{
+  "Errors": [],
+  "SearchResults": {
+    "NumberOfResult": 908941,
+    "Parts": [
+      {
+        "Availability": "1598 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Phone Connectors 1/4\"Phone jack hor CHASSIS CONN PLSTC",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/amphenol/images/ITP_523-ACJM-HHDR_t.jpg",
+        "Category": "Phone Connectors",
+        "LeadTime": "112 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Amphenol Audio",
+        "ManufacturerPartNumber": "ACJM-HHDR",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "523-ACJM-HHDR",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Bulk"
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "100"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.36",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.22",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$1.13",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$1.01",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 300,
+            "Price": "$0.978",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.934",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.817",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2500,
+            "Price": "$0.805",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.792",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Amphenol-Audio/ACJM-HHDR?qs=t8%2F5FiDdxGZR4gBVKrXjqA%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 0.0082
+        },
+        "AvailabilityInStock": "1598",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 40 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694040"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8536901100"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536690020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853669000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536691000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536693000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "85369099"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85366990"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "1 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/710/1/conga_JC370.pdf",
+        "Description": "Computer Cables Cable for LVDS Panel with JST SHDR-40V connector, 50 cm, Open End, matches also with conga-JC370.",
+        "FactoryStock": "0",
+        "ImagePath": null,
+        "Category": "Computer Cables",
+        "LeadTime": "34 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "congatec",
+        "ManufacturerPartNumber": "cab-LVDS SHDR-40V, Open End",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "787-CAB-LVDSR40VONED",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "1"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$21.96",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$18.66",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$17.27",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 50,
+            "Price": "$16.66",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$16.10",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$15.21",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$14.29",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/congatec/cab-LVDS-SHDR-40V-Open-End?qs=A6eO%252BMLsxmSTHb6ovdlN0A%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "1",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8544429090"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8544420090"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536699099"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85444200"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "64 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/85/1/qms_ra.pdf",
+        "Description": "Headers & Wire Housings 0.635 mm Q2 High-Speed Rugged Ground Plane Terminal Strip",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/samtec/images/qms-016-01-h-d-dp-em2_SPL.jpg",
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "36 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Samtec",
+        "ManufacturerPartNumber": "QMS-026-01-H-D-RA-MG",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "200-QMS02601HDRAMG",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Tray"
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "40"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$23.77",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$22.50",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$21.21",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 120,
+            "Price": "$16.81",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 280,
+            "Price": "$14.42",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 520,
+            "Price": "$12.10",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$10.20",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Samtec/QMS-026-01-H-D-RA-MG?qs=PB6%2FjmICvI0X83Lp8XDdvQ%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 0.0005408
+        },
+        "AvailabilityInStock": "64",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694040"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8538900000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536690020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853669000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536691000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536693000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8536699999"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85366990"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "940 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Headers & Wire Housings GHD HOUSING",
+        "FactoryStock": "0",
+        "ImagePath": null,
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "112 Days",
+        "LifecycleStatus": "New at Mouser",
+        "Manufacturer": "JST Commercial",
+        "ManufacturerPartNumber": "GHDR-24V-S-1",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "306-GHDR-24V-S-1",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "1000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.40",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.343",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$0.302",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.267",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.24",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.195",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 3000,
+            "Price": "$0.182",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.174",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10000,
+            "Price": "$0.165",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/JST-Commercial/GHDR-24V-S-1?qs=CoAU%2FpHVZXxdfRZmfzWOTA%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "940",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 12 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8538908180"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853890000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "2247 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/1070/1/eGHD_AU.pdf",
+        "Description": "Headers & Wire Housings GHD HOUSING",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/jstcommercial/images/GHDR-series_SPL.jpg",
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "112 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "JST Commercial",
+        "ManufacturerPartNumber": "GHDR-20V-S-1",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "306-GHDR-20V-S-1F",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "1000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.40",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.337",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$0.297",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.262",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.236",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.191",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 3000,
+            "Price": "$0.179",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.171",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10000,
+            "Price": "$0.167",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/JST-Commercial/GHDR-20V-S-1?qs=IKkN%2F947nfCMyJuk7NGt8Q%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "2247",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 12 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8538908180"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8538900000"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853890000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8538907080"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "849 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Headers & Wire Housings GHD HOUSING",
+        "FactoryStock": "0",
+        "ImagePath": null,
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "112 Days",
+        "LifecycleStatus": "New at Mouser",
+        "Manufacturer": "JST Commercial",
+        "ManufacturerPartNumber": "GHDR-28V-S-1",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "306-GHDR-28V-S-1",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "1000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.42",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.354",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$0.311",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.275",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.247",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.201",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 3000,
+            "Price": "$0.188",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.18",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10000,
+            "Price": "$0.17",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/JST-Commercial/GHDR-28V-S-1?qs=CoAU%2FpHVZXxAQq%252Bnc7nAcQ%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "849",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 10 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8538908180"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853890000"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "650 In Stock",
+        "DataSheetUrl": "",
+        "Description": "Headers & Wire Housings GHD HOUSING",
+        "FactoryStock": "0",
+        "ImagePath": null,
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "112 Days",
+        "LifecycleStatus": "New at Mouser",
+        "Manufacturer": "JST Commercial",
+        "ManufacturerPartNumber": "GHDR-16V-S-1",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "306-GHDR-16V-S-1",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "1000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.40",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.337",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$0.296",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.262",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.235",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.172",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5000,
+            "Price": "$0.171",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10000,
+            "Price": "$0.166",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/JST-Commercial/GHDR-16V-S-1?qs=IKkN%2F947nfBQTiYhIo8sNQ%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "650",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": []
+      },
+      {
+        "Availability": "1855 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/506/1/100866606.pdf",
+        "Description": "Terminals HRNG-TRM 16-12 #10     VYL YEL",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/panduit/images/pv12-10hdrb-2k_SPL.jpg",
+        "Category": "Terminals",
+        "LeadTime": "70 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Panduit",
+        "ManufacturerPartNumber": "PV12-10HDRB-2K",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "644-PV12-10HDRB-2K",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "2000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.74",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.722",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.654",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.637",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.585",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2000,
+            "Price": "$0.441",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Panduit/PV12-10HDRB-2K?qs=yEyEXwUbCumTYUYE6A2FwQ%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 0.002696885
+        },
+        "AvailabilityInStock": "1855",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": null,
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536904000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8538900000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536900020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853690000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536909010"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536901000"
+          },
+          {
+            "ComplianceName": "MXHTS",
+            "ComplianceValue": "8536902800"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85369090"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "139 In Stock",
+        "DataSheetUrl": "",
+        "Description": "HDMI, Displayport & DVI Connectors Latch lock, HDMI, receptacle, with dust cover",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/amphenol/images/MRHDR01A1300035_SPL.jpg",
+        "Category": "HDMI, Displayport & DVI Connectors",
+        "LeadTime": "56 Days",
+        "LifecycleStatus": "New at Mouser",
+        "Manufacturer": "Amphenol Commercial Products",
+        "ManufacturerPartNumber": "MRHDR01A13000",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "523-MRHDR01A13000",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Bag"
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "192"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$18.47",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$15.70",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$14.72",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 50,
+            "Price": "$14.02",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$13.12",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Amphenol-Commercial-Products/MRHDR01A13000?qs=jcD%2FCkGBYeOFZqEAHVHykQ%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "139",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 40 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694030"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536699099"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "896 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/167/1/ts0770.pdf",
+        "Description": "Headers & Wire Housings 3M Four-Wall Header 2500 Series, 8 Pin Straight Header, 0.112 Tail Length, Gold Flash",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/3m/images/Y2510-6002-SH-10P-ST-HDR-0.112-GF_SPL.jpg",
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "83 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "3M",
+        "ManufacturerPartNumber": "Y2508-6002-SH 08P ST HDR 0.112 GF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "517-2508-600208ST112",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "896"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.25",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.07",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.904",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.774",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 896,
+            "Price": "$0.737",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2688,
+            "Price": "$0.731",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5376,
+            "Price": "$0.682",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/3M/Y2508-6002-SH-08P-ST-HDR-0.112-GF?qs=jcD%2FCkGBYeMzOyxvjvv5gg%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "896",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694040"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536690020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853669000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536691000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536693000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85366990"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "811 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/167/1/ts0770.pdf",
+        "Description": "Headers & Wire Housings 3M Four-Wall Header 2500 Series, 6 Pin Straight Header, 0.112 Tail Length, Gold Flash",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/3m/images/Y2510-6002-SH-10P-ST-HDR-0.112-GF_SPL.jpg",
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "79 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "3M",
+        "ManufacturerPartNumber": "Y2506-6002-SH 06P ST HDR 0.112 GF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "517-2506-600206ST112",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "1064"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.16",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.987",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.839",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.749",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1064,
+            "Price": "$0.709",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2128,
+            "Price": "$0.698",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5320,
+            "Price": "$0.633",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/3M/Y2506-6002-SH-06P-ST-HDR-0.112-GF?qs=jcD%2FCkGBYePsP568TfIASA%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "811",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694040"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536690020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853669000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536691000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536693000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85366990"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "279 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/167/1/ts0770.pdf",
+        "Description": "Headers & Wire Housings 3M Four-Wall Header 2500 Series, 40 Pin, Right Angle Header, 0.155 Tail Length, Gold Flash",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/3m/images/Y2508-5002-SH%208P-RA-HDR-0.112-GF_SPL.jpg",
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "78 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "3M",
+        "ManufacturerPartNumber": "Y2540-5003-SH 40P RA HDR 0.155 GF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "517-2540-500340RA155",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "280"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$2.21",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.88",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 280,
+            "Price": "$1.49",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 560,
+            "Price": "$1.41",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1120,
+            "Price": "$1.34",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2520,
+            "Price": "$1.30",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5040,
+            "Price": "$1.20",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/3M/Y2540-5003-SH-40P-RA-HDR-0.155-GF?qs=jcD%2FCkGBYeOKCOUOj595XQ%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "279",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694040"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536690020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853669000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536691000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536693000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85366990"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "279 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/167/1/ts0770.pdf",
+        "Description": "Headers & Wire Housings 3M Four-Wall Header 2500 Series, 34 Pin, Right Angle Header, 0.155 Tail Length, Gold Flash",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/3m/images/Y2508-5002-SH%208P-RA-HDR-0.112-GF_SPL.jpg",
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "79 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "3M",
+        "ManufacturerPartNumber": "Y2534-5003-SH 34P RA HDR 0.155 GF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "517-2534-500334RA155",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "280"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.96",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.67",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 280,
+            "Price": "$1.32",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 560,
+            "Price": "$1.25",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1120,
+            "Price": "$1.19",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2520,
+            "Price": "$1.15",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5040,
+            "Price": "$1.07",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/3M/Y2534-5003-SH-34P-RA-HDR-0.155-GF?qs=jcD%2FCkGBYePdpHGvqbtuQA%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "279",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694040"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536690020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853669000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536691000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536693000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85366990"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "336 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/167/1/ts0770.pdf",
+        "Description": "Headers & Wire Housings 3M Four-Wall Header 2500 Series, 60 Pin, Right Angle Header, 0.112 Tail Length, Gold Flash",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/3m/images/Y2508-5002-SH%208P-RA-HDR-0.112-GF_SPL.jpg",
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "83 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "3M",
+        "ManufacturerPartNumber": "Y2560-5002-SH 60P RA HDR 0.112 GF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "517-2560-500260RA112",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "336"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$3.26",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$2.78",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$2.28",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 336,
+            "Price": "$2.10",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1008,
+            "Price": "$2.00",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2688,
+            "Price": "$1.96",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5040,
+            "Price": "$1.78",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/3M/Y2560-5002-SH-60P-RA-HDR-0.112-GF?qs=jcD%2FCkGBYeMRQRpuQxthyQ%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "336",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694040"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536690020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853669000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536691000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536693000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85366990"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "774 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/167/1/ts0770.pdf",
+        "Description": "Headers & Wire Housings 3M Four-Wall Header 2500 Series, 10 Pin, Right Angle Header, 0.112 Tail Length, Gold Flash",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/3m/images/Y2508-5002-SH%208P-RA-HDR-0.112-GF_SPL.jpg",
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "79 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "3M",
+        "ManufacturerPartNumber": "Y2510-5002-SH 10P RA HDR 0.112 GF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "517-2510-500210RA112",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "784"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.00",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.845",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.719",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.622",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 784,
+            "Price": "$0.591",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2352,
+            "Price": "$0.583",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5488,
+            "Price": "$0.541",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/3M/Y2510-5002-SH-10P-RA-HDR-0.112-GF?qs=jcD%2FCkGBYeNB4CpHwFYjbQ%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "774",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694040"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536690020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853669000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536691000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536693000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85366990"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "179 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/167/1/ts0770.pdf",
+        "Description": "Headers & Wire Housings 3M Four-Wall Header 2500 Series, 40 Pin, Right Angle Header, 0.112 Tail Length, Gold Flash",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/3m/images/Y2508-5002-SH%208P-RA-HDR-0.112-GF_SPL.jpg",
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "78 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "3M",
+        "ManufacturerPartNumber": "Y2540-5002-SH 40P RA HDR 0.112 GF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "517-2540-500240RA112",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "280"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$2.21",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.88",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 280,
+            "Price": "$1.49",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 560,
+            "Price": "$1.41",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1120,
+            "Price": "$1.34",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2520,
+            "Price": "$1.30",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5040,
+            "Price": "$1.20",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/3M/Y2540-5002-SH-40P-RA-HDR-0.112-GF?qs=jcD%2FCkGBYePjdUKZj%2Frl6A%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "179",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694040"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536690020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853669000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536691000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536693000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85366990"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "1063 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/167/1/ts0770.pdf",
+        "Description": "Headers & Wire Housings 3M Four-Wall Header 2500 Series, 6 Pin, Right Angle Header, 0.112 Tail Length, Gold Flash",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/3m/images/Y2508-5002-SH%208P-RA-HDR-0.112-GF_SPL.jpg",
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "79 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "3M",
+        "ManufacturerPartNumber": "Y2506-5002-SH 06P RA HDR 0.112 GF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "517-2506-500206RA112",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "1064"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.89",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.748",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 25,
+            "Price": "$0.718",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.672",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.611",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.55",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1064,
+            "Price": "$0.498",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2128,
+            "Price": "$0.488",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5320,
+            "Price": "$0.444",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/3M/Y2506-5002-SH-06P-RA-HDR-0.112-GF?qs=jcD%2FCkGBYePPTw160j%2F%252BOQ%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "1063",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694040"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536690020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853669000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536691000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536693000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85366990"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "336 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/167/1/ts0770.pdf",
+        "Description": "Headers & Wire Housings 3M Four-Wall Header 2500 Series, 30 Pin, Right Angle Header, 0.155 Tail Length, Gold Flash",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/3m/images/Y2508-5002-SH%208P-RA-HDR-0.112-GF_SPL.jpg",
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "79 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "3M",
+        "ManufacturerPartNumber": "Y2530-5003-SH 30P RA HDR 0.155 GF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "517-2530-500330RA155",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "336"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.76",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.50",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$1.21",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 336,
+            "Price": "$1.11",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1008,
+            "Price": "$1.07",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2688,
+            "Price": "$1.05",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5040,
+            "Price": "$0.963",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/3M/Y2530-5003-SH-30P-RA-HDR-0.155-GF?qs=jcD%2FCkGBYePfTob5hNRDLQ%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "336",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694040"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536690020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853669000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536691000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536693000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85366990"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "1990 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/506/1/100866606.pdf",
+        "Description": "Terminals Ring Terminal, heavy duty, vinyl insulated, 16 - 12 AWG, 1/4\" stud size, funnel entry",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/panduit/images/pv12-10hdrb-2k_SPL.jpg",
+        "Category": "Terminals",
+        "LeadTime": "115 Days",
+        "LifecycleStatus": null,
+        "Manufacturer": "Panduit",
+        "ManufacturerPartNumber": "PV12-14HDRB-2K",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "644-PV12-14HDRB-2K",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Reel"
+          },
+          {
+            "AttributeName": "Packaging",
+            "AttributeValue": "Cut Tape"
+          },
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "2000"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.87",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.845",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.765",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.745",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.684",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2000,
+            "Price": "$0.664",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 4000,
+            "Price": "$0.638",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10000,
+            "Price": "$0.616",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Panduit/PV12-14HDRB-2K?qs=yEyEXwUbCukUFLAeF5sjJw%3D%3D",
+        "Reeling": true,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "UnitWeightKg": {
+          "UnitWeight": 0.00341875
+        },
+        "AvailabilityInStock": "1990",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 20 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536904000"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8538900000"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536900020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "8536900002"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536901000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85369090"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "266 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/167/1/ts0770.pdf",
+        "Description": "Headers & Wire Housings 3M Four-Wall Header 2500 Series, 40 Pin Straight Header, 0.155 Tail Length, Gold Flash",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/3m/images/Y2510-6002-SH-10P-ST-HDR-0.112-GF_SPL.jpg",
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "78 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "3M",
+        "ManufacturerPartNumber": "Y2540-6003-SH 40P ST HDR 0.155 GF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "517-2540-600340ST155",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "280"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$2.19",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.86",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 280,
+            "Price": "$1.48",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 560,
+            "Price": "$1.40",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1120,
+            "Price": "$1.33",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2520,
+            "Price": "$1.29",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5040,
+            "Price": "$1.19",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/3M/Y2540-6003-SH-40P-ST-HDR-0.155-GF?qs=jcD%2FCkGBYePhH9nSDDzvWA%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "266",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694040"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536690020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853669000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536691000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536693000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85366990"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "392 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/167/1/ts0770.pdf",
+        "Description": "Headers & Wire Housings 3M Four-Wall Header 2500 Series, 26 Pin Straight Header, 0.155 Tail Length, Gold Flash",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/3m/images/Y2510-6002-SH-10P-ST-HDR-0.112-GF_SPL.jpg",
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "78 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "3M",
+        "ManufacturerPartNumber": "Y2526-6003-SH 26P ST HDR 0.155 GF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "517-2526-600326ST155",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "392"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.58",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.35",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$1.33",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$1.04",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 392,
+            "Price": "$0.985",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1176,
+            "Price": "$0.957",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2744,
+            "Price": "$0.931",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5096,
+            "Price": "$0.863",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/3M/Y2526-6003-SH-26P-ST-HDR-0.155-GF?qs=jcD%2FCkGBYeP15B67Lig5Ew%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "392",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694040"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536690020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853669000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536691000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536693000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85366990"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "336 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/167/1/ts0770.pdf",
+        "Description": "Headers & Wire Housings 3M Four-Wall Header 2500 Series, 30 Pin Straight Header, 0.155 Tail Length, Gold Flash",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/3m/images/Y2510-6002-SH-10P-ST-HDR-0.112-GF_SPL.jpg",
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "83 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "3M",
+        "ManufacturerPartNumber": "Y2530-6003-SH 30P ST HDR 0.155 GF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "517-2530-600330ST155",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "336"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.75",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.49",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$1.20",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 336,
+            "Price": "$1.10",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1008,
+            "Price": "$1.07",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2688,
+            "Price": "$1.05",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5040,
+            "Price": "$0.956",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/3M/Y2530-6003-SH-30P-ST-HDR-0.155-GF?qs=jcD%2FCkGBYeOQRLr1o6Iodw%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "336",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694040"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536690020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853669000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536691000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536693000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85366990"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "336 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/167/1/ts0770.pdf",
+        "Description": "Headers & Wire Housings 3M Four-Wall Header 2500 Series, 64 Pin, Right Angle Header, 0.155 Tail Length, Gold Flash",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/3m/images/Y2508-5002-SH%208P-RA-HDR-0.112-GF_SPL.jpg",
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "83 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "3M",
+        "ManufacturerPartNumber": "Y2564-5003-SH 64P RA HDR 0.155 GF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "517-2564-500364RA155",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "336"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$3.59",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$3.05",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$2.50",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 336,
+            "Price": "$2.31",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1008,
+            "Price": "$2.20",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2688,
+            "Price": "$2.13",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5040,
+            "Price": "$1.96",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/3M/Y2564-5003-SH-64P-RA-HDR-0.155-GF?qs=jcD%2FCkGBYePQIxniBEiksw%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "336",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694040"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536690020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853669000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536691000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536693000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85366990"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "1063 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/167/1/ts0770.pdf",
+        "Description": "Headers & Wire Housings 3M Four-Wall Header 2500 Series, 6 Pin, Right Angle Header, 0.155 Tail Length, Gold Flash",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/3m/images/Y2508-5002-SH%208P-RA-HDR-0.112-GF_SPL.jpg",
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "79 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "3M",
+        "ManufacturerPartNumber": "Y2506-5003-SH 06P RA HDR 0.155 GF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "517-2506-500306RA155",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "1064"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.17",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.995",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.846",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.755",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1064,
+            "Price": "$0.715",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2128,
+            "Price": "$0.704",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5320,
+            "Price": "$0.638",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/3M/Y2506-5003-SH-06P-RA-HDR-0.155-GF?qs=jcD%2FCkGBYePTyMN8XPNhzA%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "1063",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694040"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536690020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853669000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536691000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536693000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85366990"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "280 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/167/1/ts0770.pdf",
+        "Description": "Headers & Wire Housings 3M Four-Wall Header 2500 Series, 36 Pin, Right Angle Header, 0.155 Tail Length, Gold Flash",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/3m/images/Y2508-5002-SH%208P-RA-HDR-0.112-GF_SPL.jpg",
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "79 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "3M",
+        "ManufacturerPartNumber": "Y2536-5003-SH 36P RA HDR 0.155 GF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "517-2536-500336RA155",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "280"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$2.05",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.74",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 280,
+            "Price": "$1.38",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 560,
+            "Price": "$1.30",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1120,
+            "Price": "$1.24",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2520,
+            "Price": "$1.22",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5040,
+            "Price": "$1.12",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/3M/Y2536-5003-SH-36P-RA-HDR-0.155-GF?qs=jcD%2FCkGBYeOzO77LNt43fg%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "280",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694040"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536690020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853669000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536691000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536693000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85366990"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "1053 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/167/1/ts0770.pdf",
+        "Description": "Headers & Wire Housings 3M Four-Wall Header 2500 Series, 6 Pin Straight Header, 0.155 Tail Length, Gold Flash",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/3m/images/Y2510-6002-SH-10P-ST-HDR-0.112-GF_SPL.jpg",
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "78 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "3M",
+        "ManufacturerPartNumber": "Y2506-6003-SH 06P ST HDR 0.155 GF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "517-2506-600306ST155",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "1064"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.16",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.987",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.839",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.749",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1064,
+            "Price": "$0.71",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2128,
+            "Price": "$0.69",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5320,
+            "Price": "$0.633",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/3M/Y2506-6003-SH-06P-ST-HDR-0.155-GF?qs=jcD%2FCkGBYeNUo23P7hf4jQ%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "1053",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694040"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536690020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853669000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536691000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536693000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85366990"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "616 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/167/1/ts0770.pdf",
+        "Description": "Headers & Wire Housings 3M Four-Wall Header 2500 Series, 14 Pin Straight Header, 0.155 Tail Length, Gold Flash",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/3m/images/Y2510-6002-SH-10P-ST-HDR-0.112-GF_SPL.jpg",
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "78 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "3M",
+        "ManufacturerPartNumber": "Y2514-6003-SH 14P ST HDR 0.155 GF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "517-2514-600314ST155",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "616"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.18",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.999",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.85",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$0.849",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.747",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.711",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2464,
+            "Price": "$0.702",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5544,
+            "Price": "$0.639",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/3M/Y2514-6003-SH-14P-ST-HDR-0.155-GF?qs=jcD%2FCkGBYeMmTJW363Krdg%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "616",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694040"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536690020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853669000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536691000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536693000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85366990"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "477 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/167/1/ts0770.pdf",
+        "Description": "Headers & Wire Housings 3M Four-Wall Header 2500 Series, 20 Pin Straight Header, 0.155 Tail Length, Gold Flash",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/3m/images/Y2510-6002-SH-10P-ST-HDR-0.112-GF_SPL.jpg",
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "78 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "3M",
+        "ManufacturerPartNumber": "Y2520-6003-SH 20P ST HDR 0.155 GF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "517-2520-600320ST155",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "504"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.39",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.18",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$1.01",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 504,
+            "Price": "$0.893",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1008,
+            "Price": "$0.85",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2520,
+            "Price": "$0.835",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5040,
+            "Price": "$0.759",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/3M/Y2520-6003-SH-20P-ST-HDR-0.155-GF?qs=jcD%2FCkGBYeMZdmPia%252BXJeA%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "477",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694040"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536690020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853669000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536691000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536693000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85366990"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "334 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/167/1/ts0770.pdf",
+        "Description": "Headers & Wire Housings 3M Four-Wall Header 2500 Series, 64 Pin Straight Header, 0.155 Tail Length, Gold Flash",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/3m/images/Y2510-6002-SH-10P-ST-HDR-0.112-GF_SPL.jpg",
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "83 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "3M",
+        "ManufacturerPartNumber": "Y2564-6003-SH 64P ST HDR 0.155 GF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "517-2564-600364ST155",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "336"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$3.56",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$3.03",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$2.48",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 336,
+            "Price": "$2.29",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1008,
+            "Price": "$2.18",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2688,
+            "Price": "$2.14",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5040,
+            "Price": "$1.95",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/3M/Y2564-6003-SH-64P-ST-HDR-0.155-GF?qs=jcD%2FCkGBYeNgcC7wrhOYNw%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "334",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694040"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536690020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853669000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536691000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536693000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85366990"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "784 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/167/1/ts0770.pdf",
+        "Description": "Headers & Wire Housings 3M Four-Wall Header 2500 Series, 10 Pin Straight Header, 0.112 Tail Length, Gold Flash",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/3m/images/Y2510-6002-SH-10P-ST-HDR-0.112-GF_SPL.jpg",
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "79 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "3M",
+        "ManufacturerPartNumber": "Y2510-6002-SH 10P ST HDR 0.112 GF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "517-2510-600210ST112",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "784"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.99",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.839",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.714",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.636",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 784,
+            "Price": "$0.587",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2352,
+            "Price": "$0.578",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5488,
+            "Price": "$0.537",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/3M/Y2510-6002-SH-10P-ST-HDR-0.112-GF?qs=jcD%2FCkGBYeN98z0g2a7zLQ%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "784",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694040"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536690020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853669000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536691000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536693000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85366990"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "292 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/167/1/ts0770.pdf",
+        "Description": "Headers & Wire Housings 3M Four-Wall Header 2500 Series, 26 Pin Straight Header, 0.112 Tail Length, Gold Flash",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/3m/images/Y2510-6002-SH-10P-ST-HDR-0.112-GF_SPL.jpg",
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "78 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "3M",
+        "ManufacturerPartNumber": "Y2526-6002-SH 26P ST HDR 0.112 GF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "517-2526-600226ST112",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "392"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.61",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.37",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$1.36",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$1.06",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 392,
+            "Price": "$1.00",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1176,
+            "Price": "$0.977",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2744,
+            "Price": "$0.952",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5096,
+            "Price": "$0.881",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/3M/Y2526-6002-SH-26P-ST-HDR-0.112-GF?qs=jcD%2FCkGBYePrF%2F7imYS%2FVA%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "292",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694040"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536690020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853669000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536691000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536693000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85366990"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "1120 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/167/1/ts0770.pdf",
+        "Description": "Headers & Wire Housings 3M Four-Wall Header 2500 Series, 36 Pin Straight Header, 0.112 Tail Length, Gold Flash",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/3m/images/Y2510-6002-SH-10P-ST-HDR-0.112-GF_SPL.jpg",
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "83 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "3M",
+        "ManufacturerPartNumber": "Y2536-6002-SH 36P ST HDR 0.112 GF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "517-2536-600236ST112",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "1120"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$2.03",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.73",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$1.37",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$1.30",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1120,
+            "Price": "$1.24",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2240,
+            "Price": "$1.19",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5600,
+            "Price": "$1.11",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/3M/Y2536-6002-SH-36P-ST-HDR-0.112-GF?qs=jcD%2FCkGBYeNt1%2F%252Bg2vhCmA%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "1120",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694040"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536690020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853669000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536691000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536693000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85366990"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "326 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/167/1/ts0770.pdf",
+        "Description": "Headers & Wire Housings 3M Four-Wall Header 2500 Series, 30 Pin Straight Header, 0.112 Tail Length, Gold Flash",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/3m/images/Y2510-6002-SH-10P-ST-HDR-0.112-GF_SPL.jpg",
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "78 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "3M",
+        "ManufacturerPartNumber": "Y2530-6002-SH 30P ST HDR 0.112 GF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "517-2530-600230ST112",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "336"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.75",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.49",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$1.48",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$1.16",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 336,
+            "Price": "$1.10",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1008,
+            "Price": "$1.07",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2688,
+            "Price": "$1.04",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5040,
+            "Price": "$0.956",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/3M/Y2530-6002-SH-30P-ST-HDR-0.112-GF?qs=jcD%2FCkGBYeNfENxIxEB7eg%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "326",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694040"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536690020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853669000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536691000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536693000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85366990"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "392 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/167/1/ts0770.pdf",
+        "Description": "Headers & Wire Housings 3M Four-Wall Header 2500 Series, 24 Pin Straight Header, 0.112 Tail Length, Gold Flash",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/3m/images/Y2510-6002-SH-10P-ST-HDR-0.112-GF_SPL.jpg",
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "83 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "3M",
+        "ManufacturerPartNumber": "Y2524-6002-SH 24P ST HDR 0.112 GF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "517-2524-600224ST112",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "392"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.53",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.30",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$1.29",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$1.01",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 392,
+            "Price": "$0.953",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1176,
+            "Price": "$0.926",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2744,
+            "Price": "$0.899",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5096,
+            "Price": "$0.835",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/3M/Y2524-6002-SH-24P-ST-HDR-0.112-GF?qs=jcD%2FCkGBYePYuY%2FBOosxnQ%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "392",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694040"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536690020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853669000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536691000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536693000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85366990"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "336 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/167/1/ts0770.pdf",
+        "Description": "Headers & Wire Housings 3M Four-Wall Header 2500 Series, 60 Pin, Right Angle Header, 0.155 Tail Length, Gold Flash",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/3m/images/Y2508-5002-SH%208P-RA-HDR-0.112-GF_SPL.jpg",
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "83 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "3M",
+        "ManufacturerPartNumber": "Y2560-5003-SH 60P RA HDR 0.155 GF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "517-2560-500360RA155",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "336"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$3.26",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$2.78",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$2.28",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 336,
+            "Price": "$2.10",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1008,
+            "Price": "$2.00",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2688,
+            "Price": "$1.97",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5040,
+            "Price": "$1.78",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/3M/Y2560-5003-SH-60P-RA-HDR-0.155-GF?qs=jcD%2FCkGBYeOyyOn%252B4qf10w%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "336",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694040"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536690020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853669000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536691000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536693000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85366990"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "280 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/167/1/ts0770.pdf",
+        "Description": "Headers & Wire Housings 3M Four-Wall Header 2500 Series, 36 Pin, Right Angle Header, 0.112 Tail Length, Gold Flash",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/3m/images/Y2508-5002-SH%208P-RA-HDR-0.112-GF_SPL.jpg",
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "78 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "3M",
+        "ManufacturerPartNumber": "Y2536-5002-SH 36P RA HDR 0.112 GF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "517-2536-500236RA112",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "280"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$2.05",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.74",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 280,
+            "Price": "$1.37",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 560,
+            "Price": "$1.30",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1120,
+            "Price": "$1.24",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2520,
+            "Price": "$1.22",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5040,
+            "Price": "$1.12",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/3M/Y2536-5002-SH-36P-RA-HDR-0.112-GF?qs=jcD%2FCkGBYeObXeRoO%2FkY1A%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "280",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694040"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536690020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853669000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536691000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536693000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85366990"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "336 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/167/1/ts0770.pdf",
+        "Description": "Headers & Wire Housings 3M Four-Wall Header 2500 Series, 64 Pin, Right Angle Header, 0.112 Tail Length, Gold Flash",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/3m/images/Y2508-5002-SH%208P-RA-HDR-0.112-GF_SPL.jpg",
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "83 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "3M",
+        "ManufacturerPartNumber": "Y2564-5002-SH 64P RA HDR 0.112 GF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "517-2564-500264RA112",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "336"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$3.59",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$3.05",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$2.50",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 336,
+            "Price": "$2.31",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1008,
+            "Price": "$2.20",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2688,
+            "Price": "$2.16",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5040,
+            "Price": "$1.96",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/3M/Y2564-5002-SH-64P-RA-HDR-0.112-GF?qs=jcD%2FCkGBYePSG3NorRxFOA%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "336",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694040"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536690020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853669000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536691000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536693000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85366990"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "550 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/167/1/ts0770.pdf",
+        "Description": "Headers & Wire Housings 3M Four-Wall Header 2500 Series, 16 Pin, Right Angle Header, 0.112 Tail Length, Gold Flash",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/3m/images/Y2508-5002-SH%208P-RA-HDR-0.112-GF_SPL.jpg",
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "69 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "3M",
+        "ManufacturerPartNumber": "Y2516-5002-SH 16P RA HDR 0.112 GF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "517-2516-500216RA112",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "560"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.27",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.08",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.911",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 560,
+            "Price": "$0.806",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1120,
+            "Price": "$0.768",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2800,
+            "Price": "$0.758",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5040,
+            "Price": "$0.69",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/3M/Y2516-5002-SH-16P-RA-HDR-0.112-GF?qs=jcD%2FCkGBYeM%2Fac%2FHeN8i8Q%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "550",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694040"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536690020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853669000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536691000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536693000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85366990"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "260 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/167/1/ts0770.pdf",
+        "Description": "Headers & Wire Housings 3M Four-Wall Header 2500 Series, 40 Pin Straight Header, 0.112 Tail Length, Gold Flash",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/3m/images/Y2510-6002-SH-10P-ST-HDR-0.112-GF_SPL.jpg",
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "83 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "3M",
+        "ManufacturerPartNumber": "Y2540-6002-SH 40P ST HDR 0.112 GF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "517-2540-600240ST112",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "280"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$2.19",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.86",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 280,
+            "Price": "$1.48",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 560,
+            "Price": "$1.40",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1120,
+            "Price": "$1.33",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2520,
+            "Price": "$1.29",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5040,
+            "Price": "$1.19",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/3M/Y2540-6002-SH-40P-ST-HDR-0.112-GF?qs=jcD%2FCkGBYePPpoUgXV7EKA%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "260",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694040"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536690020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853669000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536691000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536693000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85366990"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "223 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/167/1/ts0770.pdf",
+        "Description": "Headers & Wire Housings 3M Four-Wall Header 2500 Series, 50 Pin, Right Angle Header, 0.112 Tail Length, Gold Flash",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/3m/images/Y2508-5002-SH%208P-RA-HDR-0.112-GF_SPL.jpg",
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "78 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "3M",
+        "ManufacturerPartNumber": "Y2550-5002-SH 50P RA HDR 0.112 GF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "517-2550-500250RA112",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "224"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$2.93",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$2.50",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$2.01",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 224,
+            "Price": "$2.00",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 448,
+            "Price": "$1.85",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1120,
+            "Price": "$1.78",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2688,
+            "Price": "$1.74",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5152,
+            "Price": "$1.60",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/3M/Y2550-5002-SH-50P-RA-HDR-0.112-GF?qs=jcD%2FCkGBYeORXUGpqPihqg%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "223",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694040"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536690020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853669000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536691000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536693000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85366990"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "495 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/167/1/ts0770.pdf",
+        "Description": "Headers & Wire Housings 3M Four-Wall Header 2500 Series, 16 Pin Straight Header, 0.155 Tail Length, Gold Flash",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/3m/images/Y2510-6002-SH-10P-ST-HDR-0.112-GF_SPL.jpg",
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "79 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "3M",
+        "ManufacturerPartNumber": "Y2516-6003-SH 16P ST HDR 0.155 GF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "517-2516-600316ST155",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "560"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.25",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.07",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.905",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 560,
+            "Price": "$0.80",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1120,
+            "Price": "$0.762",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2800,
+            "Price": "$0.752",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5040,
+            "Price": "$0.685",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/3M/Y2516-6003-SH-16P-ST-HDR-0.155-GF?qs=jcD%2FCkGBYeMGkmr%252BQpYXKg%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "495",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694040"
+          },
+          {
+            "ComplianceName": "CNHTS",
+            "ComplianceValue": "8536901100"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536690020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853669000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536691000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536693000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85366990"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "1120 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/167/1/ts0770.pdf",
+        "Description": "Headers & Wire Housings 3M Four-Wall Header 2500 Series, 36 Pin Straight Header, 0.155 Tail Length, Gold Flash",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/3m/images/Y2510-6002-SH-10P-ST-HDR-0.112-GF_SPL.jpg",
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "69 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "3M",
+        "ManufacturerPartNumber": "Y2536-6003-SH 36P ST HDR 0.155 GF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "517-2536-600336ST155",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "1120"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$2.03",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.73",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$1.37",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$1.30",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1120,
+            "Price": "$1.24",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2240,
+            "Price": "$1.11",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/3M/Y2536-6003-SH-36P-ST-HDR-0.155-GF?qs=jcD%2FCkGBYeMGoGE2Ztt0Og%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "1120",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694040"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536690020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853669000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536691000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536693000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85366990"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "184 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/167/1/ts0770.pdf",
+        "Description": "Headers & Wire Housings 3M Four-Wall Header 2500 Series, 50 Pin Straight Header, 0.155 Tail Length, Gold Flash",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/3m/images/Y2510-6002-SH-10P-ST-HDR-0.112-GF_SPL.jpg",
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "79 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "3M",
+        "ManufacturerPartNumber": "Y2550-6003-SH 50P ST HDR 0.155 GF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "517-2550-600350ST155",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "224"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$2.91",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$2.48",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$1.99",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 224,
+            "Price": "$1.98",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 448,
+            "Price": "$1.83",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1120,
+            "Price": "$1.77",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2688,
+            "Price": "$1.73",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5152,
+            "Price": "$1.59",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/3M/Y2550-6003-SH-50P-ST-HDR-0.155-GF?qs=jcD%2FCkGBYeN3tszJKuXCHg%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "184",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694040"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536690020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853669000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536691000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536693000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85366990"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "249 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/167/1/ts0770.pdf",
+        "Description": "Headers & Wire Housings 3M Four-Wall Header 2500 Series, 34 Pin Straight Header, 0.155 Tail Length, Gold Flash",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/3m/images/Y2510-6002-SH-10P-ST-HDR-0.112-GF_SPL.jpg",
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "78 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "3M",
+        "ManufacturerPartNumber": "Y2534-6003-SH 34P ST HDR 0.155 GF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "517-2534-600334ST155",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "280"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.94",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.65",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 280,
+            "Price": "$1.31",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 560,
+            "Price": "$1.24",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1120,
+            "Price": "$1.18",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2520,
+            "Price": "$1.15",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5040,
+            "Price": "$1.06",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/3M/Y2534-6003-SH-34P-ST-HDR-0.155-GF?qs=jcD%2FCkGBYeMqH3f%252BOf5Isg%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "249",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694040"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536690020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853669000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536691000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536693000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85366990"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "891 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/167/1/ts0770.pdf",
+        "Description": "Headers & Wire Housings 3M Four-Wall Header 2500 Series, 8 Pin Straight Header, 0.155 Tail Length, Gold Flash",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/3m/images/Y2510-6002-SH-10P-ST-HDR-0.112-GF_SPL.jpg",
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "79 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "3M",
+        "ManufacturerPartNumber": "Y2508-6003-SH 08P ST HDR 0.155 GF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "517-2508-600308ST155",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "896"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.25",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.07",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.904",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.774",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 896,
+            "Price": "$0.737",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2688,
+            "Price": "$0.731",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5376,
+            "Price": "$0.682",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/3M/Y2508-6003-SH-08P-ST-HDR-0.155-GF?qs=jcD%2FCkGBYeOoovIdyzIVmw%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "891",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694040"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536690020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853669000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536691000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536693000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85366990"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "336 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/167/1/ts0770.pdf",
+        "Description": "Headers & Wire Housings 3M Four-Wall Header 2500 Series, 60 Pin Straight Header, 0.112 Tail Length, Gold Flash",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/3m/images/Y2510-6002-SH-10P-ST-HDR-0.112-GF_SPL.jpg",
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "83 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "3M",
+        "ManufacturerPartNumber": "Y2560-6002-SH 60P ST HDR 0.112 GF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "517-2560-600260ST112",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "336"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$3.24",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$2.76",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$2.26",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 336,
+            "Price": "$2.08",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1008,
+            "Price": "$1.98",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2688,
+            "Price": "$1.94",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5040,
+            "Price": "$1.77",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/3M/Y2560-6002-SH-60P-ST-HDR-0.112-GF?qs=jcD%2FCkGBYePQ9IIZ4dE%252Bww%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "336",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694040"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536690020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853669000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536691000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536693000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85366990"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "1226 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/167/1/ts0770.pdf",
+        "Description": "Headers & Wire Housings 3M Four-Wall Header 2500 Series, 14 Pin Straight Header, 0.112 Tail Length, Gold Flash",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/3m/images/Y2510-6002-SH-10P-ST-HDR-0.112-GF_SPL.jpg",
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "83 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "3M",
+        "ManufacturerPartNumber": "Y2514-6002-SH 14P ST HDR 0.112 GF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "517-2514-600214ST112",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "1232"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.18",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$0.999",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$0.85",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 500,
+            "Price": "$0.747",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1000,
+            "Price": "$0.712",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2464,
+            "Price": "$0.695",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 4928,
+            "Price": "$0.639",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/3M/Y2514-6002-SH-14P-ST-HDR-0.112-GF?qs=jcD%2FCkGBYePVoBLM3uRdCg%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "1226",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694040"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536690020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853669000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536691000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536693000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85366990"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "392 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/167/1/ts0770.pdf",
+        "Description": "Headers & Wire Housings 3M Four-Wall Header 2500 Series, 26 Pin, Right Angle Header, 0.112 Tail Length, Gold Flash",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/3m/images/Y2508-5002-SH%208P-RA-HDR-0.112-GF_SPL.jpg",
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "79 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "3M",
+        "ManufacturerPartNumber": "Y2526-5002-SH 26P RA HDR 0.112 GF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "517-2526-500226RA112",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "392"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.62",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.38",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 250,
+            "Price": "$1.11",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 392,
+            "Price": "$1.01",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1176,
+            "Price": "$0.985",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2744,
+            "Price": "$0.97",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5096,
+            "Price": "$0.888",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/3M/Y2526-5002-SH-26P-RA-HDR-0.112-GF?qs=jcD%2FCkGBYeNSHbjutJdUqg%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "392",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694040"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536690020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853669000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536691000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536693000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85366990"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "499 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/167/1/ts0770.pdf",
+        "Description": "Headers & Wire Housings 3M Four-Wall Header 2500 Series, 20 Pin, Right Angle Header, 0.112 Tail Length, Gold Flash",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/3m/images/Y2508-5002-SH%208P-RA-HDR-0.112-GF_SPL.jpg",
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "78 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "3M",
+        "ManufacturerPartNumber": "Y2520-5002-SH 20P RA HDR 0.112 GF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "517-2520-500220RA112",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "504"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.40",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.19",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$1.01",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 504,
+            "Price": "$0.901",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1008,
+            "Price": "$0.857",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2520,
+            "Price": "$0.829",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5040,
+            "Price": "$0.765",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/3M/Y2520-5002-SH-20P-RA-HDR-0.112-GF?qs=jcD%2FCkGBYeOjy7%252Bj%2Fckj8Q%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "499",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694040"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536690020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853669000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536691000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536693000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85366990"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      },
+      {
+        "Availability": "500 In Stock",
+        "DataSheetUrl": "https://www.mouser.com/datasheet/3/167/1/ts0770.pdf",
+        "Description": "Headers & Wire Housings 3M Four-Wall Header 2500 Series, 20 Pin Straight Header, 0.112 Tail Length, Gold Flash",
+        "FactoryStock": "0",
+        "ImagePath": "https://www.mouser.com/images/3m/images/Y2510-6002-SH-10P-ST-HDR-0.112-GF_SPL.jpg",
+        "Category": "Headers & Wire Housings",
+        "LeadTime": "107 Days",
+        "LifecycleStatus": "New Product",
+        "Manufacturer": "3M",
+        "ManufacturerPartNumber": "Y2520-6002-SH 20P ST HDR 0.112 GF",
+        "Min": "1",
+        "Mult": "1",
+        "MouserPartNumber": "517-2520-600220ST112",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Standard Pack Qty",
+            "AttributeValue": "504"
+          }
+        ],
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$1.39",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 10,
+            "Price": "$1.18",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 100,
+            "Price": "$1.01",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 504,
+            "Price": "$0.956",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 1008,
+            "Price": "$0.85",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 2520,
+            "Price": "$0.823",
+            "Currency": "USD"
+          },
+          {
+            "Quantity": 5040,
+            "Price": "$0.759",
+            "Currency": "USD"
+          }
+        ],
+        "AlternatePackagings": null,
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/3M/Y2520-6002-SH-20P-ST-HDR-0.112-GF?qs=jcD%2FCkGBYeMPDx8CCodTbQ%3D%3D",
+        "Reeling": false,
+        "ROHSStatus": "RoHS Compliant",
+        "SuggestedReplacement": "",
+        "MultiSimBlue": 0,
+        "AvailabilityInStock": "500",
+        "AvailabilityOnOrder": [],
+        "InfoMessages": [],
+        "SurchargeMessages": [
+          {
+            "code": "TARIFF_US",
+            "message": "A tariff of 16 % may be applied."
+          }
+        ],
+        "ProductCompliance": [
+          {
+            "ComplianceName": "USHTS",
+            "ComplianceValue": "8536694040"
+          },
+          {
+            "ComplianceName": "CAHTS",
+            "ComplianceValue": "8536690020"
+          },
+          {
+            "ComplianceName": "JPHTS",
+            "ComplianceValue": "853669000"
+          },
+          {
+            "ComplianceName": "KRHTS",
+            "ComplianceValue": "8536691000"
+          },
+          {
+            "ComplianceName": "TARIC",
+            "ComplianceValue": "8536693000"
+          },
+          {
+            "ComplianceName": "BRHTS",
+            "ComplianceValue": "85366990"
+          },
+          {
+            "ComplianceName": "ECCN",
+            "ComplianceValue": "EAR99"
+          }
+        ]
+      }
+    ]
+  }
+}
