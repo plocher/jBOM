@@ -25,7 +25,7 @@ Feature: Issue #21 Conceptual Problem - BOM vs Parts List Distinction
       | R1        | 10K   | R_0805_2012 |
       | R2        | 10K   | R_0805_2012 |
       | R3        | 10K   | R_0603_1608 |
-    When I run jbom command "parts"
+    When I run jbom command "parts -o -"
     Then the command should succeed
     # Problem solved: Parts command gives you individual component listing for assembly
     And the output should contain "R1"
@@ -58,7 +58,7 @@ Feature: Issue #21 Conceptual Problem - BOM vs Parts List Distinction
       | R1        | 10K   | R_0805_2012 |
       | R2        | 10K   | R_0805_2012 |
       | R3        | 10K   | R_0603_1608 |
-    When I run jbom command "parts"
+    When I run jbom command "parts -o -"
     Then the command should succeed
     # Parts list shows every individual component for assembly
     And the output should contain "R1"

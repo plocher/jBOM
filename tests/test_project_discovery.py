@@ -21,11 +21,14 @@ class TestProjectDiscovery(unittest.TestCase):
             if p.is_file():
                 p.unlink()
 
-    def test_empty_directory_returns_none(self):
-        """Test that empty directory returns None for all file types."""
+    def test_empty_directory_requires_project_file(self):
+        """KiCad 6+ projects must contain exactly one *.kicad_pro."""
         discovery = ProjectDiscovery()
 
-        self.assertIsNone(discovery.find_project_file(self.tmpdir))
+        with self.assertRaises(ValueError) as cm:
+            discovery.find_project_file(self.tmpdir)
+        self.assertIn("No project files found", str(cm.exception))
+
         self.assertIsNone(discovery.find_schematic_file(self.tmpdir))
         self.assertIsNone(discovery.find_pcb_file(self.tmpdir))
 
@@ -39,40 +42,39 @@ class TestProjectDiscovery(unittest.TestCase):
 
         self.assertEqual(found, project_file)
 
-    def test_find_legacy_pro_project_file(self):
-        """Test finding legacy .pro project files."""
-        legacy_file = self.tmpdir / "legacy.pro"
-        legacy_file.write_text("legacy project file content")
+    def test_multiple_projects_raises_exception(self):
+        """Test that multiple project files raise an exception."""
+        (self.tmpdir / "project1.kicad_pro").write_text(
+            "(kicad_pro (version 20211014))"
+        )
+        (self.tmpdir / "project2.kicad_pro").write_text(
+            "(kicad_pro (version 20211014))"
+        )
 
         discovery = ProjectDiscovery()
-        found = discovery.find_project_file(self.tmpdir)
 
-        self.assertEqual(found, legacy_file)
+        with self.assertRaises(ValueError) as cm:
+            discovery.find_project_file(self.tmpdir)
 
-    def test_prefer_kicad_pro_over_legacy_pro(self):
-        """Test that .kicad_pro files are preferred over .pro files."""
-        legacy_file = self.tmpdir / "legacy.pro"
-        legacy_file.write_text("legacy project file content")
+        self.assertIn("Multiple project files found", str(cm.exception))
 
-        kicad_pro_file = self.tmpdir / "modern.kicad_pro"
-        kicad_pro_file.write_text("(kicad_pro (version 20211014))")
+    def test_discover_project_files_returns_all(self):
+        """Test discovering all project files at once."""
+        project = self.tmpdir / "test.kicad_pro"
+        project.write_text("(kicad_pro (version 20211014))")
 
-        discovery = ProjectDiscovery()
-        found = discovery.find_project_file(self.tmpdir)
+        schematic = self.tmpdir / "test.kicad_sch"
+        schematic.write_text("(kicad_sch (version 20211123))")
 
-        self.assertEqual(found, kicad_pro_file)
-
-    def test_prefer_directory_name_matching(self):
-        """Test that files matching directory name are preferred."""
-        # Create two project files, prefer one that matches directory name
-        (self.tmpdir / "other.kicad_pro").write_text("(kicad_pro (version 20211014))")
-        expected = self.tmpdir / f"{self.tmpdir.name}.kicad_pro"
-        expected.write_text("(kicad_pro (version 20211014))")
+        pcb = self.tmpdir / "test.kicad_pcb"
+        pcb.write_text("(kicad_pcb (version 20211014))")
 
         discovery = ProjectDiscovery()
-        found = discovery.find_project_file(self.tmpdir)
+        result = discovery.discover_project_files(self.tmpdir)
 
-        self.assertEqual(found, expected)
+        self.assertEqual(result.project_file, project)
+        self.assertEqual(result.schematic_file, schematic)
+        self.assertEqual(result.pcb_file, pcb)
 
     def test_find_schematic_file(self):
         """Test finding schematic files."""
@@ -116,53 +118,6 @@ class TestProjectDiscovery(unittest.TestCase):
         found = discovery.find_schematic_file(self.tmpdir)
 
         self.assertEqual(found, normal)
-
-    def test_discover_project_files_returns_all(self):
-        """Test discovering all project files at once."""
-        project = self.tmpdir / "test.kicad_pro"
-        project.write_text("(kicad_pro (version 20211014))")
-
-        schematic = self.tmpdir / "test.kicad_sch"
-        schematic.write_text("(kicad_sch (version 20211123))")
-
-        pcb = self.tmpdir / "test.kicad_pcb"
-        pcb.write_text("(kicad_pcb (version 20211014))")
-
-        discovery = ProjectDiscovery()
-        result = discovery.discover_project_files(self.tmpdir)
-
-        self.assertEqual(result.project_file, project)
-        self.assertEqual(result.schematic_file, schematic)
-        self.assertEqual(result.pcb_file, pcb)
-
-    def test_multiple_projects_raises_exception(self):
-        """Test that multiple project files raise an exception."""
-        (self.tmpdir / "project1.kicad_pro").write_text(
-            "(kicad_pro (version 20211014))"
-        )
-        (self.tmpdir / "project2.kicad_pro").write_text(
-            "(kicad_pro (version 20211014))"
-        )
-
-        discovery = ProjectDiscovery(strict_mode=True)
-
-        with self.assertRaises(ValueError) as cm:
-            discovery.find_project_file(self.tmpdir)
-
-        self.assertIn("Multiple project files found", str(cm.exception))
-
-    def test_multiple_projects_in_lenient_mode(self):
-        """Test that multiple project files in lenient mode picks first."""
-        project1 = self.tmpdir / "a_first.kicad_pro"
-        project1.write_text("(kicad_pro (version 20211014))")
-        (self.tmpdir / "b_second.kicad_pro").write_text(
-            "(kicad_pro (version 20211014))"
-        )
-
-        discovery = ProjectDiscovery(strict_mode=False)
-        found = discovery.find_project_file(self.tmpdir)
-
-        self.assertEqual(found, project1)
 
 
 if __name__ == "__main__":

@@ -5,10 +5,17 @@ from __future__ import annotations
 import argparse
 import csv
 import sys
-from pathlib import Path
-from typing import Optional
+from typing import Optional, TextIO
 
 from jbom.cli.formatting import Column, print_table
+from jbom.cli.output import (
+    OutputDestination,
+    OutputKind,
+    OutputRefusedError,
+    add_force_argument,
+    open_output_text_file,
+    resolve_output_destination,
+)
 from jbom.services.search.cache import InMemorySearchCache, SearchCache
 from jbom.services.search.filtering import (
     SearchFilter,
@@ -64,8 +71,9 @@ def register_command(subparsers) -> None:
     parser.add_argument(
         "-o",
         "--output",
-        help="Output destination: 'console' for table, '-' for CSV to stdout, or a file path",
+        help="Output destination: omit for console, use 'console' for table, '-' for CSV to stdout, or a file path",
     )
+    add_force_argument(parser)
 
     parser.set_defaults(handler=handle_search)
 
@@ -101,7 +109,8 @@ def handle_search(args: argparse.Namespace) -> int:
     results = SearchSorter.rank(results)
     results = results[:display_limit]
 
-    return _output_results(results, output=args.output)
+    force = bool(getattr(args, "force", False))
+    return _output_results(results, output=args.output, force=force)
 
 
 def _create_provider(
@@ -114,17 +123,41 @@ def _create_provider(
     raise ValueError(f"Unknown provider: {provider_id}")
 
 
-def _output_results(results: list[SearchResult], *, output: Optional[str]) -> int:
-    if output is None or output == "console":
+def _output_results(
+    results: list[SearchResult], *, output: Optional[str], force: bool
+) -> int:
+    dest = resolve_output_destination(
+        output,
+        default_destination=OutputDestination(OutputKind.CONSOLE),
+    )
+
+    if dest.kind == OutputKind.CONSOLE:
         _print_console(results)
         return 0
 
-    if output == "-":
-        _print_csv(results)
+    if dest.kind == OutputKind.STDOUT:
+        _print_csv(results, out=sys.stdout)
         return 0
 
-    path = Path(output)
-    _write_csv(results, path)
+    if not dest.path:
+        raise ValueError("Internal error: file output selected but no path provided")
+
+    path = dest.path
+    refused = (
+        f"Error: Output file '{path}' already exists. Use -F/--force to overwrite."
+    )
+
+    try:
+        with open_output_text_file(
+            path,
+            force=force,
+            refused_message=refused,
+        ) as f:
+            _print_csv(results, out=f)
+    except OutputRefusedError as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
+
     print(f"Search results written to {path}")
     return 0
 
@@ -167,19 +200,11 @@ def _print_console(results: list[SearchResult]) -> None:
     print(f"Found {len(results)} results.")
 
 
-def _print_csv(results: list[SearchResult]) -> None:
-    writer = csv.DictWriter(sys.stdout, fieldnames=_csv_headers())
+def _print_csv(results: list[SearchResult], *, out: TextIO) -> None:
+    writer = csv.DictWriter(out, fieldnames=_csv_headers())
     writer.writeheader()
     for r in results:
         writer.writerow(_csv_row_for_result(r))
-
-
-def _write_csv(results: list[SearchResult], path: Path) -> None:
-    with open(path, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=_csv_headers())
-        writer.writeheader()
-        for r in results:
-            writer.writerow(_csv_row_for_result(r))
 
 
 def _csv_headers() -> list[str]:

@@ -14,8 +14,14 @@ Feature: CLI Parts Output Semantics
       | C20       | 100nF | C_0603_1608       |
       | U1        | LM358 | SOIC-8_3.9x4.9mm |
 
-  Scenario: Default output is console table (human-first)
+  Scenario: Default output writes a project-named CSV file
     When I run jbom command "parts"
+    Then the command should succeed
+    And a file named "project.parts.csv" should exist
+    And the file "project.parts.csv" should contain "R1"
+
+  Scenario: Default output is console table (human-first)
+    When I run jbom command "parts -o console"
     Then the command should succeed
     And the output should contain "Parts List"
     And the output should contain "R1"

@@ -3,10 +3,20 @@
 import argparse
 import csv
 import sys
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+from typing import TextIO
+
 import shutil
 
+from jbom.cli.output import (
+    OutputDestination,
+    OutputKind,
+    OutputRefusedError,
+    add_force_argument,
+    open_output_text_file,
+    resolve_output_destination,
+)
 from jbom.common.types import Component, InventoryItem
 from jbom.common.options import GeneratorOptions
 from jbom.cli.formatting import print_inventory_table
@@ -40,7 +50,10 @@ def register_command(subparsers) -> None:
     parser.add_argument(
         "-o",
         "--output",
-        help="Output destination: file path, 'console', or '-' for stdout (default: part-inventory.csv)",
+        help=(
+            "Output destination: omit for default file output (part-inventory.csv), "
+            "use 'console' for table, '-' for stdout, or a file path"
+        ),
         default=None,
     )
 
@@ -60,11 +73,7 @@ def register_command(subparsers) -> None:
     )
 
     # Safety options
-    parser.add_argument(
-        "--force",
-        action="store_true",
-        help="Overwrite existing output files without confirmation",
-    )
+    add_force_argument(parser)
 
     # Verbose mode
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
@@ -302,42 +311,60 @@ def _filter_components_by_existing_inventory(
 
 
 def _output_inventory(
-    inventory_items, field_names, output, force=False, verbose=False
+    inventory_items, field_names, output, force: bool = False, verbose: bool = False
 ) -> int:
     """Output inventory data in the requested format.
 
-    Human-first defaults (BREAKING CHANGE for UX consistency):
-    - output is None => formatted table to stdout (human exploration)
-    - output == "console" => formatted table to stdout (explicit)
-    - output == "-" => CSV to stdout (machine readable)
+    Defaults:
+    - output omitted => write to part-inventory.csv in the current working directory
+    - output == "console" => formatted table to stdout
+    - output == "-" => CSV to stdout
     - otherwise => treat as file path with safety checks
     """
-    if output is None or output == "console":
+    default_path = Path("part-inventory.csv")
+
+    dest = resolve_output_destination(
+        output,
+        default_destination=OutputDestination(OutputKind.FILE, path=default_path),
+    )
+
+    if dest.kind == OutputKind.CONSOLE:
         _print_console_table(inventory_items, field_names)
-    elif output == "-":
-        _print_csv(inventory_items, field_names)
-    else:
-        output_path = Path(output)
+        return 0
 
-        # File existence and backup handling
-        if output_path.exists():
-            if not force:
-                print(
-                    f"Error: Output file '{output_path}' already exists. Use --force to overwrite.",
-                    file=sys.stderr,
-                )
-                return 1
+    if dest.kind == OutputKind.STDOUT:
+        _print_csv(inventory_items, field_names, out=sys.stdout)
+        return 0
 
-            # Create timestamped backup
-            backup_path = _create_backup(output_path, verbose)
-            if backup_path and verbose:
-                print(f"Created backup: {backup_path}", file=sys.stderr)
+    if not dest.path:
+        raise ValueError("Internal error: file output selected but no path provided")
 
-        _write_csv(inventory_items, field_names, output_path)
-        print(
-            f"Generated inventory with {len(inventory_items)} items written to {output_path}"
-        )
+    output_path = dest.path
+    refused = (
+        f"Error: Output file '{output_path}' already exists. Use --force to overwrite."
+    )
 
+    def _backup(p: Path) -> Path | None:
+        backup_path = _create_backup(p, verbose)
+        if backup_path and verbose:
+            print(f"Created backup: {backup_path}", file=sys.stderr)
+        return backup_path
+
+    try:
+        with open_output_text_file(
+            output_path,
+            force=force,
+            refused_message=refused,
+            make_backup=_backup,
+        ) as f:
+            _write_csv(inventory_items, field_names, out=f)
+    except OutputRefusedError as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
+
+    print(
+        f"Generated inventory with {len(inventory_items)} items written to {output_path}"
+    )
     return 0
 
 
@@ -401,9 +428,10 @@ def _print_console_table(inventory_items, field_names) -> None:
     print(f"\nGenerated inventory with {len(inventory_items)} items")
 
 
-def _print_csv(inventory_items, field_names) -> None:
-    """Print inventory as CSV to stdout."""
-    writer = csv.DictWriter(sys.stdout, fieldnames=field_names)
+def _print_csv(inventory_items, field_names, *, out: TextIO) -> None:
+    """Print inventory as CSV to a file-like object."""
+
+    writer = csv.DictWriter(out, fieldnames=field_names)
     writer.writeheader()
 
     for item in inventory_items:
@@ -430,31 +458,31 @@ def _print_csv(inventory_items, field_names) -> None:
         writer.writerow(row)
 
 
-def _write_csv(inventory_items, field_names, output_path: Path) -> None:
-    """Write inventory as CSV to file."""
-    with open(output_path, "w", newline="", encoding="utf-8") as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=field_names)
-        writer.writeheader()
+def _write_csv(inventory_items, field_names, *, out: TextIO) -> None:
+    """Write inventory as CSV to a file-like object."""
 
-        for item in inventory_items:
-            row = {
-                "IPN": item.ipn,
-                "Category": item.category,
-                "Value": item.value,
-                "Description": item.description,
-                "Package": item.package,
-                "Manufacturer": item.manufacturer,
-                "MFGPN": item.mfgpn,
-                "LCSC": item.lcsc,
-                "Datasheet": item.datasheet,
-                "UUID": item.uuid,
-            }
-            # Add any extra fields from component properties
-            for field in field_names:
-                if (
-                    field not in row
-                    and hasattr(item, "raw_data")
-                    and field in item.raw_data
-                ):
-                    row[field] = item.raw_data[field]
-            writer.writerow(row)
+    writer = csv.DictWriter(out, fieldnames=field_names)
+    writer.writeheader()
+
+    for item in inventory_items:
+        row = {
+            "IPN": item.ipn,
+            "Category": item.category,
+            "Value": item.value,
+            "Description": item.description,
+            "Package": item.package,
+            "Manufacturer": item.manufacturer,
+            "MFGPN": item.mfgpn,
+            "LCSC": item.lcsc,
+            "Datasheet": item.datasheet,
+            "UUID": item.uuid,
+        }
+        # Add any extra fields from component properties
+        for field in field_names:
+            if (
+                field not in row
+                and hasattr(item, "raw_data")
+                and field in item.raw_data
+            ):
+                row[field] = item.raw_data[field]
+        writer.writerow(row)

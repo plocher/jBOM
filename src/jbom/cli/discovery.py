@@ -1,7 +1,7 @@
 """CLI discovery functions for KiCad project files.
 
-Provides functions to find KiCad project files (.kicad_pro, .pro),
-schematic files (.kicad_sch), and PCB files (.kicad_pcb) in directories.
+Provides functions to find KiCad v6+ project files (`*.kicad_pro`),
+schematic files (`*.kicad_sch`), and PCB files (`*.kicad_pcb`) in directories.
 Handles autosave files and directory name matching preferences.
 """
 
@@ -19,37 +19,32 @@ __all__ = [
 
 
 def find_project(search_dir: Path) -> Optional[Path]:
-    """Find the best KiCad project file in a directory.
+    """Find the single KiCad v6+ project file in a directory.
+
+    Returns the project file only if exactly one `*.kicad_pro` exists.
 
     Args:
         search_dir: Directory to search in
 
     Returns:
-        Path to .kicad_pro or .pro file, or None if not found
+        Path to the single `*.kicad_pro` file, or None if not found.
+
+    Raises:
+        ValueError: If multiple `*.kicad_pro` files are found.
     """
     if not search_dir.is_dir():
         return None
 
-    # Find project files (prefer .kicad_pro over legacy .pro)
-    kicad_pro_files = list(search_dir.glob("*.kicad_pro"))
-    if kicad_pro_files:
-        # Prefer files matching directory name
-        dir_name = search_dir.name
-        matching = [f for f in kicad_pro_files if f.stem == dir_name]
-        if matching:
-            return matching[0]
-        return sorted(kicad_pro_files)[0]
+    kicad_pro_files = sorted(search_dir.glob("*.kicad_pro"))
+    if not kicad_pro_files:
+        return None
 
-    # Fall back to legacy .pro files
-    pro_files = list(search_dir.glob("*.pro"))
-    if pro_files:
-        dir_name = search_dir.name
-        matching = [f for f in pro_files if f.stem == dir_name]
-        if matching:
-            return matching[0]
-        return sorted(pro_files)[0]
+    if len(kicad_pro_files) > 1:
+        raise ValueError(
+            f"Multiple project files found in {search_dir}: {len(kicad_pro_files)}"
+        )
 
-    return None
+    return kicad_pro_files[0]
 
 
 def find_pcb(search_dir: Path) -> Optional[Path]:

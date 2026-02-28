@@ -22,7 +22,9 @@ class TestProjectFileResolver(unittest.TestCase):
                 p.unlink()
 
     def test_resolve_explicit_schematic_file(self):
-        """Test resolving explicit .kicad_sch file paths (backward compatibility)."""
+        """Test resolving explicit .kicad_sch file paths."""
+        (self.tmpdir / "board.kicad_pro").write_text("(kicad_pro (version 20211014))")
+
         schematic = self.tmpdir / "board.kicad_sch"
         schematic.write_text("(kicad_sch (version 20211123))")
 
@@ -37,6 +39,8 @@ class TestProjectFileResolver(unittest.TestCase):
 
     def test_resolve_explicit_pcb_file(self):
         """Test resolving explicit .kicad_pcb file paths."""
+        (self.tmpdir / "board.kicad_pro").write_text("(kicad_pro (version 20211014))")
+
         pcb = self.tmpdir / "board.kicad_pcb"
         pcb.write_text("(kicad_pcb (version 20211014))")
 
@@ -50,6 +54,8 @@ class TestProjectFileResolver(unittest.TestCase):
 
     def test_resolve_current_directory(self):
         """Test resolving current directory '.' input."""
+        (self.tmpdir / "project.kicad_pro").write_text("(kicad_pro (version 20211014))")
+
         schematic = self.tmpdir / "project.kicad_sch"
         schematic.write_text("(kicad_sch (version 20211123))")
 
@@ -114,6 +120,8 @@ class TestProjectFileResolver(unittest.TestCase):
 
     def test_resolve_pcb_input_returns_pcb(self):
         """Test that resolver can return PCB files when appropriate."""
+        (self.tmpdir / "test.kicad_pro").write_text("(kicad_pro (version 20211014))")
+
         pcb = self.tmpdir / "test.kicad_pcb"
         pcb.write_text("(kicad_pcb (version 20211014))")
 
@@ -126,6 +134,8 @@ class TestProjectFileResolver(unittest.TestCase):
 
     def test_resolve_cross_file_intelligence(self):
         """Test cross-file intelligence (sch -> pcb, pcb -> sch)."""
+        (self.tmpdir / "board.kicad_pro").write_text("(kicad_pro (version 20211014))")
+
         schematic = self.tmpdir / "board.kicad_sch"
         schematic.write_text("(kicad_sch (version 20211123))")
 
@@ -161,6 +171,8 @@ class TestProjectFileResolver(unittest.TestCase):
 
     def test_helpful_suggestions(self):
         """Test that resolver provides helpful suggestions for common mistakes."""
+        (self.tmpdir / "board.kicad_pro").write_text("(kicad_pro (version 20211014))")
+
         # Create PCB file but user asks for schematic
         pcb = self.tmpdir / "board.kicad_pcb"
         pcb.write_text("(kicad_pcb (version 20211014))")
@@ -177,6 +189,8 @@ class TestProjectFileResolver(unittest.TestCase):
 
     def test_hierarchical_schematic_resolution(self):
         """Test resolution of hierarchical schematics."""
+        (self.tmpdir / "main.kicad_pro").write_text("(kicad_pro (version 20211014))")
+
         # Create main schematic with hierarchical sheets
         main_sch = self.tmpdir / "main.kicad_sch"
         main_sch_content = """(kicad_sch (version 20211123)

@@ -11,9 +11,9 @@ Feature: BOM Fabricator Compatibility
       | C1        | 100nF | C_0603_1608 |
 
   Scenario: BOM generation works with all configured fabricators
-    When I run jbom command "bom"
+    When I run jbom command "bom -o -"
     Then the BOM works with all configured fabricators
 
   Scenario: All configured fabricators work without errors
-    When I run jbom command "bom"
+    When I run jbom command "bom -o -"
     Then the BOM works with all configured fabricators

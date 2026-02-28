@@ -52,6 +52,9 @@ class TestProjectContext(unittest.TestCase):
 
     def test_resolve_hierarchical_schematics(self):
         """Test finding hierarchical schematic files."""
+        # KiCad 6+ projects require a .kicad_pro
+        (self.tmpdir / "main.kicad_pro").write_text("(kicad_pro (version 20211014))")
+
         # Create main schematic with hierarchical references
         main_sch = self.tmpdir / "main.kicad_sch"
         main_sch_content = """(kicad_sch (version 20211123)
@@ -131,6 +134,8 @@ class TestProjectContext(unittest.TestCase):
 
     def test_suggest_missing_files(self):
         """Test suggesting missing related files."""
+        (self.tmpdir / "test.kicad_pro").write_text("(kicad_pro (version 20211014))")
+
         # Only create schematic, missing PCB
         schematic_file = self.tmpdir / "test.kicad_sch"
         schematic_file.write_text("(kicad_sch (version 20211123))")

@@ -15,7 +15,7 @@ Feature: BOM Inventory Enhancement
       | IPN     | Category  | Value | Package | Manufacturer | MFGPN           | LCSC   |
       | RES_10K | RESISTOR  | 10K   | 0805    | Yageo        | RC0805FR-0710KL | C17414 |
       | CAP_100N| CAPACITOR | 100nF | 0603    | Samsung      | CL10B104KB8NNNC | C1591  |
-    When I run jbom command "bom --inventory components.csv"
+    When I run jbom command "bom --inventory components.csv -o console"
     Then the command should succeed
     And the output should contain "Inventory enhanced"
 

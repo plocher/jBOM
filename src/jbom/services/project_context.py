@@ -38,22 +38,14 @@ class ProjectContext:
         self.options = options or GeneratorOptions()
 
         # Discover project files using ProjectDiscovery service
-        discovery = ProjectDiscovery(strict_mode=False, options=self.options)
+        discovery = ProjectDiscovery(options=self.options)
         self.project_files = discovery.discover_project_files(project_directory)
 
-        # Validate that we found at least some project files
-        if (
-            not self.project_files.project_file
-            and not self.project_files.schematic_file
-            and not self.project_files.pcb_file
-        ):
-            raise ValueError(
-                f"No project files found in {project_directory}. "
-                f"Expected at least one of: .kicad_pro, .kicad_sch, or .kicad_pcb files."
-            )
+        # KiCad 6+ projects always have exactly one *.kicad_pro
+        # ProjectDiscovery enforces this and will raise a ValueError if missing/ambiguous.
 
     @property
-    def project_file(self) -> Optional[Path]:
+    def project_file(self) -> Path:
         """Get the project file path."""
         return self.project_files.project_file
 

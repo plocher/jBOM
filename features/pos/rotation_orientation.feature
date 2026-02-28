@@ -22,6 +22,6 @@ Feature: POS Rotation and Orientation
     Given a PCB that contains:
       | Reference | X | Y | Rotation | Side   | Footprint   |
       | R1        | 5 | 5 | 0        | BOTTOM | R_0805_2012 |
-    When I run jbom command "pos"
+    When I run jbom command "pos -o console"
     Then the command should succeed
     And the output should contain "R1"
