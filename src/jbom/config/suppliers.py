@@ -36,6 +36,8 @@ class SupplierConfig:
     part_number_example: Optional[str] = None
 
     # Search behavior tuning (optional).
+    # TTL can be expressed in either seconds or hours.
+    search_cache_ttl_seconds: Optional[float] = None
     search_cache_ttl_hours: Optional[float] = None
     search_timeout_seconds: Optional[float] = None
     search_max_retries: Optional[int] = None
@@ -101,6 +103,14 @@ class SupplierConfig:
         cache_cfg = search_cfg.get("cache") or {}
         if not isinstance(cache_cfg, dict):
             raise ValueError(f"Supplier '{sid}' search.cache must be a mapping")
+
+        cache_ttl_seconds = cache_cfg.get("ttl_seconds")
+        if cache_ttl_seconds is not None and not isinstance(
+            cache_ttl_seconds, (int, float)
+        ):
+            raise ValueError(
+                f"Supplier '{sid}' search.cache.ttl_seconds must be a number or null"
+            )
 
         cache_ttl_hours = cache_cfg.get("ttl_hours")
         if cache_ttl_hours is not None and not isinstance(
@@ -169,6 +179,9 @@ class SupplierConfig:
             search_url_template=search_url_template,
             part_number_pattern=pattern,
             part_number_example=example,
+            search_cache_ttl_seconds=(
+                float(cache_ttl_seconds) if cache_ttl_seconds is not None else None
+            ),
             search_cache_ttl_hours=(
                 float(cache_ttl_hours) if cache_ttl_hours is not None else None
             ),

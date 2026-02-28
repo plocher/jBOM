@@ -6,3 +6,7 @@ inventory_column: "Supplier"
 url_template: null
 search_url_template: null
 part_number: {}
+
+search:
+  cache:
+    ttl_seconds: 10

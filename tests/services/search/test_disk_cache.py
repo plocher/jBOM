@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import timedelta
 
+from jbom.config.suppliers import SupplierConfig
 from jbom.services.search.cache import DiskSearchCache, SearchCacheKey
 from jbom.services.search.models import SearchResult
 from jbom.services.search.mouser_provider import MouserProvider
@@ -69,6 +70,30 @@ def test_disk_cache_clear_removes_provider_dir(tmp_path) -> None:
 
     cache.clear()
     assert not provider_dir.exists()
+
+
+def test_disk_cache_missing_profile_ttl_falls_back_to_10s(
+    tmp_path, monkeypatch, caplog
+) -> None:
+    from jbom.services.search import cache as cache_mod
+
+    supplier = SupplierConfig(
+        id="mouser",
+        name="Mouser",
+        inventory_column="Mouser",
+        # Missing TTL entries on purpose.
+        search_cache_ttl_seconds=None,
+        search_cache_ttl_hours=None,
+    )
+
+    monkeypatch.setattr(cache_mod, "resolve_supplier_by_id", lambda _sid: supplier)
+
+    cache = DiskSearchCache("mouser", cache_root=tmp_path)
+    assert cache._ttl == timedelta(seconds=10)
+
+    assert any(
+        "defaulting DiskSearchCache TTL to 10s" in rec.message for rec in caplog.records
+    )
 
 
 class _FakeResponse:

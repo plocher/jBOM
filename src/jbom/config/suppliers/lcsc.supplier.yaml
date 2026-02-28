@@ -8,3 +8,7 @@ part_number:
   example: "C25231"
 url_template: "https://www.lcsc.com/product-detail/{pn}.html"
 search_url_template: "https://www.lcsc.com/search?q={query}"
+
+search:
+  cache:
+    ttl_seconds: 10
