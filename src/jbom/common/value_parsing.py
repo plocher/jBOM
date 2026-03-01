@@ -14,8 +14,12 @@ from __future__ import annotations
 import re
 from typing import Optional
 
+from jbom.common.component_classification import normalize_component_type
+
 __all__ = [
     "parse_res_to_ohms",
+    "parse_voltage_to_volts",
+    "parse_value_to_normal",
     "ohms_to_eia",
     "cap_unit_multiplier",
     "parse_cap_to_farad",
@@ -26,6 +30,69 @@ __all__ = [
 ]
 
 _OHM_RE = re.compile(r"^\s*([0-9]*\.?[0-9]+)\s*([kKmMrR]?)\s*\+?\s*$")
+
+
+def parse_voltage_to_volts(value: str) -> Optional[float]:
+    """Parse a voltage string into volts.
+
+    Examples:
+        - "3.3V" -> 3.3
+        - "600mV" -> 0.6
+
+    Returns:
+        Parsed voltage in volts, or None if parsing fails.
+    """
+
+    if not value:
+        return None
+
+    t = str(value).strip().lower().replace(" ", "")
+    t = t.replace("μ", "u").replace("µ", "u")
+
+    # Common forms: 3.3v, 600mv
+    m = re.match(r"^([0-9]*\.?[0-9]+)(mv|v)$", t)
+    if not m:
+        return None
+
+    num = float(m.group(1))
+    unit = m.group(2)
+    if unit == "mv":
+        return num * 1e-3
+    return num
+
+
+def parse_value_to_normal(category: str, text: str) -> Optional[float]:
+    """Parse a value string to SI base units for the given component category.
+
+    Args:
+        category: Normalized component type string as returned by
+            normalize_component_type() — e.g. "RES", "CAP", "IND", "REG".
+        text: Raw value string from inventory or supplier attribute.
+
+    Returns:
+        float in SI base units (ohms, farads, henries, volts), or None if the value
+        is unparseable or the category is unsupported.
+
+    Notes:
+        This API intentionally returns numeric canonical values only. For component
+        categories whose "Value" field is not meaningfully numeric (e.g. LEDs as
+        color, diodes as part numbers), this returns None.
+    """
+
+    cat = normalize_component_type(category or "")
+    if not cat:
+        return None
+
+    if cat == "RES":
+        return parse_res_to_ohms(text)
+    if cat == "CAP":
+        return parse_cap_to_farad(text)
+    if cat == "IND":
+        return parse_ind_to_henry(text)
+    if cat == "REG":
+        return parse_voltage_to_volts(text)
+
+    return None
 
 
 def parse_res_to_ohms(value: str) -> Optional[float]:
@@ -186,7 +253,7 @@ def parse_cap_to_farad(value: str) -> Optional[float]:
     if not value:
         return None
 
-    t = value.strip().lower().replace("μ", "u")
+    t = value.strip().lower().replace("μ", "u").replace("µ", "u")
     t = t.replace(" ", "")
 
     m = re.match(r"^([0-9]*\.?[0-9]+)\s*([fpnum]?)(f)?$", t)
@@ -282,7 +349,7 @@ def parse_ind_to_henry(value: str) -> Optional[float]:
     if not value:
         return None
 
-    t = value.strip().lower().replace("μ", "u")
+    t = value.strip().lower().replace("μ", "u").replace("µ", "u")
     t = t.replace(" ", "")
     t = t.replace("h", "")
 

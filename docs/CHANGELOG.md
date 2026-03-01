@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changed
 - Mouser provider now supports configurable timeout + retry/backoff for transient failures.
 - `inventory-search` now deduplicates identical queries within a run to reduce provider API calls.
+- Search parametric filtering now supports category-aware value normalization for RES/CAP/IND/REG and uses canonical values as a tertiary sort key.
 
 ## [7.0.0] - 2026-02-27
 

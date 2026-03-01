@@ -116,6 +116,28 @@ def test_inventory_search_service_deduplicates_provider_calls_and_fans_out() -> 
     assert "Unique queries dispatched: 3 (of 10 items)" in report
 
 
+def test_filter_searchable_items_allows_led_single_character_value() -> None:
+    items = [
+        _inv_item(
+            ipn="LED-R-1",
+            category="LED",
+            value="R",
+            package="0603",
+            tolerance="",
+        ),
+        _inv_item(
+            ipn="LED-EMPTY",
+            category="LED",
+            value="",
+            package="0603",
+            tolerance="",
+        ),
+    ]
+
+    filtered = InventorySearchService.filter_searchable_items(items, categories=None)
+    assert [i.ipn for i in filtered] == ["LED-R-1"]
+
+
 def test_inventory_search_service_fans_out_provider_errors_to_all_items() -> None:
     err_msg = "provider unavailable"
 

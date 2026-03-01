@@ -54,6 +54,62 @@ def test_filter_by_query_resistance_strict_matches_when_attribute_present():
     assert "C" in mpns
 
 
+def test_filter_by_query_backward_compat_empty_category_filters_resistance():
+    results = [
+        _sr(attributes={"Resistance": "10 kOhms"}, mpn="A"),
+        _sr(attributes={"Resistance": "22 kOhms"}, mpn="B"),
+        _sr(attributes={}, mpn="C"),  # fail-open
+    ]
+
+    filtered = SearchFilter.filter_by_query(results, "10K 0603", category="")
+    mpns = {r.mpn for r in filtered}
+    assert "A" in mpns
+    assert "B" not in mpns
+    assert "C" in mpns
+
+
+def test_filter_by_query_capacitance_when_category_provided():
+    results = [
+        _sr(attributes={"Capacitance": "100nF"}, mpn="A"),
+        _sr(attributes={"Capacitance": "1uF"}, mpn="B"),
+        _sr(attributes={}, mpn="C"),  # fail-open
+    ]
+
+    filtered = SearchFilter.filter_by_query(results, "100nF 0805", category="CAP")
+    mpns = {r.mpn for r in filtered}
+    assert "A" in mpns
+    assert "B" not in mpns
+    assert "C" in mpns
+
+
+def test_filter_by_query_capacitor_voltage_rating_when_present_in_query():
+    results = [
+        _sr(attributes={"Capacitance": "100nF", "Voltage Rating": "16V"}, mpn="A"),
+        _sr(attributes={"Capacitance": "100nF", "Voltage Rating": "10V"}, mpn="B"),
+        _sr(attributes={"Capacitance": "100nF"}, mpn="C"),  # fail-open for voltage
+    ]
+
+    filtered = SearchFilter.filter_by_query(results, "100nF 16V 0805", category="CAP")
+    mpns = {r.mpn for r in filtered}
+    assert "A" in mpns
+    assert "B" not in mpns
+    assert "C" in mpns
+
+
+def test_filter_by_query_inductance_when_category_provided():
+    results = [
+        _sr(attributes={"Inductance": "100uH"}, mpn="A"),
+        _sr(attributes={"Inductance": "10uH"}, mpn="B"),
+        _sr(attributes={}, mpn="C"),  # fail-open
+    ]
+
+    filtered = SearchFilter.filter_by_query(results, "100uH 0603", category="IND")
+    mpns = {r.mpn for r in filtered}
+    assert "A" in mpns
+    assert "B" not in mpns
+    assert "C" in mpns
+
+
 def test_sorter_prefers_higher_stock_then_lower_price():
     results = [
         _sr(stock_quantity=10, price="$0.20", mpn="A"),
@@ -63,3 +119,29 @@ def test_sorter_prefers_higher_stock_then_lower_price():
 
     ranked = SearchSorter.rank(results)
     assert [r.mpn for r in ranked] == ["C", "B", "A"]
+
+
+def test_sorter_uses_numeric_value_as_tertiary_key_when_category_provided():
+    results = [
+        _sr(
+            stock_quantity=10,
+            price="$0.10",
+            mpn="A",
+            attributes={"Capacitance": "1uF"},
+        ),
+        _sr(
+            stock_quantity=10,
+            price="$0.10",
+            mpn="B",
+            attributes={"Capacitance": "100nF"},
+        ),
+        _sr(
+            stock_quantity=10,
+            price="$0.10",
+            mpn="C",
+            attributes={"Capacitance": "garbage"},
+        ),
+    ]
+
+    ranked = SearchSorter.rank(results, category="CAP")
+    assert [r.mpn for r in ranked] == ["B", "A", "C"]
