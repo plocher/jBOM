@@ -1,6 +1,27 @@
 # CHANGELOG
 
 
+## v6.13.0 (2026-03-01)
+
+### Features
+
+* feat: improve search console result table
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`76ec0dd`](https://github.com/plocher/jBOM/commit/76ec0dd4c3c5f4dc9f31662607f9f236455dc816))
+
+* feat: externalize search type query keywords
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`08931b9`](https://github.com/plocher/jBOM/commit/08931b977c60650e45887f3ccc92296af5929cd7))
+
+### Unknown
+
+* Merge pull request #92 from plocher/feature/issue-83-search-config-externalization
+
+Search [5/6] (#83): externalize type_query_keywords + improve search result table ([`7681e32`](https://github.com/plocher/jBOM/commit/7681e323d4c4a4a88500262d323982356b42c402))
+
+* test:add resistance, capacitance, inductance and name fields to inventory files ([`0c7ec00`](https://github.com/plocher/jBOM/commit/0c7ec00dcb8561a5f6c71d596f1147d9e31ea38d))
+
+
 ## v6.12.0 (2026-03-01)
 
 ### Features
