@@ -1,6 +1,31 @@
 # CHANGELOG
 
 
+## v6.12.0 (2026-03-01)
+
+### Features
+
+* feat: extend parametric filtering via parse_value_to_normal
+
+Add parse_value_to_normal dispatch for RES/CAP/IND/REG; extend SearchFilter/SearchSorter with optional category support; allow LED one-char values in searchable inventory filter; add unit tests and update docs changelog.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`e5223cf`](https://github.com/plocher/jBOM/commit/e5223cf107aeae1df3548b44ef1913a8f8463515))
+
+### Refactoring
+
+* refactor: dedupe voltage parsing and attr maps
+
+Promote parse_voltage_to_volts() as public helper in value_parsing.py and reuse it from filtering.py. Factor category->attribute mapping into a module constant. Add explicit tests for IND category filtering and empty-category backward compatibility.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`f171463`](https://github.com/plocher/jBOM/commit/f171463e5d76f655dde184b806669688aa3cf57c))
+
+### Unknown
+
+* Merge pull request #89 from plocher/feature/issue-82-search-parametric-filtering
+
+Search: parse_value_to_normal dispatch + category-aware parametric filtering (Issue #82) ([`8bab7e7`](https://github.com/plocher/jBOM/commit/8bab7e710fcec068d2f22b821caa94b99f1c8123))
+
+
 ## v6.11.0 (2026-02-28)
 
 ### Features
