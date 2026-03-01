@@ -18,6 +18,7 @@ from dataclasses import dataclass
 
 from jbom.common.component_classification import normalize_component_type
 from jbom.common.types import Component, InventoryItem
+from jbom.config.suppliers import resolve_supplier_by_id
 from jbom.services.search.cache import normalize_query
 from jbom.services.search.filtering import SearchSorter, apply_default_filters
 from jbom.services.search.models import SearchResult
@@ -145,7 +146,7 @@ class InventorySearchService:
         return out
 
     def build_query(self, item: InventoryItem) -> str:
-        """Build a Mouser-friendly keyword query string."""
+        """Build a provider-friendly keyword query string."""
 
         parts: list[str] = []
 
@@ -153,7 +154,8 @@ class InventorySearchService:
             parts.append(_normalize_ascii_value(item.value))
 
         cat = _category_token(item.category)
-        type_keywords = {
+
+        default_type_keywords = {
             "RES": "resistor",
             "CAP": "capacitor",
             "IND": "inductor",
@@ -165,6 +167,13 @@ class InventorySearchService:
             "CON": "connector",
             "CONN": "connector",
         }
+
+        supplier = resolve_supplier_by_id(self._provider.provider_id)
+        type_keywords = dict(default_type_keywords)
+        if supplier is not None and supplier.search_type_query_keywords:
+            # Supplier config overrides/adds to the built-in defaults.
+            type_keywords.update(supplier.search_type_query_keywords)
+
         if cat in type_keywords:
             parts.append(type_keywords[cat])
 

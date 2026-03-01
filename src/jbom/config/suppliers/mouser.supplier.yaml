@@ -16,3 +16,23 @@ search:
     timeout_seconds: 10.0
     max_retries: 3
     retry_delay_seconds: 1.0
+
+  # Keyword appended to query per normalized component category.
+  type_query_keywords:
+    RES: "resistor"
+    CAP: "capacitor"
+    IND: "inductor"
+    LED: "LED"
+    DIO: "diode"
+    Z: "zener diode"
+    Q: "transistor"
+    IC: "IC"
+    OSC: "oscillator"
+    REG: "regulator"
+    CON: "connector"
+    CONN: "connector"
+    XFMR: "transformer"
+    XTL: "crystal"
+    SW: "switch"
+    FUSE: "fuse"
+    RLY: "relay"
