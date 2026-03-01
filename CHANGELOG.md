@@ -1,6 +1,24 @@
 # CHANGELOG
 
 
+## Unreleased
+
+### Refactoring
+
+* refactor: simplify search console table to fixed Description-centric columns (#91)
+
+  Remove the heuristic parametric column selection from #83. The supplier
+  Description field already carries parametric info in human-readable form
+  (e.g. "RES 10K OHM 1% 1/10W 0603"), making dynamic column selection redundant
+  and unpredictable. Fixed columns: Distributor PN | Price | Stock | Lifecycle |
+  Description. Description gets the remaining terminal width. Terminal width is
+  now read from shutil.get_terminal_size() instead of hardcoded 120.
+  Removes _select_parametric_keys(), _format_parametric_value(), and the
+  value_parsing imports that were only used for that machinery.
+
+  Co-Authored-By: Oz <oz-agent@warp.dev>
+
+
 ## v6.14.0 (2026-03-01)
 
 ### Features

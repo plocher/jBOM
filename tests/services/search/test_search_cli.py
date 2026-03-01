@@ -76,9 +76,9 @@ def test_search_console_output(monkeypatch, capsys):
     assert rc == 0
 
     out = capsys.readouterr().out
-    assert "MPN" in out
+    assert "Distributor PN" in out
     assert "Description" in out
-    assert "Yageo" in out
+    assert "123-ABC" in out  # distributor part number
 
 
 def test_search_csv_stdout(monkeypatch, capsys):
