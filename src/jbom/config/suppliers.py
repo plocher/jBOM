@@ -11,7 +11,7 @@ Future scope: support hierarchical override/extension locations.
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, Mapping, Optional
 
@@ -40,6 +40,10 @@ class SupplierConfig:
     search_timeout_seconds: Optional[float] = None
     search_max_retries: Optional[int] = None
     search_retry_delay_seconds: Optional[float] = None
+
+    # Optional category -> keyword mapping used by inventory-search query construction.
+    # Keys should be normalized component category tokens (e.g. RES, CAP, IND).
+    search_type_query_keywords: dict[str, str] = field(default_factory=dict)
 
     @staticmethod
     def from_yaml_dict(data: Dict[str, Any], *, default_id: str) -> "SupplierConfig":
@@ -114,6 +118,24 @@ class SupplierConfig:
         if not isinstance(api_cfg, dict):
             raise ValueError(f"Supplier '{sid}' search.api must be a mapping")
 
+        type_query_keywords_cfg = search_cfg.get("type_query_keywords") or {}
+        if not isinstance(type_query_keywords_cfg, dict):
+            raise ValueError(
+                f"Supplier '{sid}' search.type_query_keywords must be a mapping"
+            )
+
+        type_query_keywords: dict[str, str] = {}
+        for k, v in type_query_keywords_cfg.items():
+            if not isinstance(k, str) or not k.strip():
+                raise ValueError(
+                    f"Supplier '{sid}' search.type_query_keywords keys must be non-empty strings"
+                )
+            if not isinstance(v, str) or not v.strip():
+                raise ValueError(
+                    f"Supplier '{sid}' search.type_query_keywords[{k!r}] must be a non-empty string"
+                )
+            type_query_keywords[k.strip().upper()] = v.strip()
+
         timeout_seconds = api_cfg.get("timeout_seconds")
         if timeout_seconds is not None and not isinstance(
             timeout_seconds, (int, float)
@@ -179,6 +201,7 @@ class SupplierConfig:
             search_retry_delay_seconds=(
                 float(retry_delay_seconds) if retry_delay_seconds is not None else None
             ),
+            search_type_query_keywords=type_query_keywords,
         )
 
 

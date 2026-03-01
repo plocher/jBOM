@@ -38,6 +38,19 @@ def test_load_supplier_lcsc() -> None:
 
     assert lcsc.search_cache_ttl_hours == 24
 
+    assert isinstance(lcsc.search_type_query_keywords, dict)
+    assert lcsc.search_type_query_keywords == {}
+
+
+def test_load_supplier_mouser_has_type_query_keywords() -> None:
+    mouser = load_supplier("mouser")
+    assert isinstance(mouser.search_type_query_keywords, dict)
+
+    # Contract: the keys are normalized category tokens.
+    assert mouser.search_type_query_keywords.get("RES") == "resistor"
+    assert mouser.search_type_query_keywords.get("CAP") == "capacitor"
+    assert mouser.search_type_query_keywords.get("IND") == "inductor"
+
 
 def test_load_unknown_supplier_raises() -> None:
     with pytest.raises(ValueError, match=r"Unknown supplier"):

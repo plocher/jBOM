@@ -76,7 +76,8 @@ def test_search_console_output(monkeypatch, capsys):
     assert rc == 0
 
     out = capsys.readouterr().out
-    assert "Manufacturer" in out
+    assert "MPN" in out
+    assert "Description" in out
     assert "Yageo" in out
 
 

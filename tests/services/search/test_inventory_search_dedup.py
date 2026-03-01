@@ -3,6 +3,7 @@ from __future__ import annotations
 from unittest.mock import Mock
 
 from jbom.common.types import InventoryItem
+from jbom.config.suppliers import SupplierConfig
 from jbom.services.search.inventory_search_service import InventorySearchService
 from jbom.services.search.models import SearchResult
 from jbom.services.search.provider import SearchProvider
@@ -136,6 +137,37 @@ def test_filter_searchable_items_allows_led_single_character_value() -> None:
 
     filtered = InventorySearchService.filter_searchable_items(items, categories=None)
     assert [i.ipn for i in filtered] == ["LED-R-1"]
+
+
+def test_build_query_uses_supplier_config_keywords(monkeypatch) -> None:
+    supplier = SupplierConfig(
+        id="mouser",
+        name="Mouser",
+        inventory_column="Mouser",
+        search_type_query_keywords={"RES": "thick film resistor"},
+    )
+
+    import jbom.services.search.inventory_search_service as iss
+
+    monkeypatch.setattr(iss, "resolve_supplier_by_id", lambda _sid: supplier)
+
+    class _Provider:
+        provider_id = "mouser"
+
+        def search(self, query: str, *, limit: int = 10) -> list[SearchResult]:
+            return []
+
+    svc = InventorySearchService(_Provider())
+    item = _inv_item(
+        ipn="R-TEST",
+        category="RES",
+        value="10K",
+        package="0603",
+        tolerance="1%",
+    )
+
+    query = svc.build_query(item)
+    assert "thick film resistor" in query
 
 
 def test_inventory_search_service_fans_out_provider_errors_to_all_items() -> None:

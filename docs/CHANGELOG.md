@@ -14,6 +14,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Mouser provider now supports configurable timeout + retry/backoff for transient failures.
 - `inventory-search` now deduplicates identical queries within a run to reduce provider API calls.
 - Search parametric filtering now supports category-aware value normalization for RES/CAP/IND/REG and uses canonical values as a tertiary sort key.
+- `inventory-search` query construction now supports per-supplier `search.type_query_keywords` with a safe hardcoded fallback.
+- `jbom search` console output now includes Description plus up to 2 heuristic parametric columns.
 
 ## [7.0.0] - 2026-02-27
 
