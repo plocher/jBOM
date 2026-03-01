@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import shutil
 import sys
 from typing import Optional, TextIO
 
@@ -15,15 +16,6 @@ from jbom.cli.output import (
     add_force_argument,
     open_output_text_file,
     resolve_output_destination,
-)
-from jbom.common.value_parsing import (
-    farad_to_eia,
-    henry_to_eia,
-    ohms_to_eia,
-    parse_cap_to_farad,
-    parse_ind_to_henry,
-    parse_res_to_ohms,
-    parse_voltage_to_volts,
 )
 from jbom.services.search.cache import DiskSearchCache, InMemorySearchCache, SearchCache
 from jbom.services.search.filtering import (
@@ -200,59 +192,44 @@ def _print_console(results: list[SearchResult]) -> None:
         print("No results found.")
         return
 
-    # Heuristic (intentionally simple for Issue #83): inspect the top 10 results and
-    # choose up to 2 parametric attribute columns from a curated allowlist, ranked by
-    # how often they appear.
-    parametric_keys = _select_parametric_keys(results, limit=2)
+    rows = [_row_for_result(r) for r in results]
 
-    rows = [_row_for_result(r, parametric_keys=parametric_keys) for r in results]
-
+    # Fixed, predictable columns: the supplier Description already carries the
+    # parametric summary in human-readable form (e.g. "CAP CER 0.1UF 50V X7R 0603").
+    # Description gets the remaining terminal width after the narrower fixed columns.
     cols = [
-        Column(
-            header="Manufacturer", key="manufacturer", preferred_width=18, wrap=True
-        ),
-        Column(header="MPN", key="mpn", preferred_width=28, wrap=True),
-        Column(header="Description", key="description", preferred_width=34, wrap=True),
         Column(
             header="Distributor PN",
             key="distributor_part_number",
-            preferred_width=22,
+            preferred_width=28,
             wrap=True,
         ),
+        Column(
+            header="Price",
+            key="price",
+            preferred_width=10,
+            fixed=True,
+            align="right",
+        ),
+        Column(
+            header="Stock",
+            key="stock_quantity",
+            preferred_width=8,
+            fixed=True,
+            align="right",
+        ),
+        Column(
+            header="Lifecycle",
+            key="lifecycle_status",
+            preferred_width=10,
+            wrap=True,
+        ),
+        Column(header="Description", key="description", preferred_width=60, wrap=True),
     ]
 
-    for key in parametric_keys:
-        cols.append(
-            Column(header=key, key=f"attr:{key}", preferred_width=14, wrap=True)
-        )
-
-    cols.extend(
-        [
-            Column(
-                header="Price",
-                key="price",
-                preferred_width=10,
-                fixed=True,
-                align="right",
-            ),
-            Column(
-                header="Stock",
-                key="stock_quantity",
-                preferred_width=8,
-                fixed=True,
-                align="right",
-            ),
-            Column(
-                header="Lifecycle",
-                key="lifecycle_status",
-                preferred_width=10,
-                wrap=True,
-            ),
-        ]
-    )
-
+    terminal_width = shutil.get_terminal_size(fallback=(120, 24)).columns
     print("")
-    print_table(rows, cols, terminal_width=120)
+    print_table(rows, cols, terminal_width=terminal_width)
     print("")
     print(f"Found {len(results)} results.")
 
@@ -262,62 +239,6 @@ def _print_csv(results: list[SearchResult], *, out: TextIO) -> None:
     writer.writeheader()
     for r in results:
         writer.writerow(_csv_row_for_result(r))
-
-
-def _select_parametric_keys(results: list[SearchResult], *, limit: int) -> list[str]:
-    if limit <= 0:
-        return []
-
-    allowlist = [
-        "Resistance",
-        "Capacitance",
-        "Inductance",
-        "Tolerance",
-        "Voltage Rating",
-        "Output Voltage",
-        "Current Rating",
-        "Power",
-        "Package",
-    ]
-
-    # Consider the first N results only (table is for interactive use, so prioritize
-    # what the user sees at the top).
-    sample = results[: min(10, len(results))]
-
-    freq: dict[str, int] = {k: 0 for k in allowlist}
-    for r in sample:
-        keys = set((r.attributes or {}).keys())
-        for k in allowlist:
-            if k in keys:
-                freq[k] += 1
-
-    ranked = [k for k in allowlist if freq[k] > 0]
-    ranked.sort(key=lambda k: (-freq[k], allowlist.index(k)))
-    return ranked[:limit]
-
-
-def _format_parametric_value(attr_name: str, raw: str) -> str:
-    t = (raw or "").strip()
-    if not t:
-        return ""
-
-    if attr_name == "Resistance":
-        v = parse_res_to_ohms(t)
-        return ohms_to_eia(v) if v is not None else t
-
-    if attr_name == "Capacitance":
-        v = parse_cap_to_farad(t)
-        return farad_to_eia(v) if v is not None else t
-
-    if attr_name == "Inductance":
-        v = parse_ind_to_henry(t)
-        return henry_to_eia(v) if v is not None else t
-
-    if attr_name in {"Voltage Rating", "Output Voltage"}:
-        v = parse_voltage_to_volts(t)
-        return f"{v:g}V" if v is not None else t
-
-    return t
 
 
 def _csv_headers() -> list[str]:
@@ -350,23 +271,12 @@ def _csv_row_for_result(r: SearchResult) -> dict[str, str]:
     }
 
 
-def _row_for_result(r: SearchResult, *, parametric_keys: list[str]) -> dict[str, str]:
-    # Internal row mapping used by console output.
-    out: dict[str, str] = {
-        "manufacturer": r.manufacturer,
-        "mpn": r.mpn,
-        "description": r.description,
-        "distributor": r.distributor,
+def _row_for_result(r: SearchResult) -> dict[str, str]:
+    """Build the console row mapping for a single search result."""
+    return {
         "distributor_part_number": r.distributor_part_number,
-        "availability": r.availability,
-        "stock_quantity": str(r.stock_quantity),
         "price": r.price,
+        "stock_quantity": str(r.stock_quantity),
         "lifecycle_status": r.lifecycle_status,
-        "details_url": r.details_url,
+        "description": r.description,
     }
-
-    for k in parametric_keys:
-        raw = (r.attributes or {}).get(k, "")
-        out[f"attr:{k}"] = _format_parametric_value(k, raw)
-
-    return out
