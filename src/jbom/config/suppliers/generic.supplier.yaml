@@ -8,5 +8,12 @@ search_url_template: null
 part_number: {}
 
 search:
+  fields:
+    - supplier_part_number
+    - price
+    - stock_quantity
+    - lifecycle_status
+    - description
+
   cache:
     ttl_hours: 24

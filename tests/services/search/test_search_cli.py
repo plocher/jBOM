@@ -70,15 +70,17 @@ def test_search_console_output(monkeypatch, capsys):
         all=True,
         no_parametric=True,
         output="console",
+        fields=None,
+        list_fields=False,
     )
 
     rc = handle_search(args, _cache=InMemorySearchCache())
     assert rc == 0
 
     out = capsys.readouterr().out
-    assert "Distributor PN" in out
+    assert "Supplier PN" in out
     assert "Description" in out
-    assert "123-ABC" in out  # distributor part number
+    assert "123-ABC" in out  # supplier_part_number
 
 
 def test_search_csv_stdout(monkeypatch, capsys):
@@ -98,14 +100,16 @@ def test_search_csv_stdout(monkeypatch, capsys):
         all=True,
         no_parametric=True,
         output="-",
+        fields=None,
+        list_fields=False,
     )
 
     rc = handle_search(args, _cache=InMemorySearchCache())
     assert rc == 0
 
     out = capsys.readouterr().out.splitlines()
-    assert out[0].startswith("Manufacturer,MPN,Distributor")
-    assert any("Yageo" in line for line in out[1:])
+    assert out[0].startswith("Supplier PN,Price,Stock")
+    assert any("123-ABC" in line for line in out[1:])
 
 
 def test_search_csv_file(monkeypatch, tmp_path):
@@ -127,11 +131,100 @@ def test_search_csv_file(monkeypatch, tmp_path):
         all=True,
         no_parametric=True,
         output=str(outpath),
+        fields=None,
+        list_fields=False,
     )
 
     rc = handle_search(args, _cache=InMemorySearchCache())
     assert rc == 0
 
     text = outpath.read_text(encoding="utf-8")
-    assert text.splitlines()[0].startswith("Manufacturer,MPN,Distributor")
-    assert "Yageo" in text
+    assert text.splitlines()[0].startswith("Supplier PN,Price,Stock")
+    assert "123-ABC" in text
+
+
+def test_search_list_fields_exits_without_api_key(monkeypatch, capsys):
+    # This should not require an API key and should not call providers.
+    from jbom.services.search import mouser_provider
+
+    def _boom(*_a, **_kw):
+        raise AssertionError("Provider.search should not be called for --list-fields")
+
+    monkeypatch.setattr(mouser_provider.MouserProvider, "search", _boom)
+
+    args = argparse.Namespace(
+        query="ignored",
+        provider="mouser",
+        limit=1,
+        api_key=None,
+        all=True,
+        no_parametric=True,
+        output="console",
+        fields=None,
+        list_fields=True,
+    )
+
+    rc = handle_search(args, _cache=InMemorySearchCache())
+    assert rc == 0
+
+    out = capsys.readouterr().out
+    assert "supplier_part_number" in out
+    assert "Supplier PN" in out
+
+
+def test_search_fields_override_affects_csv_schema(monkeypatch, capsys):
+    from jbom.services.search import mouser_provider
+
+    monkeypatch.setattr(
+        mouser_provider.MouserProvider,
+        "search",
+        lambda self, query, *, limit=10: [_sr()],
+    )
+
+    args = argparse.Namespace(
+        query="10K resistor 0603",
+        provider="mouser",
+        limit=1,
+        api_key="dummy",
+        all=True,
+        no_parametric=True,
+        output="-",
+        fields="mpn,manufacturer",
+        list_fields=False,
+    )
+
+    rc = handle_search(args, _cache=InMemorySearchCache())
+    assert rc == 0
+
+    out = capsys.readouterr().out.splitlines()
+    assert out[0] == "MPN,Manufacturer"
+    assert any("RC0603FR-0710KL" in line for line in out[1:])
+    assert any("Yageo" in line for line in out[1:])
+
+
+def test_search_unknown_field_rejected(monkeypatch, capsys):
+    from jbom.services.search import mouser_provider
+
+    def _boom(*_a, **_kw):
+        raise AssertionError("Provider.search should not be called on invalid --fields")
+
+    monkeypatch.setattr(mouser_provider.MouserProvider, "search", _boom)
+
+    args = argparse.Namespace(
+        query="10K resistor 0603",
+        provider="mouser",
+        limit=1,
+        api_key="dummy",
+        all=True,
+        no_parametric=True,
+        output="console",
+        fields="does_not_exist",
+        list_fields=False,
+    )
+
+    rc = handle_search(args, _cache=InMemorySearchCache())
+    assert rc == 1
+
+    captured = capsys.readouterr()
+    assert "Unknown field" in captured.err
+    assert "does_not_exist" in captured.err
