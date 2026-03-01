@@ -237,6 +237,12 @@ Searches distributor catalogs for parts matching a keyword or part number.
 **--no-parametric**
 : Disable smart parametric filtering derived from the query text.
 
+**--fields LIST**
+: Comma-separated list of output field *registry keys* (applies to console + CSV output). Use `--list-fields` to discover valid keys.
+
+**--list-fields**
+: Print available field keys alongside their display names, then exit. Does not require an API key.
+
 **-o, --output OUTPUT**
 : Output destination. Default: `console` (formatted table).
   - Use `-o console` (or omit `-o`) for a formatted table.
