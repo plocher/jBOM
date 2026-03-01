@@ -1,6 +1,23 @@
 # CHANGELOG
 
 
+## Unreleased
+
+### Features
+
+* feat: add typed parametric fields to InventoryItem (#90)
+
+  Add `resistance`, `capacitance`, `inductance` (SI-unit floats) and `name` fields
+  to `InventoryItem`. The inventory reader decodes these at intake from explicit
+  `Resistance`/`Capacitance`/`Inductance`/`Name` CSV columns, falling back to the
+  `Value` column for passives. A WARNING is logged when both sources disagree by
+  more than 0.1%. `build_query()` in `InventorySearchService` now uses the typed
+  fields to produce normalised EIA search strings for passives, and prefers the
+  `Name` field for non-passive components.
+
+  Co-Authored-By: Oz <oz-agent@warp.dev>
+
+
 ## v6.13.0 (2026-03-01)
 
 ### Features

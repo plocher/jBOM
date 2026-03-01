@@ -18,6 +18,7 @@ from dataclasses import dataclass
 
 from jbom.common.component_classification import normalize_component_type
 from jbom.common.types import Component, InventoryItem
+from jbom.common.value_parsing import farad_to_eia, henry_to_eia, ohms_to_eia
 from jbom.config.suppliers import resolve_supplier_by_id
 from jbom.services.search.cache import normalize_query
 from jbom.services.search.filtering import SearchSorter, apply_default_filters
@@ -146,14 +147,38 @@ class InventorySearchService:
         return out
 
     def build_query(self, item: InventoryItem) -> str:
-        """Build a provider-friendly keyword query string."""
+        """Build a provider-friendly keyword query string.
+
+        Primary value token selection:
+        - Passives (RES/CAP/IND): use the typed numeric field formatted back to an
+          EIA string for consistent, normalised search terms.  Falls back to the
+          raw Value string when the typed field is absent.
+        - Non-passives: prefer the Name field (e.g. 'LM358D', 'AMS1117-3.3');
+          fall back to Value when Name is empty.
+        """
 
         parts: list[str] = []
 
-        if item.value:
-            parts.append(_normalize_ascii_value(item.value))
-
         cat = _category_token(item.category)
+
+        # Determine the primary value token.
+        if cat == "RES" and item.resistance is not None:
+            value_token = ohms_to_eia(item.resistance)
+        elif cat == "CAP" and item.capacitance is not None:
+            value_token = farad_to_eia(item.capacitance)
+        elif cat == "IND" and item.inductance is not None:
+            value_token = henry_to_eia(item.inductance)
+        elif cat in ("RES", "CAP", "IND"):
+            # Typed field absent — fall back to raw value string.
+            value_token = _normalize_ascii_value(item.value)
+        elif item.name:
+            # Non-passive with an explicit component name.
+            value_token = item.name
+        else:
+            value_token = _normalize_ascii_value(item.value)
+
+        if value_token:
+            parts.append(value_token)
 
         default_type_keywords = {
             "RES": "resistor",
