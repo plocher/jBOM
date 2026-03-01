@@ -1,22 +1,17 @@
 # CHANGELOG
 
 
-## Unreleased
+## v6.15.0 (2026-03-01)
 
-### Refactoring
+### Features
 
-* refactor: simplify search console table to fixed Description-centric columns (#91)
+* feat: simplify search console table to fixed 5-column layout (#91)
 
-  Remove the heuristic parametric column selection from #83. The supplier
-  Description field already carries parametric info in human-readable form
-  (e.g. "RES 10K OHM 1% 1/10W 0603"), making dynamic column selection redundant
-  and unpredictable. Fixed columns: Distributor PN | Price | Stock | Lifecycle |
-  Description. Description gets the remaining terminal width. Terminal width is
-  now read from shutil.get_terminal_size() instead of hardcoded 120.
-  Removes _select_parametric_keys(), _format_parametric_value(), and the
-  value_parsing imports that were only used for that machinery.
+Replaces heuristic parametric column selection with fixed 5-column layout (Distributor PN | Price | Stock | Lifecycle | Description). Removes _select_parametric_keys(), _format_parametric_value(), and 7 value_parsing imports (net -72 lines). Terminal width from shutil.get_terminal_size(). Also updates SPCoast example inventory files with ComponentName column rename from #90.
 
-  Co-Authored-By: Oz <oz-agent@warp.dev>
+Closes #91
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`695ba20`](https://github.com/plocher/jBOM/commit/695ba20a8dcdcd0e7335c6b94b4fd76e0606e01f))
 
 
 ## v6.14.0 (2026-03-01)
