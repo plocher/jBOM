@@ -38,6 +38,9 @@ def test_load_supplier_lcsc() -> None:
 
     assert lcsc.search_cache_ttl_hours == 24
 
+    # LCSC does not currently override search.fields; it should fall back to generic.
+    assert lcsc.search_fields == []
+
     assert isinstance(lcsc.search_type_query_keywords, dict)
     assert lcsc.search_type_query_keywords == {}
 
@@ -70,3 +73,15 @@ def test_validate_part_number_without_pattern_is_advisory() -> None:
 
     assert validate_part_number(generic, "ANYTHING") is True
     assert validate_part_number(generic, "") is False
+
+
+def test_load_supplier_generic_has_search_fields() -> None:
+    generic = load_supplier("generic")
+
+    assert generic.search_fields == [
+        "supplier_part_number",
+        "price",
+        "stock_quantity",
+        "lifecycle_status",
+        "description",
+    ]

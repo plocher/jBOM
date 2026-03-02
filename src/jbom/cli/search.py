@@ -1,4 +1,4 @@
-"""Search command - catalog lookup via external distributors (Phase 6)."""
+"""Search command - catalog lookup via external suppliers (Phase 6)."""
 
 from __future__ import annotations
 
@@ -6,7 +6,8 @@ import argparse
 import csv
 import shutil
 import sys
-from typing import Optional, TextIO
+from dataclasses import dataclass
+from typing import Callable, Optional, TextIO
 
 from jbom.cli.formatting import Column, print_table
 from jbom.cli.output import (
@@ -17,6 +18,7 @@ from jbom.cli.output import (
     open_output_text_file,
     resolve_output_destination,
 )
+from jbom.config.suppliers import load_supplier, resolve_supplier_by_id
 from jbom.services.search.cache import DiskSearchCache, InMemorySearchCache, SearchCache
 from jbom.services.search.filtering import (
     SearchFilter,
@@ -28,19 +30,115 @@ from jbom.services.search.models import SearchResult
 from jbom.services.search.provider import SearchProvider
 
 
+@dataclass(frozen=True)
+class _FieldDef:
+    """Registry entry describing a selectable search output field."""
+
+    key: str
+    column: Column
+    extractor: Callable[[SearchResult], str]
+
+
+def _s(r: SearchResult, value: object) -> str:
+    # Ensure everything is a safe string for console/CSV output.
+    return str(value if value is not None else "")
+
+
+_FIELD_REGISTRY: dict[str, _FieldDef] = {
+    # NOTE: SearchResult currently exposes distributor_part_number (normalized provider field).
+    # We use supplier_part_number as the public registry key to keep the CLI supplier-agnostic.
+    "supplier_part_number": _FieldDef(
+        key="supplier_part_number",
+        column=Column(
+            header="Supplier PN",
+            key="supplier_part_number",
+            preferred_width=28,
+            wrap=True,
+        ),
+        extractor=lambda r: _s(r, r.distributor_part_number),
+    ),
+    "mpn": _FieldDef(
+        key="mpn",
+        column=Column(header="MPN", key="mpn", preferred_width=18, wrap=True),
+        extractor=lambda r: _s(r, r.mpn),
+    ),
+    "manufacturer": _FieldDef(
+        key="manufacturer",
+        column=Column(
+            header="Manufacturer", key="manufacturer", preferred_width=16, wrap=True
+        ),
+        extractor=lambda r: _s(r, r.manufacturer),
+    ),
+    "price": _FieldDef(
+        key="price",
+        column=Column(
+            header="Price",
+            key="price",
+            preferred_width=10,
+            fixed=True,
+            align="right",
+        ),
+        extractor=lambda r: _s(r, r.price),
+    ),
+    "stock_quantity": _FieldDef(
+        key="stock_quantity",
+        column=Column(
+            header="Stock",
+            key="stock_quantity",
+            preferred_width=8,
+            fixed=True,
+            align="right",
+        ),
+        extractor=lambda r: _s(r, r.stock_quantity),
+    ),
+    "lifecycle_status": _FieldDef(
+        key="lifecycle_status",
+        column=Column(
+            header="Lifecycle",
+            key="lifecycle_status",
+            preferred_width=10,
+            wrap=True,
+        ),
+        extractor=lambda r: _s(r, r.lifecycle_status),
+    ),
+    "description": _FieldDef(
+        key="description",
+        column=Column(
+            header="Description", key="description", preferred_width=60, wrap=True
+        ),
+        extractor=lambda r: _s(r, r.description),
+    ),
+    "availability": _FieldDef(
+        key="availability",
+        column=Column(
+            header="Availability", key="availability", preferred_width=18, wrap=True
+        ),
+        extractor=lambda r: _s(r, r.availability),
+    ),
+    "details_url": _FieldDef(
+        key="details_url",
+        column=Column(
+            header="Details URL", key="details_url", preferred_width=40, wrap=True
+        ),
+        extractor=lambda r: _s(r, r.details_url),
+    ),
+}
+
+
 def register_command(subparsers) -> None:
     """Register search command with argument parser."""
 
     parser = subparsers.add_parser(
         "search",
-        help="Search distributor catalogs (e.g. Mouser)",
-        description="Search distributor catalogs and print results.",
+        help="Search supplier catalogs (e.g. Mouser)",
+        description="Search supplier catalogs and print results.",
     )
 
     parser.add_argument(
         "query", help="Search query (keyword, part number, description)"
     )
 
+    # Provider controls the API backend.
     parser.add_argument(
         "--provider",
         choices=["mouser"],
@@ -82,6 +180,17 @@ def register_command(subparsers) -> None:
     )
 
     parser.add_argument(
+        "--fields",
+        help="Comma-separated list of output field registry keys (use --list-fields to discover)",
+    )
+
+    parser.add_argument(
+        "--list-fields",
+        action="store_true",
+        help="List available field keys and exit",
+    )
+
+    parser.add_argument(
         "-o",
         "--output",
         help="Output destination: omit for console, use 'console' for table, '-' for CSV to stdout, or a file path",
@@ -95,6 +204,14 @@ def handle_search(
     args: argparse.Namespace, *, _cache: SearchCache | None = None
 ) -> int:
     """Handle `jbom search` command."""
+
+    if bool(getattr(args, "list_fields", False)):
+        _print_list_fields()
+        return 0
+
+    resolved_fields = _resolve_fields_from_args(args)
+    if resolved_fields is None:
+        return 1
 
     cache = _cache if _cache is not None else _build_cache(args)
 
@@ -125,7 +242,88 @@ def handle_search(
     results = results[:display_limit]
 
     force = bool(getattr(args, "force", False))
-    return _output_results(results, output=args.output, force=force)
+    return _output_results(
+        results,
+        output=args.output,
+        force=force,
+        fields=resolved_fields,
+    )
+
+
+def _print_list_fields() -> None:
+    width = max((len(k) for k in _FIELD_REGISTRY.keys()), default=1) + 2
+    print("\nAvailable fields:")
+    for key in sorted(_FIELD_REGISTRY.keys()):
+        label = _FIELD_REGISTRY[key].column.header
+        print(f"  {key:<{width}}{label}")
+    print("")
+
+
+def _parse_fields_argument(fields: str) -> list[str] | None:
+    raw = [t.strip() for t in (fields or "").split(",")]
+    tokens: list[str] = []
+    for tok in raw:
+        if not tok:
+            continue
+        tokens.append(tok)
+
+    if not tokens:
+        print("Error: --fields parameter cannot be empty", file=sys.stderr)
+        return None
+
+    # Registry keys only.
+    normalized = [t.strip().lower() for t in tokens]
+
+    unknown = [f for f in normalized if f not in _FIELD_REGISTRY]
+    if unknown:
+        print(f"Error: Unknown field(s): {', '.join(unknown)}", file=sys.stderr)
+        print("\nUse --list-fields to see valid field keys.", file=sys.stderr)
+        return None
+
+    # Deduplicate, preserve order.
+    seen: set[str] = set()
+    deduped: list[str] = []
+    for f in normalized:
+        if f not in seen:
+            seen.add(f)
+            deduped.append(f)
+
+    return deduped
+
+
+def _resolve_fields_from_args(args: argparse.Namespace) -> list[str] | None:
+    # 1) CLI override
+    if getattr(args, "fields", None) is not None:
+        return _parse_fields_argument(args.fields)
+
+    # 2) Supplier profile fields (provider id is the closest proxy for supplier id)
+    supplier_id = (getattr(args, "provider", "") or "").strip().lower()
+    supplier = resolve_supplier_by_id(supplier_id)
+    if supplier is not None and supplier.search_fields:
+        return list(supplier.search_fields)
+
+    # 3) Generic profile fields
+    try:
+        generic = load_supplier("generic")
+        if generic.search_fields:
+            return list(generic.search_fields)
+    except ValueError:
+        pass
+
+    # 4) Emergency fallback (keep it simple and always include description)
+    return [
+        "supplier_part_number",
+        "price",
+        "stock_quantity",
+        "lifecycle_status",
+        "description",
+    ]
+
+
+def _row_for_result(r: SearchResult) -> dict[str, str]:
+    """Build a row mapping containing every known registry key."""
+
+    return {k: _FIELD_REGISTRY[k].extractor(r) for k in _FIELD_REGISTRY.keys()}
 
 
 def _build_cache(args: argparse.Namespace) -> SearchCache:
@@ -149,7 +347,11 @@ def _create_provider(
 
 
 def _output_results(
-    results: list[SearchResult], *, output: Optional[str], force: bool
+    results: list[SearchResult],
+    *,
+    output: Optional[str],
+    force: bool,
+    fields: list[str],
 ) -> int:
     dest = resolve_output_destination(
         output,
@@ -157,11 +359,11 @@ def _output_results(
     )
 
     if dest.kind == OutputKind.CONSOLE:
-        _print_console(results)
+        _print_console(results, fields=fields)
         return 0
 
     if dest.kind == OutputKind.STDOUT:
-        _print_csv(results, out=sys.stdout)
+        _print_csv(results, fields=fields, out=sys.stdout)
         return 0
 
     if not dest.path:
@@ -178,7 +380,7 @@ def _output_results(
             force=force,
             refused_message=refused,
         ) as f:
-            _print_csv(results, out=f)
+            _print_csv(results, fields=fields, out=f)
     except OutputRefusedError as exc:
         print(str(exc), file=sys.stderr)
         return 1
@@ -187,45 +389,19 @@ def _output_results(
     return 0
 
 
-def _print_console(results: list[SearchResult]) -> None:
+def _print_console(results: list[SearchResult], *, fields: list[str]) -> None:
     if not results:
         print("No results found.")
         return
 
     rows = [_row_for_result(r) for r in results]
 
-    # Fixed, predictable columns: the supplier Description already carries the
-    # parametric summary in human-readable form (e.g. "CAP CER 0.1UF 50V X7R 0603").
-    # Description gets the remaining terminal width after the narrower fixed columns.
-    cols = [
-        Column(
-            header="Distributor PN",
-            key="distributor_part_number",
-            preferred_width=28,
-            wrap=True,
-        ),
-        Column(
-            header="Price",
-            key="price",
-            preferred_width=10,
-            fixed=True,
-            align="right",
-        ),
-        Column(
-            header="Stock",
-            key="stock_quantity",
-            preferred_width=8,
-            fixed=True,
-            align="right",
-        ),
-        Column(
-            header="Lifecycle",
-            key="lifecycle_status",
-            preferred_width=10,
-            wrap=True,
-        ),
-        Column(header="Description", key="description", preferred_width=60, wrap=True),
-    ]
+    cols: list[Column] = []
+    for f in fields:
+        if f not in _FIELD_REGISTRY:
+            # Defensive: should never happen after validation.
+            continue
+        cols.append(_FIELD_REGISTRY[f].column)
 
     terminal_width = shutil.get_terminal_size(fallback=(120, 24)).columns
     print("")
@@ -234,49 +410,19 @@ def _print_console(results: list[SearchResult]) -> None:
     print(f"Found {len(results)} results.")
 
 
-def _print_csv(results: list[SearchResult], *, out: TextIO) -> None:
-    writer = csv.DictWriter(out, fieldnames=_csv_headers())
-    writer.writeheader()
+def _print_csv(results: list[SearchResult], *, fields: list[str], out: TextIO) -> None:
+    writer = csv.writer(out)
+    writer.writerow(_csv_headers(fields))
+
     for r in results:
-        writer.writerow(_csv_row_for_result(r))
+        row = _csv_row_for_result(r, fields)
+        writer.writerow(row)
 
 
-def _csv_headers() -> list[str]:
-    # House style: human-readable headers (Title Case / abbreviations) similar to
-    # other jbom-new CSV outputs.
-    return [
-        "Manufacturer",
-        "MPN",
-        "Distributor",
-        "Distributor PN",
-        "Availability",
-        "Stock",
-        "Price",
-        "Lifecycle",
-        "Details URL",
-    ]
+def _csv_headers(fields: list[str]) -> list[str]:
+    return [_FIELD_REGISTRY[f].column.header for f in fields]
 
 
-def _csv_row_for_result(r: SearchResult) -> dict[str, str]:
-    return {
-        "Manufacturer": r.manufacturer,
-        "MPN": r.mpn,
-        "Distributor": r.distributor,
-        "Distributor PN": r.distributor_part_number,
-        "Availability": r.availability,
-        "Stock": str(r.stock_quantity),
-        "Price": r.price,
-        "Lifecycle": r.lifecycle_status,
-        "Details URL": r.details_url,
-    }
-
-
-def _row_for_result(r: SearchResult) -> dict[str, str]:
-    """Build the console row mapping for a single search result."""
-    return {
-        "distributor_part_number": r.distributor_part_number,
-        "price": r.price,
-        "stock_quantity": str(r.stock_quantity),
-        "lifecycle_status": r.lifecycle_status,
-        "description": r.description,
-    }
+def _csv_row_for_result(r: SearchResult, fields: list[str]) -> list[str]:
+    full = _row_for_result(r)
+    return [str(full.get(f, "")) for f in fields]

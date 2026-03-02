@@ -35,6 +35,9 @@ class SupplierConfig:
     part_number_pattern: Optional[str] = None
     part_number_example: Optional[str] = None
 
+    # Search output field selection (applies to console + CSV output).
+    search_fields: list[str] = field(default_factory=list)
+
     # Search behavior tuning (optional).
     search_cache_ttl_hours: Optional[float] = None
     search_timeout_seconds: Optional[float] = None
@@ -101,6 +104,18 @@ class SupplierConfig:
         search_cfg = data.get("search") or {}
         if not isinstance(search_cfg, dict):
             raise ValueError(f"Supplier '{sid}' search must be a mapping")
+
+        fields_cfg = search_cfg.get("fields") or []
+        if not isinstance(fields_cfg, list):
+            raise ValueError(f"Supplier '{sid}' search.fields must be a list")
+
+        search_fields: list[str] = []
+        for f in fields_cfg:
+            if not isinstance(f, str) or not f.strip():
+                raise ValueError(
+                    f"Supplier '{sid}' search.fields entries must be non-empty strings"
+                )
+            search_fields.append(f.strip().lower())
 
         cache_cfg = search_cfg.get("cache") or {}
         if not isinstance(cache_cfg, dict):
@@ -191,6 +206,7 @@ class SupplierConfig:
             search_url_template=search_url_template,
             part_number_pattern=pattern,
             part_number_example=example,
+            search_fields=search_fields,
             search_cache_ttl_hours=(
                 float(cache_ttl_hours) if cache_ttl_hours is not None else None
             ),
