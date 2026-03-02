@@ -15,11 +15,11 @@ Provider *types* are internal (e.g. "mouser_api", "jlcparts_sqlite").
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from jbom.services.search.cache import SearchCache
-from jbom.services.search.mouser_provider import MouserProvider
-from jbom.services.search.provider import SearchProvider
+if TYPE_CHECKING:
+    from jbom.services.search.cache import SearchCache
+    from jbom.services.search.provider import SearchProvider
 
 
 @dataclass(frozen=True)
@@ -46,13 +46,19 @@ class SearchProviderConfig:
         return SearchProviderConfig(type=self.type, extra=merged)
 
 
-_REGISTRY: dict[str, type[SearchProvider]] = {
-    "mouser_api": MouserProvider,
-    # jlcparts_sqlite provider is added in Issue #112 scope as a stub.
-}
+def _registry() -> dict[str, type["SearchProvider"]]:
+    # Lazily import providers to avoid config<->service circular imports.
+    from jbom.services.search.mouser_provider import MouserProvider
+
+    return {
+        "mouser_api": MouserProvider,
+        # jlcparts_sqlite provider is added in Issue #112 scope as a stub.
+    }
 
 
-def get_provider(cfg: SearchProviderConfig, *, cache: SearchCache) -> SearchProvider:
+def get_provider(
+    cfg: SearchProviderConfig, *, cache: "SearchCache"
+) -> "SearchProvider":
     """Instantiate a SearchProvider from its config.
 
     Args:
@@ -70,7 +76,7 @@ def get_provider(cfg: SearchProviderConfig, *, cache: SearchCache) -> SearchProv
     if not provider_type:
         raise ValueError("Provider config missing non-empty 'type'")
 
-    provider_cls = _REGISTRY.get(provider_type)
+    provider_cls = _registry().get(provider_type)
     if provider_cls is None:
         raise ValueError(f"Unknown provider type: {provider_type}")
 

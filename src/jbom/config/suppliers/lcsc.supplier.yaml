@@ -27,3 +27,7 @@ search_url_template: "https://www.lcsc.com/search?q={query}"
 search:
   cache:
     ttl_hours: 24
+
+  providers:
+    - type: jlcparts_sqlite
+      db_path: "~/.cache/jbom/jlcparts/components.db"

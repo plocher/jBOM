@@ -46,6 +46,10 @@ def test_load_supplier_lcsc() -> None:
     # LCSC does not currently override search.fields; it should fall back to generic.
     assert lcsc.search_fields == []
 
+    assert len(lcsc.search_providers) == 1
+    assert lcsc.search_providers[0].type == "jlcparts_sqlite"
+    assert "db_path" in lcsc.search_providers[0].extra
+
     assert isinstance(lcsc.search_type_query_keywords, dict)
     assert lcsc.search_type_query_keywords == {}
 
@@ -58,6 +62,10 @@ def test_load_supplier_mouser_has_type_query_keywords() -> None:
     assert mouser.search_type_query_keywords.get("RES") == "resistor"
     assert mouser.search_type_query_keywords.get("CAP") == "capacitor"
     assert mouser.search_type_query_keywords.get("IND") == "inductor"
+
+    assert len(mouser.search_providers) == 1
+    assert mouser.search_providers[0].type == "mouser_api"
+    assert mouser.search_providers[0].extra.get("api_key_env") == "MOUSER_API_KEY"
 
 
 def test_load_unknown_supplier_raises() -> None:
