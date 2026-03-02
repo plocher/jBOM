@@ -1,6 +1,20 @@
 # CHANGELOG
 
 
+## v6.19.1 (2026-03-02)
+
+### Refactoring
+
+* refactor: extract _provider_choices to list_searchable_suppliers in providers.py (#114)
+
+Eliminates the duplicated _provider_choices() function from cli/search.py
+and cli/inventory_search.py by moving it to config/providers.py as the
+public list_searchable_suppliers() utility. Both CLI modules now import
+and call the shared function.
+
+Co-authored-by: Oz <oz-agent@warp.dev> ([`42daffb`](https://github.com/plocher/jBOM/commit/42daffb68ad80a18db417ffabf34c6c55bdcee68))
+
+
 ## v6.19.0 (2026-03-02)
 
 ### Features
