@@ -15,6 +15,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, Mapping, Optional
 
+from jbom.config.providers import SearchProviderConfig
+
 import yaml
 
 
@@ -38,6 +40,10 @@ class SupplierConfig:
 
     # Search output field selection (applies to console + CSV output).
     search_fields: list[str] = field(default_factory=list)
+
+    # Search provider configuration (ordered fallback chain).
+    # Empty means the supplier has no search capability.
+    search_providers: list[SearchProviderConfig] = field(default_factory=list)
 
     # Search behavior tuning (optional).
     search_cache_ttl_hours: Optional[float] = None
@@ -132,6 +138,28 @@ class SupplierConfig:
                 )
             search_fields.append(f.strip().lower())
 
+        providers_cfg = search_cfg.get("providers") or []
+        if not isinstance(providers_cfg, list):
+            raise ValueError(f"Supplier '{sid}' search.providers must be a list")
+
+        search_providers: list[SearchProviderConfig] = []
+        for p in providers_cfg:
+            if not isinstance(p, dict):
+                raise ValueError(
+                    f"Supplier '{sid}' search.providers entries must be mappings"
+                )
+
+            ptype = p.get("type")
+            if not isinstance(ptype, str) or not ptype.strip():
+                raise ValueError(
+                    f"Supplier '{sid}' search.providers entries must include non-empty 'type'"
+                )
+
+            extra = {k: v for k, v in p.items() if k != "type"}
+            search_providers.append(
+                SearchProviderConfig(type=ptype.strip(), extra=dict(extra))
+            )
+
         cache_cfg = search_cfg.get("cache") or {}
         if not isinstance(cache_cfg, dict):
             raise ValueError(f"Supplier '{sid}' search.cache must be a mapping")
@@ -223,6 +251,7 @@ class SupplierConfig:
             part_number_pattern=pattern,
             part_number_example=example,
             search_fields=search_fields,
+            search_providers=search_providers,
             search_cache_ttl_hours=(
                 float(cache_ttl_hours) if cache_ttl_hours is not None else None
             ),

@@ -30,6 +30,10 @@ search:
     max_retries: 3
     retry_delay_seconds: 1.0
 
+  providers:
+    - type: mouser_api
+      api_key_env: MOUSER_API_KEY
+
   # Keyword appended to query per normalized component category.
   type_query_keywords:
     RES: "resistor"

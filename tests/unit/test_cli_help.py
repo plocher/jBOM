@@ -87,3 +87,15 @@ def test_inventory_search_help_includes_fabricator_choices():
             assert fab in out
     finally:
         sys.path.remove(str(SRC_DIR))
+
+
+def test_search_help_lists_only_configured_supplier_providers():
+    out = run_help(["search"]).lower()
+
+    # Only suppliers with search.providers in YAML should appear as choices.
+    assert "mouser" in out
+    assert "lcsc" in out
+
+    # Suppliers without providers should not appear.
+    assert "digikey" not in out
+    assert "seeed" not in out

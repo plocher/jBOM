@@ -191,15 +191,18 @@ def step_have_sample_fixtures(context, rel_path):
     """Copy fixture subtree into the per-scenario temp workspace.
 
     Rules:
-    - Source is ALWAYS under jbom-new/features/fixtures in the repo.
+    - Source is ALWAYS under features/fixtures in the repo.
     - Destination is ALWAYS under the scenario temp dir (context.project_root).
     - We never delete or modify files under the repo working tree.
+
+    Backward compatibility:
+    - Callers may still pass legacy paths prefixed with "jbom-new/".
     """
     from pathlib import Path
     import shutil
 
     assert hasattr(context, "sandbox_root"), "sandbox_root not initialized"
-    repo_jbom_new = Path(getattr(context, "jbom_new_root"))
+    repo_root = Path(getattr(context, "repo_root"))
 
     # Normalize incoming path: allow callers to pass either of these prefixes
     #   "features/fixtures/..." or "jbom-new/features/fixtures/..."
@@ -210,8 +213,8 @@ def step_have_sample_fixtures(context, rel_path):
         parts = parts[1:]
     normalized_rel = "/".join(parts)
 
-    # Compute absolute source under repo jbom-new
-    src = (repo_jbom_new / normalized_rel).resolve()
+    # Compute absolute source under the repo root.
+    src = (repo_root / normalized_rel).resolve()
     assert src.exists() and src.is_dir(), f"Fixtures directory not found: {src}"
 
     # Compute destination under temp workspace, mirroring the normalized path

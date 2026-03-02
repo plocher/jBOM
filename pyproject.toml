@@ -129,4 +129,5 @@ markers = [
     "unit: Unit tests for individual components",
     "integration: Integration tests for component interactions",
     "plugin: Plugin-specific tests",
+    "contract: Data-contract tests pinned to real inventory fixtures (may fail on fixture drift)",
 ]

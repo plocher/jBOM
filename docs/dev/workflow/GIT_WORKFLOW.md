@@ -120,7 +120,7 @@ These hooks **only check** (but don't modify) the files.  Issues they identify M
 ### Documentation Commit
 
 ```bash
-git add jbom-new/docs/architecture/anti-patterns.md
+git add /docs/architecture/anti-patterns.md
 git add -u
 git commit -m "docs: document anti-patterns from old-jbom
 
@@ -131,14 +131,14 @@ Identifies 5 architectural problems:
 - Tight coupling between services
 - Debug printing in domain layer
 
-Each with code examples and jbom-new alternatives.
+Each with code examples and alternatives.
 "
 ```
 
 ### Feature Commit
 
 ```bash
-git add jbom-new/src/jbom/common/value_parsing.py
+git add ./src/jbom/common/value_parsing.py
 git add -u
 git commit -m "feat: add value parsing utilities
 
@@ -146,7 +146,7 @@ Port from old-jbom with type hints and docstrings:
 - parse_res_to_ohms() - Resistor value parsing
 - parse_cap_to_farad() - Capacitor value parsing
 - parse_ind_to_henry() - Inductor value parsing
-- EIA standard converters
+- EIA standard converters.
 
 Pure functions, no side effects, ready for use in matcher.
 "
@@ -155,7 +155,7 @@ Pure functions, no side effects, ready for use in matcher.
 ### Test Commit
 
 ```bash
-git add jbom-new/tests/unit/test_value_parsing.py
+git add ./tests/unit/test_value_parsing.py
 git add -u
 git commit -m "test: add unit tests for value parsing
 

@@ -5,12 +5,15 @@ from __future__ import annotations
 import logging
 import os
 import time
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from jbom.config.suppliers import resolve_supplier_by_id
 from jbom.services.search.cache import SearchCache, SearchCacheKey
 from jbom.services.search.models import SearchResult
 from jbom.services.search.provider import SearchProvider
+
+if TYPE_CHECKING:
+    from jbom.config.providers import SearchProviderConfig
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +32,7 @@ class MouserProvider(SearchProvider):
         self,
         *,
         api_key: Optional[str] = None,
+        api_key_env: str = "MOUSER_API_KEY",
         cache: Optional[SearchCache] = None,
         timeout: float | None = None,
         max_retries: int | None = None,
@@ -37,21 +41,20 @@ class MouserProvider(SearchProvider):
         """Create a provider.
 
         Args:
-            api_key: Mouser API key. Defaults to MOUSER_API_KEY environment variable.
+            api_key: Mouser API key.
+            api_key_env: Environment variable name suggested to users when api_key is missing.
             cache: Optional cache used to reduce repeated API calls.
             timeout: Request timeout in seconds (defaults to supplier profile).
             max_retries: Max retry attempts for transient failures (defaults to supplier profile).
             retry_delay: Initial delay (seconds) before retry; uses exponential backoff (defaults to supplier profile).
-
-        Raises:
-            ValueError: When api_key is not provided and MOUSER_API_KEY is not set.
         """
 
-        self._api_key = api_key or os.environ.get("MOUSER_API_KEY")
-        if not self._api_key:
-            raise ValueError(
-                "Mouser API Key is required. Set MOUSER_API_KEY or pass --api-key."
-            )
+        self._api_key_env = (
+            api_key_env or "MOUSER_API_KEY"
+        ).strip() or "MOUSER_API_KEY"
+        self._api_key = (
+            (api_key or "").strip() or os.environ.get(self._api_key_env) or None
+        )
 
         self._cache = cache
 
@@ -90,6 +93,39 @@ class MouserProvider(SearchProvider):
         self._max_retries = max(0, int(max_retries))
         self._retry_delay = max(0.0, float(retry_delay))
 
+    @classmethod
+    def from_config(
+        cls, cfg: SearchProviderConfig, *, cache: SearchCache
+    ) -> "MouserProvider":
+        api_key = cfg.extra.get("api_key")
+        api_key_norm = str(api_key).strip() if api_key is not None else ""
+
+        api_key_env = cfg.extra.get("api_key_env")
+        api_key_env_norm = (
+            str(api_key_env).strip() if api_key_env is not None else "MOUSER_API_KEY"
+        )
+        api_key_env_norm = api_key_env_norm or "MOUSER_API_KEY"
+
+        resolved_key = api_key_norm or os.environ.get(api_key_env_norm)
+
+        return cls(
+            api_key=resolved_key,
+            api_key_env=api_key_env_norm,
+            cache=cache,
+        )
+
+    def available(self) -> bool:
+        if requests is None:  # pragma: no cover
+            return False
+        return bool(self._api_key)
+
+    def unavailable_reason(self) -> str:
+        if requests is None:  # pragma: no cover
+            return "Search support requires the 'requests' package. Install it with: pip install requests"
+        if not self._api_key:
+            return f"Mouser API Key is required. Set {self._api_key_env} or pass --api-key."
+        return ""
+
     @property
     def provider_id(self) -> str:
         return "mouser"
@@ -100,9 +136,9 @@ class MouserProvider(SearchProvider):
 
     def search(self, query: str, *, limit: int = 10) -> list[SearchResult]:
         if requests is None:  # pragma: no cover
-            raise RuntimeError(
-                "Search support requires the 'requests' package. Install it with: pip install requests"
-            )
+            raise RuntimeError(self.unavailable_reason())
+        if not self._api_key:
+            raise RuntimeError(self.unavailable_reason())
 
         cache_key = None
         if self._cache is not None:

@@ -228,3 +228,23 @@ def test_search_unknown_field_rejected(monkeypatch, capsys):
     captured = capsys.readouterr()
     assert "Unknown field" in captured.err
     assert "does_not_exist" in captured.err
+
+
+def test_search_lcsc_provider_exits_cleanly_when_unavailable(capsys):
+    args = argparse.Namespace(
+        query="10K resistor 0603",
+        provider="lcsc",
+        limit=1,
+        api_key=None,
+        all=True,
+        no_parametric=True,
+        output="console",
+        fields=None,
+        list_fields=False,
+    )
+
+    rc = handle_search(args, _cache=InMemorySearchCache())
+    assert rc == 1
+
+    captured = capsys.readouterr()
+    assert "not yet implemented" in captured.err.lower()

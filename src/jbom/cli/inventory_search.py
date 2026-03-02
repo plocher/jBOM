@@ -21,24 +21,52 @@ from jbom.common.cli_fabricator import (
     resolve_fabricator_selection_from_args,
 )
 from jbom.config.fabricators import load_fabricator
+from jbom.config.providers import get_provider
+from jbom.config.suppliers import list_suppliers, load_supplier, resolve_supplier_by_id
 from jbom.services.inventory_reader import InventoryReader
 from jbom.services.search.cache import DiskSearchCache, InMemorySearchCache, SearchCache
 from jbom.services.search.inventory_search_service import InventorySearchService
-from jbom.services.search.mouser_provider import MouserProvider
+from jbom.services.search.provider import SearchProvider
 
 
-_PROVIDER_FACTORIES = {
-    "mouser": MouserProvider,
-}
+def _provider_choices() -> list[str]:
+    """Return supplier IDs that declare at least one search provider."""
+
+    out: list[str] = []
+    for sid in list_suppliers():
+        try:
+            supplier = load_supplier(sid)
+        except ValueError:
+            continue
+
+        if supplier.search_providers:
+            out.append(supplier.id)
+
+    return sorted(set(out))
 
 
-def _default_provider_for_fabricator(fabricator_id: str) -> str:
-    """Pick the first working provider based on fab supplier priority."""
+def _default_provider_for_fabricator(fabricator_id: str, *, api_key: str | None) -> str:
+    """Pick the first available provider based on fab supplier priority."""
 
     fab = load_fabricator(fabricator_id)
     for supplier_id in fab.suppliers:
-        if supplier_id in _PROVIDER_FACTORIES:
-            return supplier_id
+        supplier = resolve_supplier_by_id(supplier_id)
+        if supplier is None or not supplier.search_providers:
+            continue
+
+        cfg = supplier.search_providers[0]
+        if api_key:
+            cfg = cfg.with_extra({"api_key": api_key})
+
+        # Use a transient in-memory cache for availability probing.
+        try:
+            provider = get_provider(cfg, cache=InMemorySearchCache())
+        except Exception:
+            continue
+
+        if provider.available():
+            return supplier.id
+
     # Fallback: preserve historical default behavior.
     return "mouser"
 
@@ -71,7 +99,7 @@ def register_command(subparsers) -> None:
 
     parser.add_argument(
         "--provider",
-        choices=sorted(_PROVIDER_FACTORIES.keys()),
+        choices=_provider_choices(),
         default=None,
         help="Search provider to use (default: derived from fabricator supplier priority)",
     )
@@ -158,7 +186,10 @@ def handle_inventory_search(
         if not provider_id:
             # Preserve historical default when no fabricator is explicitly selected.
             provider_id = (
-                _default_provider_for_fabricator(fabricator_id)
+                _default_provider_for_fabricator(
+                    fabricator_id,
+                    api_key=args.api_key,
+                )
                 if fabricator_explicit
                 else "mouser"
             )
@@ -239,17 +270,22 @@ def _build_cache(provider_id: str, args: argparse.Namespace) -> SearchCache:
 
 def _create_provider(
     provider_id: str, *, api_key: str | None, cache: SearchCache
-) -> MouserProvider:
-    pid = (provider_id or "").strip().lower()
+) -> SearchProvider:
+    supplier_id = (provider_id or "").strip().lower()
+    supplier = load_supplier(supplier_id)
 
-    if pid not in _PROVIDER_FACTORIES:
-        raise ValueError(f"Unknown provider: {provider_id}")
+    if not supplier.search_providers:
+        raise ValueError(f"Supplier '{supplier_id}' has no configured search providers")
 
-    if pid == "mouser":
-        return MouserProvider(api_key=api_key, cache=cache)
+    cfg = supplier.search_providers[0]
+    if api_key:
+        cfg = cfg.with_extra({"api_key": api_key})
 
-    # Defensive: keep mypy happy if additional factories are added without updating.
-    raise AssertionError(f"Unhandled provider_id: {pid}")
+    provider = get_provider(cfg, cache=cache)
+    if not provider.available():
+        raise RuntimeError(provider.unavailable_reason())
+
+    return provider
 
 
 def _print_dry_run_summary(items) -> None:
