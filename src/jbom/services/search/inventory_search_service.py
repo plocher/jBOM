@@ -19,6 +19,7 @@ from dataclasses import dataclass
 from jbom.common.component_classification import normalize_component_type
 from jbom.common.types import Component, InventoryItem
 from jbom.common.value_parsing import farad_to_eia, henry_to_eia, ohms_to_eia
+from jbom.config.fabricators import FabricatorConfig
 from jbom.config.suppliers import resolve_supplier_by_id
 from jbom.services.search.cache import normalize_query
 from jbom.services.search.filtering import SearchSorter, apply_default_filters
@@ -81,6 +82,52 @@ def _category_matches(item_category: str, selector: str) -> bool:
 
 class InventorySearchService:
     """Service that searches external catalogs for inventory backfill candidates."""
+
+    @staticmethod
+    def is_sparse_for_fabricator(
+        item: InventoryItem, fabricator: FabricatorConfig
+    ) -> bool:
+        """Return True if item has no PN for any supplier in fabricator.suppliers.
+
+        This is Phase 1 "fab-relative sparseness": sparseness is defined relative to
+        the fabricator's ordered supplier list.
+        """
+
+        # If a fabricator has no suppliers list, treat sparseness as "not applicable".
+        if not fabricator.suppliers:
+            return False
+
+        for supplier_id in fabricator.suppliers:
+            supplier = resolve_supplier_by_id(supplier_id)
+            if supplier is None:
+                # Unknown supplier IDs are warned at config load time.
+                continue
+
+            pn = ""
+            if supplier.id == "lcsc":
+                # InventoryReader populates InventoryItem.lcsc from several header variants.
+                pn = (item.lcsc or "").strip()
+            else:
+                pn = str(
+                    (item.raw_data or {}).get(supplier.inventory_column, "")
+                ).strip()
+
+            if pn:
+                return False
+
+        return True
+
+    @staticmethod
+    def filter_sparse_items_for_fabricator(
+        items: list[InventoryItem], *, fabricator: FabricatorConfig
+    ) -> list[InventoryItem]:
+        """Filter to items that are sparse for this fabricator."""
+
+        return [
+            i
+            for i in items
+            if InventorySearchService.is_sparse_for_fabricator(i, fabricator)
+        ]
 
     def __init__(
         self,

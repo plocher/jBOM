@@ -3,6 +3,13 @@ id: "pcbway"
 description: "PCBWay Bill of Materials"
 website: "https://www.pcbway.com/helpcenter/assembly_help/How_to_place_an_assembly_order.html"
 
+# Ordered supplier profile IDs (position encodes priority).
+suppliers:
+  - mouser
+  - digikey
+  - farnell
+  - newark
+
 part_number:
   header: "Manufacturer Part Number"
 

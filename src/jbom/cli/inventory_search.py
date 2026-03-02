@@ -16,10 +16,31 @@ from jbom.cli.output import (
     open_output_text_file,
     resolve_output_destination,
 )
+from jbom.common.cli_fabricator import (
+    add_fabricator_arguments,
+    resolve_fabricator_selection_from_args,
+)
+from jbom.config.fabricators import load_fabricator
 from jbom.services.inventory_reader import InventoryReader
 from jbom.services.search.cache import DiskSearchCache, InMemorySearchCache, SearchCache
 from jbom.services.search.inventory_search_service import InventorySearchService
 from jbom.services.search.mouser_provider import MouserProvider
+
+
+_PROVIDER_FACTORIES = {
+    "mouser": MouserProvider,
+}
+
+
+def _default_provider_for_fabricator(fabricator_id: str) -> str:
+    """Pick the first working provider based on fab supplier priority."""
+
+    fab = load_fabricator(fabricator_id)
+    for supplier_id in fab.suppliers:
+        if supplier_id in _PROVIDER_FACTORIES:
+            return supplier_id
+    # Fallback: preserve historical default behavior.
+    return "mouser"
 
 
 def register_command(subparsers) -> None:
@@ -50,9 +71,9 @@ def register_command(subparsers) -> None:
 
     parser.add_argument(
         "--provider",
-        choices=["mouser"],
-        default="mouser",
-        help="Search provider to use (default: mouser)",
+        choices=sorted(_PROVIDER_FACTORIES.keys()),
+        default=None,
+        help="Search provider to use (default: derived from fabricator supplier priority)",
     )
 
     parser.add_argument(
@@ -90,6 +111,10 @@ def register_command(subparsers) -> None:
         help="Comma-separated list of categories to search (e.g. 'RES,CAP,IC')",
     )
 
+    # Fabricator selection (optional). When specified, inventory-search will scope
+    # to items that are sparse for that fabricator.
+    add_fabricator_arguments(parser)
+
     parser.set_defaults(handler=handle_inventory_search)
 
 
@@ -113,12 +138,33 @@ def handle_inventory_search(
             items, categories=args.categories
         )
 
+        # Fab-relative sparseness is opt-in: only apply when the user explicitly
+        # selects a fabricator.
+        fabricator_id, fabricator_explicit = resolve_fabricator_selection_from_args(
+            args
+        )
+        if fabricator_explicit:
+            fab = load_fabricator(fabricator_id)
+            searchable = InventorySearchService.filter_sparse_items_for_fabricator(
+                searchable,
+                fabricator=fab,
+            )
+
         if args.dry_run:
             _print_dry_run_summary(searchable)
             return 0
 
-        cache = _cache if _cache is not None else _build_cache(args)
-        provider = _create_provider(args.provider, api_key=args.api_key, cache=cache)
+        provider_id = (args.provider or "").strip().lower()
+        if not provider_id:
+            # Preserve historical default when no fabricator is explicitly selected.
+            provider_id = (
+                _default_provider_for_fabricator(fabricator_id)
+                if fabricator_explicit
+                else "mouser"
+            )
+
+        cache = _cache if _cache is not None else _build_cache(provider_id, args)
+        provider = _create_provider(provider_id, api_key=args.api_key, cache=cache)
         service = InventorySearchService(
             provider,
             candidate_limit=args.limit,
@@ -181,24 +227,29 @@ def handle_inventory_search(
         return 1
 
 
-def _build_cache(args: argparse.Namespace) -> SearchCache:
+def _build_cache(provider_id: str, args: argparse.Namespace) -> SearchCache:
     if getattr(args, "clear_cache", False):
-        DiskSearchCache.clear_provider(args.provider)
+        DiskSearchCache.clear_provider(provider_id)
 
     if getattr(args, "no_cache", False):
         return InMemorySearchCache()
 
-    return DiskSearchCache(args.provider)
+    return DiskSearchCache(provider_id)
 
 
 def _create_provider(
     provider_id: str, *, api_key: str | None, cache: SearchCache
 ) -> MouserProvider:
     pid = (provider_id or "").strip().lower()
+
+    if pid not in _PROVIDER_FACTORIES:
+        raise ValueError(f"Unknown provider: {provider_id}")
+
     if pid == "mouser":
         return MouserProvider(api_key=api_key, cache=cache)
 
-    raise ValueError(f"Unknown provider: {provider_id}")
+    # Defensive: keep mypy happy if additional factories are added without updating.
+    raise AssertionError(f"Unhandled provider_id: {pid}")
 
 
 def _print_dry_run_summary(items) -> None:

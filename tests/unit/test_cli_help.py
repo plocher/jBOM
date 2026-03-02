@@ -71,3 +71,19 @@ def test_root_help_includes_search_command():
 def test_root_help_includes_inventory_search_command():
     out = run_help([]).lower()
     assert "inventory-search" in out
+
+
+def test_inventory_search_help_includes_fabricator_choices():
+    out = run_help(["inventory-search"]).lower()
+    assert "--fabricator" in out
+
+    import sys
+
+    sys.path.insert(0, str(SRC_DIR))
+    try:
+        from jbom.config.fabricators import get_available_fabricators
+
+        for fab in get_available_fabricators():
+            assert fab in out
+    finally:
+        sys.path.remove(str(SRC_DIR))

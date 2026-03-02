@@ -8,6 +8,15 @@ pcb_manufacturing:
 pcb_assembly:
   website: "https://jlcpcb.com/help/article/bill-of-materials-for-pcb-assembly"
 
+# Ordered supplier profile IDs (position encodes priority).
+# First entry is the fabricator's own catalog.
+suppliers:
+  - lcsc
+  - mouser
+  - digikey
+  - farnell
+  - newark
+
 part_number:
   header: "fabricator_part_number"
 
