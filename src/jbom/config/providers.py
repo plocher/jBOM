@@ -48,11 +48,12 @@ class SearchProviderConfig:
 
 def _registry() -> dict[str, type["SearchProvider"]]:
     # Lazily import providers to avoid config<->service circular imports.
+    from jbom.services.search.jlcparts_provider import JlcpartsProvider
     from jbom.services.search.mouser_provider import MouserProvider
 
     return {
         "mouser_api": MouserProvider,
-        # jlcparts_sqlite provider is added in Issue #112 scope as a stub.
+        "jlcparts_sqlite": JlcpartsProvider,
     }
 
 
