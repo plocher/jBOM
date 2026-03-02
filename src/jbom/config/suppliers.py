@@ -25,6 +25,7 @@ class SupplierConfig:
     id: str
     name: str
     inventory_column: str
+    inventory_column_synonyms: list[str] = field(default_factory=list)
 
     description: Optional[str] = None
     website: Optional[str] = None
@@ -66,6 +67,7 @@ class SupplierConfig:
         sid = data.get("id", default_id)
         name = data.get("name", default_id)
         inventory_column = data.get("inventory_column")
+        inventory_column_synonyms_cfg = data.get("inventory_column_synonyms") or []
 
         if not isinstance(sid, str) or not sid.strip():
             raise ValueError("Supplier id must be a non-empty string")
@@ -77,6 +79,19 @@ class SupplierConfig:
             raise ValueError(
                 f"Supplier '{sid}' missing inventory_column (canonical CSV column name)"
             )
+
+        if not isinstance(inventory_column_synonyms_cfg, list):
+            raise ValueError(
+                f"Supplier '{sid}' inventory_column_synonyms must be a list of strings"
+            )
+
+        inventory_column_synonyms: list[str] = []
+        for syn in inventory_column_synonyms_cfg:
+            if not isinstance(syn, str) or not syn.strip():
+                raise ValueError(
+                    f"Supplier '{sid}' inventory_column_synonyms entries must be non-empty strings"
+                )
+            inventory_column_synonyms.append(syn.strip())
 
         part_number_cfg = data.get("part_number") or {}
 
@@ -200,6 +215,7 @@ class SupplierConfig:
             id=sid,
             name=name,
             inventory_column=inventory_column,
+            inventory_column_synonyms=inventory_column_synonyms,
             description=description,
             website=website,
             url_template=url_template,

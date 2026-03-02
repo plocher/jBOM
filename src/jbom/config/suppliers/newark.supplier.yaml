@@ -1,3 +1,16 @@
 id: newark
 name: "Newark"
 inventory_column: "Newark"
+inventory_column_synonyms:
+  - "Newark Part Number"
+  - "Stock Code"
+  - "Distributor Part Number"
+  - "Distributor Part #"
+  - "Distributor SKU"
+  - "SKU"
+  - "Supplier Part Number"
+  - "Supplier P/N"
+  - "Supplier PN"
+  - "Part Number"
+  - "Part #"
+  - "P/N"
