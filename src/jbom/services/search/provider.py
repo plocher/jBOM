@@ -3,12 +3,35 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 
 from jbom.services.search.models import SearchResult
+
+if TYPE_CHECKING:
+    from jbom.config.providers import SearchProviderConfig
+    from jbom.services.search.cache import SearchCache
 
 
 class SearchProvider(ABC):
     """Abstract base class for distributor catalog search providers."""
+
+    @classmethod
+    @abstractmethod
+    def from_config(
+        cls, cfg: "SearchProviderConfig", *, cache: "SearchCache"
+    ) -> "SearchProvider":
+        """Instantiate from supplier YAML config.
+
+        Providers own their own configuration schema (cfg.extra).
+        """
+
+    @abstractmethod
+    def available(self) -> bool:
+        """Return False if the provider cannot run (missing key, missing DB, etc.)."""
+
+    @abstractmethod
+    def unavailable_reason(self) -> str:
+        """Return an actionable message for why :meth:`available` is False."""
 
     @property
     @abstractmethod

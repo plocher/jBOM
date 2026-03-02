@@ -4,6 +4,7 @@ from unittest.mock import Mock
 
 import pytest
 
+from jbom.config.providers import SearchProviderConfig
 from jbom.config.suppliers import SupplierConfig
 from jbom.services.search.cache import InMemorySearchCache
 from jbom.services.search.mouser_provider import MouserProvider
@@ -17,16 +18,21 @@ def _mock_response(payload: dict):
 
 
 def test_mouser_provider_requires_api_key(monkeypatch):
+    import jbom.services.search.mouser_provider as mp
+
+    monkeypatch.setattr(mp, "requests", Mock())
     monkeypatch.delenv("MOUSER_API_KEY", raising=False)
-    with pytest.raises(ValueError):
-        MouserProvider()
+
+    provider = MouserProvider(api_key=None)
+    assert provider.available() is False
+    assert "MOUSER_API_KEY" in provider.unavailable_reason()
+
+    with pytest.raises(RuntimeError):
+        provider.search("10K resistor", limit=5)
 
 
 def test_mouser_provider_parses_basic_result(monkeypatch):
     cache = InMemorySearchCache()
-
-    # Provide env key so constructor succeeds.
-    monkeypatch.setenv("MOUSER_API_KEY", "dummy")
 
     import jbom.services.search.mouser_provider as mp
 
@@ -62,7 +68,8 @@ def test_mouser_provider_parses_basic_result(monkeypatch):
     )
     monkeypatch.setattr(mp, "requests", Mock(post=post))
 
-    provider = MouserProvider(cache=cache)
+    cfg = SearchProviderConfig(type="mouser_api", extra={"api_key": "dummy"})
+    provider = MouserProvider.from_config(cfg, cache=cache)
     results = provider.search("10K resistor", limit=5)
     assert len(results) == 1
 
@@ -75,14 +82,14 @@ def test_mouser_provider_parses_basic_result(monkeypatch):
 
 def test_mouser_provider_uses_cache(monkeypatch):
     cache = InMemorySearchCache()
-    monkeypatch.setenv("MOUSER_API_KEY", "dummy")
 
     import jbom.services.search.mouser_provider as mp
 
     post = Mock(return_value=_mock_response({"SearchResults": {"Parts": []}}))
     monkeypatch.setattr(mp, "requests", Mock(post=post))
 
-    provider = MouserProvider(cache=cache)
+    cfg = SearchProviderConfig(type="mouser_api", extra={"api_key": "dummy"})
+    provider = MouserProvider.from_config(cfg, cache=cache)
 
     provider.search("abc", limit=10)
     provider.search("abc", limit=10)
@@ -94,7 +101,6 @@ def test_mouser_provider_defaults_retry_settings_when_profile_missing(
     monkeypatch, caplog
 ):
     cache = InMemorySearchCache()
-    monkeypatch.setenv("MOUSER_API_KEY", "dummy")
 
     import jbom.services.search.mouser_provider as mp
 
@@ -107,7 +113,8 @@ def test_mouser_provider_defaults_retry_settings_when_profile_missing(
     )
     monkeypatch.setattr(mp, "resolve_supplier_by_id", lambda _sid: supplier)
 
-    provider = MouserProvider(cache=cache)
+    cfg = SearchProviderConfig(type="mouser_api", extra={"api_key": "dummy"})
+    provider = MouserProvider.from_config(cfg, cache=cache)
 
     assert provider._timeout == 10.0
     assert provider._max_retries == 3
