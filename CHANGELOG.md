@@ -1,6 +1,20 @@
 # CHANGELOG
 
 
+## v6.18.0 (2026-03-02)
+
+### Features
+
+* feat: derive fab synonyms and tier rules from ordered supplier list (#107)
+
+Adds inventory_column_synonyms to all supplier profiles. FabricatorConfig derives fab_pn/supplier_pn synonyms from suppliers[0]/suppliers[1..N]. tier_rules is now list[TierRule] (order is source of truth); tier_overrides is an ordered YAML list; preference_tier = idx+1 at match time only. Removes all explicit synonym lists and tier_rules blocks from fab YAMLs.
+
+Closes #107
+Known gap: #110 (seeed.supplier.yaml needed to restore Seeed fab_pn synonyms)
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`26a5bb4`](https://github.com/plocher/jBOM/commit/26a5bb407d104426f25fc4054f8420e21a4bfb8b))
+
+
 ## v6.17.0 (2026-03-02)
 
 ### Features
