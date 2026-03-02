@@ -157,24 +157,43 @@ class FabricatorConfig:
             sid = raw_sid.strip().lower()
             suppliers.append(sid)
 
-            # Advisory validation: warn on unknown supplier IDs but do not error.
             if resolve_supplier_by_id(sid) is None:
-                log.warning(
-                    "Unknown supplier profile id %r referenced by fabricator %r",
-                    sid,
-                    pid,
+                raise ValueError(
+                    f"Unknown supplier profile id {sid!r} referenced by fabricator {pid!r}"
                 )
+
+        if not suppliers:
+            raise ValueError(
+                f"Fabricator '{pid}' must declare a non-empty suppliers list"
+            )
 
         # Schema migration guardrail: priority_fields has been replaced by
         # field_synonyms + tier_rules (Issue #59).
         if isinstance(part_number, dict) and "priority_fields" in part_number:
             raise ValueError(
                 "Fabricator config uses deprecated part_number.priority_fields. "
-                "Migrate to 'field_synonyms' + 'tier_rules'."
+                "Migrate to 'field_synonyms' + derived tiers."
+            )
+
+        if "tier_rules" in data:
+            raise ValueError(
+                "tier_rules is no longer supported in fab YAMLs; use derived base tiers + tier_overrides"
             )
 
         field_synonyms = _parse_field_synonyms(data.get("field_synonyms") or {})
-        tier_rules = _parse_tier_rules(data.get("tier_rules") or {})
+        field_synonyms = _derive_part_number_field_synonyms(
+            field_synonyms=field_synonyms, suppliers=suppliers
+        )
+
+        required_fields = {"fab_pn", "supplier_pn", "mpn"}
+        missing_fields = required_fields - set(field_synonyms.keys())
+        if missing_fields:
+            raise ValueError(
+                f"Fabricator '{pid}' missing required field_synonyms entries: {sorted(missing_fields)}"
+            )
+
+        tier_overrides = _parse_tier_rules(data.get("tier_overrides") or {})
+        tier_rules = _derive_base_tier_rules(tier_overrides=tier_overrides)
 
         return FabricatorConfig(
             id=pid,
@@ -227,12 +246,15 @@ def _parse_field_synonyms(raw: Any) -> Dict[str, FieldSynonym]:
         if not isinstance(cfg, dict):
             raise ValueError(f"field_synonyms[{canonical!r}] must be a mapping")
 
-        synonyms = cfg.get("synonyms")
-        if not isinstance(synonyms, list) or not all(
-            isinstance(s, str) for s in synonyms
+        synonyms_cfg = cfg.get("synonyms")
+        if synonyms_cfg is None:
+            synonyms_cfg = []
+
+        if not isinstance(synonyms_cfg, list) or not all(
+            isinstance(s, str) and s.strip() for s in synonyms_cfg
         ):
             raise ValueError(
-                f"field_synonyms[{canonical!r}].synonyms must be a list of strings"
+                f"field_synonyms[{canonical!r}].synonyms must be a list of non-empty strings"
             )
 
         display_name = cfg.get("display_name")
@@ -241,9 +263,88 @@ def _parse_field_synonyms(raw: Any) -> Dict[str, FieldSynonym]:
                 f"field_synonyms[{canonical!r}].display_name must be a non-empty string"
             )
 
-        parsed[canonical] = FieldSynonym(synonyms=synonyms, display_name=display_name)
+        parsed[canonical] = FieldSynonym(
+            synonyms=[s.strip() for s in synonyms_cfg],
+            display_name=display_name.strip(),
+        )
 
     return parsed
+
+
+def _dedupe_preserve_order(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    out: list[str] = []
+    for v in values:
+        if v in seen:
+            continue
+        seen.add(v)
+        out.append(v)
+    return out
+
+
+def _derive_part_number_field_synonyms(
+    *,
+    field_synonyms: Dict[str, FieldSynonym],
+    suppliers: list[str],
+) -> Dict[str, FieldSynonym]:
+    """Return field_synonyms with derived fab_pn/supplier_pn synonyms injected.
+
+    Derivation rules:
+    - fab_pn synonyms: suppliers[0] inventory_column + inventory_column_synonyms
+    - supplier_pn synonyms: suppliers[1..] inventory_column + inventory_column_synonyms
+
+    display_name is sourced from the YAML field_synonyms entries.
+    """
+
+    if not suppliers:
+        raise ValueError("Cannot derive part-number field synonyms without suppliers")
+
+    def _synonyms_for_supplier_ids(sids: list[str]) -> list[str]:
+        raw: list[str] = []
+        for sid in sids:
+            supplier = resolve_supplier_by_id(sid)
+            if supplier is None:
+                raise ValueError(f"Unknown supplier profile id: {sid!r}")
+            raw.append(supplier.inventory_column)
+            raw.extend(supplier.inventory_column_synonyms)
+        return _dedupe_preserve_order([s.strip() for s in raw if s and s.strip()])
+
+    fab_pn_synonyms = _synonyms_for_supplier_ids([suppliers[0]])
+    supplier_pn_synonyms = (
+        _synonyms_for_supplier_ids(list(suppliers[1:])) if len(suppliers) > 1 else []
+    )
+
+    out = dict(field_synonyms)
+
+    if "fab_pn" in out:
+        out["fab_pn"] = FieldSynonym(
+            synonyms=fab_pn_synonyms,
+            display_name=out["fab_pn"].display_name,
+        )
+
+    if "supplier_pn" in out:
+        out["supplier_pn"] = FieldSynonym(
+            synonyms=supplier_pn_synonyms,
+            display_name=out["supplier_pn"].display_name,
+        )
+
+    return out
+
+
+def _derive_base_tier_rules(
+    *, tier_overrides: Dict[int, TierRule]
+) -> Dict[int, TierRule]:
+    """Derive base tier rules and merge tier_overrides on top."""
+
+    base: Dict[int, TierRule] = {
+        2: TierRule(conditions=[TierCondition(field="fab_pn", operator="exists")]),
+        3: TierRule(conditions=[TierCondition(field="supplier_pn", operator="exists")]),
+        4: TierRule(conditions=[TierCondition(field="mpn", operator="exists")]),
+    }
+
+    merged: Dict[int, TierRule] = dict(base)
+    merged.update(tier_overrides)
+    return merged
 
 
 def _parse_tier_rules(raw: Any) -> Dict[int, TierRule]:
