@@ -104,9 +104,10 @@ class FabricatorConfig:
     # Position encodes priority (first entry is most preferred).
     suppliers: list[str] = field(default_factory=list)
 
-    # Phase 2 schema: field synonyms + explicit tier rules.
+    # Phase 2 schema: field synonyms + ordered tier rules.
+    # Earlier rules are more preferred.
     field_synonyms: Dict[str, FieldSynonym] = field(default_factory=dict)
-    tier_rules: Dict[int, TierRule] = field(default_factory=dict)
+    tier_rules: list[TierRule] = field(default_factory=list)
 
     description: Optional[str] = None
     bom_columns: Optional[Dict[str, str]] = None  # Header -> internal field mapping
@@ -157,24 +158,43 @@ class FabricatorConfig:
             sid = raw_sid.strip().lower()
             suppliers.append(sid)
 
-            # Advisory validation: warn on unknown supplier IDs but do not error.
             if resolve_supplier_by_id(sid) is None:
-                log.warning(
-                    "Unknown supplier profile id %r referenced by fabricator %r",
-                    sid,
-                    pid,
+                raise ValueError(
+                    f"Unknown supplier profile id {sid!r} referenced by fabricator {pid!r}"
                 )
+
+        if not suppliers:
+            raise ValueError(
+                f"Fabricator '{pid}' must declare a non-empty suppliers list"
+            )
 
         # Schema migration guardrail: priority_fields has been replaced by
         # field_synonyms + tier_rules (Issue #59).
         if isinstance(part_number, dict) and "priority_fields" in part_number:
             raise ValueError(
                 "Fabricator config uses deprecated part_number.priority_fields. "
-                "Migrate to 'field_synonyms' + 'tier_rules'."
+                "Migrate to 'field_synonyms' + derived tiers."
+            )
+
+        if "tier_rules" in data:
+            raise ValueError(
+                "tier_rules is no longer supported in fab YAMLs; use derived base tiers + tier_overrides"
             )
 
         field_synonyms = _parse_field_synonyms(data.get("field_synonyms") or {})
-        tier_rules = _parse_tier_rules(data.get("tier_rules") or {})
+        field_synonyms = _derive_part_number_field_synonyms(
+            field_synonyms=field_synonyms, suppliers=suppliers
+        )
+
+        required_fields = {"fab_pn", "supplier_pn", "mpn"}
+        missing_fields = required_fields - set(field_synonyms.keys())
+        if missing_fields:
+            raise ValueError(
+                f"Fabricator '{pid}' missing required field_synonyms entries: {sorted(missing_fields)}"
+            )
+
+        tier_overrides = _parse_tier_overrides(data.get("tier_overrides") or [])
+        tier_rules = _derive_tier_rules(tier_overrides=tier_overrides)
 
         return FabricatorConfig(
             id=pid,
@@ -227,12 +247,15 @@ def _parse_field_synonyms(raw: Any) -> Dict[str, FieldSynonym]:
         if not isinstance(cfg, dict):
             raise ValueError(f"field_synonyms[{canonical!r}] must be a mapping")
 
-        synonyms = cfg.get("synonyms")
-        if not isinstance(synonyms, list) or not all(
-            isinstance(s, str) for s in synonyms
+        synonyms_cfg = cfg.get("synonyms")
+        if synonyms_cfg is None:
+            synonyms_cfg = []
+
+        if not isinstance(synonyms_cfg, list) or not all(
+            isinstance(s, str) and s.strip() for s in synonyms_cfg
         ):
             raise ValueError(
-                f"field_synonyms[{canonical!r}].synonyms must be a list of strings"
+                f"field_synonyms[{canonical!r}].synonyms must be a list of non-empty strings"
             )
 
         display_name = cfg.get("display_name")
@@ -241,66 +264,137 @@ def _parse_field_synonyms(raw: Any) -> Dict[str, FieldSynonym]:
                 f"field_synonyms[{canonical!r}].display_name must be a non-empty string"
             )
 
-        parsed[canonical] = FieldSynonym(synonyms=synonyms, display_name=display_name)
+        parsed[canonical] = FieldSynonym(
+            synonyms=[s.strip() for s in synonyms_cfg],
+            display_name=display_name.strip(),
+        )
 
     return parsed
 
 
-def _parse_tier_rules(raw: Any) -> Dict[int, TierRule]:
-    if raw is None:
-        return {}
+def _dedupe_preserve_order(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    out: list[str] = []
+    for v in values:
+        if v in seen:
+            continue
+        seen.add(v)
+        out.append(v)
+    return out
 
-    if not isinstance(raw, dict):
-        raise ValueError("tier_rules must be a mapping")
 
-    parsed: Dict[int, TierRule] = {}
+def _derive_part_number_field_synonyms(
+    *,
+    field_synonyms: Dict[str, FieldSynonym],
+    suppliers: list[str],
+) -> Dict[str, FieldSynonym]:
+    """Return field_synonyms with derived fab_pn/supplier_pn synonyms injected.
 
-    for tier_key, rule_cfg in raw.items():
-        try:
-            tier_num = int(tier_key)
-        except (TypeError, ValueError) as e:
+    Derivation rules:
+    - fab_pn synonyms: suppliers[0] inventory_column + inventory_column_synonyms
+    - supplier_pn synonyms: suppliers[1..] inventory_column + inventory_column_synonyms
+
+    display_name is sourced from the YAML field_synonyms entries.
+    """
+
+    if not suppliers:
+        raise ValueError("Cannot derive part-number field synonyms without suppliers")
+
+    def _synonyms_for_supplier_ids(sids: list[str]) -> list[str]:
+        raw: list[str] = []
+        for sid in sids:
+            supplier = resolve_supplier_by_id(sid)
+            if supplier is None:
+                raise ValueError(f"Unknown supplier profile id: {sid!r}")
+            raw.append(supplier.inventory_column)
+            raw.extend(supplier.inventory_column_synonyms)
+        return _dedupe_preserve_order([s.strip() for s in raw if s and s.strip()])
+
+    fab_pn_synonyms = _synonyms_for_supplier_ids([suppliers[0]])
+    supplier_pn_synonyms = (
+        _synonyms_for_supplier_ids(list(suppliers[1:])) if len(suppliers) > 1 else []
+    )
+
+    out = dict(field_synonyms)
+
+    if "fab_pn" in out:
+        out["fab_pn"] = FieldSynonym(
+            synonyms=fab_pn_synonyms,
+            display_name=out["fab_pn"].display_name,
+        )
+
+    if "supplier_pn" in out:
+        out["supplier_pn"] = FieldSynonym(
+            synonyms=supplier_pn_synonyms,
+            display_name=out["supplier_pn"].display_name,
+        )
+
+    return out
+
+
+def _derive_tier_rules(*, tier_overrides: list[TierRule]) -> list[TierRule]:
+    """Derive ordered tier rules from ordered overrides + base rules.
+
+    Contract:
+    - YAML authors provide `tier_overrides` as an ordered list.
+    - Base tiers are appended after overrides.
+    - Order is the source of truth; numeric tier values are derived at evaluation time.
+    """
+
+    return [
+        *tier_overrides,
+        TierRule(conditions=[TierCondition(field="fab_pn", operator="exists")]),
+        TierRule(conditions=[TierCondition(field="supplier_pn", operator="exists")]),
+        TierRule(conditions=[TierCondition(field="mpn", operator="exists")]),
+    ]
+
+
+def _parse_tier_rule(rule_cfg: Any, *, context: str) -> TierRule:
+    if not isinstance(rule_cfg, dict):
+        raise ValueError(f"{context} must be a mapping")
+
+    conditions_cfg = rule_cfg.get("conditions", [])
+    if not isinstance(conditions_cfg, list):
+        raise ValueError(f"{context}.conditions must be a list")
+
+    conditions: List[TierCondition] = []
+    for cond_cfg in conditions_cfg:
+        if not isinstance(cond_cfg, dict):
+            raise ValueError(f"{context}.conditions entries must be mappings")
+
+        field_name = cond_cfg.get("field")
+        operator = cond_cfg.get("operator")
+        value = cond_cfg.get("value")
+
+        if not isinstance(field_name, str) or not field_name.strip():
+            raise ValueError("TierCondition.field must be a non-empty string")
+
+        if not isinstance(operator, str) or operator not in _SUPPORTED_TIER_OPERATORS:
             raise ValueError(
-                f"tier_rules key must be int-like, got: {tier_key!r}"
-            ) from e
-
-        if not isinstance(rule_cfg, dict):
-            raise ValueError(f"tier_rules[{tier_key!r}] must be a mapping")
-
-        conditions_cfg = rule_cfg.get("conditions", [])
-        if not isinstance(conditions_cfg, list):
-            raise ValueError(f"tier_rules[{tier_key!r}].conditions must be a list")
-
-        conditions: List[TierCondition] = []
-        for cond_cfg in conditions_cfg:
-            if not isinstance(cond_cfg, dict):
-                raise ValueError(
-                    f"tier_rules[{tier_key!r}].conditions entries must be mappings"
-                )
-
-            field_name = cond_cfg.get("field")
-            operator = cond_cfg.get("operator")
-            value = cond_cfg.get("value")
-
-            if not isinstance(field_name, str) or not field_name.strip():
-                raise ValueError("TierCondition.field must be a non-empty string")
-
-            if (
-                not isinstance(operator, str)
-                or operator not in _SUPPORTED_TIER_OPERATORS
-            ):
-                raise ValueError(
-                    f"TierCondition.operator must be one of {sorted(_SUPPORTED_TIER_OPERATORS)}, "
-                    f"got: {operator!r}"
-                )
-
-            if value is not None and not isinstance(value, str):
-                raise ValueError("TierCondition.value must be a string when provided")
-
-            conditions.append(
-                TierCondition(field=field_name, operator=operator, value=value)
+                f"TierCondition.operator must be one of {sorted(_SUPPORTED_TIER_OPERATORS)}, "
+                f"got: {operator!r}"
             )
 
-        parsed[tier_num] = TierRule(conditions=conditions)
+        if value is not None and not isinstance(value, str):
+            raise ValueError("TierCondition.value must be a string when provided")
+
+        conditions.append(
+            TierCondition(field=field_name, operator=operator, value=value)
+        )
+
+    return TierRule(conditions=conditions)
+
+
+def _parse_tier_overrides(raw: Any) -> list[TierRule]:
+    if raw is None:
+        return []
+
+    if not isinstance(raw, list):
+        raise ValueError("tier_overrides must be a list")
+
+    parsed: list[TierRule] = []
+    for idx, rule_cfg in enumerate(raw):
+        parsed.append(_parse_tier_rule(rule_cfg, context=f"tier_overrides[{idx}]"))
 
     return parsed
 

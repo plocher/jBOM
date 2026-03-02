@@ -22,33 +22,8 @@ part_number:
 
 field_synonyms:
   fab_pn:
-    synonyms:
-      - "LCSC"
-      - "LCSC Part"
-      - "LCSC Part #"
-      - "LCSC Part Number"
-      - "JLC"
-      - "JLC Part"
-      - "JLC Part #"
-      - "JLC PCB"
-      - "JLC PCB Part"
-      - "JLC PCB Part #"
-      - "JLC_PCB Part #"
     display_name: "LCSC Part Number"
   supplier_pn:
-    synonyms:
-      - "Distributor Part Number"
-      - "Distributor Part #"
-      - "Distributor SKU"
-      - "SKU"
-      - "Mouser"
-      - "Mouser Part Number"
-      - "DigiKey"
-      - "DigiKey Part Number"
-      - "Arrow"
-      - "Farnell"
-      - "Newark"
-      - "Stock Code"
     display_name: "Supplier Part Number"
   mpn:
     synonyms:
@@ -57,28 +32,14 @@ field_synonyms:
       - "Manufacturer Part Number"
     display_name: "MPN"
 
-tier_rules:
-  0:
-    conditions:
+tier_overrides:
+  - conditions:
       - field: "Consigned"
         operator: "truthy"
-  1:
-    conditions:
+  - conditions:
       - field: "Preferred"
         operator: "truthy"
       - field: "fab_pn"
-        operator: "exists"
-  2:
-    conditions:
-      - field: "fab_pn"
-        operator: "exists"
-  3:
-    conditions:
-      - field: "supplier_pn"
-        operator: "exists"
-  4:
-    conditions:
-      - field: "mpn"
         operator: "exists"
 bom_columns:
   "Designator": "reference"

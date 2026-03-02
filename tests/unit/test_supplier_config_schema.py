@@ -32,6 +32,10 @@ def test_load_supplier_lcsc() -> None:
     assert lcsc.id == "lcsc"
     assert lcsc.name == "LCSC"
     assert lcsc.inventory_column == "LCSC"
+
+    assert isinstance(lcsc.inventory_column_synonyms, list)
+    assert "LCSC Part #" in lcsc.inventory_column_synonyms
+
     assert lcsc.url_template
     assert lcsc.search_url_template
     assert lcsc.part_number_pattern

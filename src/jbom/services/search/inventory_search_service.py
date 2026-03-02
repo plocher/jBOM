@@ -106,6 +106,8 @@ class InventorySearchService:
             pn = ""
             if supplier.id == "lcsc":
                 # InventoryReader populates InventoryItem.lcsc from several header variants.
+                # TODO(#107): Once Phase 2 normalizes supplier lookups through inventory_column
+                # synonyms everywhere, this special-case should be removable.
                 pn = (item.lcsc or "").strip()
             else:
                 pn = str(

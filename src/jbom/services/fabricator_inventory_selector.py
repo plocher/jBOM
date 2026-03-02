@@ -8,7 +8,7 @@ Selection pipeline (in order):
 1) Project restriction: honor optional `Projects` field (comma-separated).
 2) Field normalization: map evolving CSV header variants to canonical names using
    FabricatorConfig.field_synonyms.
-3) Tier assignment: evaluate FabricatorConfig.tier_rules in ascending tier order.
+3) Tier assignment: evaluate FabricatorConfig.tier_rules in declared order.
 
 This service is intentionally *stateless* with respect to InventoryItem objects:
 - It does NOT mutate InventoryItem.raw_data.
@@ -148,9 +148,9 @@ class FabricatorInventorySelector:
         Returns None when no tier matches.
         """
 
-        for tier_num in sorted(self._config.tier_rules.keys()):
-            rule = self._config.tier_rules[tier_num]
+        for idx, rule in enumerate(self._config.tier_rules):
             if rule.matches(raw_data):
-                return tier_num
+                # 1-based tier numbering for user-friendly reporting.
+                return idx + 1
 
         return None

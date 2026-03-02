@@ -18,28 +18,9 @@ part_number:
   header: "Part Number"
 
 field_synonyms:
+  fab_pn:
+    display_name: "Preferred Supplier PN"
   supplier_pn:
-    synonyms:
-      - "Part Number"
-      - "P/N"
-      - "Part #"
-      - "Supplier Part Number"
-      - "Supplier P/N"
-      - "Distributor Part Number"
-      - "Distributor SKU"
-      - "SKU"
-      - "Mouser"
-      - "Mouser Part Number"
-      - "DigiKey"
-      - "DigiKey Part Number"
-      - "Arrow"
-      - "Farnell"
-      - "Newark"
-      - "Stock Code"
-      - "LCSC"
-      - "LCSC Part"
-      - "LCSC Part #"
-      - "LCSC Part Number"
     display_name: "Part Number"
   mpn:
     synonyms:
@@ -47,16 +28,6 @@ field_synonyms:
       - "MFGPN"
       - "Manufacturer Part Number"
     display_name: "MPN"
-
-tier_rules:
-  0:
-    conditions:
-      - field: "supplier_pn"
-        operator: "exists"
-  1:
-    conditions:
-      - field: "mpn"
-        operator: "exists"
 bom_columns:
   "Reference": "reference"
   "Quantity": "quantity"

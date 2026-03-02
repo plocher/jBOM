@@ -1,3 +1,16 @@
 id: farnell
 name: "Farnell"
 inventory_column: "Farnell"
+inventory_column_synonyms:
+  - "Farnell Part Number"
+  - "Stock Code"
+  - "Distributor Part Number"
+  - "Distributor Part #"
+  - "Distributor SKU"
+  - "SKU"
+  - "Supplier Part Number"
+  - "Supplier P/N"
+  - "Supplier PN"
+  - "Part Number"
+  - "Part #"
+  - "P/N"

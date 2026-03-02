@@ -15,28 +15,8 @@ part_number:
 
 field_synonyms:
   fab_pn:
-    synonyms:
-      - "Seeed Part Number"
-      - "Seeed"
-      - "Seeed Part"
-      - "Seeed Part #"
-      - "Seeed Studio"
-      - "Seeed SKU"
-      - "SKU"
-    display_name: "Seeed Part Number"
+    display_name: "Preferred Supplier PN"
   supplier_pn:
-    synonyms:
-      - "Distributor Part Number"
-      - "Distributor Part #"
-      - "Distributor SKU"
-      - "Mouser"
-      - "Mouser Part Number"
-      - "DigiKey"
-      - "DigiKey Part Number"
-      - "Arrow"
-      - "Farnell"
-      - "Newark"
-      - "Stock Code"
     display_name: "Supplier Part Number"
   mpn:
     synonyms:
@@ -44,30 +24,6 @@ field_synonyms:
       - "MFGPN"
       - "Manufacturer Part Number"
     display_name: "MPN"
-
-tier_rules:
-  0:
-    conditions:
-      - field: "Consigned"
-        operator: "truthy"
-  1:
-    conditions:
-      - field: "Preferred"
-        operator: "truthy"
-      - field: "fab_pn"
-        operator: "exists"
-  2:
-    conditions:
-      - field: "fab_pn"
-        operator: "exists"
-  3:
-    conditions:
-      - field: "supplier_pn"
-        operator: "exists"
-  4:
-    conditions:
-      - field: "mpn"
-        operator: "exists"
 bom_columns:
   "Designator": "reference"
   "Quantity": "quantity"
