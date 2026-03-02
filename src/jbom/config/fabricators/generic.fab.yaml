@@ -4,6 +4,16 @@ description: "Generic fabricator template"
 dynamic_name: true
 name_source: "manufacturer"
 
+# Ordered supplier profile IDs (position encodes priority).
+# Generic uses a broad, permissive scope.
+suppliers:
+  - generic
+  - lcsc
+  - mouser
+  - digikey
+  - farnell
+  - newark
+
 part_number:
   header: "Part Number"
 

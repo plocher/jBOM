@@ -13,7 +13,7 @@ from jbom.config.fabricators import (
 )
 
 
-def test_load_generic_parses_field_synonyms_and_tier_rules() -> None:
+def test_load_generic_parses_field_synonyms_tier_rules_and_suppliers() -> None:
     fab = load_fabricator("generic")
 
     assert isinstance(fab.field_synonyms, dict)
@@ -27,6 +27,10 @@ def test_load_generic_parses_field_synonyms_and_tier_rules() -> None:
     assert fab.tier_rules[0].conditions
     assert isinstance(fab.tier_rules[0].conditions[0], TierCondition)
 
+    assert isinstance(fab.suppliers, list)
+    assert fab.suppliers
+    assert all(isinstance(s, str) for s in fab.suppliers)
+
 
 def test_resolve_field_synonym_is_forgiving() -> None:
     fab = load_fabricator("jlc")
@@ -34,6 +38,21 @@ def test_resolve_field_synonym_is_forgiving() -> None:
     assert fab.resolve_field_synonym(" Lcsc Part # ") == "fab_pn"
     assert fab.resolve_field_synonym("fab_pn") == "fab_pn"
     assert fab.resolve_field_synonym("unknown_field") is None
+
+
+def test_from_yaml_dict_warns_on_unknown_supplier_ids(caplog) -> None:
+    data = {
+        "name": "Example",
+        "pos_columns": {"Designator": "reference"},
+        "suppliers": ["definitely-not-a-real-supplier"],
+    }
+
+    caplog.clear()
+    fab = FabricatorConfig.from_yaml_dict(data, default_id="example")
+    assert fab.suppliers == ["definitely-not-a-real-supplier"]
+
+    # Advisory validation: unknown supplier IDs should warn but not error.
+    assert any("Unknown supplier" in r.message for r in caplog.records)
 
 
 def test_from_yaml_dict_rejects_deprecated_priority_fields() -> None:

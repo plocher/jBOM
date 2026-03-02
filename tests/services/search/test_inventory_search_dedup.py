@@ -3,6 +3,7 @@ from __future__ import annotations
 from unittest.mock import Mock
 
 from jbom.common.types import InventoryItem
+from jbom.config.fabricators import load_fabricator
 from jbom.config.suppliers import SupplierConfig
 from jbom.services.search.inventory_search_service import InventorySearchService
 from jbom.services.search.models import SearchResult
@@ -16,6 +17,8 @@ def _inv_item(
     value: str,
     package: str,
     tolerance: str,
+    lcsc: str = "",
+    raw_data: dict[str, str] | None = None,
 ) -> InventoryItem:
     return InventoryItem(
         ipn=ipn,
@@ -29,11 +32,12 @@ def _inv_item(
         voltage="",
         amperage="",
         wattage="",
-        lcsc="",
+        lcsc=lcsc,
         manufacturer="",
         mfgpn="",
         datasheet="",
         package=package,
+        raw_data=raw_data or {},
     )
 
 
@@ -168,6 +172,49 @@ def test_build_query_uses_supplier_config_keywords(monkeypatch) -> None:
 
     query = svc.build_query(item)
     assert "thick film resistor" in query
+
+
+def test_filter_sparse_items_for_fabricator_scopes_by_supplier_columns() -> None:
+    fab = load_fabricator("jlc")
+
+    items = [
+        _inv_item(
+            ipn="HAS-LCSC",
+            category="RES",
+            value="10K",
+            package="0603",
+            tolerance="1%",
+            lcsc="C123",
+        ),
+        _inv_item(
+            ipn="HAS-MOUSER",
+            category="RES",
+            value="10K",
+            package="0603",
+            tolerance="1%",
+            raw_data={"Mouser": "123"},
+        ),
+        _inv_item(
+            ipn="HAS-FARNELL",
+            category="RES",
+            value="10K",
+            package="0603",
+            tolerance="1%",
+            raw_data={"Farnell": "F-123"},
+        ),
+        _inv_item(
+            ipn="SPARSE",
+            category="RES",
+            value="10K",
+            package="0603",
+            tolerance="1%",
+        ),
+    ]
+
+    sparse = InventorySearchService.filter_sparse_items_for_fabricator(
+        items, fabricator=fab
+    )
+    assert [i.ipn for i in sparse] == ["SPARSE"]
 
 
 def test_inventory_search_service_fans_out_provider_errors_to_all_items() -> None:

@@ -4,11 +4,16 @@ Loads fabricator definitions from built-in config files.
 """
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional
 
 import yaml
+
+from jbom.config.suppliers import resolve_supplier_by_id
+
+log = logging.getLogger(__name__)
 
 
 _SUPPORTED_TIER_OPERATORS = {"exists", "truthy", "equals", "not_empty"}
@@ -95,6 +100,10 @@ class FabricatorConfig:
     name: str
     pos_columns: Dict[str, str]  # Header -> internal field mapping
 
+    # Phase 1 schema: ordered supplier profile IDs.
+    # Position encodes priority (first entry is most preferred).
+    suppliers: list[str] = field(default_factory=list)
+
     # Phase 2 schema: field synonyms + explicit tier rules.
     field_synonyms: Dict[str, FieldSynonym] = field(default_factory=dict)
     tier_rules: Dict[int, TierRule] = field(default_factory=dict)
@@ -136,6 +145,26 @@ class FabricatorConfig:
         pcb_assembly = data.get("pcb_assembly")
         website = data.get("website")
 
+        # Phase 1: ordered supplier profile IDs.
+        suppliers_cfg = data.get("suppliers") or []
+        if not isinstance(suppliers_cfg, list):
+            raise ValueError("suppliers must be a list")
+
+        suppliers: list[str] = []
+        for raw_sid in suppliers_cfg:
+            if not isinstance(raw_sid, str) or not raw_sid.strip():
+                raise ValueError("suppliers entries must be non-empty strings")
+            sid = raw_sid.strip().lower()
+            suppliers.append(sid)
+
+            # Advisory validation: warn on unknown supplier IDs but do not error.
+            if resolve_supplier_by_id(sid) is None:
+                log.warning(
+                    "Unknown supplier profile id %r referenced by fabricator %r",
+                    sid,
+                    pid,
+                )
+
         # Schema migration guardrail: priority_fields has been replaced by
         # field_synonyms + tier_rules (Issue #59).
         if isinstance(part_number, dict) and "priority_fields" in part_number:
@@ -151,6 +180,7 @@ class FabricatorConfig:
             id=pid,
             name=name,
             pos_columns=pos_columns,
+            suppliers=suppliers,
             field_synonyms=field_synonyms,
             tier_rules=tier_rules,
             description=description,
