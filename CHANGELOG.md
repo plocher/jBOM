@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v6.18.1 (2026-03-02)
+
+### Bug Fixes
+
+* fix: add seeed.supplier.yaml to restore Seeed fab_pn synonym recognition (#110)
+
+Creates seeed.supplier.yaml with inventory_column="Seeed" and synonyms for Seeed Part Number/SKU variants. Updates seeed.fab.yaml to list seeed as suppliers[0] (native catalog), restoring correct fab_pn derivation lost in #107.
+
+Closes #110
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`664c3c3`](https://github.com/plocher/jBOM/commit/664c3c302fa272cc62683803a42a5d7003e27459))
+
+
 ## v6.18.0 (2026-03-02)
 
 ### Features
