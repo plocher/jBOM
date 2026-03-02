@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v6.19.0 (2026-03-02)
+
+### Features
+
+* feat: config-driven provider registry + search.providers in supplier YAML (#112)
+
+Adds SearchProviderConfig, provider registry (config/providers.py), dynamic --provider choices from supplier profiles. MouserProvider gains from_config() factory, available()/unavailable_reason() interface. JlcpartsProvider stub for jlcparts_sqlite. Also cleans up jbom-new path references throughout docs and test infrastructure.
+
+Closes #112
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`a985268`](https://github.com/plocher/jBOM/commit/a985268c477e8da5d7a287228f1fbccccdf8fd72))
+
+
 ## v6.18.1 (2026-03-02)
 
 ### Bug Fixes
