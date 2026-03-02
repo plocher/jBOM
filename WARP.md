@@ -49,9 +49,9 @@ jBOM is a sophisticated KiCad Bill of Materials generator in Python. It matches 
 
 ### Project Structure
 - **Legacy System**: `~/Dropbox/KiCad/jBOM/src` (READ-ONLY - use for reference and migration)
-- **Active Development**: `~/Dropbox/KiCad/jBOM/jbom-new` (ALL changes go here)
+- **Active Development**: `~/Dropbox/KiCad/jBOM/` (ALL changes go here)
 - **Architecture**: Domain-centric design with Service-Command pattern
-- **Documentation**: `jbom-new/docs/` contains architectural and tutorial knowledge
+- **Documentation**: `./docs/` contains architectural and tutorial knowledge
 
 ## Development Practices
 
@@ -76,7 +76,7 @@ jBOM is a sophisticated KiCad Bill of Materials generator in Python. It matches 
 ## Environment-Specific Guidance
 
 ### Python Environment
-- **ALWAYS use**: `PYTHONPATH=/Users/jplocher/Dropbox/KiCad/jBOM/jbom-new/src`
+- **ALWAYS use**: `PYTHONPATH=/Users/jplocher/Dropbox/KiCad/jBOM/src`
 - **Test paths**: Use dot notation (`tests.test_jbom`), not file paths
 
 ### Shell (macOS zsh)
@@ -107,7 +107,7 @@ jBOM is a sophisticated KiCad Bill of Materials generator in Python. It matches 
 ### Testing Requirements
 - **Unit and functional tests for an item should pass** before they are committed
 - **Behave functional tests MUST pass before opening or merging any PR.**
-  - Run from `jbom-new/`: `python -m behave --format progress`
+  - Run from `repo root`: `python -m behave --format progress`
   - Merges are blocked if any scenarios are failed, error, or undefined
   - During development it's fine to run by tag (e.g., `--tags @regression`), but run the full suite before merge
 - **Create functional tests** as needed in the `tests/` folder using TDD
