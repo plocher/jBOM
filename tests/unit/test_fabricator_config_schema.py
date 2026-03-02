@@ -32,12 +32,10 @@ def test_load_generic_derives_field_synonyms_and_tier_rules_from_suppliers() -> 
     assert "mpn" in fab.field_synonyms
     assert isinstance(fab.field_synonyms["mpn"], FieldSynonym)
 
-    assert isinstance(fab.tier_rules, dict)
-    assert 1 in fab.tier_rules
-    assert 2 in fab.tier_rules
-    assert 3 in fab.tier_rules
-    assert isinstance(fab.tier_rules[1], TierRule)
-    assert isinstance(fab.tier_rules[1].conditions[0], TierCondition)
+    assert isinstance(fab.tier_rules, list)
+    assert len(fab.tier_rules) >= 3
+    assert isinstance(fab.tier_rules[0], TierRule)
+    assert isinstance(fab.tier_rules[0].conditions[0], TierCondition)
 
     assert isinstance(fab.suppliers, list)
     assert fab.suppliers

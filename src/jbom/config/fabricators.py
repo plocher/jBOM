@@ -104,9 +104,10 @@ class FabricatorConfig:
     # Position encodes priority (first entry is most preferred).
     suppliers: list[str] = field(default_factory=list)
 
-    # Phase 2 schema: field synonyms + explicit tier rules.
+    # Phase 2 schema: field synonyms + ordered tier rules.
+    # Earlier rules are more preferred.
     field_synonyms: Dict[str, FieldSynonym] = field(default_factory=dict)
-    tier_rules: Dict[int, TierRule] = field(default_factory=dict)
+    tier_rules: list[TierRule] = field(default_factory=list)
 
     description: Optional[str] = None
     bom_columns: Optional[Dict[str, str]] = None  # Header -> internal field mapping
@@ -331,33 +332,21 @@ def _derive_part_number_field_synonyms(
     return out
 
 
-def _derive_tier_rules(*, tier_overrides: list[TierRule]) -> Dict[int, TierRule]:
-    """Derive tier rules from ordered overrides + base rules.
+def _derive_tier_rules(*, tier_overrides: list[TierRule]) -> list[TierRule]:
+    """Derive ordered tier rules from ordered overrides + base rules.
 
     Contract:
     - YAML authors provide `tier_overrides` as an ordered list.
-    - The loader assigns 1-based tier numbers by position.
     - Base tiers are appended after overrides.
+    - Order is the source of truth; numeric tier values are derived at evaluation time.
     """
 
-    out: Dict[int, TierRule] = {}
-
-    # Overrides: position is priority; first item is the best (tier 1).
-    for i, rule in enumerate(tier_overrides, start=1):
-        out[i] = rule
-
-    base_start = len(tier_overrides) + 1
-    out[base_start] = TierRule(
-        conditions=[TierCondition(field="fab_pn", operator="exists")]
-    )
-    out[base_start + 1] = TierRule(
-        conditions=[TierCondition(field="supplier_pn", operator="exists")]
-    )
-    out[base_start + 2] = TierRule(
-        conditions=[TierCondition(field="mpn", operator="exists")]
-    )
-
-    return out
+    return [
+        *tier_overrides,
+        TierRule(conditions=[TierCondition(field="fab_pn", operator="exists")]),
+        TierRule(conditions=[TierCondition(field="supplier_pn", operator="exists")]),
+        TierRule(conditions=[TierCondition(field="mpn", operator="exists")]),
+    ]
 
 
 def _parse_tier_rule(rule_cfg: Any, *, context: str) -> TierRule:
