@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v6.16.0 (2026-03-02)
+
+### Features
+
+* feat: config-driven search fields + --fields/--list-fields (#97)
+
+Adds _FIELD_REGISTRY with supplier_part_number (renamed from distributor_part_number), config-driven search.fields in supplier profiles, --fields and --list-fields CLI flags applying to all output modes (console + CSV). generic.supplier.yaml carries the baseline field list.
+
+Closes #97
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`22d744d`](https://github.com/plocher/jBOM/commit/22d744d378b61d2a9df5f1d3dca23b9fba3eeb55))
+
+
 ## v6.15.0 (2026-03-01)
 
 ### Features
