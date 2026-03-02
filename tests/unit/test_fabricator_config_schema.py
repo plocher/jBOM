@@ -33,11 +33,11 @@ def test_load_generic_derives_field_synonyms_and_tier_rules_from_suppliers() -> 
     assert isinstance(fab.field_synonyms["mpn"], FieldSynonym)
 
     assert isinstance(fab.tier_rules, dict)
+    assert 1 in fab.tier_rules
     assert 2 in fab.tier_rules
     assert 3 in fab.tier_rules
-    assert 4 in fab.tier_rules
-    assert isinstance(fab.tier_rules[2], TierRule)
-    assert isinstance(fab.tier_rules[2].conditions[0], TierCondition)
+    assert isinstance(fab.tier_rules[1], TierRule)
+    assert isinstance(fab.tier_rules[1].conditions[0], TierCondition)
 
     assert isinstance(fab.suppliers, list)
     assert fab.suppliers
@@ -90,9 +90,9 @@ def test_from_yaml_dict_rejects_unknown_tier_operator() -> None:
             "supplier_pn": {"display_name": "Supplier PN"},
             "mpn": {"display_name": "MPN"},
         },
-        "tier_overrides": {
-            0: {"conditions": [{"field": "fab_pn", "operator": "bogus"}]},
-        },
+        "tier_overrides": [
+            {"conditions": [{"field": "fab_pn", "operator": "bogus"}]},
+        ],
     }
 
     with pytest.raises(ValueError, match=r"operator"):

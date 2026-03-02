@@ -33,12 +33,10 @@ field_synonyms:
     display_name: "MPN"
 
 tier_overrides:
-  0:
-    conditions:
+  - conditions:
       - field: "Consigned"
         operator: "truthy"
-  1:
-    conditions:
+  - conditions:
       - field: "Preferred"
         operator: "truthy"
       - field: "fab_pn"

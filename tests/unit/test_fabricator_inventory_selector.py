@@ -140,7 +140,7 @@ def test_tier_assignment_consigned_preferred_catalog_and_order_preserved() -> No
 
     eligible = selector.select_eligible(items)
     assert [e.item.ipn for e in eligible] == ["T2", "T0", "T1"]
-    assert [e.preference_tier for e in eligible] == [2, 0, 1]
+    assert [e.preference_tier for e in eligible] == [3, 1, 2]
 
 
 def test_items_with_no_matching_tier_are_ineligible() -> None:

@@ -192,8 +192,8 @@ class FabricatorConfig:
                 f"Fabricator '{pid}' missing required field_synonyms entries: {sorted(missing_fields)}"
             )
 
-        tier_overrides = _parse_tier_rules(data.get("tier_overrides") or {})
-        tier_rules = _derive_base_tier_rules(tier_overrides=tier_overrides)
+        tier_overrides = _parse_tier_overrides(data.get("tier_overrides") or [])
+        tier_rules = _derive_tier_rules(tier_overrides=tier_overrides)
 
         return FabricatorConfig(
             id=pid,
@@ -331,77 +331,81 @@ def _derive_part_number_field_synonyms(
     return out
 
 
-def _derive_base_tier_rules(
-    *, tier_overrides: Dict[int, TierRule]
-) -> Dict[int, TierRule]:
-    """Derive base tier rules and merge tier_overrides on top."""
+def _derive_tier_rules(*, tier_overrides: list[TierRule]) -> Dict[int, TierRule]:
+    """Derive tier rules from ordered overrides + base rules.
 
-    base: Dict[int, TierRule] = {
-        2: TierRule(conditions=[TierCondition(field="fab_pn", operator="exists")]),
-        3: TierRule(conditions=[TierCondition(field="supplier_pn", operator="exists")]),
-        4: TierRule(conditions=[TierCondition(field="mpn", operator="exists")]),
-    }
+    Contract:
+    - YAML authors provide `tier_overrides` as an ordered list.
+    - The loader assigns 1-based tier numbers by position.
+    - Base tiers are appended after overrides.
+    """
 
-    merged: Dict[int, TierRule] = dict(base)
-    merged.update(tier_overrides)
-    return merged
+    out: Dict[int, TierRule] = {}
+
+    # Overrides: position is priority; first item is the best (tier 1).
+    for i, rule in enumerate(tier_overrides, start=1):
+        out[i] = rule
+
+    base_start = len(tier_overrides) + 1
+    out[base_start] = TierRule(
+        conditions=[TierCondition(field="fab_pn", operator="exists")]
+    )
+    out[base_start + 1] = TierRule(
+        conditions=[TierCondition(field="supplier_pn", operator="exists")]
+    )
+    out[base_start + 2] = TierRule(
+        conditions=[TierCondition(field="mpn", operator="exists")]
+    )
+
+    return out
 
 
-def _parse_tier_rules(raw: Any) -> Dict[int, TierRule]:
-    if raw is None:
-        return {}
+def _parse_tier_rule(rule_cfg: Any, *, context: str) -> TierRule:
+    if not isinstance(rule_cfg, dict):
+        raise ValueError(f"{context} must be a mapping")
 
-    if not isinstance(raw, dict):
-        raise ValueError("tier_rules must be a mapping")
+    conditions_cfg = rule_cfg.get("conditions", [])
+    if not isinstance(conditions_cfg, list):
+        raise ValueError(f"{context}.conditions must be a list")
 
-    parsed: Dict[int, TierRule] = {}
+    conditions: List[TierCondition] = []
+    for cond_cfg in conditions_cfg:
+        if not isinstance(cond_cfg, dict):
+            raise ValueError(f"{context}.conditions entries must be mappings")
 
-    for tier_key, rule_cfg in raw.items():
-        try:
-            tier_num = int(tier_key)
-        except (TypeError, ValueError) as e:
+        field_name = cond_cfg.get("field")
+        operator = cond_cfg.get("operator")
+        value = cond_cfg.get("value")
+
+        if not isinstance(field_name, str) or not field_name.strip():
+            raise ValueError("TierCondition.field must be a non-empty string")
+
+        if not isinstance(operator, str) or operator not in _SUPPORTED_TIER_OPERATORS:
             raise ValueError(
-                f"tier_rules key must be int-like, got: {tier_key!r}"
-            ) from e
-
-        if not isinstance(rule_cfg, dict):
-            raise ValueError(f"tier_rules[{tier_key!r}] must be a mapping")
-
-        conditions_cfg = rule_cfg.get("conditions", [])
-        if not isinstance(conditions_cfg, list):
-            raise ValueError(f"tier_rules[{tier_key!r}].conditions must be a list")
-
-        conditions: List[TierCondition] = []
-        for cond_cfg in conditions_cfg:
-            if not isinstance(cond_cfg, dict):
-                raise ValueError(
-                    f"tier_rules[{tier_key!r}].conditions entries must be mappings"
-                )
-
-            field_name = cond_cfg.get("field")
-            operator = cond_cfg.get("operator")
-            value = cond_cfg.get("value")
-
-            if not isinstance(field_name, str) or not field_name.strip():
-                raise ValueError("TierCondition.field must be a non-empty string")
-
-            if (
-                not isinstance(operator, str)
-                or operator not in _SUPPORTED_TIER_OPERATORS
-            ):
-                raise ValueError(
-                    f"TierCondition.operator must be one of {sorted(_SUPPORTED_TIER_OPERATORS)}, "
-                    f"got: {operator!r}"
-                )
-
-            if value is not None and not isinstance(value, str):
-                raise ValueError("TierCondition.value must be a string when provided")
-
-            conditions.append(
-                TierCondition(field=field_name, operator=operator, value=value)
+                f"TierCondition.operator must be one of {sorted(_SUPPORTED_TIER_OPERATORS)}, "
+                f"got: {operator!r}"
             )
 
-        parsed[tier_num] = TierRule(conditions=conditions)
+        if value is not None and not isinstance(value, str):
+            raise ValueError("TierCondition.value must be a string when provided")
+
+        conditions.append(
+            TierCondition(field=field_name, operator=operator, value=value)
+        )
+
+    return TierRule(conditions=conditions)
+
+
+def _parse_tier_overrides(raw: Any) -> list[TierRule]:
+    if raw is None:
+        return []
+
+    if not isinstance(raw, list):
+        raise ValueError("tier_overrides must be a list")
+
+    parsed: list[TierRule] = []
+    for idx, rule_cfg in enumerate(raw):
+        parsed.append(_parse_tier_rule(rule_cfg, context=f"tier_overrides[{idx}]"))
 
     return parsed
 
