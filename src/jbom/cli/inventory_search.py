@@ -21,28 +21,12 @@ from jbom.common.cli_fabricator import (
     resolve_fabricator_selection_from_args,
 )
 from jbom.config.fabricators import load_fabricator
-from jbom.config.providers import get_provider
-from jbom.config.suppliers import list_suppliers, load_supplier, resolve_supplier_by_id
+from jbom.config.providers import get_provider, list_searchable_suppliers
+from jbom.config.suppliers import load_supplier, resolve_supplier_by_id
 from jbom.services.inventory_reader import InventoryReader
 from jbom.services.search.cache import DiskSearchCache, InMemorySearchCache, SearchCache
 from jbom.services.search.inventory_search_service import InventorySearchService
 from jbom.services.search.provider import SearchProvider
-
-
-def _provider_choices() -> list[str]:
-    """Return supplier IDs that declare at least one search provider."""
-
-    out: list[str] = []
-    for sid in list_suppliers():
-        try:
-            supplier = load_supplier(sid)
-        except ValueError:
-            continue
-
-        if supplier.search_providers:
-            out.append(supplier.id)
-
-    return sorted(set(out))
 
 
 def _default_provider_for_fabricator(fabricator_id: str, *, api_key: str | None) -> str:
@@ -99,7 +83,7 @@ def register_command(subparsers) -> None:
 
     parser.add_argument(
         "--provider",
-        choices=_provider_choices(),
+        choices=list_searchable_suppliers(),
         default=None,
         help="Search provider to use (default: derived from fabricator supplier priority)",
     )
