@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v6.17.0 (2026-03-02)
+
+### Features
+
+* feat: fab profiles ordered supplier list + fab-relative sparseness (#105)
+
+Adds suppliers: ordered list to all fab YAMLs (jlc, pcbway, seeed, generic). FabricatorConfig.suppliers parsed with advisory validation (unknown IDs warn, do not error). Minimal stub profiles for farnell and newark. Fab-relative sparseness opt-in via --fabricator on inventory-search. Dynamic argparse shorthand flags from discovered fab profiles. Provider defaulting walks fab.suppliers order for first supported provider.
+
+Closes #105
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`5239fcf`](https://github.com/plocher/jBOM/commit/5239fcffbc34c41b5dce0c41691a9efdcefe68fb))
+
+
 ## v6.16.0 (2026-03-02)
 
 ### Features
