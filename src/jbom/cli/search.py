@@ -18,8 +18,8 @@ from jbom.cli.output import (
     open_output_text_file,
     resolve_output_destination,
 )
-from jbom.config.providers import get_provider
-from jbom.config.suppliers import list_suppliers, load_supplier, resolve_supplier_by_id
+from jbom.config.providers import get_provider, list_searchable_suppliers
+from jbom.config.suppliers import load_supplier, resolve_supplier_by_id
 from jbom.services.search.cache import DiskSearchCache, InMemorySearchCache, SearchCache
 from jbom.services.search.filtering import (
     SearchFilter,
@@ -125,22 +125,6 @@ _FIELD_REGISTRY: dict[str, _FieldDef] = {
 }
 
 
-def _provider_choices() -> list[str]:
-    """Return supplier IDs that declare at least one search provider."""
-
-    out: list[str] = []
-    for sid in list_suppliers():
-        try:
-            supplier = load_supplier(sid)
-        except ValueError:
-            continue
-
-        if supplier.search_providers:
-            out.append(supplier.id)
-
-    return sorted(set(out))
-
-
 def register_command(subparsers) -> None:
     """Register search command with argument parser."""
 
@@ -155,7 +139,7 @@ def register_command(subparsers) -> None:
     )
 
     # Provider is selected by supplier ID, discovered from supplier YAML profiles.
-    provider_choices = _provider_choices()
+    provider_choices = list_searchable_suppliers()
     default_provider = "mouser" if "mouser" in provider_choices else None
     if default_provider is None and provider_choices:
         default_provider = provider_choices[0]

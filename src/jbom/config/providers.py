@@ -84,4 +84,23 @@ def get_provider(
     return provider_cls.from_config(cfg, cache=cache)
 
 
-__all__ = ["SearchProviderConfig", "get_provider"]
+def list_searchable_suppliers() -> list[str]:
+    """Return supplier IDs that declare at least one search provider, sorted.
+
+    Used to populate --provider choices in CLI commands.
+    """
+
+    from jbom.config.suppliers import list_suppliers, load_supplier
+
+    out: list[str] = []
+    for sid in list_suppliers():
+        try:
+            supplier = load_supplier(sid)
+        except ValueError:
+            continue
+        if supplier.search_providers:
+            out.append(supplier.id)
+    return sorted(set(out))
+
+
+__all__ = ["SearchProviderConfig", "get_provider", "list_searchable_suppliers"]
