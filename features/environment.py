@@ -12,13 +12,11 @@ from pathlib import Path
 
 def before_all(context):
     """Set up test environment before all tests."""
-    # Repository root (…/jBOM) and jbom-new root (…/jBOM/jbom-new)
-    repo_root = Path(__file__).resolve().parents[2]
-    jbom_new_root = Path(__file__).resolve().parents[1]
+    # Repository root (…/jBOM).
+    repo_root = Path(__file__).resolve().parents[1]
 
     context.repo_root = repo_root
-    context.jbom_new_root = jbom_new_root
-    context.src_root = jbom_new_root / "src"
+    context.src_root = repo_root / "src"
 
     # Set BEHAVE_STEPS_DIR so plugin features can find core step definitions
     steps_dir = Path(__file__).parent / "steps"

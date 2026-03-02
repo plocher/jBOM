@@ -38,10 +38,8 @@ from jbom.services.sophisticated_inventory_matcher import (
 
 
 def _repo_root() -> Path:
-    # .../jBOM/jbom-new/tests/integration/test_target_inventory_contract.py
-    # We want the *jBOM* repo root (sibling of jbom-new/), since that's where the
-    # shared examples/ inventory lives.
-    return Path(__file__).resolve().parents[3]
+    # .../jBOM/tests/integration/test_target_inventory_contract.py
+    return Path(__file__).resolve().parents[2]
 
 
 def _default_inventory_csv() -> Path:
@@ -300,7 +298,7 @@ class TestTargetInventoryContract:
         self, target_inventory_csv: Path, target_inventory_items: list[InventoryItem]
     ) -> None:
         sentinel_ipns = {
-            "RES_5%_100mW_0603_10k",
+            "RES_5%_100mW_0603_10K",
             "CAP_0.1uF_X5R_0603_25V",
             "LED_Red_0603_20mA",
         }
@@ -334,7 +332,7 @@ class TestTargetInventoryContract:
                     footprint="R_0603_1608Metric",
                     properties={"Tolerance": "5%"},
                 ),
-                expected_ipn="RES_5%_100mW_0603_10k",
+                expected_ipn="RES_5%_100mW_0603_10K",
                 expected_package="0603",
             ),
             ExpectedMatch(
@@ -389,7 +387,7 @@ class TestTargetInventoryContract:
             )
 
         # If the expected inventory items are present, assert the known ordering.
-        expected_ipn = "RES_5%_100mW_0603_10k"
+        expected_ipn = "RES_5%_100mW_0603_10K"
         if not _inventory_contains_ipn(target_inventory_items, expected_ipn):
             raise AssertionError(
                 "CONTRACT FAILURE (data drift): expected resistor IPN no longer present: "
