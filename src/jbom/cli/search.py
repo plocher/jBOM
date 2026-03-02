@@ -18,14 +18,14 @@ from jbom.cli.output import (
     open_output_text_file,
     resolve_output_destination,
 )
-from jbom.config.suppliers import load_supplier, resolve_supplier_by_id
+from jbom.config.providers import get_provider
+from jbom.config.suppliers import list_suppliers, load_supplier, resolve_supplier_by_id
 from jbom.services.search.cache import DiskSearchCache, InMemorySearchCache, SearchCache
 from jbom.services.search.filtering import (
     SearchFilter,
     SearchSorter,
     apply_default_filters,
 )
-from jbom.services.search.mouser_provider import MouserProvider
 from jbom.services.search.models import SearchResult
 from jbom.services.search.provider import SearchProvider
 
@@ -125,6 +125,22 @@ _FIELD_REGISTRY: dict[str, _FieldDef] = {
 }
 
 
+def _provider_choices() -> list[str]:
+    """Return supplier IDs that declare at least one search provider."""
+
+    out: list[str] = []
+    for sid in list_suppliers():
+        try:
+            supplier = load_supplier(sid)
+        except ValueError:
+            continue
+
+        if supplier.search_providers:
+            out.append(supplier.id)
+
+    return sorted(set(out))
+
+
 def register_command(subparsers) -> None:
     """Register search command with argument parser."""
 
@@ -138,12 +154,17 @@ def register_command(subparsers) -> None:
         "query", help="Search query (keyword, part number, description)"
     )
 
-    # Provider controls the API backend.
+    # Provider is selected by supplier ID, discovered from supplier YAML profiles.
+    provider_choices = _provider_choices()
+    default_provider = "mouser" if "mouser" in provider_choices else None
+    if default_provider is None and provider_choices:
+        default_provider = provider_choices[0]
+
     parser.add_argument(
         "--provider",
-        choices=["mouser"],
-        default="mouser",
-        help="Search provider to use (default: mouser)",
+        choices=provider_choices,
+        default=default_provider,
+        help="Search provider to use (default: derived from supplier profiles)",
     )
 
     parser.add_argument(
@@ -339,11 +360,21 @@ def _build_cache(args: argparse.Namespace) -> SearchCache:
 def _create_provider(
     provider_id: str, *, api_key: Optional[str], cache: SearchCache
 ) -> SearchProvider:
-    pid = (provider_id or "").strip().lower()
-    if pid == "mouser":
-        return MouserProvider(api_key=api_key, cache=cache)
+    supplier_id = (provider_id or "").strip().lower()
+    supplier = load_supplier(supplier_id)
 
-    raise ValueError(f"Unknown provider: {provider_id}")
+    if not supplier.search_providers:
+        raise ValueError(f"Supplier '{supplier_id}' has no configured search providers")
+
+    cfg = supplier.search_providers[0]
+    if api_key:
+        cfg = cfg.with_extra({"api_key": api_key})
+
+    provider = get_provider(cfg, cache=cache)
+    if not provider.available():
+        raise RuntimeError(provider.unavailable_reason())
+
+    return provider
 
 
 def _output_results(
