@@ -5,6 +5,7 @@ website: "https://www.seeedstudio.com/fusion_pcb.html"
 
 # Ordered supplier profile IDs (position encodes priority).
 suppliers:
+  - seeed
   - mouser
   - digikey
   - farnell

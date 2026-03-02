@@ -20,6 +20,7 @@ def test_list_suppliers_includes_builtin_profiles() -> None:
     assert "lcsc" in suppliers
     assert "mouser" in suppliers
     assert "digikey" in suppliers
+    assert "seeed" in suppliers
 
 
 def test_get_available_suppliers_is_non_empty() -> None:
