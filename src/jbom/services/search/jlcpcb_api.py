@@ -95,6 +95,7 @@ class JlcpcbPartsApi:
         presale_type: str = "stock",
         sort_mode: str = "STOCK_SORT",
         sort_asc: str = "DESC",
+        manufacturer: str | None = None,
     ) -> dict[str, Any]:
         """Search by keyword across the catalog.
 
@@ -105,10 +106,17 @@ class JlcpcbPartsApi:
             presale_type: Observed default is "stock".
             sort_mode: Browser-observed sort mode, default "STOCK_SORT".
             sort_asc: "DESC" or "ASC".
+            manufacturer: Optional manufacturer/brand filter. When provided, sent
+                as `componentBrandList` to reduce irrelevant results at the source.
 
         Returns:
             Raw decoded JSON response.
         """
+
+        mfg = (manufacturer or "").strip()
+        component_brand_list: list[dict[str, Any]] = []
+        if mfg:
+            component_brand_list = [{"brandName": mfg}]
 
         payload: dict[str, Any] = {
             "currentPage": int(page),
@@ -124,7 +132,7 @@ class JlcpcbPartsApi:
             "secondSortName": None,
             "componentSpecificationList": [],
             "componentAttributeList": [],
-            "componentBrandList": [],
+            "componentBrandList": component_brand_list,
             "sortMode": str(sort_mode or "").strip(),
             "sortASC": str(sort_asc or "").strip(),
         }

@@ -266,9 +266,116 @@ class InventorySearchService:
     def search(self, items: list[InventoryItem]) -> list[InventorySearchRecord]:
         """Search for candidates for each inventory item.
 
-        This implementation deduplicates provider calls by normalized query so that
-        repeated inventory rows do not burn additional API quota.
+        Deduplicates provider calls by normalized query so repeated inventory rows
+        do not burn additional API quota.
+
+        Issue #106 routing:
+        - When the provider is LCSC (JlcpcbProvider) and the inventory item has an
+          explicit MPN (`InventoryItem.mfgpn`), attempt a deterministic MPN lookup
+          first (MPN → best available LCSC C-number).
+        - If the lookup returns a match, emit it as Candidate 1 and skip catalog
+          search for that item.
+        - If no match is found, fall back to the existing keyword-based search.
         """
+
+        if not items:
+            return []
+
+        jlc_provider = None
+        try:
+            from jbom.services.search.jlcpcb_provider import JlcpcbProvider
+
+            if isinstance(self._provider, JlcpcbProvider):
+                jlc_provider = self._provider
+        except Exception:
+            jlc_provider = None
+
+        deterministic_score = 1000
+
+        records_by_index: list[InventorySearchRecord | None] = [None] * len(items)
+        remaining_items: list[InventoryItem] = []
+        remaining_indices: list[int] = []
+
+        # Group MPN lookups to avoid redundant API calls.
+        mpn_groups: dict[str, tuple[str, str, list[int]]] = {}
+
+        for idx, item in enumerate(items):
+            mpn = (item.mfgpn or "").strip()
+            if jlc_provider is None or not mpn:
+                remaining_items.append(item)
+                remaining_indices.append(idx)
+                continue
+
+            mfg = (item.manufacturer or "").strip()
+            key = normalize_query(f"mpn:{mpn} manufacturer:{mfg}")
+            if key not in mpn_groups:
+                mpn_groups[key] = (mfg, mpn, [])
+            mpn_groups[key][2].append(idx)  # type: ignore[index]
+
+        # Resolve each unique (manufacturer, mpn) once.
+        mpn_results: dict[str, SearchResult | None] = {}
+        mpn_errors: dict[str, str] = {}
+
+        for key, (mfg, mpn, _indices) in mpn_groups.items():
+            try:
+                mpn_results[key] = jlc_provider.lookup_by_mpn(mfg, mpn)
+            except Exception as exc:
+                mpn_errors[key] = str(exc)
+
+            if self._request_delay_seconds > 0:
+                time.sleep(self._request_delay_seconds)
+
+        # Fan out deterministic matches; queue misses for fallback.
+        for key, (mfg, mpn, indices) in mpn_groups.items():
+            query = f"{mfg} {mpn}".strip()
+
+            if key in mpn_errors:
+                for idx in indices:
+                    records_by_index[idx] = InventorySearchRecord(
+                        inventory_item=items[idx],
+                        query=query,
+                        candidates=[],
+                        error=mpn_errors[key],
+                    )
+                continue
+
+            res = mpn_results.get(key)
+            if res is not None:
+                for idx in indices:
+                    records_by_index[idx] = InventorySearchRecord(
+                        inventory_item=items[idx],
+                        query=query,
+                        candidates=[
+                            InventorySearchCandidate(
+                                result=res, match_score=deterministic_score
+                            )
+                        ],
+                    )
+                continue
+
+            # Miss: fall back to keyword-based search.
+            for idx in indices:
+                remaining_items.append(items[idx])
+                remaining_indices.append(idx)
+
+        keyword_records: list[InventorySearchRecord] = []
+        if remaining_items:
+            keyword_records = self._search_by_keyword(remaining_items)
+
+        for idx, rec in zip(remaining_indices, keyword_records, strict=True):
+            records_by_index[idx] = rec
+
+        # Preserve input ordering.
+        out: list[InventorySearchRecord] = []
+        for rec in records_by_index:
+            if rec is not None:
+                out.append(rec)
+        return out
+
+    def _search_by_keyword(
+        self, items: list[InventoryItem]
+    ) -> list[InventorySearchRecord]:
+        """Original keyword-based search implementation (Phase 6.3)."""
 
         # Phase 6.3 behavior: limit is purely service configuration.
         provider_limit = max(10, self._candidate_limit * 3)

@@ -11,6 +11,7 @@ Notes:
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
@@ -31,6 +32,27 @@ class _Config:
 
 class JlcpcbProvider(SearchProvider):
     """LCSC search via JLCPCB's public parts API."""
+
+    _DETERMINISTIC_MPN_MATCH_SCORE = 1000
+
+    @staticmethod
+    def _normalize_mpn(text: str) -> str:
+        """Normalize an MPN for exact-match comparisons.
+
+        Notes:
+        - JLCPCB API data is usually consistent, but LCSC can list multiple C-numbers
+          for a single MPN (batch/warehouse/sub-variant distinctions).
+        - For #106, we treat MPN lookup as "best available C-number right now" and
+          use highest stock as the selection criterion.
+        """
+
+        t = (text or "").strip().upper()
+        t = re.sub(r"\s+", "", t)
+        return t
+
+    @staticmethod
+    def _normalize_manufacturer(text: str) -> str:
+        return " ".join((text or "").strip().upper().split())
 
     def __init__(
         self, *, cache: SearchCache, rate_limit_seconds: float | None = None
@@ -110,6 +132,70 @@ class JlcpcbProvider(SearchProvider):
         # Store raw provider results (the CLI applies filters/ranking).
         self._cache.set(cache_key, results)
         return list(results)
+
+    def lookup_by_mpn(self, manufacturer: str, mpn: str) -> SearchResult | None:
+        """Deterministically resolve an MPN to the best available LCSC C-number.
+
+        This is a *lookup*, not a ranked search. We:
+        1) Query the live API using keyword=MPN and componentBrandList=manufacturer
+           (when manufacturer is known)
+        2) Filter to exact-MPN matches
+        3) If multiple C-numbers match the same MPN, pick the highest-stock result
+
+        Returns:
+            The best matching SearchResult, or None if no exact match is found.
+        """
+
+        mpn_norm = (mpn or "").strip()
+        if not mpn_norm:
+            return None
+
+        mfg_norm = (manufacturer or "").strip()
+
+        cache_query = f"mpn:{mpn_norm} manufacturer:{mfg_norm}".strip()
+        cache_key = SearchCacheKey.create(
+            provider_id=self.provider_id, query=cache_query, limit=50
+        )
+        cached = self._cache.get(cache_key)
+        if cached is not None:
+            results = list(cached)
+        else:
+            if self._api is None:
+                raise RuntimeError(self.unavailable_reason())
+
+            data = self._api.search_keyword(
+                query=mpn_norm,
+                page=1,
+                page_size=50,
+                sort_mode="STOCK_SORT",
+                sort_asc="DESC",
+                manufacturer=mfg_norm or None,
+            )
+            results = self._parse_results(data)
+            self._cache.set(cache_key, results)
+
+        want_mpn = self._normalize_mpn(mpn_norm)
+        want_mfg = self._normalize_manufacturer(mfg_norm) if mfg_norm else ""
+
+        matches: list[SearchResult] = []
+        for r in results:
+            if self._normalize_mpn(r.mpn) != want_mpn:
+                continue
+            if want_mfg and self._normalize_manufacturer(r.manufacturer) != want_mfg:
+                continue
+            matches.append(r)
+
+        if not matches:
+            return None
+
+        # Deterministic selection: highest stock, then stable tie-break.
+        matches.sort(
+            key=lambda r: (
+                -int(r.stock_quantity or 0),
+                str(r.distributor_part_number or ""),
+            )
+        )
+        return matches[0]
 
     def _parse_results(self, data: dict[str, Any]) -> list[SearchResult]:
         payload = data.get("data")

@@ -91,3 +91,78 @@ def test_jlcpcb_provider_uses_cache(monkeypatch) -> None:
     provider.search("10k 0603", limit=1)
 
     assert search_keyword.call_count == 1
+
+
+def test_jlcpcb_provider_lookup_by_mpn_picks_highest_stock(monkeypatch) -> None:
+    import jbom.services.search.jlcpcb_api as api_mod
+
+    monkeypatch.setattr(api_mod, "requests", Mock())
+
+    cache = InMemorySearchCache()
+    cfg = SearchProviderConfig(type="jlcpcb_api", extra={"rate_limit_seconds": 0})
+    provider = JlcpcbProvider.from_config(cfg, cache=cache)
+
+    assert provider._api is not None
+
+    api_response = {
+        "code": 200,
+        "data": {
+            "componentPageInfo": {
+                "list": [
+                    {
+                        "componentCode": "C111",
+                        "componentModelEn": "RC0603FR-0710KL",
+                        "componentBrandEn": "Yageo",
+                        "describe": "RES SMD 10k 1% 0603",
+                        "lcscGoodsUrl": "https://www.lcsc.com/product-detail/C111.html",
+                        "dataManualUrl": "https://example.com/datasheet.pdf",
+                        "stockCount": 10,
+                        "minBuyNumber": 1,
+                        "componentPrices": [
+                            {"productPrice": "0.10", "productNumber": 1}
+                        ],
+                        "attributes": [],
+                    },
+                    {
+                        "componentCode": "C222",
+                        "componentModelEn": "RC0603FR-0710KL",
+                        "componentBrandEn": "Yageo",
+                        "describe": "RES SMD 10k 1% 0603 (alt)",
+                        "lcscGoodsUrl": "https://www.lcsc.com/product-detail/C222.html",
+                        "dataManualUrl": "https://example.com/datasheet.pdf",
+                        "stockCount": 500,
+                        "minBuyNumber": 1,
+                        "componentPrices": [
+                            {"productPrice": "0.09", "productNumber": 1}
+                        ],
+                        "attributes": [],
+                    },
+                    {
+                        "componentCode": "C333",
+                        "componentModelEn": "NOT-THE-SAME",
+                        "componentBrandEn": "Yageo",
+                        "describe": "noise",
+                        "lcscGoodsUrl": "https://www.lcsc.com/product-detail/C333.html",
+                        "dataManualUrl": "",
+                        "stockCount": 999,
+                        "minBuyNumber": 1,
+                        "componentPrices": [],
+                        "attributes": [],
+                    },
+                ]
+            }
+        },
+    }
+
+    search_keyword = Mock(return_value=api_response)
+    monkeypatch.setattr(provider._api, "search_keyword", search_keyword)
+
+    best = provider.lookup_by_mpn("Yageo", "RC0603FR-0710KL")
+    assert best is not None
+    assert best.distributor_part_number == "C222"
+    assert best.stock_quantity == 500
+
+    assert search_keyword.call_count == 1
+    _args, kwargs = search_keyword.call_args
+    assert kwargs.get("query") == "RC0603FR-0710KL"
+    assert kwargs.get("manufacturer") == "Yageo"
