@@ -1,6 +1,17 @@
 # CHANGELOG
 
 
+## v6.22.0 (2026-03-03)
+
+### Features
+
+* feat: implement issue 115 phase 4 query foundation
+
+Add Phase 4 RES/CAP decision-tree query planning with Python constant mappings, static defaults, parametric JLCPCB API dispatch, and deterministic keyword fallback. Integrates inventory-search with item-aware LCSC dispatch and adds focused unit coverage plus changelog update.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`4e631da`](https://github.com/plocher/jBOM/commit/4e631da734684cd94d6e522eaefca0e94aadef21))
+
+
 ## v6.21.0 (2026-03-03)
 
 ### Features
