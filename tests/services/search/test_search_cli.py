@@ -230,7 +230,12 @@ def test_search_unknown_field_rejected(monkeypatch, capsys):
     assert "does_not_exist" in captured.err
 
 
-def test_search_lcsc_provider_exits_cleanly_when_unavailable(capsys):
+def test_search_lcsc_provider_exits_cleanly_when_unavailable(monkeypatch, capsys):
+    # Avoid live network calls by forcing the provider to be unavailable.
+    import jbom.services.search.jlcpcb_api as api_mod
+
+    monkeypatch.setattr(api_mod, "requests", None)
+
     args = argparse.Namespace(
         query="10K resistor 0603",
         provider="lcsc",
@@ -247,4 +252,4 @@ def test_search_lcsc_provider_exits_cleanly_when_unavailable(capsys):
     assert rc == 1
 
     captured = capsys.readouterr()
-    assert "not yet implemented" in captured.err.lower()
+    assert "requires the 'requests' package" in captured.err
