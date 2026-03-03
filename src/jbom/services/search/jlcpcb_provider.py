@@ -18,10 +18,14 @@ from typing import TYPE_CHECKING, Any
 from jbom.services.search.cache import SearchCache, SearchCacheKey
 from jbom.services.search import jlcpcb_api
 from jbom.services.search.jlcpcb_api import JlcpcbPartsApi
+from jbom.services.search.jlcpcb_phase4_heuristics import (
+    build_phase4_parametric_query_plan,
+)
 from jbom.services.search.models import SearchResult
 from jbom.services.search.provider import SearchProvider
 
 if TYPE_CHECKING:
+    from jbom.common.types import InventoryItem
     from jbom.config.providers import SearchProviderConfig
 
 
@@ -130,6 +134,59 @@ class JlcpcbProvider(SearchProvider):
         results = self._parse_results(data)
 
         # Store raw provider results (the CLI applies filters/ranking).
+        self._cache.set(cache_key, results)
+        return list(results)
+
+    def search_for_inventory_item(
+        self, item: "InventoryItem", *, query: str, limit: int = 10
+    ) -> list[SearchResult]:
+        """Search using Phase 4 item-aware parametric planning when available.
+
+        Falls back to keyword search when:
+        - Category is unsupported by the Phase 4 planner
+        - Required parametric fields are missing (e.g. no RES/CAP value)
+        - Parametric API call fails or returns no results
+        """
+
+        if self._api is None:
+            raise RuntimeError(self.unavailable_reason())
+
+        plan = build_phase4_parametric_query_plan(item, base_query=query)
+        if not plan.use_parametric or not plan.first_sort_name:
+            return self.search(query, limit=limit)
+
+        cache_key = SearchCacheKey.create(
+            provider_id=self.provider_id,
+            query=plan.cache_fingerprint(),
+            limit=limit,
+        )
+        cached = self._cache.get(cache_key)
+        if cached is not None:
+            return list(cached)
+
+        page_size = max(1, min(1024, int(limit)))
+
+        try:
+            data = self._api.search_parametric(
+                query=plan.keyword_query,
+                first_sort_name=plan.first_sort_name,
+                second_sort_name=plan.second_sort_name,
+                component_specification_list=list(plan.component_specification_list),
+                component_attribute_list=plan.component_attribute_payload(),
+                page=1,
+                page_size=page_size,
+                sort_mode="STOCK_SORT",
+                sort_asc="DESC",
+            )
+            results = self._parse_results(data)
+        except Exception:
+            results = []
+
+        if not results:
+            fallback = self.search(query, limit=limit)
+            self._cache.set(cache_key, fallback)
+            return list(fallback)
+
         self._cache.set(cache_key, results)
         return list(results)
 

@@ -3,9 +3,12 @@ from __future__ import annotations
 from unittest.mock import Mock
 
 from jbom.common.types import InventoryItem
+from jbom.config.providers import SearchProviderConfig
 from jbom.config.fabricators import load_fabricator
 from jbom.config.suppliers import SupplierConfig
+from jbom.services.search.cache import InMemorySearchCache
 from jbom.services.search.inventory_search_service import InventorySearchService
+from jbom.services.search.jlcpcb_provider import JlcpcbProvider
 from jbom.services.search.models import SearchResult
 from jbom.services.search.provider import SearchProvider
 
@@ -269,3 +272,51 @@ def test_inventory_search_service_fans_out_provider_errors_to_all_items() -> Non
 
     assert by_ipn["R1K-1"].candidates
     assert by_ipn["R1K-1"].error is None
+
+
+def test_inventory_search_service_uses_item_aware_lcsc_dispatch(monkeypatch) -> None:
+    import jbom.services.search.jlcpcb_api as api_mod
+
+    monkeypatch.setattr(api_mod, "requests", Mock())
+
+    cache = InMemorySearchCache()
+    cfg = SearchProviderConfig(type="jlcpcb_api", extra={"rate_limit_seconds": 0})
+    provider = JlcpcbProvider.from_config(cfg, cache=cache)
+
+    search_for_inventory_item = Mock(
+        return_value=[_sr(distributor="lcsc", distributor_part_number="C25231")]
+    )
+    monkeypatch.setattr(
+        provider, "search_for_inventory_item", search_for_inventory_item
+    )
+
+    search_keyword_only = Mock(
+        side_effect=AssertionError(
+            "provider.search should not be used for JLC inventory item queries"
+        )
+    )
+    monkeypatch.setattr(provider, "search", search_keyword_only)
+
+    svc = InventorySearchService(provider, candidate_limit=1, request_delay_seconds=0.0)
+
+    items = [
+        _inv_item(
+            ipn="R10K-1",
+            category="RES",
+            value="10K",
+            package="0603",
+            tolerance="1%",
+        ),
+        _inv_item(
+            ipn="R10K-2",
+            category="RES",
+            value="10K",
+            package="0603",
+            tolerance="1%",
+        ),
+    ]
+
+    records = svc.search(items)
+    assert [r.inventory_item.ipn for r in records] == ["R10K-1", "R10K-2"]
+    assert all(r.candidates for r in records)
+    assert search_for_inventory_item.call_count == 1

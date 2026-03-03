@@ -380,6 +380,15 @@ class InventorySearchService:
         # Phase 6.3 behavior: limit is purely service configuration.
         provider_limit = max(10, self._candidate_limit * 3)
 
+        jlc_provider = None
+        try:
+            from jbom.services.search.jlcpcb_provider import JlcpcbProvider
+
+            if isinstance(self._provider, JlcpcbProvider):
+                jlc_provider = self._provider
+        except Exception:
+            jlc_provider = None
+
         query_groups: dict[str, list[tuple[InventoryItem, str]]] = defaultdict(list)
         per_item_query: list[tuple[InventoryItem, str, str]] = []
 
@@ -398,11 +407,19 @@ class InventorySearchService:
         for key, group in query_groups.items():
             # Keep the original (non-normalized) query string for the provider call.
             provider_query = group[0][1]
+            representative_item = group[0][0]
 
             try:
-                raw_results = self._provider.search(
-                    provider_query, limit=provider_limit
-                )
+                if jlc_provider is not None:
+                    raw_results = jlc_provider.search_for_inventory_item(
+                        representative_item,
+                        query=provider_query,
+                        limit=provider_limit,
+                    )
+                else:
+                    raw_results = self._provider.search(
+                        provider_query, limit=provider_limit
+                    )
                 filtered = apply_default_filters(raw_results)
                 ranked_by_query[key] = SearchSorter.rank(filtered)
             except Exception as exc:
