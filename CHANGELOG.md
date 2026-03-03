@@ -1,6 +1,15 @@
 # CHANGELOG
 
 
+## v6.21.0 (2026-03-03)
+
+### Features
+
+* feat: add deterministic MPN cross-reference for LCSC (#119)
+
+Implements JlcpcbProvider.lookup_by_mpn with manufacturer filtering and routes inventory-search to use it when item.mfgpn is present. ([`df447ee`](https://github.com/plocher/jBOM/commit/df447ee177054d8c6c6383deb26a41265222ae39))
+
+
 ## v6.20.0 (2026-03-03)
 
 ### Features
