@@ -28,6 +28,11 @@ search:
   cache:
     ttl_hours: 24
 
+  api:
+    timeout_seconds: 20.0
+    max_retries: 3
+    retry_delay_seconds: 1.0
+
   providers:
-    - type: jlcparts_sqlite
-      db_path: "~/.cache/jbom/jlcparts/components.db"
+    - type: jlcpcb_api
+      rate_limit_seconds: 2

@@ -47,8 +47,13 @@ def test_load_supplier_lcsc() -> None:
     assert lcsc.search_fields == []
 
     assert len(lcsc.search_providers) == 1
-    assert lcsc.search_providers[0].type == "jlcparts_sqlite"
-    assert "db_path" in lcsc.search_providers[0].extra
+    assert lcsc.search_providers[0].type == "jlcpcb_api"
+    assert lcsc.search_providers[0].extra.get("rate_limit_seconds") == 2
+
+    # LCSC profile includes search.api.* overrides.
+    assert lcsc.search_timeout_seconds == 20.0
+    assert lcsc.search_max_retries == 3
+    assert lcsc.search_retry_delay_seconds == 1.0
 
     assert isinstance(lcsc.search_type_query_keywords, dict)
     assert lcsc.search_type_query_keywords == {}

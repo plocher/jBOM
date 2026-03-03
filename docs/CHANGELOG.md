@@ -9,9 +9,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 - Mouser search fixtures and offline contract/integration test scaffolding.
 - Persistent disk-backed search cache (default, 24h TTL) with `--no-cache` and `--clear-cache` flags.
+- LCSC keyword search provider using the public JLCPCB live parts API (`jlcpcb_api`).
 
 ### Changed
 - Mouser provider now supports configurable timeout + retry/backoff for transient failures.
+- LCSC supplier profile now uses `jlcpcb_api` (live API) instead of the `jlcparts_sqlite` stub.
 - `inventory-search` now deduplicates identical queries within a run to reduce provider API calls.
 - Search parametric filtering now supports category-aware value normalization for RES/CAP/IND/REG and uses canonical values as a tertiary sort key.
 - `inventory-search` query construction now supports per-supplier `search.type_query_keywords` with a safe hardcoded fallback.
