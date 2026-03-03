@@ -26,28 +26,38 @@ What this script is expected to confirm (see #115 + #116):
 - Basic pagination behavior at pageSize=1024
 - Basic throttling / rate limit behavior (optional probe)
 
-POC findings (captured 2026-03-02):
+POC findings (captured 2026-03-03):
 - Auth: No authentication, cookies, or CSRF token required for basic searches.
-- Known-good endpoint: `SEARCH_URL` (selectSmtComponentList/v2) returns `code=200`.
-- Category browse works:
-  - `firstSortName`/`firstSortId` constrain the top-level category (e.g. Resistors).
-  - `secondSortName`/`secondSortId` constrain subcategory (e.g. Chip Resistor - Surface Mount).
-  - Response includes taxonomy tree `sortAndCountVoList` with category/subcategory IDs + counts.
-- Response schema confirmed (selected fields):
-  - LCSC C-number: `componentCode` (e.g. "C1091")
-  - MPN-ish: `componentModelEn`
-  - Brand/manufacturer: `componentBrandEn`
-  - Stock: `stockCount`
-  - Price breaks: `componentPrices` [{startNumber,endNumber,productPrice}, ...]
-  - Per-result attributes list: `attributes` [{attribute_name_en, attribute_value_name}, ...]
-  - Product URL: `lcscGoodsUrl`
-  - Datasheet URL: `dataManualUrl`
-- Pagination: `--pagination-probe` successfully returns 1024 results for page 1 and 2.
-- Throttling: `--rate-limit-probe 5` (with built-in 2s delay) did not trigger throttling.
-- Known failures / open questions:
-  - Attribute filters: when `componentAttributeList` is non-empty (via `--attribute Name=Value`),
-    the API returns `code=101` (unknown error). Attribute filtering is therefore NOT proven yet.
-  - Attribute facet endpoint: `FILTER_ATTRIBUTES_URL` currently returns `code=500` (system error).
+
+Two-endpoint / two-mode pattern:
+- Bootstrap/drill-down facets: `FILTER_ATTRIBUTES_URL` (filterComponentAttribute)
+  - `nowCondition="productTypeIdList"` returns `data.productTypeList` (top-level categories: id, name, docCount).
+  - `nowCondition="<attr>"` with `paramList=[{"parentParamName": "Resistance", "paramValueList": ["10kΩ"]}, ...]`
+    returns refinement options + counts (facet groups).
+- Final results: `SEARCH_URL` (selectSmtComponentList/v2)
+  - Use `searchType=2` for parametric/category browse.
+  - Category must be sent as `firstSortNameList: ["Resistors"]` (array).
+  - Package must be sent as `componentSpecificationList: ["0603"]`.
+  - Attributes must be sent as `componentAttributeList: [{"Resistance": ["10kΩ"]}, ...]`.
+
+Taxonomy discovery:
+- `sortAndCountVoList` taxonomy is returned by `selectSmtComponentList/v2` in `searchType=3` mode.
+  - With `firstSortId=0` and empty `firstSortName`, this yields a global category + subcategory tree.
+  - In `searchType=2` responses, `sortAndCountVoList` is not present (at least in observed calls).
+
+Response schema confirmed (selected fields from v2 results):
+- LCSC C-number: `componentCode` (e.g. "C1091")
+- MPN-ish: `componentModelEn`
+- Brand/manufacturer: `componentBrandEn`
+- Stock: `stockCount`
+- Price breaks: `componentPrices` [{startNumber,endNumber,productPrice}, ...]
+- Per-result attributes list: `attributes` [{attribute_name_en, attribute_value_name}, ...]
+- Product URL: `lcscGoodsUrl`
+- Datasheet URL: `dataManualUrl`
+
+Open items to confirm:
+- `stockSort`/`stockFlag` values that enable stockCount-desc ordering.
+- Catalog coverage vs yaqwsx DB snapshot row counts (requires a local DB path to compare).
 
 If you have a yaqwsx/jlcparts SQLite snapshot, pass --db to compare rough catalog
 coverage (row counts + category tables) against what the live API appears to
@@ -77,6 +87,11 @@ FILTER_ATTRIBUTES_URL = "https://jlcpcb.com/api/overseas-pcb-order/v1/componentS
 class AttributeFilter:
     name: str
     value: str
+
+
+def _is_package_attribute_name(name: str) -> bool:
+    t = (name or "").strip().lower()
+    return t in {"package", "pkg", "spec", "specification"}
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -124,10 +139,10 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--search-type",
         type=int,
-        default=3,
+        default=2,
         help=(
-            "searchType parameter. 3 is used by the known-good sleemanj example for category browsing; "
-            "other values may activate different server search modes."
+            "searchType parameter. 2 is used by the JLCPCB parts UI for category/parametric browse; "
+            "3 appears to be a free-text / legacy search mode."
         ),
     )
 
@@ -157,6 +172,15 @@ def _build_parser() -> argparse.ArgumentParser:
     )
 
     parser.add_argument(
+        "--stock-sort-probe",
+        action="store_true",
+        help=(
+            "Try a small set of candidate stockSort values and report the top stockCount values returned, "
+            "to discover how to enable stockCount-desc ordering."
+        ),
+    )
+
+    parser.add_argument(
         "--print-taxonomy",
         action="store_true",
         help=(
@@ -169,6 +193,45 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help=(
             "Call filterComponentAttribute endpoint and print facet groups (attribute values + counts), if available."
+        ),
+    )
+
+    parser.add_argument(
+        "--product-type-id",
+        action="append",
+        default=[],
+        help=(
+            "Repeatable productTypeId values for filterComponentAttribute (sent as productTypeIdList). "
+            "If omitted, defaults to --first-sort-id as a string."
+        ),
+    )
+
+    parser.add_argument(
+        "--presale-type",
+        default="stock",
+        help=(
+            "presaleType for filterComponentAttribute (default: stock). "
+            "This appears to control whether the facet discovery is stock-only."
+        ),
+    )
+
+    parser.add_argument(
+        "--facet-now-condition",
+        default="",
+        help=(
+            "Override nowCondition for filterComponentAttribute (advanced). "
+            "If empty, the script picks a heuristic based on selected filters."
+        ),
+    )
+
+    parser.add_argument(
+        "--probe-product-type-ids",
+        type=int,
+        default=0,
+        help=(
+            "If >0, empirically probe productTypeIdList by calling filterComponentAttribute "
+            "with productTypeIdList=['1'], ['2'], ... up to N, and print any category-ish "
+            "names discovered in responses."
         ),
     )
     parser.add_argument(
@@ -185,12 +248,22 @@ def _build_parser() -> argparse.ArgumentParser:
     )
 
     parser.add_argument(
+        "--spec",
+        action="append",
+        default=[],
+        help=(
+            "Package/spec filter (repeatable). Sent via componentSpecificationList. "
+            "Example: --spec 0603"
+        ),
+    )
+
+    parser.add_argument(
         "--attribute",
         action="append",
         default=[],
         help=(
             "Attribute filter in the form 'Name=Value'. Can be repeated. "
-            "Example: --attribute 'Package=0603'"
+            "Example: --attribute 'Resistance=10kΩ'"
         ),
     )
 
@@ -380,31 +453,56 @@ def _build_payload(
     stock_flag: bool | None,
     stock_sort: str | None,
     component_library_type: str | None,
+    specs: list[str],
     attributes: list[AttributeFilter],
     brands: list[str],
 ) -> dict[str, Any]:
     """Build a payload compatible with the v2 endpoint.
 
-    This shape is based on reverse-engineering public clients, notably:
-    - CDFER/jlcpcb-parts-database scrape script
-    - PatrickWalther/go-jlcpcb-parts
+    Notes:
+    - The JLCPCB parts UI appears to use `searchType=2` and sends category as
+      `firstSortNameList` (array) rather than only `firstSortName`.
+    - Package (e.g. 0603) is sent via `componentSpecificationList`.
+    - Parametric attributes are sent as a list of single-key dicts:
+      `[{"Resistance": ["10kΩ"]}, {"Tolerance": ["1%"]}]`.
 
-    IMPORTANT: Some fields appear to be ignored by the server; we include them
-    defensively to match known-working payloads.
+    We include both the "old" and "new" field spellings where harmless; the
+    server seems to ignore unknown/extra fields.
     """
 
+    spec_list = [str(s).strip() for s in specs if str(s).strip()]
+
+    # Browser-observed: componentAttributeList is a list of {name: [values]}.
+    grouped: dict[str, list[str]] = {}
+    for f in attributes:
+        if _is_package_attribute_name(f.name):
+            spec_list.append(str(f.value).strip())
+            continue
+        key = str(f.name).strip()
+        val = str(f.value).strip()
+        if not key or not val:
+            continue
+        grouped.setdefault(key, [])
+        if val not in grouped[key]:
+            grouped[key].append(val)
+
+    component_attribute_list: list[dict[str, list[str]]] = [
+        {k: v} for k, v in grouped.items() if k and v
+    ]
+
     payload: dict[str, Any] = {
-        "componentAttributeList": [
-            {"attributeName": f.name, "attributeValue": f.value} for f in attributes
-        ],
+        "componentAttributeList": component_attribute_list,
         "componentBrandList": [
             {"brandName": b} for b in (str(x).strip() for x in brands) if b
         ],
         "componentLibraryType": component_library_type,
-        "componentSpecificationList": [],
+        "componentSpecificationList": spec_list,
         "currentPage": int(page),
         "firstSortId": int(first_sort_id),
         "firstSortName": str(first_sort_name or ""),
+        "firstSortNameList": [str(first_sort_name or "").strip()]
+        if first_sort_name
+        else [],
         "keyword": str(keyword or ""),
         "pageSize": int(page_size),
         "paramList": [],
@@ -417,6 +515,64 @@ def _build_payload(
     }
 
     return payload
+
+
+def _build_filter_component_attribute_payload(
+    *,
+    product_type_id_list: list[str],
+    component_specification_list: list[str],
+    param_list: list[dict[str, Any]],
+    now_condition: str,
+    presale_type: str,
+    keyword: str | None,
+    component_brand_list: list[dict[str, Any]] | None,
+) -> dict[str, Any]:
+    """Build the filterComponentAttribute payload matching the Safari capture.
+
+    Observed request shape (2026-03-02 recording):
+    - top-level keys: baseQueryDto, catalogLevel, nowCondition, paramList, queryString
+    - baseQueryDto includes: componentBrandList, componentSpecificationList,
+      componentTypeIdList, orderLibraryTypeList, packageTypeList, filterType,
+      productTypeIdList, keyword, queryShelveStatus, presaleType
+
+    The endpoint returns `code=101` if this structure/types don't match closely.
+    """
+
+    bq: dict[str, Any] = {
+        "componentBrandList": component_brand_list or [],
+        "componentSpecificationList": component_specification_list,
+        "componentTypeIdList": [],
+        "orderLibraryTypeList": [],
+        "packageTypeList": [],
+        "filterType": 3,
+        "productTypeIdList": product_type_id_list,
+        "keyword": keyword,
+        "queryShelveStatus": None,
+        "presaleType": str(presale_type or "stock"),
+    }
+
+    return {
+        "baseQueryDto": bq,
+        "catalogLevel": 0,
+        "nowCondition": str(now_condition),
+        "paramList": param_list,
+        "queryString": None,
+    }
+
+
+def _iter_string_values(obj: object) -> list[str]:
+    """Collect string leaf values from an arbitrary JSON-like object."""
+
+    out: list[str] = []
+    if isinstance(obj, str):
+        out.append(obj)
+    elif isinstance(obj, dict):
+        for v in obj.values():
+            out.extend(_iter_string_values(v))
+    elif isinstance(obj, list):
+        for v in obj:
+            out.extend(_iter_string_values(v))
+    return out
 
 
 def _post(
@@ -511,6 +667,61 @@ def _first_item_fields(item: dict[str, Any]) -> dict[str, Any]:
         "lcsc_url": _g(item, "lcscGoodsUrl", default=""),
         "datasheet": _g(item, "dataManualUrl", default=""),
     }
+
+
+def _summarize_facet_response(label: str, status: int, data: dict[str, Any]) -> None:
+    print(f"\n== {label} ==")
+    print(f"HTTP status: {status}")
+
+    api_code = _g(data, "code", "status", default=None)
+    api_msg = _g(data, "message", "msg", default=None)
+    if api_code is not None or api_msg is not None:
+        print(f"API code/message: {api_code!r} / {api_msg!r}")
+
+    payload = _g(data, "data", default=None)
+    if not isinstance(payload, dict):
+        print(f"data: {type(payload).__name__}")
+        return
+
+    product_types = payload.get("productTypeList")
+    if isinstance(product_types, list):
+        print(f"productTypeList: {len(product_types)}")
+        for it in product_types[:10]:
+            if not isinstance(it, dict):
+                continue
+            name = it.get("name")
+            key = it.get("key")
+            doc = it.get("docCount")
+            flag = it.get("displayFlag")
+            print(f"  - {name!r} (key={key!r}, docCount={doc!r}, displayFlag={flag!r})")
+        if len(product_types) > 10:
+            print(f"  ...(and {len(product_types)-10} more)")
+
+    parent_params = payload.get("parentParamList")
+    if isinstance(parent_params, list):
+        print(f"parentParamList: {len(parent_params)}")
+        for g in parent_params[:8]:
+            if not isinstance(g, dict):
+                continue
+            name = g.get("parentParamName") or g.get("name")
+            doc = g.get("docCount")
+            sub = g.get("subAggs")
+            n_sub = len(sub) if isinstance(sub, list) else None
+            print(f"  - {name!r} (docCount={doc!r}, subAggs={n_sub})")
+        if len(parent_params) > 8:
+            print(f"  ...(and {len(parent_params)-8} more)")
+
+    # Some responses use paramList/parentParamRangeList etc.
+    for k in (
+        "paramList",
+        "paramRangeList",
+        "parentParamRangeList",
+        "componentSpecificationList",
+        "componentBrandList",
+    ):
+        v = payload.get(k)
+        if isinstance(v, list):
+            print(f"{k}: {len(v)}")
 
 
 def _summarize_response(label: str, status: int, data: dict[str, Any]) -> None:
@@ -761,6 +972,10 @@ def _run_inventory_mode(args: argparse.Namespace) -> int:
             else:
                 second_sort_id, second_sort_name = None, None
 
+        specs = [str(s).strip() for s in (args.spec or []) if str(s).strip()]
+        if (row.get("Package") or "").strip():
+            specs.append((row.get("Package") or "").strip())
+
         payload = _build_payload(
             keyword=keyword,
             page=1,
@@ -779,6 +994,7 @@ def _run_inventory_mode(args: argparse.Namespace) -> int:
             component_library_type=_coerce_component_library_type(
                 str(args.component_library_type)
             ),
+            specs=specs,
             attributes=_parse_attribute_filters(list(args.attribute or [])),
             brands=list(args.brand or []),
         )
@@ -874,6 +1090,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         component_library_type=_coerce_component_library_type(
             str(args.component_library_type)
         ),
+        specs=[str(s).strip() for s in (args.spec or []) if str(s).strip()],
         attributes=attributes,
         brands=list(args.brand or []),
     )
@@ -889,18 +1106,155 @@ def main(argv: Sequence[str] | None = None) -> int:
     if bool(getattr(args, "print_taxonomy", False)):
         _summarize_taxonomy(data)
 
-    if bool(getattr(args, "print_attribute_facets", False)):
-        # Best-effort: shape inferred from frontend usage. If this fails, we document the failure.
-        try:
+    if int(getattr(args, "probe_product_type_ids", 0) or 0) > 0:
+        max_id = int(args.probe_product_type_ids)
+        print("\n== productTypeIdList empirical probe ==")
+        for i in range(1, max_id + 1):
+            pt = [str(i)]
+            facet_payload = _build_filter_component_attribute_payload(
+                product_type_id_list=pt,
+                component_specification_list=[],
+                param_list=[],
+                now_condition="productTypeIdList",
+                presale_type=str(args.presale_type or "stock"),
+                keyword=None,
+                component_brand_list=[],
+            )
             st2, facets = _post(
                 url=FILTER_ATTRIBUTES_URL,
-                payload=payload,
+                payload=facet_payload,
                 timeout=float(args.timeout),
                 use_json=bool(args.use_json),
             )
-            _summarize_response("filterComponentAttribute", st2, facets)
+            api_code = _g(facets, "code", "status", default=None)
+            msg = _g(facets, "message", "msg", default=None)
+            # Extract any plausible category-like strings.
+            strings = [s for s in _iter_string_values(facets) if isinstance(s, str)]
+            hints = [
+                s
+                for s in strings
+                if s
+                and any(
+                    w in s.lower()
+                    for w in (
+                        "resistor",
+                        "capac",
+                        "inductor",
+                        "connector",
+                        "diode",
+                        "transistor",
+                        "ic",
+                        "integrated",
+                    )
+                )
+            ]
+            hints = list(dict.fromkeys(hints))[:5]
+            hint_str = f" hints={hints!r}" if hints else ""
+            print(f"  id={i:>2}: http={st2} api={api_code!r} msg={msg!r}{hint_str}")
+            time.sleep(0.3)
+
+    def _facet_call(
+        *,
+        pt: list[str],
+        specs: list[str],
+        params: list[dict[str, Any]],
+        now_condition: str,
+    ) -> tuple[int, dict[str, Any]]:
+        facet_payload = _build_filter_component_attribute_payload(
+            product_type_id_list=pt,
+            component_specification_list=specs,
+            param_list=params,
+            now_condition=now_condition,
+            presale_type=str(args.presale_type or "stock"),
+            keyword=None if not str(args.keyword or "").strip() else str(args.keyword),
+            component_brand_list=list(payload.get("componentBrandList") or []),
+        )
+        return _post(
+            url=FILTER_ATTRIBUTES_URL,
+            payload=facet_payload,
+            timeout=float(args.timeout),
+            use_json=bool(args.use_json),
+        )
+
+    if bool(getattr(args, "print_attribute_facets", False)):
+        try:
+            pt = [
+                str(x).strip() for x in (args.product_type_id or []) if str(x).strip()
+            ]
+            if not pt:
+                pt = [str(int(args.first_sort_id))]
+
+            params: list[dict[str, Any]] = []
+            for f in attributes:
+                if _is_package_attribute_name(f.name):
+                    continue
+                params.append(
+                    {"parentParamName": str(f.name), "paramValueList": [str(f.value)]}
+                )
+
+            specs = [str(s).strip() for s in (args.spec or []) if str(s).strip()]
+
+            if str(args.facet_now_condition or "").strip():
+                now_condition = str(args.facet_now_condition).strip()
+            elif params:
+                now_condition = str(params[-1]["parentParamName"])
+            elif specs:
+                now_condition = "componentSpecificationList"
+            else:
+                now_condition = "productTypeIdList"
+
+            st2, facets = _facet_call(
+                pt=pt, specs=specs, params=params, now_condition=now_condition
+            )
+            _summarize_facet_response(
+                f"filterComponentAttribute (nowCondition={now_condition})", st2, facets
+            )
         except Exception as exc:
             print(f"\n== filterComponentAttribute ==\nError: {exc}")
+
+    if bool(getattr(args, "stock_sort_probe", False)):
+        print("\n== stockSort probe ==")
+        candidates: list[tuple[str, str | None, bool | None]] = [
+            ("baseline", None, None),
+            ("desc", "desc", None),
+            ("DESC", "DESC", None),
+            ("1", "1", None),
+            ("-1", "-1", None),
+            ("true+desc", "desc", True),
+            ("true+1", "1", True),
+        ]
+
+        def _top_stocks(resp: dict[str, Any], n: int = 8) -> list[int]:
+            p = _g(resp, "data", default={})
+            page_info = _g(p, "componentPageInfo", default={})
+            lst = _g(page_info, "list", default=[])
+            out: list[int] = []
+            if isinstance(lst, list):
+                for it in lst[:n]:
+                    if not isinstance(it, dict):
+                        continue
+                    try:
+                        out.append(int(it.get("stockCount") or 0))
+                    except Exception:
+                        out.append(0)
+            return out
+
+        for label, sort_val, flag_val in candidates:
+            pay = dict(payload)
+            pay["stockSort"] = sort_val
+            pay["stockFlag"] = flag_val
+            st, resp = _post(
+                url=SEARCH_URL,
+                payload=pay,
+                timeout=float(args.timeout),
+                use_json=bool(args.use_json),
+            )
+            code = _g(resp, "code", default=None)
+            stocks = _top_stocks(resp)
+            print(
+                f"  {label:>10}: http={st} api={code!r} stockSort={sort_val!r} stockFlag={flag_val!r} top_stocks={stocks}"
+            )
+            time.sleep(0.4)
 
     if args.dump:
         _dump_json(Path(args.dump), data)
