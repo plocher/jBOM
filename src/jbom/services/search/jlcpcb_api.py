@@ -143,6 +143,86 @@ class JlcpcbPartsApi:
 
         return self._post_json(self.SEARCH_URL, payload)
 
+    def search_parametric(
+        self,
+        *,
+        query: str,
+        first_sort_name: str,
+        second_sort_name: str | None = None,
+        component_specification_list: list[str] | None = None,
+        component_attribute_list: list[dict[str, list[str]]] | None = None,
+        page: int = 1,
+        page_size: int = 50,
+        presale_type: str = "stock",
+        sort_mode: str = "STOCK_SORT",
+        sort_asc: str = "DESC",
+    ) -> dict[str, Any]:
+        """Search using category/spec/attribute filters (Issue #115 Phase 4).
+
+        Args:
+            query: Keyword context merged from inventory-derived terms.
+            first_sort_name: Top-level JLCPCB category name (e.g. "Resistors").
+            second_sort_name: Optional subcategory name.
+            component_specification_list: Optional package/spec filters.
+            component_attribute_list: Optional attribute filters as
+                ``[{attribute_name: [value1, value2]}, ...]``.
+            page: 1-indexed page.
+            page_size: Requested page size (max 1024 observed).
+            presale_type: Observed default is "stock".
+            sort_mode: Browser-observed sort mode, default "STOCK_SORT".
+            sort_asc: "DESC" or "ASC".
+
+        Returns:
+            Raw decoded JSON response.
+        """
+
+        specs = [
+            str(v).strip()
+            for v in (component_specification_list or [])
+            if str(v).strip()
+        ]
+
+        attrs: list[dict[str, list[str]]] = []
+        for group in component_attribute_list or []:
+            if not isinstance(group, dict):
+                continue
+            for name, values in group.items():
+                key = str(name).strip()
+                if not key:
+                    continue
+                cleaned_values = [
+                    str(v).strip() for v in (values or []) if str(v).strip()
+                ]
+                if cleaned_values:
+                    attrs.append({key: cleaned_values})
+
+        payload: dict[str, Any] = {
+            "currentPage": int(page),
+            "pageSize": int(page_size),
+            "keyword": (query or "").strip() or None,
+            "componentLibraryType": "",
+            "preferredComponentFlag": False,
+            "stockFlag": "",
+            "presaleType": str(presale_type or "stock"),
+            "searchType": 2,
+            "stockSort": None,
+            "firstSortName": str(first_sort_name or "").strip(),
+            "firstSortNameList": [str(first_sort_name or "").strip()]
+            if str(first_sort_name or "").strip()
+            else [],
+            "secondSortName": str(second_sort_name or "").strip() or None,
+            "componentSpecificationList": specs,
+            "componentAttributeList": attrs,
+            "componentBrandList": [],
+            "sortMode": str(sort_mode or "").strip(),
+            "sortASC": str(sort_asc or "").strip(),
+        }
+
+        if self._cfg.rate_limit_seconds > 0:
+            time.sleep(self._cfg.rate_limit_seconds)
+
+        return self._post_json(self.SEARCH_URL, payload)
+
     def _post_json(self, url: str, payload: dict[str, Any]) -> dict[str, Any]:
         headers = {
             "Accept": "application/json, text/plain, */*",

@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Search parametric filtering now supports category-aware value normalization for RES/CAP/IND/REG and uses canonical values as a tertiary sort key.
 - `inventory-search` query construction now supports per-supplier `search.type_query_keywords` with a safe hardcoded fallback.
 - `jbom search` console output now includes Description plus up to 2 heuristic parametric columns.
+- LCSC `inventory-search` now applies Issue #115 Phase 4 foundation heuristics for RES/CAP parametric query shaping (category/spec/attribute payloads with static defaults and safe keyword fallback).
 
 ## [7.0.0] - 2026-02-27
 
