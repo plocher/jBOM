@@ -22,6 +22,20 @@ A **component** is a placed part in a KiCad schematic, identified by a reference
 
 Components are the design-side input to jBOM. Their attributes express electro-mechanical requirements, not supply chain choices.
 
+#### Component Attribute Classification
+
+Not all attributes have the same meaning or handling. jBOM classifies component attributes into
+three camps that determine how they are used in matching, enrichment, and write-back:
+
+- **Camp 1** (KiCad-specified): Explicit designer constraints — must match; never modified by jBOM
+- **Camp 2** (implicitly defaulted): Attributes left blank by design choice — surfaced for explicit
+  confirmation during Mode A; written back only on acceptance; never auto-filled
+- **Camp 3** (catalog-only): Supplier catalog attributes with no electro-mechanical meaning —
+  silently filtered from Mode A display and inventory write-back
+
+See **[Component Attribute Enrichment](component-attribute-enrichment.md)** for the full model,
+lifecycle phases, domain defaults table, and write-back rules.
+
 ### Aggregation
 
 A KiCad project typically has many components but fewer unique parts. R1, R2, and R9 might all be `{value=330R, package=0603, tolerance=5%, category=resistor}` — they have identical electro-mechanical requirements.

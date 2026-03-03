@@ -109,6 +109,7 @@ This architecture documentation is organized as the authoritative source of desi
 - **[Layer Responsibilities](layer-responsibilities.md)** - Detailed layer definitions and constraints
 - **[Design Patterns](design-patterns.md)** - Established patterns used throughout jBOM
 - **[Integration Patterns](integration-patterns.md)** - Service composition and layer interaction
+- **[Component Attribute Enrichment](component-attribute-enrichment.md)** - 3-camp attribute model, lifecycle phases, domain defaults, and write-back rules
 
 ## Architectural Evolution
 
