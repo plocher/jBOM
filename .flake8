@@ -7,7 +7,9 @@ exclude =
     venv,
     build,
     dist,
-    *.egg-info
+    *.egg-info,
+    legacy,
+    poc
 
 # Ignore E402 (module level import not at top) in test files
 # Tests need sys.path manipulation before imports
