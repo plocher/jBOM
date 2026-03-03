@@ -55,9 +55,16 @@ Response schema confirmed (selected fields from v2 results):
 - Product URL: `lcscGoodsUrl`
 - Datasheet URL: `dataManualUrl`
 
-Open items to confirm:
-- `stockSort`/`stockFlag` values that enable stockCount-desc ordering.
-- Catalog coverage vs yaqwsx DB snapshot row counts (requires a local DB path to compare).
+Coverage note:
+- The API reports `componentPageInfo.total` ≈ 7.1M parts (observed 7,102,450).
+- Historic yaqwsx/jlcparts DBs are ~0.8M–1.0M rows; this mismatch is very likely a counting methodology difference
+  (e.g. SKUs/variants) rather than a coverage gap.
+- Therefore, Scenario A/B/C/D cannot be determined by row count alone; qualitative
+  spot-checks of rare subcategories are the real test.
+
+Stock sorting (confirmed via browser capture on 2026-03-03):
+- The UI uses `sortMode="STOCK_SORT"` with `sortASC="DESC"` (or "ASC").
+- `stockSort` remains `null` in those requests; attempting to set it to values like "desc" or "1" yields API `code=101`.
 
 If you have a yaqwsx/jlcparts SQLite snapshot, pass --db to compare rough catalog
 coverage (row counts + category tables) against what the live API appears to
@@ -167,7 +174,26 @@ def _build_parser() -> argparse.ArgumentParser:
         "--stock-sort",
         default="null",
         help=(
-            "stockSort parameter. Default null. (POC needs to discover values for stock-desc sorting.)"
+            "stockSort parameter (legacy/unknown). Default null. "
+            "NOTE: Browser capture indicates stock ordering is controlled by sortMode/sortASC instead."
+        ),
+    )
+
+    parser.add_argument(
+        "--sort-mode",
+        default="",
+        help=(
+            "sortMode parameter (browser observed). Example: STOCK_SORT. "
+            "Leave empty for server default."
+        ),
+    )
+
+    parser.add_argument(
+        "--sort-asc",
+        default="",
+        help=(
+            "sortASC parameter (browser observed). Example: DESC or ASC. "
+            "Leave empty for server default."
         ),
     )
 
@@ -175,8 +201,8 @@ def _build_parser() -> argparse.ArgumentParser:
         "--stock-sort-probe",
         action="store_true",
         help=(
-            "Try a small set of candidate stockSort values and report the top stockCount values returned, "
-            "to discover how to enable stockCount-desc ordering."
+            "Try browser-observed stock sorting knobs (sortMode/sortASC) and report the first page's stockCount values, "
+            "to confirm stockCount-desc ordering."
         ),
     )
 
@@ -452,6 +478,8 @@ def _build_payload(
     search_type: int,
     stock_flag: bool | None,
     stock_sort: str | None,
+    sort_mode: str | None,
+    sort_asc: str | None,
     component_library_type: str | None,
     specs: list[str],
     attributes: list[AttributeFilter],
@@ -513,6 +541,12 @@ def _build_payload(
         "stockSort": stock_sort,
         "stockFlag": stock_flag,
     }
+
+    # Browser capture suggests server-side sorting is controlled by these fields.
+    if sort_mode is not None and str(sort_mode).strip() != "":
+        payload["sortMode"] = str(sort_mode).strip()
+    if sort_asc is not None and str(sort_asc).strip() != "":
+        payload["sortASC"] = str(sort_asc).strip()
 
     return payload
 
@@ -991,6 +1025,8 @@ def _run_inventory_mode(args: argparse.Namespace) -> int:
                 if str(args.stock_sort).strip().lower() in ("", "null", "none")
                 else str(args.stock_sort).strip()
             ),
+            sort_mode=(str(args.sort_mode).strip() or None),
+            sort_asc=(str(args.sort_asc).strip() or None),
             component_library_type=_coerce_component_library_type(
                 str(args.component_library_type)
             ),
@@ -1087,6 +1123,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         search_type=int(args.search_type),
         stock_flag=stock_flag,
         stock_sort=stock_sort_val,
+        sort_mode=(str(args.sort_mode).strip() or None),
+        sort_asc=(str(args.sort_asc).strip() or None),
         component_library_type=_coerce_component_library_type(
             str(args.component_library_type)
         ),
@@ -1213,18 +1251,14 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(f"\n== filterComponentAttribute ==\nError: {exc}")
 
     if bool(getattr(args, "stock_sort_probe", False)):
-        print("\n== stockSort probe ==")
-        candidates: list[tuple[str, str | None, bool | None]] = [
+        print("\n== stock sort probe ==")
+        candidates: list[tuple[str, str | None, str | None]] = [
             ("baseline", None, None),
-            ("desc", "desc", None),
-            ("DESC", "DESC", None),
-            ("1", "1", None),
-            ("-1", "-1", None),
-            ("true+desc", "desc", True),
-            ("true+1", "1", True),
+            ("STOCK_SORT DESC", "STOCK_SORT", "DESC"),
+            ("STOCK_SORT ASC", "STOCK_SORT", "ASC"),
         ]
 
-        def _top_stocks(resp: dict[str, Any], n: int = 8) -> list[int]:
+        def _top_stocks(resp: dict[str, Any], n: int = 10) -> list[int]:
             p = _g(resp, "data", default={})
             page_info = _g(p, "componentPageInfo", default={})
             lst = _g(page_info, "list", default=[])
@@ -1239,10 +1273,16 @@ def main(argv: Sequence[str] | None = None) -> int:
                         out.append(0)
             return out
 
-        for label, sort_val, flag_val in candidates:
+        def _is_nonincreasing(nums: list[int]) -> bool:
+            return all(nums[i] >= nums[i + 1] for i in range(len(nums) - 1))
+
+        for label, mode, asc in candidates:
             pay = dict(payload)
-            pay["stockSort"] = sort_val
-            pay["stockFlag"] = flag_val
+            # Preserve browser behavior: stockSort remains null.
+            pay["stockSort"] = None
+            pay["sortMode"] = mode or ""
+            pay["sortASC"] = asc or ""
+
             st, resp = _post(
                 url=SEARCH_URL,
                 payload=pay,
@@ -1251,8 +1291,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
             code = _g(resp, "code", default=None)
             stocks = _top_stocks(resp)
+            ok = _is_nonincreasing(stocks) if stocks else False
             print(
-                f"  {label:>10}: http={st} api={code!r} stockSort={sort_val!r} stockFlag={flag_val!r} top_stocks={stocks}"
+                f"  {label:>14}: http={st} api={code!r} sortMode={mode!r} sortASC={asc!r} top_stocks={stocks} sorted_desc={ok}"
             )
             time.sleep(0.4)
 
