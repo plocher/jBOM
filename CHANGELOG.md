@@ -1,6 +1,21 @@
 # CHANGELOG
 
 
+## v6.20.0 (2026-03-03)
+
+### Features
+
+* feat: implement JlcpcbProvider — live JLCPCB/LCSC API (Phase 1+2 of #115) (#118)
+
+* chore: add LCSC/JLCPCB live API POC script
+* chore: fix JLCPCB API POC facet+parametric payloads
+* chore: document stock sorting and coverage notes in POC
+* chore: exclude legacy/poc from flake8 pre-commit
+* feat: add jlcpcb_api provider for LCSC live search
+* test: add/update tests for jlcpcb_api
+* docs: update changelog for jlcpcb_api provider ([`d37743d`](https://github.com/plocher/jBOM/commit/d37743d215850a8b55fa7e877bb7fe709942badb))
+
+
 ## v6.19.1 (2026-03-02)
 
 ### Refactoring
