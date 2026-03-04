@@ -1,6 +1,34 @@
 # CHANGELOG
 
 
+## v6.23.0 (2026-03-04)
+
+### Features
+
+* feat: add defaults profile system (#98)
+
+- Implement find_profile() / profile_search_dirs() shared resolver
+  (src/jbom/config/profile_search.py) with 6-level search path:
+  cwd/.jbom → repo_root/.jbom → JBOM_PROFILE_PATH → ~/.jbom →
+  platform system dir → built-in package dir
+- Add DefaultsConfig dataclass + load_defaults() / get_defaults() loader
+  (src/jbom/config/defaults.py) with extends: deep-merge support
+- Add generic.defaults.yaml factory default profile with all 5 constant
+  groups (domain_defaults, package_power, package_voltage,
+  parametric_query_fields, category_route_rules) plus enrichment_attributes
+- Remove 5 hardcoded constant dicts from jlcpcb_phase4_heuristics.py;
+  build_phase4_parametric_query_plan() now accepts defaults: DefaultsConfig|None
+- Retrofit load_fabricator() and load_supplier() to use find_profile()
+  for consistent profile resolution
+- Add 35+ unit and integration tests
+- Update component-attribute-enrichment.md: replace conceptual schema
+  placeholders with implemented schema and search-path documentation
+
+Tech debt logged in #98: --defaults CLI flag deferred to #99 epic.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`396b780`](https://github.com/plocher/jBOM/commit/396b7808db734b13deee18eedc8f07499b212ae6))
+
+
 ## v6.22.0 (2026-03-03)
 
 ### Features
