@@ -123,58 +123,68 @@ When an inventory enrichment operation writes data:
 | Sourcing fields (C-number, SPN, price, stock) | **Always written** on candidate acceptance |
 | Camp 3 (catalog-only) | **Not written** — excluded by `enrichment_attributes` filter |
 
-## enrichment_attributes YAML (Camp 3 Filter)
+## Defaults Profile System (implemented in #98)
 
-The list of Camp 3 attributes to exclude is controlled by a per-category YAML configuration.
-This allows the org to tune what "noise" means for their workflow without code changes.
+The Camp 2 domain defaults and Camp 3 filter lists live in `*.defaults.yaml` profile files,
+loaded by `jbom.config.defaults`. This is the same pattern as `*.fab.yaml` and
+`*.supplier.yaml` — profile name, search path, built-in fallback.
 
-Conceptual schema (exact implementation in #98):
+**Profile file**: `<name>.defaults.yaml` (e.g. `generic.defaults.yaml`, `aerospace.defaults.yaml`)
+
+**Search path** (highest priority first):
+1. `<project>/.jbom/` — project-local override (checked into repo or gitignored)
+2. `<repo_root>/.jbom/` — monorepo root override
+3. Dirs in `JBOM_PROFILE_PATH` env var — org shared profile library
+4. `~/.jbom/` — personal developer defaults
+5. Platform system dir (Mac: `~/Library/Application Support/jBOM/`)
+6. Built-in package (`src/jbom/config/defaults/`) — factory defaults, always present
+
+**Override without copying**: use `extends: generic` in your profile file to inherit the
+factory defaults and change only what differs:
 
 ```yaml
-enrichment_attributes:
+extends: generic
+domain_defaults:
   resistor:
-    show_in_mode_a: [tolerance, power_rating, voltage_rating]
+    tolerance: "1%"   # aerospace/precision override
+```
+
+Merge semantics: dict sections are deep-merged (child overlays parent); list sections are
+replaced entirely.
+
+**Profile schema** (see `src/jbom/config/defaults/generic.defaults.yaml` for full example):
+
+```yaml
+domain_defaults:             # Camp 2 electrical defaults by category
+  resistor:
+    tolerance: "5%"
+  capacitor:
+    tolerance: "10%"
+    dielectric: "X7R"
+
+package_power:               # SMD resistor power ratings by package
+  "0402": "63mW"
+  "0603": "100mW"
+
+package_voltage:             # SMD capacitor voltage ratings by package
+  "0402": "10V"
+  "0603": "25V"
+
+enrichment_attributes:       # Camp 2/3 classification per category
+  resistor:
+    show_in_mode_a: [tolerance, power_rating, voltage_rating, technology]
     suppress: [pricing, stock, lead_time, eia_land_pattern, series]
   capacitor:
     show_in_mode_a: [tolerance, voltage_rating, dielectric]
     suppress: [pricing, stock, lead_time, eia_land_pattern, series]
-  # ... per category
 ```
 
-The `show_in_mode_a` list defines which Camp 2 attributes are surfaced for confirmation. The
-`suppress` list defines Camp 3 attributes that are silently filtered.
+The `show_in_mode_a` list defines which Camp 2 attributes Mode A surfaces for confirmation.
+The `suppress` list defines Camp 3 attributes silently filtered from Mode A and write-back.
 
-## Domain Defaults Table
-
-When Mode A surfaces a Camp 2 attribute for confirmation, it needs a sensible pre-selection.
-These defaults belong **in jBOM** (not in supplier profiles) and must be org-overridable.
-
-The logic: defaults reflect design culture, not supplier taxonomy. An aerospace org defaults to
-1% tolerance; a consumer electronics org defaults to 5%. A supplier profile has nothing to do
-with that decision.
-
-Conceptual schema (exact implementation in #98):
-
-```yaml
-domain_defaults:
-  package_power:          # SMD resistor default power ratings by package
-    "0402": "63mW"
-    "0603": "100mW"
-    "0805": "125mW"
-    "1206": "250mW"
-    "2512": "1W"
-  tolerance_tiers:        # by application tier
-    commodity: "5%"       # consumer electronics, non-critical signals
-    standard: "1%"        # general precision
-    precision: "0.1%"     # metrology, reference, audio
-  voltage_defaults:       # default voltage rating by capacitor package/dielectric
-    "0402_X5R": "10V"
-    "0603_X7R": "25V"
-    "0805_X7R": "50V"
-```
-
-Org-level override via project YAML allows aerospace teams to set `tolerance_tiers.commodity:
-"1%"` or automotive teams to annotate AEC-Q qualification requirements.
+Defaults reflect **design culture, not supplier taxonomy**. An aerospace org sets
+`tolerance: "1%"`; a consumer org uses the generic `"5%"`. Supplier profiles have nothing
+to do with this — they are orthogonal.
 
 ## Interaction with Mode A (#99)
 
@@ -206,5 +216,8 @@ confirmation workflow that respects the deliberate design decision to leave fiel
 See also:
 - `workflow-architecture.md` — BOM generation pipeline and component attribute foundations
 - `domain-centric-design.md` — bounded contexts and domain model structure
-- GitHub #98 — enrichment output structure (implementation issue)
-- GitHub #99 — Mode A interactive loop (implementation issue)
+- `src/jbom/config/defaults/generic.defaults.yaml` — factory default profile
+- `src/jbom/config/defaults.py` — DefaultsConfig dataclass and loader
+- `src/jbom/config/profile_search.py` — shared search path resolver
+- GitHub #98 — defaults profile system (implemented)
+- GitHub #99 — Mode A interactive loop (pending)

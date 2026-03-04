@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Mapping, Optional
 
 import yaml
 
+from jbom.config.profile_search import find_profile
 from jbom.config.suppliers import resolve_supplier_by_id
 
 log = logging.getLogger(__name__)
@@ -429,6 +430,9 @@ def get_available_fabricators() -> list[str]:
 def load_fabricator(fid: str) -> FabricatorConfig:
     """Load fabricator configuration from YAML file.
 
+    Searches the profile search path (project .jbom/, repo root, JBOM_PROFILE_PATH,
+    ~/.jbom/, system dirs) before falling back to the built-in package directory.
+
     Args:
         fid: Fabricator ID (filename without .fab.yaml extension)
 
@@ -438,8 +442,8 @@ def load_fabricator(fid: str) -> FabricatorConfig:
     Raises:
         ValueError: If fabricator not found or missing required fields
     """
-    path = _BUILTIN_DIR / f"{fid}.fab.yaml"
-    if not path.exists():
+    path = find_profile(fid, "fab", builtin_dir=_BUILTIN_DIR)
+    if path is None:
         raise ValueError(f"Unknown fabricator: {fid}")
 
     with open(path, "r", encoding="utf-8") as f:

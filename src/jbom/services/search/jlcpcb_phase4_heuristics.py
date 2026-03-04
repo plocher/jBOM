@@ -1,8 +1,12 @@
 """Phase 4 decision-tree query shaping for JLCPCB/LCSC search.
 
-This module provides data-first, YAML-shaped constants and deterministic helper
-logic used by Issue #115 Phase 4 foundation work. It intentionally avoids
-interactive prompting (Mode A / #99) and avoids configuration loader work (#98).
+This module provides deterministic helper logic for building structured
+JLCPCB/LCSC parametric search queries from inventory item attributes.
+
+All configurable constants (domain defaults, package ratings, routing rules,
+query fields) are loaded from the defaults profile system (#98) via
+get_defaults() / DefaultsConfig. See generic.defaults.yaml for factory values
+and docs/dev/architecture/component-attribute-enrichment.md for the design model.
 """
 
 from __future__ import annotations
@@ -11,55 +15,8 @@ from dataclasses import dataclass
 
 from jbom.common.types import InventoryItem
 from jbom.common.value_parsing import farad_to_eia, ohms_to_eia
+from jbom.config.defaults import DefaultsConfig, get_defaults
 from jbom.services.search.cache import normalize_query
-
-# YAML-shaped constants (kept in code for Phase 4 foundation only).
-PARAMETRIC_QUERY_FIELDS: dict[str, list[str]] = {
-    "resistor": ["resistance", "tolerance", "package", "power_rating", "technology"],
-    "capacitor": [
-        "capacitance",
-        "tolerance",
-        "package",
-        "voltage_rating",
-        "dielectric",
-    ],
-}
-
-CATEGORY_ROUTE_RULES: dict[str, dict[str, str]] = {
-    "resistor": {
-        "first_sort": "Resistors",
-        "second_sort_smd": "Chip Resistor - Surface Mount",
-        "second_sort_pth": "Through Hole Resistors",
-    },
-    "capacitor": {
-        "first_sort": "Capacitors",
-    },
-}
-
-DOMAIN_DEFAULTS: dict[str, dict[str, str]] = {
-    "resistor": {
-        "tolerance": "5%",
-    },
-    "capacitor": {
-        "tolerance": "10%",
-        "dielectric": "X7R",
-    },
-}
-
-PACKAGE_POWER_DEFAULTS: dict[str, str] = {
-    "0402": "63mW",
-    "0603": "100mW",
-    "0805": "125mW",
-    "1206": "250mW",
-    "2512": "1W",
-}
-
-PACKAGE_VOLTAGE_DEFAULTS: dict[str, str] = {
-    "0402": "10V",
-    "0603": "25V",
-    "0805": "50V",
-    "1206": "50V",
-}
 
 
 @dataclass(frozen=True)
@@ -99,20 +56,28 @@ class JlcpcbParametricQueryPlan:
 
 
 def build_phase4_parametric_query_plan(
-    item: InventoryItem, *, base_query: str
+    item: InventoryItem,
+    *,
+    base_query: str,
+    defaults: DefaultsConfig | None = None,
 ) -> JlcpcbParametricQueryPlan:
     """Build a Phase 4 query plan for one inventory item.
 
     Supported categories:
     - RES (resistor)
     - CAP (capacitor)
-    """
 
+    Args:
+        item: Inventory item to build a query plan for.
+        base_query: Pre-built keyword query string (used as fallback).
+        defaults: Defaults profile to use. Loads 'generic' profile when None.
+    """
+    cfg = defaults if defaults is not None else get_defaults()
     category = _normalize_category(item.category)
     if category == "RES":
-        return _build_resistor_plan(item, base_query=base_query)
+        return _build_resistor_plan(item, base_query=base_query, defaults=cfg)
     if category == "CAP":
-        return _build_capacitor_plan(item, base_query=base_query)
+        return _build_capacitor_plan(item, base_query=base_query, defaults=cfg)
 
     return JlcpcbParametricQueryPlan(
         use_parametric=False,
@@ -123,10 +88,11 @@ def build_phase4_parametric_query_plan(
 
 
 def _build_resistor_plan(
-    item: InventoryItem, *, base_query: str
+    item: InventoryItem, *, base_query: str, defaults: DefaultsConfig
 ) -> JlcpcbParametricQueryPlan:
-    first_sort = CATEGORY_ROUTE_RULES["resistor"]["first_sort"]
-    second_sort = _resistor_second_sort(item)
+    rules = defaults.get_category_route_rules("resistor")
+    first_sort = rules.get("first_sort", "Resistors")
+    second_sort = _resistor_second_sort(item, defaults=defaults)
 
     specs: list[str] = []
     package = _normalize_token(item.package)
@@ -143,16 +109,15 @@ def _build_resistor_plan(
         )
 
     tolerance = _normalize_tolerance(
-        item.tolerance, default=DOMAIN_DEFAULTS["resistor"]["tolerance"]
+        item.tolerance,
+        default=defaults.get_domain_default("resistor", "tolerance", fallback="5%"),
     )
 
     attributes: list[tuple[str, tuple[str, ...]]] = [("Resistance", (resistance,))]
     if tolerance:
         attributes.append(("Tolerance", (tolerance,)))
 
-    power_rating = _normalize_token(item.wattage) or _package_default(
-        PACKAGE_POWER_DEFAULTS, package
-    )
+    power_rating = _normalize_token(item.wattage) or defaults.get_package_power(package)
     technology = _resistor_technology_token(item.type)
 
     keyword_query = _merge_keyword_tokens(base_query, [technology, power_rating])
@@ -170,9 +135,10 @@ def _build_resistor_plan(
 
 
 def _build_capacitor_plan(
-    item: InventoryItem, *, base_query: str
+    item: InventoryItem, *, base_query: str, defaults: DefaultsConfig
 ) -> JlcpcbParametricQueryPlan:
-    first_sort = CATEGORY_ROUTE_RULES["capacitor"]["first_sort"]
+    rules = defaults.get_category_route_rules("capacitor")
+    first_sort = rules.get("first_sort", "Capacitors")
 
     specs: list[str] = []
     package = _normalize_token(item.package)
@@ -189,13 +155,12 @@ def _build_capacitor_plan(
         )
 
     tolerance = _normalize_tolerance(
-        item.tolerance, default=DOMAIN_DEFAULTS["capacitor"]["tolerance"]
+        item.tolerance,
+        default=defaults.get_domain_default("capacitor", "tolerance", fallback="10%"),
     )
-    voltage = _normalize_voltage(item.voltage) or _package_default(
-        PACKAGE_VOLTAGE_DEFAULTS, package
-    )
-    dielectric = (
-        _dielectric_token(item.type) or DOMAIN_DEFAULTS["capacitor"]["dielectric"]
+    voltage = _normalize_voltage(item.voltage) or defaults.get_package_voltage(package)
+    dielectric = _dielectric_token(item.type) or defaults.get_domain_default(
+        "capacitor", "dielectric", fallback="X7R"
     )
 
     attributes: list[tuple[str, tuple[str, ...]]] = [("Capacitance", (capacitance,))]
@@ -277,16 +242,19 @@ def _capacitance_attribute_value(item: InventoryItem) -> str:
     return _normalize_token(item.value)
 
 
-def _resistor_second_sort(item: InventoryItem) -> str | None:
+def _resistor_second_sort(
+    item: InventoryItem, *, defaults: DefaultsConfig
+) -> str | None:
+    rules = defaults.get_category_route_rules("resistor")
     smd = _normalize_token(item.smd).upper()
     if smd == "SMD":
-        return CATEGORY_ROUTE_RULES["resistor"]["second_sort_smd"]
+        return rules.get("second_sort_smd")
     if smd == "PTH":
-        return CATEGORY_ROUTE_RULES["resistor"]["second_sort_pth"]
+        return rules.get("second_sort_pth")
 
     type_token = _normalize_token(item.type).lower()
     if any(t in type_token for t in ("wirewound", "metal film", "carbon film")):
-        return CATEGORY_ROUTE_RULES["resistor"]["second_sort_pth"]
+        return rules.get("second_sort_pth")
     return None
 
 
@@ -319,11 +287,6 @@ def _merge_keyword_tokens(base_query: str, extras: list[str]) -> str:
 
 
 __all__ = [
-    "CATEGORY_ROUTE_RULES",
-    "DOMAIN_DEFAULTS",
     "JlcpcbParametricQueryPlan",
-    "PACKAGE_POWER_DEFAULTS",
-    "PACKAGE_VOLTAGE_DEFAULTS",
-    "PARAMETRIC_QUERY_FIELDS",
     "build_phase4_parametric_query_plan",
 ]
