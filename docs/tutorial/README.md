@@ -1,97 +1,48 @@
-# jBOM Developer Tutorial Series
+# jBOM Tutorial Series
 
-This tutorial series demonstrates jBOM's development methodology. The tutorials focus on jBOM's architectural patterns, design philosophy, and TDD workflow rather than implementation details.
+Welcome to jBOM. These tutorials walk you through real workflows, starting from nothing and working up to customizing jBOM for your team or fab house.
 
-## Tutorial Example: POS Service
+Each tutorial builds on the previous one. Start at the beginning if you are new to jBOM.
 
-The tutorial introduces a service and CLI and to generate Component Placement Lists for PCB fabrication.  The example is based on the production `jbom pos` implementation.
+## Tutorial Path
 
-The premise for this feature is
-  * **Business Domain**: Generate component placement files for PCB manufacturing
-  * **User Interface**: `jbom pos board.kicad_pcb [options]`
-  * **Key Services**: PCB Reader, POS Generator, Coordinate Transformer
-  * **Integration Points**: CLI adapter, Gherkin features, unit/integration tests
+### [1. Key Concepts](README.context.md)
+**5 minutes — read first**
 
-This example demonstrates:
-- Multi-service collaboration (PCB Reader → POS Generator)
-- Configuration-driven behavior (units, filters, coordinate systems)
-- Domain-specific business rules (SMD vs through-hole, layer separation)
-- Manufacturing workflow integration (CSV output, console presentation)
+Learn the mental model behind jBOM before you type any commands:
+- What problem jBOM solves and why it works the way it does
+- The three things you need: a KiCad project, an inventory file, and a fabricator profile
+- How profiles let you change behaviour without changing your design
 
-## Using These Tutorials
+### [2. Your First BOM](README.implementation.md)
+**15 minutes — core workflow**
 
-1. Start with [Context](README.context.md) to understand jBOM's design philosophy and learn why jBOM made specific design decisions
-2. Follow [Implementation](README.implementation.md) to see these test-driven design patterns used in service development
-3. Study [Integration](README.integration.md) for CLI integration and layered testing strategies
-4. Reference [Documentation](README.documentation.md) when adding new features
+Go from a KiCad project to JLCPCB-ready manufacturing files:
+- Extract an inventory template from your schematic
+- Fill in part numbers and edit your inventory
+- Generate a fabrication BOM and a component placement file (CPL)
+- Check what matched and what didn't
 
-Each tutorial demonstrates extensibility points:
-- **New Services**: Follow implementation patterns for domain logic
-- **New CLI Commands**: Use integration patterns for interface adaptation
-- **New Domain Models**: Apply shared foundational core patterns
-- **New Testing**: Implement
+### [3. Finding and Enriching Parts](README.integration.md)
+**20 minutes — search and bulk enrichment**
 
-## Beyond the Tutorials
+Find supplier part numbers without leaving the terminal:
+- Search Mouser interactively with `jbom search`
+- Bulk-match an entire inventory file against LCSC with `jbom inventory-search`
+- Use a dry run to preview what will be searched before spending API quota
+- Save an enriched inventory for BOM generation
 
-After completing these tutorials, you should be able to:
+### [4. Customising for Your Workflow](README.documentation.md)
+**20 minutes — profiles and configuration**
 
-- Add new domain services following jBOM's patterns
-- Create CLI adapters that properly separate interface and business concerns
-- Write appropriate tests for each architectural layer
-- Maintain documentation that communicates architectural decisions
-- Extend jBOM while preserving its design integrity
+Tailor jBOM's output and behaviour to your team or organisation:
+- Use a custom fabricator profile with your own BOM column names
+- Create a defaults profile that sets organisation-wide tolerances and voltage ratings
+- Share profiles across a team using `JBOM_PROFILE_PATH`
+- Override just what you need with `extends:`
 
-The tutorial approach emphasizes understanding architectural principles over implementation details to encourage consistency in feature evolution.
+## Quick Reference
 
-## Tutorial Structure
+Once you have worked through the tutorials, the complete command reference is in [README.man1.md](../README.man1.md).
 
-### [1. Context: Design Patterns & Architecture](README.context.md)
-
-**Goal**: Understand jBOM's design philosophy before writing code.
-
-**Topics Covered**:
-- Domain-centric architecture with layered responsibilities
-- Domain-driven design patterns (services, value objects, shared kernel)
-- Architectural constraints and dependency management
-- Development workflow using TDD and Gherkin specifications
-
-**Key Takeaway**: jBOM uses stateful domain services for business logic, stateless application layer for workflow orchestration, and pure domain models for shared concepts.
-
-### [2. Implementation: Building Domain Services](README.implementation.md)
-
-**Goal**: Implement a complete domain service following jBOM's patterns.
-
-**Topics Covered**:
-- Gherkin feature definition and step implementation
-- Domain model creation with business rules
-- Service implementation using strategy and factory patterns
-- Configuration objects and error handling
-- Unit testing with domain-focused test data
-
-**Key Takeaway**: Domain services encapsulate business operations as stateful objects with business logic, tested in isolation from infrastructure concerns.
-
-### [3. Integration: CLI Adapters & Testing](README.integration.md)
-
-**Goal**: Connect domain services to user interfaces through adapter patterns.
-
-**Topics Covered**:
-- Application layer command implementation as stateless orchestrators
-- Input translation from interface arguments to domain configuration
-- Output presentation adapting domain results for different formats
-- Error translation from domain exceptions to user messages
-- Integration and functional testing strategies
-
-**Key Takeaway**: Application layer orchestrates workflows between interface concerns and domain services without containing business logic, enabling multiple interface types.
-
-### [4. Documentation: Maintaining Project Docs](README.documentation.md)
-
-**Goal**: Keep project documentation aligned with architectural changes.
-
-**Topics Covered**:
-- Documentation philosophy and audience-specific content
-- CHANGELOG maintenance for version management
-- Service and architecture documentation updates
-- CLI help and user workflow documentation
-- Testing documentation and maintenance guidelines
-
-**Key Takeaway**: Documentation should reflect architectural decisions and provide practical guidance for different audiences (users, developers, architects).
+For configuration details — profile file format, search paths, environment variables — see [README.configuration.md](../README.configuration.md).

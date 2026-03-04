@@ -1,17 +1,139 @@
-# Integration Tutorial: CLI Adapters and Testing
+# Tutorial 3: Finding and Enriching Parts
 
-This tutorial demonstrates how to integrate domain services with jBOM's CLI interface and testing infrastructure, following the adapter pattern and TDD workflow.
+In Tutorial 2 you filled in LCSC part numbers by hand. For a new project with dozens of passives, that gets tedious fast. This tutorial covers jBOM's two search commands:
 
-## Application Layer Integration Overview
+- `jbom search` — interactive search for a single part
+- `jbom inventory-search` — bulk-match an entire inventory file against LCSC
 
-The Application Layer acts as an **orchestrator** between interface concerns and domain services:
+## Prerequisites
 
-- **Input Translation**: Interface arguments → Domain configuration objects
-- **Service Orchestration**: Coordinate multiple domain services
-- **Output Presentation**: Domain results → Interface-appropriate formats
-- **Error Translation**: Domain exceptions → User-friendly messages
+- An inventory CSV from Tutorial 2 (some LCSC fields may be empty)
+- A Mouser API key **or** LCSC access via JLCPCB
 
-## Step 1: Create Application Layer Command
+> **API keys**: `jbom search` uses Mouser by default. Get a free key at [mouser.com/api](https://www.mouser.com/api-hub/). `jbom inventory-search` uses the LCSC/JLCPCB API and does not require an explicit key for the public catalog.
+
+## Step 1: Search for a single part interactively
+
+```bash
+export MOUSER_API_KEY=your_key_here
+jbom search "10k 0603 resistor" --limit 5
+```
+
+This queries Mouser and prints a table of up to 5 matching parts:
+
+```
+Manufacturer  MPN              Description                 Stock   Price
+-----------   ---------------  --------------------------  ------  -----
+YAGEO         RC0603FR-0710KL  10 kOhms ±1% 0603 Thick..  847200  0.004
+...
+```
+
+By default jBOM applies smart parametric filtering: it parses `"10k 0603 resistor"` and adds Mouser attribute filters for resistance, package, and tolerance. Disable this with `--no-parametric` if you want raw keyword results.
+
+**Filter to a specific provider:**
+```bash
+jbom search "100nF 0603 X7R" --provider lcsc --limit 10
+```
+
+**See all fields** (not just the default display set):
+```bash
+jbom search "AMS1117-3.3" --list-fields
+jbom search "AMS1117-3.3" --fields Mfr_Part_No,Description,Stock,Price_USD,LCSC
+```
+
+**Save to CSV:**
+```bash
+jbom search "10k 0603 resistor" -o results.csv
+```
+
+## Step 2: Set up your API key permanently
+
+Instead of `export` every session, add the key to your shell profile:
+
+```bash
+# ~/.zshrc or ~/.bashrc
+export MOUSER_API_KEY=your_key_here
+```
+
+Or use a `.env` file in your project directory (with a tool like `direnv`).
+
+## Step 3: Bulk-enrich your inventory
+
+`jbom inventory-search` reads your entire inventory file and queries LCSC for candidate part numbers for every row that does not already have an LCSC value (or for all rows if you want alternatives).
+
+**Dry run first** — see what would be searched without making any API calls:
+```bash
+jbom inventory-search inventory.csv --dry-run
+```
+
+The output shows which items are searchable, which are skipped (already have LCSC), and why some may be excluded:
+```
+Searchable items: 14
+  RES  10K     0603  → will search LCSC
+  RES  100R    0402  → will search LCSC
+  CAP  100nF   0603  → will search LCSC
+  IC   AMS1117-3.3  SOT-223  → will search LCSC
+  ...
+Skipped: 3 (LCSC already set)
+Excluded: 2 (category not supported: CONN, MECH)
+```
+
+**Run the actual search:**
+```bash
+jbom inventory-search inventory.csv -o enriched.csv --report report.txt
+```
+
+- `-o enriched.csv` writes a copy of your inventory with LCSC fields filled in where candidates were found
+- `--report report.txt` writes a human-readable summary of what was found, what was ambiguous, and what was not found
+
+**Limit to specific categories** (useful to avoid wasting quota on parts you already have):
+```bash
+jbom inventory-search inventory.csv --categories RES,CAP -o enriched.csv
+```
+
+**Limit candidates per item** (default 3):
+```bash
+jbom inventory-search inventory.csv --limit 5 -o enriched.csv
+```
+
+## Step 4: Review and accept candidates
+
+Open `enriched.csv`. For items where jBOM found exactly one candidate, the LCSC column is filled. For items with multiple candidates, jBOM adds rows with higher Priority numbers — review and delete the ones you do not want.
+
+For items marked "not found" in the report, you will need to search manually (web UI or `jbom search`) and add the part number yourself.
+
+Once you are happy with `enriched.csv`, use it as your inventory for BOM generation:
+```bash
+jbom bom MyBoard/ --jlc --inventory enriched.csv
+```
+
+## Step 5: Cache management
+
+jBOM caches API responses on disk to avoid redundant calls. The cache is per-provider.
+
+```bash
+# Skip cache for this run (always fetch fresh data)
+jbom inventory-search inventory.csv --no-cache -o enriched.csv
+
+# Clear the LCSC cache before running
+jbom inventory-search inventory.csv --clear-cache -o enriched.csv
+```
+
+## Common issues
+
+**"Search commands require API key"**: Set `MOUSER_API_KEY` environment variable or pass `--api-key YOUR_KEY`.
+
+**"Unsupported inventory file format"**: Install the optional parser:
+```bash
+pip install jbom[excel]    # for .xlsx / .xls
+pip install jbom[numbers]  # for .numbers
+```
+
+**Low match quality**: `inventory-search` uses the same parametric matching as `jbom search`. If results are poor, check that your inventory Value and Package fields match LCSC conventions (e.g., `10K` not `10000`, `0603` not `0603_1608Metric`).
+
+## Next steps
+
+- [Tutorial 4: Customising for Your Workflow](README.documentation.md) — create a custom fabricator profile, set org-wide tolerances with a defaults profile
 
 Implement the POS command orchestrator in `cli/pos.py`:
 
