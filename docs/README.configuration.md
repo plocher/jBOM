@@ -2,102 +2,59 @@
 
 ## Overview
 
-jBOM uses a hierarchical YAML-based configuration system that allows complete customization of fabricator settings, BOM formats, and part number priorities without hardcoding.
+jBOM uses YAML profile files to configure fabricator formats, supplier connections, and electrical defaults. There is no global config file to maintain — each profile type is resolved independently by name, using the same search path.
 
-## Configuration Hierarchy
+## Profile Types
 
-Configurations are loaded in order of precedence (later configs override earlier ones):
+There are three kinds of profiles:
 
-1. **Package Defaults**: Built-in configs distributed with jBOM
-   - Location: `<jbom-package>/config/defaults.yaml`
-   - Contains: JLC, PCBWay, Seeed, Generic fabricators
+| Profile type | File suffix | Selects | CLI flag |
+|---|---|---|---|
+| Fabricator | `*.fab.yaml` | BOM/CPL column names, part-number field order | `--fabricator NAME` or `--jlc`, `--pcbway`, etc. |
+| Supplier | `*.supplier.yaml` | API endpoint, rate limits, authentication | (internal, no CLI flag yet) |
+| Defaults | `*.defaults.yaml` | Electrical defaults for parametric search | (auto-loaded from search path) |
 
-2. **System Configs**: System-wide settings (rare)
-   - macOS: `/Library/Application Support/jbom/config.yaml`
-   - Windows: `%PROGRAMDATA%\jbom\config.yaml` (e.g., `C:\ProgramData\jbom\config.yaml`)
-   - Linux: `/etc/jbom/config.yaml` or `/usr/local/etc/jbom/config.yaml`
+Built-in profiles (always present):
+- Fabricators: `jlc`, `pcbway`, `seeed`, `generic`
+- Supplier: `lcsc`
+- Defaults: `generic`
 
-3. **User Home Configs**: Personal user settings
-   - macOS: `~/Library/Application Support/jbom/config.yaml`
-   - Windows: `%APPDATA%\jbom\config.yaml` (e.g., `C:\Users\{username}\AppData\Roaming\jbom\config.yaml`)
-   - Linux: `~/.config/jbom/config.yaml` (XDG) or `~/.jbom/config.yaml` (legacy)
+## Profile Search Path
 
-4. **Project Configs**: Project-specific overrides
-   - Location: `.jbom/config.yaml` or `jbom.yaml` in project directory
-   - Use for: Project-specific fabricator preferences
+All three profile types use the same 6-level search path, checked in order (first match wins):
 
-## Configuration Replacement Behavior
+1. `<project>/.jbom/` — project-local, highest priority
+2. `<repo-root>/.jbom/` — for monorepos: nearest ancestor directory containing `.git/`
+3. Directories in `JBOM_PROFILE_PATH` env var — colon-separated, left to right
+4. `~/.jbom/` — personal per-user overrides
+5. Platform system directory:
+   - macOS: `~/Library/Application Support/jBOM/`
+   - Linux: `/usr/local/share/jBOM/` or `/etc/jBOM/`
+   - Windows: `%LOCALAPPDATA%\jBOM\`
+6. Built-in package directory — factory defaults, always present
 
-jBOM uses a **REPLACE** strategy for dictionary fields and list items (like component classifiers) within a configuration. This is critical for allowing users to remove unwanted defaults.
+Example: if you put `jlc.fab.yaml` in `MyBoard/.jbom/`, that file is used instead of the built-in JLC profile when running from `MyBoard/`.
 
-### Fabricator Configuration
-When you define an override for a fabricator (same `id`), the following fields are **fully replaced**, not merged key-by-key:
+## Inheritance and Merge Behaviour
+
+### Fabricator profiles: `based_on` field replacement
+
+Fabricator profiles use a **replace** strategy. When you define `based_on: "jlc"` and supply a `bom_columns` section, your section **fully replaces** the parent's `bom_columns`. You must include every column you want — omitted keys are not inherited from the parent.
+
+Fields replaced in their entirety:
 - `bom_columns`
 - `pos_columns`
 - `part_number`
 - `pcb_manufacturing`
 - `pcb_assembly`
 
-**Example:**
-If the default JLC config has 10 columns, and you define a `bom_columns` section with just 2 columns in your override, the resulting BOM will have **only those 2 columns**. The default columns are discarded.
+### Defaults profiles: `extends` deep-merge
 
-### Component Classifiers
-When you define a component classifier with the same `type` as a built-in one (e.g., `type: "LED"`), your definition **fully replaces** the built-in one.
+Defaults profiles use a **deep-merge** strategy. When you supply `extends: generic`, each dict section you include is recursively merged with the parent — only the keys you provide are overridden. Everything you omit is inherited as-is.
 
-This means you must include *all* rules you want to apply for that type, including the default ones if you still want them.
+Exception: list-valued sections (e.g., `parametric_query_fields`) are **replaced** entirely if you include them — you cannot append to a list, only substitute it.
 
-## Configuration File Format
-
-### Main Configuration File
-
-```yaml
-version: "3.0.0"
-schema_version: "2025.12.20"
-
-metadata:
-  description: "My custom jBOM configuration"
-  author: "John Doe"
-
-# Reference external fabricator files
-fabricators:
-  - name: "jlc"
-    file: "fabricators/jlc.fab.yaml"
-
-  - name: "myjlc"
-    file: "fabricators/myjlc.fab.yaml"
-
-  # Inline fabricator definition
-  - name: "Custom Fab"
-    id: "customfab"
-    description: "My custom fabricator"
-    part_number:
-      header: "Custom P/N"
-      priority_fields:
-        - "CUSTOM"
-        - "MPN"
-    bom_columns:
-      "Part": "reference"
-      "Custom P/N": "fabricator_part_number"
-
-global_presets:
-  minimal:
-    description: "Minimal BOM fields"
-    fields:
-      - "reference"
-      - "quantity"
-      - "description"
-
-component_classifiers:
-  - type: "RES"
-    rules:
-      - "lib_id contains resistor"
-      - "footprint contains res"
-  - type: "LED"
-    rules:
-      - "lib_id contains led"
-      # Add custom rule for WS2812 which might not match "led"
-      - "lib_id contains ws2812"
-```
+## Fabricator Profile File Format
 
 ### Fabricator Configuration File
 
@@ -280,80 +237,116 @@ fabricators:
       "Datasheet": "datasheet"
 ```
 
-## File Organization
+## File Organisation
 
-### Recommended Structure
+### Project-local profiles
 
-**macOS:**
-```
-~/Library/Application Support/jbom/
-├── config.yaml              # Main config file
-└── fabricators/
-    ├── myjlc.fab.yaml       # Custom JLC config
-    ├── mypcbway.fab.yaml    # Custom PCBWay config
-    └── company.fab.yaml     # Company-specific config
-```
-
-**Windows:**
-```
-%APPDATA%\jbom\
-├── config.yaml              # Main config file
-└── fabricators\
-    ├── myjlc.fab.yaml       # Custom JLC config
-    ├── mypcbway.fab.yaml    # Custom PCBWay config
-    └── company.fab.yaml     # Company-specific config
-```
-
-**Linux:**
-```
-~/.config/jbom/
-├── config.yaml              # Main config file
-└── fabricators/
-    ├── myjlc.fab.yaml       # Custom JLC config
-    ├── mypcbway.fab.yaml    # Custom PCBWay config
-    └── company.fab.yaml     # Company-specific config
-```
-
-### Project-Specific Configs
+The simplest way to add a custom profile is to put it directly in `.jbom/` in your project directory. No configuration needed — jBOM finds it automatically.
 
 ```
 MyProject/
 ├── MyProject.kicad_pro
 ├── MyProject.kicad_sch
-├── jbom.yaml               # Project config (option 1)
 └── .jbom/
-    ├── config.yaml         # Project config (option 2)
-    └── fabricators/
-        └── project.fab.yaml
+    ├── acmefab.fab.yaml          # custom fabricator
+    └── precision.defaults.yaml   # tighter tolerances
 ```
+
+With this layout, `jbom bom MyProject/ --acmefab` resolves `acmefab.fab.yaml` from `.jbom/`.
+
+### Personal profiles (apply to all your projects)
+
+```
+~/.jbom/
+├── acmefab.fab.yaml          # available everywhere
+└── generic.defaults.yaml     # overrides the factory defaults
+```
+
+### Team / organisation profiles (`JBOM_PROFILE_PATH`)
+
+```bash
+export JBOM_PROFILE_PATH=/shared/jbom-profiles
+```
+
+```
+/shared/jbom-profiles/
+├── aerospace.defaults.yaml
+├── automotive.defaults.yaml
+├── acmefab.fab.yaml
+└── lcsc.supplier.yaml
+```
+
+All users with `JBOM_PROFILE_PATH` set find these profiles without any per-project setup. Use a colon-separated list for multiple directories:
+```bash
+export JBOM_PROFILE_PATH=/shared/jbom-profiles:/opt/jbom-legacy-profiles
+```
+
+## Defaults Profile File Format
+
+File name: `<name>.defaults.yaml`
+Merge strategy: `extends:` deep-merge (see above)
+
+```yaml
+extends: generic   # optional: inherit from this profile
+
+# Electrical defaults by component category (used by parametric search)
+domain_defaults:
+  resistor:
+    tolerance: "5%"      # default when no tolerance specified in schematic
+  capacitor:
+    tolerance: "10%"
+    dielectric: "X7R"   # default when no dielectric specified
+
+# SMD resistor power ratings by package
+package_power:
+  "0402": "63mW"
+  "0603": "100mW"
+  "0805": "125mW"
+  "1206": "250mW"
+
+# SMD capacitor voltage ratings by package
+package_voltage:
+  "0402": "10V"
+  "0603": "25V"
+  "0805": "50V"
+
+# Attributes jBOM surfaces for Mode A interactive confirmation
+enrichment_attributes:
+  resistor:
+    show_in_mode_a: [tolerance, power_rating, voltage_rating, technology]
+    suppress: [pricing, stock, lead_time, eia_land_pattern, series]
+  capacitor:
+    show_in_mode_a: [tolerance, voltage_rating, dielectric]
+    suppress: [pricing, stock, lead_time, eia_land_pattern, series]
+```
+
+See `src/jbom/config/defaults/generic.defaults.yaml` in the package for the full factory defaults.
 
 ## Environment Variables
 
-- `JBOM_CONFIG_DIR`: Override config directory location
-- `JBOM_CONFIG_FILE`: Override config file path
+- `JBOM_PROFILE_PATH`: Colon-separated list of directories to include in the profile search path (org/team shared library).
 
 ## Troubleshooting
 
-### Config Loading Issues
+### Profile not found
 
-```bash
-# Debug config loading
-jbom bom --debug project/
-
-# Check what fabricators are loaded
-python -c "from jbom.common.config import get_config; c=get_config(); print([f.name for f in c.fabricators])"
+Check the search path jBOM is using:
+```python
+from jbom.config.profile_search import profile_search_dirs
+for d in profile_search_dirs():
+    print(d)
 ```
+Verify your profile file name matches `<name>.<type>.yaml` exactly (e.g., `acmefab.fab.yaml`, not `acmefab.yaml`).
 
-### Validation Errors
+### Fabricator validation errors
 
 - **Missing required fields**: Fabricator configs must have `name` field minimum
 - **Invalid YAML**: Use a YAML validator to check syntax
-- **File not found**: Check file paths in `file:` references
 - **Circular inheritance**: `based_on` cannot create loops
 
-### CLI Flag Conflicts
+### CLI flag conflicts
 
-- Fabricator `id` values must be unique
+- Fabricator `id` values must be unique across all loaded profiles
 - CLI flags are auto-generated from `id` (e.g., `id: "test"` → `--test`)
 - Avoid common flag names (`help`, `version`, etc.)
 

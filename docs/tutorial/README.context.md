@@ -1,100 +1,91 @@
-# jBOM Developer Tutorial: Adding a New Service
+# Tutorial 1: Key Concepts
 
-This tutorial series demonstrates jBOM's development approach by walking through adding a new POS (Position) service. The tutorial assumes you are an experienced software engineer familiar with design patterns and want to understand jBOM's architectural approach.
+## The problem jBOM solves
 
-## Tutorial Goal
+KiCad gives you a schematic and a PCB layout. Before you can order boards and parts, you need two more files:
 
-Add a new POS service to jBOM that generates component placement files from KiCad PCB data, following jBOM's established patterns and TDD workflow.
+- A **Bill of Materials (BOM)** — what to buy and how many
+- A **Placement file (CPL/POS)** — where each component sits on the board
 
-## Prerequisites
+The obvious approach is to put supplier part numbers directly into your KiCad symbols (e.g., `LCSC: C123456`). This works for a one-off board but breaks quickly:
+- Out-of-stock parts require editing the schematic
+- Different board revisions may use different sources
+- Colleagues using a different fab house need different columns
+- Sharing a design means sharing your sourcing decisions
 
-Before implementing any service, you need to understand jBOM's design language and architectural patterns.
+jBOM separates **what the circuit needs** (schematic) from **where to get it** (inventory file). Your schematic stays generic (`10kΩ 0603 resistor`). The inventory file maps that to a specific part. jBOM joins them at generation time.
 
-## jBOM's Design Philosophy
+## The three pieces
 
-### Domain-Centric Architecture
+### 1. Your KiCad project
 
-jBOM implements a domain-centric architecture with clear layer responsibilities:
+You already have this. jBOM reads `.kicad_sch` and `.kicad_pcb` files. No schematic modifications required.
 
-- **Domain Services Layer** (`services/`) - Pure business logic, stateful process objects
-- **Application Layer** (`cli/`) - Interface orchestration, stateless workflow managers
-- **Domain Model Layer** (`common/`) - Shared domain concepts and pure functions
-- **Configuration Layer** (`config/`) - Domain and application configuration
+### 2. An inventory file
 
-### Domain-Driven Design Patterns
+A CSV, Excel, or Numbers spreadsheet with one row per unique part. Required columns:
 
-**Services as Stateful Domain Objects**
-- Services have `__init__` methods configuring business behavior
-- They maintain process state and encapsulate domain operations
-- Pure business logic with no infrastructure dependencies
+| Column   | Purpose |
+|----------|---------|
+| IPN      | Your internal part number (any unique string) |
+| Category | Part type: `RES`, `CAP`, `IC`, `LED`, `CONN`, ... |
+| Value    | Electrical value: `10K`, `100nF`, `AMS1117-3.3` |
+| Package  | Footprint: `0603`, `SOT-23`, `QFN-32` |
+| LCSC     | Supplier part number (JLCPCB/LCSC) |
+| Priority | Integer. 1 = preferred, higher = fallback |
 
-**Application Layer as Stateless Orchestrators**
-- Commands coordinate domain services but contain no business logic
-- Translate between interface concerns and domain concepts
-- Thin orchestration layer handling workflow-specific concerns
+jBOM matches schematic components to inventory rows by comparing Category + Value + Package. When multiple rows match, the lowest Priority wins.
 
-**Domain Model Layer for Shared Concepts**
-- Immutable value objects representing business concepts
-- Pure functions for domain calculations
-- Cross-cutting utilities with no business state
+You do not need to fill every field before you start. Tutorial 2 shows how to bootstrap an inventory from your schematic.
 
-### Service Design Patterns
+### 3. Profiles
 
-**Strategy Pattern**: Configurable behavior through constructor injection
-```python
-generator = BOMGenerator(aggregation_strategy="value_footprint")
-matcher = InventoryMatcher(matching_criteria)
+A profile is a small YAML file that configures one aspect of jBOM's behaviour. There are three kinds:
+
+**Fabricator profiles** (`*.fab.yaml`) control BOM and CPL column names, part-number field priority, and any fab-specific requirements. The built-in profiles cover JLCPCB, PCBWay, and Seeed Studio. You select one with `--fabricator jlc` (or `--jlc`).
+
+**Supplier profiles** (`*.supplier.yaml`) configure how jBOM connects to a distributor's API (base URL, rate limits, authentication). The built-in profile covers LCSC/JLCPCB.
+
+**Defaults profiles** (`*.defaults.yaml`) set electrical defaults for the parametric search system — things like default tolerances, voltage ratings, and package power ratings. The built-in `generic` profile uses industry-standard values. Your organisation can override just what differs (e.g., set all resistor tolerances to 1% for aerospace work).
+
+All three profile types use the same search path:
+```
+<project>/.jbom/      ← project-local (highest priority)
+<repo-root>/.jbom/    ← monorepo shared
+$JBOM_PROFILE_PATH    ← org library (colon-separated dirs)
+~/.jbom/              ← personal overrides
+<platform system dir> ← IT-managed org config
+<jbom package>        ← built-in factory defaults (always present)
 ```
 
-**Factory Pattern**: Complex object creation within services
-```python
-def _build_processors(self) -> Dict[str, ComponentProcessor]:
-    return {'resistor': ResistorProcessor(), 'capacitor': CapacitorProcessor()}
+You never need to touch a profile to get started. The built-in profiles work out of the box.
+
+## The basic workflow
+
+```
+KiCad project
+      │
+      v
+  jbom inventory   ←─ extracts component list from schematic
+      │
+      v
+  Edit inventory   ←─ add LCSC part numbers, set priorities
+      │
+      v
+  jbom bom         ←─ matches inventory to schematic, outputs BOM CSV
+  jbom pos         ←─ reads PCB file, outputs placement CSV
 ```
 
-**Command/Query Separation**: Distinct operations vs data retrieval
-- Commands: `generate_bom_data()`, `create_inventory()`
-- Queries: `validate_bom()`, `list_components()`
+The BOM and placement files are what you upload to JLCPCB (or your fab of choice).
 
-## Architectural Constraints
+## What about unmatched components?
 
-**Dependency Direction**: Application Layer → Domain Services → Domain Models (never outward)
-**Service Autonomy**: Testable in isolation, interface-agnostic
-**State Management**:
-- Domain Services Layer: Business process state
-- Domain Model Layer: Stateless and pure
-- Application Layer: Stateless orchestrators
+When jBOM generates a BOM it tells you about every component that did **not** match your inventory. Run with `-v` to see match quality scores and notes. Unmatched components appear in the BOM with an empty part number — the BOM is still written, so you can iterate.
 
-## Development Workflow
+Exit code `2` (rather than `0`) means "BOM written, but some components are unmatched". Exit code `1` means a hard error.
 
-jBOM uses **Test-Driven Development** with Gherkin specifications:
+## Next steps
 
-1. **Feature Definition**: Write Gherkin scenarios describing user behavior
-2. **Step Implementation**: Create step functions that orchestrate services
-3. **Service Development**: Build domain services to fulfill business requirements
-4. **CLI Integration**: Add command adapters for user interface
-
-## Key Integration Points
-
-**Configuration Objects**: Type-safe options from `common/options.py`
-**Domain Models**: Shared concepts from `common/types.py`
-**File Parsing**: Utilities in `common/sexp_parser.py`
-**Error Handling**: Domain-specific exceptions with user-friendly messages
-
-## Anti-Patterns to Avoid
-
-- Services depending on CLI modules
-- Business logic in CLI commands
-- Infrastructure concerns in domain services
-- Raw CLI args passed to domain services
-- Print statements in service methods
-
-## Next Steps
-
-The following tutorials demonstrate these principles in practice:
-
-- [Implementation Tutorial](README.implementation.md) - Step-by-step service development
-- [Integration Tutorial](README.integration.md) - CLI and testing integration
-- [Documentation Tutorial](README.documentation.md) - Maintaining project documentation
-
-Each tutorial builds on the POS service example while highlighting jBOM's architectural decisions and development practices.
+- [Tutorial 2: Your First BOM](README.implementation.md) — hands-on walkthrough of the core workflow
+- [Tutorial 3: Finding and Enriching Parts](README.integration.md) — fill your inventory using `jbom search` and `jbom inventory-search`
+- [Tutorial 4: Customising for Your Workflow](README.documentation.md) — create custom fab and defaults profiles

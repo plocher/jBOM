@@ -1,436 +1,221 @@
-# Documentation Tutorial: Maintaining Project Documentation
+# Tutorial 4: Customising for Your Workflow
 
-This tutorial demonstrates how to maintain jBOM's documentation when adding new services, ensuring consistency with the project's architectural approach and user needs.
+The built-in fabricator profiles (jlc, pcbway, seeed) and the `generic` defaults profile work well for most projects. This tutorial shows you how to go beyond them:
 
-## Documentation Philosophy
+- Create a custom fabricator profile with your own column names
+- Create a defaults profile to set org-wide electrical assumptions
+- Share profiles across a team with `JBOM_PROFILE_PATH`
 
-jBOM documentation serves different audiences with different needs:
+## Part A: Custom fabricator profiles
 
-- **README Files**: High-level architectural overview for experienced developers
-- **Tutorial Series**: Step-by-step development guide with practical examples
-- **API Documentation**: Service interfaces and domain models
-- **User Documentation**: CLI usage and workflow guides
-- **CHANGELOG**: Version-aware change tracking
+### Why customise a fabricator profile?
 
-## Documentation Update Process
+Maybe you want to:
+- Use different BOM column headers than the built-in JLC preset
+- Add a custom column (e.g., your internal MPN field)
+- Set up a house-specific fab that isn't JLCPCB, PCBWay, or Seeed
 
-When adding new functionality like the POS service, update documentation in this order:
-
-1. **CHANGELOG** - Record user-visible changes
-2. **CLI Help** - Update command documentation
-3. **Service Documentation** - Document new domain services
-4. **Architecture Documentation** - Update system overviews
-5. **Tutorial Documentation** - Add practical examples
-
-## Step 1: Update CHANGELOG
-
-Document user-visible changes in `docs/CHANGELOG.md`:
-
-```markdown
-# Changelog
-
-All notable changes to this project will be documented in this file.
-
-## [1.2.0] - 2024-01-19
-
-### Added
-- **POS Command**: New `jbom pos` command for generating component placement files
-  - Generate pick-and-place CSV files from KiCad PCB data
-  - Filter by SMD components only with `--smd-only`
-  - Filter by board layer with `--layer TOP|BOTTOM`
-  - Support both metric (mm) and imperial (inch) units
-  - Output to file, stdout, or console table format
-- **PCB Reader Service**: New domain service for reading KiCad PCB files
-  - Extract component placement data from .kicad_pcb files
-  - Support for both S-expression and pcbnew API parsing modes
-  - Comprehensive footprint and placement information extraction
-
-### Enhanced
-- **Common Types**: Added PCB-specific domain models
-  - `BoardModel` entity for PCB board representation
-  - `PcbComponent` entity for component placement data
-  - `PlacementOptions` configuration object for POS generation
-
-### Developer Experience
-- **Tutorial Series**: Added comprehensive developer tutorials
-  - Context tutorial explaining jBOM's design patterns
-  - Implementation tutorial for TDD service development
-  - Integration tutorial for CLI adapter patterns
-  - Documentation tutorial for maintaining project docs
-```
-
-**Key Insight**: CHANGELOG focuses on user impact and feature capabilities, not implementation details.
-
-## Step 2: Update CLI Help Documentation
-
-Ensure CLI help text is comprehensive and user-focused:
-
-```python
-def register_command(subparsers) -> None:
-    """Register pos command with comprehensive help documentation."""
-    parser = subparsers.add_parser(
-        "pos",
-        help="Generate component placement files from KiCad PCB",
-        description="""
-        Generate component placement (pick-and-place) files from KiCad PCB data.
-        Output includes component reference, coordinates, rotation, side, and package info.
-        Suitable for manufacturing and assembly processes.
-        """,
-        epilog="""
-        Examples:
-          jbom pos board.kicad_pcb                    # CSV to stdout
-          jbom pos board.kicad_pcb -o placement.csv  # Save to file
-          jbom pos board.kicad_pcb -o console        # Console table
-          jbom pos board.kicad_pcb --smd-only        # SMD components only
-          jbom pos board.kicad_pcb --layer TOP       # Top layer only
-          jbom pos board.kicad_pcb --units inch      # Imperial units
-        """
-    )
-
-    # Detailed argument help
-    parser.add_argument(
-        "pcb",
-        help="Path to .kicad_pcb file"
-    )
-    parser.add_argument(
-        "-o", "--output",
-        help='Output destination: file path, "stdout" for piping, "console" for table display'
-    )
-    parser.add_argument(
-        "--smd-only",
-        action="store_true",
-        help="Include only surface-mount (SMD) components, exclude through-hole"
-    )
-    parser.add_argument(
-        "--layer",
-        choices=["TOP", "BOTTOM"],
-        help="Include only components on specified board layer"
-    )
-    parser.add_argument(
-        "--units",
-        choices=["mm", "inch"],
-        default="mm",
-        help="Coordinate units in output (default: mm)"
-    )
-```
-
-**Key Insight**: CLI help should include practical examples and explain business value, not just technical parameters.
-
-## Step 3: Service Documentation Updates
-
-Update service documentation to reflect new capabilities in `src/jbom/services/README.md`:
-
-```markdown
-## Service Domain Boundaries
-
-### [`pos_generator.py`](pos_generator.py) - Position File Domain
-**Bounded Context**: Manufacturing placement file generation
-**Domain Concepts**: Pick-and-Place Data, Manufacturing Coordinates, Assembly Information
-**Core Operations**:
-- Generate manufacturing placement data from PCB component information
-- Apply coordinate system transformations for different manufacturing standards
-- Filter components based on manufacturing requirements (SMD vs through-hole, layer)
-- Format placement data for various manufacturing file formats
-
-**Business Rules**:
-- SMD components use surface-mount assembly processes
-- Coordinate origins may be board-based or auxiliary-based depending on manufacturer
-- Rotation angles normalized to manufacturing-standard ranges (0-360°)
-- Layer designation follows industry standards (TOP/BOTTOM vs F.Cu/B.Cu)
-
-### [`pcb_reader.py`](pcb_reader.py) - PCB Layout Domain
-**Bounded Context**: Component placement and physical layout data extraction
-**Domain Concepts**: Board Layout, Component Placement, Physical Footprints, Layer Information
-**Core Operations**:
-- Extract component placement information from KiCad PCB files
-- Parse footprint data and convert to domain objects
-- Handle coordinate system interpretation from design files
-- Validate PCB file format and structural integrity
-
-**Integration Points**:
-- Provides placement data to POS Generator service
-- Supplies component information to BOM enhancement workflows
-- Integrates with common PCB parsing utilities
-```
-
-**Key Insight**: Service documentation focuses on business domain and integration points, not implementation details.
-
-## Step 4: Update Architecture Documentation
-
-Reflect new services in `src/README.md`:
-
-```markdown
-## Service Composition Workflows
-
-**Enhanced Workflow** (multiple service collaboration):
-```python
-# PCB-based workflows
-pcb_reader = PCBReader()
-pos_generator = POSGenerator(placement_options)
-bom_enhancer = BOMEnhancer(enhancement_strategy)
-
-# Extract placement and component data
-board_model = pcb_reader.read_pcb_file(pcb_path)
-placement_data = pos_generator.generate_pos_data(board_model)
-enhanced_bom = bom_enhancer.correlate_placement_with_bom(placement_data, bom_data)
-```
-
-**Cross-Domain Integration**:
-```python
-# Services spanning multiple bounded contexts
-schematic_reader = SchematicReader()
-pcb_reader = PCBReader()
-correlator = SchematicPCBCorrelator()
-
-# Integrate schematic and layout data
-schematic = schematic_reader.read_schematic(sch_path)
-board = pcb_reader.read_pcb_file(pcb_path)
-correlated_data = correlator.correlate_design_data(schematic, board)
-```
-```
-
-**Key Insight**: Architecture documentation shows how new services fit into existing patterns and collaboration workflows.
-
-## Step 5: Update CLI Documentation
-
-Update `src/jbom/cli/README.md` to include new command patterns:
-
-```markdown
-### [`pos.py`](pos.py) - Position File Command Adapter
-**Interface**: `jbom pos <pcb> [options]`
-**Adaptation Responsibilities**:
-- CLI placement options → `PlacementOptions` domain configuration
-- PCB domain services orchestration for manufacturing workflows
-- Placement data → Manufacturing file formats (CSV, console table)
-- PCB processing exceptions → User-friendly manufacturing error messages
-
-**Domain Services Used**:
-- `PCBReader` - Extract component placement from PCB files
-- `POSGenerator` - Generate manufacturing placement data
-- `CoordinateTransformer` - Handle manufacturing coordinate systems
-- `OutputFormatter` - Present placement data in various formats
-
-**Command Workflows**:
-```python
-def handle_pos(args):
-    """Manufacturing placement workflow orchestration."""
-    # Input translation: CLI → Domain
-    placement_options = PlacementOptions(
-        units=args.units,
-        smd_only=args.smd_only,
-        layer_filter=args.layer
-    )
-
-    # Service orchestration: Manufacturing workflow
-    pcb_reader = PCBReader()
-    pos_generator = POSGenerator(placement_options)
-
-    board = pcb_reader.read_pcb_file(args.pcb_file)
-    placement_data = pos_generator.generate_pos_data(board)
-
-    # Output adaptation: Domain → CLI formats
-    return present_placement_results(placement_data, args.output)
-```
-```
-
-**Key Insight**: CLI documentation emphasizes orchestration patterns and interface adaptation responsibilities.
-
-## Step 6: Common Types Documentation
-
-Update `src/jbom/common/README.md` with new domain models:
-
-```markdown
-### PCB Domain Models ([`pcb_types.py`](pcb_types.py))
-**Pattern**: PCB layout and manufacturing domain entities
-**Bounded Context**: Physical board design and component placement
-
-```python
-@dataclass
-class BoardModel:
-    """Domain Entity: PCB board with comprehensive component placement data.
-
-    Represents the physical board design including all placed components,
-    board metadata, and manufacturing-relevant information.
-    """
-    path: Path                                    # Design file location
-    title: str = ""                              # Board project title
-    kicad_version: str = ""                      # Design tool version
-    footprints: List[PcbComponent] = field(default_factory=list)
-
-    @property
-    def component_count(self) -> int:
-        """Business query: Total number of placed components."""
-        return len(self.footprints)
-
-    @property
-    def smd_component_count(self) -> int:
-        """Business query: Count of surface-mount components."""
-        return sum(1 for fp in self.footprints if fp.is_smd)
-
-@dataclass
-class PlacementOptions:
-    """Configuration Value Object: Manufacturing placement generation options.
-
-    Captures manufacturing-specific requirements and coordinate system
-    preferences for placement file generation.
-    """
-    units: str = "mm"                           # Manufacturing coordinate units
-    origin: str = "board"                       # Coordinate system reference
-    smd_only: bool = False                      # Assembly process filter
-    layer_filter: Optional[str] = None          # Manufacturing layer selection
-
-    def __post_init__(self):
-        """Domain validation: Manufacturing constraint validation."""
-        if self.units not in ("mm", "inch"):
-            raise ValueError("Manufacturing units must be 'mm' or 'inch'")
-        if self.origin not in ("board", "aux"):
-            raise ValueError("Origin must be 'board' or 'aux' reference")
-```
-```
-
-**Key Insight**: Domain model documentation emphasizes business meaning and manufacturing context over technical implementation.
-
-## Step 7: User Documentation
-
-Create user-focused documentation in `docs/README.md`:
-
-```markdown
-# jBOM User Guide
-
-## Position File Generation
-
-Generate component placement files for PCB manufacturing and assembly.
-
-### Basic Usage
+### Step A1: Create a project `.jbom/` directory
 
 ```bash
-# Generate placement CSV to stdout
-jbom pos board.kicad_pcb
-
-# Save placement data to file
-jbom pos board.kicad_pcb -o placement.csv
-
-# View placement data as formatted table
-jbom pos board.kicad_pcb -o console
+mkdir -p MyBoard/.jbom
 ```
 
-### Manufacturing Workflows
+Any profile file placed here takes precedence over the built-in profiles for this project.
 
-**SMD Assembly Process**:
+### Step A2: Create a custom fabricator profile
+
+Create `MyBoard/.jbom/acmefab.fab.yaml`:
+
+```yaml
+name: "Acme Fab"
+id: "acmefab"          # becomes the --acmefab CLI flag
+description: "Internal Acme fabrication format"
+based_on: "jlc"       # inherit everything from the built-in JLC profile
+
+# Override only the BOM columns
+bom_columns:
+  "Ref Des":    "reference"
+  "Qty":        "quantity"
+  "Part Value": "value"
+  "Package":    "i:package"
+  "LCSC":       "fabricator_part_number"
+  "Internal PN": "mfgpn"    # extra column
+```
+
+`based_on: "jlc"` means you inherit the part-number priority list, PCB assembly settings, and everything else from the JLC profile — you only override what you change.
+
+### Step A3: Use it
+
 ```bash
-# Generate SMD-only placement for surface-mount assembly
-jbom pos board.kicad_pcb --smd-only -o smd_placement.csv
+jbom bom MyBoard/ --acmefab --inventory inventory.csv
 ```
 
-**Layer-Specific Assembly**:
+jBOM discovers `acmefab.fab.yaml` in `.jbom/` automatically. No configuration file needed.
+
+### Step A4: Make it permanent for your personal setup
+
+If you use the same fab profile across multiple projects, put it in your home directory instead:
+
 ```bash
-# Top layer placement for first assembly pass
-jbom pos board.kicad_pcb --layer TOP -o top_placement.csv
-
-# Bottom layer placement for second assembly pass
-jbom pos board.kicad_pcb --layer BOTTOM -o bottom_placement.csv
+mkdir -p ~/.jbom
+copy MyBoard/.jbom/acmefab.fab.yaml ~/.jbom/
 ```
 
-**Imperial Units for US Manufacturers**:
+Now `--acmefab` works from any project directory.
+
+### Fabricator profile fields reference
+
+```yaml
+name: "Display Name"
+id: "cli-id"           # creates --cli-id flag
+description: "..."
+based_on: "jlc"        # optional: inherit from built-in profile
+
+pcb_manufacturing:
+  website: "https://..."
+  gerbers: "kicad"
+
+part_number:
+  header: "fabricator_part_number"
+  priority_fields:     # search these schematic fields in order
+    - "LCSC"
+    - "LCSC Part"
+    - "MPN"
+
+bom_columns:           # BOM header: jBOM internal field
+  "Designator": "reference"
+  "Qty":        "quantity"
+  ...
+
+pos_columns:           # CPL header: jBOM internal field
+  "Designator": "reference"
+  "Mid X":      "x"
+  "Mid Y":      "y"
+  ...
+```
+
+For a complete example, look at the built-in `jlc.fab.yaml`:
 ```bash
-# Generate placement with imperial coordinates
-jbom pos board.kicad_pcb --units inch -o placement_imperial.csv
+python -c "import jbom, pathlib; print(pathlib.Path(jbom.__file__).parent / 'config' / 'fabricators' / 'jlc.fab.yaml')"
 ```
 
-### Integration with Manufacturing Tools
+---
 
-The generated CSV format is compatible with most pick-and-place machines:
+## Part B: Defaults profiles
 
-| Column | Description | Format |
-|--------|-------------|--------|
-| Reference | Component designator | R1, C5, U3 |
-| X(mm/in) | X coordinate | Decimal degrees |
-| Y(mm/in) | Y coordinate | Decimal degrees |
-| Rotation | Component rotation | 0.0-360.0 degrees |
-| Side | Board layer | TOP, BOTTOM |
-| Footprint | Component footprint | Library:Package |
-| Package | Package type | 0805, SOIC-8, QFN-32 |
+### Why customise a defaults profile?
+
+The `generic` defaults profile sets conservative, widely-applicable values:
+- Resistor tolerance: 5%
+- Capacitor dielectric: X7R
+- Package voltage/power ratings: consumer-grade
+
+If your organisation designs to different standards — aerospace, automotive, high-precision — you should not have to specify these overrides on every single resistor in every schematic. A defaults profile captures your design culture in one place.
+
+### Step B1: See what the generic profile contains
+
+```bash
+python -c "import jbom, pathlib; print(pathlib.Path(jbom.__file__).parent / 'config' / 'defaults' / 'generic.defaults.yaml')" | xargs cat
 ```
 
-**Key Insight**: User documentation focuses on practical workflows and manufacturing integration, not technical architecture.
+You will see sections like:
+```yaml
+domain_defaults:
+  resistor:
+    tolerance: "5%"
+  capacitor:
+    tolerance: "10%"
+    dielectric: "X7R"
 
-## Step 8: Testing Documentation
+package_power:
+  "0402": "63mW"
+  "0603": "100mW"
+  ...
 
-Update testing approach in `tests/README.md`:
-
-```markdown
-## Service Testing Strategy
-
-### POS Service Testing (`tests/services/test_pos_generator.py`)
-
-**Domain Logic Testing**:
-- Component filtering business rules (SMD-only, layer-specific)
-- Coordinate transformation accuracy
-- Manufacturing data format validation
-- Configuration validation and error handling
-
-**Integration Testing** (`tests/integration/test_pos_workflow.py`):
-- PCB Reader → POS Generator service composition
-- End-to-end placement data generation workflows
-- Error propagation between services
-
-### CLI Testing Strategy
-
-**Command Integration Testing** (`tests/cli/test_pos_command.py`):
-- CLI argument translation to domain configuration
-- Service orchestration verification
-- Output format validation (CSV, console, file)
-- Error message translation and user feedback
-
-**Functional Testing** (`features/pos/`):
-- Complete user workflow validation
-- Real KiCad PCB file processing
-- Manufacturing file format compliance
-- Cross-platform compatibility verification
+package_voltage:
+  "0402": "10V"
+  "0603": "25V"
+  ...
 ```
 
-## Step 9: Maintenance Guidelines
+### Step B2: Create an overriding defaults profile
 
-Establish documentation maintenance patterns:
+Create `MyBoard/.jbom/precision.defaults.yaml`:
 
-```markdown
-# Documentation Maintenance Guidelines
+```yaml
+extends: generic        # inherit everything from the built-in generic profile
 
-## When Adding New Services
-
-1. **Update CHANGELOG** with user-facing functionality
-2. **Add CLI help** with practical examples
-3. **Document service boundaries** and domain responsibilities
-4. **Update architecture diagrams** showing service relationships
-5. **Add user workflow examples** for common use cases
-6. **Create tutorial content** for complex integration patterns
-
-## Documentation Review Criteria
-
-**Architecture Documentation**:
-- [ ] Service responsibilities clearly defined
-- [ ] Domain boundaries and integration points documented
-- [ ] Design patterns and architectural constraints explained
-- [ ] Code examples show architectural principles
-
-**User Documentation**:
-- [ ] Common workflows with practical examples
-- [ ] Clear error messages and troubleshooting guidance
-- [ ] Integration examples with external tools
-- [ ] Performance and compatibility considerations
-
-**Developer Documentation**:
-- [ ] TDD workflow examples with real code
-- [ ] Testing strategies for each architectural layer
-- [ ] Extension points and customization guidance
-- [ ] Contributing guidelines and code standards
+domain_defaults:
+  resistor:
+    tolerance: "1%"   # override: 1% for all resistors
+  capacitor:
+    tolerance: "5%"   # override: tighter cap tolerance
+    dielectric: "C0G" # override: C0G/NP0 for precision
 ```
 
-## Documentation Benefits
+`extends: generic` performs a **deep merge**: every section you include overlays the parent; anything you omit stays as the parent value. You only write what changes.
 
-**Architectural Clarity**: Clear service boundaries and integration patterns
-**Developer Onboarding**: Practical tutorials with working examples
-**User Adoption**: Workflow-focused documentation with real use cases
-**Maintainability**: Consistent documentation patterns across all components
+List sections replace (not merge): if you override `package_power`, your list replaces the entire parent list rather than merging into it.
 
-The documentation approach ensures that jBOM's architectural principles are clearly communicated while providing practical guidance for both users and developers extending the system.
+### Step B3: Use it
+
+Currently defaults profiles are loaded automatically from the search path — jBOM picks up `precision.defaults.yaml` from `.jbom/` and uses it for the parametric search queries in `jbom inventory-search`.
+
+> **Note**: An explicit `--defaults <name>` CLI flag is planned for a future release. For now, the profile is selected by placing it in the search path with the name `generic.defaults.yaml` to override the factory defaults, or by using a custom name in `.jbom/` for project-local overrides.
+
+### Step B4: Share profiles across a team
+
+For a team or organisation, you want everyone to use the same defaults without checking profiles into every project repo. Use `JBOM_PROFILE_PATH`:
+
+```bash
+# Set in your shell profile (or in a CI environment variable)
+export JBOM_PROFILE_PATH=/shared/jbom-profiles
+```
+
+Put your profiles in that directory:
+```
+/shared/jbom-profiles/
+├── aerospace.defaults.yaml   # 1% resistors, C0G caps
+├── automotive.defaults.yaml  # AEC-Q ratings
+└── acmefab.fab.yaml           # house fab profile
+```
+
+All engineers with `JBOM_PROFILE_PATH` pointing to the shared directory automatically get these profiles. No file copying, no checking profiles into individual repos.
+
+The full search path (highest to lowest priority):
+```
+<project>/.jbom/        project-local (committed or gitignored)
+<repo-root>/.jbom/      monorepo shared
+$JBOM_PROFILE_PATH      org library (colon-separated dirs)
+~/.jbom/                personal
+<platform system dir>   IT-managed
+<jbom package>          factory built-ins (always present)
+```
+
+### Step B5: Verify which profiles are active
+
+To see which profile files jBOM would find for a given name:
+
+```python
+from jbom.config.profile_search import profile_search_dirs
+for d in profile_search_dirs():
+    print(d)
+```
+
+---
+
+## Summary
+
+You now have the full jBOM toolkit:
+
+1. **Generate inventory** from your schematic (`jbom inventory`)
+2. **Enrich it** with part numbers (`jbom search`, `jbom inventory-search`)
+3. **Generate BOM and CPL** for your fab (`jbom bom`, `jbom pos`)
+4. **Customise** column names with a fab profile and electrical defaults with a defaults profile
+5. **Share** profiles across your team with `JBOM_PROFILE_PATH`
+
+For a complete reference:
+- [README.man1.md](../README.man1.md) — all commands and flags
+- [README.configuration.md](../README.configuration.md) — profile file formats and search path details
+- [README.man5.md](../README.man5.md) — inventory file format
