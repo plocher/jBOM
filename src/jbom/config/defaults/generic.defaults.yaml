@@ -1,0 +1,121 @@
+# jBOM defaults profile: generic
+#
+# Factory defaults for component attribute classification and domain knowledge.
+# Org-overridable without code changes.
+#
+# To override, place <name>.defaults.yaml in any .jbom/ directory on the search
+# path, or in $JBOM_PROFILE_PATH. Use 'extends: generic' to inherit these values
+# and change only what differs:
+#
+#   extends: generic
+#   domain_defaults:
+#     resistor:
+#       tolerance: "1%"   # aerospace default
+#
+# Search path (highest priority first):
+#   <project>/.jbom/  →  <repo_root>/.jbom/  →  $JBOM_PROFILE_PATH  →
+#   ~/.jbom/  →  platform system dir  →  (this file)
+
+# ---------------------------------------------------------------------------
+# Camp 2: Electrical attribute defaults by component category.
+# Used when the designer left a field blank ("default is fine").
+# Surfaced in Mode A for explicit confirmation; never auto-filled.
+# ---------------------------------------------------------------------------
+domain_defaults:
+  resistor:
+    tolerance: "5%"
+  capacitor:
+    tolerance: "10%"
+    dielectric: "X7R"
+
+# ---------------------------------------------------------------------------
+# Default power ratings for SMD resistors by package size.
+# ---------------------------------------------------------------------------
+package_power:
+  "0402": "63mW"
+  "0603": "100mW"
+  "0805": "125mW"
+  "1206": "250mW"
+  "2512": "1W"
+
+# ---------------------------------------------------------------------------
+# Default voltage ratings for SMD capacitors by package size.
+# ---------------------------------------------------------------------------
+package_voltage:
+  "0402": "10V"
+  "0603": "25V"
+  "0805": "50V"
+  "1206": "50V"
+
+# ---------------------------------------------------------------------------
+# Parametric spec fields to include in JLCPCB/LCSC search queries per category.
+# List order reflects preference for query construction.
+# ---------------------------------------------------------------------------
+parametric_query_fields:
+  resistor:
+    - resistance
+    - tolerance
+    - package
+    - power_rating
+    - technology
+  capacitor:
+    - capacitance
+    - tolerance
+    - package
+    - voltage_rating
+    - dielectric
+
+# ---------------------------------------------------------------------------
+# JLCPCB taxonomy routing for parametric search (category → filter names).
+# ---------------------------------------------------------------------------
+category_route_rules:
+  resistor:
+    first_sort: "Resistors"
+    second_sort_smd: "Chip Resistor - Surface Mount"
+    second_sort_pth: "Through Hole Resistors"
+  capacitor:
+    first_sort: "Capacitors"
+
+# ---------------------------------------------------------------------------
+# Camp 2/3 attribute classification per component category.
+# show_in_mode_a: Camp 2 — surfaced for explicit designer confirmation in Mode A.
+# suppress:       Camp 3 — silently filtered from Mode A display and write-back.
+# ---------------------------------------------------------------------------
+enrichment_attributes:
+  resistor:
+    show_in_mode_a:
+      - tolerance
+      - power_rating
+      - voltage_rating
+      - technology
+    suppress:
+      - pricing
+      - stock
+      - lead_time
+      - eia_land_pattern
+      - series
+      - packaging
+  capacitor:
+    show_in_mode_a:
+      - tolerance
+      - voltage_rating
+      - dielectric
+      - temperature_coefficient
+    suppress:
+      - pricing
+      - stock
+      - lead_time
+      - eia_land_pattern
+      - series
+      - packaging
+  inductor:
+    show_in_mode_a:
+      - tolerance
+      - current_rating
+      - dcr
+    suppress:
+      - pricing
+      - stock
+      - lead_time
+      - series
+      - packaging

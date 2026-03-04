@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from jbom.common.types import InventoryItem
+from jbom.config.defaults import get_defaults
 from jbom.services.search.jlcpcb_phase4_heuristics import (
-    PARAMETRIC_QUERY_FIELDS,
     build_phase4_parametric_query_plan,
 )
 
@@ -42,15 +42,16 @@ def _inv_item(
     )
 
 
-def test_phase4_constants_are_yaml_shaped_for_resistor_and_capacitor() -> None:
-    assert PARAMETRIC_QUERY_FIELDS["resistor"] == [
+def test_generic_defaults_profile_has_expected_parametric_fields() -> None:
+    cfg = get_defaults("generic")
+    assert cfg.get_parametric_query_fields("resistor") == [
         "resistance",
         "tolerance",
         "package",
         "power_rating",
         "technology",
     ]
-    assert PARAMETRIC_QUERY_FIELDS["capacitor"] == [
+    assert cfg.get_parametric_query_fields("capacitor") == [
         "capacitance",
         "tolerance",
         "package",

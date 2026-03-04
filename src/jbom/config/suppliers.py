@@ -4,8 +4,8 @@ Supplier profiles capture supplier-specific knowledge such as:
 - URL templates for direct product links and search pages
 - Part-number validation patterns
 
-Phase 4S scope: built-in profiles stored in the source tree.
-Future scope: support hierarchical override/extension locations.
+Profiles are loaded from the search path (project .jbom/, JBOM_PROFILE_PATH,
+~/.jbom/, system dirs) before falling back to built-in package profiles.
 """
 
 from __future__ import annotations
@@ -15,6 +15,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, Mapping, Optional
 
+from jbom.config.profile_search import find_profile
 from jbom.config.providers import SearchProviderConfig
 
 import yaml
@@ -291,6 +292,9 @@ def get_available_suppliers() -> list[str]:
 def load_supplier(sid: str) -> SupplierConfig:
     """Load supplier configuration from YAML file.
 
+    Searches the profile search path (project .jbom/, repo root, JBOM_PROFILE_PATH,
+    ~/.jbom/, system dirs) before falling back to the built-in package directory.
+
     Args:
         sid: Supplier ID (filename without .supplier.yaml extension)
 
@@ -301,8 +305,8 @@ def load_supplier(sid: str) -> SupplierConfig:
         ValueError: If supplier not found or schema is invalid.
     """
 
-    path = _BUILTIN_DIR / f"{sid}.supplier.yaml"
-    if not path.exists():
+    path = find_profile(sid, "supplier", builtin_dir=_BUILTIN_DIR)
+    if path is None:
         raise ValueError(f"Unknown supplier: {sid}")
 
     with open(path, "r", encoding="utf-8") as f:
