@@ -5,7 +5,10 @@ Loader for generating inventory from KiCad project components.
 from typing import List, Tuple, Dict, Set
 
 from jbom.common.types import Component, InventoryItem, DEFAULT_PRIORITY
-from jbom.common.component_utils import get_component_type
+from jbom.common.component_utils import (
+    derive_package_from_footprint,
+    get_component_type,
+)
 from jbom.common.constants import CommonFields
 from jbom.common.packages import PackageType
 
@@ -129,18 +132,13 @@ class ProjectInventoryGenerator:
         # Extract package from footprint
         package = self._extract_package(component.footprint)
 
-        # Generate a pseudo-IPN in format: <category>_<value>
-        # Only generate IPN if we have a valid category
-        if comp_type:
-            ipn = f"{category}_{component.value}" if component.value else category
-            # Cleanup IPN: replace spaces with underscores but preserve special characters like Ω
-            ipn = ipn.replace(" ", "_")
-        else:
-            # Leave IPN blank if category is unknown, allowing user to fix it
-            ipn = ""
-
         # Map properties to InventoryItem fields
         props = component.properties
+
+        # IPN must only come from an explicit 'IPN' schematic property.
+        # jBOM has no knowledge of IPN structure or naming conventions.
+        # Leave blank so the user can assign their own IPNs.
+        ipn = props.get("IPN", "")
 
         return InventoryItem(
             ipn=ipn,
@@ -168,25 +166,19 @@ class ProjectInventoryGenerator:
         )
 
     def _extract_package(self, footprint: str) -> str:
-        """Extract package name from footprint."""
+        """Extract package name from footprint.
+
+        Tries SMD package pattern matching first for a clean package code
+        (e.g. '0603'), then falls back to stripping the library prefix via
+        :func:`derive_package_from_footprint`.
+        """
         if not footprint:
             return ""
 
         fp_lower = footprint.lower()
 
-        # Simple extraction logic mirroring InventoryMatcher._extract_package_from_footprint
-        # but simplified since we don't have an inventory to match against.
-        # We just want to extract a recognizable package name.
-
         for pattern in sorted(PackageType.SMD_PACKAGES, key=len, reverse=True):
             if pattern in fp_lower:
                 return pattern
 
-        # If no SMD package found, maybe return the whole footprint name or last part?
-        # Often footprint names are like "Resistor_SMD:R_0603_1608Metric"
-        # We might want "0603" or "R_0603_1608Metric"
-
-        if ":" in footprint:
-            return footprint.split(":")[-1]
-
-        return footprint
+        return derive_package_from_footprint(footprint)

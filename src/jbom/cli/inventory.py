@@ -21,6 +21,7 @@ from jbom.common.types import Component, InventoryItem
 from jbom.common.options import GeneratorOptions
 from jbom.cli.formatting import print_inventory_table
 from jbom.services.inventory_reader import InventoryReader
+from jbom.common.component_filters import apply_component_filters
 from jbom.services.project_file_resolver import ProjectFileResolver
 from jbom.services.project_inventory import ProjectInventoryGenerator
 from jbom.services.schematic_reader import SchematicReader
@@ -29,7 +30,15 @@ from jbom.services.sophisticated_inventory_matcher import (
     SophisticatedInventoryMatcher,
 )
 
-_NO_AGGREGATE_PREFIX_FIELDS = ["Project", "UUID", "Category", "IPN"]
+_NO_AGGREGATE_PREFIX_FIELDS = [
+    "Project",
+    "ProjectName",
+    "UUID",
+    "SourceFile",
+    "Refs",
+    "Category",
+    "IPN",
+]
 _NO_AGGREGATE_PREFERRED_FIELDS = [
     "SMD",
     "Value",
@@ -202,6 +211,26 @@ def _handle_generate_inventory(args: argparse.Namespace) -> int:
         )
         return 1
 
+    # Apply standard BOM-equivalent filtering: exclude virtual symbols, DNP, and non-BOM components.
+    # Virtual symbols (power flags, GND nets, etc.) are never stocked or purchased.
+    # No CLI flags are exposed for inventory — these defaults are correct and permanent.
+    components = apply_component_filters(
+        components,
+        {
+            "exclude_dnp": True,
+            "include_only_bom": True,
+            "include_virtual_symbols": False,
+        },
+    )
+
+    if not components:
+        print(
+            "Error: No real components found after filtering virtual symbols. "
+            "Cannot create inventory from empty schematic.",
+            file=sys.stderr,
+        )
+        return 1
+
     # Apply inventory filtering (component-level) if requested.
     if args.inventory_files or args.filter_matches:
         components = _filter_components_by_existing_inventory(
@@ -220,10 +249,17 @@ def _handle_generate_inventory(args: argparse.Namespace) -> int:
     # Generate inventory
     generator = ProjectInventoryGenerator(components)
 
+    project_name = (
+        resolved_input.project_context.project_base_name
+        if resolved_input.project_context
+        else project_directory.name
+    )
+
     if args.no_aggregate:
         rows, field_names = _generate_no_aggregate_inventory_rows(
             components,
             project_directory=project_directory,
+            project_name=project_name,
         )
         return _output_inventory_rows(
             rows, field_names, args.output, args.force, args.verbose
@@ -238,21 +274,45 @@ def _handle_generate_inventory(args: argparse.Namespace) -> int:
 
 
 def _generate_no_aggregate_inventory_rows(
-    components: list[Component], project_directory: Path
+    components: list[Component],
+    project_directory: Path,
+    project_name: str = "",
 ) -> tuple[list[dict[str, str]], list[str]]:
-    """Generate no-aggregate inventory rows grouped by category with sub-headers."""
+    """Generate no-aggregate inventory rows grouped by category with sub-headers.
+
+    Schema prefix: Project, ProjectName, UUID, SourceFile, Refs, Category, IPN, ...
+
+    Identity semantics:
+    - ``SourceFile`` (absolute path) + ``UUID`` is the canonical annotation routing key.
+    - ``ProjectName`` and ``Project`` are cosmetic context only, never used for routing.
+    """
 
     generator = ProjectInventoryGenerator(components)
     inventory_items, base_field_names = generator.load_no_aggregate()
 
     field_names = _build_no_aggregate_field_order(base_field_names)
     project_value = str(project_directory.resolve())
+    # ProjectName: use provided name, or fall back to project directory stem
+    project_name_value = project_name or project_directory.name
+
+    # Build a uuid -> source_file mapping from the original components
+    uuid_to_source: dict[str, str] = {}
+    uuid_to_ref: dict[str, str] = {}
+    for comp in components:
+        if comp.uuid:
+            uuid_to_source[comp.uuid] = (
+                str(comp.source_file) if comp.source_file else ""
+            )
+            uuid_to_ref[comp.uuid] = comp.reference
 
     data_rows: list[dict[str, str]] = []
     for item in inventory_items:
         row = _inventory_item_to_row(item, field_names)
         row["Project"] = project_value
+        row["ProjectName"] = project_name_value
         row["UUID"] = item.uuid
+        row["SourceFile"] = uuid_to_source.get(item.uuid, "")
+        row["Refs"] = uuid_to_ref.get(item.uuid, "")
         row["Category"] = item.category
         row["IPN"] = item.ipn
         data_rows.append(row)
@@ -291,11 +351,19 @@ def _build_no_aggregate_field_order(base_field_names: list[str]) -> list[str]:
 
 
 def _build_no_aggregate_subheader_row(field_names: list[str]) -> dict[str, str]:
-    """Build minimal deterministic sub-header marker row for no-aggregate output."""
+    """Build minimal deterministic sub-header marker row for no-aggregate output.
+
+    The five leading columns (Project, ProjectName, UUID, SourceFile, Refs) are
+    always populated and marked as required (FieldName sentinel). IPN is optional.
+    """
 
     row = {field_name: "" for field_name in field_names}
+    # Required leading columns — always populated, sentinel = field name
     row["Project"] = "Project"
+    row["ProjectName"] = "ProjectName"
     row["UUID"] = "UUID"
+    row["SourceFile"] = "SourceFile"
+    row["Refs"] = "Refs"
     row["Category"] = "Category"
     row["IPN"] = "(Optional)\nIPN"
     row["Value"] = "Value"

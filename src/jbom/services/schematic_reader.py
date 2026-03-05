@@ -53,10 +53,12 @@ class SchematicReader:
         """Parse schematic file using S-expression parser."""
         sexp = schematic_reader.load_kicad_file(schematic_file)
         components: List[Component] = []
+        resolved_path = schematic_file.resolve()
 
         for symbol_node in schematic_reader.walk_nodes(sexp, "symbol"):
             component = self._parse_symbol(symbol_node)
             if component and self._should_include_component(component):
+                component.source_file = resolved_path
                 components.append(component)
 
         return components

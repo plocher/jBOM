@@ -21,6 +21,9 @@ class Component:
     in_bom: bool = True
     exclude_from_sim: bool = False
     dnp: bool = False
+    source_file: Optional[
+        Path
+    ] = None  # Absolute path to the .kicad_sch this component came from
 
 
 @dataclass

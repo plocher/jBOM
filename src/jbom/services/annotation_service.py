@@ -11,7 +11,7 @@ import sexpdata
 
 from jbom.common.sexp_parser import load_kicad_file, walk_nodes
 
-_RESERVED_COLUMNS = {"project", "uuid"}
+_RESERVED_COLUMNS = {"project", "uuid", "sourcefile", "projectname", "refs"}
 _REQUIRED_FIELDS = ("Value", "Package")
 
 
@@ -69,10 +69,214 @@ def annotate_schematic(
     inventory_path: Path,
     *,
     dry_run: bool = False,
+    schematic_files: list[Path] | None = None,
 ) -> AnnotationResult:
-    """Apply annotation values from inventory rows to schematic symbols by UUID."""
+    """Apply annotation values from inventory rows to schematic symbols by UUID.
+
+    Supports hierarchical projects via the ``schematic_files`` parameter.
+
+    Routing logic:
+    - **Primary path**: when CSV rows carry a non-blank ``SourceFile`` column,
+      each row is routed directly to its named file and matched by UUID.
+      ``SourceFile`` + ``UUID`` is the canonical, unambiguous key.
+    - **Fallback path**: when ``SourceFile`` is absent (hand-crafted or
+      pre-Enhancement-6 CSVs), a global UUID index is built across all
+      ``schematic_files`` and rows are applied by UUID alone.  UUIDs are
+      unique within a KiCad project hierarchy, so no collision is possible.
+
+    Args:
+        schematic_path: Primary ``.kicad_sch`` file (used when
+            ``schematic_files`` is ``None`` — preserves single-file call-site
+            compatibility).
+        inventory_path: CSV inventory file used for annotation.
+        dry_run: When ``True``, compute changes but do not write any files.
+        schematic_files: Full list of schematic files in the project hierarchy.
+            When ``None`` defaults to ``[schematic_path]``.
+    """
+
+    if schematic_files is None:
+        schematic_files = [schematic_path]
 
     rows = _load_annotation_rows(inventory_path)
+
+    # Determine routing strategy: primary (SourceFile present) vs fallback (UUID-only)
+    has_source_file_column = any(
+        row.values.get("SourceFile", "").strip()
+        for row in rows
+        if not _is_header_or_subheader_row(row)
+    )
+
+    if has_source_file_column:
+        return _annotate_with_source_file_routing(
+            rows, schematic_files, dry_run=dry_run
+        )
+    else:
+        return _annotate_with_uuid_index(rows, schematic_files, dry_run=dry_run)
+
+
+def _annotate_with_source_file_routing(
+    rows: list[AnnotationRow],
+    schematic_files: list[Path],
+    *,
+    dry_run: bool,
+) -> AnnotationResult:
+    """Primary annotation path: route each row to its SourceFile, apply by UUID."""
+
+    changes: list[AnnotationChange] = []
+    warnings: list[str] = []
+    updated_components: set[str] = set()
+
+    # Group rows by their SourceFile value
+    rows_by_source: dict[str, list[AnnotationRow]] = {}
+    for row in rows:
+        if _is_header_or_subheader_row(row):
+            continue
+        source = row.values.get("SourceFile", "").strip()
+        if not source:
+            continue  # Skip rows without SourceFile in a SourceFile-routed pass
+        rows_by_source.setdefault(source, []).append(row)
+
+    # Build a set of known schematic file paths for fast lookup
+    known_files = {str(p.resolve()): p for p in schematic_files}
+
+    for source_path_str, source_rows in rows_by_source.items():
+        # Resolve to absolute path
+        source_path = Path(source_path_str)
+        resolved_str = str(source_path.resolve())
+
+        # Prefer the known project file if it matches; otherwise use as-is
+        target_path = known_files.get(resolved_str, source_path)
+
+        if not target_path.exists():
+            warnings.append(
+                f"SourceFile not found on disk, skipping {len(source_rows)} row(s): {source_path_str}"
+            )
+            continue
+
+        result = _apply_rows_to_file(source_rows, target_path, dry_run=dry_run)
+        changes.extend(result.changes)
+        warnings.extend(result.warnings)
+        updated_components.update(c.uuid for c in result.changes)
+
+    return AnnotationResult(
+        dry_run=dry_run,
+        updated_components=len(updated_components),
+        changes=changes,
+        warnings=warnings,
+    )
+
+
+def _annotate_with_uuid_index(
+    rows: list[AnnotationRow],
+    schematic_files: list[Path],
+    *,
+    dry_run: bool,
+) -> AnnotationResult:
+    """Fallback annotation path: build global UUID index across all files.
+
+    Used when the CSV has no ``SourceFile`` column.  Within a single KiCad
+    project hierarchy KiCad guarantees UUID uniqueness, so no collision is
+    possible.
+    """
+
+    changes: list[AnnotationChange] = []
+    warnings: list[str] = []
+    updated_components: set[str] = set()
+
+    # Build UUID -> (symbol_node, source_file) index across all schematic files
+    uuid_to_location: dict[str, tuple[list[Any], Path]] = {}
+    schematics_cache: dict[Path, list[Any]] = {}
+
+    for sch_path in schematic_files:
+        if not sch_path.exists():
+            warnings.append(f"Schematic file not found, skipping: {sch_path}")
+            continue
+        schematic = load_kicad_file(sch_path)
+        schematics_cache[sch_path] = schematic
+        for symbol in walk_nodes(schematic, "symbol"):
+            symbol_uuid = _get_symbol_uuid(symbol)
+            if symbol_uuid and symbol_uuid not in uuid_to_location:
+                uuid_to_location[symbol_uuid] = (symbol, sch_path)
+
+    # Apply rows using UUID index
+    for row in rows:
+        if _is_header_or_subheader_row(row):
+            continue
+
+        missing_required = _missing_required_fields(row.values)
+        if missing_required:
+            warnings.append(
+                f"Row {row.row_number} UUID {row.uuid or '<blank>'}: required blank field(s): "
+                + ", ".join(missing_required)
+            )
+
+        if not row.uuid:
+            continue
+
+        location = uuid_to_location.get(row.uuid)
+        if location is None:
+            warnings.append(
+                f"Row {row.row_number}: UUID {row.uuid!r} not found in any schematic file"
+            )
+            continue
+
+        symbol, source_path = location
+        row_updates = _extract_row_updates(row.values)
+        if not row_updates:
+            continue
+
+        row_changed = False
+        for field_name, new_value in row_updates.items():
+            current = _get_property_value(symbol, field_name)
+            if current == new_value:
+                continue
+            changes.append(
+                AnnotationChange(
+                    uuid=row.uuid,
+                    field=field_name,
+                    before=current,
+                    after=new_value,
+                    row_number=row.row_number,
+                )
+            )
+            row_changed = True
+            if not dry_run:
+                _set_property_value(symbol, field_name, new_value)
+
+        if row_changed:
+            updated_components.add(row.uuid)
+
+    # Write back each modified schematic file
+    if not dry_run and changes:
+        changed_uuids = {c.uuid for c in changes}
+        written: set[Path] = set()
+        for uuid in changed_uuids:
+            location = uuid_to_location.get(uuid)
+            if location is None:
+                continue
+            _, source_path = location
+            if source_path not in written:
+                source_path.write_text(
+                    sexpdata.dumps(schematics_cache[source_path]), encoding="utf-8"
+                )
+                written.add(source_path)
+
+    return AnnotationResult(
+        dry_run=dry_run,
+        updated_components=len(updated_components),
+        changes=changes,
+        warnings=warnings,
+    )
+
+
+def _apply_rows_to_file(
+    rows: list[AnnotationRow],
+    schematic_path: Path,
+    *,
+    dry_run: bool,
+) -> AnnotationResult:
+    """Apply a set of annotation rows to a single schematic file."""
+
     schematic = load_kicad_file(schematic_path)
     symbols_by_uuid = _index_symbols_by_uuid(schematic)
 
@@ -81,9 +285,6 @@ def annotate_schematic(
     updated_components: set[str] = set()
 
     for row in rows:
-        if _is_header_or_subheader_row(row):
-            continue
-
         missing_required = _missing_required_fields(row.values)
         if missing_required:
             warnings.append(
@@ -107,7 +308,6 @@ def annotate_schematic(
             current = _get_property_value(symbol, field_name)
             if current == new_value:
                 continue
-
             changes.append(
                 AnnotationChange(
                     uuid=row.uuid,
@@ -118,7 +318,6 @@ def annotate_schematic(
                 )
             )
             row_changed = True
-
             if not dry_run:
                 _set_property_value(symbol, field_name, new_value)
 
