@@ -1,6 +1,91 @@
 # CHANGELOG
 
 
+## v6.27.0 (2026-03-05)
+
+### Features
+
+* feat: issue #133 core implementation — data quality and field handling
+
+P0: normalize property keys at intake
+- bom_generator.py: normalize comp.properties keys via normalize_field_name()
+  before inserting into BOMEntry.attributes (Component.properties unchanged).
+
+Bug 1: inventory virtual symbol filtering
+- cli/inventory.py: call apply_component_filters() with hardcoded BOM-equivalent
+  defaults (exclude_dnp=True, include_only_bom=True, include_virtual_symbols=False).
+  No CLI flags exposed — silent default, permissive design.
+
+Bug 2: inventory invents IPN
+- project_inventory.py: replace entire pseudo-IPN block with
+  ipn = props.get("IPN", ""). jBOM has no knowledge of IPN conventions;
+  leave blank so users assign their own IPNs.
+
+Bug 4: package footprint fallback helper
+- common/component_utils.py: add derive_package_from_footprint() shared helper.
+- cli/bom.py: use helper as fallback in _get_field_value() for "package" field.
+- project_inventory.py: _extract_package() delegates to shared helper.
+
+Bug 5: permissive --fields
+- common/field_parser.py: remove all raise ValueError guards for unknown field
+  names (plain tokens and +preset tokens). Permissive is the singular behavior.
+
+Enhancement 6: Component.source_file + --no-aggregate schema
+- common/types.py: add source_file: Optional[Path] = None to Component.
+- services/schematic_reader.py: set component.source_file in _parse_schematic().
+- cli/inventory.py: _NO_AGGREGATE_PREFIX_FIELDS expanded to 7 fields
+  (Project, ProjectName, UUID, SourceFile, Refs, Category, IPN);
+  _generate_no_aggregate_inventory_rows() populates all 7 columns;
+  _build_no_aggregate_subheader_row() updated accordingly.
+
+Enhancement 7: hierarchical annotation routing
+- services/annotation_service.py: annotate_schematic() gains
+  schematic_files: list[Path] | None = None; primary routing uses
+  SourceFile+UUID index across all schematic files; UUID-only fallback
+  retained for ambiguous/missing source-file cases.
+  _RESERVED_COLUMNS extended with sourcefile, projectname, refs.
+- cli/annotate.py: passes resolved.get_hierarchical_files() to service.
+
+Test additions
+- tests/unit/test_inventory_no_aggregate.py: updated for 7-field schema.
+- tests/unit/test_issue_133_data_quality.py: new file with 30 unit tests
+  covering all issue items.
+
+All 421 pytest tests pass. All 202 behave scenarios pass.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`f1a9ec3`](https://github.com/plocher/jBOM/commit/f1a9ec341e19cb7036a2c02a11f282b68c8ba672))
+
+* feat: dynamic --list-fields from project+inventory union, permissive fields framing
+
+- bom.py: _list_available_fields() now accepts components/inventory_column_names
+  for runtime field discovery from the union of project+inventory data.
+  Framing changed from "Available fields:" to "Known fields (any field name is
+  accepted — unknown fields produce blank cells)".
+- bom.py: --list-fields block does best-effort schematic+inventory load when
+  --input and/or --inventory flags are provided alongside --list-fields.
+- bom.py/pos.py: updated --fields help text to say "any field name is accepted".
+- pos.py: removed validate_fields_against_available() call; _list_available_pos_fields()
+  now uses same "Known fields" framing and sorted dynamic output.
+- field_parser.py: already permissive; no further changes needed here.
+- Feature/test updates for permissive and blank-IPN behaviors:
+  - issue-26: "invalid fields rejected" → "unknown fields accepted (blank column)"
+  - IPN_generation.feature: rewritten to test current behavior (blank IPN,
+    correct category classification, value preservation) instead of old
+    auto-generated IPN format.
+  - inventory_matching.feature: removed IPN column from CSV row assertions.
+  - ux_consistency.feature: replaced auto-IPN consistency checks with category checks.
+  - no_aggregate.feature: updated header assertion to match 7-field prefix schema.
+  - field_system_regression.feature: updated --list-fields and permissive-field scenarios.
+  - common_steps.py: step_error_should_list_available_fields now accepts both
+    "Known fields" and legacy "Available fields:" headings.
+- Test fixes: normalize attribute key casing (Tolerance→tolerance, Voltage→voltage,
+  Wattage→wattage, Manufacturer→manufacturer) in integration and unit tests.
+
+All 421 pytest tests pass. All 202 behave scenarios pass.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`9532c0c`](https://github.com/plocher/jBOM/commit/9532c0c44a9006bcc5019f1ec4aefdb4eeb34395))
+
+
 ## v6.26.0 (2026-03-05)
 
 ### Features
