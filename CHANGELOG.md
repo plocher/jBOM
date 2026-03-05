@@ -1,6 +1,15 @@
 # CHANGELOG
 
 
+## v6.26.0 (2026-03-05)
+
+### Features
+
+* feat: aggregate parts output by electro-mechanical identity
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`e8b9a6d`](https://github.com/plocher/jBOM/commit/e8b9a6dddc2dcb5eefad49070a7b0503bdbb82c5))
+
+
 ## v6.25.0 (2026-03-05)
 
 ### Features
