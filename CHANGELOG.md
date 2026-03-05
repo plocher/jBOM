@@ -1,6 +1,27 @@
 # CHANGELOG
 
 
+## v6.27.1 (2026-03-05)
+
+### Bug Fixes
+
+* fix: console output UX - terminal width, row separators, newline in cells
+
+All -o console table outputs (bom, pos, parts, inventory, search) now:
+- Use get_terminal_width() from shutil.get_terminal_size() instead of
+  hardcoded 100-char limit (formatting.py DRY helper, search.py deduped)
+- Emit a -+- row separator after every data row for visual clarity,
+  especially important for --no-aggregate multi-line rows
+- Correctly render explicit \\n in cell text as separate visual lines,
+  fixing (Optional)\\nIPN subheader in --no-aggregate console output
+
+DRY refactor: bom, pos, parts _print_console_table all route through
+print_table. parts._PARTS_FIELDS is single source of truth for both
+CSV and console field lists.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`55ac307`](https://github.com/plocher/jBOM/commit/55ac307b5fc6ae2f01e8d4260cc90f651515121e))
+
+
 ## v6.27.0 (2026-03-05)
 
 ### Features
