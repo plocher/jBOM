@@ -71,6 +71,41 @@ class ProjectInventoryGenerator:
 
         return self.inventory, sorted(list(self.inventory_fields))
 
+    def load_no_aggregate(self) -> Tuple[List[InventoryItem], List[str]]:
+        """Generate one inventory item per component instance (no aggregation).
+
+        Returns:
+            Tuple of (inventory items list, field names list)
+        """
+        self.inventory = []
+        self.inventory_fields = {
+            "IPN",
+            "Category",
+            "Value",
+            "Package",
+            "Description",
+            "Keywords",
+            "Manufacturer",
+            "MFGPN",
+            "Datasheet",
+            "LCSC",
+            "UUID",
+            "Footprint",
+            "Symbol",
+        }
+
+        for component in self.components:
+            item = self._create_inventory_item(component, component.uuid)
+            item.raw_data = dict(item.raw_data)
+            item.raw_data["Footprint"] = component.footprint
+            item.raw_data["Symbol"] = component.lib_id
+
+            self.inventory.append(item)
+            for prop in component.properties.keys():
+                self.inventory_fields.add(prop)
+
+        return self.inventory, sorted(list(self.inventory_fields))
+
     def _generate_group_key(self, component: Component) -> str:
         """Generate a unique key for grouping components."""
         # We group by Value, Footprint, and relevant properties to deduplicate
