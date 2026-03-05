@@ -23,6 +23,7 @@ from jbom.common.component_filters import (
     create_filter_config,
 )
 from jbom.config.fabricators import get_available_fabricators
+from jbom.cli.formatting import Column, print_table, get_terminal_width
 
 
 def register_command(subparsers) -> None:
@@ -254,6 +255,20 @@ def _output_parts(
     return 0
 
 
+# Single source of truth for parts fields: used by both CSV and console output.
+# Each tuple is (PartsListEntry attribute, display header, preferred console width).
+_PARTS_FIELDS: list[tuple[str, str, int]] = [
+    ("refs_csv", "Refs", 20),
+    ("value", "Value", 12),
+    ("footprint", "Footprint", 20),
+    ("package", "Package", 14),
+    ("part_type", "Type", 10),
+    ("tolerance", "Tolerance", 10),
+    ("voltage", "Voltage", 8),
+    ("dielectric", "Dielectric", 10),
+]
+
+
 def _print_console_table(parts_data: PartsListData) -> None:
     """Print Parts List as formatted console table."""
     print(f"\n{parts_data.project_name} - Parts List")
@@ -263,18 +278,18 @@ def _print_console_table(parts_data: PartsListData) -> None:
         print("No components found.")
         return
 
-    # Simple table formatting
-    print(f"{'Refs':<20} {'Value':<12} {'Package':<14}")
-    print("-" * 60)
-
-    for entry in parts_data.entries:
-        refs_value = entry.refs_csv
-        refs = refs_value[:19] + "..." if len(refs_value) > 19 else refs_value
-        value = entry.value[:11] + "..." if len(entry.value) > 11 else entry.value
-        package = entry.package or entry.footprint
-        package_display = package[:13] + "..." if len(package) > 13 else package
-
-        print(f"{refs:<20} {value:<12} {package_display:<14}")
+    rows = [
+        {
+            header: str(getattr(entry, attr, "") or "")
+            for attr, header, _ in _PARTS_FIELDS
+        }
+        for entry in parts_data.entries
+    ]
+    columns = [
+        Column(header=header, key=header, preferred_width=width, wrap=True)
+        for _, header, width in _PARTS_FIELDS
+    ]
+    print_table(rows, columns, terminal_width=get_terminal_width())
 
     print(
         f"\nTotal: {parts_data.total_components} components in {parts_data.total_groups} groups"
@@ -290,49 +305,9 @@ def _print_console_table(parts_data: PartsListData) -> None:
 
 def _print_csv(parts_data: PartsListData, *, out: TextIO) -> None:
     """Print Parts List as CSV to a file-like object."""
-
     writer = csv.writer(out)
-
-    # Headers
-    headers = [
-        "Refs",
-        "Value",
-        "Footprint",
-        "Package",
-        "Type",
-        "Tolerance",
-        "Voltage",
-        "Dielectric",
-    ]
-
-    # Add inventory headers if present
-    if parts_data.entries and parts_data.entries[0].attributes.get("inventory_matched"):
-        headers.extend(["Manufacturer", "Manufacturer Part", "Description", "Voltage"])
-
-    writer.writerow(headers)
-
-    # Data rows
+    writer.writerow([header for _, header, _ in _PARTS_FIELDS])
     for entry in parts_data.entries:
-        row = [
-            entry.refs_csv,
-            entry.value,
-            entry.footprint,
-            entry.package,
-            entry.part_type,
-            entry.tolerance,
-            entry.voltage,
-            entry.dielectric,
-        ]
-
-        # Add inventory data if present
-        if entry.attributes.get("inventory_matched"):
-            row.extend(
-                [
-                    entry.attributes.get("manufacturer", ""),
-                    entry.attributes.get("manufacturer_part", ""),
-                    entry.attributes.get("description", ""),
-                    entry.attributes.get("voltage", ""),
-                ]
-            )
-
-        writer.writerow(row)
+        writer.writerow(
+            [str(getattr(entry, attr, "") or "") for attr, _, _ in _PARTS_FIELDS]
+        )

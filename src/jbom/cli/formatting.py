@@ -9,6 +9,7 @@ commands.
 from __future__ import annotations
 
 import csv
+import shutil
 import sys
 import textwrap
 from dataclasses import dataclass
@@ -21,6 +22,11 @@ from typing import (
     Optional,
     Sequence,
 )
+
+
+def get_terminal_width() -> int:
+    """Return current terminal column width with a sensible fallback."""
+    return shutil.get_terminal_size(fallback=(120, 24)).columns
 
 
 @dataclass(frozen=True)
@@ -48,14 +54,23 @@ def _wrap_text(text: str, *, width: int) -> list[str]:
     if not text:
         return [""]
 
-    # `textwrap.wrap` handles both word-wrapping and unbreakable strings.
-    return textwrap.wrap(
-        text,
-        width=width,
-        break_long_words=True,
-        break_on_hyphens=False,
-        drop_whitespace=True,
-    ) or [""]
+    # Split on explicit newlines first so that "(Optional)\nIPN" renders as
+    # two separate lines rather than being collapsed to "(Optional) IPN".
+    result: list[str] = []
+    for segment in text.split("\n"):
+        if segment:
+            result.extend(
+                textwrap.wrap(
+                    segment,
+                    width=width,
+                    break_long_words=True,
+                    break_on_hyphens=False,
+                    drop_whitespace=True,
+                )
+            )
+        else:
+            result.append("")
+    return result or [""]
 
 
 def _truncate(text: str, *, width: int, align: str) -> str:
@@ -186,6 +201,11 @@ def print_table(
         sep_parts = ["-" * w for w in widths]
         print("-+-".join(sep_parts))
 
+    if len(col_list) == 1:
+        row_sep = "-" * widths[0]
+    else:
+        row_sep = "-+-".join("-" * w for w in widths)
+
     for row in rows_list:
         # Build per-column wrapped cell lines.
         per_col_lines: list[list[str]] = []
@@ -205,6 +225,8 @@ def print_table(
                 cell_text = lines[line_idx] if line_idx < len(lines) else ""
                 parts.append(_format_cell(cell_text, width=w, align=c.align))
             print(" | ".join(parts))
+
+        print(row_sep)
 
 
 def print_tabular_data(
@@ -278,11 +300,12 @@ def print_inventory_table(items: Iterable[dict], fieldnames: List[str]) -> None:
     ]
 
     print(f"\nInventory: {len(items_list)} items")
-    print_table(items_list, cols, terminal_width=100)
+    print_table(items_list, cols, terminal_width=get_terminal_width())
 
 
 __all__ = [
     "Column",
+    "get_terminal_width",
     "print_table",
     "print_tabular_data",
     "print_inventory_table",
