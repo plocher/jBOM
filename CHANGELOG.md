@@ -1,6 +1,15 @@
 # CHANGELOG
 
 
+## v6.24.0 (2026-03-05)
+
+### Features
+
+* feat: add v7 annotate command with uuid write-back service
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`bd662b1`](https://github.com/plocher/jBOM/commit/bd662b140894407eb15272b4a86259737cc013b3))
+
+
 ## v6.23.0 (2026-03-04)
 
 ### Features
