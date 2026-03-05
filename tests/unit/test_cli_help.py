@@ -58,7 +58,13 @@ def test_pos_help_shows_core_flags():
 def test_inventory_help_shows_inventory_interface_tokens():
     out = run_help(["inventory"]).lower()
     # Test current simplified interface with inventory matching flags
-    tokens_current = ["--inventory", "--filter-matches", "-o", "--output"]
+    tokens_current = [
+        "--inventory",
+        "--filter-matches",
+        "--no-aggregate",
+        "-o",
+        "--output",
+    ]
     for token in tokens_current:
         assert token in out
 

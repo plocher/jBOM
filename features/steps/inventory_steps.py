@@ -279,3 +279,53 @@ def given_directory_readonly(context):
 
     # Store original permissions for cleanup
     context.original_permissions = current_permissions
+
+
+@then('the file "{filename}" contains exactly {n:d} no-aggregate data rows')
+def then_file_contains_n_no_aggregate_data_rows(context, filename: str, n: int) -> None:
+    """Count only non-sentinel data rows in a no-aggregate CSV."""
+
+    path = context.project_root / filename
+    with path.open("r", encoding="utf-8", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+
+    data_rows = [row for row in rows if row.get("Project", "") != "Project"]
+    assert len(data_rows) == n, f"Expected {n} no-aggregate rows, got {len(data_rows)}"
+
+
+@then('the file "{filename}" contains a no-aggregate sub-header row for each category')
+def then_file_contains_subheader_row_for_each_category(context, filename: str) -> None:
+    """Validate one sentinel sub-header row exists for each data category."""
+
+    path = context.project_root / filename
+    with path.open("r", encoding="utf-8", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+
+    data_categories = {
+        row.get("Category", "") for row in rows if row.get("Project") != "Project"
+    }
+    subheaders = [row for row in rows if row.get("Project") == "Project"]
+
+    assert len(subheaders) == len(
+        data_categories
+    ), f"Expected {len(data_categories)} sub-header rows, got {len(subheaders)}"
+
+
+@then(
+    'the no-aggregate sub-header row in "{filename}" marks required and optional fields'
+)
+def then_no_aggregate_subheader_marks_required_optional(context, filename: str) -> None:
+    """Validate minimal deterministic sub-header marker encoding."""
+
+    path = context.project_root / filename
+    with path.open("r", encoding="utf-8", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+
+    subheader = next((row for row in rows if row.get("Project") == "Project"), None)
+    assert subheader is not None, "Expected at least one no-aggregate sub-header row"
+
+    assert subheader.get("UUID", "") == "UUID"
+    assert subheader.get("Category", "") == "Category"
+    assert subheader.get("IPN", "") == "(Optional)\nIPN"
+    assert subheader.get("Value", "") == "Value"
+    assert subheader.get("Package", "") == "Package"
