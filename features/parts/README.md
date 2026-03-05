@@ -1,10 +1,10 @@
 # Parts Domain
 
 ## Use Case
-As a hardware engineer, I want to generate a complete parts list from my KiCad project showing individual components (not aggregated like BOMs), so I can understand exactly which physical parts I need to procure or validate in my design.
+As a hardware engineer, I want to generate a complete parts list from my KiCad project showing electro-mechanical groups with collapsed references, so I can validate design identity without supply-chain splitting.
 
 ## Core User Needs
-1. "I want to see every individual component from my schematic in a simple list"
+1. "I want to see electro-mechanical groups with a clear `Refs` list from my schematic"
 2. "I want to exclude components that shouldn't be manufactured (DNP, excluded from BOM)"
 3. "I want to exclude KiCad's internal virtual symbols unless I specifically need them for debugging"
 4. "I want control over what gets included without having to understand KiCad's internal implementation"

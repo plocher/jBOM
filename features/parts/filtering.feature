@@ -16,12 +16,12 @@ Feature: Parts List Filtering
     When I run jbom command "parts"
     Then the command should succeed
     And the CSV output has rows where:
-      | Reference | Value |
-      | R1        | 10K   |
-      | C1        | 100nF |
+      | Refs | Value |
+      | R1   | 10K   |
+      | C1   | 100nF |
     And the CSV output does not contain components where:
-      | Reference |
-      | R2        |
+      | Refs |
+      | R2   |
 
   Scenario: Include DNP components when requested
     Given a schematic that contains:
@@ -32,10 +32,9 @@ Feature: Parts List Filtering
     When I run jbom command "parts --include-dnp"
     Then the command should succeed
     And the CSV output has rows where:
-      | Reference | Value |
-      | R1        | 10K   |
-      | R2        | 10K   |
-      | C1        | 100nF |
+      | Refs  | Value |
+      | R1,R2 | 10K   |
+      | C1    | 100nF |
 
   Scenario: Exclude components marked as excluded from BOM by default
     Given a schematic that contains:
@@ -46,12 +45,12 @@ Feature: Parts List Filtering
     When I run jbom command "parts"
     Then the command should succeed
     And the CSV output has rows where:
-      | Reference | Value |
-      | R1        | 10K   |
-      | C1        | 100nF |
+      | Refs | Value |
+      | R1   | 10K   |
+      | C1   | 100nF |
     And the CSV output does not contain components where:
-      | Reference |
-      | R2        |
+      | Refs |
+      | R2   |
 
   Scenario: Include excluded components when requested
     Given a schematic that contains:
@@ -62,10 +61,9 @@ Feature: Parts List Filtering
     When I run jbom command "parts --include-excluded"
     Then the command should succeed
     And the CSV output has rows where:
-      | Reference | Value |
-      | R1        | 10K   |
-      | R2        | 10K   |
-      | C1        | 100nF |
+      | Refs  | Value |
+      | R1,R2 | 10K   |
+      | C1    | 100nF |
 
   Scenario: Exclude virtual symbols automatically
     Given a schematic that contains:
@@ -77,13 +75,13 @@ Feature: Parts List Filtering
     When I run jbom command "parts"
     Then the command should succeed
     And the CSV output has rows where:
-      | Reference | Value |
-      | R1        | 10K   |
-      | C1        | 100nF |
+      | Refs | Value |
+      | R1   | 10K   |
+      | C1   | 100nF |
     And the CSV output does not contain components where:
-      | Reference |
-      | #PWR01    |
-      | #PWR02    |
+      | Refs  |
+      | #PWR01 |
+      | #PWR02 |
 
   Scenario: Include virtual symbols with --include-all
     Given a schematic that contains:
@@ -95,11 +93,11 @@ Feature: Parts List Filtering
     When I run jbom command "parts --include-all"
     Then the command should succeed
     And the CSV output has rows where:
-      | Reference | Value |
-      | R1        | 10K   |
-      | C1        | 100nF |
-      | #PWR01    | GND   |
-      | #PWR02    | VCC   |
+      | Refs   | Value |
+      | R1     | 10K   |
+      | C1     | 100nF |
+      | #PWR01 | GND   |
+      | #PWR02 | VCC   |
 
   Scenario: Test both DNP and ExcludeFromBOM flags work independently
     Given a schematic that contains:
@@ -111,11 +109,9 @@ Feature: Parts List Filtering
     When I run jbom command "parts --include-dnp --include-excluded"
     Then the command should succeed
     And the CSV output has rows where:
-      | Reference | Value |
-      | R1        | 10K   |
-      | R2        | 10K   |
-      | R3        | 10K   |
-      | C1        | 100nF |
+      | Refs     | Value |
+      | R1,R2,R3 | 10K   |
+      | C1       | 100nF |
 
   Scenario: Include only DNP components (exclude ExcludeFromBOM)
     Given a schematic that contains:
@@ -126,12 +122,11 @@ Feature: Parts List Filtering
     When I run jbom command "parts --include-dnp"
     Then the command should succeed
     And the CSV output has rows where:
-      | Reference | Value |
-      | R1        | 10K   |
-      | R2        | 10K   |
+      | Refs  | Value |
+      | R1,R2 | 10K   |
     And the CSV output does not contain components where:
-      | Reference |
-      | R3        |
+      | Refs |
+      | R3   |
 
   Scenario: Include only ExcludeFromBOM components (exclude DNP)
     Given a schematic that contains:
@@ -142,9 +137,8 @@ Feature: Parts List Filtering
     When I run jbom command "parts --include-excluded"
     Then the command should succeed
     And the CSV output has rows where:
-      | Reference | Value |
-      | R1        | 10K   |
-      | R3        | 10K   |
+      | Refs  | Value |
+      | R1,R3 | 10K   |
     And the CSV output does not contain components where:
-      | Reference |
-      | R2        |
+      | Refs |
+      | R2   |

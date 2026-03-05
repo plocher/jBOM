@@ -175,7 +175,7 @@ Generates an initial inventory template from schematic components. The output is
 jbom parts [PROJECT] [-o OUTPUT] [OPTIONS]
 ```
 
-Generates an unaggregated parts list — one row per component reference — from schematics. Unlike `bom`, `parts` does not aggregate by value+package and does not require an inventory file. Useful for checking component counts or exporting for use in another tool.
+Generates an electro-mechanically aggregated parts list from schematics. `parts` groups by value/package/type/tolerance/voltage/dielectric and emits a `Refs` column containing collapsed reference designators. Unlike `bom`, this aggregation excludes supply-chain fields and does not require an inventory file.
 
 **PROJECT** (optional, default: current directory)
 : Path to .kicad_sch file, project directory, or base name.
@@ -302,7 +302,7 @@ Bulk-searches distributor catalogs using items from an existing inventory file t
 : Default name `part-inventory.csv` (written in the current working directory when `-o` is omitted). Template with IPN, Category, Value, Package, and related columns.
 
 **Parts CSV**
-: Default name `${ProjectName}.parts.csv` (written in the project directory when `-o` is omitted). One row per component reference, not aggregated. Use `-o -` for CSV to stdout.
+: Default name `${ProjectName}.parts.csv` (written in the project directory when `-o` is omitted). One row per electro-mechanical group with a `Refs` column of collapsed references. Use `-o -` for CSV to stdout.
 
 **Exit Codes**
 : 0 — success
@@ -386,7 +386,7 @@ Show only components not yet in an existing inventory:
 jbom inventory MyProject/ --inventory existing.csv --filter-matches -o new_parts.csv
 ```
 
-Parts list (one row per reference, no aggregation):
+Parts list (electro-mechanical groups with collapsed Refs):
 ```
 jbom parts MyProject/ -o parts.csv
 ```
