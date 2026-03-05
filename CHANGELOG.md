@@ -1,6 +1,15 @@
 # CHANGELOG
 
 
+## v6.25.0 (2026-03-05)
+
+### Features
+
+* feat: add inventory --no-aggregate category-grouped export
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`9b4cb95`](https://github.com/plocher/jBOM/commit/9b4cb95102c9eedddf0ffcc7136bfb43ab4cfa7c))
+
+
 ## v6.24.0 (2026-03-05)
 
 ### Features
