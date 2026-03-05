@@ -640,9 +640,10 @@ def step_file_should_contain(context, filename, text):
     file_path = Path(context.project_root) / filename
     assert file_path.exists(), f"File not found: {file_path}"
     content = file_path.read_text(encoding="utf-8")
+    expected_text = text.replace('\\"', '"')
     assert (
-        text in content
-    ), f"Text '{text}' not found in file {filename}\nContent:\n{content}"
+        expected_text in content
+    ), f"Text '{expected_text}' not found in file {filename}\nContent:\n{content}"
 
 
 @then('a file should exist that contains "{text}"')
