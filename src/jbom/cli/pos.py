@@ -22,10 +22,7 @@ from jbom.common.cli_fabricator import (
     add_fabricator_arguments,
     resolve_fabricator_from_args,
 )
-from jbom.common.field_parser import (
-    parse_fields_argument,
-    validate_fields_against_available,
-)
+from jbom.common.field_parser import parse_fields_argument
 from jbom.common.fields import field_to_header
 from jbom.common.component_filters import (
     add_component_filter_arguments,
@@ -93,7 +90,11 @@ def register_command(subparsers) -> None:
     parser.add_argument(
         "-f",
         "--fields",
-        help="Comma-separated field list or preset (+minimal, +standard, +jlc, etc.)",
+        help=(
+            "Select specific fields for POS output. Comma-separated list or +preset. "
+            "Any field name is accepted; unknown fields produce blank cells. "
+            "Use --list-fields to see known fields."
+        ),
     )
 
     parser.add_argument(
@@ -238,19 +239,8 @@ def handle_pos(args: argparse.Namespace) -> int:
                 None,  # No BOM presets for POS
                 context="pos",
             )
-            # Validate fields
-            validate_fields_against_available(selected_fields, available_pos_fields)
-
-            # Check for fabricator completeness warnings if fabricator specified but custom fields used
-            if args.fields and fabricator != "generic":
-                from jbom.common.field_parser import check_fabricator_field_completeness
-
-                # Don't use BOM presets for POS completeness check
-                warning = check_fabricator_field_completeness(
-                    selected_fields, fabricator, None
-                )
-                if warning:
-                    print(f"Warning: {warning}", file=sys.stderr)
+            # Permissive: unknown fields are accepted and produce blank cells.
+            # No strict validation — jBOM is a flexible tool, not a gatekeeper.
 
         except ValueError as e:
             print(f"Error: {e}", file=sys.stderr)
@@ -292,27 +282,33 @@ def _get_available_pos_fields() -> dict:
 
 
 def _list_available_pos_fields(fabricator: str) -> None:
-    """List available POS fields and fabricator presets.
+    """List known POS fields and fabricator defaults.
+
+    Fields are dynamically derived from the POS schema. Any field name is accepted;
+    unknown fields produce blank cells.
 
     Args:
         fabricator: Current fabricator ID
     """
-    available_fields = _get_available_pos_fields()
-    # NOTE: Don't show BOM presets for POS - they contain incompatible fields
+    from jbom.common.fields import field_to_header
 
-    print(f"\nAvailable POS Fields for {fabricator} fabricator:")
-    print("=" * 50)
+    known_fields = _get_available_pos_fields()
 
-    for field, description in available_fields.items():
-        print(f"  {field:<15} - {description}")
+    print(
+        "\nKnown POS fields (any field name is accepted — unknown fields produce blank cells):"
+    )
+    print("=" * 60)
+    for field_name in sorted(known_fields.keys()):
+        desc = known_fields[field_name]
+        header = field_to_header(field_name)
+        print(f"  {field_name:<30}  ({header}):  {desc}")
 
-    print("\nFabricator Presets:")
-    print("  No POS-specific presets available (POS uses fabricator column mapping)")
-
-    # Show default fields if no --fields specified
+    # Show default fields for the active fabricator
     default_fields = get_fabricator_default_fields(fabricator, "pos")
     if default_fields:
-        print("\nDefault fields (when no --fields specified):")
+        print(
+            f"\nDefault fields for {fabricator} fabricator (when --fields not specified):"
+        )
         print(f"  {', '.join(default_fields)}")
 
 

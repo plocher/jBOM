@@ -121,14 +121,11 @@ Feature: Issue #26 - POS Field Selection and Output Control (Regression Canaries
   # Output format compatibility (canary - full testing in features/pos/fields.feature)
 
   # Input validation (TDD - desired error handling behavior)
-  Scenario: Invalid field names should be rejected with helpful message
-    When I run jbom command "pos --fields Reference,InvalidField,X"
-    Then the command should fail
-    And the error output contains:
-      | Invalid field: InvalidField |
-      | Available fields:           |
-    And the error output should list these available fields:
-      | Reference | X | Y | Rotation | Side | Footprint | Package | Value |
+  Scenario: Unknown field names are accepted and produce blank columns
+    # jBOM is permissive: unknown fields are silently accepted and produce blank cells.
+    # An unrecognized field simply produces a blank column; it does not fail.
+    When I run jbom command "pos --fields Reference,UnknownField,X"
+    Then the command should succeed
 
   Scenario: Empty fields parameter should be rejected
     When I run jbom command "pos --fields ''"

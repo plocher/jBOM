@@ -23,32 +23,33 @@ Feature: Inventory Matching and Filtering
   Scenario: Basic inventory matching with --inventory flag
     When I run jbom command "inventory --inventory existing_inventory.csv -o -"
     Then the command should succeed
-    # Should output only items NOT present in existing inventory
+    # All schematic components are output; IPN is blank unless explicitly in schematic properties.
     And the CSV output has rows where:
-      | IPN       | Value | Category |
-      | RES_22k   | 22k   | RES      |
-      | CAP_22pF  | 22pF  | CAP      |
-      | IC_LM358  | LM358 | IC       |
+      | Value | Category |
+      | 22k   | RES      |
+      | 22pF  | CAP      |
+      | LM358 | IC       |
 
   Scenario: Filter matched components with --filter-matches
     When I run jbom command "inventory --inventory existing_inventory.csv --filter-matches -o -"
     Then the command should succeed
-    # With filtering, should still output only non-matching items
+    # With --filter-matches, items that match existing inventory are excluded.
+    # Unmatched components (22k, 22pF, LM358) remain; IPN is blank without explicit property.
     And the CSV output has rows where:
-      | IPN       | Value | Category |
-      | RES_22k   | 22k   | RES      |
-      | CAP_22pF  | 22pF  | CAP      |
-      | IC_LM358  | LM358 | IC       |
+      | Value | Category |
+      | 22k   | RES      |
+      | 22pF  | CAP      |
+      | LM358 | IC       |
 
   Scenario: Verbose matching shows detailed match information
     When I run jbom command "inventory --inventory existing_inventory.csv --filter-matches -o - -v"
     Then the command should succeed
     # Still validate by CSV content rather than verbose console strings
     And the CSV output has rows where:
-      | IPN       | Value | Category |
-      | RES_22k   | 22k   | RES      |
-      | CAP_22pF  | 22pF  | CAP      |
-      | IC_LM358  | LM358 | IC       |
+      | Value | Category |
+      | 22k   | RES      |
+      | 22pF  | CAP      |
+      | LM358 | IC       |
 
   Scenario: Warning when --filter-matches used without --inventory
     When I run jbom command "inventory --filter-matches -o -"

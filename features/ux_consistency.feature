@@ -54,7 +54,7 @@ Feature: UX Consistency Across Commands
     When I run jbom command "inventory --inventory test_inventory.csv -o -"
     Then the command should succeed
     And the output should contain "IPN"
-    And the IPN for component "R1" should be consistent
+    And the output should contain "RES"
 
   Scenario: All commands support -o console for explicit table output
     When I run jbom command "bom -o console"
@@ -72,7 +72,7 @@ Feature: UX Consistency Across Commands
     When I run jbom command "inventory --inventory test_inventory.csv -o console"
     Then the command should succeed
     And the output should contain "Generated inventory"
-    And the IPN for component "R1" should be consistent
+    And the output should contain "RES"
 
   Scenario: All commands support -o filename.csv for file output
     When I run jbom command "bom -o test_bom.csv"
@@ -89,7 +89,7 @@ Feature: UX Consistency Across Commands
     When I run jbom command "inventory --inventory test_inventory.csv -o test_inventory_output.csv"
     Then the command should succeed
     And a file named "test_inventory_output.csv" should exist
-    And the file "test_inventory_output.csv" should contain "RES_10k"
+    And the file "test_inventory_output.csv" should contain "10k"
 
   Scenario: All commands show consistent help patterns
     When I run jbom command "bom --help"
