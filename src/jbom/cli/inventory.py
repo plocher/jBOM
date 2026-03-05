@@ -29,6 +29,38 @@ from jbom.services.sophisticated_inventory_matcher import (
     SophisticatedInventoryMatcher,
 )
 
+_NO_AGGREGATE_PREFIX_FIELDS = ["Project", "UUID", "Category", "IPN"]
+_NO_AGGREGATE_PREFERRED_FIELDS = [
+    "SMD",
+    "Value",
+    "Type",
+    "Description",
+    "Resistance",
+    "Capacitance",
+    "Inductance",
+    "Package",
+    "Form",
+    "Pins",
+    "Pitch",
+    "Tolerance",
+    "V",
+    "A",
+    "W",
+    "Color",
+    "Angle",
+    "Wavelength",
+    "mcd",
+    "Frequency",
+    "Symbol",
+    "Footprint",
+    "Manufacturer",
+    "MFGPN",
+    "LCSC",
+    "Datasheet",
+    "Keywords",
+    "Name",
+]
+
 
 def register_command(subparsers) -> None:
     """Register inventory command with argument parser."""
@@ -70,6 +102,11 @@ def register_command(subparsers) -> None:
         "--filter-matches",
         action="store_true",
         help="Filter out components that match existing inventory items",
+    )
+    parser.add_argument(
+        "--no-aggregate",
+        action="store_true",
+        help="Emit one inventory row per component instance with category sub-header rows",
     )
 
     # Safety options
@@ -174,14 +211,96 @@ def _handle_generate_inventory(args: argparse.Namespace) -> int:
             verbose=args.verbose,
         )
 
+    project_directory = (
+        resolved_input.project_context.project_directory
+        if resolved_input.project_context
+        else schematic_file.parent
+    )
+
     # Generate inventory
     generator = ProjectInventoryGenerator(components)
+
+    if args.no_aggregate:
+        rows, field_names = _generate_no_aggregate_inventory_rows(
+            components,
+            project_directory=project_directory,
+        )
+        return _output_inventory_rows(
+            rows, field_names, args.output, args.force, args.verbose
+        )
+
     inventory_items, field_names = generator.load()
 
     # Handle output using same pattern as BOM command
     return _output_inventory(
         inventory_items, field_names, args.output, args.force, args.verbose
     )
+
+
+def _generate_no_aggregate_inventory_rows(
+    components: list[Component], project_directory: Path
+) -> tuple[list[dict[str, str]], list[str]]:
+    """Generate no-aggregate inventory rows grouped by category with sub-headers."""
+
+    generator = ProjectInventoryGenerator(components)
+    inventory_items, base_field_names = generator.load_no_aggregate()
+
+    field_names = _build_no_aggregate_field_order(base_field_names)
+    project_value = str(project_directory.resolve())
+
+    data_rows: list[dict[str, str]] = []
+    for item in inventory_items:
+        row = _inventory_item_to_row(item, field_names)
+        row["Project"] = project_value
+        row["UUID"] = item.uuid
+        row["Category"] = item.category
+        row["IPN"] = item.ipn
+        data_rows.append(row)
+
+    sorted_rows = sorted(
+        data_rows, key=lambda row: (row.get("Category", ""), row.get("UUID", ""))
+    )
+
+    grouped_rows: list[dict[str, str]] = []
+    current_category = ""
+    for row in sorted_rows:
+        category = row.get("Category", "")
+        if category != current_category:
+            grouped_rows.append(_build_no_aggregate_subheader_row(field_names))
+            current_category = category
+        grouped_rows.append(row)
+
+    return grouped_rows, field_names
+
+
+def _build_no_aggregate_field_order(base_field_names: list[str]) -> list[str]:
+    """Return deterministic field ordering for no-aggregate inventory output."""
+
+    base_set = set(base_field_names)
+    ordered_fields = list(_NO_AGGREGATE_PREFIX_FIELDS)
+
+    for field_name in _NO_AGGREGATE_PREFERRED_FIELDS:
+        if field_name in base_set and field_name not in ordered_fields:
+            ordered_fields.append(field_name)
+
+    extras = sorted(
+        field_name for field_name in base_set if field_name not in ordered_fields
+    )
+    ordered_fields.extend(extras)
+    return ordered_fields
+
+
+def _build_no_aggregate_subheader_row(field_names: list[str]) -> dict[str, str]:
+    """Build minimal deterministic sub-header marker row for no-aggregate output."""
+
+    row = {field_name: "" for field_name in field_names}
+    row["Project"] = "Project"
+    row["UUID"] = "UUID"
+    row["Category"] = "Category"
+    row["IPN"] = "(Optional)\nIPN"
+    row["Value"] = "Value"
+    row["Package"] = "Package"
+    return row
 
 
 def _filter_components_by_existing_inventory(
@@ -368,6 +487,68 @@ def _output_inventory(
     return 0
 
 
+def _output_inventory_rows(
+    rows: list[dict[str, str]],
+    field_names: list[str],
+    output,
+    force: bool = False,
+    verbose: bool = False,
+) -> int:
+    """Output pre-built inventory row dictionaries in the requested format."""
+    default_path = Path("part-inventory.csv")
+
+    dest = resolve_output_destination(
+        output,
+        default_destination=OutputDestination(OutputKind.FILE, path=default_path),
+    )
+
+    if dest.kind == OutputKind.CONSOLE:
+        print_inventory_table(rows, field_names)
+        print(f"\nGenerated inventory with {_count_data_rows(rows)} items")
+        return 0
+
+    if dest.kind == OutputKind.STDOUT:
+        _write_csv_rows(rows, field_names, out=sys.stdout)
+        return 0
+
+    if not dest.path:
+        raise ValueError("Internal error: file output selected but no path provided")
+
+    output_path = dest.path
+    refused = (
+        f"Error: Output file '{output_path}' already exists. Use --force to overwrite."
+    )
+
+    def _backup(path: Path) -> Path | None:
+        backup_path = _create_backup(path, verbose)
+        if backup_path and verbose:
+            print(f"Created backup: {backup_path}", file=sys.stderr)
+        return backup_path
+
+    try:
+        with open_output_text_file(
+            output_path,
+            force=force,
+            refused_message=refused,
+            make_backup=_backup,
+        ) as handle:
+            _write_csv_rows(rows, field_names, out=handle)
+    except OutputRefusedError as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
+
+    print(
+        f"Generated inventory with {_count_data_rows(rows)} items written to {output_path}"
+    )
+    return 0
+
+
+def _count_data_rows(rows: list[dict[str, str]]) -> int:
+    """Count inventory data rows excluding no-aggregate sentinel sub-headers."""
+
+    return sum(1 for row in rows if row.get("Project", "") != "Project")
+
+
 def _create_backup(file_path: Path, verbose: bool = False) -> Path:
     """Create a timestamped backup of an existing file.
 
@@ -430,59 +611,54 @@ def _print_console_table(inventory_items, field_names) -> None:
 
 def _print_csv(inventory_items, field_names, *, out: TextIO) -> None:
     """Print inventory as CSV to a file-like object."""
-
-    writer = csv.DictWriter(out, fieldnames=field_names)
-    writer.writeheader()
-
-    for item in inventory_items:
-        row = {
-            "IPN": item.ipn,
-            "Category": item.category,
-            "Value": item.value,
-            "Description": item.description,
-            "Package": item.package,
-            "Manufacturer": item.manufacturer,
-            "MFGPN": item.mfgpn,
-            "LCSC": item.lcsc,
-            "Datasheet": item.datasheet,
-            "UUID": item.uuid,
-        }
-        # Add any extra fields from component properties
-        for field in field_names:
-            if (
-                field not in row
-                and hasattr(item, "raw_data")
-                and field in item.raw_data
-            ):
-                row[field] = item.raw_data[field]
-        writer.writerow(row)
+    rows = [_inventory_item_to_row(item, field_names) for item in inventory_items]
+    _write_csv_rows(rows, field_names, out=out)
 
 
 def _write_csv(inventory_items, field_names, *, out: TextIO) -> None:
     """Write inventory as CSV to a file-like object."""
+    rows = [_inventory_item_to_row(item, field_names) for item in inventory_items]
+    _write_csv_rows(rows, field_names, out=out)
+
+
+def _inventory_item_to_row(
+    item: InventoryItem, field_names: list[str]
+) -> dict[str, str]:
+    """Convert an InventoryItem to a CSV row dictionary."""
+
+    row = {
+        "IPN": item.ipn,
+        "Category": item.category,
+        "Value": item.value,
+        "Description": item.description,
+        "Package": item.package,
+        "Manufacturer": item.manufacturer,
+        "MFGPN": item.mfgpn,
+        "LCSC": item.lcsc,
+        "Datasheet": item.datasheet,
+        "UUID": item.uuid,
+    }
+
+    for field_name in field_names:
+        if (
+            field_name not in row
+            and hasattr(item, "raw_data")
+            and field_name in item.raw_data
+        ):
+            row[field_name] = item.raw_data[field_name]
+
+    for field_name in field_names:
+        row.setdefault(field_name, "")
+
+    return row
+
+
+def _write_csv_rows(
+    rows: list[dict[str, str]], field_names: list[str], *, out: TextIO
+) -> None:
+    """Write row dictionaries as CSV using the provided field order."""
 
     writer = csv.DictWriter(out, fieldnames=field_names)
     writer.writeheader()
-
-    for item in inventory_items:
-        row = {
-            "IPN": item.ipn,
-            "Category": item.category,
-            "Value": item.value,
-            "Description": item.description,
-            "Package": item.package,
-            "Manufacturer": item.manufacturer,
-            "MFGPN": item.mfgpn,
-            "LCSC": item.lcsc,
-            "Datasheet": item.datasheet,
-            "UUID": item.uuid,
-        }
-        # Add any extra fields from component properties
-        for field in field_names:
-            if (
-                field not in row
-                and hasattr(item, "raw_data")
-                and field in item.raw_data
-            ):
-                row[field] = item.raw_data[field]
+    for row in rows:
         writer.writerow(row)
