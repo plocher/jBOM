@@ -98,7 +98,7 @@ class TestBOMGenerator:
         assert sorted(entry.references) == ["R1", "R2"]
         assert entry.value == "10K"
         assert entry.quantity == 2
-        assert entry.attributes["Tolerance"] == "5%"
+        assert entry.attributes["tolerance"] == "5%"
 
     def test_generate_bom_data_different_components(self):
         """Test BOM generation with different components."""
@@ -415,9 +415,9 @@ class TestBOMGenerator:
 
         assert len(bom_data.entries) == 1
         entry = bom_data.entries[0]
-        assert entry.attributes["Tolerance"] == "5%"
-        assert entry.attributes["Wattage"] == "0.1W"
-        assert entry.attributes["Manufacturer"] == "Yageo"
+        assert entry.attributes["tolerance"] == "5%"
+        assert entry.attributes["wattage"] == "0.1W"
+        assert entry.attributes["manufacturer"] == "Yageo"
 
 
 class TestBOMEntry:

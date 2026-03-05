@@ -33,6 +33,7 @@ from jbom.common.component_filters import (
     add_component_filter_arguments,
     create_filter_config,
 )
+from jbom.common.component_utils import derive_package_from_footprint
 
 
 def register_command(subparsers) -> None:
@@ -88,7 +89,11 @@ def register_command(subparsers) -> None:
     parser.add_argument(
         "-f",
         "--fields",
-        help="Comma-separated field list or preset (+minimal, +standard, +jlc, etc.)",
+        help=(
+            "Select specific fields for BOM output. Comma-separated list or +preset "
+            "(+minimal, +standard, +jlc, etc.). Any field name is accepted; unknown "
+            "fields produce blank cells. Use --list-fields to see known fields and presets."
+        ),
     )
 
     parser.add_argument(
@@ -120,9 +125,42 @@ def handle_bom(args: argparse.Namespace) -> int:
         if not fabricator:
             fabricator = "generic"
 
-        # Handle --list-fields before input resolution (no project needed)
+        # Handle --list-fields - best-effort: try to load runtime data for richer output
         if args.list_fields:
-            _list_available_fields(fabricator)
+            list_components: list = []
+            list_inv_columns: list[str] = []
+
+            # Try to load project components if a specific input was given
+            if args.input and args.input != ".":
+                try:
+                    list_resolver = ProjectFileResolver(
+                        prefer_pcb=False, target_file_type="schematic"
+                    )
+                    list_resolved = list_resolver.resolve_input(args.input)
+                    list_reader = SchematicReader()
+                    for sch_f in list_resolved.get_hierarchical_files():
+                        list_components.extend(list_reader.load_components(sch_f))
+                except Exception:
+                    pass  # Fall back to statically-known fields
+
+            # Try to load inventory columns if --inventory was given
+            if args.inventory_files:
+                from jbom.services.inventory_reader import InventoryReader as _InvReader
+
+                for inv_str in args.inventory_files:
+                    inv_p = Path(inv_str)
+                    if inv_p.exists():
+                        try:
+                            _, cols = _InvReader(inv_p).load()
+                            list_inv_columns.extend(cols)
+                        except Exception:
+                            pass
+
+            _list_available_fields(
+                fabricator,
+                components=list_components or None,
+                inventory_column_names=list_inv_columns or None,
+            )
             return 0
 
         # Create options
@@ -279,27 +317,49 @@ def handle_bom(args: argparse.Namespace) -> int:
         return 1
 
 
-def _list_available_fields(fabricator: str) -> None:
-    """List all available fields and presets for the given fabricator."""
-    print("\nAvailable fields:")
-    print("=" * 40)
+def _list_available_fields(
+    fabricator: str,
+    components: list | None = None,
+    inventory_column_names: list[str] | None = None,
+) -> None:
+    """List known BOM fields and presets for the given fabricator.
 
-    # Get standard BOM fields
-    standard_fields = [
-        "reference",
-        "quantity",
-        "value",
-        "description",
-        "footprint",
-        "manufacturer",
-        "mfgpn",
-        "fabricator_part_number",
-        "smd",
-        "lcsc",
-    ]
+    Fields are dynamically derived from the union of component-schema fields and any
+    loaded inventory columns. Any field name is accepted at runtime; unknown fields
+    produce blank cells.
 
-    for field in sorted(standard_fields):
-        print(f"  {field}")
+    Args:
+        fabricator: Current fabricator ID (for fabricator-specific presets)
+        components: Optional loaded components for runtime field discovery
+        inventory_column_names: Optional list of inventory CSV column headers
+    """
+    from jbom.common.fields import field_to_header, normalize_field_name
+
+    # Build known fields dynamically from project + inventory union
+    known_fields = _get_available_bom_fields(components or [])
+
+    # Merge in inventory-discovered columns (with i: prefix for unambiguous access)
+    if inventory_column_names:
+        for col in inventory_column_names:
+            normalized_col = normalize_field_name(col)
+            i_key = f"i:{normalized_col}"
+            if i_key not in known_fields:
+                known_fields[i_key] = f"Inventory: {col}"
+
+    print(
+        "\nKnown fields (any field name is accepted \u2014 unknown fields produce blank cells):"
+    )
+    print("=" * 60)
+    for field_name in sorted(known_fields.keys()):
+        desc = known_fields[field_name]
+        header = field_to_header(field_name)
+        print(f"  {field_name:<30}  ({header}):  {desc}")
+
+    if not components and not inventory_column_names:
+        print(
+            "\n  Tip: Run with a project path or --inventory to see runtime-discovered fields."
+        )
+        print("  Example: jbom bom --list-fields [input] [--inventory file.csv]")
 
     print("\nAvailable presets:")
     print("=" * 40)
@@ -497,7 +557,8 @@ def _get_field_value(entry, field: str) -> str:
         ),
         "smd": lambda e: "Yes" if e.attributes.get("smd", False) else "No",
         "lcsc": lambda e: e.attributes.get("lcsc", "") or e.attributes.get("LCSC", ""),
-        "package": lambda e: e.attributes.get("package", ""),
+        "package": lambda e: e.attributes.get("package", "")
+        or derive_package_from_footprint(e.footprint),
     }
 
     if field in field_mapping:

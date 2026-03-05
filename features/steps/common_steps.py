@@ -849,7 +849,9 @@ def step_error_output_should_contain_options(context):
 
 @then("the error output should list these available fields:")
 def step_error_should_list_available_fields(context):
-    """Verify that error output lists the specified available fields.
+    """Verify that output lists the specified known/available fields.
+
+    Accepts both "Known fields" (current framing) and "Available fields:" (legacy).
 
     Table format:
     | Reference | X | Y | Rotation | Side | Footprint | Package | Value |
@@ -862,16 +864,19 @@ def step_error_should_list_available_fields(context):
     # Get expected available fields from first table row
     expected_fields = [cell for cell in context.table.headings]
 
-    # Check that "Available fields:" text exists
-    assert "Available fields:" in context.last_output, (
-        f"'Available fields:' text not found in error output.\n"
+    # Accept either the current "Known fields" heading or the legacy "Available fields:"
+    assert (
+        "Known fields" in context.last_output
+        or "Available fields:" in context.last_output
+    ), (
+        f"'Known fields' or 'Available fields:' text not found in output.\n"
         f"Output:\n{context.last_output}"
     )
 
-    # Check that each expected field is mentioned in the error output
+    # Check that each expected field is mentioned in the output
     for field in expected_fields:
         assert field in context.last_output, (
-            f"Expected available field '{field}' not found in error output.\n"
+            f"Expected available field '{field}' not found in output.\n"
             f"Output:\n{context.last_output}"
         )
 

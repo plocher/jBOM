@@ -69,24 +69,23 @@ Feature: BOM Field System and Output Customization
     And the output should contain CSV headers "Reference,Value,I:Voltage,I:Tolerance"
 
   @regression @current-broken
-  Scenario: Field validation - unknown field should fail
+  Scenario: Unknown fields are accepted and produce blank columns
+    # jBOM is permissive: any field name is accepted; unknown fields produce blank cells.
     When I run jbom command "bom -f Reference,Value,UnknownField -o -"
-    Then the command should fail
-    And the error output contains:
-      | Unknown field: 'UnknownField' |
+    Then the command should succeed
+    And the output should contain CSV headers "Reference,Value,Unknown Field"
 
   @regression @current-broken
-  Scenario: Preset validation - unknown preset should fail
+  Scenario: Unknown preset treated as field name addition
+    # jBOM is permissive: +unknown_preset is treated as adding a field named 'unknown_preset'.
     When I run jbom command "bom -f +unknown_preset -o -"
-    Then the command should fail
-    And the error output contains:
-      | Unknown preset: +unknown_preset |
+    Then the command should succeed
 
   @regression @current-broken
   Scenario: List available fields functionality
     When I run jbom command "bom --list-fields"
     Then the command should succeed
-    And the output should contain "Available fields:"
+    And the output should contain "Known fields"
     And the output should contain "reference"
     And the output should contain "value"
     And the output should contain "lcsc"

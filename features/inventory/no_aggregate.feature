@@ -10,10 +10,10 @@ Feature: Inventory no-aggregate export
       | uuid-c1 | C1        | 100nF | Capacitor_SMD:C_0603_1608Metric    | Device:C |
       | uuid-r1 | R1        | 10K   | Resistor_SMD:R_0603_1608Metric     | Device:R |
 
-  Scenario: no-aggregate output uses Project UUID Category IPN leading columns
+  Scenario: no-aggregate output uses Project ProjectName UUID SourceFile Refs Category IPN leading columns
     When I run jbom command "inventory --no-aggregate -o noagg.csv"
     Then the command should succeed
-    And the file "noagg.csv" contains "Project,UUID,Category,IPN"
+    And the file "noagg.csv" contains "Project,ProjectName,UUID,SourceFile,Refs,Category,IPN"
 
   Scenario: no-aggregate output emits one data row per component instance
     When I run jbom command "inventory --no-aggregate -o noagg.csv"

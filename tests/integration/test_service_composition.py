@@ -91,14 +91,14 @@ class TestServiceComposition:
         assert sorted(resistor_entry.references) == ["R1", "R2"]
         assert resistor_entry.value == "10K"
         assert resistor_entry.quantity == 2
-        assert resistor_entry.attributes["Tolerance"] == "5%"
+        assert resistor_entry.attributes["tolerance"] == "5%"
 
         # C1 should be its own entry
         capacitor_entry = next(e for e in bom_data.entries if "C1" in e.references)
         assert capacitor_entry.references == ["C1"]
         assert capacitor_entry.value == "100nF"
         assert capacitor_entry.quantity == 1
-        assert capacitor_entry.attributes["Voltage"] == "50V"
+        assert capacitor_entry.attributes["voltage"] == "50V"
 
         # R3 should not appear (filtered out due to DNP)
         all_references = [ref for entry in bom_data.entries for ref in entry.references]

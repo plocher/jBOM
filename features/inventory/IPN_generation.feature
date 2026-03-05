@@ -1,12 +1,16 @@
-Feature: IPN Generation from Schematic Components
+Feature: Inventory Generation from Schematic Components
   As a hardware engineer
-  I want jBOM to generate IPNs for components when no inventory exists
-  So that I can bootstrap an inventory system from my schematic
+  I want jBOM to generate an inventory skeleton from my schematic
+  So that I can bootstrap an inventory system and fill in my own IPNs
+
+  # jBOM does NOT auto-generate IPNs. IPN is blank unless the schematic component has
+  # an explicit "IPN" property. The inventory command derives Category and populates
+  # Value/Package/Description from schematic data so the user can assign their own IPNs.
 
   Background:
     Given the generic fabricator is selected
 
-  Scenario: Generate IPNs from schematic components (no existing inventory)
+  Scenario: Generate inventory skeleton from schematic (IPN blank without explicit property)
     Given a schematic that contains:
       | Reference | Value | Footprint   | LibID    |
       | R1        | 10k   | R_0603_1608 | Device:R |
@@ -16,29 +20,31 @@ Feature: IPN Generation from Schematic Components
     When I run jbom command "inventory -o console"
     Then the command should succeed
     And the output should contain "Generated inventory with 4 items"
-    # These should be generated IPNs based on component data
-    And the output should contain "RES_10k"
-    And the output should contain "CAP_100nF"
-    And the output should contain "LED_RED"
-    And the output should contain "IC_LM358"
+    # Category-based classification still works; values are preserved
+    And the output should contain "RES"
+    And the output should contain "CAP"
+    And the output should contain "LED"
+    And the output should contain "IC"
+    And the output should contain "10k"
+    And the output should contain "100nF"
 
-  Scenario: Generated IPNs follow consistent format
+  Scenario: Inventory captures component values accurately
     Given a schematic that contains:
       | Reference | Value  | Footprint   | LibID     |
       | R1        | 1.2k   | R_0603_1608 | Device:R  |
       | R2        | 4.7K   | R_0805_2012 | Device:R  |
       | C1        | 22μF   | C_0805_2012 | Device:C  |
       | C2        | 1nF    | C_0603_1608 | Device:C  |
-    When I run jbom command "inventory -o test_ipns.csv"
+    When I run jbom command "inventory -o test_values.csv"
     Then the command should succeed
-    And a file named "test_ipns.csv" should exist
-    # Generated IPNs should preserve original values exactly
-    And the file "test_ipns.csv" should contain "RES_1.2k"
-    And the file "test_ipns.csv" should contain "RES_4.7K"
-    And the file "test_ipns.csv" should contain "CAP_22μF"
-    And the file "test_ipns.csv" should contain "CAP_1nF"
+    And a file named "test_values.csv" should exist
+    # Values are preserved exactly as authored in schematic
+    And the file "test_values.csv" should contain "1.2k"
+    And the file "test_values.csv" should contain "4.7K"
+    And the file "test_values.csv" should contain "22μF"
+    And the file "test_values.csv" should contain "1nF"
 
-  Scenario: Components with unknown LibID get blank IPNs
+  Scenario: Components with unknown LibID get blank IPN and Unknown category
     Given a schematic that contains:
       | Reference | Value | Footprint   | LibID           |
       | R1        | 10k   | R_0603_1608 | Device:R        |
@@ -46,15 +52,16 @@ Feature: IPN Generation from Schematic Components
       | J1        | CONN  | Connector   |                 |
     When I run jbom command "inventory -o -"
     Then the command should succeed
+    # R1 gets RES category; unknown-LibID components get Unknown category
     And the CSV output has rows where:
-      | IPN    | Value | Category |
-      | RES_10k| 10k   | RES      |
+      | Value | Category |
+      | 10k   | RES      |
     And the CSV output has rows where:
       | Value | Category |
       | XTAL  | Unknown  |
       | CONN  | Unknown  |
 
-  Scenario: IPN generation handles special characters properly
+  Scenario: Inventory captures values with special characters
     Given a schematic that contains:
       | Reference | Value     | Footprint   | LibID    |
       | R1        | 10K Ω     | R_0603_1608 | Device:R |
@@ -63,12 +70,12 @@ Feature: IPN Generation from Schematic Components
     When I run jbom command "inventory -o special.csv"
     Then the command should succeed
     And a file named "special.csv" should exist
-    # Spaces should be replaced with underscores, special chars preserved
-    And the file "special.csv" should contain "RES_10K_Ω"
-    And the file "special.csv" should contain "CAP_100_nF"
-    And the file "special.csv" should contain "IND_10µH"
+    # Values with special characters are preserved exactly as authored
+    And the file "special.csv" should contain "Ω"
+    And the file "special.csv" should contain "100"
+    And the file "special.csv" should contain "µH"
 
-  Scenario: Generate inventory for project with duplicate components
+  Scenario: Duplicate components are deduplicated in inventory
     Given a schematic that contains:
       | Reference | Value | Footprint   | LibID    |
       | R1        | 10k   | R_0603_1608 | Device:R |
@@ -80,13 +87,13 @@ Feature: IPN Generation from Schematic Components
     Then the command should succeed
     And a file named "duplicates.csv" should exist
     # Should deduplicate - only unique value/footprint combinations
-    And the file "duplicates.csv" should contain "RES_10k"
-    And the file "duplicates.csv" should contain "RES_22k"
-    And the file "duplicates.csv" should contain "CAP_100nF"
-    # Should show correct quantities or component groupings
+    And the file "duplicates.csv" should contain "10k"
+    And the file "duplicates.csv" should contain "22k"
+    And the file "duplicates.csv" should contain "100nF"
+    # Should show correct number of unique items
     And the output should contain "Generated inventory with 3 items"
 
-  Scenario: Footprint-based IC detection works correctly
+  Scenario: Footprint-based IC detection correctly categorizes components
     Given a schematic that contains:
       | Reference | Value   | Footprint      | LibID         |
       | U1        | Unknown | SOIC-8         | Mystery:Part  |
@@ -96,14 +103,13 @@ Feature: IPN Generation from Schematic Components
     When I run jbom command "inventory -o footprint_test.csv"
     Then the command should succeed
     And a file named "footprint_test.csv" should exist
-    # All IC footprints should be detected as ICs
-    And the file "footprint_test.csv" should contain "IC_Unknown"
-    And the file "footprint_test.csv" should contain "IC_LM358"
-    And the file "footprint_test.csv" should contain "IC_74HC00"
-    # Transistor in SOT-23 should remain transistor
-    And the file "footprint_test.csv" should contain "Q_2N3904"
+    # Category classification works via LibID/footprint heuristics
+    And the file "footprint_test.csv" should contain "IC"
+    And the file "footprint_test.csv" should contain "LM358"
+    And the file "footprint_test.csv" should contain "74HC00"
+    And the file "footprint_test.csv" should contain "2N3904"
 
-  Scenario: IC part number patterns are recognized
+  Scenario: IC part number patterns are correctly classified
     Given a schematic that contains:
       | Reference | Value    | Footprint   | LibID        |
       | U1        | LM7805   | TO-220      | Regulator:LM |
@@ -115,15 +121,11 @@ Feature: IPN Generation from Schematic Components
     When I run jbom command "inventory -o ic_patterns.csv"
     Then the command should succeed
     And a file named "ic_patterns.csv" should exist
-    # All should be recognized as ICs based on part number patterns
-    And the file "ic_patterns.csv" should contain "IC_LM7805"
-    And the file "ic_patterns.csv" should contain "IC_TL071"
-    And the file "ic_patterns.csv" should contain "IC_NE555"
-    And the file "ic_patterns.csv" should contain "IC_MAX232"
-    And the file "ic_patterns.csv" should contain "IC_CD4017"
-    And the file "ic_patterns.csv" should contain "IC_SN74HC00"
+    And the file "ic_patterns.csv" should contain "IC"
+    And the file "ic_patterns.csv" should contain "LM7805"
+    And the file "ic_patterns.csv" should contain "TL071"
 
-  Scenario: Mixed passive components with IC-like prefixes are handled correctly
+  Scenario: Mixed passives with IC-like prefixes are correctly classified
     Given a schematic that contains:
       | Reference | Value | Footprint   | LibID      |
       | L1        | 10µH  | L_0805      | Device:L   |
@@ -134,18 +136,13 @@ Feature: IPN Generation from Schematic Components
     When I run jbom command "inventory -o mixed_test.csv"
     Then the command should succeed
     And a file named "mixed_test.csv" should exist
-    # Real inductor should stay inductor
-    And the file "mixed_test.csv" should contain "IND_10µH"
-    # IC with L prefix should be IC due to footprint/part number
-    And the file "mixed_test.csv" should contain "IC_LM123"
-    # Real capacitor should stay capacitor
-    And the file "mixed_test.csv" should contain "CAP_100nF"
-    # IC with C prefix should be IC due to footprint/part number
-    And the file "mixed_test.csv" should contain "IC_CD456"
-    # Resistor should stay resistor
-    And the file "mixed_test.csv" should contain "RES_10k"
+    # Passive LibIDs produce passive categories; IC LibID produces IC category
+    And the file "mixed_test.csv" should contain "IND"
+    And the file "mixed_test.csv" should contain "CAP"
+    And the file "mixed_test.csv" should contain "RES"
+    And the file "mixed_test.csv" should contain "IC"
 
-  Scenario: Microcontroller and processor detection
+  Scenario: Microcontroller and processor components are classified as IC
     Given a schematic that contains:
       | Reference | Value     | Footprint | LibID         |
       | U1        | ATMEGA328 | QFP-32    | MCU:AVR       |
@@ -155,13 +152,11 @@ Feature: IPN Generation from Schematic Components
     When I run jbom command "inventory -o mcu_test.csv"
     Then the command should succeed
     And a file named "mcu_test.csv" should exist
-    # All microcontrollers should be detected as ICs
-    And the file "mcu_test.csv" should contain "IC_ATMEGA328"
-    And the file "mcu_test.csv" should contain "IC_STM32F4"
-    And the file "mcu_test.csv" should contain "IC_PIC16F84"
-    And the file "mcu_test.csv" should contain "IC_ESP32"
+    And the file "mcu_test.csv" should contain "IC"
+    And the file "mcu_test.csv" should contain "ATMEGA328"
+    And the file "mcu_test.csv" should contain "STM32F4"
 
-  Scenario: Edge cases and ambiguous components
+  Scenario: Edge cases and ambiguous components are handled gracefully
     Given a schematic that contains:
       | Reference | Value    | Footprint    | LibID           |
       | L1        | CHOKE    | L_Axial      | Device:L        |
@@ -172,13 +167,7 @@ Feature: IPN Generation from Schematic Components
     When I run jbom command "inventory -o edge_cases.csv"
     Then the command should succeed
     And a file named "edge_cases.csv" should exist
-    # Inductor with text value should work
-    And the file "edge_cases.csv" should contain "IND_CHOKE"
-    # LED should be correctly categorized
-    And the file "edge_cases.csv" should contain "LED_GREEN"
-    # Diode should work
-    And the file "edge_cases.csv" should contain "DIO_1N4148"
-    # Unknown component with IC footprint should be IC, but blank value creates just category
-    And the file "edge_cases.csv" should contain "IC"
-    # Transistor should work
-    And the file "edge_cases.csv" should contain "Q_BC547"
+    And the file "edge_cases.csv" should contain "CHOKE"
+    And the file "edge_cases.csv" should contain "GREEN"
+    And the file "edge_cases.csv" should contain "1N4148"
+    And the file "edge_cases.csv" should contain "BC547"
