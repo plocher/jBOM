@@ -57,10 +57,15 @@ def handle_annotate(args: argparse.Namespace) -> int:
             report = triage_inventory(args.inventory)
             return _print_triage_report(report)
 
+        # Resolve all schematic files in the project hierarchy so the service
+        # can apply annotations to sub-sheets, not just the root schematic.
+        schematic_files = resolved.get_hierarchical_files()
+
         result = annotate_schematic(
             schematic_path=schematic_path,
             inventory_path=args.inventory,
             dry_run=args.dry_run,
+            schematic_files=schematic_files,
         )
         return _print_annotation_result(result, schematic_path)
     except Exception as exc:

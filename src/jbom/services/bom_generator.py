@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 
 from jbom.common.types import Component
 from jbom.common.component_filters import apply_component_filters
+from jbom.common.fields import normalize_field_name
 
 
 @dataclass
@@ -129,13 +130,19 @@ class BOMGenerator:
         # produce multiple symbol instances with the same reference)
         references = list(dict.fromkeys(comp.reference for comp in components))
 
-        # Merge properties from all components
+        # Merge properties from all components, normalizing keys to snake_case
+        # so that _get_field_value() lookups (e.g. 'description', 'package') always match.
+        # Raw Component.properties remain title-cased; normalization is scoped to BOMEntry.attributes.
         merged_attributes = {}
         for comp in components:
             for key, value in comp.properties.items():
                 if value and value.strip():  # Only add non-empty values
-                    if key not in merged_attributes or not merged_attributes[key]:
-                        merged_attributes[key] = value.strip()
+                    normalized_key = normalize_field_name(key)
+                    if (
+                        normalized_key not in merged_attributes
+                        or not merged_attributes[normalized_key]
+                    ):
+                        merged_attributes[normalized_key] = value.strip()
 
         return BOMEntry(
             references=references,

@@ -23,6 +23,10 @@ def parse_fields_argument(
     2. If --fields provided: use exactly what user specified (presets + custom)
     3. Always apply fabricator column mapping to final fields
 
+    jBOM is a flexible tool, not a validator. Any field name is accepted;
+    fields not present in the component data produce blank cells. There is
+    no strict-validation mode.
+
     Args:
         fields_arg: Field argument string or None
         available_fields: Dict of available field names and descriptions
@@ -32,9 +36,6 @@ def parse_fields_argument(
 
     Returns:
         List of normalized field names (deduplicated, preserving order)
-
-    Raises:
-        ValueError: If unknown preset or field name is encountered
     """
     # Merge global presets with fabricator-specific presets
     all_presets = FIELD_PRESETS.copy()
@@ -101,44 +102,22 @@ def parse_fields_argument(
                 else:
                     result.extend(preset_fields)
             else:
-                # Try as a field addition - normalize and check if it's a valid field
+                # Not a preset — treat as a field addition request.
+                # Permissive: accept any field name. Unknown fields produce blank cells.
                 field_name = normalize_field_name(tok[1:])
-                if field_name in available_fields:
-                    # It's a field addition - add appropriate context defaults first if result is empty
-                    if not result:
-                        # For + syntax with non-generic fabricator, use fabricator defaults
-                        # For + syntax with generic fabricator, use standard field sets
-                        if fabricator_id != "generic":
-                            # Use fabricator-specific defaults
-                            from jbom.config.fabricators import (
-                                get_fabricator_default_fields,
-                            )
+                # Add appropriate context defaults first if result is empty
+                if not result:
+                    if fabricator_id != "generic":
+                        from jbom.config.fabricators import (
+                            get_fabricator_default_fields,
+                        )
 
-                            fabricator_defaults = get_fabricator_default_fields(
-                                fabricator_id, context
-                            )
-                            if fabricator_defaults:
-                                result.extend(fabricator_defaults)
-                            else:
-                                # Fallback to standard if fabricator has no defaults
-                                if context == "pos":
-                                    result.extend(
-                                        [
-                                            "reference",
-                                            "x",
-                                            "y",
-                                            "rotation",
-                                            "side",
-                                            "footprint",
-                                            "package",
-                                        ]
-                                    )
-                                else:
-                                    result.extend(
-                                        ["reference", "quantity", "value", "footprint"]
-                                    )
+                        fabricator_defaults = get_fabricator_default_fields(
+                            fabricator_id, context
+                        )
+                        if fabricator_defaults:
+                            result.extend(fabricator_defaults)
                         else:
-                            # For generic fabricator, use standard field sets for predictable behavior
                             if context == "pos":
                                 result.extend(
                                     [
@@ -155,40 +134,28 @@ def parse_fields_argument(
                                 result.extend(
                                     ["reference", "quantity", "value", "footprint"]
                                 )
-
-                    # Add the requested field
-                    result.append(field_name)
-                else:
-                    # Not a preset or field - show error with both options
-                    all_preset_names = sorted(
-                        set(
-                            list(FIELD_PRESETS.keys())
-                            + (
-                                list(fabricator_presets.keys())
-                                if fabricator_presets
-                                else []
+                    else:
+                        if context == "pos":
+                            result.extend(
+                                [
+                                    "reference",
+                                    "x",
+                                    "y",
+                                    "rotation",
+                                    "side",
+                                    "footprint",
+                                    "package",
+                                ]
                             )
-                        )
-                    )
-                    available_fields_list = sorted(available_fields.keys())
-                    valid_presets = ", ".join(f"+{p}" for p in all_preset_names)
-                    valid_fields = ", ".join(f"+{f}" for f in available_fields_list[:5])
-                    raise ValueError(
-                        f"Unknown preset or field: {tok}. Available presets: {valid_presets}. "
-                        f"Available fields for addition: {valid_fields}..."
-                    )
+                        else:
+                            result.extend(
+                                ["reference", "quantity", "value", "footprint"]
+                            )
+                result.append(field_name)
         else:
-            # Custom field name
+            # Custom field name — permissive: normalize and accept regardless of whether
+            # the field exists in available_fields. Unknown fields produce blank cells.
             normalized = normalize_field_name(tok)
-            if normalized not in available_fields:
-                available_list = sorted(available_fields.keys())
-                # Format field names as proper headers for user-friendly error messages
-                from .fields import field_to_header
-
-                available_headers = [field_to_header(field) for field in available_list]
-                raise ValueError(
-                    f"Invalid field: {tok}. Available fields: {', '.join(available_headers)}"
-                )
             result.append(normalized)
 
     # Deduplicate while preserving order
