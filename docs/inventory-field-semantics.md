@@ -44,5 +44,27 @@ Inline sub-header rows are identified using:
 
 This sentinel is used to skip both top-level header-like guide rows and per-category sub-header rows during annotate processing.
 
+## `inventory --no-aggregate` (Scope C)
+`jbom inventory --no-aggregate` emits one row per component instance for sparse-fix workflows.
+
+Current schema prefix:
+
+- `Project` (absolute project directory path)
+- `UUID`
+- `Category`
+- `IPN`
+
+Rows are sorted/grouped by `Category`, and each category group is preceded by a sentinel sub-header row.
+
+Current minimal deterministic sub-header markers:
+
+- `Project` -> `Project`
+- `UUID` -> `UUID`
+- `Category` -> `Category`
+- `IPN` -> `(Optional)\nIPN`
+- `Value` -> `Value`
+- `Package` -> `Package`
+- all other columns -> blank
+
 ## Scope note
-Defaults-driven required/optional/recommended category semantics are intentionally deferred to the `--defaults` design thread. Current triage/reporting behavior remains minimal and explicit for Issue #127 Scope A.
+Defaults-driven required/optional/recommended category semantics are intentionally deferred to the `--defaults` design thread. Current annotate triage and no-aggregate sub-header behavior remain minimal and explicit for Issue #127 Scope A/C.
