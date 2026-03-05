@@ -26,6 +26,8 @@ def _write_schematic_local(
         ref = row.get("Reference", "U1")
         val = row.get("Value", "VAL")
         fp = row.get("Footprint", "")
+        package = row.get("Package", "")
+        uuid = row.get("UUID", "")
         lib = row.get("LibID", "Device:Generic")
         dnp = row.get("DNP", "No")
         exclude_from_bom = row.get("ExcludeFromBOM", "No")
@@ -38,6 +40,8 @@ def _write_schematic_local(
             symbol_parts.append("(dnp yes)")
         if exclude_from_bom.lower() in ["yes", "true", "1"]:
             symbol_parts.append("(in_bom no)")
+        if uuid:
+            symbol_parts.append(f'(uuid "{uuid}")')
 
         # Add properties
         symbol_parts.extend(
@@ -47,6 +51,10 @@ def _write_schematic_local(
                 f'(property "Footprint" "{fp}" (id 2) (at {x+2} 54 0))',
             ]
         )
+        if package:
+            symbol_parts.append(
+                f'(property "Package" "{package}" (id 3) (at {x+2} 56 0))'
+            )
 
         symbol_lines = [f"  {part}" for part in symbol_parts] + ["  )"]
         symbols.append("\n".join(symbol_lines))

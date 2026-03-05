@@ -73,6 +73,17 @@ def test_root_help_includes_inventory_search_command():
     assert "inventory-search" in out
 
 
+def test_root_help_includes_annotate_command():
+    out = run_help([]).lower()
+    assert "annotate" in out
+
+
+def test_annotate_help_shows_core_flags():
+    out = run_help(["annotate"]).lower()
+    for token in ["--inventory", "--dry-run", "--triage"]:
+        assert token in out
+
+
 def test_inventory_search_help_includes_fabricator_choices():
     out = run_help(["inventory-search"]).lower()
     assert "--fabricator" in out
