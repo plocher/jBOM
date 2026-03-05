@@ -30,11 +30,11 @@ Feature: CLI Parts Output Semantics
     When I run jbom command "parts -o -"
     Then the command should succeed
     And the output should contain these fields:
-      | Reference | Value | Footprint |
+      | Refs | Value | Footprint | Package |
     And the CSV output has rows where:
-      | Reference | Value | Footprint   |
-      | R1        | 10K   | R_0805_2012 |
-      | C1        | 100nF | C_0603_1608 |
+      | Refs      | Value | Footprint   |
+      | R1,R2,R10 | 10K   | R_0805_2012 |
+      | C1,C20    | 100nF | C_0603_1608 |
 
   Scenario: Explicit console output uses -o console
     When I run jbom command "parts -o console"

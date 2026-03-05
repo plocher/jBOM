@@ -264,21 +264,21 @@ def _print_console_table(parts_data: PartsListData) -> None:
         return
 
     # Simple table formatting
-    print(f"{'Reference':<12} {'Value':<12} {'Footprint':<20}")
+    print(f"{'Refs':<20} {'Value':<12} {'Package':<14}")
     print("-" * 60)
 
     for entry in parts_data.entries:
-        ref = entry.reference[:11] if len(entry.reference) > 11 else entry.reference
+        refs_value = entry.refs_csv
+        refs = refs_value[:19] + "..." if len(refs_value) > 19 else refs_value
         value = entry.value[:11] + "..." if len(entry.value) > 11 else entry.value
-        footprint = (
-            entry.footprint[:19] + "..."
-            if len(entry.footprint) > 19
-            else entry.footprint
-        )
+        package = entry.package or entry.footprint
+        package_display = package[:13] + "..." if len(package) > 13 else package
 
-        print(f"{ref:<12} {value:<12} {footprint:<20}")
+        print(f"{refs:<20} {value:<12} {package_display:<14}")
 
-    print(f"\nTotal: {parts_data.total_components} components")
+    print(
+        f"\nTotal: {parts_data.total_components} components in {parts_data.total_groups} groups"
+    )
 
     # Show inventory enhancement info if available
     if "matched_entries" in parts_data.metadata:
@@ -294,7 +294,16 @@ def _print_csv(parts_data: PartsListData, *, out: TextIO) -> None:
     writer = csv.writer(out)
 
     # Headers
-    headers = ["Reference", "Value", "Footprint"]
+    headers = [
+        "Refs",
+        "Value",
+        "Footprint",
+        "Package",
+        "Type",
+        "Tolerance",
+        "Voltage",
+        "Dielectric",
+    ]
 
     # Add inventory headers if present
     if parts_data.entries and parts_data.entries[0].attributes.get("inventory_matched"):
@@ -304,7 +313,16 @@ def _print_csv(parts_data: PartsListData, *, out: TextIO) -> None:
 
     # Data rows
     for entry in parts_data.entries:
-        row = [entry.reference, entry.value, entry.footprint]
+        row = [
+            entry.refs_csv,
+            entry.value,
+            entry.footprint,
+            entry.package,
+            entry.part_type,
+            entry.tolerance,
+            entry.voltage,
+            entry.dielectric,
+        ]
 
         # Add inventory data if present
         if entry.attributes.get("inventory_matched"):

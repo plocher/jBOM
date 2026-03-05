@@ -90,7 +90,7 @@ jbom pos MyProject.kicad_sch --jlc
 jbom inventory MyProject/ -o my_new_inventory.csv
 ```
 
-**Generate Parts List** (one row per component, no aggregation):
+**Generate Parts List** (electro-mechanical aggregation with collapsed `Refs`):
 ```bash
 jbom parts MyProject/ -o parts.csv
 ```
