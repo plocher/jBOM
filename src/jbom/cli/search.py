@@ -4,12 +4,11 @@ from __future__ import annotations
 
 import argparse
 import csv
-import shutil
 import sys
 from dataclasses import dataclass
 from typing import Callable, Optional, TextIO
 
-from jbom.cli.formatting import Column, print_table
+from jbom.cli.formatting import Column, get_terminal_width, print_table
 from jbom.cli.output import (
     OutputDestination,
     OutputKind,
@@ -418,9 +417,8 @@ def _print_console(results: list[SearchResult], *, fields: list[str]) -> None:
             continue
         cols.append(_FIELD_REGISTRY[f].column)
 
-    terminal_width = shutil.get_terminal_size(fallback=(120, 24)).columns
     print("")
-    print_table(rows, cols, terminal_width=terminal_width)
+    print_table(rows, cols, terminal_width=get_terminal_width())
     print("")
     print(f"Found {len(results)} results.")
 

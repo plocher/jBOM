@@ -98,8 +98,9 @@ class TestConsoleFormatting(unittest.TestCase):
         long = "X" * 25
         rows = [{"b": long}]
         lines = self.render(rows, cols, width=10)
-        # header, separator, then multiple wrapped lines
-        data_lines = lines[2:]
+        # header, separator, then multiple wrapped lines, then a row separator
+        # Filter out the row separator (contains only dashes/plus)
+        data_lines = [line for line in lines[2:] if not all(c in "-+" for c in line)]
         # Expect 4 wrapped lines for 25 chars with width ~8
         self.assertEqual(len(data_lines), 4)
         # Ensure no line exceeds a reasonable bound (terminal width 10 here)
@@ -177,6 +178,32 @@ class TestConsoleFormatting(unittest.TestCase):
         # Check title appears
         title_idx = next(i for i, line in enumerate(lines) if "Test Title" in line)
         self.assertEqual(lines[title_idx], "Test Title")
+
+    def test_row_separator_emitted_after_each_data_row(self):
+        """A -+- row separator must appear after every data row."""
+        cols = [
+            Column("A", "a", preferred_width=5),
+            Column("B", "b", preferred_width=5),
+        ]
+        rows = [{"a": "one", "b": "two"}, {"a": "foo", "b": "bar"}]
+        lines = self.render(rows, cols, width=20)
+        # header(0), header_sep(1), row1(2), row_sep(3), row2(4), row_sep(5)
+        self.assertEqual(len(lines), 6)
+        for sep_idx in (3, 5):
+            self.assertIn("-+-", lines[sep_idx])
+            self.assertTrue(all(c in "-+" for c in set(lines[sep_idx])))
+
+    def test_explicit_newline_in_cell_renders_as_two_lines(self):
+        """An explicit \\n in cell text must produce two separate visual lines."""
+        cols = [Column("Field", "f", preferred_width=12, wrap=True)]
+        rows = [{"f": "(Optional)\nIPN"}]
+        lines = self.render(rows, cols, width=20)
+        # header(0), sep(1), "(Optional)"(2), "IPN"(3), row_sep(4)
+        self.assertEqual(len(lines), 5)
+        self.assertEqual(lines[2].strip(), "(Optional)")
+        self.assertEqual(lines[3].strip(), "IPN")
+        # Row separator contains only dashes
+        self.assertTrue(all(c in "-+" for c in set(lines[4])))
 
 
 if __name__ == "__main__":

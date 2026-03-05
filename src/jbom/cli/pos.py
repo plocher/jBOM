@@ -32,6 +32,9 @@ from jbom.config.fabricators import (
     get_fabricator_default_fields,
     apply_fabricator_column_mapping,
 )
+from jbom.cli.formatting import Column, print_table, get_terminal_width
+
+_NUMERIC_POS_FIELDS: frozenset[str] = frozenset({"x", "y", "rotation"})
 
 
 def register_command(subparsers) -> None:
@@ -393,43 +396,21 @@ def _print_console_table(pos_data: list, selected_fields: list, headers: list) -
         print("No components found.")
         return
 
-    # Use provided headers and selected fields
-    # For console display, use abbreviated headers if too long
-    display_headers = []
-    for header in headers:
-        if len(header) > 12:
-            # Abbreviate long headers for console display
-            abbrev = header[:10] + ".."
-        else:
-            abbrev = header
-        display_headers.append(abbrev)
-
-    # Print dynamic header based on selected fields
-    header_line = ""
-    for i, header in enumerate(display_headers):
-        width = 12 if i > 0 else 10  # First column (reference) slightly narrower
-        header_line += f"{header:<{width}} "
-
-    print(header_line)
-    print("-" * len(header_line))
-
-    for entry in pos_data:
-        row_values = []
-        for field in selected_fields:
-            value = _get_pos_field_value(entry, field)
-            # Truncate values that are too long for display
-            width = 12 if len(row_values) > 0 else 10  # First column narrower
-            if len(value) > width:
-                value = value[: width - 3] + "..."
-            row_values.append(value)
-
-        # Format row with dynamic widths
-        formatted_values = []
-        for i, value in enumerate(row_values):
-            width = 12 if i > 0 else 10
-            formatted_values.append(f"{value:<{width}}")
-
-        print(" ".join(formatted_values))
+    rows = [
+        {h: _get_pos_field_value(entry, f) for f, h in zip(selected_fields, headers)}
+        for entry in pos_data
+    ]
+    columns = [
+        Column(
+            header=h,
+            key=h,
+            preferred_width=max(10, len(h)),
+            wrap=False,
+            align="right" if f in _NUMERIC_POS_FIELDS else "left",
+        )
+        for f, h in zip(selected_fields, headers)
+    ]
+    print_table(rows, columns, terminal_width=get_terminal_width())
 
     print(f"\nTotal: {len(pos_data)} components")
 

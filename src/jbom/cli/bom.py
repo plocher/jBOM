@@ -34,6 +34,7 @@ from jbom.common.component_filters import (
     create_filter_config,
 )
 from jbom.common.component_utils import derive_package_from_footprint
+from jbom.cli.formatting import Column, print_table, get_terminal_width
 
 
 def register_command(subparsers) -> None:
@@ -472,26 +473,15 @@ def _print_console_table(
         print("No components found.")
         return
 
-    # Dynamic table formatting based on selected fields
-    col_widths = [max(15, len(header)) for header in headers]
-    header_line = "  ".join(
-        f"{headers[i]:<{col_widths[i]}}" for i in range(len(headers))
-    )
-    print(header_line)
-    print("-" * len(header_line))
-
-    for entry in bom_data.entries:
-        values = []
-        for field in selected_fields:
-            value = _get_field_value(entry, field)
-            # Truncate long values to fit column width
-            col_width = col_widths[len(values)]
-            if len(value) > col_width:
-                value = value[: col_width - 3] + "..."
-            values.append(value)
-
-        row = "  ".join(f"{values[i]:<{col_widths[i]}}" for i in range(len(values)))
-        print(row)
+    rows = [
+        {h: _get_field_value(entry, f) for f, h in zip(selected_fields, headers)}
+        for entry in bom_data.entries
+    ]
+    columns = [
+        Column(header=h, key=h, preferred_width=max(15, len(h)), wrap=True)
+        for h in headers
+    ]
+    print_table(rows, columns, terminal_width=get_terminal_width())
 
     print(
         f"\nTotal: {bom_data.total_components} components, {bom_data.total_line_items} unique items"
