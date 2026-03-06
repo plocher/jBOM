@@ -149,6 +149,18 @@ class TestInventoryReaderTypedColumnDecode:
         items = _csv_reader(csv)
         assert items[0].name == ""
 
+    def test_canonical_voltage_current_power_headers_are_resolved(self):
+        csv = (
+            "IPN,ComponentName,Keywords,Category,SMD,Value,Type,Description,"
+            "Name,Resistance,Capacitance,Inductance,Package,Tolerance,Voltage,Current,Power,"
+            "Priority,Manufacturer,MPN,Datasheet\n"
+            "R1,,RES,RES,SMD,10K,,,,10K,,,0603,1%,50V,5mA,125mW,1,,,,\n"
+        )
+        items = _csv_reader(csv)
+        assert items[0].voltage == "50V"
+        assert items[0].amperage == "5mA"
+        assert items[0].wattage == "125mW"
+
 
 # ---------------------------------------------------------------------------
 # Inventory reader: Value-column fallback

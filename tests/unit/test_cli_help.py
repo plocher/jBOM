@@ -86,7 +86,7 @@ def test_root_help_includes_annotate_command():
 
 def test_annotate_help_shows_core_flags():
     out = run_help(["annotate"]).lower()
-    for token in ["--inventory", "--dry-run", "--triage"]:
+    for token in ["--inventory", "--dry-run", "--triage", "--normalize"]:
         assert token in out
 
 

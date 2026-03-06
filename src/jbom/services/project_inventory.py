@@ -151,9 +151,18 @@ class ProjectInventoryGenerator:
             value=component.value,
             type=props.get("Type", ""),
             tolerance=props.get(CommonFields.TOLERANCE, props.get("Tolerance", "")),
-            voltage=props.get(CommonFields.VOLTAGE, props.get("Voltage", "")),
-            amperage=props.get(CommonFields.AMPERAGE, props.get("Amperage", "")),
-            wattage=props.get(CommonFields.WATTAGE, props.get("Wattage", "")),
+            voltage=props.get(
+                CommonFields.VOLTAGE,
+                props.get("Voltage", props.get("V", "")),
+            ),
+            amperage=props.get(
+                CommonFields.AMPERAGE,
+                props.get("Current", props.get("Amperage", props.get("A", ""))),
+            ),
+            wattage=props.get(
+                CommonFields.WATTAGE,
+                props.get("Power", props.get("Wattage", props.get("W", ""))),
+            ),
             lcsc=props.get("LCSC", ""),
             manufacturer=props.get("Manufacturer", ""),
             mfgpn=props.get("MFGPN", props.get("MPN", "")),

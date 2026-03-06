@@ -1,7 +1,7 @@
-Project,UUID,Category,IPN,SMD,Value,Type,Description,Resistance,Capacitance,Inductance,Package,Form,Pins,Pitch,Tolerance,V,A,W,Color,Angle,Wavelength,mcd,Frequency,Symbol,Footprint
+Project,UUID,Category,IPN,SMD,Value,Type,Description,Resistance,Capacitance,Inductance,Package,Form,Pins,Pitch,Tolerance,Voltage,Current,Power,Color,Angle,Wavelength,mcd,Frequency,Symbol,Footprint
 Project,UUID,Category,"(OPTIONAL)
 IPN",SMD,Value,Type,Description,,Capacitance,,Package,,,,"(Optional)
-Tolerance",V,,,,,,,,Symbol,Footprint
+Tolerance",Voltage,,,,,,,,Symbol,Footprint
 ,,CAP,CAP_0.01uF_X7R_0603_25V,SMD,0.01uF,X7R,25V 10nF X7R ±10% 0603 Multilayer Ceramic Capacitors MLCC,,0.01uF,,0603,,,,10%,25V,,,,,,,,Device:C,SPCoast:0603-CAP
 ,,CAP,CAP_0.01uF_X5R_0603_50V,SMD,0.01uF,X5R,50V 10nF X5R ±10% 0603 Multilayer Ceramic Capacitors MLCC,,0.01uF,,0603,,,,10%,50V,,,,,,,,Device:C,SPCoast:0603-CAP
 ,,CAP,CAP_0.01uF_X7R_0603_50V,SMD,0.01uF,X7R,50V 10nF X7R ±10% 0603 Multilayer Ceramic Capacitors MLCC,,0.01uF,,0603,,,,10%,50V,,,,,,,,Device:C,SPCoast:0603-CAP
@@ -15,9 +15,9 @@ Tolerance",V,,,,,,,,Symbol,Footprint
 ,,CAP,CAP_1000uF_Electrolytic_10x10.2,SMD,1000uF,Electrolytic,Aluminum Electrolytic Capacitors - Radial Leaded 1000uF 16V -55-105c 347mA@120hz 20% D10xL10.2,,1000uF,,10x10.2,,,,20%,16V,,,,,,,,Device:C_Polarized_US,Capacitor_SMD:CP_Elec_10x10
 Project,UUID,Category,"(OPTIONAL)
 IPN",SMD,Value,"(Optional)
-Type",Description,,,,Package,,,,,"(Optional)
-V","(Optional)
-A",,,"(Optional)
+Type",Description,Resistance,,,Package,,,,,"(Optional)
+Voltage","(Optional)
+Current",,,"(Optional)
 Angle","(Optional)
 Wavelength","(Optional)
 mcd",,Symbol,Footprint
@@ -36,7 +36,7 @@ mcd",,Symbol,Footprint
 Project,UUID,Category,"(OPTIONAL)
 IPN",SMD,Value,"(Optional)
 Type",Description,Resistance,,,Package,,,,"(Optional)
-Tolerance",V,,W,,,,,,Symbol,Footprint
+Tolerance",Voltage,,Power,,,,,,Symbol,Footprint
 ,,RES,RES_5%_100mW_0603_200,SMD,200,thick film,200 100mW  75V ±100ppm/℃ ±5% 0603,200,,,0603,,,,5%,75V,,100mW,,,,,,Device:R_US,SPCoast:0603-RES
 ,,RES,RES_1%_100mW_0603_220,SMD,220,thick film,220 100mW s 150V ±100ppm/℃ ±1% 0603,220,,,0603,,,,1%,150V,,100mW,,,,,,Device:R_US,SPCoast:0603-RES
 ,,RES,RES_5%_100mW_0603_220,SMD,220,thick film,220 100mW  75V ±100ppm/℃ ±5% 0603,220,,,0603,,,,5%,75V,,100mW,,,,,,Device:R_US,SPCoast:0603-RES

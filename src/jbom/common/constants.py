@@ -39,9 +39,9 @@ class DiagnosticIssue:
 class CommonFields:
     """Common field name constants"""
 
-    VOLTAGE = "V"
-    AMPERAGE = "A"
-    WATTAGE = "W"
+    VOLTAGE = "Voltage"
+    AMPERAGE = "Current"
+    WATTAGE = "Power"
     TOLERANCE = "Tolerance"
     POWER = "Power"
     TEMPERATURE_COEFFICIENT = "Temperature Coefficient"

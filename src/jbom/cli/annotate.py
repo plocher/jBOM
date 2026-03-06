@@ -6,7 +6,11 @@ import argparse
 import sys
 from pathlib import Path
 
-from jbom.services.annotation_service import annotate_schematic, triage_inventory
+from jbom.services.annotation_service import (
+    annotate_schematic,
+    normalize_schematic_properties,
+    triage_inventory,
+)
 from jbom.services.project_file_resolver import ProjectFileResolver
 
 
@@ -27,7 +31,6 @@ def register_command(subparsers) -> None:
     parser.add_argument(
         "-i",
         "--inventory",
-        required=True,
         type=Path,
         help="Path to inventory CSV used for annotation",
     )
@@ -42,6 +45,14 @@ def register_command(subparsers) -> None:
         action="store_true",
         help="Report rows missing required fields (Value, Package)",
     )
+    parser.add_argument(
+        "--normalize",
+        action="store_true",
+        help=(
+            "Normalize schematic property aliases to canonical names "
+            "(V->Voltage, A/Amperage->Current, W/Wattage->Power)"
+        ),
+    )
     parser.set_defaults(handler=handle_annotate)
 
 
@@ -52,14 +63,28 @@ def handle_annotate(args: argparse.Namespace) -> int:
         resolver = ProjectFileResolver(prefer_pcb=False, target_file_type="schematic")
         resolved = resolver.resolve_input(args.input)
         schematic_path = resolved.resolved_path
+        schematic_files = resolved.get_hierarchical_files()
+
+        if args.normalize:
+            normalize_result = normalize_schematic_properties(
+                schematic_files, dry_run=args.dry_run
+            )
+            _print_normalization_result(normalize_result)
+            if normalize_result.conflicts:
+                return 1
+            if args.inventory is None and not args.triage:
+                return 0
+
+        if args.inventory is None:
+            print(
+                "Error: annotate requires --inventory unless --normalize is used standalone",
+                file=sys.stderr,
+            )
+            return 1
 
         if args.triage:
             report = triage_inventory(args.inventory)
             return _print_triage_report(report)
-
-        # Resolve all schematic files in the project hierarchy so the service
-        # can apply annotations to sub-sheets, not just the root schematic.
-        schematic_files = resolved.get_hierarchical_files()
 
         result = annotate_schematic(
             schematic_path=schematic_path,
@@ -71,6 +96,35 @@ def handle_annotate(args: argparse.Namespace) -> int:
     except Exception as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
+
+
+def _print_normalization_result(result) -> None:
+    """Print normalize execution summary and any detected conflicts."""
+
+    if result.conflicts:
+        print(
+            "Normalization aborted due to conflicting alias/canonical values:",
+            file=sys.stderr,
+        )
+        for conflict in result.conflicts:
+            fields = ", ".join(conflict.source_fields)
+            values = ", ".join(repr(v) for v in conflict.source_values)
+            print(
+                f"  file={conflict.source_file} uuid={conflict.uuid} "
+                f"target={conflict.target_field} aliases=[{fields}] values=[{values}]",
+                file=sys.stderr,
+            )
+        return
+
+    mode_label = "would normalize" if result.dry_run else "normalized"
+    print(
+        f"Normalization complete: {mode_label} {result.updated_components} component(s)."
+    )
+    for change in result.changes:
+        print(
+            f"  {change.source_file} UUID {change.uuid}: "
+            f"{change.source_field} -> {change.target_field} ({change.value!r})"
+        )
 
 
 def _print_triage_report(report) -> int:

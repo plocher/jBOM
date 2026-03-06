@@ -37,6 +37,14 @@ class EnrichmentCategoryConfig:
     suppress: tuple[str, ...]
 
 
+@dataclass(frozen=True)
+class FieldSynonymConfig:
+    """Canonical field naming plus accepted synonym headers."""
+
+    display_name: str
+    synonyms: tuple[str, ...]
+
+
 @dataclass
 class DefaultsConfig:
     """Loaded defaults profile.
@@ -54,6 +62,7 @@ class DefaultsConfig:
     enrichment_attributes: dict[str, EnrichmentCategoryConfig] = field(
         default_factory=dict
     )
+    field_synonyms: dict[str, FieldSynonymConfig] = field(default_factory=dict)
 
     @staticmethod
     def from_yaml_dict(data: dict[str, Any], *, name: str) -> "DefaultsConfig":
@@ -107,6 +116,21 @@ class DefaultsConfig:
                     suppress=suppress,
                 )
 
+        field_synonyms: dict[str, FieldSynonymConfig] = {}
+        for canonical, cfg in (data.get("field_synonyms") or {}).items():
+            if not isinstance(cfg, dict):
+                continue
+            display_name = str(cfg.get("display_name") or canonical).strip()
+            synonyms_cfg = cfg.get("synonyms") or []
+            if isinstance(synonyms_cfg, list):
+                synonyms = tuple(str(s).strip() for s in synonyms_cfg if str(s).strip())
+            else:
+                synonyms = tuple()
+            field_synonyms[str(canonical).strip().lower()] = FieldSynonymConfig(
+                display_name=display_name or str(canonical).strip(),
+                synonyms=synonyms,
+            )
+
         return DefaultsConfig(
             name=name,
             domain_defaults=domain_defaults,
@@ -115,6 +139,7 @@ class DefaultsConfig:
             parametric_query_fields=parametric_query_fields,
             category_route_rules=category_route_rules,
             enrichment_attributes=enrichment_attributes,
+            field_synonyms=field_synonyms,
         )
 
     def get_domain_default(
@@ -144,6 +169,11 @@ class DefaultsConfig:
     def get_category_route_rules(self, category: str) -> dict[str, str]:
         """Return the JLCPCB taxonomy routing rules for a category."""
         return dict(self.category_route_rules.get(category.lower(), {}))
+
+    def get_field_synonym_config(self, canonical: str) -> FieldSynonymConfig | None:
+        """Return field synonym config for a canonical key."""
+
+        return self.field_synonyms.get(canonical.strip().lower())
 
 
 def load_defaults(name: str, *, cwd: Path | None = None) -> DefaultsConfig:
@@ -233,6 +263,7 @@ def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any
 __all__ = [
     "DefaultsConfig",
     "EnrichmentCategoryConfig",
+    "FieldSynonymConfig",
     "get_defaults",
     "load_defaults",
 ]

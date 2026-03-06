@@ -13,6 +13,13 @@ from jbom.common.sexp_parser import load_kicad_file, walk_nodes
 
 _RESERVED_COLUMNS = {"project", "uuid", "sourcefile", "projectname", "refs"}
 _REQUIRED_FIELDS = ("Value", "Package")
+_NORMALIZE_FIELD_MAP: dict[str, str] = {
+    "V": "Voltage",
+    "A": "Current",
+    "W": "Power",
+    "Amperage": "Current",
+    "Wattage": "Power",
+}
 
 
 @dataclass(frozen=True)
@@ -62,6 +69,147 @@ class TriageReport:
 
     total_data_rows: int
     rows_with_required_blanks: list[TriageRowIssue] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class NormalizationChange:
+    """One normalized property change on a symbol."""
+
+    uuid: str
+    source_field: str
+    target_field: str
+    value: str
+    source_file: Path
+
+
+@dataclass(frozen=True)
+class NormalizationConflict:
+    """Conflict that prevents safe normalization."""
+
+    uuid: str
+    target_field: str
+    source_fields: tuple[str, ...]
+    source_values: tuple[str, ...]
+    source_file: Path
+
+
+@dataclass
+class NormalizationResult:
+    """Result summary for property normalization execution."""
+
+    dry_run: bool
+    updated_components: int
+    changes: list[NormalizationChange] = field(default_factory=list)
+    conflicts: list[NormalizationConflict] = field(default_factory=list)
+
+
+def normalize_schematic_properties(
+    schematic_files: list[Path], *, dry_run: bool = False
+) -> NormalizationResult:
+    """Normalize alias property names (V/A/W, Amperage/Wattage) to canonical names.
+
+    Conflict policy:
+    - If alias and canonical fields coexist with different values, normalization
+      is unsafe and no files are written.
+    - If multiple aliases map to the same canonical field with differing values
+      and canonical is absent, normalization is unsafe and no files are written.
+    """
+
+    schematics: dict[Path, list[Any]] = {}
+    changes: list[NormalizationChange] = []
+    conflicts: list[NormalizationConflict] = []
+    changed_symbol_ids: set[tuple[Path, str]] = set()
+    file_mutations: dict[Path, list[tuple[list[Any], str, str, str]]] = {}
+
+    inverse_map: dict[str, list[str]] = {}
+    for source, target in _NORMALIZE_FIELD_MAP.items():
+        inverse_map.setdefault(target, []).append(source)
+
+    for schematic_path in schematic_files:
+        if not schematic_path.exists():
+            continue
+        schematic = load_kicad_file(schematic_path)
+        schematics[schematic_path] = schematic
+        file_mutations[schematic_path] = []
+
+        for symbol in walk_nodes(schematic, "symbol"):
+            symbol_uuid = _get_symbol_uuid(symbol)
+            for target_field, source_fields in inverse_map.items():
+                sources = [
+                    src
+                    for src in source_fields
+                    if _find_property_node(symbol, src) is not None
+                ]
+                if not sources:
+                    continue
+
+                target_value = _get_property_value(symbol, target_field)
+                source_values = {
+                    src: _get_property_value(symbol, src) for src in sources
+                }
+                unique_source_values = sorted(set(source_values.values()))
+
+                conflict = False
+                if target_value and any(
+                    value != target_value for value in source_values.values()
+                ):
+                    conflict = True
+                if not target_value and len(unique_source_values) > 1:
+                    conflict = True
+
+                if conflict:
+                    conflicts.append(
+                        NormalizationConflict(
+                            uuid=symbol_uuid,
+                            target_field=target_field,
+                            source_fields=tuple(sources),
+                            source_values=tuple(source_values[src] for src in sources),
+                            source_file=schematic_path,
+                        )
+                    )
+                    continue
+
+                chosen_value = target_value or source_values[sources[0]]
+                for source in sources:
+                    changes.append(
+                        NormalizationChange(
+                            uuid=symbol_uuid,
+                            source_field=source,
+                            target_field=target_field,
+                            value=chosen_value,
+                            source_file=schematic_path,
+                        )
+                    )
+                    file_mutations[schematic_path].append(
+                        (symbol, source, target_field, chosen_value)
+                    )
+                    changed_symbol_ids.add((schematic_path, symbol_uuid))
+
+    if dry_run or conflicts:
+        return NormalizationResult(
+            dry_run=dry_run,
+            updated_components=len(changed_symbol_ids),
+            changes=changes,
+            conflicts=conflicts,
+        )
+
+    for schematic_path, mutations in file_mutations.items():
+        if not mutations:
+            continue
+        for symbol, source_field, target_field, chosen_value in mutations:
+            if not _find_property_node(symbol, target_field):
+                _set_property_value(symbol, target_field, chosen_value)
+            _remove_property(symbol, source_field)
+        schematic_path.write_text(
+            sexpdata.dumps(schematics[schematic_path]), encoding="utf-8"
+        )
+
+    return NormalizationResult(
+        dry_run=dry_run,
+        updated_components=len(changed_symbol_ids),
+        changes=changes,
+        conflicts=conflicts,
+    )
 
 
 def annotate_schematic(
@@ -496,6 +644,14 @@ def _set_property_value(symbol: list[Any], field_name: str, value: str) -> None:
             [sexpdata.Symbol("at"), 0, 0, 0],
         ]
     )
+
+
+def _remove_property(symbol: list[Any], field_name: str) -> None:
+    """Remove a property node from a symbol if present."""
+
+    node = _find_property_node(symbol, field_name)
+    if node is not None:
+        symbol.remove(node)
 
 
 def _next_property_id(symbol: list[Any]) -> int:

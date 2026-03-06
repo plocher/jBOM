@@ -93,6 +93,14 @@ def test_generic_profile_has_enrichment_attributes() -> None:
     assert "pricing" in res_cfg.suppress
 
 
+def test_generic_profile_has_field_synonyms() -> None:
+    cfg = load_defaults("generic")
+    voltage = cfg.get_field_synonym_config("voltage")
+    assert voltage is not None
+    assert voltage.display_name == "Voltage"
+    assert "V" in voltage.synonyms
+
+
 # ---------------------------------------------------------------------------
 # Error handling
 # ---------------------------------------------------------------------------
@@ -233,3 +241,19 @@ def test_from_yaml_dict_normalizes_package_to_uppercase() -> None:
     cfg = DefaultsConfig.from_yaml_dict(data, name="test")
     assert cfg.get_package_power("0603") == "100mW"
     assert cfg.get_package_power("0603") == "100mW"  # upper key lookup
+
+
+def test_from_yaml_dict_parses_field_synonyms() -> None:
+    data = {
+        "field_synonyms": {
+            "voltage": {
+                "display_name": "Voltage",
+                "synonyms": ["Voltage", "V"],
+            }
+        }
+    }
+    cfg = DefaultsConfig.from_yaml_dict(data, name="test")
+    voltage = cfg.get_field_synonym_config("voltage")
+    assert voltage is not None
+    assert voltage.display_name == "Voltage"
+    assert voltage.synonyms == ("Voltage", "V")
