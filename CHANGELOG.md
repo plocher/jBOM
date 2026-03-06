@@ -1,6 +1,15 @@
 # CHANGELOG
 
 
+## v6.28.1 (2026-03-06)
+
+### Bug Fixes
+
+* fix: treat component tilde constraints as blank in matching
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`2bb9f0f`](https://github.com/plocher/jBOM/commit/2bb9f0fafaf64aad377da5c8280c09ff9df9eab0))
+
+
 ## v6.28.0 (2026-03-06)
 
 ### Features
