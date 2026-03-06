@@ -366,17 +366,14 @@ class InventoryReader:
                 voltage=self._get_canonical_electrical_value(
                     row,
                     canonical="voltage",
-                    fallback_headers=["Voltage", "V"],
                 ),
                 amperage=self._get_canonical_electrical_value(
                     row,
                     canonical="current",
-                    fallback_headers=["Current", "Amperage", "A"],
                 ),
                 wattage=self._get_canonical_electrical_value(
                     row,
                     canonical="power",
-                    fallback_headers=["Power", "Wattage", "W"],
                 ),
                 # Phase 4 inventory schema: LCSC is an explicit column (no DPN fallback).
                 lcsc=self._get_first_value(row, ["LCSC", "LCSC Part", "LCSC Part #"]),
@@ -414,15 +411,18 @@ class InventoryReader:
             self.inventory.append(item)
 
     def _get_canonical_electrical_value(
-        self, row: Dict[str, str], *, canonical: str, fallback_headers: List[str]
+        self, row: Dict[str, str], *, canonical: str
     ) -> str:
-        """Resolve an electrical attribute via defaults-profile synonym mappings."""
+        """Resolve an electrical attribute via defaults-profile synonym mappings.
+
+        No hardcoded aliases are applied here by design: profile configuration
+        is authoritative, and intentional omission means aliases are disabled.
+        """
 
         keys: list[str] = []
         config = _DEFAULTS_PROFILE.get_field_synonym_config(canonical)
         if config is not None:
             keys.extend([config.display_name, *config.synonyms])
-        keys.extend(fallback_headers)
 
         deduped_keys: list[str] = []
         seen: set[str] = set()
