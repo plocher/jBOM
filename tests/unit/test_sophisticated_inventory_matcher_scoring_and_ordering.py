@@ -185,3 +185,27 @@ def test_debug_info_optional() -> None:
     results = matcher.find_matches(component, [item])
     assert results
     assert results[0].debug_info
+
+
+def test_tilde_property_constraint_is_ignored_for_scoring_bonus() -> None:
+    matcher = SophisticatedInventoryMatcher(MatchingOptions())
+
+    component = _make_component(
+        lib_id="Device:R",
+        value="10K",
+        footprint="R_0603_1608Metric",
+        properties={"Voltage": "~", "Power": "~", "Tolerance": "~"},
+    )
+    item = _make_inventory_item(
+        ipn="IPN-1",
+        category="RES",
+        value="10K",
+        package="0603",
+        priority=1,
+        tolerance="5%",
+        voltage="50V",
+        wattage="0.1W",
+    )
+
+    # Base score only (type + value + package), with no property bonus from "~".
+    assert matcher._calculate_match_score(component, item) == 120

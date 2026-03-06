@@ -91,6 +91,19 @@ class SophisticatedInventoryMatcher:
         t = re.sub(r"\s+", "", t)
         return t
 
+    @staticmethod
+    def _is_blank_constraint(value: str | None) -> bool:
+        """Return True when a component constraint should be treated as blank.
+
+        KiCad may encode empty user fields as "~" in schematic data. For
+        matching semantics, this is equivalent to blank/no-constraint.
+        """
+
+        if value is None:
+            return True
+        stripped = value.strip()
+        return stripped == "" or stripped == "~"
+
     def _passes_primary_filters(
         self, component: Component, item: InventoryItem
     ) -> bool:
@@ -112,7 +125,9 @@ class SophisticatedInventoryMatcher:
         comp_type = get_component_type(component.lib_id, component.footprint)
         comp_pkg = extract_package_from_footprint(component.footprint)
         comp_val_norm = (
-            self._normalize_value(component.value) if component.value else ""
+            ""
+            if self._is_blank_constraint(component.value)
+            else self._normalize_value(component.value)
         )
 
         # 1) Type/category must match if we could determine it.
@@ -226,7 +241,8 @@ class SophisticatedInventoryMatcher:
         properties = component.properties or {}
 
         # Tolerance matching.
-        if (tol := properties.get("Tolerance")) and item.tolerance:
+        tol = properties.get("Tolerance")
+        if not self._is_blank_constraint(tol) and item.tolerance:
             comp_tol = self._parse_tolerance_percent(tol)
             item_tol = self._parse_tolerance_percent(item.tolerance)
             if comp_tol is not None and item_tol is not None:
@@ -237,14 +253,16 @@ class SophisticatedInventoryMatcher:
 
         # Voltage matching.
         for field in ("Voltage", "V"):
-            if (v := properties.get(field)) and item.voltage:
+            v = properties.get(field)
+            if not self._is_blank_constraint(v) and item.voltage:
                 if v in item.voltage:
                     score += 10
                     break
 
         # Power / wattage matching.
         for field in ("Wattage", "Power", "W", "P"):
-            if (w := properties.get(field)) and item.wattage:
+            w = properties.get(field)
+            if not self._is_blank_constraint(w) and item.wattage:
                 if w in item.wattage:
                     score += 10
                     break

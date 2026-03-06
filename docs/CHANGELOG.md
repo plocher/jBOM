@@ -20,6 +20,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - `inventory-search` query construction now supports per-supplier `search.type_query_keywords` with a safe hardcoded fallback.
 - `jbom search` console output now includes Description plus up to 2 heuristic parametric columns.
 - LCSC `inventory-search` now applies Issue #115 Phase 4 foundation heuristics for RES/CAP parametric query shaping (category/spec/attribute payloads with static defaults and safe keyword fallback).
+- Matching now treats component-side `~` attribute values as blank/no-constraint during primary filtering and property scoring.
+- Documentation now clarifies that `annotate` writes non-blank CSV values literally (including `~`) while matching interprets component `~` as unconstrained.
 
 ## [7.0.0] - 2026-02-27
 

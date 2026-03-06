@@ -143,14 +143,23 @@ jbom bom project --inventory inventory.csv -f "Reference,Value,I:Package,C:Toler
 
 jBOM matches schematic components to inventory items through:
 
+**Blank fields = no constraint**: A blank value in any component attribute means the designer
+chose not to constrain that attribute. Blank is not "unknown" — it is an explicit non-requirement.
+Blank fields are excluded from filtering and scoring; any inventory item is acceptable on
+that attribute. This applies to Tolerance, Voltage, Current, Power, Dielectric, and all
+other optional attributes. For matching only, KiCad's `~` placeholder in component attributes
+is treated as blank/no-constraint.
+
 1. **Primary filtering** (must match all):
    - Category must match component type
    - Package must match footprint extraction
    - Value must match numerically (for RES/CAP/IND)
+   - Blank component attributes are excluded from primary filtering
 
 2. **Scoring** (selection when multiple match):
    - Priority ranking (1 preferred over 2, etc.)
-   - Technical score from property matches (Tolerance, V, A, W, etc.)
+   - Technical score from property matches (Tolerance, Voltage, Current, Power, etc.)
+   - Blank component attributes contribute zero to scoring (no constraint, no influence)
    - Tolerance-aware substitution: exact tolerance matches are preferred; tighter tolerances substitute only when exact match is unavailable
      - Exact match preferred: Schematic requires 10kΩ 10% and 10% is available → 10% part is selected (full scoring bonus)
      - Next-tighter preferred over tightest: Schematic requires 10kΩ 10%, inventory has only 5% and 1% → 5% is ranked higher (tolerance gap 5% vs 9%, closer to requirement gets higher score)
