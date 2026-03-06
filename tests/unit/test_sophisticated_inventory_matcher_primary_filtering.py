@@ -91,6 +91,19 @@ def test_resistor_value_filter_numeric_equality() -> None:
     assert matcher._passes_primary_filters(component, bad) is False
 
 
+def test_tilde_component_value_is_treated_as_blank_constraint() -> None:
+    matcher = SophisticatedInventoryMatcher(MatchingOptions())
+
+    component = _make_component(
+        lib_id="Device:R", value="~", footprint="R_0603_1608Metric"
+    )
+    item = _make_inventory_item(category="RES", value="47K", package="0603")
+
+    # "~" means no value constraint from component side, so this passes
+    # even though item.value differs.
+    assert matcher._passes_primary_filters(component, item) is True
+
+
 def test_capacitor_value_filter_numeric_equivalence_across_units() -> None:
     matcher = SophisticatedInventoryMatcher(MatchingOptions())
 
