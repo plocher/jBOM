@@ -22,7 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - LCSC `inventory-search` now applies Issue #115 Phase 4 foundation heuristics for RES/CAP parametric query shaping (category/spec/attribute payloads with static defaults and safe keyword fallback).
 - `inventory --no-aggregate` now emits canonical `Voltage`, `Current`, and `Power` columns (legacy `V/A/W` aliases are no longer output columns).
 - `annotate --normalize` now supports standalone or combined normalize+annotate workflows, with conflict-abort behavior when alias and canonical values disagree.
-- Defaults profiles now support `field_synonyms` mappings, and inventory intake resolves electrical aliases (`V/Volts`, `A/Amperage`, `W/Wattage`) through that config.
+- Defaults profiles now support `field_synonyms` mappings, and inventory intake resolves electrical aliases exclusively through that profile config (no hardcoded fallback alias mapping).
 - Matching now treats component-side `~` attribute values as blank/no-constraint during primary filtering and property scoring.
 - Documentation now clarifies that `annotate` writes non-blank CSV values literally (including `~`) while matching interprets component `~` as unconstrained.
 
