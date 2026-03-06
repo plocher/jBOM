@@ -1,6 +1,27 @@
 # CHANGELOG
 
 
+## v6.27.2 (2026-03-06)
+
+### Bug Fixes
+
+* fix: print_inventory_table shows all fields, not a hardcoded 5-col subset
+
+The hardcoded whitelist ("IPN","Category","Value","Description","Package")
+silently dropped the no-aggregate prefix columns (Project, ProjectName,
+UUID, SourceFile, Refs) from console output.  These are essential for
+jbom annotate to back-fill component attributes.
+
+Replace the whitelist with _INVENTORY_FIELD_WIDTHS — a module-level dict
+of (preferred_width, wrap) hints for known fields — so every field in the
+fieldnames argument is rendered.  Unknown fields auto-size to 15 wide.
+Terminal width still constrains the total as before.
+
+Adds unit test verifying all no-aggregate columns appear in console output.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`d0e074e`](https://github.com/plocher/jBOM/commit/d0e074eba6e148865f7394cdc18e8ae91774ac01))
+
+
 ## v6.27.1 (2026-03-05)
 
 ### Bug Fixes
