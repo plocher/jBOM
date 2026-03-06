@@ -30,43 +30,58 @@ from jbom.services.sophisticated_inventory_matcher import (
     SophisticatedInventoryMatcher,
 )
 
-_NO_AGGREGATE_PREFIX_FIELDS = [
+# Fields always present in no-aggregate output — included even when all values are empty
+# so the designer can fill them in or use "~" for heuristic defaults.
+_NO_AGGREGATE_ALWAYS_FIELDS: list[str] = [
+    # Identity — required for jbom annotate component routing
     "Project",
     "ProjectName",
     "UUID",
     "SourceFile",
-    "Refs",
+    "Reference",
     "Category",
     "IPN",
-]
-_NO_AGGREGATE_PREFERRED_FIELDS = [
-    "SMD",
+    # Electro-mechanical attributes
     "Value",
-    "Type",
     "Description",
+    "Inductance",
     "Resistance",
     "Capacitance",
-    "Inductance",
     "Package",
+    "Color",
+    "Tolerance",
+    "W",
+    "A",
+    "V",
+    "Temperature Coefficient",
+    "Voltage",
+    "Wavelength",
+    "mcd",
+    "Symbol",
+    "Footprint",
+]
+
+# Fields included only when at least one component carries a non-empty value.
+_NO_AGGREGATE_CONDITIONAL_FIELDS: list[str] = [
+    "SMD",
+    "Type",
     "Form",
     "Pins",
     "Pitch",
-    "Tolerance",
-    "V",
-    "A",
-    "W",
-    "Color",
     "Angle",
-    "Wavelength",
-    "mcd",
-    "Frequency",
-    "Symbol",
-    "Footprint",
     "Manufacturer",
     "MFGPN",
     "LCSC",
     "Datasheet",
     "Keywords",
+    "Height",
+    "Manufacturer_Name",
+    "Manufacturer_Part_Number",
+    "Mouser Part Number",
+    "Mouser Price/Stock",
+    "Sim.Device",
+    "Sim.Pins",
+    "Supplier",
     "Name",
 ]
 
@@ -280,22 +295,23 @@ def _generate_no_aggregate_inventory_rows(
 ) -> tuple[list[dict[str, str]], list[str]]:
     """Generate no-aggregate inventory rows grouped by category with sub-headers.
 
-    Schema prefix: Project, ProjectName, UUID, SourceFile, Refs, Category, IPN, ...
+    Schema always includes identity and electro-mechanical attribute columns
+    (``_NO_AGGREGATE_ALWAYS_FIELDS``).  Supply-chain and simulation columns are
+    included only when at least one component carries a non-empty value for that
+    field (``_NO_AGGREGATE_CONDITIONAL_FIELDS``).
 
     Identity semantics:
     - ``SourceFile`` (absolute path) + ``UUID`` is the canonical annotation routing key.
     - ``ProjectName`` and ``Project`` are cosmetic context only, never used for routing.
+    - ``Reference`` is the human-readable designator (e.g. "R1", "C3").
     """
 
     generator = ProjectInventoryGenerator(components)
     inventory_items, base_field_names = generator.load_no_aggregate()
 
-    field_names = _build_no_aggregate_field_order(base_field_names)
     project_value = str(project_directory.resolve())
-    # ProjectName: use provided name, or fall back to project directory stem
     project_name_value = project_name or project_directory.name
 
-    # Build a uuid -> source_file mapping from the original components
     uuid_to_source: dict[str, str] = {}
     uuid_to_ref: dict[str, str] = {}
     for comp in components:
@@ -305,20 +321,33 @@ def _generate_no_aggregate_inventory_rows(
             )
             uuid_to_ref[comp.uuid] = comp.reference
 
-    data_rows: list[dict[str, str]] = []
+    # Build raw rows using all candidate fields so conditional-field detection
+    # can inspect actual values before the final field list is determined.
+    candidate_fields: list[str] = list(
+        dict.fromkeys(
+            _NO_AGGREGATE_ALWAYS_FIELDS
+            + _NO_AGGREGATE_CONDITIONAL_FIELDS
+            + list(base_field_names)
+        )
+    )
+
+    raw_rows: list[dict[str, str]] = []
     for item in inventory_items:
-        row = _inventory_item_to_row(item, field_names)
+        row = _inventory_item_to_row(item, candidate_fields)
         row["Project"] = project_value
         row["ProjectName"] = project_name_value
         row["UUID"] = item.uuid
         row["SourceFile"] = uuid_to_source.get(item.uuid, "")
-        row["Refs"] = uuid_to_ref.get(item.uuid, "")
+        row["Reference"] = uuid_to_ref.get(item.uuid, "")
         row["Category"] = item.category
         row["IPN"] = item.ipn
-        data_rows.append(row)
+        raw_rows.append(row)
+
+    # Determine final field order: always fields + conditional fields that have data.
+    field_names = _build_no_aggregate_field_order(base_field_names, raw_rows)
 
     sorted_rows = sorted(
-        data_rows, key=lambda row: (row.get("Category", ""), row.get("UUID", ""))
+        raw_rows, key=lambda r: (r.get("Category", ""), r.get("UUID", ""))
     )
 
     grouped_rows: list[dict[str, str]] = []
@@ -328,42 +357,57 @@ def _generate_no_aggregate_inventory_rows(
         if category != current_category:
             grouped_rows.append(_build_no_aggregate_subheader_row(field_names))
             current_category = category
-        grouped_rows.append(row)
+        grouped_rows.append({fn: row.get(fn, "") for fn in field_names})
 
     return grouped_rows, field_names
 
 
-def _build_no_aggregate_field_order(base_field_names: list[str]) -> list[str]:
-    """Return deterministic field ordering for no-aggregate inventory output."""
+def _build_no_aggregate_field_order(
+    base_field_names: list[str],
+    data_rows: list[dict[str, str]],
+) -> list[str]:
+    """Return deterministic field ordering for no-aggregate inventory output.
 
-    base_set = set(base_field_names)
-    ordered_fields = list(_NO_AGGREGATE_PREFIX_FIELDS)
+    Always-include fields appear first (even when every value is empty).
+    Conditional fields follow only when at least one data row carries a
+    non-empty value.  Any remaining fields from *base_field_names* that have
+    data but are not in either list are appended at the end.
+    """
 
-    for field_name in _NO_AGGREGATE_PREFERRED_FIELDS:
-        if field_name in base_set and field_name not in ordered_fields:
-            ordered_fields.append(field_name)
+    ordered: list[str] = list(_NO_AGGREGATE_ALWAYS_FIELDS)
+    already: set[str] = set(ordered)
 
-    extras = sorted(
-        field_name for field_name in base_set if field_name not in ordered_fields
-    )
-    ordered_fields.extend(extras)
-    return ordered_fields
+    def _has_data(field: str) -> bool:
+        return any(row.get(field, "") for row in data_rows)
+
+    for field in _NO_AGGREGATE_CONDITIONAL_FIELDS:
+        if field not in already and _has_data(field):
+            ordered.append(field)
+            already.add(field)
+
+    # Append any extra fields from the KiCad base data not already covered.
+    for field in base_field_names:
+        if field not in already and _has_data(field):
+            ordered.append(field)
+            already.add(field)
+
+    return ordered
 
 
 def _build_no_aggregate_subheader_row(field_names: list[str]) -> dict[str, str]:
     """Build minimal deterministic sub-header marker row for no-aggregate output.
 
-    The five leading columns (Project, ProjectName, UUID, SourceFile, Refs) are
-    always populated and marked as required (FieldName sentinel). IPN is optional.
+    Identity columns (Project … Reference) are marked with their field name as
+    a sentinel.  IPN is marked optional.  All other columns are left empty so
+    the designer can fill in component-specific values.
     """
 
     row = {field_name: "" for field_name in field_names}
-    # Required leading columns — always populated, sentinel = field name
     row["Project"] = "Project"
     row["ProjectName"] = "ProjectName"
     row["UUID"] = "UUID"
     row["SourceFile"] = "SourceFile"
-    row["Refs"] = "Refs"
+    row["Reference"] = "Reference"
     row["Category"] = "Category"
     row["IPN"] = "(Optional)\nIPN"
     row["Value"] = "Value"

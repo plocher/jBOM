@@ -1,7 +1,10 @@
 """Unit tests for Issue #127 Scope C no-aggregate inventory output.
 
-Updated for Issue #133: schema now includes ProjectName, SourceFile, Refs
+Updated for Issue #133: schema now includes ProjectName, SourceFile, Reference
 as the 2nd, 4th, and 5th columns respectively.
+
+Updated for Issue #136: renamed Refs -> Reference; always-include / conditional
+field split replaces the old prefix + preferred-fields approach.
 """
 
 from __future__ import annotations
@@ -50,7 +53,7 @@ def _sample_components() -> list[Component]:
 
 
 def test_no_aggregate_schema_starts_with_required_leading_columns() -> None:
-    """Schema prefix is Project, ProjectName, UUID, SourceFile, Refs, Category, IPN."""
+    """Schema prefix is Project, ProjectName, UUID, SourceFile, Reference, Category, IPN."""
     rows, field_names = _generate_no_aggregate_inventory_rows(
         _sample_components(),
         project_directory=Path("/tmp/example-project"),
@@ -62,7 +65,7 @@ def test_no_aggregate_schema_starts_with_required_leading_columns() -> None:
         "ProjectName",
         "UUID",
         "SourceFile",
-        "Refs",
+        "Reference",
         "Category",
         "IPN",
     ]
@@ -75,8 +78,8 @@ def test_no_aggregate_schema_starts_with_required_leading_columns() -> None:
     assert all(row["ProjectName"] == "example-project" for row in data_rows)
 
 
-def test_no_aggregate_source_file_and_refs_populated() -> None:
-    """SourceFile and Refs columns are populated from Component.source_file and .reference."""
+def test_no_aggregate_source_file_and_reference_populated() -> None:
+    """SourceFile and Reference columns are populated from Component.source_file and .reference."""
     rows, _ = _generate_no_aggregate_inventory_rows(
         _sample_components(),
         project_directory=Path("/tmp/example-project"),
@@ -84,9 +87,9 @@ def test_no_aggregate_source_file_and_refs_populated() -> None:
     data_rows = {row["UUID"]: row for row in rows if row["Project"] != "Project"}
 
     assert data_rows["uuid-r1"]["SourceFile"] == str(_SOURCE_A)
-    assert data_rows["uuid-r1"]["Refs"] == "R1"
+    assert data_rows["uuid-r1"]["Reference"] == "R1"
     assert data_rows["uuid-c1"]["SourceFile"] == str(_SOURCE_B)
-    assert data_rows["uuid-c1"]["Refs"] == "C1"
+    assert data_rows["uuid-c1"]["Reference"] == "C1"
 
 
 def test_no_aggregate_rows_are_grouped_by_category_with_subheaders() -> None:
@@ -115,12 +118,12 @@ def test_subheader_row_uses_minimal_deterministic_markers() -> None:
     )
 
     subheader = next(row for row in rows if row["Project"] == "Project")
-    # Five required leading columns use the field name as sentinel (always populated)
+    # Identity columns use the field name as sentinel (always populated)
     assert subheader["Project"] == "Project"
     assert subheader["ProjectName"] == "ProjectName"
     assert subheader["UUID"] == "UUID"
     assert subheader["SourceFile"] == "SourceFile"
-    assert subheader["Refs"] == "Refs"
+    assert subheader["Reference"] == "Reference"
     assert subheader["Category"] == "Category"
     assert subheader["IPN"] == "(Optional)\nIPN"
     assert subheader["Value"] == "Value"
@@ -131,7 +134,7 @@ def test_subheader_row_uses_minimal_deterministic_markers() -> None:
         "ProjectName",
         "UUID",
         "SourceFile",
-        "Refs",
+        "Reference",
         "Category",
         "IPN",
         "Value",
