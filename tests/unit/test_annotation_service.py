@@ -5,7 +5,11 @@ from __future__ import annotations
 import csv
 from pathlib import Path
 
-from jbom.services.annotation_service import annotate_schematic, triage_inventory
+from jbom.services.annotation_service import (
+    annotate_schematic,
+    normalize_schematic_properties,
+    triage_inventory,
+)
 
 
 def _write_schematic(path: Path) -> str:
@@ -211,3 +215,47 @@ def test_triage_reports_only_required_blank_fields_value_and_package(
     assert len(report.rows_with_required_blanks) == 2
     assert report.rows_with_required_blanks[0].missing_required_fields == ["Value"]
     assert report.rows_with_required_blanks[1].missing_required_fields == ["Package"]
+
+
+def test_normalize_renames_alias_properties_to_canonical_fields(tmp_path: Path) -> None:
+    schematic = tmp_path / "project.kicad_sch"
+    _write_schematic(schematic)
+    content = schematic.read_text(encoding="utf-8")
+    content = content.replace(
+        '(property "Package" "0603" (id 3) (at 52 56 0))',
+        '(property "Package" "0603" (id 3) (at 52 56 0))\n'
+        '    (property "V" "25V" (id 10) (at 52 60 0))\n'
+        '    (property "Wattage" "100mW" (id 11) (at 52 62 0))',
+    )
+    schematic.write_text(content, encoding="utf-8")
+
+    result = normalize_schematic_properties([schematic], dry_run=False)
+    updated = schematic.read_text(encoding="utf-8")
+
+    assert result.conflicts == []
+    assert result.updated_components == 1
+    assert '"Voltage" "25V"' in updated
+    assert '"Power" "100mW"' in updated
+    assert '"V" "25V"' not in updated
+    assert '"Wattage" "100mW"' not in updated
+
+
+def test_normalize_aborts_on_conflicting_alias_and_canonical_values(
+    tmp_path: Path,
+) -> None:
+    schematic = tmp_path / "project.kicad_sch"
+    _write_schematic(schematic)
+    content = schematic.read_text(encoding="utf-8")
+    content = content.replace(
+        '(property "LCSC" "C1234" (id 4) (at 52 58 0))',
+        '(property "LCSC" "C1234" (id 4) (at 52 58 0))\n'
+        '    (property "V" "25V" (id 10) (at 52 60 0))\n'
+        '    (property "Voltage" "50V" (id 11) (at 52 62 0))',
+    )
+    schematic.write_text(content, encoding="utf-8")
+    original = schematic.read_text(encoding="utf-8")
+
+    result = normalize_schematic_properties([schematic], dry_run=False)
+
+    assert result.conflicts
+    assert schematic.read_text(encoding="utf-8") == original

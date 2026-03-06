@@ -81,5 +81,17 @@ Current minimal deterministic sub-header markers:
 - `Package` -> `Package`
 - all other columns -> blank
 
+Canonical electrical columns:
+- `Voltage`, `Current`, `Power` are the canonical schema names.
+- Legacy aliases accepted at intake via defaults `field_synonyms`:
+  - `V` / `Volts` -> `Voltage`
+  - `A` / `Amperage` -> `Current`
+  - `W` / `Wattage` -> `Power`
+
+`annotate --normalize` static mapping:
+- `V` -> `Voltage`
+- `A` / `Amperage` -> `Current`
+- `W` / `Wattage` -> `Power`
+
 ## Scope note
 Defaults-driven required/optional/recommended category semantics are intentionally deferred to the `--defaults` design thread. Current annotate triage and no-aggregate sub-header behavior remain minimal and explicit for Issue #127 Scope A/C.

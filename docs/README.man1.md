@@ -415,7 +415,7 @@ Use `--list-fields` to see the complete list. Common fields include:
 : Reference, Quantity, Description, Value, Footprint, LCSC, Datasheet, SMD, Priority, Match_Quality, Fabricator, Fabricator_Part_Number
 
 **Inventory fields** (prefix with `I:` to disambiguate from component properties)
-: Category, Package, Manufacturer, MFGPN, Tolerance, V, A, W, mcd, Wavelength, Angle, Frequency, Stability, Load, Family, Type, Pitch, Form
+: Category, Package, Manufacturer, MFGPN, Tolerance, Voltage, Current, Power, mcd, Wavelength, Angle, Frequency, Stability, Load, Family, Type, Pitch, Form
 
 **Component properties** (prefix with `C:`)
 : Tolerance, Voltage, Current, Power, and component-specific properties from the schematic.
@@ -448,7 +448,10 @@ Required columns:
 : IPN, Category, Value, Package, LCSC, Priority
 
 Optional columns:
-: Manufacturer, MFGPN, Datasheet, Keywords, SMD, Tolerance, V, A, W, Type, Form, Frequency, Stability, Load, Family, mcd, Wavelength, Angle, Pitch
+: Manufacturer, MFGPN, Datasheet, Keywords, SMD, Tolerance, Voltage, Current, Power, Type, Form, Frequency, Stability, Load, Family, mcd, Wavelength, Angle, Pitch
+
+Legacy aliases accepted:
+: V/Volts -> Voltage, A/Amperage -> Current, W/Wattage -> Power
 
 **Priority** uses integer ranking (1 = preferred, higher = less preferred). When multiple parts match, the lowest Priority is selected.
 

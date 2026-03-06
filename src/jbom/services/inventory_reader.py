@@ -17,9 +17,11 @@ from typing import List, Dict, Optional, Union
 from jbom.common.component_classification import normalize_component_type
 from jbom.common.types import InventoryItem, DEFAULT_PRIORITY
 from jbom.common.value_parsing import parse_value_to_normal
+from jbom.config.defaults import get_defaults
 from jbom.services.jlc_loader import JLCPrivateInventoryLoader
 
 log = logging.getLogger(__name__)
+_DEFAULTS_PROFILE = get_defaults("generic")
 
 # Maps normalised category token → CSV column name for explicit typed values
 _TYPED_COLUMN: Dict[str, str] = {
@@ -361,9 +363,21 @@ class InventoryReader:
                 value=value,
                 type=row.get("Type", ""),
                 tolerance=row.get("Tolerance", ""),
-                voltage=row.get("V", ""),
-                amperage=row.get("A", ""),
-                wattage=row.get("W", ""),
+                voltage=self._get_canonical_electrical_value(
+                    row,
+                    canonical="voltage",
+                    fallback_headers=["Voltage", "V"],
+                ),
+                amperage=self._get_canonical_electrical_value(
+                    row,
+                    canonical="current",
+                    fallback_headers=["Current", "Amperage", "A"],
+                ),
+                wattage=self._get_canonical_electrical_value(
+                    row,
+                    canonical="power",
+                    fallback_headers=["Power", "Wattage", "W"],
+                ),
                 # Phase 4 inventory schema: LCSC is an explicit column (no DPN fallback).
                 lcsc=self._get_first_value(row, ["LCSC", "LCSC Part", "LCSC Part #"]),
                 manufacturer=row.get("Manufacturer", ""),
@@ -398,6 +412,28 @@ class InventoryReader:
                 raw_data=row,
             )
             self.inventory.append(item)
+
+    def _get_canonical_electrical_value(
+        self, row: Dict[str, str], *, canonical: str, fallback_headers: List[str]
+    ) -> str:
+        """Resolve an electrical attribute via defaults-profile synonym mappings."""
+
+        keys: list[str] = []
+        config = _DEFAULTS_PROFILE.get_field_synonym_config(canonical)
+        if config is not None:
+            keys.extend([config.display_name, *config.synonyms])
+        keys.extend(fallback_headers)
+
+        deduped_keys: list[str] = []
+        seen: set[str] = set()
+        for key in keys:
+            normalized = key.strip()
+            if not normalized or normalized.lower() in seen:
+                continue
+            seen.add(normalized.lower())
+            deduped_keys.append(normalized)
+
+        return self._get_first_value(row, deduped_keys)
 
     def _get_first_value(self, row: Dict[str, str], keys: List[str]) -> str:
         """Get the first non-empty value from row matching any of the keys"""

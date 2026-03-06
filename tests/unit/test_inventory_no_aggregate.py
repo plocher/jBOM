@@ -144,3 +144,18 @@ def test_subheader_row_uses_minimal_deterministic_markers() -> None:
         if field_name in _required_populated:
             continue
         assert subheader[field_name] == ""
+
+
+def test_no_aggregate_uses_canonical_electrical_column_names() -> None:
+    rows, field_names = _generate_no_aggregate_inventory_rows(
+        _sample_components(),
+        project_directory=Path("/tmp/example-project"),
+    )
+
+    assert "Voltage" in field_names
+    assert "Current" in field_names
+    assert "Power" in field_names
+    assert "V" not in field_names
+    assert "A" not in field_names
+    assert "W" not in field_names
+    assert rows  # keep linter happy: ensure rows materialized

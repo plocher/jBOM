@@ -77,6 +77,29 @@ category_route_rules:
     first_sort: "Capacitors"
 
 # ---------------------------------------------------------------------------
+# Canonical schema field synonyms for inventory header intake/output.
+# ---------------------------------------------------------------------------
+field_synonyms:
+  voltage:
+    synonyms:
+      - "Voltage"
+      - "Volts"
+      - "V"
+    display_name: "Voltage"
+  current:
+    synonyms:
+      - "Current"
+      - "Amperage"
+      - "A"
+    display_name: "Current"
+  power:
+    synonyms:
+      - "Power"
+      - "Wattage"
+      - "W"
+    display_name: "Power"
+
+# ---------------------------------------------------------------------------
 # Camp 2/3 attribute classification per component category.
 # show_in_mode_a: Camp 2 — surfaced for explicit designer confirmation in Mode A.
 # suppress:       Camp 3 — silently filtered from Mode A display and write-back.

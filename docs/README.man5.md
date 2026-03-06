@@ -56,13 +56,13 @@ Each row represents one stocked component. Columns define the component's attrib
 **Tolerance**
 : Tolerance rating (5%, 1%, ±10%, etc.). Used in scoring to prefer tighter tolerances when available.
 
-**V (Voltage)**
+**Voltage**
 : Working voltage rating (25V, 50V, 75V, 400V, etc.).
 
-**A (Amperage)**
+**Current**
 : Current rating (100mA, 1A, 10A, etc.).
 
-**W (Wattage)**
+**Power**
 : Power dissipation rating (0.1W, 0.25W, 1W, etc.).
 
 **Type**
@@ -103,7 +103,10 @@ Each row represents one stocked component. Columns define the component's attrib
 Column names are case-insensitive and flexible:
 - Spaces accepted: "Mfg PN" or "MFGPN" both work
 - Title Case preferred for readability: "Manufacturer" not "MANUFACTURER"
-- Abbreviations: "V" for voltage, "A" for amperage, "W" for wattage
+- Legacy aliases accepted via defaults field synonyms:
+  - "V" / "Volts" -> Voltage
+  - "A" / "Amperage" -> Current
+  - "W" / "Wattage" -> Power
 - Standard notation: "mcd" for millicandela (lowercase)
 
 jBOM normalizes all field names internally to snake_case (mfg_pn, mcd, etc.), so naming variations are handled automatically.
