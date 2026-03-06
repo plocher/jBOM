@@ -1,6 +1,32 @@
 # CHANGELOG
 
 
+## v6.28.0 (2026-03-06)
+
+### Features
+
+* feat: rename Refs→Reference; always-include/conditional field schema for --no-aggregate
+
+- Replace _NO_AGGREGATE_PREFIX_FIELDS + _NO_AGGREGATE_PREFERRED_FIELDS with
+  _NO_AGGREGATE_ALWAYS_FIELDS (identity + electro-mech attributes, always present
+  even when empty) and _NO_AGGREGATE_CONDITIONAL_FIELDS (supply-chain/simulation
+  columns, only included when any component has a non-empty value).
+- _build_no_aggregate_field_order now accepts data_rows and applies conditional
+  field detection before finalising the column order.
+- _generate_no_aggregate_inventory_rows builds raw rows first using the full
+  candidate field set, then determines field order, then trims rows to the final
+  field list.
+- Rename "Refs" → "Reference" throughout inventory.py, formatting.py, unit tests,
+  and the no_aggregate.feature gherkin scenario.
+- Add _INVENTORY_FIELD_WIDTHS entries for new always-include columns (Inductance,
+  Resistance, Capacitance, Color, Tolerance, W, A, V, Temperature Coefficient,
+  Voltage, Wavelength, mcd, Symbol, Footprint).
+
+Closes #133 (partial – field schema alignment)
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`4536ecb`](https://github.com/plocher/jBOM/commit/4536ecb2aa20a6cd94c0a1fea6a93f5fe459639f))
+
+
 ## v6.27.2 (2026-03-06)
 
 ### Bug Fixes
