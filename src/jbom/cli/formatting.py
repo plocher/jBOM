@@ -261,42 +261,51 @@ def print_tabular_data(
         print(summary_line)
 
 
-def print_inventory_table(items: Iterable[dict], fieldnames: List[str]) -> None:
-    """Pretty-print inventory rows as a compact table to stdout.
+# (preferred_width, wrap) hints for inventory console display.
+# Path/ID fields are kept narrow and non-wrapping so they truncate cleanly;
+# content fields wrap so descriptions/values are fully visible.
+_INVENTORY_FIELD_WIDTHS: dict[str, tuple[int, bool]] = {
+    "Project": (25, False),
+    "ProjectName": (15, False),
+    "UUID": (20, False),
+    "SourceFile": (25, False),
+    "Refs": (8, False),
+    "Category": (10, False),
+    "IPN": (20, False),
+    "Value": (15, True),
+    "Description": (35, True),
+    "Package": (14, True),
+    "Manufacturer": (16, True),
+    "MFGPN": (16, False),
+    "LCSC": (10, False),
+    "Datasheet": (20, False),
+}
 
-    Shows a curated subset if available; otherwise falls back to CSV to stdout.
+
+def print_inventory_table(items: Iterable[dict], fieldnames: List[str]) -> None:
+    """Pretty-print inventory rows as a formatted table to stdout.
+
+    Renders every field in *fieldnames* order; terminal width constrains
+    column widths automatically.  Falls back to raw CSV if fieldnames is empty.
     """
 
     items_list = list(items)
 
-    subset = [
-        f
-        for f in ("IPN", "Category", "Value", "Description", "Package")
-        if f in fieldnames
-    ]
-    if not subset:
+    if not fieldnames:
         writer = csv.DictWriter(sys.stdout, fieldnames=fieldnames)
         writer.writeheader()
         for row in items_list:
             writer.writerow(row)
         return
 
-    width_defaults = {
-        "IPN": 20,
-        "Category": 15,
-        "Value": 15,
-        "Description": 40,
-        "Package": 15,
-    }
-
     cols = [
         Column(
             header=f,
             key=f,
-            preferred_width=width_defaults.get(f, 15),
-            wrap=True,
+            preferred_width=_INVENTORY_FIELD_WIDTHS.get(f, (15, True))[0],
+            wrap=_INVENTORY_FIELD_WIDTHS.get(f, (15, True))[1],
         )
-        for f in subset
+        for f in fieldnames
     ]
 
     print(f"\nInventory: {len(items_list)} items")

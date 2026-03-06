@@ -1,8 +1,14 @@
 import io
 import unittest
 from contextlib import redirect_stdout
+from unittest.mock import patch
 
-from jbom.cli.formatting import Column, print_table, print_tabular_data
+from jbom.cli.formatting import (
+    Column,
+    print_inventory_table,
+    print_table,
+    print_tabular_data,
+)
 
 
 class TestConsoleFormatting(unittest.TestCase):
@@ -178,6 +184,42 @@ class TestConsoleFormatting(unittest.TestCase):
         # Check title appears
         title_idx = next(i for i, line in enumerate(lines) if "Test Title" in line)
         self.assertEqual(lines[title_idx], "Test Title")
+
+    def test_print_inventory_table_renders_all_fieldnames(self):
+        """print_inventory_table must show every field in fieldnames, not a hardcoded subset."""
+        fieldnames = [
+            "Project",
+            "UUID",
+            "SourceFile",
+            "Refs",
+            "Category",
+            "IPN",
+            "Value",
+        ]
+        rows = [
+            {
+                "Project": "/some/path",
+                "UUID": "uuid-r1",
+                "SourceFile": "/some/path/top.kicad_sch",
+                "Refs": "R1",
+                "Category": "RES",
+                "IPN": "",
+                "Value": "10K",
+            }
+        ]
+        buf = io.StringIO()
+        # Use a wide terminal so no column shrinks below its header width.
+        with patch("jbom.cli.formatting.get_terminal_width", return_value=400):
+            with redirect_stdout(buf):
+                print_inventory_table(rows, fieldnames)
+        out = buf.getvalue()
+        # Every field name must appear as a column header (no whitelist truncation).
+        for field in fieldnames:
+            self.assertIn(field, out, f"Column '{field}' missing from console output")
+        # Data values must also be present.
+        self.assertIn("uuid-r1", out)
+        self.assertIn("RES", out)
+        self.assertIn("10K", out)
 
     def test_row_separator_emitted_after_each_data_row(self):
         """A -+- row separator must appear after every data row."""
