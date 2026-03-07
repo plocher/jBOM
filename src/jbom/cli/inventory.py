@@ -133,9 +133,17 @@ def register_command(subparsers) -> None:
         help="Filter out components that match existing inventory items",
     )
     parser.add_argument(
+        "--per-instance",
+        action="store_true",
+        dest="per_instance",
+        help="Emit one inventory row per component instance with category sub-header rows",
+    )
+    # Deprecated alias — kept for backward compatibility.
+    parser.add_argument(
         "--no-aggregate",
         action="store_true",
-        help="Emit one inventory row per component instance with category sub-header rows",
+        dest="per_instance",
+        help=argparse.SUPPRESS,
     )
 
     # Safety options
@@ -275,8 +283,8 @@ def _handle_generate_inventory(args: argparse.Namespace) -> int:
         else project_directory.name
     )
 
-    if args.no_aggregate:
-        rows, field_names = _generate_no_aggregate_inventory_rows(
+    if args.per_instance:
+        rows, field_names = _generate_per_instance_inventory_rows(
             components,
             project_directory=project_directory,
             project_name=project_name,
@@ -293,12 +301,17 @@ def _handle_generate_inventory(args: argparse.Namespace) -> int:
     )
 
 
-def _generate_no_aggregate_inventory_rows(
+def _generate_per_instance_inventory_rows(
     components: list[Component],
     project_directory: Path,
     project_name: str = "",
 ) -> tuple[list[dict[str, str]], list[str]]:
-    """Generate no-aggregate inventory rows grouped by category with sub-headers.
+    """Generate per-instance inventory rows grouped by category with sub-headers.
+
+    Emits one row per component instance (no aggregation).  Used by the
+    ``--per-instance`` flag to support the ``jbom annotate`` back-annotation
+    workflow, where ``SourceFile`` + ``UUID`` are needed to route IPNs back
+    to the correct schematic component.
 
     Schema always includes identity and electro-mechanical attribute columns
     (``_NO_AGGREGATE_ALWAYS_FIELDS``).  Supply-chain and simulation columns are
@@ -312,7 +325,7 @@ def _generate_no_aggregate_inventory_rows(
     """
 
     generator = ProjectInventoryGenerator(components)
-    inventory_items, base_field_names = generator.load_no_aggregate()
+    inventory_items, base_field_names = generator.load_per_instance()
 
     project_value = str(project_directory.resolve())
     project_name_value = project_name or project_directory.name

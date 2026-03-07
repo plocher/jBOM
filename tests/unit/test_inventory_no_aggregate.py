@@ -11,7 +11,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from jbom.cli.inventory import _generate_no_aggregate_inventory_rows
+from jbom.cli.inventory import (
+    _generate_per_instance_inventory_rows as _generate_no_aggregate_inventory_rows,
+)
 from jbom.common.types import Component
 
 _SOURCE_A = Path("/tmp/example-project/top.kicad_sch").resolve()

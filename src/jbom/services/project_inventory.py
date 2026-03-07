@@ -3,6 +3,7 @@
 from typing import List, Tuple, Dict, Set
 
 from jbom.common.component_classification import normalize_component_type
+from jbom.common.component_id import make_component_id
 from jbom.common.types import Component, InventoryItem, DEFAULT_PRIORITY
 from jbom.common.component_utils import (
     derive_package_from_footprint,
@@ -78,8 +79,8 @@ class ProjectInventoryGenerator:
 
         return self.inventory, sorted(list(self.inventory_fields))
 
-    def load_no_aggregate(self) -> Tuple[List[InventoryItem], List[str]]:
-        """Generate one COMPONENT row per component instance (no aggregation).
+    def load_per_instance(self) -> Tuple[List[InventoryItem], List[str]]:
+        """Generate one COMPONENT row per component instance for --per-instance output.
 
         Returns:
             Tuple of (inventory items list, field names list)
@@ -122,41 +123,26 @@ class ProjectInventoryGenerator:
         return self.inventory, sorted(list(self.inventory_fields))
 
     def _generate_group_key(self, component: Component) -> str:
-        """Generate deterministic requirement identity from explicit fields only."""
+        """Generate deterministic requirement identity via make_component_id().
+
+        Always delegates to ``make_component_id`` — never constructs the
+        ComponentID string directly.
+        """
         category_raw = (
             get_component_type(component.lib_id, component.footprint) or "UNK"
         )
         category = normalize_component_type(category_raw)
-        package = self._extract_package(component.footprint).upper().strip()
-        value = (component.value or "").strip().upper()
         props = component.properties or {}
 
-        tolerance = (
-            props.get(CommonFields.TOLERANCE, props.get("Tolerance", ""))
-            .strip()
-            .upper()
-        )
-        voltage = (
-            props.get(CommonFields.VOLTAGE, props.get("Voltage", "")).strip().upper()
-        )
-        amperage = (
-            props.get(CommonFields.AMPERAGE, props.get("Amperage", "")).strip().upper()
-        )
-        wattage = (
-            props.get(CommonFields.WATTAGE, props.get("Wattage", "")).strip().upper()
-        )
-        ctype = props.get("Type", "").strip().upper()
-
-        return (
-            "REQ1"
-            f"|CAT={category}"
-            f"|VAL={value}"
-            f"|PKG={package}"
-            f"|TOL={tolerance}"
-            f"|V={voltage}"
-            f"|A={amperage}"
-            f"|W={wattage}"
-            f"|TYPE={ctype}"
+        return make_component_id(
+            category=category,
+            value=component.value or "",
+            package=self._extract_package(component.footprint),
+            tolerance=props.get(CommonFields.TOLERANCE, props.get("Tolerance", "")),
+            voltage=props.get(CommonFields.VOLTAGE, props.get("Voltage", "")),
+            amperage=props.get(CommonFields.AMPERAGE, props.get("Amperage", "")),
+            wattage=props.get(CommonFields.WATTAGE, props.get("Wattage", "")),
+            component_type=props.get("Type", ""),
         )
 
     def _create_inventory_item(

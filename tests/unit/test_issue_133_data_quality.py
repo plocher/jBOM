@@ -197,10 +197,10 @@ class TestBug2IPNBlankByDefault:
         items, _ = gen.load()
         assert items[0].ipn == "RES-0603-10K"
 
-    def test_ipn_blank_no_aggregate(self) -> None:
+    def test_ipn_blank_per_instance(self) -> None:
         comp = _make_comp(properties={})
         gen = ProjectInventoryGenerator([comp])
-        items, _ = gen.load_no_aggregate()
+        items, _ = gen.load_per_instance()
         assert items[0].ipn == ""
 
 
