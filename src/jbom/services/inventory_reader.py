@@ -15,6 +15,7 @@ from typing import List, Dict, Optional, Union
 
 # warnings imported at line 12 already
 from jbom.common.component_classification import normalize_component_type
+from jbom.common.component_id import is_current_version, make_component_id
 from jbom.common.types import InventoryItem, DEFAULT_PRIORITY
 from jbom.common.value_parsing import parse_value_to_normal
 from jbom.config.defaults import get_defaults
@@ -104,6 +105,36 @@ try:
     NUMBERS_SUPPORT = True
 except ImportError:
     NUMBERS_SUPPORT = False
+
+
+def _resolve_component_id(
+    row_type: str,
+    stored_id: str,
+    row: Dict[str, str],
+) -> str:
+    """Return a current-version ComponentID for a COMPONENT row.
+
+    If *stored_id* is already at the current encoding version it is returned
+    unchanged.  Otherwise the ID is regenerated from the row's field data so
+    that stale IDs (e.g. legacy ``REQ1|...`` format, wrong version number, or
+    blank) are transparently upgraded on load without requiring manual action.
+
+    ITEM rows are returned as-is (they do not carry a ComponentID).
+    """
+    if row_type != _ROW_TYPE_COMPONENT:
+        return stored_id
+    if is_current_version(stored_id):
+        return stored_id
+    return make_component_id(
+        category=row.get("Category", ""),
+        value=row.get("Value", ""),
+        package=row.get("Package", ""),
+        tolerance=row.get("Tolerance", ""),
+        voltage=row.get("V", ""),
+        amperage=row.get("A", ""),
+        wattage=row.get("W", ""),
+        component_type=row.get("Type", ""),
+    )
 
 
 class InventoryReader:
@@ -393,7 +424,9 @@ class InventoryReader:
                     canonical="power",
                 ),
                 row_type=row_type,
-                component_id=str(row.get("ComponentID", "")).strip(),
+                component_id=_resolve_component_id(
+                    row_type, str(row.get("ComponentID", "")).strip(), row
+                ),
                 # Phase 4 inventory schema: LCSC is an explicit column (no DPN fallback).
                 lcsc=self._get_first_value(row, ["LCSC", "LCSC Part", "LCSC Part #"]),
                 manufacturer=row.get("Manufacturer", ""),

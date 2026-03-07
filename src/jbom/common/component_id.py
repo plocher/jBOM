@@ -40,6 +40,20 @@ _VERSION = (
 _KNOWN_KEYS = ("A", "CAT", "PKG", "TOL", "TYPE", "V", "VAL", "W")
 
 
+def is_current_version(component_id: str) -> bool:
+    """Return True if *component_id* was produced by the current encoding rules.
+
+    A current-version ID starts with ``str(_VERSION)`` as its first
+    ``|``-delimited segment.  Any other prefix — including the legacy
+    ``REQ1`` prefix, a blank string, or a different version number —
+    is considered stale.
+    """
+    if not component_id:
+        return False
+    first = component_id.split("|")[0]
+    return first.isdigit() and int(first) == _VERSION
+
+
 def _norm(value: str) -> str:
     """Normalise a raw field value: strip, uppercase, treat ``~`` as blank."""
     v = value.strip().upper()
