@@ -11,6 +11,7 @@ from jbom.common.component_utils import (
 )
 from jbom.common.constants import CommonFields
 from jbom.common.packages import PackageType
+from jbom.common.value_parsing import decode_typed_parametric
 
 
 class ProjectInventoryGenerator:
@@ -76,6 +77,15 @@ class ProjectInventoryGenerator:
             # Add any extra fields found in properties
             for prop in representative.properties.keys():
                 self.inventory_fields.add(prop)
+
+        # Include typed parametric columns when at least one item has a value.
+        for attr, field in (
+            ("resistance", "Resistance"),
+            ("capacitance", "Capacitance"),
+            ("inductance", "Inductance"),
+        ):
+            if any(getattr(item, attr) is not None for item in self.inventory):
+                self.inventory_fields.add(field)
 
         return self.inventory, sorted(list(self.inventory_fields))
 
@@ -166,6 +176,10 @@ class ProjectInventoryGenerator:
         ipn = props.get("IPN", "")
 
         component_id = self._generate_group_key(component)
+        # Decode typed parametric fields from schematic properties.
+        # props acts as the row: it may carry an explicit Resistance/Capacitance/
+        # Inductance property; Value is the fallback.
+        row_for_decode: dict[str, str] = dict(props)
         return InventoryItem(
             row_type="COMPONENT",
             component_id=component_id,
@@ -198,6 +212,9 @@ class ProjectInventoryGenerator:
             package=package,
             uuid=uuid_str,
             priority=DEFAULT_PRIORITY,
+            resistance=decode_typed_parametric("RES", component.value, row_for_decode),
+            capacitance=decode_typed_parametric("CAP", component.value, row_for_decode),
+            inductance=decode_typed_parametric("IND", component.value, row_for_decode),
             source="Project",
             raw_data={
                 **props,

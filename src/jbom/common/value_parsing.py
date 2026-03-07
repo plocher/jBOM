@@ -11,10 +11,13 @@ The functions here are intentionally simple and side-effect free.
 
 from __future__ import annotations
 
+import logging
 import re
-from typing import Optional
+from typing import Callable, NamedTuple, Optional
 
 from jbom.common.component_classification import normalize_component_type
+
+log = logging.getLogger(__name__)
 
 __all__ = [
     "parse_res_to_ohms",
@@ -27,6 +30,8 @@ __all__ = [
     "ind_unit_multiplier",
     "parse_ind_to_henry",
     "henry_to_eia",
+    "canonical_value",
+    "decode_typed_parametric",
 ]
 
 _OHM_RE = re.compile(r"^\s*([0-9]*\.?[0-9]+)\s*([kKmMrR]?)\s*\+?\s*$")
@@ -290,7 +295,7 @@ def farad_to_eia(farad: Optional[float]) -> str:
 
     if farad >= 1e-6:
         v = farad / 1e-6
-        s = f"{v:.3g}"
+        s = f"{v:.6g}"  # .6g avoids scientific notation up to 999999uF
         if s.endswith(".0"):
             s = s[:-2]
         if "." in s:
@@ -299,7 +304,7 @@ def farad_to_eia(farad: Optional[float]) -> str:
 
     if farad >= 1e-9:
         v = farad / 1e-9
-        s = f"{v:.3g}"
+        s = f"{v:.6g}"
         if s.endswith(".0"):
             s = s[:-2]
         if "." in s:
@@ -307,7 +312,7 @@ def farad_to_eia(farad: Optional[float]) -> str:
         return s + "nF"
 
     v = farad / 1e-12
-    s = f"{v:.3g}"
+    s = f"{v:.6g}"
     if s.endswith(".0"):
         s = s[:-2]
     if "." in s:
@@ -412,3 +417,93 @@ def henry_to_eia(henry: Optional[float]) -> str:
     if "." in s:
         return s.replace(".", "n") + "H"
     return s + "nH"
+
+
+# ---------------------------------------------------------------------------
+# Value normalizer registry
+# ---------------------------------------------------------------------------
+
+
+class _Normalizer(NamedTuple):
+    """Parser/formatter pair for one component value category."""
+
+    parse: Callable  # str -> Optional[float]  (SI base units)
+    format: Callable  # Optional[float] -> str  (EIA canonical text)
+    column: str  # explicit typed column name in inventory rows
+
+
+# Adding a new category requires exactly one line here.
+_NORMALIZERS: dict[str, _Normalizer] = {
+    "RES": _Normalizer(parse_res_to_ohms, ohms_to_eia, "Resistance"),
+    "CAP": _Normalizer(parse_cap_to_farad, farad_to_eia, "Capacitance"),
+    "IND": _Normalizer(parse_ind_to_henry, henry_to_eia, "Inductance"),
+}
+
+
+def canonical_value(category: str, text: str) -> str:
+    """Return canonical EIA text for *text* given the component *category*.
+
+    Dispatches through ``_NORMALIZERS``.  The float is purely a transient
+    intermediate — the result is always text.  Returns *text* unchanged when
+    the category has no registered normalizer or the value is unparseable.
+
+    Guard: if the formatter produces scientific notation (e.g. ``"1E+05UF"``
+    from a unit-free value such as ``"0.100"`` fed to the capacitance
+    formatter), the original *text* is returned unchanged.
+    """
+    if not text:
+        return text
+    entry = _NORMALIZERS.get(category)
+    if entry is None:
+        return text
+    parsed = entry.parse(text)
+    if parsed is None:
+        return text
+    result = entry.format(parsed).upper()
+    # Reject scientific notation — EIA strings are purely alphanumeric.
+    if "E+" in result or "E-" in result:
+        return text
+    return result
+
+
+def decode_typed_parametric(
+    category: str,
+    value: str,
+    row: dict[str, str],
+) -> Optional[float]:
+    """Decode a typed parametric field from a component or inventory row.
+
+    Priority:
+    1. Explicit typed column (``Resistance``, ``Capacitance``, or
+       ``Inductance``) from *row*.
+    2. *value* field as fallback.
+
+    Logs a WARNING when both sources parse successfully but disagree by
+    more than 0.1 %.  Returns ``None`` when neither source is parseable or
+    the category has no registered normalizer.
+    """
+    entry = _NORMALIZERS.get(normalize_component_type(category))
+    if entry is None:
+        return None
+
+    explicit_str = (row.get(entry.column) or "").strip()
+    value_str = (value or "").strip()
+
+    explicit_val: Optional[float] = entry.parse(explicit_str) if explicit_str else None
+    value_val: Optional[float] = entry.parse(value_str) if value_str else None
+
+    if explicit_val is not None and value_val is not None:
+        denominator = abs(explicit_val) if explicit_val != 0 else abs(value_val)
+        if denominator > 0 and abs(explicit_val - value_val) / denominator > 0.001:
+            log.warning(
+                "Component has conflicting values: "
+                "%s column='%s' (%g) disagrees with Value='%s' (%g). "
+                "Using explicit column value.",
+                entry.column,
+                explicit_str,
+                explicit_val,
+                value_str,
+                value_val,
+            )
+
+    return explicit_val if explicit_val is not None else value_val
