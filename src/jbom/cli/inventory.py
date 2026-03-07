@@ -17,6 +17,7 @@ from jbom.cli.output import (
     open_output_text_file,
     resolve_output_destination,
 )
+from jbom.common.value_parsing import farad_to_eia, henry_to_eia, ohms_to_eia
 from jbom.common.types import Component, InventoryItem
 from jbom.common.options import GeneratorOptions
 from jbom.cli.formatting import print_inventory_table
@@ -772,6 +773,15 @@ def _inventory_item_to_row(
         "Datasheet": item.datasheet,
         "UUID": item.uuid,
     }
+
+    # Write canonical EIA text for typed parametric fields, overriding the
+    # raw schematic strings so "1.0uF" and "1uF" are both rendered as "1uF".
+    if item.resistance is not None:
+        row["Resistance"] = ohms_to_eia(item.resistance)
+    if item.capacitance is not None:
+        row["Capacitance"] = farad_to_eia(item.capacitance)
+    if item.inductance is not None:
+        row["Inductance"] = henry_to_eia(item.inductance)
 
     for field_name in field_names:
         if (

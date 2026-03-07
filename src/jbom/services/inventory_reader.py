@@ -14,76 +14,17 @@ from pathlib import Path
 from typing import List, Dict, Optional, Union
 
 # warnings imported at line 12 already
-from jbom.common.component_classification import normalize_component_type
 from jbom.common.component_id import is_current_version, make_component_id
 from jbom.common.types import InventoryItem, DEFAULT_PRIORITY
-from jbom.common.value_parsing import parse_value_to_normal
+from jbom.common.value_parsing import decode_typed_parametric
 from jbom.config.defaults import get_defaults
 from jbom.services.jlc_loader import JLCPrivateInventoryLoader
 
 log = logging.getLogger(__name__)
 _DEFAULTS_PROFILE = get_defaults("generic")
 
-# Maps normalised category token → CSV column name for explicit typed values
-_TYPED_COLUMN: Dict[str, str] = {
-    "RES": "Resistance",
-    "CAP": "Capacitance",
-    "IND": "Inductance",
-}
 _ROW_TYPE_ITEM = "ITEM"
 _ROW_TYPE_COMPONENT = "COMPONENT"
-
-
-def _decode_typed_parametric(
-    category: str,
-    value: str,
-    row: Dict[str, str],
-) -> Optional[float]:
-    """Decode a typed parametric field from an inventory row.
-
-    Priority:
-    1. Explicit typed column (Resistance, Capacitance, or Inductance)
-    2. Value field as fallback
-
-    Logs a WARNING when both sources parse successfully but disagree by >0.1%.
-    Returns None when neither source is parseable or the category is unsupported.
-    """
-    cat = normalize_component_type(category)
-    if cat not in _TYPED_COLUMN:
-        return None
-
-    column = _TYPED_COLUMN[cat]
-    explicit_str = (row.get(column) or "").strip()
-    value_str = (value or "").strip()
-
-    explicit_val: Optional[float] = (
-        parse_value_to_normal(cat, explicit_str) if explicit_str else None
-    )
-    value_val: Optional[float] = (
-        parse_value_to_normal(cat, value_str) if value_str else None
-    )
-
-    # Sanity-check: warn when both are present but numerically disagree.
-    if explicit_val is not None and value_val is not None:
-        denominator = abs(explicit_val) if explicit_val != 0 else abs(value_val)
-        if denominator > 0:
-            rel_diff = abs(explicit_val - value_val) / denominator
-            if rel_diff > 0.001:  # >0.1 % tolerance
-                log.warning(
-                    "Inventory item has conflicting values: "
-                    "%s column='%s' (%g) disagrees with Value='%s' (%g). "
-                    "Using explicit column value.",
-                    column,
-                    explicit_str,
-                    explicit_val,
-                    value_str,
-                    value_val,
-                )
-
-    # Explicit typed column takes priority; fall back to Value.
-    if explicit_val is not None:
-        return explicit_val
-    return value_val
 
 
 # Suppress specific Numbers version warning
@@ -452,9 +393,9 @@ class InventoryReader:
                 # Typed parametric fields decoded at intake (#90).
                 # Each call passes the TARGET field's category so the helper knows
                 # which column to look in and which parse function to apply.
-                resistance=_decode_typed_parametric("RES", value, row),
-                capacitance=_decode_typed_parametric("CAP", value, row),
-                inductance=_decode_typed_parametric("IND", value, row),
+                resistance=decode_typed_parametric("RES", value, row),
+                capacitance=decode_typed_parametric("CAP", value, row),
+                inductance=decode_typed_parametric("IND", value, row),
                 name=(row.get("Name") or "").strip(),
                 source=source,
                 source_file=source_file,

@@ -30,6 +30,8 @@ Callers must never construct a ComponentID string directly.
 """
 from __future__ import annotations
 
+from jbom.common.value_parsing import canonical_value as _canonical_value_fn
+
 _TILDE = "~"
 _VERSION = (
     1  # Bump when encoding rules change; existing IDs with other versions are stale.
@@ -123,9 +125,14 @@ def make_component_id(
         A ``|``-delimited ``KEY=VALUE`` string, keys sorted alphabetically,
         empty fields omitted.  ``CAT`` is always present.
     """
+    from jbom.common.component_classification import normalize_component_type
+
+    cat = _norm(category) or "UNK"
+    val = _canonical_value_fn(normalize_component_type(cat), _norm(value))
+
     fields: dict[str, str] = {
-        "CAT": _norm(category) or "UNK",
-        "VAL": _norm(value),
+        "CAT": cat,
+        "VAL": val,
         "PKG": _norm(package),
         "TOL": _norm(tolerance),
         "V": _norm(voltage),
