@@ -10,18 +10,18 @@ Feature: Inventory no-aggregate export
       | uuid-c1 | C1        | 100nF | Capacitor_SMD:C_0603_1608Metric    | Device:C |
       | uuid-r1 | R1        | 10K   | Resistor_SMD:R_0603_1608Metric     | Device:R |
 
-  Scenario: no-aggregate output uses Project ProjectName UUID SourceFile Reference Category IPN leading columns
-    When I run jbom command "inventory --no-aggregate -o noagg.csv"
+  Scenario: per-instance output uses Project ProjectName UUID SourceFile Reference Category IPN leading columns
+    When I run jbom command "inventory --per-instance -o noagg.csv"
     Then the command should succeed
     And the file "noagg.csv" contains "Project,ProjectName,UUID,SourceFile,Reference,Category,IPN"
 
-  Scenario: no-aggregate output emits one data row per component instance
-    When I run jbom command "inventory --no-aggregate -o noagg.csv"
+  Scenario: per-instance output emits one data row per component instance
+    When I run jbom command "inventory --per-instance -o noagg.csv"
     Then the command should succeed
     And the file "noagg.csv" contains exactly 3 no-aggregate data rows
 
-  Scenario: no-aggregate output inserts category sub-header sentinel rows
-    When I run jbom command "inventory --no-aggregate -o noagg.csv"
+  Scenario: per-instance output inserts category sub-header sentinel rows
+    When I run jbom command "inventory --per-instance -o noagg.csv"
     Then the command should succeed
     And the file "noagg.csv" contains a no-aggregate sub-header row for each category
     And the no-aggregate sub-header row in "noagg.csv" marks required and optional fields

@@ -61,7 +61,7 @@ def test_inventory_help_shows_inventory_interface_tokens():
     tokens_current = [
         "--inventory",
         "--filter-matches",
-        "--no-aggregate",
+        "--per-instance",
         "-o",
         "--output",
     ]

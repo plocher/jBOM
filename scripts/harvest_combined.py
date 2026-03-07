@@ -62,11 +62,12 @@ def _find_project_dirs(projects_dir: Path) -> list[Path]:
 
 
 def _harvest_project(project_dir: Path) -> tuple[list[dict[str, str]], list[str]]:
-    """Run ``jbom inventory --no-aggregate`` on *project_dir* and return
-    (component_rows, fieldnames).  Sub-header sentinel rows are excluded.
+    """Run ``jbom inventory`` (aggregated) on *project_dir* and return
+    (component_rows, fieldnames).  The aggregated output already emits
+    ``RowType=COMPONENT`` and ``ComponentID`` without per-instance fields.
     """
     result = subprocess.run(
-        ["jbom", "inventory", str(project_dir), "-o", "-", "--no-aggregate"],
+        ["jbom", "inventory", str(project_dir), "-o", "-"],
         capture_output=True,
         text=True,
     )
@@ -79,18 +80,14 @@ def _harvest_project(project_dir: Path) -> tuple[list[dict[str, str]], list[str]
         return [], []
 
     reader = csv.DictReader(io.StringIO(result.stdout))
-    fieldnames: list[str] = list(reader.fieldnames or [])
-
-    # Strip blank/None field names (can appear when a KiCad component has an
-    # empty-string property key — a schematic data-quality issue)
-    fieldnames = [f for f in fieldnames if f]
+    # Strip blank/None field names (defensive: guards against schematic data issues)
+    fieldnames: list[str] = [f for f in (reader.fieldnames or []) if f]
 
     rows = []
     for row in reader:
-        # Skip the sub-header sentinel rows written by --no-aggregate
-        if row.get("ComponentID") == "ComponentID":
-            continue
-        if row.get("RowType") == "COMPONENT":
+        cid = row.get("ComponentID", "")
+        # Only keep real COMPONENT rows (non-empty ComponentID, RowType=COMPONENT)
+        if row.get("RowType") == "COMPONENT" and cid:
             rows.append({k: v for k, v in row.items() if k})
 
     return rows, fieldnames

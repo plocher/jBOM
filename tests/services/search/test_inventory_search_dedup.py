@@ -56,7 +56,7 @@ def test_split_rows_by_type_separates_component_and_item_rows() -> None:
         package="0603",
         tolerance="5%",
         row_type="COMPONENT",
-        component_id="REQ1|CAT=RES|VAL=10K|PKG=0603",
+        component_id="1|CAT=RES|PKG=0603|TOL=5%|VAL=10K",
     )
     item = _inv_item(
         ipn="R-10K-0603",
@@ -68,7 +68,7 @@ def test_split_rows_by_type_separates_component_and_item_rows() -> None:
     )
 
     components, items = InventorySearchService.split_rows_by_type([component, item])
-    assert [c.component_id for c in components] == ["REQ1|CAT=RES|VAL=10K|PKG=0603"]
+    assert [c.component_id for c in components] == ["1|CAT=RES|PKG=0603|TOL=5%|VAL=10K"]
     assert [i.ipn for i in items] == ["R-10K-0603"]
 
 
