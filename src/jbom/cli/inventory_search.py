@@ -20,6 +20,7 @@ from jbom.common.cli_fabricator import (
     add_fabricator_arguments,
     resolve_fabricator_selection_from_args,
 )
+from jbom.common.types import InventoryItem
 from jbom.config.fabricators import load_fabricator
 from jbom.config.providers import get_provider, list_searchable_suppliers
 from jbom.config.suppliers import load_supplier, resolve_supplier_by_id
@@ -27,6 +28,10 @@ from jbom.services.inventory_reader import InventoryReader
 from jbom.services.search.cache import DiskSearchCache, InMemorySearchCache, SearchCache
 from jbom.services.search.inventory_search_service import InventorySearchService
 from jbom.services.search.provider import SearchProvider
+from jbom.services.sophisticated_inventory_matcher import (
+    MatchingOptions,
+    SophisticatedInventoryMatcher,
+)
 
 
 def _default_provider_for_fabricator(fabricator_id: str, *, api_key: str | None) -> str:
@@ -144,11 +149,14 @@ def handle_inventory_search(
         if not items:
             print("Error: No inventory items found in file", file=sys.stderr)
             return 1
+        component_rows, item_rows = InventorySearchService.split_rows_by_type(items)
+        search_base = component_rows if component_rows else item_rows
 
         # filter_searchable_items is pure logic — no provider or API key needed.
         searchable = InventorySearchService.filter_searchable_items(
-            items, categories=args.categories
+            search_base, categories=args.categories
         )
+        searchable = _filter_already_covered_requirements(searchable, item_rows)
 
         # Fab-relative sparseness is opt-in: only apply when the user explicitly
         # selects a fabricator.
@@ -287,6 +295,23 @@ def _print_dry_run_summary(items) -> None:
             print(f"  {cat}: {count}")
 
 
+def _filter_already_covered_requirements(
+    component_rows: list[InventoryItem], item_rows: list[InventoryItem]
+) -> list[InventoryItem]:
+    """Skip search for COMPONENT requirements already satisfiable by ITEM rows."""
+    if not component_rows or not item_rows:
+        return component_rows
+
+    matcher = SophisticatedInventoryMatcher(MatchingOptions())
+    filtered = []
+    for row in component_rows:
+        requirement = InventorySearchService._inventory_item_to_component(row)
+        matches = matcher.find_matches(requirement, item_rows)
+        if not matches:
+            filtered.append(row)
+    return filtered
+
+
 def _write_enhanced_csv(rows: list[dict], fields: list[str], *, out: TextIO) -> None:
     writer = csv.DictWriter(out, fieldnames=fields)
     writer.writeheader()
@@ -303,6 +328,8 @@ def _load_header_order(path: Path) -> list[str]:
 
     # For non-CSV, fall back to a stable default.
     return [
+        "RowType",
+        "ComponentID",
         "IPN",
         "Category",
         "Value",

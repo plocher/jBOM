@@ -45,6 +45,8 @@ class InventoryItem:
     manufacturer: str
     mfgpn: str
     datasheet: str
+    row_type: str = "ITEM"  # COMPONENT or ITEM
+    component_id: str = ""  # Requirement identity for COMPONENT rows
     package: str = ""
     distributor: str = ""
     distributor_part_number: str = ""

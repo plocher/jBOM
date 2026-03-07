@@ -53,14 +53,16 @@ def _sample_components() -> list[Component]:
 
 
 def test_no_aggregate_schema_starts_with_required_leading_columns() -> None:
-    """Schema prefix is Project, ProjectName, UUID, SourceFile, Reference, Category, IPN."""
+    """Schema prefix includes RowType/ComponentID before identity columns."""
     rows, field_names = _generate_no_aggregate_inventory_rows(
         _sample_components(),
         project_directory=Path("/tmp/example-project"),
         project_name="example-project",
     )
 
-    assert field_names[:7] == [
+    assert field_names[:9] == [
+        "RowType",
+        "ComponentID",
         "Project",
         "ProjectName",
         "UUID",
@@ -120,6 +122,8 @@ def test_subheader_row_uses_minimal_deterministic_markers() -> None:
     subheader = next(row for row in rows if row["Project"] == "Project")
     # Identity columns use the field name as sentinel (always populated)
     assert subheader["Project"] == "Project"
+    assert subheader["RowType"] == "COMPONENT"
+    assert subheader["ComponentID"] == "ComponentID"
     assert subheader["ProjectName"] == "ProjectName"
     assert subheader["UUID"] == "UUID"
     assert subheader["SourceFile"] == "SourceFile"
@@ -130,6 +134,8 @@ def test_subheader_row_uses_minimal_deterministic_markers() -> None:
     assert subheader["Package"] == "Package"
 
     _required_populated = {
+        "RowType",
+        "ComponentID",
         "Project",
         "ProjectName",
         "UUID",

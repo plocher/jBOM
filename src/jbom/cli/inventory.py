@@ -33,6 +33,8 @@ from jbom.services.sophisticated_inventory_matcher import (
 # Fields always present in no-aggregate output — included even when all values are empty
 # so the designer can fill them in or use "~" for heuristic defaults.
 _NO_AGGREGATE_ALWAYS_FIELDS: list[str] = [
+    "RowType",
+    "ComponentID",
     # Identity — required for jbom annotate component routing
     "Project",
     "ProjectName",
@@ -59,6 +61,9 @@ _NO_AGGREGATE_ALWAYS_FIELDS: list[str] = [
     "mcd",
     "Symbol",
     "Footprint",
+    "footprint_full",
+    "symbol_name",
+    "ki_keywords",
 ]
 
 # Fields included only when at least one component carries a non-empty value.
@@ -404,6 +409,8 @@ def _build_no_aggregate_subheader_row(field_names: list[str]) -> dict[str, str]:
 
     row = {field_name: "" for field_name in field_names}
     row["Project"] = "Project"
+    row["RowType"] = "COMPONENT"
+    row["ComponentID"] = "ComponentID"
     row["ProjectName"] = "ProjectName"
     row["UUID"] = "UUID"
     row["SourceFile"] = "SourceFile"
@@ -739,6 +746,8 @@ def _inventory_item_to_row(
     """Convert an InventoryItem to a CSV row dictionary."""
 
     row = {
+        "RowType": item.row_type,
+        "ComponentID": item.component_id,
         "IPN": item.ipn,
         "Category": item.category,
         "Value": item.value,
@@ -770,7 +779,7 @@ def _write_csv_rows(
 ) -> None:
     """Write row dictionaries as CSV using the provided field order."""
 
-    writer = csv.DictWriter(out, fieldnames=field_names)
+    writer = csv.DictWriter(out, fieldnames=field_names, extrasaction="ignore")
     writer.writeheader()
     for row in rows:
         writer.writerow(row)

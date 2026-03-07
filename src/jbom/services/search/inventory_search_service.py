@@ -131,6 +131,32 @@ class InventorySearchService:
             if InventorySearchService.is_sparse_for_fabricator(i, fabricator)
         ]
 
+    @staticmethod
+    def split_rows_by_type(
+        items: list[InventoryItem],
+    ) -> tuple[list[InventoryItem], list[InventoryItem]]:
+        """Return (component_rows, item_rows) based on RowType."""
+        component_rows: list[InventoryItem] = []
+        item_rows: list[InventoryItem] = []
+        for item in items:
+            row_type = (item.row_type or "ITEM").strip().upper()
+            if row_type == "COMPONENT":
+                component_rows.append(item)
+            else:
+                item_rows.append(item)
+        return component_rows, item_rows
+
+    @staticmethod
+    def row_identity(item: InventoryItem) -> str:
+        """Return stable row identity for record mapping across mixed row types."""
+        row_type = (item.row_type or "ITEM").strip().upper()
+        if row_type == "COMPONENT":
+            component_id = (item.component_id or "").strip()
+            if component_id:
+                return f"COMPONENT:{component_id}"
+            return f"COMPONENT_UUID:{(item.uuid or '').strip()}"
+        return f"ITEM:{(item.ipn or '').strip()}"
+
     def __init__(
         self,
         provider: SearchProvider,
@@ -516,11 +542,13 @@ class InventorySearchService:
         if item.wattage:
             props["Wattage"] = item.wattage
 
+        footprint_full = str((item.raw_data or {}).get("footprint_full", "")).strip()
+        symbol_name = str((item.raw_data or {}).get("symbol_name", "")).strip()
         return Component(
-            reference=item.ipn or "",
-            lib_id=lib_id,
+            reference=item.component_id or item.ipn or "",
+            lib_id=symbol_name or lib_id,
             value=item.value or "",
-            footprint=item.package or "",
+            footprint=footprint_full or item.package or "",
             properties=props,
         )
 
@@ -616,7 +644,9 @@ class InventorySearchService:
         original_field_order: list[str],
         records: list[InventorySearchRecord],
     ) -> list[dict[str, str]]:
-        by_ipn = {r.inventory_item.ipn: r for r in records if r.inventory_item.ipn}
+        by_identity = {
+            InventorySearchService.row_identity(r.inventory_item): r for r in records
+        }
 
         enhanced: list[dict[str, str]] = []
         for item in original_items:
@@ -626,7 +656,7 @@ class InventorySearchService:
             for f in original_field_order:
                 row.setdefault(f, "")
 
-            rec = by_ipn.get(item.ipn)
+            rec = by_identity.get(InventorySearchService.row_identity(item))
             if rec is None:
                 # Not searched / filtered out.
                 row["Search Query"] = ""

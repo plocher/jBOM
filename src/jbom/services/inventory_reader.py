@@ -29,6 +29,8 @@ _TYPED_COLUMN: Dict[str, str] = {
     "CAP": "Capacitance",
     "IND": "Inductance",
 }
+_ROW_TYPE_ITEM = "ITEM"
+_ROW_TYPE_COMPONENT = "COMPONENT"
 
 
 def _decode_typed_parametric(
@@ -189,7 +191,7 @@ class InventoryReader:
         # Use the first worksheet
         worksheet = workbook.active
 
-        # Find the header row by looking for 'IPN' column
+        # Find the header row by looking for a characteristic schema column
         header_row = None
         start_col = 1
 
@@ -198,7 +200,11 @@ class InventoryReader:
                 1, min(10, worksheet.max_column + 1)
             ):  # Check first 10 columns
                 cell_value = worksheet.cell(row_num, col_num).value
-                if cell_value and str(cell_value).strip().upper() == "IPN":
+                if cell_value and str(cell_value).strip().upper() in {
+                    "IPN",
+                    "CATEGORY",
+                    "ROWTYPE",
+                }:
                     header_row = row_num
                     start_col = col_num
                     break
@@ -207,7 +213,8 @@ class InventoryReader:
 
         if not header_row:
             raise ValueError(
-                f"Could not find 'IPN' header column in Excel file {path}. Make sure the inventory has an 'IPN' column."
+                f"Could not find an inventory header row in Excel file {path}. "
+                "Expected columns such as RowType, Category, or IPN."
             )
 
         # Get headers from the identified header row
@@ -261,14 +268,18 @@ class InventoryReader:
 
         table = sheet.tables[0]
 
-        # Find the header row by looking for 'IPN' column (similar to Excel)
+        # Find the header row by looking for a characteristic schema column
         header_row_idx = None
         start_col = None
 
         for row_idx in range(min(10, table.num_rows)):  # Check first 10 rows
             for col_idx in range(min(10, table.num_cols)):  # Check first 10 columns
                 cell = table.cell(row_idx, col_idx)
-                if cell.value and str(cell.value).strip().upper() == "IPN":
+                if cell.value and str(cell.value).strip().upper() in {
+                    "IPN",
+                    "CATEGORY",
+                    "ROWTYPE",
+                }:
                     header_row_idx = row_idx
                     start_col = col_idx
                     break
@@ -277,7 +288,8 @@ class InventoryReader:
 
         if header_row_idx is None:
             raise ValueError(
-                "Could not find 'IPN' header column in Numbers file. Make sure the inventory has an 'IPN' column."
+                "Could not find an inventory header row in Numbers file. "
+                "Expected columns such as RowType, Category, or IPN."
             )
 
         # Get headers from the identified header row
@@ -325,7 +337,7 @@ class InventoryReader:
     ):
         """Process inventory data from any source format into InventoryItem objects"""
         # Validate required headers
-        required_headers = ["IPN", "Category"]
+        required_headers = ["Category"]
         header_upper = [h.upper() for h in headers]
         missing_headers = [
             req for req in required_headers if req.upper() not in header_upper
@@ -348,14 +360,19 @@ class InventoryReader:
                 self.inventory_fields.append(clean_field)
 
         for row in rows:
-            if not row.get("IPN"):  # Skip empty rows
+            row_type = str(row.get("RowType", _ROW_TYPE_ITEM)).strip().upper()
+            if row_type not in {_ROW_TYPE_ITEM, _ROW_TYPE_COMPONENT}:
+                row_type = _ROW_TYPE_ITEM
+
+            ipn = str(row.get("IPN", "")).strip()
+            if row_type == _ROW_TYPE_ITEM and not ipn:
                 continue
 
             # No need to parse stocking info - Priority column handles all ranking
             category = row.get("Category", "")
             value = row.get("Value", "")
             item = InventoryItem(
-                ipn=row.get("IPN", ""),
+                ipn=ipn,
                 keywords=row.get("Keywords", ""),
                 category=category,
                 description=row.get("Description", ""),
@@ -375,6 +392,8 @@ class InventoryReader:
                     row,
                     canonical="power",
                 ),
+                row_type=row_type,
+                component_id=str(row.get("ComponentID", "")).strip(),
                 # Phase 4 inventory schema: LCSC is an explicit column (no DPN fallback).
                 lcsc=self._get_first_value(row, ["LCSC", "LCSC Part", "LCSC Part #"]),
                 manufacturer=row.get("Manufacturer", ""),

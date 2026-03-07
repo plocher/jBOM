@@ -1,53 +1,53 @@
-﻿IPN,Category,MFR Part #,Footprint,Description,JLCPCB Part #,JLCPCB Parts Qty,Global Sourcing Parts Qty,Consigned Parts Qty,Unit Price($),Total Price($)
-JLC-C100042,Capacitors,CC0603KRX7R9BB103,0603,10nF 50V X7R ±10% 0603 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS,C100042,3620,0,0,0.01,4.37
-JLC-C13585,Capacitors,CL31A106KBHNNNE,1206,10uF 50V X5R ±10% 1206 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS,C13585,1980,0,0,0.02,37.82
-JLC-C136294,Capacitors,UCD1V221MNL1GS,"SMD,D8xL10mm","-55℃~+105℃ 10.5mm 2000hrs@105℃ 220uF 300mA@120Hz 35V 8mm ±20% SMD,D8xL10mm Aluminum Electrolytic Capacitors - SMD ROHS",C136294,490,0,0,0.16,76.14
-JLC-C14663,Capacitors,CC0603KRX7R9BB104,0603,100nF 50V X7R ±10% 0603 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS,C14663,3260,0,0,0.01,4.33
-JLC-C15458,Resistors,0603WAJ0104T5E,0603,-55℃~+155℃ 100kΩ 100mW 75V Thick Film Resistor ±100ppm/℃ ±5% 0603 Chip Resistor - Surface Mount ROHS,C15458,5000,0,0,0.01,2.52
-JLC-C15849,Capacitors,CL10A105KB8NNNC,0603,1uF 50V X5R ±10% 0603 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS,C15849,3620,0,0,0.01,10.95
-JLC-C161618,Optoelectronics,LTST-C194TGKT,0603,-20℃~+80℃ 130° 20mA 260.5mcd 3.2V 525nm 530nm 76mW Emerald Green Water Clear 0603 LED Indication - Discrete ROHS,C161618,0,0,0,0,0
-JLC-C1852832,Capacitors,CC0603KPX7R8BB103,0603,10nF 25V X7R ±10% 0603 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS,C1852832,3394,0,0,0.02,42.34
-JLC-C18679,Resistors,0603WAJ0225T5E,0603,-55℃~+155℃ 100mW 2.2MΩ 75V Thick Film Resistor ±100ppm/℃ ±5% 0603 Chip Resistor - Surface Mount ROHS,C18679,4260,0,0,0.01,2.58
-JLC-C2169859,Capacitors,GMK107BJ105KAHT,0603,1uF 35V X5R ±10% 0603 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS,C2169859,3973,0,0,0.04,128.57
-JLC-C22371303,Optoelectronics,HL-PSC-1608S25OC-G4,0603,-40℃~+85℃ 10mA 130° 2.4V 600nm~612nm 60mW 90mcd Orange Water Clear 0603 LED Indication - Discrete ROHS,C22371303,4000,0,0,0.01,21.3
-JLC-C22935,Resistors,0603WAF1004T5E,0603,-55℃~+155℃ 100mW 1MΩ 75V Thick Film Resistor ±1% ±100ppm/℃ 0603 Chip Resistor - Surface Mount ROHS,C22935,9960,0,0,0.01,6.32
-JLC-C23344,Resistors,0603WAJ0223T5E,0603,-55℃~+155℃ 100mW 22kΩ 75V Thick Film Resistor ±100ppm/℃ ±5% 0603 Chip Resistor - Surface Mount ROHS,C23344,5000,0,0,0.01,2.52
-JLC-C2443214,Capacitors,0603X104K250CT,0603,100nF 25V X5R ±10% 0603 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS,C2443214,0,0,0,0,0
-JLC-C25231,Resistors,0603WAJ0331T5E,0603,-55℃~+155℃ 100mW 330Ω 75V Thick Film Resistor ±100ppm/℃ ±5% 0603 Chip Resistor - Surface Mount ROHS,C25231,5000,0,0,0.01,2.52
-JLC-C25241,Resistors,0603WAJ0471T5E,0603,-55℃~+155℃ 100mW 470Ω 75V Thick Film Resistor ±100ppm/℃ ±5% 0603 Chip Resistor - Surface Mount ROHS,C25241,5000,0,0,0.01,2.52
-JLC-C25585,Resistors,0603WAJ0102T5E,0603,-55℃~+155℃ 100mW 1kΩ 75V Thick Film Resistor ±100ppm/℃ ±5% 0603 Chip Resistor - Surface Mount ROHS,C25585,4140,0,0,0.01,2.55
-JLC-C25992,Resistors,0603WAJ0222T5E,0603,-55℃~+155℃ 100mW 2.2kΩ 75V Thick Film Resistor ±100ppm/℃ ±5% 0603 Chip Resistor - Surface Mount ROHS,C25992,4920,0,0,0.01,2.51
-JLC-C25999,Resistors,0603WAJ0472T5E,0603,-55℃~+155℃ 100mW 4.7kΩ 75V Thick Film Resistor ±100ppm/℃ ±5% 0603 Chip Resistor - Surface Mount ROHS,C25999,5000,0,0,0.01,2.52
-JLC-C26001,Resistors,0603WAJ0562T5E,0603,-55℃~+155℃ 100mW 5.6kΩ 75V Thick Film Resistor ±100ppm/℃ ±5% 0603 Chip Resistor - Surface Mount ROHS,C26001,5000,0,0,0.01,2.52
-JLC-C2678753,LED Drivers,"PCA9685PW,118",TSSOP-28,-40℃~+85℃ 100kHz~1MHz 16 2.3V~5.5V 25mA PWM TSSOP-28 LED Drivers ROHS,C2678753,0,0,0,0,0
-JLC-C2683482,Amplifiers/Comparators,LM358D,SOP-8,-15V~-1.5V -40℃~+85℃ 1.18mA 120mA 1MHz 2 300V/ms 30V 3V~30V 40nV/√Hz@1kHz 500nA 7mV 7uV/℃ 80dB SOP-8 Operational Amplifier ROHS,C2683482,3640,0,0,0.02,68.83
-JLC-C2843785,Optoelectronics,XL-5050RGBC-2812B,SMD5050,-20℃~+85℃ 0.3mA 1.6mm 120° 2000V 3.5V~5.5V 465nm~475nm 4kHz 5mm 5mm 800Kbit/s G:1300mcd~1800mcd Top-mount Water Clear SMD5050-4P RGB LEDs(Built-in IC) ROHS,C2843785,4707,0,0,0.03,118.77
-JLC-C2907023,Resistors,FRC0603F3301TS,0603,-55℃~+155℃ 100mW 3.3kΩ 75V Thick Film Resistor ±1% ±100ppm/℃ 0603 Chip Resistor - Surface Mount ROHS,C2907023,4620,0,0,0.01,2.8
-JLC-C2907123,Resistors,FRC0603J201 TS,0603,-55℃~+155℃ 100mW 200Ω 75V Thick Film Resistor ±100ppm/℃ ±5% 0603 Chip Resistor - Surface Mount ROHS,C2907123,4620,0,0,0.01,1.85
-JLC-C2930027,Resistors,FRC0603J103 TS,0603,-55℃~+155℃ 100mW 10kΩ 75V Thick Film Resistor ±100ppm/℃ ±5% 0603 Chip Resistor - Surface Mount,C2930027,3180,0,0,0.01,1.59
-JLC-C3853265,Capacitors,GMC10X5R104K25NT,0603,100nF 25V X5R ±10% 0603 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS,C3853265,4000,0,0,0.01,10.34
-JLC-C3910010,Capacitors,GMC10X5R103K50NT,0603,10nF 50V X5R ±10% 0603 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS,C3910010,4000,0,0,0.01,9.46
-JLC-C403986,Resistors,RS-03L225JJT,0603,-55℃~+155℃ 100mW 2.2MΩ 50V Thick Film Resistor ±250ppm/℃ ±5% 0603 Chip Resistor - Surface Mount ROHS,C403986,5000,0,0,0.01,2.01
-JLC-C408388,Diodes,BAT54C,SOT-23,1 Pair Common Cathode 1V@100mA 200mA 2uA@25V 30V 600mA SOT-23 Schottky Diodes ROHS,C408388,830,0,0,0.01,6.25
-JLC-C4118381,Resistors,RC0603JR-1310KL,0603,-55℃~+155℃ 100mW 10kΩ 75V Thick Film Resistor ±100ppm/℃ ±5% 0603 Chip Resistor - Surface Mount ROHS,C4118381,9508,0,0,0.01,40.16
-JLC-C5184404,Transistors/Thyristors,MMBT3904,SOT-23,"100@10mA,1V 100nA 200mA 200mW 300MHz 300mV 40V 6V NPN SOT-23 Bipolar (BJT) ROHS",C5184404,5970,0,0,0.01,20.4
-JLC-C5184433,Transistors/Thyristors,BC807-40,SOT-23,"100MHz 100nA 250@100mA,1V 300mW 45V 500mA 5V 700mV PNP SOT-23 Bipolar (BJT) ROHS",C5184433,6000,0,0,0.01,43.41
-JLC-C5224215,Transistors/Thyristors,2N7002,SOT-23,-55℃~+150℃ 1.6V@250uA 1.8nC@4.5V 11pF 2.05Ω@4.5V 28pF 300mA 350mW 4pF 60V N-Channel One N-channel SOT-23 MOSFETs ROHS,C5224215,2630,0,0,0.01,17.19
-JLC-C5345984,Power Management (PMIC),AMS1117-5.0,SOT-223,"0℃~+125℃@(Ta) 1 12mA 18V 1A 20mV@(1A) 5V Fixed Positive SOT-223 Voltage Regulators - Linear, Low Drop Out (LDO) Regulators ROHS",C5345984,482,0,0,0.03,13.69
-JLC-C5663181,Optoelectronics,L196L-QYC-TR,0603,100mcd 140° 2.15V 595nm 598nm Water Clear Yellow 0603 LED Indication - Discrete ROHS,C5663181,0,0,0,0,0
-JLC-C5745677,Optoelectronics,L196B-QOC-TR,0603,150° 20mA 2V 605nm 615nm 95mcd Orange Water Clear 0603 LED Indication - Discrete ROHS,C5745677,0,0,0,0,0
-JLC-C575416,Optoelectronics,LTST-C194KFKT,0603,130° 162.5mcd 20mA 2V 605nm 611nm Orange Water Clear 0603 LED Indication - Discrete ROHS,C575416,0,0,0,0,0
-JLC-C5842375,Resistors,RC0603FR-13220RL,0603,-55℃~+155℃ 100mW 220Ω 75V Thick Film Resistor ±1% ±100ppm/℃ 0603 Chip Resistor - Surface Mount ROHS,C5842375,3914,0,0,0.01,27.15
-JLC-C629440,Interface,MCP23017T-E/SO,SOIC-28-300mil,-40℃~+125℃ 1.7MHz 1.8V~5.5V 16 3mA 3uA 600mV 8 8mA I2C Interrupt Output SOIC-28-300mil I/O Expanders ROHS,C629440,20,0,0,1.46,29.1
-JLC-C688858,Amplifiers/Comparators,LM358D,SOIC-8,-40℃~+85℃ 1MHz 2 300V/ms 30V 3V~30V 40mA 40nV/√Hz@1kHz 430uA 45nA 5nA 80dB 9mV SOIC-8 Operational Amplifier ROHS,C688858,0,0,0,0,0
-JLC-C7288939,Optoelectronics,IN-S63ASR,0603,-30℃~+85℃ 120° 150mcd 2.2V 20mA 622nm 630nm 75mW Red Water Clear 0603 LED Indication - Discrete ROHS,C7288939,4000,0,0,0.07,255.29
-JLC-C7499856,Transistors/Thyristors,2301V,SOT-23,-55℃~+150℃ 1 P-Channel 185pF 2.2nC@4.5V 2.3A 20V 25pF 400mV 800mW 95mΩ SOT-23 MOSFETs ROHS,C7499856,3000,0,0,0.01,17.48
-JLC-C878901,Transistors/Thyristors,DMN4468LSS-13-VB,SO-8,"-55℃~+150℃@(Tj) 1 N-Channel 13A 3V 4.1W 6.8nC@5V 73pF@15V 800pF@15V 8mΩ@10V,10A SO-8 MOSFETs ROHS",C878901,15,0,0,0.18,2.69
-JLC-C881901,Resistors,CR-03JA7---3K3,0603,-55℃~+155℃ 100mW 3.3kΩ 75V Thick Film Resistor ±100ppm/℃ ±5% 0603 Chip Resistor - Surface Mount ROHS,C881901,0,0,0,0,0
-JLC-C965799,Optoelectronics,XL-1608SURC-06,0603,-40℃~+85℃ 120° 2.3V 20mA 225mcd 50mW 620nm~630nm 625nm Red Top-mount Water Clear 0603 LED Indication - Discrete ROHS,C965799,3160,0,0,0.01,5.87
-JLC-C965800,Optoelectronics,XL-1608UOC-06,0603,-40℃~+85℃ 120° 2.3V 20mA 315mcd 50mW 600nm~610nm 605nm Orange Water Clear op View Mount 0603 LED Indication - Discrete ROHS,C965800,3618,0,0,0.01,12.77
-JLC-C965803,Optoelectronics,XL-1608UYC-04,0603,-40℃~+85℃ 120° 2.3V 20mA 210mcd 50mW 585nm~595nm 590nm Water Clear Yellow op View Mount 0603 LED Indication - Discrete ROHS,C965803,2390,0,0,0.01,10.54
-JLC-C965804,Optoelectronics,XL-1608UGC-04,0603,-40℃~+85℃ 120° 20mA 3.3V 515nm~535nm 525nm 70mW 810mcd Discrete Diode Emerald Green Water Clear op View Mount 0603 LED Indication - Discrete ROHS,C965804,0,0,0,0,0
-JLC-C965806,Optoelectronics,XL-1608SYGC-04,0603,-40℃~+85℃ 120° 2.4V 20mA 50mW 50mcd 565nm~575nm 572nm Water Clear Yellow Green op View Mount 0603 LED Indication - Discrete ROHS,C965806,4000,0,0,0.01,16.9
-JLC-C965807,Optoelectronics,XL-1608UBC-04,0603,120° 20mA 3.3V 300mcd 455nm~475nm 470nm 70mW Blue Top-mount Water Clear 0603 LED Indication - Discrete ROHS,C965807,3190,0,0,0.01,7.27
-JLC-C965808,Optoelectronics,XL-1608UWC-04,0603,-40℃~+85℃ 120° 130mcd 13700K~33000K 2.7V 20mA 70mW White Yellow Lens op View Mount 0603 LED Indication - Discrete ROHS,C965808,2790,0,0,0.01,6.49
+RowType,ComponentID,IPN,Category,MFR Part #,Footprint,Description,JLCPCB Part #,JLCPCB Parts Qty,Global Sourcing Parts Qty,Consigned Parts Qty,Unit Price($),Total Price($)
+ITEM,,JLC-C100042,Capacitors,CC0603KRX7R9BB103,0603,10nF 50V X7R ±10% 0603 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS,C100042,3620,0,0,0.01,4.37
+ITEM,,JLC-C13585,Capacitors,CL31A106KBHNNNE,1206,10uF 50V X5R ±10% 1206 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS,C13585,1980,0,0,0.02,37.82
+ITEM,,JLC-C136294,Capacitors,UCD1V221MNL1GS,"SMD,D8xL10mm","-55℃~+105℃ 10.5mm 2000hrs@105℃ 220uF 300mA@120Hz 35V 8mm ±20% SMD,D8xL10mm Aluminum Electrolytic Capacitors - SMD ROHS",C136294,490,0,0,0.16,76.14
+ITEM,,JLC-C14663,Capacitors,CC0603KRX7R9BB104,0603,100nF 50V X7R ±10% 0603 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS,C14663,3260,0,0,0.01,4.33
+ITEM,,JLC-C15458,Resistors,0603WAJ0104T5E,0603,-55℃~+155℃ 100kΩ 100mW 75V Thick Film Resistor ±100ppm/℃ ±5% 0603 Chip Resistor - Surface Mount ROHS,C15458,5000,0,0,0.01,2.52
+ITEM,,JLC-C15849,Capacitors,CL10A105KB8NNNC,0603,1uF 50V X5R ±10% 0603 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS,C15849,3620,0,0,0.01,10.95
+ITEM,,JLC-C161618,Optoelectronics,LTST-C194TGKT,0603,-20℃~+80℃ 130° 20mA 260.5mcd 3.2V 525nm 530nm 76mW Emerald Green Water Clear 0603 LED Indication - Discrete ROHS,C161618,0,0,0,0,0
+ITEM,,JLC-C1852832,Capacitors,CC0603KPX7R8BB103,0603,10nF 25V X7R ±10% 0603 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS,C1852832,3394,0,0,0.02,42.34
+ITEM,,JLC-C18679,Resistors,0603WAJ0225T5E,0603,-55℃~+155℃ 100mW 2.2MΩ 75V Thick Film Resistor ±100ppm/℃ ±5% 0603 Chip Resistor - Surface Mount ROHS,C18679,4260,0,0,0.01,2.58
+ITEM,,JLC-C2169859,Capacitors,GMK107BJ105KAHT,0603,1uF 35V X5R ±10% 0603 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS,C2169859,3973,0,0,0.04,128.57
+ITEM,,JLC-C22371303,Optoelectronics,HL-PSC-1608S25OC-G4,0603,-40℃~+85℃ 10mA 130° 2.4V 600nm~612nm 60mW 90mcd Orange Water Clear 0603 LED Indication - Discrete ROHS,C22371303,4000,0,0,0.01,21.3
+ITEM,,JLC-C22935,Resistors,0603WAF1004T5E,0603,-55℃~+155℃ 100mW 1MΩ 75V Thick Film Resistor ±1% ±100ppm/℃ 0603 Chip Resistor - Surface Mount ROHS,C22935,9960,0,0,0.01,6.32
+ITEM,,JLC-C23344,Resistors,0603WAJ0223T5E,0603,-55℃~+155℃ 100mW 22kΩ 75V Thick Film Resistor ±100ppm/℃ ±5% 0603 Chip Resistor - Surface Mount ROHS,C23344,5000,0,0,0.01,2.52
+ITEM,,JLC-C2443214,Capacitors,0603X104K250CT,0603,100nF 25V X5R ±10% 0603 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS,C2443214,0,0,0,0,0
+ITEM,,JLC-C25231,Resistors,0603WAJ0331T5E,0603,-55℃~+155℃ 100mW 330Ω 75V Thick Film Resistor ±100ppm/℃ ±5% 0603 Chip Resistor - Surface Mount ROHS,C25231,5000,0,0,0.01,2.52
+ITEM,,JLC-C25241,Resistors,0603WAJ0471T5E,0603,-55℃~+155℃ 100mW 470Ω 75V Thick Film Resistor ±100ppm/℃ ±5% 0603 Chip Resistor - Surface Mount ROHS,C25241,5000,0,0,0.01,2.52
+ITEM,,JLC-C25585,Resistors,0603WAJ0102T5E,0603,-55℃~+155℃ 100mW 1kΩ 75V Thick Film Resistor ±100ppm/℃ ±5% 0603 Chip Resistor - Surface Mount ROHS,C25585,4140,0,0,0.01,2.55
+ITEM,,JLC-C25992,Resistors,0603WAJ0222T5E,0603,-55℃~+155℃ 100mW 2.2kΩ 75V Thick Film Resistor ±100ppm/℃ ±5% 0603 Chip Resistor - Surface Mount ROHS,C25992,4920,0,0,0.01,2.51
+ITEM,,JLC-C25999,Resistors,0603WAJ0472T5E,0603,-55℃~+155℃ 100mW 4.7kΩ 75V Thick Film Resistor ±100ppm/℃ ±5% 0603 Chip Resistor - Surface Mount ROHS,C25999,5000,0,0,0.01,2.52
+ITEM,,JLC-C26001,Resistors,0603WAJ0562T5E,0603,-55℃~+155℃ 100mW 5.6kΩ 75V Thick Film Resistor ±100ppm/℃ ±5% 0603 Chip Resistor - Surface Mount ROHS,C26001,5000,0,0,0.01,2.52
+ITEM,,JLC-C2678753,LED Drivers,"PCA9685PW,118",TSSOP-28,-40℃~+85℃ 100kHz~1MHz 16 2.3V~5.5V 25mA PWM TSSOP-28 LED Drivers ROHS,C2678753,0,0,0,0,0
+ITEM,,JLC-C2683482,Amplifiers/Comparators,LM358D,SOP-8,-15V~-1.5V -40℃~+85℃ 1.18mA 120mA 1MHz 2 300V/ms 30V 3V~30V 40nV/√Hz@1kHz 500nA 7mV 7uV/℃ 80dB SOP-8 Operational Amplifier ROHS,C2683482,3640,0,0,0.02,68.83
+ITEM,,JLC-C2843785,Optoelectronics,XL-5050RGBC-2812B,SMD5050,-20℃~+85℃ 0.3mA 1.6mm 120° 2000V 3.5V~5.5V 465nm~475nm 4kHz 5mm 5mm 800Kbit/s G:1300mcd~1800mcd Top-mount Water Clear SMD5050-4P RGB LEDs(Built-in IC) ROHS,C2843785,4707,0,0,0.03,118.77
+ITEM,,JLC-C2907023,Resistors,FRC0603F3301TS,0603,-55℃~+155℃ 100mW 3.3kΩ 75V Thick Film Resistor ±1% ±100ppm/℃ 0603 Chip Resistor - Surface Mount ROHS,C2907023,4620,0,0,0.01,2.8
+ITEM,,JLC-C2907123,Resistors,FRC0603J201 TS,0603,-55℃~+155℃ 100mW 200Ω 75V Thick Film Resistor ±100ppm/℃ ±5% 0603 Chip Resistor - Surface Mount ROHS,C2907123,4620,0,0,0.01,1.85
+ITEM,,JLC-C2930027,Resistors,FRC0603J103 TS,0603,-55℃~+155℃ 100mW 10kΩ 75V Thick Film Resistor ±100ppm/℃ ±5% 0603 Chip Resistor - Surface Mount,C2930027,3180,0,0,0.01,1.59
+ITEM,,JLC-C3853265,Capacitors,GMC10X5R104K25NT,0603,100nF 25V X5R ±10% 0603 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS,C3853265,4000,0,0,0.01,10.34
+ITEM,,JLC-C3910010,Capacitors,GMC10X5R103K50NT,0603,10nF 50V X5R ±10% 0603 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS,C3910010,4000,0,0,0.01,9.46
+ITEM,,JLC-C403986,Resistors,RS-03L225JJT,0603,-55℃~+155℃ 100mW 2.2MΩ 50V Thick Film Resistor ±250ppm/℃ ±5% 0603 Chip Resistor - Surface Mount ROHS,C403986,5000,0,0,0.01,2.01
+ITEM,,JLC-C408388,Diodes,BAT54C,SOT-23,1 Pair Common Cathode 1V@100mA 200mA 2uA@25V 30V 600mA SOT-23 Schottky Diodes ROHS,C408388,830,0,0,0.01,6.25
+ITEM,,JLC-C4118381,Resistors,RC0603JR-1310KL,0603,-55℃~+155℃ 100mW 10kΩ 75V Thick Film Resistor ±100ppm/℃ ±5% 0603 Chip Resistor - Surface Mount ROHS,C4118381,9508,0,0,0.01,40.16
+ITEM,,JLC-C5184404,Transistors/Thyristors,MMBT3904,SOT-23,"100@10mA,1V 100nA 200mA 200mW 300MHz 300mV 40V 6V NPN SOT-23 Bipolar (BJT) ROHS",C5184404,5970,0,0,0.01,20.4
+ITEM,,JLC-C5184433,Transistors/Thyristors,BC807-40,SOT-23,"100MHz 100nA 250@100mA,1V 300mW 45V 500mA 5V 700mV PNP SOT-23 Bipolar (BJT) ROHS",C5184433,6000,0,0,0.01,43.41
+ITEM,,JLC-C5224215,Transistors/Thyristors,2N7002,SOT-23,-55℃~+150℃ 1.6V@250uA 1.8nC@4.5V 11pF 2.05Ω@4.5V 28pF 300mA 350mW 4pF 60V N-Channel One N-channel SOT-23 MOSFETs ROHS,C5224215,2630,0,0,0.01,17.19
+ITEM,,JLC-C5345984,Power Management (PMIC),AMS1117-5.0,SOT-223,"0℃~+125℃@(Ta) 1 12mA 18V 1A 20mV@(1A) 5V Fixed Positive SOT-223 Voltage Regulators - Linear, Low Drop Out (LDO) Regulators ROHS",C5345984,482,0,0,0.03,13.69
+ITEM,,JLC-C5663181,Optoelectronics,L196L-QYC-TR,0603,100mcd 140° 2.15V 595nm 598nm Water Clear Yellow 0603 LED Indication - Discrete ROHS,C5663181,0,0,0,0,0
+ITEM,,JLC-C5745677,Optoelectronics,L196B-QOC-TR,0603,150° 20mA 2V 605nm 615nm 95mcd Orange Water Clear 0603 LED Indication - Discrete ROHS,C5745677,0,0,0,0,0
+ITEM,,JLC-C575416,Optoelectronics,LTST-C194KFKT,0603,130° 162.5mcd 20mA 2V 605nm 611nm Orange Water Clear 0603 LED Indication - Discrete ROHS,C575416,0,0,0,0,0
+ITEM,,JLC-C5842375,Resistors,RC0603FR-13220RL,0603,-55℃~+155℃ 100mW 220Ω 75V Thick Film Resistor ±1% ±100ppm/℃ 0603 Chip Resistor - Surface Mount ROHS,C5842375,3914,0,0,0.01,27.15
+ITEM,,JLC-C629440,Interface,MCP23017T-E/SO,SOIC-28-300mil,-40℃~+125℃ 1.7MHz 1.8V~5.5V 16 3mA 3uA 600mV 8 8mA I2C Interrupt Output SOIC-28-300mil I/O Expanders ROHS,C629440,20,0,0,1.46,29.1
+ITEM,,JLC-C688858,Amplifiers/Comparators,LM358D,SOIC-8,-40℃~+85℃ 1MHz 2 300V/ms 30V 3V~30V 40mA 40nV/√Hz@1kHz 430uA 45nA 5nA 80dB 9mV SOIC-8 Operational Amplifier ROHS,C688858,0,0,0,0,0
+ITEM,,JLC-C7288939,Optoelectronics,IN-S63ASR,0603,-30℃~+85℃ 120° 150mcd 2.2V 20mA 622nm 630nm 75mW Red Water Clear 0603 LED Indication - Discrete ROHS,C7288939,4000,0,0,0.07,255.29
+ITEM,,JLC-C7499856,Transistors/Thyristors,2301V,SOT-23,-55℃~+150℃ 1 P-Channel 185pF 2.2nC@4.5V 2.3A 20V 25pF 400mV 800mW 95mΩ SOT-23 MOSFETs ROHS,C7499856,3000,0,0,0.01,17.48
+ITEM,,JLC-C878901,Transistors/Thyristors,DMN4468LSS-13-VB,SO-8,"-55℃~+150℃@(Tj) 1 N-Channel 13A 3V 4.1W 6.8nC@5V 73pF@15V 800pF@15V 8mΩ@10V,10A SO-8 MOSFETs ROHS",C878901,15,0,0,0.18,2.69
+ITEM,,JLC-C881901,Resistors,CR-03JA7---3K3,0603,-55℃~+155℃ 100mW 3.3kΩ 75V Thick Film Resistor ±100ppm/℃ ±5% 0603 Chip Resistor - Surface Mount ROHS,C881901,0,0,0,0,0
+ITEM,,JLC-C965799,Optoelectronics,XL-1608SURC-06,0603,-40℃~+85℃ 120° 2.3V 20mA 225mcd 50mW 620nm~630nm 625nm Red Top-mount Water Clear 0603 LED Indication - Discrete ROHS,C965799,3160,0,0,0.01,5.87
+ITEM,,JLC-C965800,Optoelectronics,XL-1608UOC-06,0603,-40℃~+85℃ 120° 2.3V 20mA 315mcd 50mW 600nm~610nm 605nm Orange Water Clear op View Mount 0603 LED Indication - Discrete ROHS,C965800,3618,0,0,0.01,12.77
+ITEM,,JLC-C965803,Optoelectronics,XL-1608UYC-04,0603,-40℃~+85℃ 120° 2.3V 20mA 210mcd 50mW 585nm~595nm 590nm Water Clear Yellow op View Mount 0603 LED Indication - Discrete ROHS,C965803,2390,0,0,0.01,10.54
+ITEM,,JLC-C965804,Optoelectronics,XL-1608UGC-04,0603,-40℃~+85℃ 120° 20mA 3.3V 515nm~535nm 525nm 70mW 810mcd Discrete Diode Emerald Green Water Clear op View Mount 0603 LED Indication - Discrete ROHS,C965804,0,0,0,0,0
+ITEM,,JLC-C965806,Optoelectronics,XL-1608SYGC-04,0603,-40℃~+85℃ 120° 2.4V 20mA 50mW 50mcd 565nm~575nm 572nm Water Clear Yellow Green op View Mount 0603 LED Indication - Discrete ROHS,C965806,4000,0,0,0.01,16.9
+ITEM,,JLC-C965807,Optoelectronics,XL-1608UBC-04,0603,120° 20mA 3.3V 300mcd 455nm~475nm 470nm 70mW Blue Top-mount Water Clear 0603 LED Indication - Discrete ROHS,C965807,3190,0,0,0.01,7.27
+ITEM,,JLC-C965808,Optoelectronics,XL-1608UWC-04,0603,-40℃~+85℃ 120° 130mcd 13700K~33000K 2.7V 20mA 70mW White Yellow Lens op View Mount 0603 LED Indication - Discrete ROHS,C965808,2790,0,0,0.01,6.49

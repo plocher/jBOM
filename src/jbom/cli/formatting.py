@@ -265,6 +265,8 @@ def print_tabular_data(
 # Path/ID fields are kept narrow and non-wrapping so they truncate cleanly;
 # content fields wrap so descriptions/values are fully visible.
 _INVENTORY_FIELD_WIDTHS: dict[str, tuple[int, bool]] = {
+    "RowType": (10, False),
+    "ComponentID": (28, False),
     "Project": (25, False),
     "ProjectName": (15, False),
     "UUID": (20, False),

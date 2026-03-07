@@ -1,9 +1,8 @@
-"""
-Loader for generating inventory from KiCad project components.
-"""
+"""Loader for generating inventory from KiCad project components."""
 
 from typing import List, Tuple, Dict, Set
 
+from jbom.common.component_classification import normalize_component_type
 from jbom.common.types import Component, InventoryItem, DEFAULT_PRIORITY
 from jbom.common.component_utils import (
     derive_package_from_footprint,
@@ -23,12 +22,12 @@ class ProjectInventoryGenerator:
         self.inventory_fields: Set[str] = set()
 
     def load(self) -> Tuple[List[InventoryItem], List[str]]:
-        """Generate inventory items from components.
+        """Generate COMPONENT rows from project requirements.
 
         Returns:
             Tuple of (inventory items list, field names list)
         """
-        # Group components by Value, Footprint, and relevant properties to deduplicate
+        # Group by explicit requirement identity so identical requirements collapse.
         grouped_components: Dict[str, List[Component]] = {}
 
         for comp in self.components:
@@ -45,6 +44,8 @@ class ProjectInventoryGenerator:
         self.inventory = []
         # Standard fields that we always want
         self.inventory_fields = {
+            "RowType",
+            "ComponentID",
             "IPN",
             "Category",
             "Value",
@@ -56,6 +57,9 @@ class ProjectInventoryGenerator:
             "Datasheet",
             "LCSC",
             "UUID",
+            "footprint_full",
+            "symbol_name",
+            "ki_keywords",
         }
 
         for key, comps in grouped_components.items():
@@ -75,13 +79,15 @@ class ProjectInventoryGenerator:
         return self.inventory, sorted(list(self.inventory_fields))
 
     def load_no_aggregate(self) -> Tuple[List[InventoryItem], List[str]]:
-        """Generate one inventory item per component instance (no aggregation).
+        """Generate one COMPONENT row per component instance (no aggregation).
 
         Returns:
             Tuple of (inventory items list, field names list)
         """
         self.inventory = []
         self.inventory_fields = {
+            "RowType",
+            "ComponentID",
             "IPN",
             "Category",
             "Value",
@@ -95,6 +101,9 @@ class ProjectInventoryGenerator:
             "UUID",
             "Footprint",
             "Symbol",
+            "footprint_full",
+            "symbol_name",
+            "ki_keywords",
         }
 
         for component in self.components:
@@ -102,6 +111,9 @@ class ProjectInventoryGenerator:
             item.raw_data = dict(item.raw_data)
             item.raw_data["Footprint"] = component.footprint
             item.raw_data["Symbol"] = component.lib_id
+            item.raw_data["footprint_full"] = component.footprint
+            item.raw_data["symbol_name"] = component.lib_id
+            item.raw_data["ki_keywords"] = component.properties.get("Keywords", "")
 
             self.inventory.append(item)
             for prop in component.properties.keys():
@@ -110,15 +122,42 @@ class ProjectInventoryGenerator:
         return self.inventory, sorted(list(self.inventory_fields))
 
     def _generate_group_key(self, component: Component) -> str:
-        """Generate a unique key for grouping components."""
-        # We group by Value, Footprint, and relevant properties to deduplicate
-        # We also need to consider properties that affect part selection (Tolerance, Voltage, etc.)
+        """Generate deterministic requirement identity from explicit fields only."""
+        category_raw = (
+            get_component_type(component.lib_id, component.footprint) or "UNK"
+        )
+        category = normalize_component_type(category_raw)
+        package = self._extract_package(component.footprint).upper().strip()
+        value = (component.value or "").strip().upper()
+        props = component.properties or {}
 
-        # Add key properties to the group key
-        props = component.properties
-        prop_key = f"{props.get('Tolerance','')}|{props.get('Voltage','')}|{props.get('Rating','')}"
+        tolerance = (
+            props.get(CommonFields.TOLERANCE, props.get("Tolerance", ""))
+            .strip()
+            .upper()
+        )
+        voltage = (
+            props.get(CommonFields.VOLTAGE, props.get("Voltage", "")).strip().upper()
+        )
+        amperage = (
+            props.get(CommonFields.AMPERAGE, props.get("Amperage", "")).strip().upper()
+        )
+        wattage = (
+            props.get(CommonFields.WATTAGE, props.get("Wattage", "")).strip().upper()
+        )
+        ctype = props.get("Type", "").strip().upper()
 
-        return f"{component.value}|{component.footprint}|{component.lib_id}|{prop_key}"
+        return (
+            "REQ1"
+            f"|CAT={category}"
+            f"|VAL={value}"
+            f"|PKG={package}"
+            f"|TOL={tolerance}"
+            f"|V={voltage}"
+            f"|A={amperage}"
+            f"|W={wattage}"
+            f"|TYPE={ctype}"
+        )
 
     def _create_inventory_item(
         self, component: Component, uuid_str: str = ""
@@ -140,7 +179,10 @@ class ProjectInventoryGenerator:
         # Leave blank so the user can assign their own IPNs.
         ipn = props.get("IPN", "")
 
+        component_id = self._generate_group_key(component)
         return InventoryItem(
+            row_type="COMPONENT",
+            component_id=component_id,
             ipn=ipn,
             keywords=props.get("Keywords", ""),
             category=category,
@@ -171,7 +213,14 @@ class ProjectInventoryGenerator:
             uuid=uuid_str,
             priority=DEFAULT_PRIORITY,
             source="Project",
-            raw_data=props,
+            raw_data={
+                **props,
+                "RowType": "COMPONENT",
+                "ComponentID": component_id,
+                "footprint_full": component.footprint,
+                "symbol_name": component.lib_id,
+                "ki_keywords": props.get("Keywords", ""),
+            },
         )
 
     def _extract_package(self, footprint: str) -> str:
