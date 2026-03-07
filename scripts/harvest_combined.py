@@ -32,6 +32,43 @@ PROJECTS_DIR = Path("/Users/jplocher/Dropbox/KiCad/projects")
 SPCOAST_INVENTORY = JBOM_ROOT / "examples" / "SPCoast-INVENTORY.csv"
 OUTPUT_FILE = JBOM_ROOT / "examples" / "combined.csv"
 
+# ITEM columns always included (in this explicit order) after COMPONENT canonical
+# columns, even when some values are empty.
+_ITEM_ALWAYS_COLS: list[str] = [
+    "IPN",
+    "Description",
+    "Keywords",
+    "Manufacturer",
+    "MPN",
+    "LCSC",
+    "Priority",
+    "Status",
+]
+
+# ITEM columns included only when at least one ITEM row carries a non-empty value.
+_ITEM_CONDITIONAL_COLS: list[str] = [
+    "ComponentName",
+    "SMD",
+    "Name",
+    "Form",
+    "Pins",
+    "Pitch",
+    "V",
+    "A",
+    "W",
+    "Angle",
+    "Wavelength",
+    "mcd",
+    "Frequency",
+    "Mouser",
+    "Mouser Link",
+    "LCSC Link",
+    "Symbol",
+    "Footprint",
+    "Datasheet",
+]
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -103,24 +140,50 @@ def _normalise_component_row(row: dict[str, str]) -> dict[str, str]:
     return {col: normalised.get(col, "") for col in COMPONENT_ROW_COLUMNS}
 
 
-def _ordered_union(item_fields: list[str]) -> list[str]:
+def _ordered_union(
+    item_fields: list[str],
+    item_rows: list[dict[str, str]],
+) -> list[str]:
     """Return a deterministic union of column names.
 
-    COMPONENT canonical columns come first; then remaining ITEM-specific columns.
+    Column order (mirrors the ALWAYS/CONDITIONAL triage in inventory.py):
+    1. COMPONENT canonical columns (COMPONENT_ROW_COLUMNS) — always, in fixed order.
+    2. _ITEM_ALWAYS_COLS — important ITEM fields, always included if present.
+    3. _ITEM_CONDITIONAL_COLS — secondary ITEM fields, only when at least one row
+       carries a non-empty value.
+    4. Any remaining item_fields not covered by the above lists.
     """
+    item_field_set = set(item_fields)
     seen: set[str] = set()
     ordered: list[str] = []
 
-    def _add(col: str) -> None:
-        if col not in seen:
+    def _add_if_present(col: str) -> None:
+        if col not in seen and col in item_field_set:
             seen.add(col)
             ordered.append(col)
 
-    for col in COMPONENT_ROW_COLUMNS:
-        _add(col)
+    def _has_data(col: str) -> bool:
+        return any(row.get(col) for row in item_rows)
 
+    # 1. Canonical COMPONENT columns (always)
+    for col in COMPONENT_ROW_COLUMNS:
+        seen.add(col)
+        ordered.append(col)
+
+    # 2. Important ITEM columns (always, if present in the source file)
+    for col in _ITEM_ALWAYS_COLS:
+        _add_if_present(col)
+
+    # 3. Secondary ITEM columns (only when at least one row has data)
+    for col in _ITEM_CONDITIONAL_COLS:
+        if _has_data(col):
+            _add_if_present(col)
+
+    # 4. Any remaining item_fields not covered above (only when they carry data)
     for col in item_fields:
-        _add(col)
+        if col not in seen and _has_data(col):
+            seen.add(col)
+            ordered.append(col)
 
     return ordered
 
@@ -240,7 +303,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"Loaded {len(item_rows)} ITEM rows from {args.spcoast.name}.")
 
     # ---- Build unified field list ----
-    all_fields = _ordered_union(item_fields)
+    all_fields = _ordered_union(item_fields, item_rows)
     print(f"Combined column count: {len(all_fields)}")
 
     # ---- Write output ----
