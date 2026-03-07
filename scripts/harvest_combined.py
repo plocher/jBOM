@@ -21,6 +21,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from jbom.common.component_id import COLUMN_NORMALISE, COMPONENT_ROW_COLUMNS
+
 
 # ---------------------------------------------------------------------------
 # Defaults (relative to jBOM project root)
@@ -29,23 +31,6 @@ JBOM_ROOT = Path(__file__).resolve().parent.parent
 PROJECTS_DIR = Path("/Users/jplocher/Dropbox/KiCad/projects")
 SPCOAST_INVENTORY = JBOM_ROOT / "examples" / "SPCoast-INVENTORY.csv"
 OUTPUT_FILE = JBOM_ROOT / "examples" / "combined.csv"
-
-# Preferred column order for the combined output.
-# Columns that appear in BOTH sources come first; source-specific cols follow.
-_LEADING_COLS = [
-    "RowType",
-    "ComponentID",
-    "IPN",
-    "Category",
-    "Value",
-    "Description",
-    "Package",
-    "Tolerance",
-    "Resistance",
-    "Capacitance",
-    "Inductance",
-]
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -102,14 +87,26 @@ def _load_item_rows(csv_path: Path) -> tuple[list[dict[str, str]], list[str]]:
     return rows, fieldnames
 
 
-def _ordered_union(
-    component_fields: list[str],
-    item_fields: list[str],
-) -> list[str]:
+def _normalise_component_row(row: dict[str, str]) -> dict[str, str]:
+    """Rename legacy short column names and strip to canonical COMPONENT columns.
+
+    Step 1: apply COLUMN_NORMALISE (``W``→``Power``, ``A``→``Current``,
+    ``V``→``Voltage``).  Long-form value wins if both old and new keys exist.
+    Step 2: keep only columns listed in COMPONENT_ROW_COLUMNS.
+    """
+    normalised: dict[str, str] = {}
+    for k, v in row.items():
+        canonical = COLUMN_NORMALISE.get(k, k)
+        # Long-form wins: only fill if slot is empty
+        if canonical not in normalised or not normalised[canonical]:
+            normalised[canonical] = v
+    return {col: normalised.get(col, "") for col in COMPONENT_ROW_COLUMNS}
+
+
+def _ordered_union(item_fields: list[str]) -> list[str]:
     """Return a deterministic union of column names.
 
-    Leading columns come first; then COMPONENT-specific (project provenance
-    and search-hint fields); then remaining ITEM-specific columns.
+    COMPONENT canonical columns come first; then remaining ITEM-specific columns.
     """
     seen: set[str] = set()
     ordered: list[str] = []
@@ -119,14 +116,9 @@ def _ordered_union(
             seen.add(col)
             ordered.append(col)
 
-    for col in _LEADING_COLS:
+    for col in COMPONENT_ROW_COLUMNS:
         _add(col)
 
-    # All COMPONENT fields in their natural order
-    for col in component_fields:
-        _add(col)
-
-    # Remaining ITEM fields
     for col in item_fields:
         _add(col)
 
@@ -218,18 +210,12 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Found {len(project_dirs)} KiCad project(s) in {args.projects_dir}")
 
     # ---- Harvest COMPONENT rows ----
-    all_component_fields: list[str] = []
     component_rows_by_id: dict[str, dict[str, str]] = {}
     total_harvested = 0
 
     for proj_dir in project_dirs:
-        rows, fields = _harvest_project(proj_dir)
+        rows, _fields = _harvest_project(proj_dir)
         total_harvested += len(rows)
-
-        # Union of field names across all projects
-        for f in fields:
-            if f not in all_component_fields:
-                all_component_fields.append(f)
 
         # Deduplicate by ComponentID (first occurrence wins)
         new_count = 0
@@ -241,7 +227,9 @@ def main(argv: list[str] | None = None) -> int:
 
         print(f"  {proj_dir.name:35s}: {len(rows):3d} rows  (+{new_count} unique)")
 
-    component_rows = list(component_rows_by_id.values())
+    component_rows = [
+        _normalise_component_row(r) for r in component_rows_by_id.values()
+    ]
     print(
         f"\nHarvested {total_harvested} total COMPONENT rows across {len(project_dirs)} project(s)."
     )
@@ -252,7 +240,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"Loaded {len(item_rows)} ITEM rows from {args.spcoast.name}.")
 
     # ---- Build unified field list ----
-    all_fields = _ordered_union(all_component_fields, item_fields)
+    all_fields = _ordered_union(item_fields)
     print(f"Combined column count: {len(all_fields)}")
 
     # ---- Write output ----
