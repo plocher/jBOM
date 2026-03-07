@@ -82,6 +82,15 @@ def is_current_version(component_id: str) -> bool:
     return first.isdigit() and int(first) == _VERSION
 
 
+def is_null_value(value: str) -> bool:
+    """Return True if *value* is effectively blank.
+
+    A value is blank when it is the empty string or the KiCad null placeholder
+    ``~`` (with optional surrounding whitespace).
+    """
+    return not value or value.strip() == _TILDE
+
+
 def _norm(value: str) -> str:
     """Normalise a raw field value: strip, uppercase, treat ``~`` as blank."""
     v = value.strip().upper()

@@ -21,7 +21,11 @@ import subprocess
 import sys
 from pathlib import Path
 
-from jbom.common.component_id import COLUMN_NORMALISE, COMPONENT_ROW_COLUMNS
+from jbom.common.component_id import (
+    COLUMN_NORMALISE,
+    COMPONENT_ROW_COLUMNS,
+    is_null_value,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -134,8 +138,8 @@ def _normalise_component_row(row: dict[str, str]) -> dict[str, str]:
     normalised: dict[str, str] = {}
     for k, v in row.items():
         canonical = COLUMN_NORMALISE.get(k, k)
-        # Long-form wins: only fill if slot is empty
-        if canonical not in normalised or not normalised[canonical]:
+        # Real value wins over blank or KiCad null (~); first real value wins.
+        if canonical not in normalised or is_null_value(normalised[canonical]):
             normalised[canonical] = v
     return {col: normalised.get(col, "") for col in COMPONENT_ROW_COLUMNS}
 
