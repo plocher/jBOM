@@ -193,6 +193,15 @@ def main(argv: list[str] | None = None) -> int:
         help="Output file path (default: examples/combined.csv)",
     )
     parser.add_argument(
+        "--exclude",
+        metavar="PROJECT",
+        action="append",
+        dest="exclude",
+        default=[],
+        help="Project directory name(s) to skip (can be repeated). "
+        "Use for known-bad or corrupted projects.",
+    )
+    parser.add_argument(
         "--dry-run-search",
         action="store_true",
         help="After writing combined.csv, run jbom inventory-search --dry-run",
@@ -201,7 +210,15 @@ def main(argv: list[str] | None = None) -> int:
 
     # ---- Discover projects ----
     project_dirs = _find_project_dirs(args.projects_dir)
-    print(f"Found {len(project_dirs)} KiCad project(s) in {args.projects_dir}")
+    if args.exclude:
+        excluded = set(args.exclude)
+        project_dirs = [d for d in project_dirs if d.name not in excluded]
+        print(
+            f"Found {len(project_dirs)} KiCad project(s) in {args.projects_dir} "
+            f"(excluding: {', '.join(sorted(excluded))})"
+        )
+    else:
+        print(f"Found {len(project_dirs)} KiCad project(s) in {args.projects_dir}")
 
     # ---- Harvest COMPONENT rows ----
     all_component_fields: list[str] = []
