@@ -39,6 +39,34 @@ _VERSION = (
 # The actual sort is performed at runtime so this list is informational only.
 _KNOWN_KEYS = ("A", "CAT", "PKG", "TOL", "TYPE", "V", "VAL", "W")
 
+# Maps legacy short column names to their canonical long-form equivalents.
+# Apply these renames before stripping a row down to COMPONENT_ROW_COLUMNS.
+COLUMN_NORMALISE: dict[str, str] = {
+    "V": "Voltage",
+    "A": "Current",
+    "W": "Power",
+}
+
+# Canonical columns present in every COMPONENT row of combined.csv.
+# Exactly the hash inputs (decoded to long form) plus decoded parametric values.
+# COMPONENT rows MUST NOT carry per-instance or project-provenance fields
+# (Project, UUID, IPN, Quantity, Designator, …).
+COMPONENT_ROW_COLUMNS: tuple[str, ...] = (
+    "RowType",
+    "ComponentID",
+    "Category",
+    "Value",
+    "Package",
+    "Tolerance",
+    "Voltage",
+    "Current",
+    "Power",
+    "Type",
+    "Resistance",
+    "Capacitance",
+    "Inductance",
+)
+
 
 def is_current_version(component_id: str) -> bool:
     """Return True if *component_id* was produced by the current encoding rules.

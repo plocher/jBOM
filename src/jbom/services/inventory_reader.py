@@ -130,9 +130,9 @@ def _resolve_component_id(
         value=row.get("Value", ""),
         package=row.get("Package", ""),
         tolerance=row.get("Tolerance", ""),
-        voltage=row.get("V", ""),
-        amperage=row.get("A", ""),
-        wattage=row.get("W", ""),
+        voltage=row.get("Voltage") or row.get("V", ""),
+        amperage=row.get("Current") or row.get("A", ""),
+        wattage=row.get("Power") or row.get("W", ""),
         component_type=row.get("Type", ""),
     )
 
