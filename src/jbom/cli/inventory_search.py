@@ -156,7 +156,11 @@ def handle_inventory_search(
         searchable = InventorySearchService.filter_searchable_items(
             search_base, categories=args.categories
         )
-        searchable = _filter_already_covered_requirements(searchable, item_rows)
+        # Deduplication against item_rows only applies when COMPONENT rows are the
+        # search target. In the fallback (ITEM-only inventory), search_base IS
+        # item_rows — deduplicating against itself would zero out all results.
+        if component_rows:
+            searchable = _filter_already_covered_requirements(searchable, item_rows)
 
         # Fab-relative sparseness is opt-in: only apply when the user explicitly
         # selects a fabricator.
