@@ -118,7 +118,11 @@ class InventoryMatcher:
         try:
             loader = InventoryReader(inventory_file)
             inventory_items, _ = loader.load()
-            return inventory_items
+            return [
+                item
+                for item in inventory_items
+                if (item.row_type or "ITEM").strip().upper() == "ITEM"
+            ]
         except Exception:
             return []
 

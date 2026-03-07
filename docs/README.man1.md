@@ -445,7 +445,8 @@ jbom bom project --inventory inv.csv -f "REFERENCE,MATCH_QUALITY,I:PACKAGE"
 Detailed inventory file format documentation is in [inventory(5)](README.man5.md).
 
 Required columns:
-: IPN, Category, Value, Package, LCSC, Priority
+: RowType, ComponentID, Category, Value, Package
+: Plus `IPN` for ITEM rows
 
 Optional columns:
 : Manufacturer, MFGPN, Datasheet, Keywords, SMD, Tolerance, Voltage, Current, Power, Type, Form, Frequency, Stability, Load, Family, mcd, Wavelength, Angle, Pitch

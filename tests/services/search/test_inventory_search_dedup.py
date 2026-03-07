@@ -20,10 +20,14 @@ def _inv_item(
     value: str,
     package: str,
     tolerance: str,
+    row_type: str = "ITEM",
+    component_id: str = "",
     lcsc: str = "",
     raw_data: dict[str, str] | None = None,
 ) -> InventoryItem:
     return InventoryItem(
+        row_type=row_type,
+        component_id=component_id,
         ipn=ipn,
         keywords="",
         category=category,
@@ -42,6 +46,30 @@ def _inv_item(
         package=package,
         raw_data=raw_data or {},
     )
+
+
+def test_split_rows_by_type_separates_component_and_item_rows() -> None:
+    component = _inv_item(
+        ipn="",
+        category="RES",
+        value="10K",
+        package="0603",
+        tolerance="5%",
+        row_type="COMPONENT",
+        component_id="REQ1|CAT=RES|VAL=10K|PKG=0603",
+    )
+    item = _inv_item(
+        ipn="R-10K-0603",
+        category="RES",
+        value="10K",
+        package="0603",
+        tolerance="1%",
+        row_type="ITEM",
+    )
+
+    components, items = InventorySearchService.split_rows_by_type([component, item])
+    assert [c.component_id for c in components] == ["REQ1|CAT=RES|VAL=10K|PKG=0603"]
+    assert [i.ipn for i in items] == ["R-10K-0603"]
 
 
 def _sr(**kw) -> SearchResult:

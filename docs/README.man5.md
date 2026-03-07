@@ -8,12 +8,20 @@ inventory — bill of materials inventory file format for jBOM
 
 The jBOM inventory file is a structured database of available components. It supports three formats: CSV (comma-separated values), Excel (.xlsx, .xls), and Apple Numbers (.numbers). All formats use the same logical column structure.
 
-Each row represents one stocked component. Columns define the component's attributes and how it relates to schematic components during matching.
+Each row represents either a project requirement (`COMPONENT`) or a stocked part (`ITEM`). Columns define the row role and matching/search attributes.
 
 ## REQUIRED COLUMNS
 
+**RowType**
+: Row role discriminator: `COMPONENT` or `ITEM`.
+
+**ComponentID**
+: Requirement identifier for `COMPONENT` rows.
+: Leave blank for `ITEM` rows.
+
 **IPN** (Internal Part Number)
-: Unique identifier for this inventory item. jBOM uses IPN to group components in the BOM.
+: Required for `ITEM` rows.
+: Leave blank for `COMPONENT` rows.
 
 **Category**
 : Component classification (RES, CAP, IND, LED, DIO, IC, MCU, CON, etc.). Must match the schematic component type detected from lib_id or footprint. Used as first-stage filter.
@@ -114,14 +122,10 @@ jBOM normalizes all field names internally to snake_case (mfg_pn, mcd, etc.), so
 ## EXAMPLE CSV
 
 ```csv
-IPN,Category,Package,Value,Tolerance,LCSC,Manufacturer,MFGPN,Description,Datasheet,SMD,Priority
-R001,RES,0603,330R,5%,C25231,UNI-ROYAL,0603WAJ0331T5E,330Ω 5% 0603,,SMD,1
-R002,RES,0603,10K,1%,C25232,YAGEO,RC0603FR-0710KL,10kΩ 1% 0603,,SMD,1
-R003,RES,0603,47K,5%,C25233,VISHAY,CRCW060347KJNEA,47kΩ 5% 0603,,SMD,2
-C001,CAP,0603,100nF,10%,C14663,YAGEO,CC0603KRX7R9BB104,100nF X7R 0603,,SMD,1
-C002,CAP,0603,1uF,10%,C14664,MURATA,GRM31CR61A105KA19L,1uF X5R 0603,,SMD,1
-L001,IND,0603,10uH,20%,C1608,SUNLORD,SWPA3012S100MT,10µH 0603,,SMD,1
-LED001,LED,0603,Red,,,EVERLIGHT,19-217-GHC-YR1S2-3T,Red LED 0603,,SMD,1
+RowType,ComponentID,IPN,Category,Package,Value,Tolerance,LCSC,Manufacturer,MFGPN,Description,Datasheet,SMD,Priority
+COMPONENT,REQ1|CAT=RES|VAL=10K|PKG=0603|TOL=5%|V=|A=|W=|TYPE=,,RES,0603,10K,5%,,,,,,,,99
+ITEM,,R001,RES,0603,330R,5%,C25231,UNI-ROYAL,0603WAJ0331T5E,330Ω 5% 0603,,SMD,1
+ITEM,,R002,RES,0603,10K,1%,C25232,YAGEO,RC0603FR-0710KL,10kΩ 1% 0603,,SMD,1
 ```
 
 ## FIELD DISAMBIGUATION (I: and C: PREFIXES)
@@ -216,7 +220,9 @@ CSV files are auto-detected as UTF-8 with BOM or without.
 ## VALIDATION
 
 jBOM validates inventory on load:
-- IPN column required (skips rows without IPN)
+- Category column required
+- ITEM rows require IPN
+- COMPONENT rows require ComponentID
 - Category auto-uppercased for matching
 - Value parsed for numeric types (RES, CAP, IND)
 - Package normalized (whitespace cleaned)
