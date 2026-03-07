@@ -1,6 +1,21 @@
 # CHANGELOG
 
 
+## v6.29.0 (2026-03-07)
+
+### Features
+
+* feat: add normalize flow and canonical Voltage/Current/Power schema
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`dc66cb4`](https://github.com/plocher/jBOM/commit/dc66cb4aa6461b0be710171fec3bfdee8443ea27))
+
+### Refactoring
+
+* refactor: make electrical alias resolution profile-authoritative
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`dcce5d1`](https://github.com/plocher/jBOM/commit/dcce5d1b83ed2b430a4ee54ee4204484dc93dcee))
+
+
 ## v6.28.1 (2026-03-06)
 
 ### Bug Fixes
