@@ -7,6 +7,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 
 ### Added
+- **Two-layer inventory model** (issue #142): `jbom inventory` now emits `RowType=COMPONENT` rows representing project requirements, distinct from `RowType=ITEM` rows for stocked parts. Backward-compatible with existing ITEM-only inventory files.
+- **ComponentID**: deterministic, version-stamped hash of a component requirement (`category|value|package|tolerance|voltage|...`). Stale IDs from old encoding versions are transparently re-derived on load.
+- **COMPONENT_ROW_COLUMNS** canonical column set and `COLUMN_NORMALISE` remap (`V`→`Voltage`, `A`→`Current`, `W`→`Power`) in `component_id.py`.
+- **Value normalization registry** in `value_parsing.py`: `_Normalizer`/`_NORMALIZERS` registry keyed by `RES`/`CAP`/`IND`; `canonical_value()` for ComponentID VAL normalization; `decode_typed_parametric()` for typed SI-unit field extraction with explicit-column-vs-Value priority and >0.1% disagreement warning.
+- **Canonical typed parametric columns** (`Resistance`, `Capacitance`, `Inductance`) in inventory CSV output: values written as EIA strings (`1uF` not `1.0uF`, `1000uF` not `1e+03uF`).
+- `is_null_value()` helper to distinguish KiCad `~` null placeholder from real values.
+- `harvest_combined.py` script for multi-project COMPONENT+ITEM combined inventory.
 - Mouser search fixtures and offline contract/integration test scaffolding.
 - Persistent disk-backed search cache (default, 24h TTL) with `--no-cache` and `--clear-cache` flags.
 - LCSC keyword search provider using the public JLCPCB live parts API (`jlcpcb_api`).
