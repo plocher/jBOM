@@ -151,7 +151,10 @@ class ProjectInventoryGenerator:
         """
         if category_override is None:
             category_raw = (
-                get_component_type(component.lib_id, component.footprint) or "UNK"
+                get_component_type(
+                    component.lib_id, component.footprint, component.reference
+                )
+                or "UNK"
             )
         else:
             category_raw = category_override
@@ -175,7 +178,9 @@ class ProjectInventoryGenerator:
         """Create an InventoryItem from a Component."""
 
         # Determine category
-        comp_type = get_component_type(component.lib_id, component.footprint)
+        comp_type = get_component_type(
+            component.lib_id, component.footprint, component.reference
+        )
         category = comp_type if comp_type else "Unknown"
 
         # Extract package from footprint

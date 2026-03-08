@@ -11,12 +11,15 @@ SRC_DIR = PROJECT_ROOT / "src"
 sys.path.insert(0, str(SRC_DIR))
 
 from jbom.common.component_classification import (  # noqa: E402
+    ClassificationSignal,
+    _SIGNALS,
+    _classify_by_score,
     get_category_fields,
     get_component_type,
     get_value_interpretation,
     normalize_component_type,
 )
-from jbom.common.constants import DEFAULT_CATEGORY_FIELDS  # noqa: E402
+from jbom.common.constants import DEFAULT_CATEGORY_FIELDS, ComponentType  # noqa: E402
 
 
 def test_normalize_component_type_direct_and_mapped() -> None:
@@ -102,3 +105,198 @@ def test_get_component_type_c_prefixed_led_name_not_misclassified_as_cap() -> No
 def test_get_component_type_unknown_returns_none() -> None:
     assert get_component_type(lib_id="Custom:Thing", footprint="") is None
     assert get_component_type(lib_id="", footprint="Whatever") is None
+
+
+# ---------------------------------------------------------------------------
+# Scoring model structure
+# ---------------------------------------------------------------------------
+
+
+def test_classification_signal_is_dataclass() -> None:
+    """ClassificationSignal must be a frozen dataclass with required fields."""
+    sig = ClassificationSignal("RES", 1.0, lambda n, f, r: n.startswith("R"))
+    assert sig.category == "RES"
+    assert sig.weight == 1.0
+    assert sig.match("R1", "", "") is True
+    assert sig.match("C1", "", "") is False
+
+
+def test_signals_list_is_non_empty_and_typed() -> None:
+    """_SIGNALS must be a non-empty list of ClassificationSignal instances."""
+    assert len(_SIGNALS) > 0
+    for sig in _SIGNALS:
+        assert isinstance(sig, ClassificationSignal)
+        assert sig.weight > 0
+
+
+def test_classify_by_score_no_match_returns_none() -> None:
+    assert _classify_by_score("XYZZY", "", "") is None
+
+
+def test_classify_by_score_single_signal_wins() -> None:
+    # INDUCTOR substring fires at 5.0; IC pattern NE fires at 3.0 (from GENERIC)
+    # but IND still wins (5.0 > 3.0).
+    assert _classify_by_score("GENERIC_INDUCTOR", "", "") == "IND"
+
+
+# ---------------------------------------------------------------------------
+# Multi-signal scoring — core correctness cases
+# ---------------------------------------------------------------------------
+
+
+def test_scoring_cled_rgb_led_beats_c_prefix() -> None:
+    """CLED_RGB: LED substring (3.0) + LED footprint (4.0) beat C-prefix (1.0).
+
+    This was the motivating bug for issue #149.
+    """
+    assert (
+        get_component_type(
+            lib_id="Custom:CLED_RGB",
+            footprint="LED_SMD:LED_0603_1608Metric",
+        )
+        == "LED"
+    )
+
+
+def test_scoring_connector_beats_c_prefix() -> None:
+    """CONNECTOR_01X04_V: CONN substring (5.0) beats C-prefix (1.0).
+
+    Regression: previously required band-aid ordering fix from issue #145.
+    """
+    assert (
+        get_component_type(
+            lib_id="SPCoast:CONNECTOR_01X04_V",
+            footprint="SPCoast:Connector_01x04_V",
+        )
+        == "CON"
+    )
+
+
+def test_scoring_ic_pattern_beats_r_prefix() -> None:
+    """LM in name (3.0) beats R-prefix (1.0), classifying RLMxxxx as IC."""
+    assert get_component_type(lib_id="Custom:RLM321", footprint="") == "IC"
+
+
+def test_scoring_ic_footprint_beats_single_prefix() -> None:
+    """SOIC footprint (6.0) overrides U-prefix (2.0) — both → IC, stacking."""
+    assert (
+        get_component_type(
+            lib_id="Custom:UGENERIC",
+            footprint="Package_SO:SOIC-8_3.9x4.9mm_P1.27mm",
+        )
+        == "IC"
+    )
+
+
+def test_scoring_ic_footprint_beats_c_prefix() -> None:
+    """SOIC footprint (6.0) beats C-prefix (1.0), preventing capacitor misclassification."""
+    assert (
+        get_component_type(
+            lib_id="Custom:CD4011",
+            footprint="Package_SO:SOIC-14_3.9x8.65mm_P1.27mm",
+        )
+        == "IC"
+    )
+
+
+# ---------------------------------------------------------------------------
+# IPC reference designator signals
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("reference", "expected"),
+    [
+        ("J1", "CON"),  # J → CONNECTOR
+        ("FB1", "IND"),  # FB → INDUCTOR (ferrite bead)
+        ("D3", "DIO"),  # D → DIODE
+        ("Q2", "Q"),  # Q → TRANSISTOR
+        ("U4", "IC"),  # U → IC
+        ("K1", "RLY"),  # K → RELAY
+        ("Y1", "OSC"),  # Y → OSCILLATOR (crystal)
+        ("F1", "FUS"),  # F → FUSE
+    ],
+)
+def test_refdes_signal_classifies_unknown_component(
+    reference: str, expected: str
+) -> None:
+    """An unknown component name should be classified by its RefDes prefix.
+
+    'PART' is chosen as a neutral name: it starts with 'P' (no single-char prefix
+    signal), contains no IC indicator patterns, and carries no 'J' substring.
+    The RefDes signal is therefore the only signal that fires.
+    """
+    assert (
+        get_component_type(
+            lib_id="Custom:PART",
+            footprint="",
+            reference=reference,
+        )
+        == expected
+    ), f"reference={reference!r} should classify as {expected!r}"
+
+
+def test_refdes_fb_beats_f_for_ferrite_beads() -> None:
+    """FB* reference (weight 6.0) outweighs the broader F→FUS signal (5.0)."""
+    result = get_component_type(
+        lib_id="Custom:FERRITE_BEAD_100R",
+        footprint="",
+        reference="FB2",
+    )
+    assert (
+        result == "IND"
+    ), f"FB2 reference should classify ferrite bead as IND, got {result!r}"
+
+
+def test_refdes_j_connector_beats_name_prefix() -> None:
+    """J reference (5.0) + name prefix wins over weak C-prefix (1.0) for JST-style parts."""
+    result = get_component_type(
+        lib_id="Custom:JST_PH_2P",
+        footprint="Connector_JST:JST_PH_S2B",
+        reference="J3",
+    )
+    assert result == "CON"
+
+
+def test_refdes_absent_does_not_affect_result() -> None:
+    """Omitting reference leaves existing signal-based classification unchanged."""
+    # Without reference: LED signal (3.0 + 4.0) beats C-prefix (1.0)
+    assert (
+        get_component_type(
+            lib_id="Custom:CLED_RGB",
+            footprint="LED_SMD:LED_0603_1608Metric",
+        )
+        == "LED"
+    )
+    # With reference D (which would add DIO 3.0): LED still wins (7.0 > 4.0)
+    assert (
+        get_component_type(
+            lib_id="Custom:CLED_RGB",
+            footprint="LED_SMD:LED_0603_1608Metric",
+            reference="D5",
+        )
+        == "LED"
+    )
+
+
+# ---------------------------------------------------------------------------
+# FUSE category
+# ---------------------------------------------------------------------------
+
+
+def test_fuse_detected_by_name_substring() -> None:
+    assert get_component_type(lib_id="Device:Fuse", footprint="") == "FUS"
+
+
+def test_fuse_detected_by_refdes() -> None:
+    """Unknown component with F* reference designator → FUS."""
+    assert (
+        get_component_type(
+            lib_id="Custom:POLY_RESETTABLE", footprint="", reference="F1"
+        )
+        == "FUS"
+    )
+
+
+def test_fuse_category_type_constant() -> None:
+    assert ComponentType.FUSE == "FUS"
