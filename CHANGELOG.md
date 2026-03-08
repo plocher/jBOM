@@ -1,6 +1,25 @@
 # CHANGELOG
 
 
+## v6.30.1 (2026-03-08)
+
+### Bug Fixes
+
+* fix: resolve connector classification and category-gated typed decode
+
+Fixes #145 and #146 by prioritizing connector-specific classification checks before generic prefix checks, and by gating typed parametric decoding to the effective category in project and CSV inventory intake with UNK-only promotion and ambiguity warnings.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`56aa715`](https://github.com/plocher/jBOM/commit/56aa71516ca320613244a7b3f00a5e3442dcf803))
+
+### Refactoring
+
+* refactor: centralize typed decode constants in value_parsing
+
+Moves typed parametric category-column mapping and unclassified-category set to jbom.common.value_parsing and reuses them from inventory_reader and project_inventory to remove duplication.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`4260445`](https://github.com/plocher/jBOM/commit/426044557d2450c239267fd57d689c557e923e65))
+
+
 ## v6.30.0 (2026-03-08)
 
 ### Bug Fixes
