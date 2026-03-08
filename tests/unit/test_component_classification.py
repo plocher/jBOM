@@ -215,6 +215,9 @@ def test_scoring_ic_footprint_beats_c_prefix() -> None:
         ("K1", "RLY"),  # K → RELAY
         ("Y1", "OSC"),  # Y → OSCILLATOR (crystal)
         ("F1", "FUS"),  # F → FUSE
+        ("R1", "RES"),  # R → RESISTOR (IPC passive designator)
+        ("C1", "CAP"),  # C → CAPACITOR (IPC passive designator)
+        ("L1", "IND"),  # L → INDUCTOR (IPC passive designator)
     ],
 )
 def test_refdes_signal_classifies_unknown_component(
@@ -300,3 +303,50 @@ def test_fuse_detected_by_refdes() -> None:
 
 def test_fuse_category_type_constant() -> None:
     assert ComponentType.FUSE == "FUS"
+
+
+# ---------------------------------------------------------------------------
+# Regression: passive RefDes signals override IC false-positives from lib_id
+# ---------------------------------------------------------------------------
+
+
+def test_r_refdes_beats_ne_in_generic_lib_id() -> None:
+    """R* reference (RES 4.0) outweighs 'NE' substring in 'Generic' (IC 3.0).
+
+    Regression guard for GitHub issue #149 behave scenario
+    'BOM with partial inventory matches': schematics built with
+    lib_id='Device:Generic' and reference='R1' were falsely classified
+    as IC, causing the RESISTOR inventory type-filter to reject them.
+    """
+    result = get_component_type(
+        lib_id="Device:Generic",
+        footprint="R_0805_2012",
+        reference="R1",
+    )
+    assert (
+        result == "RES"
+    ), f"Device:Generic + R1 should classify as RES (not IC), got {result!r}"
+
+
+def test_c_refdes_beats_ne_in_generic_lib_id() -> None:
+    """C* reference (CAP 4.0) outweighs 'NE' substring in 'Generic' (IC 3.0)."""
+    result = get_component_type(
+        lib_id="Device:Generic",
+        footprint="C_0603_1608",
+        reference="C1",
+    )
+    assert (
+        result == "CAP"
+    ), f"Device:Generic + C1 should classify as CAP (not IC), got {result!r}"
+
+
+def test_l_refdes_beats_ne_in_generic_lib_id() -> None:
+    """L* reference (IND 4.0) outweighs 'NE' substring in 'Generic' (IC 3.0)."""
+    result = get_component_type(
+        lib_id="Device:Generic",
+        footprint="L_0805_2012",
+        reference="L1",
+    )
+    assert (
+        result == "IND"
+    ), f"Device:Generic + L1 should classify as IND (not IC), got {result!r}"
