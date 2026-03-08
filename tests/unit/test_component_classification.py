@@ -89,6 +89,16 @@ def test_get_component_type_connector_name_not_misclassified_as_cap() -> None:
     )
 
 
+def test_get_component_type_c_prefixed_led_name_not_misclassified_as_cap() -> None:
+    assert (
+        get_component_type(
+            lib_id="Custom:CLED_RGB",
+            footprint="LED_SMD:LED_0603_1608Metric",
+        )
+        == "LED"
+    )
+
+
 def test_get_component_type_unknown_returns_none() -> None:
     assert get_component_type(lib_id="Custom:Thing", footprint="") is None
     assert get_component_type(lib_id="", footprint="Whatever") is None
