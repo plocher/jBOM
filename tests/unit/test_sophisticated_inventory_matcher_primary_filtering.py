@@ -14,8 +14,11 @@ def _make_component(
     lib_id: str,
     value: str = "",
     footprint: str = "",
+    reference: str = "R1",
 ) -> Component:
-    return Component(reference="R1", lib_id=lib_id, value=value, footprint=footprint)
+    return Component(
+        reference=reference, lib_id=lib_id, value=value, footprint=footprint
+    )
 
 
 def _make_inventory_item(
@@ -56,9 +59,11 @@ def test_type_filter_rejects_mismatched_category() -> None:
 
 
 def test_type_filter_skipped_when_component_type_unknown() -> None:
+    # Use a neutral reference ("M1") that carries no RefDes signal, so that
+    # lib_id="Foo:ABC" produces no classification and the type filter is skipped.
     matcher = SophisticatedInventoryMatcher(MatchingOptions())
 
-    component = _make_component(lib_id="Foo:ABC")
+    component = _make_component(lib_id="Foo:ABC", reference="M1")
     item = _make_inventory_item(category="CAP")
 
     assert matcher._passes_primary_filters(component, item) is True

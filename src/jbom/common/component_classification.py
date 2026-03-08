@@ -155,8 +155,14 @@ _SIGNALS: list[ClassificationSignal] = [
     ClassificationSignal("RLY", 5.0, lambda n, f, r: r.startswith("K")),
     ClassificationSignal("OSC", 5.0, lambda n, f, r: r.startswith("Y")),
     ClassificationSignal("FUS", 5.0, lambda n, f, r: r.startswith("F")),
+    # Standard IPC passive-component designators (same tier as footprint
+    # library prefix signals — weight 4.0 outweighs IC name-pattern
+    # false-positives such as "NE" appearing inside "Generic").
+    ClassificationSignal("RES", 4.0, lambda n, f, r: r.startswith("R")),
+    ClassificationSignal("CAP", 4.0, lambda n, f, r: r.startswith("C")),
+    ClassificationSignal("IND", 4.0, lambda n, f, r: r.startswith("L")),
     # ------------------------------------------------------------------
-    # Single-char name prefix signals (weakest — easily overridden by any
+    # Single-char name prefix signals
     # of the above).
     # ------------------------------------------------------------------
     ClassificationSignal("RES", 1.0, lambda n, f, r: n.startswith("R")),
