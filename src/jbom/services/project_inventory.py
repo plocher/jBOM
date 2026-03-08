@@ -12,16 +12,13 @@ from jbom.common.component_utils import (
 )
 from jbom.common.constants import CommonFields
 from jbom.common.packages import PackageType
-from jbom.common.value_parsing import decode_typed_parametric
+from jbom.common.value_parsing import (
+    TYPED_PARAMETRIC_COLUMNS_BY_CATEGORY,
+    UNCLASSIFIED_CATEGORIES,
+    decode_typed_parametric,
+)
 
 log = logging.getLogger(__name__)
-
-_TYPED_PARAMETRIC_COLUMNS_BY_CATEGORY: dict[str, str] = {
-    "RES": "Resistance",
-    "CAP": "Capacitance",
-    "IND": "Inductance",
-}
-_UNCLASSIFIED_CATEGORIES = {"", "UNK", "UNKNOWN"}
 
 
 class ProjectInventoryGenerator:
@@ -276,14 +273,14 @@ class ProjectInventoryGenerator:
         """Return (effective_category, decode_category, category_was_promoted)."""
 
         normalized_category = normalize_component_type(source_category)
-        if normalized_category in _TYPED_PARAMETRIC_COLUMNS_BY_CATEGORY:
+        if normalized_category in TYPED_PARAMETRIC_COLUMNS_BY_CATEGORY:
             return source_category, normalized_category, False
-        if normalized_category not in _UNCLASSIFIED_CATEGORIES:
+        if normalized_category not in UNCLASSIFIED_CATEGORIES:
             return source_category, None, False
 
         populated_categories = [
             category
-            for category, column in _TYPED_PARAMETRIC_COLUMNS_BY_CATEGORY.items()
+            for category, column in TYPED_PARAMETRIC_COLUMNS_BY_CATEGORY.items()
             if str(row_for_decode.get(column, "")).strip()
         ]
 
@@ -293,7 +290,7 @@ class ProjectInventoryGenerator:
 
         if len(populated_categories) > 1:
             populated_columns = ", ".join(
-                _TYPED_PARAMETRIC_COLUMNS_BY_CATEGORY[category]
+                TYPED_PARAMETRIC_COLUMNS_BY_CATEGORY[category]
                 for category in populated_categories
             )
             log.warning(

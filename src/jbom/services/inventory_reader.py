@@ -17,7 +17,11 @@ from typing import List, Dict, Optional, Union
 from jbom.common.component_classification import normalize_component_type
 from jbom.common.component_id import is_current_version, make_component_id
 from jbom.common.types import InventoryItem, DEFAULT_PRIORITY
-from jbom.common.value_parsing import decode_typed_parametric
+from jbom.common.value_parsing import (
+    TYPED_PARAMETRIC_COLUMNS_BY_CATEGORY,
+    UNCLASSIFIED_CATEGORIES,
+    decode_typed_parametric,
+)
 from jbom.config.defaults import get_defaults
 from jbom.services.jlc_loader import JLCPrivateInventoryLoader
 
@@ -26,12 +30,6 @@ _DEFAULTS_PROFILE = get_defaults("generic")
 
 _ROW_TYPE_ITEM = "ITEM"
 _ROW_TYPE_COMPONENT = "COMPONENT"
-_TYPED_PARAMETRIC_COLUMNS_BY_CATEGORY: dict[str, str] = {
-    "RES": "Resistance",
-    "CAP": "Capacitance",
-    "IND": "Inductance",
-}
-_UNCLASSIFIED_CATEGORIES = {"", "UNK", "UNKNOWN"}
 
 
 # Suppress specific Numbers version warning
@@ -447,14 +445,14 @@ class InventoryReader:
         """Return (effective_category, decode_category) for typed decode gating."""
 
         normalized_category = normalize_component_type(source_category)
-        if normalized_category in _TYPED_PARAMETRIC_COLUMNS_BY_CATEGORY:
+        if normalized_category in TYPED_PARAMETRIC_COLUMNS_BY_CATEGORY:
             return source_category, normalized_category
-        if normalized_category not in _UNCLASSIFIED_CATEGORIES:
+        if normalized_category not in UNCLASSIFIED_CATEGORIES:
             return source_category, None
 
         populated_categories = [
             category
-            for category, column in _TYPED_PARAMETRIC_COLUMNS_BY_CATEGORY.items()
+            for category, column in TYPED_PARAMETRIC_COLUMNS_BY_CATEGORY.items()
             if str(row.get(column, "")).strip()
         ]
 
@@ -464,7 +462,7 @@ class InventoryReader:
 
         if len(populated_categories) > 1:
             populated_columns = ", ".join(
-                _TYPED_PARAMETRIC_COLUMNS_BY_CATEGORY[category]
+                TYPED_PARAMETRIC_COLUMNS_BY_CATEGORY[category]
                 for category in populated_categories
             )
             log.warning(

@@ -32,6 +32,8 @@ __all__ = [
     "henry_to_eia",
     "canonical_value",
     "decode_typed_parametric",
+    "TYPED_PARAMETRIC_COLUMNS_BY_CATEGORY",
+    "UNCLASSIFIED_CATEGORIES",
 ]
 
 _OHM_RE = re.compile(r"^\s*([0-9]*\.?[0-9]+)\s*([kKmMrR]?)\s*\+?\s*$")
@@ -438,6 +440,12 @@ _NORMALIZERS: dict[str, _Normalizer] = {
     "CAP": _Normalizer(parse_cap_to_farad, farad_to_eia, "Capacitance"),
     "IND": _Normalizer(parse_ind_to_henry, henry_to_eia, "Inductance"),
 }
+
+# Shared typed-field metadata used by inventory intake/generation services.
+TYPED_PARAMETRIC_COLUMNS_BY_CATEGORY: dict[str, str] = {
+    category: normalizer.column for category, normalizer in _NORMALIZERS.items()
+}
+UNCLASSIFIED_CATEGORIES: frozenset[str] = frozenset({"", "UNK", "UNKNOWN"})
 
 
 def canonical_value(category: str, text: str) -> str:
