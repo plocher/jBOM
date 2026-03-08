@@ -1,6 +1,188 @@
 # CHANGELOG
 
 
+## v6.30.0 (2026-03-08)
+
+### Bug Fixes
+
+* fix: treat KiCad ~ null as blank when merging old/new column names
+
+A schematic symbol may carry both W=100mW (old property name) and
+Power=~ (KiCad null placeholder for the new name). Previously ~, being
+a non-empty string, blocked the real value from filling the canonical
+Power slot. Fix: export is_null_value() from component_id.py (where ~
+semantics are already defined) and use it in _normalise_component_row
+so the first real (non-null) value always wins.
+
+Result: AltmillSwitchController 10K 0603 now shows Power=100mW instead
+of Power=~.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`f24ffb3`](https://github.com/plocher/jBOM/commit/f24ffb3239a913612f431455112efd0856d3b877))
+
+* fix: normalise V/A/W column names; strip COMPONENT rows to canonical set
+
+- Add COLUMN_NORMALISE (V->Voltage, A->Current, W->Power) and
+  COMPONENT_ROW_COLUMNS (13 canonical fields) to component_id.py
+- Fix _resolve_component_id and InventoryReader._process_inventory_data
+  to prefer long-form names (Voltage/Current/Power) with short-form
+  fallback (V/A/W) for backward compatibility
+- harvest_combined.py: normalise and strip each COMPONENT row to the
+  canonical set before writing combined.csv; remove dead
+  all_component_fields accumulation; _ordered_union now starts from
+  COMPONENT_ROW_COLUMNS and appends ITEM-specific columns
+- combined.csv: 57 -> 40 columns; COMPONENT rows now carry only the
+  13 canonical fields
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`89b3b8f`](https://github.com/plocher/jBOM/commit/89b3b8f55c161ba7e345cb93e8d50104350db222))
+
+* fix(examples): exclude corrupted I2C-12v-GPIO project from harvest
+
+Add --exclude PROJECT argument to scripts/harvest_combined.py so
+known-bad project directories can be skipped. I2C-12v-GPIO cannot be
+parsed by KiCad v9 and its harvested rows are unreliable.
+
+Regenerated examples/combined.csv excluding I2C-12v-GPIO:
+  12 projects, 266 total / 79 unique COMPONENT rows
+  100 SPCoast ITEM rows → 179 total rows
+
+Coverage: 30 searchable ITEM candidates (CAP:5 CON:13 DIO:1 IC:4 LED:5 RES:2)
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`b67f57a`](https://github.com/plocher/jBOM/commit/b67f57aad2b2fd8f7342105cbb091246de48f3c2))
+
+* fix: skip COMPONENT/ITEM dedup when using ITEM-only fallback in inventory-search
+
+In backward-compat mode (no COMPONENT rows), search_base == item_rows.
+Passing the same rows to _filter_already_covered_requirements caused every
+item to match itself and be filtered out, yielding Searchable items: 0.
+
+Guard: only apply dedup when component_rows is non-empty.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`c830570`](https://github.com/plocher/jBOM/commit/c830570bdae04345148f33df5aec3bd98a671388))
+
+### Features
+
+* feat: registry-based value normalizer + canonical Capacitance/Resistance/Inductance columns
+
+Refactor value normalization from ad-hoc per-parser logic into a
+registry-based architecture (_Normalizer / _NORMALIZERS in value_parsing.py).
+
+Changes:
+- value_parsing.py: add _Normalizer NamedTuple, _NORMALIZERS registry keyed
+  by 'RES'/'CAP'/'IND'; new canonical_value() dispatches through registry;
+  decode_typed_parametric() moved from inventory_reader.py into value_parsing;
+  farad_to_eia() bumped from .3g to .6g to avoid scientific notation for
+  1000uF; henry_to_eia() moved before _NORMALIZERS to fix forward-reference.
+- component_id.py: replace inline _canonical_value() with import of
+  canonical_value from value_parsing; VAL normalisation now uses registry.
+- inventory_reader.py: remove local _decode_typed_parametric/_TYPED_COLUMN;
+  import decode_typed_parametric from value_parsing instead.
+- project_inventory.py: decode resistance/capacitance/inductance via
+  decode_typed_parametric('RES'/'CAP'/'IND') in _create_inventory_item;
+  load() conditionally adds typed parametric field names.
+- cli/inventory.py: _inventory_item_to_row writes canonical EIA strings
+  (ohms_to_eia/farad_to_eia/henry_to_eia) to Resistance/Capacitance/Inductance
+  columns so '1.0uF' and '1uF' both render as '1uF'.
+- examples/combined.csv: regenerated with canonical Capacitance values.
+
+Before: CAP components had '1.0UF' in ComponentID and '1.0uF' in Capacitance.
+After:  Both use '1UF' / '1uF' respectively.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`40941fb`](https://github.com/plocher/jBOM/commit/40941fb230ef2ec09442a5d8839e9adb06510a5f))
+
+* feat: auto-upgrade stale ComponentIDs on inventory load
+
+InventoryReader._process_inventory_data now calls _resolve_component_id()
+for every COMPONENT row. If the stored ComponentID is stale (legacy REQ1|
+prefix, wrong version number, or blank), it is silently regenerated from
+the row's field data using make_component_id() before being stored in the
+InventoryItem.
+
+This means:
+- Files written with the old REQ1|... format continue to work
+- Deduplication against freshly-generated IDs always succeeds
+- No manual migration step is ever needed; stale IDs vanish on next load
+
+Detection helper is_current_version(cid) exported from common/component_id
+so other code can check staleness without reimplementing the version logic.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`ea883f7`](https://github.com/plocher/jBOM/commit/ea883f768c721c87b5137bef1bd77a1f248f5f4b))
+
+* feat(examples): harvest COMPONENT rows from all KiCad projects
+
+Add scripts/harvest_combined.py that:
+- Discovers all KiCad projects under a configurable projects directory
+- Runs 'jbom inventory --no-aggregate' on each project
+- Deduplicates COMPONENT rows on ComponentID (first-occurrence wins)
+- Filters blank field names (I2C-12v-GPIO has empty-key component property)
+- Appends ITEM rows from examples/SPCoast-INVENTORY.csv
+- Writes examples/combined.csv with union of all columns
+
+Results from 13 projects (270 total → 83 unique COMPONENT rows):
+  CAP:15, CON:13, DIO:1, IC:6, LED:5, RES:17, Unknown:26
+
+Combined with 100 SPCoast ITEM rows → 183 total rows, 58 columns.
+Coverage dry-run shows 31 searchable ITEM candidates (CAP:5, CON:13,
+DIO:1, IC:5, LED:5, RES:2) - sparse RES coverage motivates issue #99.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`ef120c0`](https://github.com/plocher/jBOM/commit/ef120c03ed9e6cd22d3e4974b97e745a29a3b8ff))
+
+* feat(inventory): implement COMPONENT/ITEM row architecture
+
+Introduce RowType + ComponentID schema, emit COMPONENT requirement rows from project inventory, route inventory-search to COMPONENT rows with ITEM dedupe, and keep BOM matching ITEM-only.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`efff15d`](https://github.com/plocher/jBOM/commit/efff15dc4ce2a14e40c24a238fd7da9cb023c5c7))
+
+### Refactoring
+
+* refactor: apply ALWAYS/CONDITIONAL column triage to ITEM fields in harvest
+
+Mirror the _NO_AGGREGATE_ALWAYS_FIELDS/_CONDITIONAL_FIELDS pattern from
+inventory.py:
+- _ITEM_ALWAYS_COLS: IPN, Description, Keywords, Manufacturer, MPN,
+  LCSC, Priority, Status — shown right after COMPONENT canonical columns
+- _ITEM_CONDITIONAL_COLS: secondary fields included only when at least
+  one ITEM row carries a non-empty value
+- Remaining item_fields: appended only when they carry data (consistent
+  with _build_no_aggregate_field_order)
+Combined column count: 40 -> 39 (Frequency had no data; now suppressed)
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`f7f5dfd`](https://github.com/plocher/jBOM/commit/f7f5dfd80384f714511cfa1b8f1f252ced427f9c))
+
+* refactor: canonical ComponentID + --per-instance flag + clean harvest
+
+Three interrelated improvements:
+
+1. common/component_id.py: single make_component_id() function
+   - Format: {version}|KEY=VALUE|... (version is first segment, bare int)
+   - ~ normalised to '' (same as blank — both mean unconstrained)
+   - Empty fields omitted after normalisation
+   - Keys sorted alphabetically for order-independence
+   - _VERSION=1 constant: bump when encoding rules change; stale IDs
+     detectable via cid.split('|')[0] != str(_VERSION)
+   - Example: 1|CAT=RES|PKG=0603|VAL=330R|W=100MW
+   - project_inventory._generate_group_key() delegates here exclusively;
+     no code may construct a ComponentID string directly
+
+2. inventory: rename --no-aggregate to --per-instance
+   - --no-aggregate kept as hidden deprecated alias (dest='per_instance')
+   - Internal function renamed _generate_per_instance_inventory_rows
+   - ProjectInventoryGenerator.load_no_aggregate -> load_per_instance
+   - --per-instance purpose made explicit: one row per schematic instance
+     with UUID/SourceFile for jbom annotate back-annotation workflow
+
+3. harvest script: use plain jbom inventory (aggregated)
+   - Aggregated output already emits RowType=COMPONENT + ComponentID
+     without per-instance fields (Project, ProjectName, UUID, SourceFile,
+     Reference) — those belong only in --per-instance output
+   - combined.csv: 79 unique COMPONENT rows + 100 SPCoast ITEM rows,
+     57 columns (down from 58; per-instance fields correctly absent)
+   - ComponentIDs now versioned: 1|CAT=CAP|PKG=0603|V=50V|VAL=1.0UF
+
+All 427 pytest + 202 behave pass.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`7411401`](https://github.com/plocher/jBOM/commit/74114011cf3217a37f8b3b80bcb4d6e1dd4e0bbf))
+
+
 ## v6.29.0 (2026-03-07)
 
 ### Features
