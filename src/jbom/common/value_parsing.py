@@ -440,6 +440,12 @@ _NORMALIZERS: dict[str, _Normalizer] = {
     "CAP": _Normalizer(parse_cap_to_farad, farad_to_eia, "Capacitance"),
     "IND": _Normalizer(parse_ind_to_henry, henry_to_eia, "Inductance"),
 }
+"""R/C/L-only typed normalizer registry.
+
+This registry intentionally handles only single-dominant numeric categories
+(resistance/capacitance/inductance). Non-RCL categories (LED, CON, etc.) are
+passthrough at this layer until scoring-based classification work lands (#149).
+"""
 
 # Shared typed-field metadata used by inventory intake/generation services.
 TYPED_PARAMETRIC_COLUMNS_BY_CATEGORY: dict[str, str] = {

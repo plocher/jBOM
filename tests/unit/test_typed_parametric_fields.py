@@ -281,6 +281,17 @@ class TestInventoryReaderCategoryGatedDecode:
         assert items[0].capacitance is None
         assert items[0].inductance is None
 
+    def test_led_category_does_not_decode_rcl_columns(self) -> None:
+        csv = (
+            _INV_HEADER
+            + "D1,,LED,LED,SMD,Green,,,CLED_RGB,10K,100nF,10uH,0603,,,,,1,,,,\n"
+        )
+        items = _csv_reader(csv)
+        assert items[0].category == "LED"
+        assert items[0].resistance is None
+        assert items[0].capacitance is None
+        assert items[0].inductance is None
+
 
 class TestProjectInventoryCategoryGatedDecode:
     def test_resistor_category_does_not_decode_capacitance_attr(self) -> None:
@@ -336,6 +347,33 @@ class TestProjectInventoryCategoryGatedDecode:
             "ambiguous typed parametric promotion" in record.message.lower()
             for record in caplog.records
         )
+
+    def test_c_prefixed_led_attributes_passthrough_and_no_typed_decode(self) -> None:
+        component = Component(
+            reference="D1",
+            lib_id="Custom:CLED_RGB",
+            value="Green",
+            footprint="LED_SMD:LED_0603_1608Metric",
+            properties={
+                "Vf": "2.1V",
+                "If": "20mA",
+                "Color": "Green",
+                "Wavelength": "525nm",
+            },
+        )
+        items, fields = ProjectInventoryGenerator([component]).load()
+        item = items[0]
+        assert item.category == "LED"
+        assert item.resistance is None
+        assert item.capacitance is None
+        assert item.inductance is None
+        assert "Resistance" not in fields
+        assert "Capacitance" not in fields
+        assert "Inductance" not in fields
+        assert item.raw_data["Vf"] == "2.1V"
+        assert item.raw_data["If"] == "20mA"
+        assert item.raw_data["Color"] == "Green"
+        assert item.raw_data["Wavelength"] == "525nm"
 
 
 # ---------------------------------------------------------------------------

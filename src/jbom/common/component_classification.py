@@ -139,7 +139,7 @@ def _get_component_type_heuristic(lib_id: str, footprint: str = "") -> Optional[
         return ComponentType.INTEGRATED_CIRCUIT
 
     # Pattern-based detection - check specific patterns before generic prefixes
-    if "LED" in component_upper:  # Check LED before L prefix
+    if "LED" in component_upper:  # Guard before generic C*/L* prefix rules (#147)
         return ComponentType.LED
     if component_upper.startswith("LM"):  # Common IC prefix (LM358, etc.)
         return ComponentType.INTEGRATED_CIRCUIT
