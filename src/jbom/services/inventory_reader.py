@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import List, Dict, Optional, Union
 
 # warnings imported at line 12 already
+from jbom.common.component_classification import normalize_component_type
 from jbom.common.component_id import is_current_version, make_component_id
 from jbom.common.types import InventoryItem, DEFAULT_PRIORITY
 from jbom.common.value_parsing import decode_typed_parametric
@@ -25,6 +26,12 @@ _DEFAULTS_PROFILE = get_defaults("generic")
 
 _ROW_TYPE_ITEM = "ITEM"
 _ROW_TYPE_COMPONENT = "COMPONENT"
+_TYPED_PARAMETRIC_COLUMNS_BY_CATEGORY: dict[str, str] = {
+    "RES": "Resistance",
+    "CAP": "Capacitance",
+    "IND": "Inductance",
+}
+_UNCLASSIFIED_CATEGORIES = {"", "UNK", "UNKNOWN"}
 
 
 # Suppress specific Numbers version warning
@@ -343,10 +350,25 @@ class InventoryReader:
             # No need to parse stocking info - Priority column handles all ranking
             category = row.get("Category", "")
             value = row.get("Value", "")
+            row_context = (
+                ipn
+                or str(row.get("ComponentID", "")).strip()
+                or str(row.get("UUID", "")).strip()
+                or str(value).strip()
+                or "<row>"
+            )
+            (
+                effective_category,
+                decode_category,
+            ) = self._resolve_category_for_typed_decode(
+                source_category=category,
+                row=row,
+                context=row_context,
+            )
             item = InventoryItem(
                 ipn=ipn,
                 keywords=row.get("Keywords", ""),
-                category=category,
+                category=effective_category,
                 description=row.get("Description", ""),
                 smd=row.get("SMD", ""),
                 value=value,
@@ -393,15 +415,66 @@ class InventoryReader:
                 # Typed parametric fields decoded at intake (#90).
                 # Each call passes the TARGET field's category so the helper knows
                 # which column to look in and which parse function to apply.
-                resistance=decode_typed_parametric("RES", value, row),
-                capacitance=decode_typed_parametric("CAP", value, row),
-                inductance=decode_typed_parametric("IND", value, row),
+                resistance=(
+                    decode_typed_parametric("RES", value, row)
+                    if decode_category == "RES"
+                    else None
+                ),
+                capacitance=(
+                    decode_typed_parametric("CAP", value, row)
+                    if decode_category == "CAP"
+                    else None
+                ),
+                inductance=(
+                    decode_typed_parametric("IND", value, row)
+                    if decode_category == "IND"
+                    else None
+                ),
                 name=(row.get("Name") or "").strip(),
                 source=source,
                 source_file=source_file,
                 raw_data=row,
             )
             self.inventory.append(item)
+
+    def _resolve_category_for_typed_decode(
+        self,
+        *,
+        source_category: str,
+        row: Dict[str, str],
+        context: str,
+    ) -> tuple[str, Optional[str]]:
+        """Return (effective_category, decode_category) for typed decode gating."""
+
+        normalized_category = normalize_component_type(source_category)
+        if normalized_category in _TYPED_PARAMETRIC_COLUMNS_BY_CATEGORY:
+            return source_category, normalized_category
+        if normalized_category not in _UNCLASSIFIED_CATEGORIES:
+            return source_category, None
+
+        populated_categories = [
+            category
+            for category, column in _TYPED_PARAMETRIC_COLUMNS_BY_CATEGORY.items()
+            if str(row.get(column, "")).strip()
+        ]
+
+        if len(populated_categories) == 1:
+            promoted_category = populated_categories[0]
+            return promoted_category, promoted_category
+
+        if len(populated_categories) > 1:
+            populated_columns = ", ".join(
+                _TYPED_PARAMETRIC_COLUMNS_BY_CATEGORY[category]
+                for category in populated_categories
+            )
+            log.warning(
+                "Ambiguous typed parametric promotion for unclassified inventory row '%s': "
+                "multiple typed attributes set (%s). Skipping typed decode.",
+                context,
+                populated_columns,
+            )
+
+        return source_category, None
 
     def _get_canonical_electrical_value(
         self, row: Dict[str, str], *, canonical: str

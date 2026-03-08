@@ -149,6 +149,10 @@ def _get_component_type_heuristic(lib_id: str, footprint: str = "") -> Optional[
         return ComponentType.INTEGRATED_CIRCUIT
     if component_upper.startswith("74"):  # Logic IC family (74HC00, etc.)
         return ComponentType.INTEGRATED_CIRCUIT
+    if "CONN" in component_upper or "J" in component_upper:
+        return ComponentType.CONNECTOR
+    if "INDUCTOR" in component_upper or "FERRITE" in component_upper:
+        return ComponentType.INDUCTOR
     if component_upper.startswith("R") and not _has_ic_indicators(
         component_upper, footprint_upper
     ):
@@ -169,8 +173,6 @@ def _get_component_type_heuristic(lib_id: str, footprint: str = "") -> Optional[
         return ComponentType.TRANSISTOR
     if component_upper.startswith("U"):  # U prefix typically means IC
         return ComponentType.INTEGRATED_CIRCUIT
-    if "CONN" in component_upper or "J" in component_upper:
-        return ComponentType.CONNECTOR
     if "SW" in component_upper:
         return ComponentType.SWITCH
 

@@ -79,6 +79,16 @@ def test_get_component_type_detects_lm_prefix_as_ic() -> None:
     )
 
 
+def test_get_component_type_connector_name_not_misclassified_as_cap() -> None:
+    assert (
+        get_component_type(
+            lib_id="SPCoast:CONNECTOR_01X04_V",
+            footprint="SPCoast:Connector_01x04_V",
+        )
+        == "CON"
+    )
+
+
 def test_get_component_type_unknown_returns_none() -> None:
     assert get_component_type(lib_id="Custom:Thing", footprint="") is None
     assert get_component_type(lib_id="", footprint="Whatever") is None

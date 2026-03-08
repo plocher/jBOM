@@ -20,6 +20,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - LCSC/JLCPCB provider architecture documented in `docs/dev/architecture/adr/0002-jlcpcb-lcsc-provider.md`; user reference at `docs/lcsc-provider.md`.
 
 ### Changed
+- Component classifier heuristic now checks connector/specific-name patterns before generic single-letter prefixes, preventing `CONNECTOR_*` symbols from being misclassified as capacitors (#145).
+- Typed parametric decode is now category-gated in both project inventory generation and inventory CSV intake: only the category-matching typed field is decoded, with UNK/Unknown/blank promotion only when exactly one typed attribute is present; ambiguous typed attributes now log a warning and decode none (#146).
 - Mouser provider now supports configurable timeout + retry/backoff for transient failures.
 - LCSC supplier profile now uses `jlcpcb_api` (live API) instead of the `jlcparts_sqlite` stub.
 - `inventory-search` now deduplicates identical queries within a run to reduce provider API calls.
