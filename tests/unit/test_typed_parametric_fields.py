@@ -24,8 +24,9 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 SRC_DIR = PROJECT_ROOT / "src"
 sys.path.insert(0, str(SRC_DIR))
 
-from jbom.common.types import InventoryItem  # noqa: E402
+from jbom.common.types import Component, InventoryItem  # noqa: E402
 from jbom.services.inventory_reader import InventoryReader  # noqa: E402
+from jbom.services.project_inventory import ProjectInventoryGenerator  # noqa: E402
 from jbom.services.search.inventory_search_service import (
     InventorySearchService,
 )  # noqa: E402
@@ -237,6 +238,103 @@ class TestInventoryReaderDisagreementWarning:
         assert not any(
             "conflict" in r.message.lower() or "disagree" in r.message.lower()
             for r in caplog.records
+        )
+
+
+class TestInventoryReaderCategoryGatedDecode:
+    def test_resistor_category_does_not_decode_capacitance_column(self) -> None:
+        csv = _INV_HEADER + "R1,,RES,RES,SMD,10K,,,,10K,100nF,,0603,1%,,,,1,,,,\n"
+        items = _csv_reader(csv)
+        assert items[0].category == "RES"
+        assert items[0].resistance == pytest.approx(10_000.0)
+        assert items[0].capacitance is None
+        assert items[0].inductance is None
+
+    def test_unknown_category_promotes_when_single_typed_attr_present(self) -> None:
+        csv = _INV_HEADER + "X1,,UNK,Unknown,SMD,N/A,,,,47K,,,0603,,,,,1,,,,\n"
+        items = _csv_reader(csv)
+        assert items[0].category == "RES"
+        assert items[0].resistance == pytest.approx(47_000.0)
+        assert items[0].capacitance is None
+        assert items[0].inductance is None
+
+    def test_unknown_category_ambiguity_logs_warning_and_decodes_none(
+        self, caplog
+    ) -> None:
+        csv = _INV_HEADER + "X1,,UNK,Unknown,SMD,N/A,,,,10K,100nF,,0603,,,,,1,,,,\n"
+        with caplog.at_level(logging.WARNING, logger="jbom.services.inventory_reader"):
+            items = _csv_reader(csv)
+        assert items[0].category == "Unknown"
+        assert items[0].resistance is None
+        assert items[0].capacitance is None
+        assert items[0].inductance is None
+        assert any(
+            "ambiguous typed parametric promotion" in record.message.lower()
+            for record in caplog.records
+        )
+
+    def test_non_unknown_category_is_not_promoted_by_typed_attrs(self) -> None:
+        csv = _INV_HEADER + "J1,,CON,CON,SMD,0.100,,,,10K,100nF,,1X04,,,,,1,,,,\n"
+        items = _csv_reader(csv)
+        assert items[0].category == "CON"
+        assert items[0].resistance is None
+        assert items[0].capacitance is None
+        assert items[0].inductance is None
+
+
+class TestProjectInventoryCategoryGatedDecode:
+    def test_resistor_category_does_not_decode_capacitance_attr(self) -> None:
+        component = Component(
+            reference="R1",
+            lib_id="Device:R",
+            value="10K",
+            footprint="Resistor_SMD:R_0603_1608Metric",
+            properties={"Capacitance": "100nF"},
+        )
+        items, _ = ProjectInventoryGenerator([component]).load()
+        item = items[0]
+        assert item.category == "RES"
+        assert item.resistance == pytest.approx(10_000.0)
+        assert item.capacitance is None
+        assert item.inductance is None
+        assert item.raw_data["Capacitance"] == "100nF"
+
+    def test_unknown_category_promotes_when_single_typed_attr_present(self) -> None:
+        component = Component(
+            reference="X1",
+            lib_id="Custom:Widget",
+            value="N/A",
+            footprint="Custom:Footprint",
+            properties={"Resistance": "47K"},
+        )
+        items, _ = ProjectInventoryGenerator([component]).load()
+        item = items[0]
+        assert item.category == "RES"
+        assert item.resistance == pytest.approx(47_000.0)
+        assert item.capacitance is None
+        assert item.inductance is None
+        assert "CAT=RES" in item.component_id
+
+    def test_unknown_category_ambiguity_logs_warning_and_decodes_none(
+        self, caplog
+    ) -> None:
+        component = Component(
+            reference="X1",
+            lib_id="Custom:Widget",
+            value="N/A",
+            footprint="Custom:Footprint",
+            properties={"Resistance": "10K", "Capacitance": "100nF"},
+        )
+        with caplog.at_level(logging.WARNING, logger="jbom.services.project_inventory"):
+            items, _ = ProjectInventoryGenerator([component]).load()
+        item = items[0]
+        assert item.category == "Unknown"
+        assert item.resistance is None
+        assert item.capacitance is None
+        assert item.inductance is None
+        assert any(
+            "ambiguous typed parametric promotion" in record.message.lower()
+            for record in caplog.records
         )
 
 
