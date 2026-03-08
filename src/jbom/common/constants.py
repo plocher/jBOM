@@ -21,6 +21,7 @@ class ComponentType:
     OSCILLATOR = "OSC"
     ANALOG = "ANA"
     SILK_SCREEN = "SLK"
+    FUSE = "FUS"
 
 
 # Diagnostic issue type constants
@@ -142,6 +143,7 @@ CATEGORY_FIELDS = {
     ComponentType.SILK_SCREEN: COMMON_FIELDS + ["Form"],
     ComponentType.RELAY: COMMON_FIELDS + ["Form"],
     ComponentType.SWITCH: COMMON_FIELDS + ["Form"],
+    ComponentType.FUSE: COMMON_FIELDS + [CommonFields.VOLTAGE, CommonFields.AMPERAGE],
 }
 
 # Define how Value:X field should be interpreted for each category
@@ -174,6 +176,7 @@ COMPONENT_TYPE_MAPPING = {
     "IC": ComponentType.INTEGRATED_CIRCUIT,
     "LM358": ComponentType.INTEGRATED_CIRCUIT,
     "LM": ComponentType.INTEGRATED_CIRCUIT,  # Common IC prefix
+    "FUSE": ComponentType.FUSE,
 }
 
 

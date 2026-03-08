@@ -8,27 +8,213 @@ We want:
 - an explicit "component classifier" concept so more sophisticated approaches
   (rules/config-driven) can be introduced later without rewriting call sites
 
-For now, the default classifier is a heuristic implementation that mirrors the
-existing jbom-new POC behavior.
+The default classifier uses a scoring / bidding model: each signal contributes a
+weighted score to a candidate category, and the category with the highest total
+score wins.  Signal weight reflects specificity — a longer, more precise match
+outweighs a short prefix match.  This removes all ordering sensitivity from the
+original if/elif chain.
+
+See: GitHub issue #149
 """
 
 from __future__ import annotations
 
-from typing import Optional, Protocol
+import logging
+from dataclasses import dataclass
+from typing import Callable, Optional, Protocol
 
 from jbom.common.constants import (
     CATEGORY_FIELDS,
     COMPONENT_TYPE_MAPPING,
     DEFAULT_CATEGORY_FIELDS,
     VALUE_INTERPRETATION,
-    ComponentType,
 )
+
+_logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Classification signal infrastructure
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class ClassificationSignal:
+    """A weighted classification signal for component type scoring.
+
+    Attributes:
+        category: The ComponentType identifier this signal votes for.
+        weight: How strongly this signal votes (higher = more authoritative).
+        match: Callable ``(component_upper, footprint_upper, ref_upper) -> bool``
+            that returns True when the signal applies.
+    """
+
+    category: str
+    weight: float
+    match: Callable[[str, str, str], bool]
+
+
+def _is_ic_footprint(footprint_upper: str) -> bool:
+    """Return True if the footprint indicates an integrated circuit."""
+
+    ic_footprint_patterns = [
+        "SOIC",
+        "QFP",
+        "QFN",
+        "BGA",
+        "DIP",
+        "PDIP",
+        "PLCC",
+        "LGA",
+        "TQFP",
+        "LQFP",
+        "SSOP",
+        "TSSOP",
+        "MSOP",
+        "SOT23-5",
+        "SOT23-6",
+        "SC70",
+        "WLCSP",
+        "UFBGA",
+        "VQFN",
+        "HVQFN",
+        "DFQFN",
+        "UDFN",
+    ]
+    return any(pattern in footprint_upper for pattern in ic_footprint_patterns)
+
+
+# ---------------------------------------------------------------------------
+# Signal table
+# ---------------------------------------------------------------------------
+# Signals are independent — order does not affect correctness.
+# Weight tiers:
+#   6.0  IC footprint or FB RefDes (very reliable hardware signal)
+#   5.0  multi-char specific substring / IPC RefDes convention
+#   4.0  footprint library prefix or RefDes for common types
+#   3.0  IC-prefix patterns / RefDes with moderate confidence
+#   2.0  single-char prefix with higher-than-usual IC affinity (U, Q)
+#   1.5  broad but useful single-char connector hint (J in name)
+#   1.0  single-char name prefix (weakest, easily overridden)
+
+_SIGNALS: list[ClassificationSignal] = [
+    # ------------------------------------------------------------------
+    # High-specificity multi-char name substrings
+    # ------------------------------------------------------------------
+    ClassificationSignal("CON", 5.0, lambda n, f, r: "CONN" in n),
+    ClassificationSignal("LED", 3.0, lambda n, f, r: "LED" in n),
+    ClassificationSignal("IND", 5.0, lambda n, f, r: "INDUCTOR" in n),
+    ClassificationSignal("IND", 5.0, lambda n, f, r: "FERRITE" in n),
+    ClassificationSignal("SWI", 4.0, lambda n, f, r: "SW" in n),
+    ClassificationSignal("RLY", 5.0, lambda n, f, r: "RELAY" in n),
+    ClassificationSignal("OSC", 5.0, lambda n, f, r: "CRYSTAL" in n),
+    ClassificationSignal("OSC", 5.0, lambda n, f, r: "XTAL" in n),
+    ClassificationSignal("FUS", 5.0, lambda n, f, r: "FUSE" in n),
+    # ------------------------------------------------------------------
+    # IC indicator name patterns (override single-char prefix classification).
+    # These must outweigh the single-char prefix signals (1.0–2.0).
+    # ------------------------------------------------------------------
+    ClassificationSignal("IC", 3.0, lambda n, f, r: "LM" in n),
+    ClassificationSignal("IC", 3.0, lambda n, f, r: "TL" in n),
+    ClassificationSignal("IC", 3.0, lambda n, f, r: "NE" in n),
+    ClassificationSignal("IC", 3.0, lambda n, f, r: "MC" in n),
+    ClassificationSignal("IC", 3.0, lambda n, f, r: "CD" in n),
+    ClassificationSignal("IC", 3.0, lambda n, f, r: "SN" in n),
+    ClassificationSignal("IC", 3.0, lambda n, f, r: "74" in n),
+    ClassificationSignal("IC", 3.0, lambda n, f, r: "40" in n),
+    ClassificationSignal("IC", 3.0, lambda n, f, r: "AD" in n),
+    ClassificationSignal("IC", 3.0, lambda n, f, r: "MAX" in n),
+    ClassificationSignal("IC", 3.0, lambda n, f, r: "LT" in n),
+    ClassificationSignal("IC", 3.0, lambda n, f, r: "MCP" in n),
+    ClassificationSignal("IC", 3.0, lambda n, f, r: "PIC" in n),
+    ClassificationSignal("IC", 3.0, lambda n, f, r: "ATMEGA" in n),
+    ClassificationSignal("IC", 3.0, lambda n, f, r: "STM32" in n),
+    ClassificationSignal("IC", 3.0, lambda n, f, r: "ESP" in n),
+    # ------------------------------------------------------------------
+    # Footprint-based signals
+    # ------------------------------------------------------------------
+    # IC package footprints are highly authoritative
+    ClassificationSignal("IC", 6.0, lambda n, f, r: _is_ic_footprint(f)),
+    # Footprint library prefix signals for passive/discrete categories
+    ClassificationSignal("CAP", 4.0, lambda n, f, r: "CAPACITOR" in f),
+    ClassificationSignal("RES", 4.0, lambda n, f, r: "RESISTOR" in f),
+    ClassificationSignal("LED", 4.0, lambda n, f, r: "LED" in f),
+    ClassificationSignal("CON", 4.0, lambda n, f, r: "CONNECTOR" in f),
+    ClassificationSignal("DIO", 4.0, lambda n, f, r: "DIODE" in f),
+    ClassificationSignal("IND", 4.0, lambda n, f, r: "INDUCTOR" in f),
+    # ------------------------------------------------------------------
+    # Reference designator signals (IPC convention — most authoritative
+    # non-footprint signal since the designer explicitly assigned it).
+    # FB at 6.0 outweighs the broader F→FUS signal (5.0) for "FB*" refs.
+    # ------------------------------------------------------------------
+    ClassificationSignal("CON", 5.0, lambda n, f, r: r.startswith("J")),
+    ClassificationSignal("IND", 6.0, lambda n, f, r: r.startswith("FB")),
+    ClassificationSignal("DIO", 3.0, lambda n, f, r: r.startswith("D")),
+    ClassificationSignal("Q", 3.0, lambda n, f, r: r.startswith("Q")),
+    ClassificationSignal("IC", 3.0, lambda n, f, r: r.startswith("U")),
+    ClassificationSignal("RLY", 5.0, lambda n, f, r: r.startswith("K")),
+    ClassificationSignal("OSC", 5.0, lambda n, f, r: r.startswith("Y")),
+    ClassificationSignal("FUS", 5.0, lambda n, f, r: r.startswith("F")),
+    # ------------------------------------------------------------------
+    # Single-char name prefix signals (weakest — easily overridden by any
+    # of the above).
+    # ------------------------------------------------------------------
+    ClassificationSignal("RES", 1.0, lambda n, f, r: n.startswith("R")),
+    ClassificationSignal("CAP", 1.0, lambda n, f, r: n.startswith("C")),
+    ClassificationSignal("IND", 1.0, lambda n, f, r: n.startswith("L")),
+    ClassificationSignal("DIO", 1.0, lambda n, f, r: n.startswith("D")),
+    ClassificationSignal("Q", 2.0, lambda n, f, r: n.startswith("Q")),
+    ClassificationSignal("IC", 2.0, lambda n, f, r: n.startswith("U")),
+    ClassificationSignal("CON", 1.5, lambda n, f, r: "J" in n),
+]
+
+
+def _classify_by_score(
+    component_upper: str, footprint_upper: str, ref_upper: str
+) -> Optional[str]:
+    """Score all active signals and return the highest-scoring category.
+
+    Args:
+        component_upper: Uppercased component name (lib_id part after ``:``)
+        footprint_upper: Uppercased KiCad footprint string.
+        ref_upper: Uppercased reference designator (e.g. ``"R1"``, ``"U3"``).
+
+    Returns:
+        The winning category string, or ``None`` if no signals matched.
+    """
+
+    scores: dict[str, float] = {}
+    for signal in _SIGNALS:
+        if signal.match(component_upper, footprint_upper, ref_upper):
+            scores[signal.category] = scores.get(signal.category, 0.0) + signal.weight
+
+    if not scores:
+        _logger.debug(
+            "classify(%s, fp=%s, ref=%s): no signals matched → None",
+            component_upper,
+            footprint_upper,
+            ref_upper,
+        )
+        return None
+
+    winner = max(scores, key=scores.__getitem__)
+    _logger.debug(
+        "classify(%s, fp=%s, ref=%s): scores=%s → %s",
+        component_upper,
+        footprint_upper,
+        ref_upper,
+        scores,
+        winner,
+    )
+    return winner
 
 
 class ComponentClassifier(Protocol):
     """Classify a schematic component into a standardized component type."""
 
-    def classify(self, lib_id: str, footprint: str = "") -> Optional[str]:
+    def classify(
+        self, lib_id: str, footprint: str = "", reference: str = ""
+    ) -> Optional[str]:
         """Return a standardized component type (e.g., "RES", "CAP") or None."""
 
 
@@ -40,12 +226,18 @@ class HeuristicComponentClassifier:
     Notes:
         - Return values use jbom-new's canonical type identifiers from
           :class:`jbom.common.constants.ComponentType`.
-        - This implementation is a direct extraction of the existing
-          `jbom.common.component_utils.get_component_type` heuristic.
+        - Uses a scoring / bidding model where each signal contributes a
+          weighted score.  The category with the highest total score wins.
     """
 
-    def classify(self, lib_id: str, footprint: str = "") -> Optional[str]:
-        return _get_component_type_heuristic(lib_id=lib_id, footprint=footprint)
+    def classify(
+        self, lib_id: str, footprint: str = "", reference: str = ""
+    ) -> Optional[str]:
+        """Classify a component by scoring weighted signals."""
+
+        return _get_component_type_heuristic(
+            lib_id=lib_id, footprint=footprint, reference=reference
+        )
 
 
 DEFAULT_COMPONENT_CLASSIFIER: ComponentClassifier = HeuristicComponentClassifier()
@@ -93,14 +285,17 @@ def get_value_interpretation(component_type: str) -> Optional[str]:
 def get_component_type(
     lib_id: str,
     footprint: str = "",
+    reference: str = "",
     *,
     classifier: ComponentClassifier = DEFAULT_COMPONENT_CLASSIFIER,
 ) -> Optional[str]:
-    """Determine component type from library ID and footprint.
+    """Determine component type from library ID, footprint, and reference designator.
 
     Args:
         lib_id: KiCad library ID (e.g., "Device:R").
         footprint: KiCad footprint name.
+        reference: KiCad reference designator (e.g., "R1", "U3", "J2").
+            When provided, IPC reference designator prefix signals are active.
         classifier: The classifier to use.
 
     Returns:
@@ -112,11 +307,18 @@ def get_component_type(
     if not lib_id:
         return None
 
-    return classifier.classify(lib_id, footprint)
+    return classifier.classify(lib_id, footprint, reference)
 
 
-def _get_component_type_heuristic(lib_id: str, footprint: str = "") -> Optional[str]:
-    """Heuristic implementation of component type detection."""
+def _get_component_type_heuristic(
+    lib_id: str, footprint: str = "", reference: str = ""
+) -> Optional[str]:
+    """Scoring-based implementation of component type detection.
+
+    Each signal in ``_SIGNALS`` contributes a weighted vote to a category.
+    The category with the highest total score wins.  Signals are independent—
+    there is no ordering dependency.
+    """
 
     if not lib_id:
         return None
@@ -129,110 +331,18 @@ def _get_component_type_heuristic(lib_id: str, footprint: str = "") -> Optional[
 
     component_upper = component_part.upper()
     footprint_upper = footprint.upper() if footprint else ""
+    ref_upper = reference.upper() if reference else ""
 
-    # Direct mapping lookup first
+    # Fast path: exact name lookup beats any heuristic.
     if component_upper in COMPONENT_TYPE_MAPPING:
-        return COMPONENT_TYPE_MAPPING[component_upper]
+        result = COMPONENT_TYPE_MAPPING[component_upper]
+        _logger.debug(
+            "classify(%s, fp=%s, ref=%s): exact mapping → %s",
+            component_upper,
+            footprint_upper,
+            ref_upper,
+            result,
+        )
+        return result
 
-    # Footprint-based detection for ICs (check before generic patterns)
-    if _is_ic_footprint(footprint_upper):
-        return ComponentType.INTEGRATED_CIRCUIT
-
-    # Pattern-based detection - check specific patterns before generic prefixes
-    if "LED" in component_upper:  # Guard before generic C*/L* prefix rules (#147)
-        return ComponentType.LED
-    if component_upper.startswith("LM"):  # Common IC prefix (LM358, etc.)
-        return ComponentType.INTEGRATED_CIRCUIT
-    if (
-        component_upper == "IC"
-    ):  # Exact IC designation (avoid false positive in GENERIC, etc.)
-        return ComponentType.INTEGRATED_CIRCUIT
-    if component_upper.startswith("74"):  # Logic IC family (74HC00, etc.)
-        return ComponentType.INTEGRATED_CIRCUIT
-    if "CONN" in component_upper or "J" in component_upper:
-        return ComponentType.CONNECTOR
-    if "INDUCTOR" in component_upper or "FERRITE" in component_upper:
-        return ComponentType.INDUCTOR
-    if component_upper.startswith("R") and not _has_ic_indicators(
-        component_upper, footprint_upper
-    ):
-        return ComponentType.RESISTOR
-    if component_upper.startswith("C") and not _has_ic_indicators(
-        component_upper, footprint_upper
-    ):
-        return ComponentType.CAPACITOR
-    if component_upper.startswith("L") and not _has_ic_indicators(
-        component_upper, footprint_upper
-    ):
-        return ComponentType.INDUCTOR
-    if component_upper.startswith("D") and not _has_ic_indicators(
-        component_upper, footprint_upper
-    ):
-        return ComponentType.DIODE
-    if component_upper.startswith("Q"):
-        return ComponentType.TRANSISTOR
-    if component_upper.startswith("U"):  # U prefix typically means IC
-        return ComponentType.INTEGRATED_CIRCUIT
-    if "SW" in component_upper:
-        return ComponentType.SWITCH
-
-    return None
-
-
-def _is_ic_footprint(footprint_upper: str) -> bool:
-    """Return True if the footprint indicates an integrated circuit."""
-
-    ic_footprint_patterns = [
-        "SOIC",
-        "QFP",
-        "QFN",
-        "BGA",
-        "DIP",
-        "PDIP",
-        "PLCC",
-        "LGA",
-        "TQFP",
-        "LQFP",
-        "SSOP",
-        "TSSOP",
-        "MSOP",
-        "SOT23-5",
-        "SOT23-6",
-        "SC70",
-        "WLCSP",
-        "UFBGA",
-        "VQFN",
-        "HVQFN",
-        "DFQFN",
-        "UDFN",
-    ]
-    return any(pattern in footprint_upper for pattern in ic_footprint_patterns)
-
-
-def _has_ic_indicators(component_upper: str, footprint_upper: str) -> bool:
-    """Return True if component likely represents an IC despite generic prefixes."""
-
-    ic_patterns = [
-        "LM",
-        "TL",
-        "NE",
-        "MC",
-        "CD",
-        "SN",
-        "74",
-        "40",
-        "AD",
-        "MAX",
-        "LT",
-        "MCP",
-        "PIC",
-        "ATMEGA",
-        "STM32",
-        "ESP",
-    ]
-
-    for pattern in ic_patterns:
-        if pattern in component_upper:
-            return True
-
-    return _is_ic_footprint(footprint_upper)
+    return _classify_by_score(component_upper, footprint_upper, ref_upper)

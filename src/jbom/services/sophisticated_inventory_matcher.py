@@ -122,7 +122,9 @@ class SophisticatedInventoryMatcher:
            - Otherwise normalized string equality
         """
 
-        comp_type = get_component_type(component.lib_id, component.footprint)
+        comp_type = get_component_type(
+            component.lib_id, component.footprint, component.reference
+        )
         comp_pkg = extract_package_from_footprint(component.footprint)
         comp_val_norm = (
             ""
@@ -197,7 +199,9 @@ class SophisticatedInventoryMatcher:
         if not component.value or not item.value:
             return False
 
-        comp_type = get_component_type(component.lib_id, component.footprint)
+        comp_type = get_component_type(
+            component.lib_id, component.footprint, component.reference
+        )
 
         if comp_type == ComponentType.RESISTOR:
             comp_num = parse_res_to_ohms(component.value)
@@ -282,7 +286,9 @@ class SophisticatedInventoryMatcher:
 
         score = 0
 
-        comp_type = get_component_type(component.lib_id, component.footprint)
+        comp_type = get_component_type(
+            component.lib_id, component.footprint, component.reference
+        )
         if comp_type and comp_type in (item.category or ""):
             score += 50
 

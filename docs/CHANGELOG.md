@@ -19,10 +19,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - LCSC keyword search provider using the public JLCPCB live parts API (`jlcpcb_api`).
 - LCSC/JLCPCB provider architecture documented in `docs/dev/architecture/adr/0002-jlcpcb-lcsc-provider.md`; user reference at `docs/lcsc-provider.md`.
 
+### Added
+- **Scoring-based component classifier** (issue #149): `_get_component_type_heuristic` replaced with a weighted signal / bidding model. Each `ClassificationSignal` votes for a category; the highest total score wins. No ordering dependency — adding a new signal never requires knowing where to insert it.
+- **IPC reference designator signals**: `get_component_type()` now accepts a `reference` parameter (e.g. `"J1"`, `"FB2"`, `"U4"`). Reference prefix signals follow IPC convention and carry high weight: `J`→CON (5.0), `FB`→IND (6.0), `D`→DIO (3.0), `Q`→Q (3.0), `U`→IC (3.0), `K`→RLY (5.0), `Y`→OSC (5.0), `F`→FUS (5.0). `FB` at 6.0 outweighs `F`→FUS for ferrite bead components.
+- **Footprint library prefix signals**: footprint strings now vote for passive/discrete categories (`CAPACITOR`→CAP, `RESISTOR`→RES, `LED`→LED, `CONNECTOR`→CON, `DIODE`→DIO, `INDUCTOR`→IND) at weight 4.0, in addition to the existing IC footprint detection.
+- **FUSE component type** (`ComponentType.FUSE = "FUS"`): detected via `FUSE` name substring, `F*` RefDes prefix, or exact `FUSE` library name lookup.
+- **Per-signal score logging**: `logging.debug` emits the full scores dict and the winning category for each classification, enabling diagnostic tracing at debug log level.
+- 23 new unit tests covering: scoring model structure, multi-signal scoring (CLED_RGB, CONNECTOR, CD4011), IC-pattern-vs-prefix precedence, all 8 IPC RefDes prefix signals, FB-vs-F disambiguation, and FUSE detection.
+
 ### Changed
-- Component classifier heuristic now checks connector/specific-name patterns before generic single-letter prefixes, preventing `CONNECTOR_*` symbols from being misclassified as capacitors (#145).
+- Component classifier heuristic now checks connector/specific-name patterns before generic single-letter prefixes, preventing `CONNECTOR_*` symbols from being misclassified as capacitors (#145). **Superseded by scoring model** — band-aid ordering no longer needed, but test coverage retained as scoring regression tests.
+- Added LED/non-RCL regression coverage to lock stopgap behavior: C-prefixed LED-like symbols are guarded from CAP misclassification (#147). **Superseded by scoring model** — `LED` signal (7.0) reliably beats `C` prefix (1.0).
 - Typed parametric decode is now category-gated in both project inventory generation and inventory CSV intake: only the category-matching typed field is decoded, with UNK/Unknown/blank promotion only when exactly one typed attribute is present; ambiguous typed attributes now log a warning and decode none (#146).
-- Added LED/non-RCL regression coverage to lock stopgap behavior: C-prefixed LED-like symbols are guarded from CAP misclassification, LED attributes (`Vf`, `If`, `Color`, `Wavelength`) pass through unchanged, and no R/C/L typed fields are populated for LED categories (#147).
 - Mouser provider now supports configurable timeout + retry/backoff for transient failures.
 - LCSC supplier profile now uses `jlcpcb_api` (live API) instead of the `jlcparts_sqlite` stub.
 - `inventory-search` now deduplicates identical queries within a run to reduce provider API calls.
