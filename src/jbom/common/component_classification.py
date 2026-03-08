@@ -145,24 +145,37 @@ _SIGNALS: list[ClassificationSignal] = [
     # ------------------------------------------------------------------
     # Reference designator signals (IPC convention — most authoritative
     # non-footprint signal since the designer explicitly assigned it).
-    # FB at 6.0 outweighs the broader F→FUS signal (5.0) for "FB*" refs.
+    #
+    # All signals require <PREFIX><digit> (e.g. "R1", "CON3") so that
+    # multi-char designators like "REG1" or "CON1" are not misclassified
+    # by a shorter, lower-specificity prefix match.
+    #
+    # CON* (3-char) must appear before C* (1-char) so "CON1"-style refs
+    # resolve to connector rather than capacitor.
+    #
+    # FB at 6.0 outweighs F→FUS (5.0); the digit constraint additionally
+    # prevents F firing on "FB*" refs (second char 'B' is not a digit).
     # ------------------------------------------------------------------
-    ClassificationSignal("CON", 5.0, lambda n, f, r: r.startswith("J")),
-    ClassificationSignal("IND", 6.0, lambda n, f, r: r.startswith("FB")),
-    ClassificationSignal("DIO", 3.0, lambda n, f, r: r.startswith("D")),
-    ClassificationSignal("Q", 3.0, lambda n, f, r: r.startswith("Q")),
-    ClassificationSignal("IC", 3.0, lambda n, f, r: r.startswith("U")),
-    ClassificationSignal("RLY", 5.0, lambda n, f, r: r.startswith("K")),
-    ClassificationSignal("OSC", 5.0, lambda n, f, r: r.startswith("Y")),
-    ClassificationSignal("FUS", 5.0, lambda n, f, r: r.startswith("F")),
-    # Standard IPC passive-component designators (same tier as footprint
-    # library prefix signals — weight 4.0 outweighs IC name-pattern
-    # false-positives such as "NE" appearing inside "Generic").
-    ClassificationSignal("RES", 4.0, lambda n, f, r: r.startswith("R")),
-    ClassificationSignal("CAP", 4.0, lambda n, f, r: r.startswith("C")),
-    ClassificationSignal("IND", 4.0, lambda n, f, r: r.startswith("L")),
+    ClassificationSignal(
+        "CON", 5.0, lambda n, f, r: r[:3] == "CON" and r[3:4].isdigit()
+    ),
+    ClassificationSignal("CON", 5.0, lambda n, f, r: r[:1] == "J" and r[1:2].isdigit()),
+    ClassificationSignal(
+        "IND", 6.0, lambda n, f, r: r[:2] == "FB" and r[2:3].isdigit()
+    ),
+    ClassificationSignal("DIO", 3.0, lambda n, f, r: r[:1] == "D" and r[1:2].isdigit()),
+    ClassificationSignal("Q", 3.0, lambda n, f, r: r[:1] == "Q" and r[1:2].isdigit()),
+    ClassificationSignal("IC", 3.0, lambda n, f, r: r[:1] == "U" and r[1:2].isdigit()),
+    ClassificationSignal("RLY", 5.0, lambda n, f, r: r[:1] == "K" and r[1:2].isdigit()),
+    ClassificationSignal("OSC", 5.0, lambda n, f, r: r[:1] == "Y" and r[1:2].isdigit()),
+    ClassificationSignal("FUS", 5.0, lambda n, f, r: r[:1] == "F" and r[1:2].isdigit()),
+    # Standard IPC passive-component designators — weight 4.0 outweighs
+    # IC name-pattern false-positives (e.g. "NE" inside "Generic").
+    ClassificationSignal("RES", 4.0, lambda n, f, r: r[:1] == "R" and r[1:2].isdigit()),
+    ClassificationSignal("CAP", 4.0, lambda n, f, r: r[:1] == "C" and r[1:2].isdigit()),
+    ClassificationSignal("IND", 4.0, lambda n, f, r: r[:1] == "L" and r[1:2].isdigit()),
     # ------------------------------------------------------------------
-    # Single-char name prefix signals
+    # Single-char name prefix signals (weakest — easily overridden by any
     # of the above).
     # ------------------------------------------------------------------
     ClassificationSignal("RES", 1.0, lambda n, f, r: n.startswith("R")),

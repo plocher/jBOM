@@ -218,6 +218,7 @@ def test_scoring_ic_footprint_beats_c_prefix() -> None:
         ("R1", "RES"),  # R → RESISTOR (IPC passive designator)
         ("C1", "CAP"),  # C → CAPACITOR (IPC passive designator)
         ("L1", "IND"),  # L → INDUCTOR (IPC passive designator)
+        ("CON1", "CON"),  # CON* → CONNECTOR (3-char prefix, beats C→CAP)
     ],
 )
 def test_refdes_signal_classifies_unknown_component(
@@ -240,7 +241,11 @@ def test_refdes_signal_classifies_unknown_component(
 
 
 def test_refdes_fb_beats_f_for_ferrite_beads() -> None:
-    """FB* reference (weight 6.0) outweighs the broader F→FUS signal (5.0)."""
+    """FB* reference (IND 6.0) classifies ferrite beads correctly.
+
+    The digit constraint also prevents F→FUS from firing on 'FB*' refs
+    (second char 'B' is not a digit), so FB→IND wins uncontested.
+    """
     result = get_component_type(
         lib_id="Custom:FERRITE_BEAD_100R",
         footprint="",
@@ -303,6 +308,25 @@ def test_fuse_detected_by_refdes() -> None:
 
 def test_fuse_category_type_constant() -> None:
     assert ComponentType.FUSE == "FUS"
+
+
+# ---------------------------------------------------------------------------
+# RefDes precision: prefix+digit constraint prevents false positives
+# ---------------------------------------------------------------------------
+
+
+def test_refdes_reg1_not_classified_as_res() -> None:
+    """'REG1' starts with 'R' but second char 'E' is not a digit → no RES signal."""
+    # lib_id has no signals; only the RefDes could classify it.
+    # REG1 should return None, not RES.
+    result = get_component_type(lib_id="Custom:PART", footprint="", reference="REG1")
+    assert result is None, f"REG1 should not classify as RES, got {result!r}"
+
+
+def test_refdes_con1_not_classified_as_cap() -> None:
+    """'CON1' resolves to CON via 3-char prefix signal, not CAP via single-char 'C'."""
+    result = get_component_type(lib_id="Custom:PART", footprint="", reference="CON1")
+    assert result == "CON", f"CON1 should classify as CON, got {result!r}"
 
 
 # ---------------------------------------------------------------------------
