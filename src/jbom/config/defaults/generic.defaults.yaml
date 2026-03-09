@@ -75,6 +75,15 @@ category_route_rules:
     second_sort_pth: "Through Hole Resistors"
   capacitor:
     first_sort: "Capacitors"
+    second_sort_mlcc: "Multilayer Ceramic Capacitors (MLCC)"
+    second_sort_electrolytic: "Aluminum Electrolytic Capacitors"
+  inductor:
+    first_sort: "Inductors"
+    second_sort_signal: "Inductors (SMD)"
+    second_sort_power: "Power Inductors"
+    second_sort_ferrite: "Ferrite Beads"
+  connector:
+    first_sort: "Connectors"
 
 # ---------------------------------------------------------------------------
 # Canonical schema field synonyms for inventory header intake/output.
