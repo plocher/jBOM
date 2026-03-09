@@ -1,6 +1,44 @@
 # CHANGELOG
 
 
+## Unreleased — feat/154-jbom-audit (PR 1)
+
+### Features
+
+* feat(audit): add `jbom audit` command — field quality + inventory coverage (#154 PR 1)
+
+New `jbom audit` command implementing the diagnostic half of the
+audit/annotate symmetric pair described in issue #154.
+
+Project mode (`jbom audit <proj> [--inventory cat.csv] [-o report.csv]`):
+- Local heuristics: checks every in-BOM component against the jBOM field
+  taxonomy (REQUIRED: Value, Footprint → ERROR; BEST_PRACTICE: Manufacturer,
+  MFGPN, and category-specific fields → WARN with SuggestedValue)
+- Coverage dry-run (when --inventory provided): runs match() for each
+  component and emits COVERAGE_GAP (ERROR), MATCH_HEURISTIC (WARN),
+  MATCH_AMBIGUOUS (INFO), or silent (exact single / IPN/MPN exclusive match)
+
+Inventory mode (`jbom audit cat.csv [--requirements req.csv] [-o report.csv]`):
+- Coverage check against COMPONENT rows from a requirements CSV
+- UNUSED_ITEM (INFO) for catalog items not satisfied by any requirement
+
+New modules:
+- `src/jbom/common/field_taxonomy.py`: FieldSeverity, FieldSpec, per-category
+  REQUIRED/BEST_PRACTICE definitions — no CLI deps, KiCad plugin callable
+- `src/jbom/services/audit_service.py`: pure service layer with AuditService,
+  AuditReport, AuditRow, CheckType, Severity; stable report.csv schema
+  including PR-2 stub columns (Supplier, SupplierPN, ApprovedValue, Action)
+- `src/jbom/cli/audit.py`: thin CLI wrapper with automatic mode detection
+
+Tests: +64 unit tests (test_field_taxonomy, test_audit_service,
+test_audit_cli); all 611 tests green.
+
+PR 2 will add: `--supplier` validation (SUPPLIER_MISS, INVENTORY_GAP rows),
+`jbom annotate --repairs`, and `jbom inventory-search` retirement.
+
+Co-Authored-By: Oz <oz-agent@warp.dev>
+
+
 ## v6.32.0 (2026-03-09)
 
 ### Bug Fixes

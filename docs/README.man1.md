@@ -8,6 +8,7 @@ jbom — generate Bill of Materials, Placement Files, and Parts Lists from KiCad
 
 ```
 jbom [-q] [--version]
+jbom audit PATH [PATH ...] [--inventory CATALOG_CSV] [--requirements REQ_CSV] [-o REPORT_CSV] [--strict]
 jbom bom [PROJECT] [--inventory FILE ...] [-o OUTPUT] [BOM OPTIONS]
 jbom pos [PROJECT] [-o OUTPUT] [POS OPTIONS]
 jbom inventory [PROJECT] [-o OUTPUT] [INVENTORY OPTIONS]
@@ -18,8 +19,9 @@ jbom inventory-search INVENTORY_FILE [OPTIONS]
 
 ## DESCRIPTION
 
-jBOM (version 7) provides six subcommands:
+jBOM (version 7) provides seven subcommands:
 
+- `audit` — diagnose field-quality issues and inventory coverage gaps in KiCad projects or catalog files
 - `bom` — generate a procurement BOM from KiCad schematics matched against an inventory file
 - `pos` — generate component placement files (CPL/POS) from KiCad PCB files
 - `inventory` — generate an initial inventory template from schematic components
@@ -38,6 +40,78 @@ The BOM workflow keeps designs supplier-neutral: components carry generic values
 
 **--version**
 : Print jBOM version and exit.
+
+## AUDIT COMMAND
+
+```
+jbom audit PATH [PATH ...]  [--inventory CATALOG_CSV]  [-o REPORT_CSV]  [--strict]
+jbom audit CAT.CSV [...]    [--requirements REQ_CSV]   [-o REPORT_CSV]  [--strict]
+```
+
+Diagnoses field-quality issues and inventory coverage gaps. Mode is detected automatically from the positional arguments:
+
+- **Project mode** — positionals are KiCad project directories or schematic files.
+- **Inventory mode** — all positionals end with `.csv`.
+
+### Checks performed
+
+**Local heuristics (project mode, always)**
+: For every in-BOM component, the jBOM field taxonomy is checked:
+  - `REQUIRED` (Value, Footprint) — `QUALITY_ISSUE` row with `Severity=ERROR` when absent.
+  - `BEST_PRACTICE` (Manufacturer, MFGPN, and category-specific fields such as Tolerance for resistors) — `QUALITY_ISSUE` row with `Severity=WARN` when absent; the `SuggestedValue` column carries an example.
+
+**Coverage dry-run (project mode + `--inventory`)**
+: Runs `match()` for every component against the catalog without generating a BOM:
+  - No match → `COVERAGE_GAP / ERROR`
+  - Match only via heuristics → `MATCH_HEURISTIC / WARN`
+  - Multiple equally-qualified candidates → `MATCH_AMBIGUOUS / INFO`
+  - Single exact match or IPN/MPN exclusive match → silent
+
+**Coverage check (inventory mode + `--requirements`)**
+: Same four-outcome model applied to COMPONENT rows from the requirements file against catalog ITEM rows.
+: Catalog items not matched by any requirement → `UNUSED_ITEM / INFO`
+
+### Arguments
+
+**PATH** (one or more, required)
+: KiCad project directories, `.kicad_sch` files (project mode), or inventory `.csv` files (inventory mode).
+
+**--inventory CATALOG_CSV**
+: Inventory catalog for a coverage dry-run (project mode only).
+
+**--requirements REQ_CSV**
+: Requirements CSV (output of `jbom inventory proj`) for a coverage check (inventory mode only).
+
+**-o, --output REPORT_CSV**
+: Write the audit report to this file. If omitted, CSV is written to stdout.
+
+**--strict**
+: Treat `WARN`-severity rows as failures: exit code is 1 even if there are no `ERROR` rows.
+
+### report.csv schema (stable)
+
+Columns: `CheckType`, `Severity`, `ProjectPath`, `RefDes`, `UUID`, `CatalogFile`, `IPN`, `Category`, `Field`, `CurrentValue`, `SuggestedValue`, `ApprovedValue`, `Action`, `Supplier`, `SupplierPN`, `Description`.
+
+The `ApprovedValue` and `Action` columns are blank in `audit` output. Open the file in a spreadsheet, fill in `ApprovedValue` and set `Action` to `SET` / `SKIP` / `IGNORE` for each `QUALITY_ISSUE` row, then pass it to `jbom annotate proj --repairs report.csv` (available in PR 2).
+
+### Exit codes
+
+- `0` — no `ERROR`-severity rows (default)
+- `1` — one or more `ERROR`-severity rows; or any `WARN`-severity rows when `--strict` is passed
+
+### Example workflow
+
+```sh
+# 1. Check field quality and inventory coverage for a project
+jbom audit ./my_project --inventory catalog.csv -o report.csv
+
+# 2. Review QUALITY_ISSUE rows, fill ApprovedValue + Action, then annotate (PR 2)
+jbom annotate ./my_project --repairs report.csv
+
+# 3. Audit catalog coverage against project requirements
+jbom inventory ./my_project -o requirements.csv
+jbom audit catalog.csv --requirements requirements.csv -o catalog_report.csv
+```
 
 ## BOM COMMAND
 
