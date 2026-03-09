@@ -67,6 +67,7 @@ class ProjectInventoryGenerator:
             "LCSC",
             "UUID",
             "footprint_full",
+            "symbol_lib",
             "symbol_name",
             "ki_keywords",
         }
@@ -120,6 +121,7 @@ class ProjectInventoryGenerator:
             "Footprint",
             "Symbol",
             "footprint_full",
+            "symbol_lib",
             "symbol_name",
             "ki_keywords",
         }
@@ -129,8 +131,6 @@ class ProjectInventoryGenerator:
             item.raw_data = dict(item.raw_data)
             item.raw_data["Footprint"] = component.footprint
             item.raw_data["Symbol"] = component.lib_id
-            item.raw_data["footprint_full"] = component.footprint
-            item.raw_data["symbol_name"] = component.lib_id
             item.raw_data["ki_keywords"] = component.properties.get("Keywords", "")
 
             self.inventory.append(item)
@@ -210,6 +210,11 @@ class ProjectInventoryGenerator:
             component,
             category_override=category if category_was_promoted else None,
         )
+        # Parse KiCad lib_id (always NICKNAME:ENTRY_NAME for valid components)
+        lib_id_parts = component.lib_id.split(":", 1)
+        sym_lib = lib_id_parts[0] if len(lib_id_parts) == 2 else ""
+        sym_name = lib_id_parts[1] if len(lib_id_parts) == 2 else lib_id_parts[0]
+
         return InventoryItem(
             row_type="COMPONENT",
             component_id=component_id,
@@ -242,6 +247,12 @@ class ProjectInventoryGenerator:
             package=package,
             uuid=uuid_str,
             priority=DEFAULT_PRIORITY,
+            # KiCad harvest fidelity fields
+            footprint_full=component.footprint,
+            symbol_lib=sym_lib,
+            symbol_name=sym_name,
+            pins=props.get("Pins", ""),
+            pitch=props.get("Pitch", ""),
             resistance=(
                 decode_typed_parametric("RES", component.value, row_for_decode)
                 if decode_category == "RES"
@@ -263,7 +274,8 @@ class ProjectInventoryGenerator:
                 "RowType": "COMPONENT",
                 "ComponentID": component_id,
                 "footprint_full": component.footprint,
-                "symbol_name": component.lib_id,
+                "symbol_lib": sym_lib,
+                "symbol_name": sym_name,
                 "ki_keywords": props.get("Keywords", ""),
             },
         )

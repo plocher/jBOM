@@ -7,6 +7,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 
 ### Added
+- **Harvest fidelity fields** (issue #126): `InventoryItem` now carries first-class `footprint_full`, `symbol_lib`, `symbol_name`, `pins`, and `pitch` fields. KiCad harvest populates them by parsing `NICKNAME:ENTRY_NAME` from `lib_id`. `InventoryReader` round-trips them from CSV; absent columns default to empty string.
+- **Phase 4 CAP technology detection** (issue #126): `_build_capacitor_plan` routes to **Aluminum Electrolytic Capacitors** when `C_Polarized` appears in `symbol_name` or the footprint entry name starts with `CP_`; otherwise routes to **Multilayer Ceramic Capacitors (MLCC)**. Dielectric is excluded from electrolytic keyword queries.
+- **Phase 4 IND plan** (issue #126): Ferrite beads (`FERRITE` in description), power inductors (`L_Core` symbol or large package), and signal/RF inductors (default) each route to the correct JLCPCB sub-category.
+- **Phase 4 CON plan** (issue #126): Uses first-class `pins`/`pitch` fields and parses KLC footprint entry names for pitch, pin count, and series (`PinHeader`, `JST_PH`, etc.).
+- **JLCPCB route rules** for `inductor` and `connector` categories in `generic.defaults.yaml`; `capacitor` gains `second_sort_mlcc` and `second_sort_electrolytic`.
+- **`docs/kicad-best-practices.md`**: user guide for per-category KiCad property recommendations.
+
+### Added
 - **Two-layer inventory model** (issue #142): `jbom inventory` now emits `RowType=COMPONENT` rows representing project requirements, distinct from `RowType=ITEM` rows for stocked parts. Backward-compatible with existing ITEM-only inventory files.
 - **ComponentID**: deterministic, version-stamped hash of a component requirement (`category|value|package|tolerance|voltage|...`). Stale IDs from old encoding versions are transparently re-derived on load.
 - **COMPONENT_ROW_COLUMNS** canonical column set and `COLUMN_NORMALISE` remap (`V`→`Voltage`, `A`→`Current`, `W`→`Power`) in `component_id.py`.

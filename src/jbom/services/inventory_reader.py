@@ -429,6 +429,13 @@ class InventoryReader:
                     else None
                 ),
                 name=(row.get("Name") or "").strip(),
+                # KiCad harvest fidelity fields: populated when columns are present;
+                # absent columns leave fields as empty string (no compat shims).
+                footprint_full=row.get("footprint_full", ""),
+                symbol_lib=row.get("symbol_lib", ""),
+                symbol_name=row.get("symbol_name", ""),
+                pins=row.get("Pins", ""),
+                pitch=row.get("Pitch", ""),
                 source=source,
                 source_file=source_file,
                 raw_data=row,

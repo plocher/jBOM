@@ -55,6 +55,12 @@ class InventoryItem:
     priority: int = (
         DEFAULT_PRIORITY  # Priority from CSV: 1=most desirable, higher=less desirable
     )
+    # KiCad harvest fidelity fields (populated at project harvest; round-trips via CSV)
+    footprint_full: str = ""  # KiCad footprint ID, e.g. "Capacitor_SMD:CP_Elec_4x5.4mm"
+    symbol_lib: str = ""  # KiCad symbol library nickname, e.g. "Device"
+    symbol_name: str = ""  # KiCad symbol entry name, e.g. "C_Polarized"
+    pins: str = ""  # connector pin count, e.g. "4"
+    pitch: str = ""  # connector pitch, e.g. "2.54mm"
     # Typed parametric fields (decoded at intake from explicit columns or Value fallback)
     resistance: Optional[float] = None  # in ohms  (RES)
     capacitance: Optional[float] = None  # in farads (CAP)
