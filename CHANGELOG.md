@@ -1,6 +1,49 @@
 # CHANGELOG
 
 
+## v6.32.0 (2026-03-09)
+
+### Bug Fixes
+
+* fix(inventory): restore original error messages broken by refactor
+
+_load_components_from_path changed two error message strings that are
+asserted by Gherkin feature tests:
+
+  'No components found in project.' was changed to include the input
+  path, breaking the Gherkin step in multi_source_edge_cases.feature:44.
+
+  'No real components found after filtering virtual symbols.' was
+  truncated, losing the second sentence.
+
+Restore both to their original wording.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`0a87b8a`](https://github.com/plocher/jBOM/commit/0a87b8adbf0334269269728bc9d51a46ecf8bd6d))
+
+### Features
+
+* feat(inventory): multi-project batch with ComponentID dedup
+
+Accept multiple project paths: jbom inventory p1 p2 p3 -o combined.csv
+- Change input nargs from '?' to '*'; empty list defaults to current dir
+- Single-project path is unchanged (no behaviour change for existing users)
+- Batch path: load components from each project, run ProjectInventoryGenerator,
+  deduplicate InventoryItems on component_id (first-seen wins), union field
+  names across all projects, write single combined output
+- --stop-on-error flag: abort on first failure (default: continue + summary)
+- Per-project success/failure summary printed to stderr after all projects
+- Refactor: extract _load_components_from_path() shared helper to eliminate
+  duplication between single-project and batch handlers
+- Add _merge_field_names() for deterministic canonical-first field ordering
+- 24 new tests (18 unit + 6 integration) covering dedup, field union,
+  error handling, routing, and acceptance criteria from issue #144
+- CHANGELOG updated; scripts/harvest_combined.py superseded
+
+Closes #144
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`55fac63`](https://github.com/plocher/jBOM/commit/55fac63d2082efca4b4cb527b1580151ed212962))
+
+
 ## v6.31.0 (2026-03-09)
 
 ### Features
