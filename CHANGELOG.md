@@ -1,6 +1,58 @@
 # CHANGELOG
 
 
+## v6.31.0 (2026-03-09)
+
+### Features
+
+* feat: preserve Phase 4 context fields in combined.csv harvest
+
+- Add _COMPONENT_CONTEXT_COLS (footprint_full, symbol_lib, symbol_name)
+  to harvest_combined.py so COMPONENT rows in combined.csv carry the
+  KiCad harvest-fidelity fields needed by jlcpcb_phase4_heuristics.
+- Update _normalise_component_row to retain context columns alongside
+  the 13-column identity set (COMPONENT_ROW_COLUMNS).
+- Update _ordered_union to always include context columns as step 1b,
+  immediately after the canonical identity columns and before ITEM cols.
+- Regenerate examples/combined.csv (76 unique COMPONENT rows, 100
+  ITEM rows, 42 columns) — all COMPONENT rows now have footprint_full,
+  symbol_lib, symbol_name populated from the live KiCad harvest.
+- Upgrade _run_dry_run_search to use --jlc for realistic JLC preview.
+- Add scripts/validate_phase4_plans.py: local introspection tool that
+  calls build_phase4_parametric_query_plan for each COMPONENT row and
+  reports parametric vs keyword plan rates per category.  No API calls.
+  Baseline result: CAP 100%, CON 100%, RES 100% (vs pre-Phase4 baseline
+  of CAP 33%, CON 0%, RES 91% from issue #123 measurements).
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`8ca23a6`](https://github.com/plocher/jBOM/commit/8ca23a68a809910255886f4273aa0223f1c5d4f5))
+
+* feat(search): harvest fidelity fields + Phase 4 heuristics for CAP, IND, CON (#126)
+
+Level 1 - InventoryItem harvest fidelity:
+- Add footprint_full, symbol_lib, symbol_name, pins, pitch as first-class fields
+- project_inventory: parse lib_id NICKNAME:ENTRY_NAME into symbol_lib/symbol_name
+- inventory_reader: populate from CSV row when columns present; absent -> empty string
+
+Level 2 - Phase 4 heuristics:
+- CAP: technology detection routes to Aluminum Electrolytic Capacitors (C_Polarized
+  symbol, CP_ footprint entry) vs Multilayer Ceramic Capacitors (MLCC) default;
+  dielectric excluded from electrolytic keyword query
+- IND: _build_inductor_plan added with ferrite bead / power / signal subtype routing;
+  ferrite detected via description, power via L_Core symbol or large package
+- CON: _build_connector_plan uses first-class pins/pitch fields and parses KLC
+  footprint entry names for pitch, pin count, and series hints; lib nickname additive
+- generic.defaults.yaml: capacitor second_sort_{mlcc,electrolytic}, inductor and
+  connector category_route_rules added
+
+Level 3 - Documentation:
+- docs/kicad-best-practices.md: per-category KiCad property guidance, symbol/footprint
+  choices, ~ don't-care convention, KLC footprint naming for connectors
+
+Tests: +26 unit tests, 502 pytest + 202 behave all green
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`a7f54f5`](https://github.com/plocher/jBOM/commit/a7f54f597ed0a7c04b1659e4da4ea4af9a51df47))
+
+
 ## v6.30.2 (2026-03-09)
 
 ### Bug Fixes
