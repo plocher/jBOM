@@ -5,7 +5,16 @@ import sys
 from typing import List, Optional
 
 from jbom import __version__
-from jbom.cli import annotate, bom, inventory, pos, parts, search, inventory_search
+from jbom.cli import (
+    annotate,
+    audit,
+    bom,
+    inventory,
+    pos,
+    parts,
+    search,
+    inventory_search,
+)
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -36,6 +45,7 @@ def create_parser() -> argparse.ArgumentParser:
     )
 
     # Direct command registration - no registry needed!
+    audit.register_command(subparsers)
     bom.register_command(subparsers)
     annotate.register_command(subparsers)
     inventory.register_command(subparsers)
