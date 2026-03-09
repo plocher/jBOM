@@ -2,8 +2,13 @@
 """Harvest COMPONENT rows from all KiCad projects and merge with SPCoast ITEM rows.
 
 Produces examples/combined.csv with:
-  - COMPONENT rows (deduplicated on ComponentID) from all 13 KiCad projects
+  - COMPONENT rows (deduplicated on ComponentID) from all KiCad projects,
+    including Phase 4 context fields (footprint_full, symbol_lib, symbol_name)
   - ITEM rows from examples/SPCoast-INVENTORY.csv
+
+The Phase 4 context fields are needed by jlcpcb_phase4_heuristics to route
+CAP/IND/CON searches to the correct JLCPCB parametric category rather than
+falling back to keyword-only queries.
 
 Then optionally runs jbom inventory-search for coverage preview.
 
@@ -47,6 +52,15 @@ _ITEM_ALWAYS_COLS: list[str] = [
     "LCSC",
     "Priority",
     "Status",
+]
+
+# Phase 4 heuristic context fields harvested from KiCad projects.
+# Present only in COMPONENT rows; always included so the reader can exercise
+# footprint/symbol-based routing (CAP electrolytic, IND subtype, CON series).
+_COMPONENT_CONTEXT_COLS: list[str] = [
+    "footprint_full",  # Full KiCad footprint ID, e.g. "Capacitor_SMD:CP_Elec_10x10"
+    "symbol_lib",  # KiCad symbol library nickname, e.g. "Device"
+    "symbol_name",  # KiCad symbol entry name, e.g. "C_Polarized"
 ]
 
 # ITEM columns included only when at least one ITEM row carries a non-empty value.
@@ -129,11 +143,12 @@ def _load_item_rows(csv_path: Path) -> tuple[list[dict[str, str]], list[str]]:
 
 
 def _normalise_component_row(row: dict[str, str]) -> dict[str, str]:
-    """Rename legacy short column names and strip to canonical COMPONENT columns.
+    """Rename legacy short column names and retain canonical + context columns.
 
     Step 1: apply COLUMN_NORMALISE (``W``→``Power``, ``A``→``Current``,
     ``V``→``Voltage``).  Long-form value wins if both old and new keys exist.
-    Step 2: keep only columns listed in COMPONENT_ROW_COLUMNS.
+    Step 2: keep columns listed in COMPONENT_ROW_COLUMNS (identity) plus
+    _COMPONENT_CONTEXT_COLS (Phase 4 heuristic inputs).
     """
     normalised: dict[str, str] = {}
     for k, v in row.items():
@@ -141,7 +156,8 @@ def _normalise_component_row(row: dict[str, str]) -> dict[str, str]:
         # Real value wins over blank or KiCad null (~); first real value wins.
         if canonical not in normalised or is_null_value(normalised[canonical]):
             normalised[canonical] = v
-    return {col: normalised.get(col, "") for col in COMPONENT_ROW_COLUMNS}
+    keep = list(COMPONENT_ROW_COLUMNS) + _COMPONENT_CONTEXT_COLS
+    return {col: normalised.get(col, "") for col in keep}
 
 
 def _ordered_union(
@@ -151,11 +167,13 @@ def _ordered_union(
     """Return a deterministic union of column names.
 
     Column order (mirrors the ALWAYS/CONDITIONAL triage in inventory.py):
-    1. COMPONENT canonical columns (COMPONENT_ROW_COLUMNS) — always, in fixed order.
-    2. _ITEM_ALWAYS_COLS — important ITEM fields, always included if present.
-    3. _ITEM_CONDITIONAL_COLS — secondary ITEM fields, only when at least one row
-       carries a non-empty value.
-    4. Any remaining item_fields not covered by the above lists.
+    1.  COMPONENT canonical columns (COMPONENT_ROW_COLUMNS) — always, in fixed order.
+    1b. COMPONENT context columns (_COMPONENT_CONTEXT_COLS) — Phase 4 heuristic
+        inputs; always included (blank for ITEM rows).
+    2.  _ITEM_ALWAYS_COLS — important ITEM fields, always included if present.
+    3.  _ITEM_CONDITIONAL_COLS — secondary ITEM fields, only when at least one row
+        carries a non-empty value.
+    4.  Any remaining item_fields not covered by the above lists.
     """
     item_field_set = set(item_fields)
     seen: set[str] = set()
@@ -173,6 +191,12 @@ def _ordered_union(
     for col in COMPONENT_ROW_COLUMNS:
         seen.add(col)
         ordered.append(col)
+
+    # 1b. Phase 4 context columns from KiCad harvest (always; blank for ITEM rows)
+    for col in _COMPONENT_CONTEXT_COLS:
+        if col not in seen:
+            seen.add(col)
+            ordered.append(col)
 
     # 2. Important ITEM columns (always, if present in the source file)
     for col in _ITEM_ALWAYS_COLS:
@@ -209,10 +233,10 @@ def _write_combined(
 
 
 def _run_dry_run_search(combined_path: Path) -> None:
-    """Run jbom inventory-search --dry-run to show coverage stats."""
-    print("\n--- Coverage preview (jbom inventory-search --dry-run) ---")
+    """Run jbom inventory-search --dry-run --jlc to show JLC coverage stats."""
+    print("\n--- Coverage preview (jbom inventory-search --dry-run --jlc) ---")
     result = subprocess.run(
-        ["jbom", "inventory-search", str(combined_path), "--dry-run"],
+        ["jbom", "inventory-search", str(combined_path), "--dry-run", "--jlc"],
         capture_output=False,
         text=True,
     )
