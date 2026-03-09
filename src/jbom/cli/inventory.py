@@ -243,7 +243,7 @@ def _load_components_from_path(
 
     if not components:
         print(
-            f"Error: No components found in '{input_path}'. "
+            "Error: No components found in project. "
             "Cannot create inventory from empty schematic.",
             file=sys.stderr,
         )
@@ -260,7 +260,8 @@ def _load_components_from_path(
 
     if not components:
         print(
-            f"Error: No real components found in '{input_path}' after filtering virtual symbols.",
+            "Error: No real components found after filtering virtual symbols. "
+            "Cannot create inventory from empty schematic.",
             file=sys.stderr,
         )
         return None
