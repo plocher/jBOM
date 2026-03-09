@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 
 ### Added
+- **Multi-project batch inventory** (issue #144): `jbom inventory` now accepts multiple project paths (`jbom inventory p1 p2 p3 -o combined.csv`). COMPONENT rows are merged and deduplicated on `ComponentID` (first-seen wins); field names are unioned across all projects. Per-project failures are skipped by default with a summary printed at the end; use `--stop-on-error` to abort on first failure. Single-project behaviour is unchanged. `scripts/harvest_combined.py` is superseded by this feature.
 - **Harvest fidelity fields** (issue #126): `InventoryItem` now carries first-class `footprint_full`, `symbol_lib`, `symbol_name`, `pins`, and `pitch` fields. KiCad harvest populates them by parsing `NICKNAME:ENTRY_NAME` from `lib_id`. `InventoryReader` round-trips them from CSV; absent columns default to empty string.
 - **Phase 4 CAP technology detection** (issue #126): `_build_capacitor_plan` routes to **Aluminum Electrolytic Capacitors** when `C_Polarized` appears in `symbol_name` or the footprint entry name starts with `CP_`; otherwise routes to **Multilayer Ceramic Capacitors (MLCC)**. Dielectric is excluded from electrolytic keyword queries.
 - **Phase 4 IND plan** (issue #126): Ferrite beads (`FERRITE` in description), power inductors (`L_Core` symbol or large package), and signal/RF inductors (default) each route to the correct JLCPCB sub-category.

@@ -100,12 +100,16 @@ def register_command(subparsers) -> None:
         description="Generate component inventory from project",
     )
 
-    # Project input as main positional argument
+    # Project input as main positional argument — accepts one or more paths for batch mode
     parser.add_argument(
         "input",
-        nargs="?",
-        default=".",
-        help="Path to .kicad_sch file, project directory, or base name (default: current directory)",
+        nargs="*",
+        default=None,
+        help=(
+            "Path(s) to .kicad_sch file, project directory, or base name. "
+            "Accepts multiple paths for batch mode (default: current directory). "
+            "Multiple projects are merged with COMPONENT rows deduplicated on ComponentID."
+        ),
     )
 
     # Output options
@@ -150,6 +154,14 @@ def register_command(subparsers) -> None:
     # Safety options
     add_force_argument(parser)
 
+    # Batch mode options
+    parser.add_argument(
+        "--stop-on-error",
+        action="store_true",
+        dest="stop_on_error",
+        help="Abort batch processing on first project failure (default: continue and report)",
+    )
+
     # Verbose mode
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
 
@@ -159,34 +171,38 @@ def register_command(subparsers) -> None:
 def handle_inventory(args: argparse.Namespace) -> int:
     """Handle inventory command - generate inventory from project."""
     try:
-        return _handle_generate_inventory(args)
+        # Normalise input: None or empty list -> ["."] (current directory)
+        raw_inputs: list[str] = args.input or ["."]
+
+        if len(raw_inputs) > 1:
+            return _handle_batch_inventory(raw_inputs, args)
+        # Single-project: delegate to the existing handler unchanged
+        return _handle_generate_inventory(raw_inputs[0], args)
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1
 
 
-def _handle_generate_inventory(args: argparse.Namespace) -> int:
-    """Generate inventory from project components with project-centric input resolution.
+def _load_components_from_path(
+    input_path: str,
+    args: argparse.Namespace,
+    options,
+) -> tuple[list[Component], str, Path] | None:
+    """Resolve a project path, load and filter its components.
 
-    Output destination handling (following BOM command pattern):
-    - None (default): write to 'part-inventory.csv'
-    - "console": pretty print table to stdout
-    - "-": write CSV format to stdout
-    - otherwise: treat as a file path
+    Shared by both single-project and batch-mode inventory handlers.
+
+    Returns:
+        (components, project_name, project_directory) on success, or None on failure
+        (error message already printed to stderr).
     """
-
-    # Create options
-    options = GeneratorOptions(verbose=args.verbose) if args.verbose else None
-
-    # Use ProjectFileResolver for intelligent input resolution
     resolver = ProjectFileResolver(
         prefer_pcb=False, target_file_type="schematic", options=options
     )
 
     try:
-        resolved_input = resolver.resolve_input(args.input)
+        resolved_input = resolver.resolve_input(input_path)
 
-        # Handle cross-command intelligence - if user provided wrong file type, try to resolve it
         if not resolved_input.is_schematic:
             if args.verbose:
                 print(
@@ -194,7 +210,6 @@ def _handle_generate_inventory(args: argparse.Namespace) -> int:
                     f"Found {resolved_input.resolved_path.suffix} file, trying to find matching schematic.",
                     file=sys.stderr,
                 )
-
             resolved_input = resolver.resolve_for_wrong_file_type(
                 resolved_input, "schematic"
             )
@@ -207,42 +222,33 @@ def _handle_generate_inventory(args: argparse.Namespace) -> int:
         schematic_file = resolved_input.resolved_path
         reader = SchematicReader(options)
 
-        # Load components from schematic (including hierarchical sheets if available)
         if resolved_input.project_context:
-            # Get all hierarchical schematic files for complete inventory
             hierarchical_files = resolved_input.get_hierarchical_files()
             if args.verbose and len(hierarchical_files) > 1:
                 print(
                     f"Processing hierarchical design with {len(hierarchical_files)} schematic files",
                     file=sys.stderr,
                 )
-
-            # Load components from all hierarchical files
             components = []
             for sch_file in hierarchical_files:
                 if args.verbose:
                     print(f"Loading components from {sch_file.name}", file=sys.stderr)
-                file_components = reader.load_components(sch_file)
-                components.extend(file_components)
+                components.extend(reader.load_components(sch_file))
         else:
-            # Load components from single schematic
             components = reader.load_components(schematic_file)
 
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
-        return 1
+        return None
 
-    # Check for empty components list
     if not components:
         print(
-            "Error: No components found in project. Cannot create inventory from empty schematic.",
+            f"Error: No components found in '{input_path}'. "
+            "Cannot create inventory from empty schematic.",
             file=sys.stderr,
         )
-        return 1
+        return None
 
-    # Apply standard BOM-equivalent filtering: exclude virtual symbols, DNP, and non-BOM components.
-    # Virtual symbols (power flags, GND nets, etc.) are never stocked or purchased.
-    # No CLI flags are exposed for inventory — these defaults are correct and permanent.
     components = apply_component_filters(
         components,
         {
@@ -254,13 +260,11 @@ def _handle_generate_inventory(args: argparse.Namespace) -> int:
 
     if not components:
         print(
-            "Error: No real components found after filtering virtual symbols. "
-            "Cannot create inventory from empty schematic.",
+            f"Error: No real components found in '{input_path}' after filtering virtual symbols.",
             file=sys.stderr,
         )
-        return 1
+        return None
 
-    # Apply inventory filtering (component-level) if requested.
     if args.inventory_files or args.filter_matches:
         components = _filter_components_by_existing_inventory(
             components,
@@ -274,15 +278,175 @@ def _handle_generate_inventory(args: argparse.Namespace) -> int:
         if resolved_input.project_context
         else schematic_file.parent
     )
-
-    # Generate inventory
-    generator = ProjectInventoryGenerator(components)
-
     project_name = (
         resolved_input.project_context.project_base_name
         if resolved_input.project_context
         else project_directory.name
     )
+
+    return components, project_name, project_directory
+
+
+def _handle_batch_inventory(input_paths: list[str], args: argparse.Namespace) -> int:
+    """Process multiple project paths, merge and deduplicate COMPONENT rows.
+
+    Deduplication key: ``component_id`` (first-seen across projects wins).
+    Field names are unioned across all projects so no data is lost.
+    On per-project failure: continue by default; abort if ``--stop-on-error``.
+    Prints a per-project summary at the end.
+    """
+    options = GeneratorOptions(verbose=args.verbose) if args.verbose else None
+
+    # Accumulate items and fields across all projects
+    accumulated_items: list = []
+    seen_component_ids: set[str] = set()
+    all_field_names: set[str] = set()
+
+    # Track per-project results for summary
+    results: list[tuple[str, bool, str]] = []  # (path, success, message)
+
+    for input_path in input_paths:
+        if args.verbose:
+            print(f"\nProcessing: {input_path}", file=sys.stderr)
+
+        result = _load_components_from_path(input_path, args, options)
+        if result is None:
+            results.append((input_path, False, "failed to load components"))
+            if args.stop_on_error:
+                print(
+                    f"Aborting batch: --stop-on-error set and '{input_path}' failed.",
+                    file=sys.stderr,
+                )
+                _print_batch_summary(results)
+                return 1
+            continue
+
+        components, project_name, _project_dir = result
+
+        generator = ProjectInventoryGenerator(components)
+        try:
+            items, field_names = generator.load()
+        except Exception as e:
+            results.append((input_path, False, str(e)))
+            print(
+                f"Error generating inventory for '{input_path}': {e}", file=sys.stderr
+            )
+            if args.stop_on_error:
+                _print_batch_summary(results)
+                return 1
+            continue
+
+        # Deduplicate: first-seen component_id wins
+        new_count = 0
+        for item in items:
+            cid = item.component_id
+            if cid and cid not in seen_component_ids:
+                seen_component_ids.add(cid)
+                accumulated_items.append(item)
+                new_count += 1
+            elif not cid:
+                # Items without a component_id are always included
+                accumulated_items.append(item)
+                new_count += 1
+
+        all_field_names.update(field_names)
+        results.append(
+            (input_path, True, f"{len(items)} items ({new_count} unique added)")
+        )
+        if args.verbose:
+            print(
+                f"  {project_name}: {len(items)} items, {new_count} new after dedup",
+                file=sys.stderr,
+            )
+
+    _print_batch_summary(results)
+
+    # Require at least one successful project
+    successful = [r for r in results if r[1]]
+    if not successful:
+        print("Error: No projects produced output.", file=sys.stderr)
+        return 1
+
+    if not accumulated_items:
+        print(
+            "Error: No inventory items collected across all projects.", file=sys.stderr
+        )
+        return 1
+
+    # Produce a deterministic field order
+    ordered_fields = _merge_field_names(all_field_names)
+
+    return _output_inventory(
+        accumulated_items, ordered_fields, args.output, args.force, args.verbose
+    )
+
+
+def _print_batch_summary(results: list[tuple[str, bool, str]]) -> None:
+    """Print a per-project success/failure summary to stderr."""
+    print("\nBatch inventory summary:", file=sys.stderr)
+    for path, success, message in results:
+        status = "OK " if success else "FAIL"
+        print(f"  [{status}] {path}: {message}", file=sys.stderr)
+
+
+def _merge_field_names(all_field_names: set[str]) -> list[str]:
+    """Return a deterministic ordered field list from a union of field name sets.
+
+    Canonical inventory fields appear first in a fixed order; any additional
+    fields discovered across projects are appended alphabetically.
+    """
+    canonical_order = [
+        "RowType",
+        "ComponentID",
+        "IPN",
+        "Category",
+        "Value",
+        "Package",
+        "Description",
+        "Keywords",
+        "Manufacturer",
+        "MFGPN",
+        "LCSC",
+        "Datasheet",
+        "Resistance",
+        "Capacitance",
+        "Inductance",
+        "UUID",
+        "footprint_full",
+        "symbol_lib",
+        "symbol_name",
+        "ki_keywords",
+    ]
+    ordered: list[str] = []
+    seen: set[str] = set()
+    for field in canonical_order:
+        if field in all_field_names:
+            ordered.append(field)
+            seen.add(field)
+    for field in sorted(all_field_names - seen):
+        ordered.append(field)
+    return ordered
+
+
+def _handle_generate_inventory(input_path: str, args: argparse.Namespace) -> int:
+    """Generate inventory from project components with project-centric input resolution.
+
+    Output destination handling (following BOM command pattern):
+    - None (default): write to 'part-inventory.csv'
+    - "console": pretty print table to stdout
+    - "-": write CSV format to stdout
+    - otherwise: treat as a file path
+    """
+    options = GeneratorOptions(verbose=args.verbose) if args.verbose else None
+
+    result = _load_components_from_path(input_path, args, options)
+    if result is None:
+        return 1
+
+    components, project_name, project_directory = result
+
+    # Generate inventory
+    generator = ProjectInventoryGenerator(components)
 
     if args.per_instance:
         rows, field_names = _generate_per_instance_inventory_rows(
