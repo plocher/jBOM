@@ -1,6 +1,88 @@
 # CHANGELOG
 
 
+## v6.30.2 (2026-03-09)
+
+### Bug Fixes
+
+* fix(classifier): add R/C/L IPC RefDes signals to fix Device:Generic false-IC
+
+The scoring classifier was misclassifying components with lib_id
+'Device:Generic' and reference 'R1' (or C1/L1) as IC because the
+2-char substring 'NE' fires at 3.0 inside 'GENERIC'.
+
+Add three standard IPC passive-component RefDes signals at weight 4.0:
+  R* → RES  (outweighs NE→IC 3.0)
+  C* → CAP
+  L* → IND
+
+These are correct by IPC convention and align with the existing J/K/Y/F
+tier-4 passive RefDes signals.  They also improve real-world robustness
+for any schematic that uses non-standard lib_ids with standard refs.
+
+Fixes: features/bom/inventory.feature:30 'BOM with partial inventory
+matches' behave scenario (0/2 matched → 1/2 matched).
+
+Also update test_type_filter_skipped_when_component_type_unknown to use
+a neutral reference ('M1') so the test reflects its actual intent: a
+component with NO classification signals, not just an unknown lib_id.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`a9f4d65`](https://github.com/plocher/jBOM/commit/a9f4d65f49e08152e2d3503ea4269d73ab8db9a3))
+
+### Refactoring
+
+* refactor(classifier): tighten RefDes signals to prefix+digit; add CON* signal
+
+All IPC reference designator signals now require <PREFIX><digit>
+(e.g. 'R1', 'CON3') rather than bare startswith():
+
+  r.startswith('X')  →  r[:n] == 'PREFIX' and r[n:n+1].isdigit()
+
+Benefits:
+- 'REG1' no longer falsely votes RES (second char 'E' is not a digit)
+- 'FB2' no longer fires the F→FUS signal (second char 'B' is not a
+  digit), so FB→IND wins cleanly without needing the weight tie-break
+- Consistent precision across all single- and multi-char prefixes
+
+Add CON* (3-char) RefDes signal at 5.0 before C*→CAP so that
+'CON1'-style connector designators resolve to CON, not CAP.
+
+Add precision tests:
+- REG1 → None  (not RES)
+- CON1 → CON   (not CAP)
+- CON1 added to the IPC parametrize table
+
+Update test_refdes_fb_beats_f_for_ferrite_beads docstring to reflect
+that the digit constraint now handles FB/F disambiguation directly.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`26605e0`](https://github.com/plocher/jBOM/commit/26605e0d7554406976c9e4c8c439dc1c1ee15d1e))
+
+* refactor: replace first-match classifier with scoring-based heuristic (#149)
+
+Replace the fragile if/elif chain in _get_component_type_heuristic with a
+weighted-signal scoring model. Each ClassificationSignal votes for a category;
+the category with the highest total score wins. No ordering dependency.
+
+Key changes:
+- Add ClassificationSignal dataclass and _SIGNALS list (47 signals)
+- Add _classify_by_score() replacing the if/elif chain
+- Remove _has_ic_indicators() — IC patterns are now individual 3.0-weight signals
+- Add IPC RefDes signals: J→CON(5), FB→IND(6), D→DIO(3), Q→Q(3), U→IC(3),
+  K→RLY(5), Y→OSC(5), F→FUS(5); FB at 6.0 beats F for ferrite beads
+- Add footprint library prefix signals for CAP/RES/LED/CON/DIO/IND at weight 4.0
+- Add ComponentType.FUSE ('FUS') with FUSE name/RefDes/mapping detection
+- Add reference='' parameter to get_component_type(), ComponentClassifier.classify(),
+  HeuristicComponentClassifier.classify(), and _get_component_type_heuristic()
+- Update all callers in project_inventory.py and sophisticated_inventory_matcher.py
+  to pass component.reference for RefDes-based signals
+- Add logging.debug for per-signal score trace
+- 23 new tests; all 467 tests pass (444 original + 23 new)
+
+Supersedes band-aid ordering fixes from #145 and #147.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`68e6acb`](https://github.com/plocher/jBOM/commit/68e6acb342f6b8b6669ef095cb0d992bf33bd4d4))
+
+
 ## v6.30.1 (2026-03-08)
 
 ### Bug Fixes
