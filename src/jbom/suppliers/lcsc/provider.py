@@ -128,7 +128,7 @@ class JlcpcbProvider(SearchProvider):
         self._cache.set(cache_key, results)
         return list(results)
 
-    def search_for_inventory_item(
+    def search_for_item(
         self, item: "InventoryItem", *, query: str, limit: int = 10
     ) -> list[SearchResult]:
         """Search using item-aware parametric planning when available.

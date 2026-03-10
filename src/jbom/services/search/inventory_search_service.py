@@ -307,15 +307,6 @@ class InventorySearchService:
         if not items:
             return []
 
-        jlc_provider = None
-        try:
-            from jbom.suppliers.lcsc.provider import JlcpcbProvider
-
-            if isinstance(self._provider, JlcpcbProvider):
-                jlc_provider = self._provider
-        except Exception:
-            jlc_provider = None
-
         deterministic_score = 1000
 
         records_by_index: list[InventorySearchRecord | None] = [None] * len(items)
@@ -327,7 +318,7 @@ class InventorySearchService:
 
         for idx, item in enumerate(items):
             mpn = (item.mfgpn or "").strip()
-            if jlc_provider is None or not mpn:
+            if not mpn:
                 remaining_items.append(item)
                 remaining_indices.append(idx)
                 continue
@@ -344,7 +335,7 @@ class InventorySearchService:
 
         for key, (mfg, mpn, _indices) in mpn_groups.items():
             try:
-                mpn_results[key] = jlc_provider.lookup_by_mpn(mfg, mpn)
+                mpn_results[key] = self._provider.lookup_by_mpn(mfg, mpn)
             except Exception as exc:
                 mpn_errors[key] = str(exc)
 
@@ -406,15 +397,6 @@ class InventorySearchService:
         # Phase 6.3 behavior: limit is purely service configuration.
         provider_limit = max(10, self._candidate_limit * 3)
 
-        jlc_provider = None
-        try:
-            from jbom.suppliers.lcsc.provider import JlcpcbProvider
-
-            if isinstance(self._provider, JlcpcbProvider):
-                jlc_provider = self._provider
-        except Exception:
-            jlc_provider = None
-
         query_groups: dict[str, list[tuple[InventoryItem, str]]] = defaultdict(list)
         per_item_query: list[tuple[InventoryItem, str, str]] = []
 
@@ -436,16 +418,11 @@ class InventorySearchService:
             representative_item = group[0][0]
 
             try:
-                if jlc_provider is not None:
-                    raw_results = jlc_provider.search_for_inventory_item(
-                        representative_item,
-                        query=provider_query,
-                        limit=provider_limit,
-                    )
-                else:
-                    raw_results = self._provider.search(
-                        provider_query, limit=provider_limit
-                    )
+                raw_results = self._provider.search_for_item(
+                    representative_item,
+                    query=provider_query,
+                    limit=provider_limit,
+                )
                 filtered = apply_default_filters(raw_results)
                 ranked_by_query[key] = SearchSorter.rank(filtered)
             except Exception as exc:
