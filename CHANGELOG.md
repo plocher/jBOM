@@ -1,6 +1,58 @@
 # CHANGELOG
 
 
+## v6.36.0 (2026-03-10)
+
+### Bug Fixes
+
+* fix(formatting): prevent column headers from being truncated below their length
+
+Two pre-existing failures in features/inventory/core.feature:
+
+1. Scenario 'Generate inventory with console output': the table formatter
+   allowed non-fixed columns to shrink to a 3-char minimum, causing
+   multi-word headers like 'Category' to display as 'Cat'. Fix:
+   _column_min_width() now returns max(3, len(col.header)), ensuring column
+   headers are always fully readable regardless of terminal width.
+
+2. Scenario 'Generate inventory with default console output (human-first)':
+   the scenario expected 'IPN' and 'Category' in stdout, but jbom inventory
+   without -o writes to part-inventory.csv (consistent with the passing
+   ux_consistency.feature test). Fix: updated the scenario to check the
+   generated file content rather than stdout.
+
+All 8 scenarios in core.feature now pass. 724 pytest tests unchanged.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`421ce8b`](https://github.com/plocher/jBOM/commit/421ce8bf9be767552cba1f78559b669c1cb15701))
+
+### Features
+
+* feat(suppliers): catalog-driven supplier assignment via generic supplier (#117)
+
+Add catalog-driven supplier PN assignment to audit and inventory commands,
+enabling use of a generic supplier catalog (null_api provider) for offline
+freshness checking and PN enrichment without requiring live API calls.
+
+## New capabilities
+
+### jbom audit inventory.csv --supplier generic
+- Emits STALE_PART (WARN) when existing supplier PN no longer appears in a
+  fresh catalog search for the item
+- Emits BETTER_AVAILABLE (INFO) when search returns a different best PN
+- Silent when existing PN matches the best search result
+- Freshness checks run even without --requirements (early-return guard fixed)
+
+### jbom inventory proj/ --supplier generic -o out.csv
+- Auto-populates the Supplier column for items/components without a PN
+- Skips items that already carry a supplier PN
+- Backfills Manufacturer and MFGPN when blank after enrichment
+- Enriches both ITEM and COMPONENT row types (schematic-generated inventory)
+
+## Tests: 9 Gherkin scenarios + 57 unit tests. Closes #117
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`123b688`](https://github.com/plocher/jBOM/commit/123b688d96a638639309d6c83e702d725ee58f6d))
+
+
 ## v6.35.0 (2026-03-10)
 
 ### Features
