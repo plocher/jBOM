@@ -50,10 +50,12 @@ def _registry() -> dict[str, type["SearchProvider"]]:
     # Lazily import providers to avoid config<->service circular imports.
     from jbom.suppliers.lcsc.provider import JlcpcbProvider
     from jbom.suppliers.mouser.provider import MouserProvider
+    from jbom.suppliers.null.provider import NullSearchProvider
 
     return {
         "mouser_api": MouserProvider,
         "jlcpcb_api": JlcpcbProvider,
+        "null_api": NullSearchProvider,
     }
 
 

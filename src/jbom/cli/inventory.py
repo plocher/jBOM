@@ -1,6 +1,9 @@
 """Inventory command - manage component inventory."""
 
+from __future__ import annotations
+
 import argparse
+from typing import TYPE_CHECKING
 import csv
 import sys
 from datetime import datetime
@@ -31,7 +34,11 @@ from jbom.services.sophisticated_inventory_matcher import (
     SophisticatedInventoryMatcher,
 )
 
-# Fields always present in no-aggregate output — included even when all values are empty
+if TYPE_CHECKING:
+    from jbom.config.suppliers import SupplierConfig
+    from jbom.services.search.inventory_search_service import InventorySearchService
+
+# Fields always present
 # so the designer can fill them in or use "~" for heuristic defaults.
 _NO_AGGREGATE_ALWAYS_FIELDS: list[str] = [
     "RowType",
@@ -164,6 +171,23 @@ def register_command(subparsers) -> None:
 
     # Verbose mode
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
+
+    # Supplier enrichment options (optional; require search provider configuration)
+    parser.add_argument(
+        "--supplier",
+        metavar="SUPPLIER_ID",
+        default=None,
+        help=(
+            "Supplier ID for auto-populating the supplier PN column "
+            "(e.g. 'lcsc', 'mouser', 'generic'). Items already having a PN are skipped."
+        ),
+    )
+    parser.add_argument(
+        "--api-key",
+        metavar="KEY",
+        default=None,
+        help="API key for the supplier search provider (overrides env vars)",
+    )
 
     parser.set_defaults(handler=handle_inventory)
 
@@ -377,6 +401,18 @@ def _handle_batch_inventory(input_paths: list[str], args: argparse.Namespace) ->
     # Produce a deterministic field order
     ordered_fields = _merge_field_names(all_field_names)
 
+    # Supplier enrichment (batch path)
+    service, supplier_config, supplier_id = _build_inventory_supplier_service(args)
+    if service is not None and supplier_config is not None:
+        accumulated_items, ordered_fields = _enrich_items_with_supplier(
+            accumulated_items,
+            ordered_fields,
+            service,
+            supplier_config,
+            supplier_id,
+            verbose=args.verbose,
+        )
+
     return _output_inventory(
         accumulated_items, ordered_fields, args.output, args.force, args.verbose
     )
@@ -429,6 +465,137 @@ def _merge_field_names(all_field_names: set[str]) -> list[str]:
     return ordered
 
 
+def _build_inventory_supplier_service(
+    args: argparse.Namespace,
+) -> "tuple[InventorySearchService | None, SupplierConfig | None, str]":
+    """Build a supplier search service from CLI args, or return (None, None, '').
+
+    Mirrors ``cli/audit.py``'s ``_build_supplier_service()`` but also returns
+    the resolved :class:`SupplierConfig` so callers can find the inventory column.
+
+    Returns:
+        Tuple of (service, supplier_config, supplier_id).  All three are falsy
+        when ``--supplier`` is not given or the supplier has no search providers.
+    """
+    supplier_id = (getattr(args, "supplier", None) or "").strip().lower()
+    if not supplier_id:
+        return None, None, ""
+
+    api_key = getattr(args, "api_key", None)
+
+    try:
+        from jbom.config.suppliers import resolve_supplier_by_id
+        from jbom.services.search.provider_factory import create_search_provider
+        from jbom.services.search.inventory_search_service import InventorySearchService
+
+        supplier_config = resolve_supplier_by_id(supplier_id)
+        if supplier_config is None:
+            print(f"Error: Unknown supplier '{supplier_id}'", file=sys.stderr)
+            return None, None, ""
+
+        provider = create_search_provider(
+            supplier_id,
+            api_key=api_key,
+            cache=None,  # default DiskSearchCache
+        )
+        service = InventorySearchService(provider, request_delay_seconds=0.2)
+        return service, supplier_config, supplier_id
+    except (ValueError, RuntimeError) as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return None, None, ""
+
+
+def _enrich_items_with_supplier(
+    items: "list[InventoryItem]",
+    field_names: list[str],
+    service: "InventorySearchService",
+    supplier_config: "SupplierConfig",
+    supplier_id: str,
+    *,
+    verbose: bool = False,
+) -> "tuple[list[InventoryItem], list[str]]":
+    """Auto-populate supplier PN column for items that lack one.
+
+    Skips items that already carry a PN for the target supplier.  After search,
+    backfills ``manufacturer`` and ``mfgpn`` when blank.
+
+    Args:
+        items: All inventory items (ITEM rows only are enriched).
+        field_names: Current ordered field list — extended with the supplier
+            column when not already present.
+        service: Instantiated :class:`InventorySearchService`.
+        supplier_config: Resolved :class:`SupplierConfig` for the supplier.
+        supplier_id: Normalized supplier ID string.
+        verbose: When True, progress is printed to stderr.
+
+    Returns:
+        Updated ``(items, field_names)`` pair.
+    """
+    from jbom.services.search.inventory_search_service import InventorySearchService
+
+    col = supplier_config.inventory_column
+    is_lcsc = supplier_id == "lcsc"
+
+    # Ensure supplier column is present in field list.
+    if col not in field_names:
+        field_names = list(field_names) + [col]
+
+    # Enrich both ITEM rows (inventory catalog) and COMPONENT rows (schematic-generated).
+    item_rows = [
+        i
+        for i in items
+        if (i.row_type or "ITEM").strip().upper() in {"ITEM", "COMPONENT"}
+    ]
+    needs_pn: list[InventoryItem] = []
+    for item in item_rows:
+        if is_lcsc:
+            existing = (item.lcsc or "").strip()
+        else:
+            existing = str((item.raw_data or {}).get(col, "")).strip()
+        if not existing:
+            needs_pn.append(item)
+
+    if not needs_pn:
+        return items, field_names
+
+    searchable = InventorySearchService.filter_searchable_items(
+        needs_pn, categories=None
+    )
+    if not searchable:
+        return items, field_names
+
+    if verbose:
+        print(
+            f"Enriching {len(searchable)} item(s) with supplier PN ({supplier_id!r})...",
+            file=sys.stderr,
+        )
+
+    records = service.search(searchable)
+
+    for record in records:
+        if not record.candidates:
+            continue
+        best = record.candidates[0].result
+        pn = best.distributor_part_number or ""
+        if not pn:
+            continue
+        item = record.inventory_item
+        if is_lcsc:
+            item.lcsc = pn
+        else:
+            if item.raw_data is None:
+                item.raw_data = {}
+            item.raw_data[col] = pn
+        if not (item.manufacturer or "").strip() and best.manufacturer:
+            item.manufacturer = best.manufacturer
+        if not (item.mfgpn or "").strip() and best.mpn:
+            item.mfgpn = best.mpn
+        if verbose:
+            print(f"  {item.ipn}: set {col}={pn!r}", file=sys.stderr)
+
+    return items, field_names
+
+
 def _handle_generate_inventory(input_path: str, args: argparse.Namespace) -> int:
     """Generate inventory from project components with project-centric input resolution.
 
@@ -460,6 +627,18 @@ def _handle_generate_inventory(input_path: str, args: argparse.Namespace) -> int
         )
 
     inventory_items, field_names = generator.load()
+
+    # Supplier enrichment (single-project path)
+    service, supplier_config, supplier_id = _build_inventory_supplier_service(args)
+    if service is not None and supplier_config is not None:
+        inventory_items, field_names = _enrich_items_with_supplier(
+            inventory_items,
+            list(field_names),
+            service,
+            supplier_config,
+            supplier_id,
+            verbose=args.verbose,
+        )
 
     # Handle output using same pattern as BOM command
     return _output_inventory(

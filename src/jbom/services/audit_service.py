@@ -79,6 +79,9 @@ class CheckType(str, Enum):
     UNUSED_ITEM = "UNUSED_ITEM"
     SUPPLIER_MISS = "SUPPLIER_MISS"  # PR-2: supplier validation
     INVENTORY_GAP = "INVENTORY_GAP"  # PR-2: supplier validation
+    STALE_PART = "STALE_PART"  # existing PN not found in fresh catalog search
+    BETTER_AVAILABLE = "BETTER_AVAILABLE"  # fresh search found a different/better PN
+    SPEC_MISMATCH = "SPEC_MISMATCH"  # reserved: supplier PN doesn't match item spec
 
 
 class Severity(str, Enum):
@@ -376,8 +379,16 @@ class AuditService:
         if requirements_path is None and supplier_service is None:
             return report
 
+        # Freshness checks for ITEM rows (runs even when requirements_path is None).
+        if supplier_service is not None:
+            for item in catalog_items:
+                for freshness_row in self._check_item_freshness(
+                    item, catalog_file_str, supplier_service, supplier_id
+                ):
+                    report.rows.append(freshness_row)
+                    _increment_counter(report, freshness_row.severity)
+
         if requirements_path is None:
-            # Supplier-only check without requirements: nothing to compare against.
             return report
 
         # Load requirement COMPONENT rows.
@@ -442,6 +453,74 @@ class AuditService:
     # ------------------------------------------------------------------
     # Private helpers — supplier validation
     # ------------------------------------------------------------------
+
+    def _check_item_freshness(
+        self,
+        item: InventoryItem,
+        catalog_file: str,
+        supplier_service: InventorySearchService,
+        supplier_id: str,
+    ) -> list[AuditRow]:
+        """Check whether an ITEM row's existing supplier PN is still current.
+
+        Args:
+            item: An ITEM row from the inventory catalog.
+            catalog_file: String path to the catalog file (used in rows).
+            supplier_service: Search service to query.
+            supplier_id: Display name for the supplier.
+
+        Returns:
+            Zero or one :class:`AuditRow`: STALE_PART, BETTER_AVAILABLE, or
+            nothing (silent when existing PN matches the best result).
+        """
+        existing_pn = _get_supplier_pn_for_item(item, supplier_id)
+        if not existing_pn:
+            return []  # SUPPLIER_MISS pathway handles items without PNs
+
+        records = supplier_service.search([item])
+
+        if not records or not records[0].candidates:
+            return [
+                AuditRow(
+                    check_type=CheckType.STALE_PART,
+                    severity=Severity.WARN,
+                    catalog_file=catalog_file,
+                    ipn=item.ipn,
+                    category=item.category or "",
+                    supplier=supplier_id,
+                    supplier_pn=existing_pn,
+                    current_value=existing_pn,
+                    description=(
+                        f"IPN {item.ipn!r}: supplier PN {existing_pn!r} not found by fresh search"
+                        + (f" ({supplier_id!r})" if supplier_id else "")
+                    ),
+                )
+            ]
+
+        best = records[0].candidates[0]
+        best_pn = best.result.distributor_part_number or ""
+
+        if best_pn and best_pn != existing_pn:
+            return [
+                AuditRow(
+                    check_type=CheckType.BETTER_AVAILABLE,
+                    severity=Severity.INFO,
+                    catalog_file=catalog_file,
+                    ipn=item.ipn,
+                    category=item.category or "",
+                    supplier=supplier_id,
+                    supplier_pn=best_pn,
+                    current_value=existing_pn,
+                    suggested_value=best_pn,
+                    description=(
+                        f"IPN {item.ipn!r}: better supplier PN available"
+                        + (f" ({supplier_id!r})" if supplier_id else "")
+                        + f" — current: {existing_pn!r}, suggested: {best_pn!r}"
+                    ),
+                )
+            ]
+
+        return []  # Silent — existing PN matches best result
 
     def _check_supplier_coverage(
         self,
@@ -761,6 +840,30 @@ def _is_blank(value: str) -> bool:
     """Return True when a field value is absent or a KiCad no-value sentinel."""
     s = (value or "").strip()
     return s == "" or s == "~"
+
+
+def _get_supplier_pn_for_item(item: InventoryItem, supplier_id: str) -> str:
+    """Return the existing supplier PN stored on an ITEM row.
+
+    Handles LCSC as a special case (``item.lcsc``).  For all other suppliers
+    the value is read from ``item.raw_data[supplier.inventory_column]``.
+
+    Args:
+        item: An ITEM row from the inventory catalog.
+        supplier_id: Normalized supplier ID string (e.g. ``'generic'``).
+
+    Returns:
+        Stripped PN string, or empty string when absent.
+    """
+    from jbom.config.suppliers import resolve_supplier_by_id
+
+    sid = (supplier_id or "").strip().lower()
+    if sid == "lcsc":
+        return (item.lcsc or "").strip()
+    supplier = resolve_supplier_by_id(sid)
+    if supplier is None:
+        return ""
+    return str((item.raw_data or {}).get(supplier.inventory_column, "")).strip()
 
 
 def _prop(comp: Component, name: str) -> str:
