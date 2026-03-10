@@ -1,4 +1,3 @@
-@wip
 Feature: Inventory supplier PN auto-populate
   As a hardware developer
   I want jbom inventory to populate supplier PNs automatically

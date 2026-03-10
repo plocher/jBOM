@@ -10,7 +10,7 @@ The Phase 4 context fields are needed by jlcpcb_phase4_heuristics to route
 CAP/IND/CON searches to the correct JLCPCB parametric category rather than
 falling back to keyword-only queries.
 
-Then optionally runs jbom inventory-search for coverage preview.
+Then optionally runs jbom inventory for multi-project batch coverage preview.
 
 Usage:
     python scripts/harvest_combined.py

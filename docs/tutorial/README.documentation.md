@@ -210,8 +210,9 @@ for d in profile_search_dirs():
 You now have the full jBOM toolkit:
 
 1. **Generate inventory** from your schematic (`jbom inventory`)
-2. **Enrich it** with part numbers (`jbom search`, `jbom inventory-search`)
-3. **Generate BOM and CPL** for your fab (`jbom bom`, `jbom pos`)
+2. **Enrich it** with part numbers (`jbom search`, `jbom inventory --supplier`)
+3. **Audit supplier PNs** for staleness (`jbom audit inventory.csv --supplier`)
+4. **Generate BOM and CPL** for your fab (`jbom bom`, `jbom pos`)
 4. **Customise** column names with a fab profile and electrical defaults with a defaults profile
 5. **Share** profiles across your team with `JBOM_PROFILE_PATH`
 

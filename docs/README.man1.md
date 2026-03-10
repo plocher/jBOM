@@ -43,7 +43,7 @@ The BOM workflow keeps designs supplier-neutral: components carry generic values
 
 ```
 jbom audit PATH [PATH ...]  [--inventory CATALOG_CSV]  [--supplier NAME] [--api-key KEY]  [-o REPORT_CSV]  [--strict]
-jbom audit CAT.CSV [...]    [--requirements REQ_CSV]   [-o REPORT_CSV]  [--strict]
+jbom audit CAT.CSV [...]    [--requirements REQ_CSV]   [--supplier NAME] [--api-key KEY]  [-o REPORT_CSV]  [--strict]
 ```
 
 Diagnoses field-quality issues and inventory coverage gaps. Mode is detected automatically from the positional arguments:
@@ -75,6 +75,13 @@ Diagnoses field-quality issues and inventory coverage gaps. Mode is detected aut
   - Found at supplier but absent from local `--inventory` → `INVENTORY_GAP / INFO` (only when `--inventory` is also given)
   - Silent when both local inventory and supplier match.
 
+**Supplier freshness checks (inventory mode + `--supplier`)**
+: When all positionals are `.csv` files and `--supplier` is given, each `ITEM` row's supplier PN is validated against a fresh catalog search:
+  - Existing PN not found by a fresh search → `STALE_PART / WARN`
+  - Fresh search returns a better PN than the one recorded → `BETTER_AVAILABLE / WARN`
+  - Existing PN matches the best search result → silent
+  - Row has no supplier PN → skipped (no check)
+
 ### Arguments
 
 **PATH** (one or more, required)
@@ -84,7 +91,7 @@ Diagnoses field-quality issues and inventory coverage gaps. Mode is detected aut
 : Inventory catalog for a coverage dry-run (project mode only).
 
 **--supplier NAME**
-: Search a distributor catalog to check supplier coverage for each component. Choices: `mouser`, `lcsc`. Set `MOUSER_API_KEY` environment variable or use `--api-key`. May be combined with `--inventory` to also detect `INVENTORY_GAP` rows.
+: Search a distributor catalog to check supplier coverage for each component. Choices: `mouser`, `lcsc`, `generic`. Set `MOUSER_API_KEY` environment variable or use `--api-key`. May be combined with `--inventory` to also detect `INVENTORY_GAP` rows. In inventory mode (all positionals are `.csv` files), runs freshness checks (`STALE_PART`, `BETTER_AVAILABLE`) against each `ITEM` row.
 
 **--api-key KEY**
 : API key for the `--supplier` provider, overrides the provider-specific environment variable.

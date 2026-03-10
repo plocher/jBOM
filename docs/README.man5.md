@@ -49,8 +49,14 @@ Each row represents either a project requirement (`COMPONENT`) or a stocked part
 : Manufacturer part number (0603WAJ0331T5E, CC0603KRX7R9BB104, etc.).
 
 
-**LCSC**
-: Supplier part number from LCSC Electronics. Used as the primary identifier in the BOM output.
+**Supplier**
+: Supplier name for this part. Used by `jbom audit --supplier` to identify which supplier PN to validate, and by `jbom inventory --supplier` to record which distributor assigned the PN. Typical values: `lcsc`, `mouser`, `generic`.
+
+**SPN** (Supplier Part Number)
+: The supplier-assigned part number corresponding to the `Supplier` field. Used as the part number identifier in BOM output when present.
+
+**LCSC** *(deprecated)*
+: Legacy supplier part number from LCSC Electronics. Equivalent to setting `Supplier=lcsc` and `SPN=<value>`. Accepted for backward compatibility; new inventories should use `Supplier` + `SPN` instead.
 
 **Datasheet**
 : URL to component datasheet PDF.
