@@ -223,9 +223,7 @@ def test_jlcpcb_provider_uses_parametric_search_for_resistor_item(
     monkeypatch.setattr(provider._api, "search_keyword", search_keyword)
 
     item = _inv_item(category="RES", value="10K", tolerance="", package="0603")
-    results = provider.search_for_inventory_item(
-        item, query="10K resistor 0603", limit=5
-    )
+    results = provider.search_for_item(item, query="10K resistor 0603", limit=5)
 
     assert len(results) == 1
     assert search_parametric.call_count == 1
@@ -255,9 +253,7 @@ def test_jlcpcb_provider_parametric_search_falls_back_to_keyword_when_empty(
     monkeypatch.setattr(provider._api, "search_keyword", search_keyword)
 
     item = _inv_item(category="RES", value="10K", tolerance="1%", package="0603")
-    results = provider.search_for_inventory_item(
-        item, query="10K resistor 0603", limit=5
-    )
+    results = provider.search_for_item(item, query="10K resistor 0603", limit=5)
 
     assert len(results) == 1
     assert search_parametric.call_count == 1

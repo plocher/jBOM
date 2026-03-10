@@ -96,7 +96,7 @@ def _sr(**kw) -> SearchResult:
 
 def test_inventory_search_service_deduplicates_provider_calls_and_fans_out() -> None:
     provider = Mock(spec=SearchProvider)
-    provider.search = Mock(return_value=[_sr()])
+    provider.search_for_item = Mock(return_value=[_sr()])
 
     svc = InventorySearchService(provider, candidate_limit=1, request_delay_seconds=0.0)
 
@@ -142,7 +142,7 @@ def test_inventory_search_service_deduplicates_provider_calls_and_fans_out() -> 
 
     records = svc.search(items)
 
-    assert provider.search.call_count == 3
+    assert provider.search_for_item.call_count == 3
 
     # Preserve fan-out: one record per input item, maintaining associations.
     assert [r.inventory_item.ipn for r in records] == [i.ipn for i in items]
@@ -251,13 +251,15 @@ def test_filter_sparse_items_for_fabricator_scopes_by_supplier_columns() -> None
 def test_inventory_search_service_fans_out_provider_errors_to_all_items() -> None:
     err_msg = "provider unavailable"
 
-    def _fake_search(query: str, *, limit: int = 10) -> list[SearchResult]:
+    def _fake_search_for_item(
+        item, *, query: str, limit: int = 10
+    ) -> list[SearchResult]:
         if "10k" in query.lower():
             raise RuntimeError(err_msg)
         return [_sr()]
 
     provider = Mock(spec=SearchProvider)
-    provider.search = Mock(side_effect=_fake_search)
+    provider.search_for_item = Mock(side_effect=_fake_search_for_item)
 
     svc = InventorySearchService(provider, candidate_limit=1, request_delay_seconds=0.0)
 
@@ -288,7 +290,7 @@ def test_inventory_search_service_fans_out_provider_errors_to_all_items() -> Non
     records = svc.search(items)
 
     # 2 unique queries: one fails, one succeeds.
-    assert provider.search.call_count == 2
+    assert provider.search_for_item.call_count == 2
 
     by_ipn = {r.inventory_item.ipn: r for r in records}
 
@@ -314,9 +316,7 @@ def test_inventory_search_service_uses_item_aware_lcsc_dispatch(monkeypatch) -> 
     search_for_inventory_item = Mock(
         return_value=[_sr(distributor="lcsc", distributor_part_number="C25231")]
     )
-    monkeypatch.setattr(
-        provider, "search_for_inventory_item", search_for_inventory_item
-    )
+    monkeypatch.setattr(provider, "search_for_item", search_for_inventory_item)
 
     search_keyword_only = Mock(
         side_effect=AssertionError(

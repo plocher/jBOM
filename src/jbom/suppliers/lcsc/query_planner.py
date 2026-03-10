@@ -18,6 +18,7 @@ from jbom.common.types import InventoryItem
 from jbom.common.value_parsing import farad_to_eia, henry_to_eia, ohms_to_eia
 from jbom.config.defaults import DefaultsConfig, get_defaults
 from jbom.services.search.cache import normalize_query
+from jbom.services.search.part_profile import detect_subtype
 
 # Compiled regexes for connector footprint parsing
 _CON_PINS_RE = re.compile(r"(\d+)[xX](\d+)")
@@ -164,7 +165,8 @@ def _build_capacitor_plan(
     first_sort = rules.get("first_sort", "Capacitors")
 
     # Technology detection: electrolytic/tantalum vs MLCC
-    if _detect_cap_is_electrolytic(item):
+    cap_subtype = detect_subtype(item, "CAP")
+    if cap_subtype in ("electrolytic", "tantalum"):
         second_sort = rules.get(
             "second_sort_electrolytic", "Aluminum Electrolytic Capacitors"
         )
@@ -227,7 +229,7 @@ def _build_inductor_plan(
     rules = defaults.get_category_route_rules("inductor")
     first_sort = rules.get("first_sort", "Inductors")
 
-    subtype = _detect_ind_subtype(item)
+    subtype = detect_subtype(item, "IND")
     if subtype == "ferrite":
         second_sort = rules.get("second_sort_ferrite", "Ferrite Beads")
     elif subtype == "power":
@@ -466,51 +468,6 @@ def _fp_lib_name(footprint_full: str) -> str:
     if not footprint_full or ":" not in footprint_full:
         return ""
     return footprint_full.split(":", 1)[0]
-
-
-# ---------------------------------------------------------------------------
-# Technology detection helpers
-# ---------------------------------------------------------------------------
-
-
-def _detect_cap_is_electrolytic(item: InventoryItem) -> bool:
-    """Return True if the capacitor is likely electrolytic or tantalum.
-
-    Detection priority:
-    - Strong: KiCad symbol entry name contains 'Polarized'
-    - Strong: Footprint entry name (after ':') starts with 'CP_'
-    - Additive: Library nickname contains 'Elec' or 'Tantalum' or 'Polarized'
-      (KLC nicknames only; non-KLC nicknames are neutral, not negative)
-    """
-    if "Polarized" in item.symbol_name:
-        return True
-    fp_entry = _fp_entry_name(item.footprint_full)
-    if fp_entry.startswith("CP_"):
-        return True
-    fp_lib = _fp_lib_name(item.footprint_full)
-    if any(hint in fp_lib for hint in ("Elec", "Tantalum", "Polarized")):
-        return True
-    return False
-
-
-def _detect_ind_subtype(item: InventoryItem) -> str:
-    """Detect inductor subtype: 'ferrite', 'power', or 'signal'.
-
-    Ferrite detection takes priority. Power detection uses structural signals
-    (symbol name, package size). Default is signal/RF inductor.
-    """
-    description_upper = (item.description or "").upper()
-    if "FERRITE" in description_upper:
-        return "ferrite"
-
-    if "_Core" in item.symbol_name or item.symbol_name == "L_Core":
-        return "power"
-
-    package = _normalize_token(item.package).upper()
-    if package in {"1210", "1812", "2520", "4532"}:
-        return "power"
-
-    return "signal"
 
 
 def _inductance_attribute_value(item: InventoryItem) -> str:
