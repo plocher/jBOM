@@ -1,6 +1,34 @@
 # CHANGELOG
 
 
+## v6.35.0 (2026-03-10)
+
+### Features
+
+* feat(search): query intelligence architecture — PartProfile, provider ABC methods, isinstance removal
+
+- Add PartProfile frozen dataclass (category/package/subtype/tolerance) as the
+  canonical component identity unit for search queries
+- Add detect_subtype(item, category) with full vocabulary:
+    CAP: c0g | x7r | x5r | y5v | electrolytic | tantalum | film (default x7r)
+    IND: signal | power | ferrite (default signal)
+    RES: smd | wirewound | metal_film (default smd)
+- Add classify_item(item) -> PartProfile | None; returns None for IC/CON/DIO
+- Extract _detect_cap_is_electrolytic + _detect_ind_subtype from query_planner
+  into services/search/part_profile as detect_subtype (no behavioral change)
+- Add concrete search_for_item() and lookup_by_mpn() to SearchProvider ABC
+  with sensible defaults (delegate to search(); return None)
+- Remove both isinstance(self._provider, JlcpcbProvider) checks from
+  inventory_search_service; all providers now dispatched polymorphically
+- Rename JlcpcbProvider.search_for_inventory_item -> search_for_item
+- 53 new TDD unit tests in tests/services/search/test_part_profile.py
+- All 672 tests passing
+
+Closes #102
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`b3ce09c`](https://github.com/plocher/jBOM/commit/b3ce09c73cf60a687eb298062efecc58aba74fa1))
+
+
 ## v6.34.1 (2026-03-10)
 
 ### Refactoring
