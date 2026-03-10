@@ -14,7 +14,7 @@ Feature: CLI Basics
     And the output should contain "pos"
     And the output should contain "inventory"
     And the output should contain "search"
-    And the output should contain "inventory-search"
+    And the output should contain "annotate"
 
   Scenario: Show version
     When I run jbom command "--version"
