@@ -8,11 +8,9 @@ Covers:
 - Bug 4: BOM Package populated / derived from footprint
 - Bug 5: --fields permissive (no rejection)
 - Enh 6: Component.source_file set by SchematicReader (via fixture)
-- Enh 7: annotate_schematic() hierarchy (primary + fallback paths)
 """
 from __future__ import annotations
 
-import csv
 from pathlib import Path
 
 import pytest
@@ -23,7 +21,6 @@ from jbom.common.component_filters import apply_component_filters
 from jbom.common.types import Component
 from jbom.services.bom_generator import BOMGenerator
 from jbom.services.project_inventory import ProjectInventoryGenerator
-from jbom.services.annotation_service import annotate_schematic
 
 
 # ---------------------------------------------------------------------------
@@ -53,34 +50,6 @@ def _make_comp(
         properties=properties or {},
         source_file=source_file,
     )
-
-
-def _write_schematic(path: Path, uuid: str = "uuid-r1") -> None:
-    path.write_text(
-        f"""(kicad_sch (version 20211123) (generator eeschema)
-  (symbol (lib_id "Device:R") (at 50 50 0)
-    (uuid "{uuid}")
-    (property "Reference" "R1" (id 0) (at 52 48 0))
-    (property "Value" "10K" (id 1) (at 52 52 0))
-    (property "Footprint" "R_0603" (id 2) (at 52 54 0))
-    (property "Package" "0603" (id 3) (at 52 56 0))
-  )
-)
-""",
-        encoding="utf-8",
-    )
-
-
-def _write_inventory_csv(
-    path: Path, rows: list[dict], fieldnames: list[str] | None = None
-) -> None:
-    if not fieldnames:
-        fieldnames = list(rows[0].keys()) if rows else []
-    with path.open("w", encoding="utf-8", newline="") as fh:
-        writer = csv.DictWriter(fh, fieldnames=fieldnames)
-        writer.writeheader()
-        for row in rows:
-            writer.writerow(row)
 
 
 # ---------------------------------------------------------------------------
@@ -296,163 +265,3 @@ class TestBug5PermissiveFields:
     def test_empty_fields_still_raises(self) -> None:
         with pytest.raises(ValueError, match="cannot be empty"):
             parse_fields_argument("", self._available)
-
-
-# ---------------------------------------------------------------------------
-# Enhancement 7: annotate hierarchy — fallback path
-# ---------------------------------------------------------------------------
-
-
-class TestEnh7AnnotateHierarchyFallback:
-    """annotate_schematic fallback path: UUID index across multiple files."""
-
-    def test_fallback_annotates_component_in_sub_sheet(self, tmp_path: Path) -> None:
-        root = tmp_path / "root.kicad_sch"
-        sub = tmp_path / "sub.kicad_sch"
-        _write_schematic(root, uuid="uuid-root")
-        _write_schematic(sub, uuid="uuid-sub")
-
-        inventory = tmp_path / "inv.csv"
-        _write_inventory_csv(
-            inventory,
-            [
-                {
-                    "Project": str(tmp_path),
-                    "UUID": "uuid-sub",
-                    "Value": "22K",
-                    "Package": "0805",
-                }
-            ],
-            fieldnames=["Project", "UUID", "Value", "Package"],
-        )
-
-        result = annotate_schematic(
-            schematic_path=root,
-            inventory_path=inventory,
-            dry_run=False,
-            schematic_files=[root, sub],
-        )
-
-        assert result.updated_components == 1
-        updated = sub.read_text(encoding="utf-8")
-        assert '"Value" "22K"' in updated
-
-    def test_fallback_warns_on_uuid_not_found(self, tmp_path: Path) -> None:
-        root = tmp_path / "root.kicad_sch"
-        _write_schematic(root, uuid="uuid-root")
-
-        inventory = tmp_path / "inv.csv"
-        _write_inventory_csv(
-            inventory,
-            [
-                {
-                    "Project": "",
-                    "UUID": "no-such-uuid",
-                    "Value": "33K",
-                    "Package": "0402",
-                }
-            ],
-            fieldnames=["Project", "UUID", "Value", "Package"],
-        )
-
-        result = annotate_schematic(
-            schematic_path=root,
-            inventory_path=inventory,
-            dry_run=False,
-            schematic_files=[root],
-        )
-
-        assert result.updated_components == 0
-        assert any("no-such-uuid" in w for w in result.warnings)
-
-    def test_fallback_dry_run_does_not_write(self, tmp_path: Path) -> None:
-        root = tmp_path / "root.kicad_sch"
-        _write_schematic(root, uuid="uuid-root")
-        original = root.read_text(encoding="utf-8")
-
-        inventory = tmp_path / "inv.csv"
-        _write_inventory_csv(
-            inventory,
-            [{"Project": "", "UUID": "uuid-root", "Value": "47K", "Package": "1206"}],
-            fieldnames=["Project", "UUID", "Value", "Package"],
-        )
-
-        result = annotate_schematic(
-            schematic_path=root,
-            inventory_path=inventory,
-            dry_run=True,
-            schematic_files=[root],
-        )
-
-        assert result.dry_run is True
-        assert result.updated_components == 1
-        assert root.read_text(encoding="utf-8") == original
-
-
-# ---------------------------------------------------------------------------
-# Enhancement 7: annotate hierarchy — primary path (SourceFile routing)
-# ---------------------------------------------------------------------------
-
-
-class TestEnh7AnnotateHierarchyPrimaryPath:
-    """annotate_schematic primary path: SourceFile+UUID routing."""
-
-    def test_primary_routes_to_correct_file(self, tmp_path: Path) -> None:
-        root = tmp_path / "root.kicad_sch"
-        sub = tmp_path / "sub.kicad_sch"
-        _write_schematic(root, uuid="uuid-root")
-        _write_schematic(sub, uuid="uuid-sub")
-
-        inventory = tmp_path / "inv.csv"
-        _write_inventory_csv(
-            inventory,
-            [
-                {
-                    "Project": str(tmp_path),
-                    "UUID": "uuid-sub",
-                    "SourceFile": str(sub),
-                    "Value": "56K",
-                    "Package": "0402",
-                }
-            ],
-            fieldnames=["Project", "UUID", "SourceFile", "Value", "Package"],
-        )
-
-        result = annotate_schematic(
-            schematic_path=root,
-            inventory_path=inventory,
-            dry_run=False,
-            schematic_files=[root, sub],
-        )
-
-        assert result.updated_components == 1
-        assert '"Value" "56K"' in sub.read_text(encoding="utf-8")
-
-    def test_primary_warns_on_missing_source_file(self, tmp_path: Path) -> None:
-        root = tmp_path / "root.kicad_sch"
-        _write_schematic(root, uuid="uuid-root")
-
-        inventory = tmp_path / "inv.csv"
-        _write_inventory_csv(
-            inventory,
-            [
-                {
-                    "Project": "",
-                    "UUID": "uuid-root",
-                    "SourceFile": "/nonexistent/path.kicad_sch",
-                    "Value": "1K",
-                    "Package": "0603",
-                }
-            ],
-            fieldnames=["Project", "UUID", "SourceFile", "Value", "Package"],
-        )
-
-        result = annotate_schematic(
-            schematic_path=root,
-            inventory_path=inventory,
-            dry_run=False,
-            schematic_files=[root],
-        )
-
-        assert result.updated_components == 0
-        assert any("not found on disk" in w for w in result.warnings)

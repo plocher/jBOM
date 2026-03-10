@@ -161,6 +161,9 @@ def _print_normalization_result(result) -> None:
 def _print_repairs_result(result: RepairsAnnotationResult) -> None:
     """Print repairs execution summary."""
 
+    for warning in result.warnings:
+        print(warning)
+
     for error in result.errors:
         print(f"Error: {error}", file=sys.stderr)
 
