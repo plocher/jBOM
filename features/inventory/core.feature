@@ -7,7 +7,7 @@ Feature: Inventory Management (Core Functionality)
   Background:
     Given the generic fabricator is selected
 
-  Scenario: Generate inventory with default console output (human-first)
+  Scenario: Generate inventory to default output file
     Given a schematic that contains:
       | Reference | Value | Footprint         | LibID                        |
       | R1        | 10K   | R_0805_2012       | Device:R                     |
@@ -16,8 +16,9 @@ Feature: Inventory Management (Core Functionality)
     When I run jbom command "inventory"
     Then the command should succeed
     And the output should contain "Generated inventory"
-    And the output should contain "IPN"
-    And the output should contain "Category"
+    And a file named "part-inventory.csv" should exist
+    And the file "part-inventory.csv" should contain "IPN"
+    And the file "part-inventory.csv" should contain "Category"
 
   Scenario: Generate inventory to explicit file
     Given a schematic that contains:

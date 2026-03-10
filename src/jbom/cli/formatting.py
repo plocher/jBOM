@@ -87,9 +87,9 @@ def _truncate(text: str, *, width: int, align: str) -> str:
 
 
 def _column_min_width(col: Column) -> int:
-    # Non-fixed columns must be allowed to shrink below header length.
-    # Tests rely on preserving fixed-width numeric columns when shrinking.
-    return 3
+    # Non-fixed columns may shrink to fit the terminal, but never below
+    # their header length so column labels remain fully readable.
+    return max(3, len(col.header))
 
 
 def _desired_width(col: Column, rows: Sequence[Mapping[str, Any]]) -> int:
