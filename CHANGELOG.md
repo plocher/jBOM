@@ -1,6 +1,43 @@
 # CHANGELOG
 
 
+## v6.34.0 (2026-03-10)
+
+### Features
+
+* feat(annotate): add RefDes-mismatch warning, multi-project ProjectPath filter, remove dead annotation_service code
+
+- Add warnings: list[str] to RepairsAnnotationResult for informational messages
+- Emit INFO warning when UUID matches but RefDes changed between audit and repair
+- Filter annotate_from_repairs rows by ProjectPath to silently skip other-project rows
+- Remove dead code: AnnotationRow, AnnotationResult, TriageRowIssue, TriageReport,
+  annotate_schematic, triage_inventory, and all their private helpers
+- Remove _RESERVED_COLUMNS and _REQUIRED_FIELDS module constants (dead)
+- Update _print_repairs_result to print result.warnings before errors
+- Remove TestEnh7* test classes (tested deleted annotate_schematic)
+- Add tests: multi-project filter and RefDes-mismatch warning
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`06c270a`](https://github.com/plocher/jBOM/commit/06c270ae631ccdc51d4c9ee2641048b87ffee5e5))
+
+* feat(annotate,audit): add --repairs, --supplier, retire inventory-search (#154)
+
+- jbom annotate --repairs REPORT_CSV: back-annotates schematics from audit
+  report; applies Action=SET rows by UUID; --dry-run preview mode retained;
+  --normalize kept orthogonal
+- jbom audit --supplier NAME / --api-key KEY: new supplier validation tier;
+  SUPPLIER_MISS/ERROR when unfindable; INVENTORY_GAP/INFO when found at
+  supplier but absent from local --inventory; works standalone or combined
+- services/search/provider_factory.py: extracted create_search_provider()
+  and build_search_cache() from retired inventory-search CLI
+- inventory-search command retired (cli/inventory_search.py deleted)
+- 22 new unit tests (test_annotate_repairs, test_audit_supplier)
+- docs/README.man1.md: ANNOTATE COMMAND section added; audit --supplier docs;
+  INVENTORY-SEARCH section replaced with retirement/migration notice
+- docs/CHANGELOG.md: Added/Removed entries under [Unreleased]
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`b82f8cf`](https://github.com/plocher/jBOM/commit/b82f8cf27813933b08148acbfd2d7eebf6ec98ed))
+
+
 ## v6.33.0 (2026-03-09)
 
 ### Features
