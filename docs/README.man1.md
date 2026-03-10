@@ -8,28 +8,26 @@ jbom — generate Bill of Materials, Placement Files, and Parts Lists from KiCad
 
 ```
 jbom [-q] [--version]
-jbom audit PATH [PATH ...] [--inventory CATALOG_CSV] [--requirements REQ_CSV] [-o REPORT_CSV] [--strict]
+jbom audit PATH [PATH ...] [--inventory CATALOG_CSV] [--supplier NAME] [--api-key KEY] [--requirements REQ_CSV] [-o REPORT_CSV] [--strict]
+jbom annotate INPUT [--repairs REPORT_CSV] [--normalize] [--dry-run]
 jbom bom [PROJECT] [--inventory FILE ...] [-o OUTPUT] [BOM OPTIONS]
 jbom pos [PROJECT] [-o OUTPUT] [POS OPTIONS]
 jbom inventory [PROJECT] [-o OUTPUT] [INVENTORY OPTIONS]
 jbom parts [PROJECT] [-o OUTPUT] [PARTS OPTIONS]
 jbom search QUERY [SEARCH OPTIONS]
-jbom inventory-search INVENTORY_FILE [OPTIONS]
 ```
 
 ## DESCRIPTION
 
-jBOM (version 7) provides seven subcommands:
+jBOM provides eight subcommands:
 
 - `audit` — diagnose field-quality issues and inventory coverage gaps in KiCad projects or catalog files
+- `annotate` — back-annotate KiCad schematics with approved field values from an audit report
 - `bom` — generate a procurement BOM from KiCad schematics matched against an inventory file
 - `pos` — generate component placement files (CPL/POS) from KiCad PCB files
 - `inventory` — generate an initial inventory template from schematic components
 - `parts` — generate an unaggregated parts list (one row per component) from schematics
 - `search` — search external distributor catalogs (e.g. Mouser) by keyword or part number
-- `inventory-search` — bulk-search distributor catalogs to find part numbers for existing inventory items
-
-The `annotate` command (back-annotate schematic from inventory) is available in `legacy/` and is planned for v8.x.
 
 The BOM workflow keeps designs supplier-neutral: components carry generic values in the schematic; an inventory file maps those values to specific supplier part numbers at generation time.
 
@@ -44,7 +42,7 @@ The BOM workflow keeps designs supplier-neutral: components carry generic values
 ## AUDIT COMMAND
 
 ```
-jbom audit PATH [PATH ...]  [--inventory CATALOG_CSV]  [-o REPORT_CSV]  [--strict]
+jbom audit PATH [PATH ...]  [--inventory CATALOG_CSV]  [--supplier NAME] [--api-key KEY]  [-o REPORT_CSV]  [--strict]
 jbom audit CAT.CSV [...]    [--requirements REQ_CSV]   [-o REPORT_CSV]  [--strict]
 ```
 
@@ -71,6 +69,12 @@ Diagnoses field-quality issues and inventory coverage gaps. Mode is detected aut
 : Same four-outcome model applied to COMPONENT rows from the requirements file against catalog ITEM rows.
 : Catalog items not matched by any requirement → `UNUSED_ITEM / INFO`
 
+**Supplier validation (project mode + `--supplier`)**
+: Bulk-searches the named distributor to verify each component is findable:
+  - No results → `SUPPLIER_MISS / ERROR`
+  - Found at supplier but absent from local `--inventory` → `INVENTORY_GAP / INFO` (only when `--inventory` is also given)
+  - Silent when both local inventory and supplier match.
+
 ### Arguments
 
 **PATH** (one or more, required)
@@ -78,6 +82,12 @@ Diagnoses field-quality issues and inventory coverage gaps. Mode is detected aut
 
 **--inventory CATALOG_CSV**
 : Inventory catalog for a coverage dry-run (project mode only).
+
+**--supplier NAME**
+: Search a distributor catalog to check supplier coverage for each component. Choices: `mouser`, `lcsc`. Set `MOUSER_API_KEY` environment variable or use `--api-key`. May be combined with `--inventory` to also detect `INVENTORY_GAP` rows.
+
+**--api-key KEY**
+: API key for the `--supplier` provider, overrides the provider-specific environment variable.
 
 **--requirements REQ_CSV**
 : Requirements CSV (output of `jbom inventory proj`) for a coverage check (inventory mode only).
@@ -92,7 +102,7 @@ Diagnoses field-quality issues and inventory coverage gaps. Mode is detected aut
 
 Columns: `CheckType`, `Severity`, `ProjectPath`, `RefDes`, `UUID`, `CatalogFile`, `IPN`, `Category`, `Field`, `CurrentValue`, `SuggestedValue`, `ApprovedValue`, `Action`, `Supplier`, `SupplierPN`, `Description`.
 
-The `ApprovedValue` and `Action` columns are blank in `audit` output. Open the file in a spreadsheet, fill in `ApprovedValue` and set `Action` to `SET` / `SKIP` / `IGNORE` for each `QUALITY_ISSUE` row, then pass it to `jbom annotate proj --repairs report.csv` (available in PR 2).
+The `ApprovedValue` and `Action` columns are blank in `audit` output. Open the file in a spreadsheet, fill in `ApprovedValue` and set `Action` to `SET` / `SKIP` / `IGNORE` for each `QUALITY_ISSUE` row, then pass it to `jbom annotate proj --repairs report.csv`.
 
 ### Exit codes
 
@@ -105,12 +115,53 @@ The `ApprovedValue` and `Action` columns are blank in `audit` output. Open the f
 # 1. Check field quality and inventory coverage for a project
 jbom audit ./my_project --inventory catalog.csv -o report.csv
 
-# 2. Review QUALITY_ISSUE rows, fill ApprovedValue + Action, then annotate (PR 2)
+# 2. Review QUALITY_ISSUE rows, fill ApprovedValue + Action, then annotate
 jbom annotate ./my_project --repairs report.csv
 
 # 3. Audit catalog coverage against project requirements
 jbom inventory ./my_project -o requirements.csv
 jbom audit catalog.csv --requirements requirements.csv -o catalog_report.csv
+```
+
+## ANNOTATE COMMAND
+
+```
+jbom annotate INPUT [--repairs REPORT_CSV] [--normalize] [--dry-run]
+```
+
+Back-annotates KiCad schematics with approved field values from an audit report, and optionally normalizes schematic property formatting.
+
+**INPUT** (required)
+: Path to a KiCad project directory or `.kicad_sch` file.
+
+**--repairs REPORT_CSV**
+: Audit report CSV (output of `jbom audit`). Rows with `Action=SET` and a non-blank `ApprovedValue` are applied: each component matching by UUID has its `Field` updated to `ApprovedValue`. Rows with other `Action` values or blank `ApprovedValue` are silently skipped. A row with `Action=SET` but no matching UUID is a hard failure.
+
+**--normalize**
+: Normalize schematic property formatting (canonical capitalization and field ordering). May be used standalone or combined with `--repairs`.
+
+**--dry-run**
+: Parse and validate the input without writing any files. Reports what would change.
+
+### Exit codes
+
+- `0` — annotation applied successfully (or nothing to do)
+- `1` — one or more hard failures (UUID not found, file not writable, etc.)
+
+### Example workflow
+
+```sh
+# Audit first; fill in ApprovedValue + Action=SET for QUALITY_ISSUE rows
+jbom audit ./my_project --inventory catalog.csv -o report.csv
+
+# Apply approved changes back to schematic
+jbom annotate ./my_project --repairs report.csv
+
+# Preview without writing
+jbom annotate ./my_project --repairs report.csv --dry-run
+
+# Normalize property formatting only
+jbom annotate ./my_project --normalize
 ```
 
 ## BOM COMMAND
@@ -326,43 +377,15 @@ Searches distributor catalogs for parts matching a keyword or part number.
 **-F, --force, --Force**
 : Overwrite an existing output file.
 
-## INVENTORY-SEARCH COMMAND
+## INVENTORY-SEARCH COMMAND (RETIRED)
 
+The `inventory-search` subcommand has been retired as of this release. Its catalog-search functionality has been consolidated into `jbom audit --supplier`.
+
+**Migration**: replace `jbom inventory-search inventory.csv --provider mouser` with:
+
+```sh
+jbom audit ./my_project --supplier mouser --api-key YOUR_KEY -o report.csv
 ```
-jbom inventory-search INVENTORY_FILE [OPTIONS]
-```
-
-Bulk-searches distributor catalogs using items from an existing inventory file to find candidate supplier part numbers. Useful for backfilling missing LCSC/MFGPN fields.
-
-**INVENTORY_FILE**
-: Path to inventory file (.csv, .xlsx, .numbers). Required.
-
-**-o, --output OUTPUT**
-: Enhanced inventory CSV output destination.
-  - Omit `-o` (or use `-o console`) to skip writing the enhanced CSV.
-  - Use `-o -` to write the enhanced CSV to stdout (the human report is written to stderr unless `--report` is provided).
-  - Otherwise, treat the value as a file path.
-
-**-F, --force, --Force**
-: Overwrite an existing output file.
-
-**--report FILE**
-: Write analysis report to this file. Default: stdout.
-
-**--provider {mouser}**
-: Search provider to use (default: mouser).
-
-**--limit N**
-: Maximum candidates per inventory item (default: 3).
-
-**--api-key KEY**
-: API key, overrides provider-specific environment variables.
-
-**--dry-run**
-: Validate input and show which items are searchable without performing API calls.
-
-**--categories LIST**
-: Comma-separated list of categories to search (e.g., `RES,CAP,IC`). Filters which inventory items are queried.
 
 ## OUTPUT
 
@@ -470,15 +493,20 @@ Search Mouser for a part:
 jbom search "10k 0603 resistor" --limit 5
 ```
 
-Bulk inventory search — dry run to preview searchable items:
-```
-jbom inventory-search inventory.csv --dry-run
+Audit with supplier coverage check:
+```sh
+export MOUSER_API_KEY=your_api_key
+jbom audit ./my_project --inventory catalog.csv --supplier mouser -o report.csv
 ```
 
-Bulk inventory search — write enriched output and report:
+Apply approved field changes back to schematic:
+```sh
+jbom annotate ./my_project --repairs report.csv
 ```
-export MOUSER_API_KEY=your_api_key
-jbom inventory-search inventory.csv -o enriched.csv --report report.txt
+
+Normalize schematic properties:
+```sh
+jbom annotate ./my_project --normalize
 ```
 
 ## FIELDS

@@ -33,6 +33,7 @@ from jbom.common.field_taxonomy import (
 from jbom.common.types import Component, InventoryItem
 from jbom.services.inventory_reader import InventoryReader
 from jbom.services.schematic_reader import SchematicReader
+from jbom.services.search.inventory_search_service import InventorySearchService
 from jbom.services.sophisticated_inventory_matcher import (
     MatchingOptions,
     SophisticatedInventoryMatcher,
@@ -253,6 +254,8 @@ class AuditService:
         project_paths: Sequence[Path],
         inventory_path: Optional[Path] = None,
         project_path_override: Optional[str] = None,
+        supplier_service: Optional[InventorySearchService] = None,
+        supplier_id: str = "",
     ) -> AuditReport:
         """Audit KiCad project(s) for field quality and optional inventory coverage.
 
@@ -263,6 +266,14 @@ class AuditService:
             project_path_override: When set, this string is used as
                 ``ProjectPath`` in every row instead of the resolved path.
                 Useful for testing deterministic output.
+            supplier_service: Optional :class:`InventorySearchService` instance.
+                When provided, every in-BOM component is searched in the
+                supplier catalog.
+                ``SUPPLIER_MISS`` rows are emitted for components not found.
+                ``INVENTORY_GAP`` rows are emitted when a component is found in
+                the supplier catalog but absent from *inventory_path* (only when
+                *inventory_path* is also provided).
+            supplier_id: Display name for the supplier used in row descriptions.
 
         Returns:
             :class:`AuditReport` with all findings.
@@ -313,12 +324,28 @@ class AuditService:
                     report.rows.append(match_row)
                     _increment_counter(report, match_row.severity)
 
+            # --- Supplier validation (only when supplier_service provided) ---
+            if supplier_service is not None:
+                supplier_row = self._check_supplier_coverage(
+                    comp,
+                    category,
+                    pro_str,
+                    supplier_service,
+                    supplier_id,
+                    inventory_items,
+                )
+                if supplier_row is not None:
+                    report.rows.append(supplier_row)
+                    _increment_counter(report, supplier_row.severity)
+
         return report
 
     def audit_inventory(
         self,
         catalog_paths: Sequence[Path],
         requirements_path: Optional[Path] = None,
+        supplier_service: Optional[InventorySearchService] = None,
+        supplier_id: str = "",
     ) -> AuditReport:
         """Audit inventory catalog(s) for coverage and quality.
 
@@ -327,6 +354,10 @@ class AuditService:
             requirements_path: Optional CSV output of ``jbom inventory proj``
                 (COMPONENT rows).  When provided, coverage checks are run
                 for each requirement against the catalog.
+            supplier_service: Optional :class:`InventorySearchService` instance.
+                When provided, each COMPONENT requirement is also checked
+                against the supplier catalog.
+            supplier_id: Display name for the supplier used in row descriptions.
 
         Returns:
             :class:`AuditReport` with all findings.
@@ -341,8 +372,12 @@ class AuditService:
             items, _ = reader.load()
             catalog_items.extend(i for i in items if i.row_type.upper() == "ITEM")
 
-        # No requirements? Nothing to check (yet — supplier checks are PR 2).
+        # No requirements and no supplier check? Nothing to do.
+        if requirements_path is None and supplier_service is None:
+            return report
+
         if requirements_path is None:
+            # Supplier-only check without requirements: nothing to compare against.
             return report
 
         # Load requirement COMPONENT rows.
@@ -371,6 +406,21 @@ class AuditService:
                 report.rows.append(match_row)
                 _increment_counter(report, match_row.severity)
 
+            # Supplier validation tier.
+            if supplier_service is not None:
+                synthetic = _component_from_inventory_item(req)
+                supplier_row = self._check_supplier_coverage(
+                    synthetic,
+                    category,
+                    ref_des,
+                    supplier_service,
+                    supplier_id,
+                    catalog_items,
+                )
+                if supplier_row is not None:
+                    report.rows.append(supplier_row)
+                    _increment_counter(report, supplier_row.severity)
+
         # Unused catalog items.
         for item in catalog_items:
             if item.ipn and item.ipn not in covered_ipns:
@@ -388,6 +438,79 @@ class AuditService:
                 report.info_count += 1
 
         return report
+
+    # ------------------------------------------------------------------
+    # Private helpers — supplier validation
+    # ------------------------------------------------------------------
+
+    def _check_supplier_coverage(
+        self,
+        comp: Component,
+        category: str,
+        pro_str: str,
+        search_service: InventorySearchService,
+        supplier_id: str,
+        inventory_items: list[InventoryItem],
+    ) -> Optional[AuditRow]:
+        """Search supplier catalog for *comp*; return a finding or ``None``.
+
+        Logic:
+        - No candidates → :attr:`CheckType.SUPPLIER_MISS` / ERROR.
+        - Candidates found + no local inventory match → :attr:`CheckType.INVENTORY_GAP` / INFO
+          (only when *inventory_items* is non-empty).
+        - Candidates found + local match (or no inventory to compare) → ``None`` (silent).
+        """
+        search_item = _component_to_inventory_item(comp, category)
+        records = search_service.search([search_item])
+
+        if not records or not records[0].candidates:
+            return AuditRow(
+                check_type=CheckType.SUPPLIER_MISS,
+                severity=Severity.ERROR,
+                project_path=pro_str,
+                ref_des=comp.reference,
+                uuid=comp.uuid,
+                category=category,
+                supplier=supplier_id,
+                description=(
+                    f"{comp.reference}: not found in supplier catalog"
+                    + (f" ({supplier_id!r})" if supplier_id else "")
+                ),
+            )
+
+        best = records[0].candidates[0]
+        supplier_pn = best.result.distributor_part_number or ""
+
+        # No local inventory to compare against — supplier found, silent.
+        if not inventory_items:
+            return None
+
+        # Check local inventory.
+        comp_ipn = _prop(comp, "IPN")
+        comp_mpn = _prop(comp, "MFGPN") or _prop(comp, "MPN")
+        if comp_ipn and any(i.ipn == comp_ipn for i in inventory_items):
+            return None
+        if comp_mpn and any(i.mfgpn == comp_mpn for i in inventory_items):
+            return None
+        matches = self._matcher.find_matches(comp, inventory_items)
+        if matches:
+            return None
+
+        return AuditRow(
+            check_type=CheckType.INVENTORY_GAP,
+            severity=Severity.INFO,
+            project_path=pro_str,
+            ref_des=comp.reference,
+            uuid=comp.uuid,
+            category=category,
+            supplier=supplier_id,
+            supplier_pn=supplier_pn,
+            description=(
+                f"{comp.reference}: found in supplier catalog"
+                + (f" ({supplier_id!r}, PN={supplier_pn!r})" if supplier_pn else "")
+                + " but absent from local inventory"
+            ),
+        )
 
     # ------------------------------------------------------------------
     # Private helpers — field quality
@@ -735,3 +858,45 @@ __all__ = [
     "AuditService",
     "REPORT_CSV_COLUMNS",
 ]
+
+
+def _component_to_inventory_item(comp: Component, category: str) -> InventoryItem:
+    """Convert a schematic :class:`Component` to an :class:`InventoryItem` for supplier search.
+
+    Only fields meaningful to :meth:`InventorySearchService.build_query` are
+    populated; all others are left as empty strings.
+    """
+    props = comp.properties or {}
+    tolerance = props.get("Tolerance", "")
+    voltage = props.get("Voltage", "")
+    wattage = props.get("Power", "")
+    mfgpn = props.get("MFGPN") or props.get("MPN", "")
+    manufacturer = props.get("Manufacturer", "")
+
+    # Simplify footprint: strip KiCad library prefix
+    # (e.g. "Resistor_SMD:R_0603" → "R_0603").
+    fp = comp.footprint or ""
+    package = fp.split(":", 1)[-1] if ":" in fp else fp
+
+    return InventoryItem(
+        ipn=props.get("IPN", ""),
+        keywords="",
+        category=category,
+        description="",
+        smd="",
+        value=comp.value or "",
+        type="",
+        tolerance=tolerance,
+        voltage=voltage,
+        amperage="",
+        wattage=wattage,
+        lcsc="",
+        manufacturer=manufacturer,
+        mfgpn=mfgpn,
+        datasheet="",
+        row_type="COMPONENT",
+        component_id=comp.reference,
+        uuid=comp.uuid,
+        package=package,
+        raw_data={},
+    )

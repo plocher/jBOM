@@ -7,6 +7,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 
 ### Added
+- **`jbom annotate` command** (issue #154): back-annotates KiCad schematics from an audit report. `--repairs REPORT_CSV` applies `Action=SET` rows by UUID; `--normalize` normalizes property formatting; `--dry-run` previews without writing.
+- **`jbom audit --supplier NAME`** (issue #154): supplier validation tier checks each component against a distributor catalog (Mouser, LCSC). Emits `SUPPLIER_MISS / ERROR` when unfindable; `INVENTORY_GAP / INFO` when found at supplier but absent from local `--inventory`. Works standalone or combined with `--inventory`.
+- **`jbom audit --api-key KEY`** (issue #154): API key override for `--supplier` catalog searches.
+- **`services/search/provider_factory.py`** (issue #154): extracted `create_search_provider()` and `build_search_cache()` as a reusable module (previously embedded in the retired `inventory-search` CLI).
+
+### Removed
+- **`inventory-search` command** (issue #154): retired; bulk catalog search is now available via `jbom audit --supplier`. Migrate: `jbom inventory-search inventory.csv --provider mouser` → `jbom audit ./my_project --supplier mouser -o report.csv`.
+
+### Added
 - **Multi-project batch inventory** (issue #144): `jbom inventory` now accepts multiple project paths (`jbom inventory p1 p2 p3 -o combined.csv`). COMPONENT rows are merged and deduplicated on `ComponentID` (first-seen wins); field names are unioned across all projects. Per-project failures are skipped by default with a summary printed at the end; use `--stop-on-error` to abort on first failure. Single-project behaviour is unchanged. `scripts/harvest_combined.py` is superseded by this feature.
 - **Harvest fidelity fields** (issue #126): `InventoryItem` now carries first-class `footprint_full`, `symbol_lib`, `symbol_name`, `pins`, and `pitch` fields. KiCad harvest populates them by parsing `NICKNAME:ENTRY_NAME` from `lib_id`. `InventoryReader` round-trips them from CSV; absent columns default to empty string.
 - **Phase 4 CAP technology detection** (issue #126): `_build_capacitor_plan` routes to **Aluminum Electrolytic Capacitors** when `C_Polarized` appears in `symbol_name` or the footprint entry name starts with `CP_`; otherwise routes to **Multilayer Ceramic Capacitors (MLCC)**. Dielectric is excluded from electrolytic keyword queries.

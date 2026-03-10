@@ -28,6 +28,7 @@ import sys
 from pathlib import Path
 
 from jbom.services.audit_service import AuditService
+from jbom.services.search.inventory_search_service import InventorySearchService
 
 
 def register_command(subparsers: argparse._SubParsersAction) -> None:  # type: ignore[type-arg]
@@ -93,6 +94,25 @@ def register_command(subparsers: argparse._SubParsersAction) -> None:  # type: i
         help="Exit with non-zero status when WARN-severity rows exist (default: only on ERROR)",
     )
 
+    # Supplier validation options (optional; require live API access)
+    parser.add_argument(
+        "--supplier",
+        metavar="SUPPLIER_ID",
+        default=None,
+        help=(
+            "Supplier ID to validate component sourcing against (e.g. 'mouser', 'lcsc'). "
+            "Emits SUPPLIER_MISS rows for components not found. "
+            "Emits INVENTORY_GAP rows (INFO) when combined with --inventory/--requirements."
+        ),
+    )
+
+    parser.add_argument(
+        "--api-key",
+        metavar="KEY",
+        default=None,
+        help="API key for the supplier search provider (overrides env vars)",
+    )
+
     parser.set_defaults(handler=handle_audit)
 
 
@@ -117,6 +137,9 @@ def handle_audit(args: argparse.Namespace) -> int:
     except ValueError as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
+    except RuntimeError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
     except Exception as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
@@ -132,10 +155,14 @@ def _run_project_mode(args: argparse.Namespace, inputs: list[Path]) -> int:
         )
         return 1
 
+    supplier_service, supplier_id = _build_supplier_service(args)
+
     service = AuditService()
     report = service.audit_project(
         project_paths=inputs,
         inventory_path=getattr(args, "inventory", None),
+        supplier_service=supplier_service,
+        supplier_id=supplier_id,
     )
 
     _write_report(args, report)
@@ -154,16 +181,41 @@ def _run_inventory_mode(args: argparse.Namespace, inputs: list[Path]) -> int:
         )
         return 1
 
+    supplier_service, supplier_id = _build_supplier_service(args)
+
     service = AuditService()
     report = service.audit_inventory(
         catalog_paths=inputs,
         requirements_path=getattr(args, "requirements", None),
+        supplier_service=supplier_service,
+        supplier_id=supplier_id,
     )
 
     _write_report(args, report)
     _print_summary(report)
 
     return report.exit_code_strict() if args.strict else report.exit_code
+
+
+def _build_supplier_service(
+    args: argparse.Namespace,
+) -> tuple[InventorySearchService | None, str]:
+    """Build a supplier search service from CLI args, or return (None, '')."""
+    supplier_id = (getattr(args, "supplier", None) or "").strip().lower()
+    if not supplier_id:
+        return None, ""
+
+    api_key = getattr(args, "api_key", None)
+
+    from jbom.services.search.provider_factory import create_search_provider
+
+    provider = create_search_provider(
+        supplier_id,
+        api_key=api_key,
+        cache=None,  # default DiskSearchCache
+    )
+    service = InventorySearchService(provider, request_delay_seconds=0.2)
+    return service, supplier_id
 
 
 def _write_report(args: argparse.Namespace, report) -> None:
