@@ -32,6 +32,21 @@ def _write_schematic_local(
         dnp = row.get("DNP", "No")
         exclude_from_bom = row.get("ExcludeFromBOM", "No")
 
+        # Determine extra properties (all table columns beyond the known standard ones).
+        _STANDARD_COLS = {
+            "Reference",
+            "Value",
+            "Footprint",
+            "LibID",
+            "Package",
+            "DNP",
+            "ExcludeFromBOM",
+            "UUID",
+        }
+        extra_props = {
+            k: v for k, v in row.items() if k not in _STANDARD_COLS and v and v.strip()
+        }
+
         # Build symbol with base properties
         symbol_parts = [f'(symbol (lib_id "{lib}") (at {x} 50 0) (unit 1)']
 
@@ -54,6 +69,11 @@ def _write_schematic_local(
         if package:
             symbol_parts.append(
                 f'(property "Package" "{package}" (id 3) (at {x+2} 56 0))'
+            )
+        # Write any extra properties (e.g. Supplier, LCSC, Manufacturer).
+        for extra_id, (k, v) in enumerate(extra_props.items(), start=10):
+            symbol_parts.append(
+                f'(property "{k}" "{v}" (id {extra_id}) (at {x+2} {58 + extra_id} 0))'
             )
 
         symbol_lines = [f"  {part}" for part in symbol_parts] + ["  )"]
@@ -564,3 +584,67 @@ def then_inventory_file_contains_value(context, value: str) -> None:
     assert (
         value in content
     ), f"Expected value '{value}' not present in CSV files: {csv_files}"
+
+
+# -------------------------
+# Supplier setup steps
+# -------------------------
+
+
+@given("a generic supplier")
+def given_a_generic_supplier(context) -> None:
+    """Set up an empty generic supplier config (null_api, returns no results).
+
+    Writes .jbom/generic.supplier.yaml with null_api and no fixtures key.
+    The null_api provider always returns [] when no fixtures are configured.
+    Use 'And a supplier catalog that contains:' to add specific results.
+    """
+    jbom_dir = Path(context.sandbox_root) / ".jbom"
+    jbom_dir.mkdir(exist_ok=True)
+    (jbom_dir / "generic.supplier.yaml").write_text(
+        "id: generic\nname: Generic\ninventory_column: Supplier\n"
+        "search:\n  providers:\n    - type: null_api\n",
+        encoding="utf-8",
+    )
+
+
+@given("a supplier catalog that contains:")
+def given_a_supplier_catalog(context) -> None:
+    """Populate the generic supplier with table-driven fixture results.
+
+    Writes .jbom/generic_results.json from the Gherkin table and updates
+    .jbom/generic.supplier.yaml to point the null_api provider at it.
+    Expects 'Given a generic supplier' to have run first (or runs standalone).
+
+    Table columns: distributor_pn, manufacturer, mpn, stock_quantity, price,
+    description (all optional except distributor_pn).
+    """
+    import json as _json
+
+    jbom_dir = Path(context.sandbox_root) / ".jbom"
+    jbom_dir.mkdir(exist_ok=True)
+    results = [
+        {
+            "manufacturer": r.get("manufacturer", ""),
+            "mpn": r.get("mpn", ""),
+            "distributor": "generic",
+            "distributor_part_number": r.get("distributor_pn", ""),
+            "description": r.get("description", ""),
+            "datasheet": "",
+            "availability": f"{r.get('stock_quantity', '0')} In Stock",
+            "price": r.get("price", ""),
+            "details_url": "",
+            "raw_data": {},
+            "stock_quantity": int(r.get("stock_quantity", 0) or 0),
+        }
+        for r in [row.as_dict() for row in context.table]
+    ]
+    fixture_file = jbom_dir / "generic_results.json"
+    fixture_file.write_text(_json.dumps(results), encoding="utf-8")
+    # Write (or overwrite) the supplier yaml with absolute fixtures path.
+    (jbom_dir / "generic.supplier.yaml").write_text(
+        "id: generic\nname: Generic\ninventory_column: Supplier\n"
+        "search:\n  providers:\n    - type: null_api\n"
+        f"      fixtures: {fixture_file}\n",
+        encoding="utf-8",
+    )

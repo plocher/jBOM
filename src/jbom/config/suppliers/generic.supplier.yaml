@@ -8,6 +8,10 @@ search_url_template: null
 part_number: {}
 
 search:
+  providers:
+    - type: null_api
+      # No fixtures key: returns [] by default
+
   fields:
     - supplier_part_number
     - price
