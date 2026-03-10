@@ -1,6 +1,30 @@
 # CHANGELOG
 
 
+## v6.34.1 (2026-03-10)
+
+### Refactoring
+
+* refactor: move supplier-specific code to jbom.suppliers package
+
+- Move jlcpcb_api, jlcpcb_provider, jlcpcb_phase4_heuristics from
+  services/search/ into src/jbom/suppliers/lcsc/{api,provider,query_planner}.py
+- Move mouser_provider into src/jbom/suppliers/mouser/provider.py
+- Delete retired jlcparts_provider.py and remove JlcpartsProvider from registry
+- Rename build_phase4_parametric_query_plan → build_parametric_query_plan
+  (removes jlcpcb-specific naming from a supplier-agnostic planning concept)
+- Update all import paths across source files, tests, and scripts
+- Rename test_jlcpcb_phase4_heuristics.py → test_lcsc_query_planner.py
+  and test_phase4_with_custom_defaults.py → test_lcsc_query_planner_custom_defaults.py
+- Fix pre-existing NameError: missing defaultdict init for query_groups in
+  inventory_search_service._search_by_keyword
+- services/search/ now contains only supplier-agnostic infrastructure
+
+Closes #157
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`bd6ba3f`](https://github.com/plocher/jBOM/commit/bd6ba3f5297ff48455978db3f268620d83fd34fd))
+
+
 ## v6.34.0 (2026-03-10)
 
 ### Features
