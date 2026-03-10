@@ -309,7 +309,7 @@ class InventorySearchService:
 
         jlc_provider = None
         try:
-            from jbom.services.search.jlcpcb_provider import JlcpcbProvider
+            from jbom.suppliers.lcsc.provider import JlcpcbProvider
 
             if isinstance(self._provider, JlcpcbProvider):
                 jlc_provider = self._provider
@@ -408,7 +408,7 @@ class InventorySearchService:
 
         jlc_provider = None
         try:
-            from jbom.services.search.jlcpcb_provider import JlcpcbProvider
+            from jbom.suppliers.lcsc.provider import JlcpcbProvider
 
             if isinstance(self._provider, JlcpcbProvider):
                 jlc_provider = self._provider

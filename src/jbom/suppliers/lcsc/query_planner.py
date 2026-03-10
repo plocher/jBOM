@@ -1,10 +1,10 @@
-"""Phase 4 decision-tree query shaping for JLCPCB/LCSC search.
+"""Category-aware parametric query builder for JLCPCB/LCSC search.
 
 This module provides deterministic helper logic for building structured
 JLCPCB/LCSC parametric search queries from inventory item attributes.
 
 All configurable constants (domain defaults, package ratings, routing rules,
-query fields) are loaded from the defaults profile system (#98) via
+query fields) are loaded from the defaults profile system via
 get_defaults() / DefaultsConfig. See generic.defaults.yaml for factory values
 and docs/dev/architecture/component-attribute-enrichment.md for the design model.
 """
@@ -63,7 +63,7 @@ class JlcpcbParametricQueryPlan:
         specs = ",".join(self.component_specification_list)
         attrs = ";".join(f"{k}={','.join(v)}" for k, v in self.component_attribute_list)
         return (
-            "phase4"
+            "jlcpcb"
             f"|first={self.first_sort_name or ''}"
             f"|second={self.second_sort_name or ''}"
             f"|spec={specs}"
@@ -72,13 +72,13 @@ class JlcpcbParametricQueryPlan:
         )
 
 
-def build_phase4_parametric_query_plan(
+def build_parametric_query_plan(
     item: InventoryItem,
     *,
     base_query: str,
     defaults: DefaultsConfig | None = None,
 ) -> JlcpcbParametricQueryPlan:
-    """Build a Phase 4 query plan for one inventory item.
+    """Build a parametric query plan for one inventory item.
 
     Supported categories:
     - RES (resistor)
@@ -223,7 +223,7 @@ def _build_capacitor_plan(
 def _build_inductor_plan(
     item: InventoryItem, *, base_query: str, defaults: DefaultsConfig
 ) -> JlcpcbParametricQueryPlan:
-    """Build a Phase 4 query plan for an inductor (IND)."""
+    """Build a parametric query plan for an inductor (IND)."""
     rules = defaults.get_category_route_rules("inductor")
     first_sort = rules.get("first_sort", "Inductors")
 
@@ -282,7 +282,7 @@ def _build_inductor_plan(
 def _build_connector_plan(
     item: InventoryItem, *, base_query: str, defaults: DefaultsConfig
 ) -> JlcpcbParametricQueryPlan:
-    """Build a Phase 4 query plan for a connector (CON)."""
+    """Build a parametric query plan for a connector (CON)."""
     rules = defaults.get_category_route_rules("connector")
     first_sort = rules.get("first_sort", "Connectors")
 
@@ -541,5 +541,5 @@ def _detect_connector_series(fp_entry: str, fp_lib: str) -> str:
 
 __all__ = [
     "JlcpcbParametricQueryPlan",
-    "build_phase4_parametric_query_plan",
+    "build_parametric_query_plan",
 ]

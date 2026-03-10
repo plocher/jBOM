@@ -8,7 +8,7 @@ from jbom.config.fabricators import load_fabricator
 from jbom.config.suppliers import SupplierConfig
 from jbom.services.search.cache import InMemorySearchCache
 from jbom.services.search.inventory_search_service import InventorySearchService
-from jbom.services.search.jlcpcb_provider import JlcpcbProvider
+from jbom.suppliers.lcsc.provider import JlcpcbProvider
 from jbom.services.search.models import SearchResult
 from jbom.services.search.provider import SearchProvider
 
@@ -303,7 +303,7 @@ def test_inventory_search_service_fans_out_provider_errors_to_all_items() -> Non
 
 
 def test_inventory_search_service_uses_item_aware_lcsc_dispatch(monkeypatch) -> None:
-    import jbom.services.search.jlcpcb_api as api_mod
+    import jbom.suppliers.lcsc.api as api_mod
 
     monkeypatch.setattr(api_mod, "requests", Mock())
 

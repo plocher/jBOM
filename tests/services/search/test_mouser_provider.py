@@ -7,7 +7,7 @@ import pytest
 from jbom.config.providers import SearchProviderConfig
 from jbom.config.suppliers import SupplierConfig
 from jbom.services.search.cache import InMemorySearchCache
-from jbom.services.search.mouser_provider import MouserProvider
+from jbom.suppliers.mouser.provider import MouserProvider
 
 
 def _mock_response(payload: dict):
@@ -18,7 +18,7 @@ def _mock_response(payload: dict):
 
 
 def test_mouser_provider_requires_api_key(monkeypatch):
-    import jbom.services.search.mouser_provider as mp
+    import jbom.suppliers.mouser.provider as mp
 
     monkeypatch.setattr(mp, "requests", Mock())
     monkeypatch.delenv("MOUSER_API_KEY", raising=False)
@@ -34,7 +34,7 @@ def test_mouser_provider_requires_api_key(monkeypatch):
 def test_mouser_provider_parses_basic_result(monkeypatch):
     cache = InMemorySearchCache()
 
-    import jbom.services.search.mouser_provider as mp
+    import jbom.suppliers.mouser.provider as mp
 
     post = Mock(
         return_value=_mock_response(
@@ -83,7 +83,7 @@ def test_mouser_provider_parses_basic_result(monkeypatch):
 def test_mouser_provider_uses_cache(monkeypatch):
     cache = InMemorySearchCache()
 
-    import jbom.services.search.mouser_provider as mp
+    import jbom.suppliers.mouser.provider as mp
 
     post = Mock(return_value=_mock_response({"SearchResults": {"Parts": []}}))
     monkeypatch.setattr(mp, "requests", Mock(post=post))
@@ -102,7 +102,7 @@ def test_mouser_provider_defaults_retry_settings_when_profile_missing(
 ):
     cache = InMemorySearchCache()
 
-    import jbom.services.search.mouser_provider as mp
+    import jbom.suppliers.mouser.provider as mp
 
     # Simulate a supplier profile that exists but doesn't specify search.api.*.
     supplier = SupplierConfig(
