@@ -43,7 +43,7 @@ Open `inventory.csv` in a spreadsheet editor. For each part you want JLCPCB to s
 
 How to find LCSC part numbers:
 - Search at [jlcpcb.com/parts](https://jlcpcb.com/parts) or [lcsc.com](https://lcsc.com)
-- Use `jbom search` from the terminal (covered in Tutorial 3)
+- Use `jbom search` from the terminal, or `jbom inventory --supplier` for bulk auto-population (covered in Tutorial 3)
 - Export your JLCPCB private parts library: *User Center → My Inventory → My Parts Lib → Export*
 
 You do not need to fill in every row before generating a BOM. Components without a matching inventory entry will appear in the BOM with an empty part number. You can iterate.
@@ -133,5 +133,5 @@ jbom parts MyBoard/ --jlc --inventory inventory.csv
 
 ## Next steps
 
-- [Tutorial 3: Finding and Enriching Parts](README.integration.md) — use `jbom search` and `jbom inventory-search` to find LCSC numbers automatically
+- [Tutorial 3: Finding and Enriching Parts](README.integration.md) — use `jbom search`, `jbom inventory --supplier`, and `jbom audit --supplier` to find and validate supplier part numbers
 - [Tutorial 4: Customising for Your Workflow](README.documentation.md) — custom column names, org-wide tolerances

@@ -18,7 +18,7 @@ jBOM v7.x does not expose a stable public Python API. The primary interface is t
 A Python API is planned for v8.x to support:
 - Programmatic BOM and placement file generation from Python scripts
 - Integration with the KiCad Python scripting environment
-- Back-annotation of schematics (`annotate` command, currently in `legacy/`)
+- Back-annotation of schematics (the `annotate` command is now a stable CLI command in v7.x)
 
 For design inspiration, see `legacy/src/jbom/api.py` — the legacy API module that informed this plan.
 
@@ -174,7 +174,7 @@ def back_annotate(
 ) -> Dict[str, Any]
 ```
 
-The `annotate` command is currently available in `legacy/src/jbom/cli/commands/builtin/annotate.py` and is planned to be re-implemented as part of the v8.x public API.
+The `annotate` command is a stable CLI command as of v7.x. It is invoked via `jbom annotate` and documented in [jbom(1)](README.man1.md). A programmatic Python API wrapper is planned for v8.x.
 
 ## WORKAROUND FOR v7.x
 

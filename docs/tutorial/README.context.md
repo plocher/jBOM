@@ -87,5 +87,5 @@ Exit code `2` (rather than `0`) means "BOM written, but some components are unma
 ## Next steps
 
 - [Tutorial 2: Your First BOM](README.implementation.md) — hands-on walkthrough of the core workflow
-- [Tutorial 3: Finding and Enriching Parts](README.integration.md) — fill your inventory using `jbom search` and `jbom inventory-search`
+- [Tutorial 3: Finding and Enriching Parts](README.integration.md) — fill your inventory using `jbom search`, `jbom inventory --supplier`, and `jbom audit --supplier`
 - [Tutorial 4: Customising for Your Workflow](README.documentation.md) — create custom fab and defaults profiles

@@ -7,15 +7,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 
 ### Added
+- **Catalog-driven supplier assignment** (issue #117): `NullSearchProvider` (`null_api` type) added as the built-in fixture-driven provider always available without credentials. `generic.supplier.yaml` wired with `null_api` as its search provider.
+- **Inventory freshness audit** (issue #117): `jbom audit inventory.csv --supplier NAME` checks each `ITEM` row's supplier PN against a fresh catalog search. Emits `STALE_PART / WARN` when the existing PN is no longer findable; `BETTER_AVAILABLE / WARN` when a different PN ranks higher than the recorded one; silent when the existing PN matches the best result.
+- **`jbom inventory --supplier NAME`** (issue #117): auto-populates `Supplier` and `SPN` columns when generating an inventory from a schematic. Rows that already have a supplier PN are preserved; new rows get the top search result filled in.
 - **`jbom annotate` command** (issue #154): back-annotates KiCad schematics from an audit report. `--repairs REPORT_CSV` applies `Action=SET` rows by UUID; `--normalize` normalizes property formatting; `--dry-run` previews without writing.
-- **`jbom audit --supplier NAME`** (issue #154): supplier validation tier checks each component against a distributor catalog (Mouser, LCSC). Emits `SUPPLIER_MISS / ERROR` when unfindable; `INVENTORY_GAP / INFO` when found at supplier but absent from local `--inventory`. Works standalone or combined with `--inventory`.
+- **`jbom audit --supplier NAME`** (issue #154): supplier validation tier checks each component against a distributor catalog (Mouser, LCSC, Generic). Emits `SUPPLIER_MISS / ERROR` when unfindable; `INVENTORY_GAP / INFO` when found at supplier but absent from local `--inventory`. Works standalone or combined with `--inventory`.
 - **`jbom audit --api-key KEY`** (issue #154): API key override for `--supplier` catalog searches.
 - **`services/search/provider_factory.py`** (issue #154): extracted `create_search_provider()` and `build_search_cache()` as a reusable module (previously embedded in the retired `inventory-search` CLI).
-
-### Removed
-- **`inventory-search` command** (issue #154): retired; bulk catalog search is now available via `jbom audit --supplier`. Migrate: `jbom inventory-search inventory.csv --provider mouser` → `jbom audit ./my_project --supplier mouser -o report.csv`.
-
-### Added
 - **Multi-project batch inventory** (issue #144): `jbom inventory` now accepts multiple project paths (`jbom inventory p1 p2 p3 -o combined.csv`). COMPONENT rows are merged and deduplicated on `ComponentID` (first-seen wins); field names are unioned across all projects. Per-project failures are skipped by default with a summary printed at the end; use `--stop-on-error` to abort on first failure. Single-project behaviour is unchanged. `scripts/harvest_combined.py` is superseded by this feature.
 - **Harvest fidelity fields** (issue #126): `InventoryItem` now carries first-class `footprint_full`, `symbol_lib`, `symbol_name`, `pins`, and `pitch` fields. KiCad harvest populates them by parsing `NICKNAME:ENTRY_NAME` from `lib_id`. `InventoryReader` round-trips them from CSV; absent columns default to empty string.
 - **Phase 4 CAP technology detection** (issue #126): `_build_capacitor_plan` routes to **Aluminum Electrolytic Capacitors** when `C_Polarized` appears in `symbol_name` or the footprint entry name starts with `CP_`; otherwise routes to **Multilayer Ceramic Capacitors (MLCC)**. Dielectric is excluded from electrolytic keyword queries.
@@ -23,21 +21,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **Phase 4 CON plan** (issue #126): Uses first-class `pins`/`pitch` fields and parses KLC footprint entry names for pitch, pin count, and series (`PinHeader`, `JST_PH`, etc.).
 - **JLCPCB route rules** for `inductor` and `connector` categories in `generic.defaults.yaml`; `capacitor` gains `second_sort_mlcc` and `second_sort_electrolytic`.
 - **`docs/kicad-best-practices.md`**: user guide for per-category KiCad property recommendations.
-
-### Added
-- **Two-layer inventory model** (issue #142): `jbom inventory` now emits `RowType=COMPONENT` rows representing project requirements, distinct from `RowType=ITEM` rows for stocked parts. Backward-compatible with existing ITEM-only inventory files.
-- **ComponentID**: deterministic, version-stamped hash of a component requirement (`category|value|package|tolerance|voltage|...`). Stale IDs from old encoding versions are transparently re-derived on load.
-- **COMPONENT_ROW_COLUMNS** canonical column set and `COLUMN_NORMALISE` remap (`V`→`Voltage`, `A`→`Current`, `W`→`Power`) in `component_id.py`.
-- **Value normalization registry** in `value_parsing.py`: `_Normalizer`/`_NORMALIZERS` registry keyed by `RES`/`CAP`/`IND`; `canonical_value()` for ComponentID VAL normalization; `decode_typed_parametric()` for typed SI-unit field extraction with explicit-column-vs-Value priority and >0.1% disagreement warning.
-- **Canonical typed parametric columns** (`Resistance`, `Capacitance`, `Inductance`) in inventory CSV output: values written as EIA strings (`1uF` not `1.0uF`, `1000uF` not `1e+03uF`).
-- `is_null_value()` helper to distinguish KiCad `~` null placeholder from real values.
-- `harvest_combined.py` script for multi-project COMPONENT+ITEM combined inventory.
-- Mouser search fixtures and offline contract/integration test scaffolding.
-- Persistent disk-backed search cache (default, 24h TTL) with `--no-cache` and `--clear-cache` flags.
-- LCSC keyword search provider using the public JLCPCB live parts API (`jlcpcb_api`).
-- LCSC/JLCPCB provider architecture documented in `docs/dev/architecture/adr/0002-jlcpcb-lcsc-provider.md`; user reference at `docs/lcsc-provider.md`.
-
-### Added
 - **Scoring-based component classifier** (issue #149): `_get_component_type_heuristic` replaced with a weighted signal / bidding model. Each `ClassificationSignal` votes for a category; the highest total score wins. No ordering dependency — adding a new signal never requires knowing where to insert it.
 - **IPC reference designator signals**: `get_component_type()` now accepts a `reference` parameter (e.g. `"J1"`, `"FB2"`, `"U4"`). Reference prefix signals follow IPC convention and carry high weight: `J`→CON (5.0), `FB`→IND (6.0), `D`→DIO (3.0), `Q`→Q (3.0), `U`→IC (3.0), `K`→RLY (5.0), `Y`→OSC (5.0), `F`→FUS (5.0). `FB` at 6.0 outweighs `F`→FUS for ferrite bead components.
 - **Footprint library prefix signals**: footprint strings now vote for passive/discrete categories (`CAPACITOR`→CAP, `RESISTOR`→RES, `LED`→LED, `CONNECTOR`→CON, `DIODE`→DIO, `INDUCTOR`→IND) at weight 4.0, in addition to the existing IC footprint detection.
@@ -45,17 +28,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **Per-signal score logging**: `logging.debug` emits the full scores dict and the winning category for each classification, enabling diagnostic tracing at debug log level.
 - 23 new unit tests covering: scoring model structure, multi-signal scoring (CLED_RGB, CONNECTOR, CD4011), IC-pattern-vs-prefix precedence, all 8 IPC RefDes prefix signals, FB-vs-F disambiguation, and FUSE detection.
 
+### Removed
+- **`inventory-search` command** (issue #154): retired; bulk catalog search is now available via `jbom audit --supplier`. Migrate: `jbom inventory-search inventory.csv --provider mouser` → `jbom audit ./my_project --supplier mouser -o report.csv`.
+
 ### Changed
 - Component classifier heuristic now checks connector/specific-name patterns before generic single-letter prefixes, preventing `CONNECTOR_*` symbols from being misclassified as capacitors (#145). **Superseded by scoring model** — band-aid ordering no longer needed, but test coverage retained as scoring regression tests.
 - Added LED/non-RCL regression coverage to lock stopgap behavior: C-prefixed LED-like symbols are guarded from CAP misclassification (#147). **Superseded by scoring model** — `LED` signal (7.0) reliably beats `C` prefix (1.0).
 - Typed parametric decode is now category-gated in both project inventory generation and inventory CSV intake: only the category-matching typed field is decoded, with UNK/Unknown/blank promotion only when exactly one typed attribute is present; ambiguous typed attributes now log a warning and decode none (#146).
 - Mouser provider now supports configurable timeout + retry/backoff for transient failures.
 - LCSC supplier profile now uses `jlcpcb_api` (live API) instead of the `jlcparts_sqlite` stub.
-- `inventory-search` now deduplicates identical queries within a run to reduce provider API calls.
 - Search parametric filtering now supports category-aware value normalization for RES/CAP/IND/REG and uses canonical values as a tertiary sort key.
-- `inventory-search` query construction now supports per-supplier `search.type_query_keywords` with a safe hardcoded fallback.
 - `jbom search` console output now includes Description plus up to 2 heuristic parametric columns.
-- LCSC `inventory-search` now applies Issue #115 Phase 4 foundation heuristics for RES/CAP parametric query shaping (category/spec/attribute payloads with static defaults and safe keyword fallback).
+- LCSC search now applies Issue #115 Phase 4 foundation heuristics for RES/CAP parametric query shaping (category/spec/attribute payloads with static defaults and safe keyword fallback).
 - `inventory --no-aggregate` now emits canonical `Voltage`, `Current`, and `Power` columns (legacy `V/A/W` aliases are no longer output columns).
 - `annotate --normalize` now supports standalone or combined normalize+annotate workflows, with conflict-abort behavior when alias and canonical values disagree.
 - Defaults profiles now support `field_synonyms` mappings, and inventory intake resolves electrical aliases exclusively through that profile config (no hardcoded fallback alias mapping).

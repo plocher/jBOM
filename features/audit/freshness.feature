@@ -1,4 +1,3 @@
-@wip
 Feature: Audit inventory supplier freshness
   As a hardware developer
   I want jbom audit to detect when supplier PNs are stale or

@@ -17,13 +17,13 @@ echo "Checking version consistency across jBOM repository..."
 echo ""
 
 # Extract versions from each file
-VERSION_PY=$(grep "^__version__" src/jbom/__version__.py | cut -d'"' -f2)
+VERSION_PY=$(grep "^__version__" src/jbom/__init__.py | cut -d'"' -f2)
 VERSION_TOML=$(grep "^version" pyproject.toml | head -1 | cut -d'"' -f2)
 VERSION_README=$(grep "^jBOM v" README.md | head -1 | sed 's/jBOM v\([0-9.]*\).*/\1/')
 
 # Display versions
 echo "Versions found:"
-echo "  __version__.py: $VERSION_PY"
+echo "  __init__.py:    $VERSION_PY"
 echo "  pyproject.toml: $VERSION_TOML"
 echo "  README.md:      $VERSION_README"
 echo ""
