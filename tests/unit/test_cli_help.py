@@ -74,11 +74,6 @@ def test_root_help_includes_search_command():
     assert "search" in out
 
 
-def test_root_help_includes_inventory_search_command():
-    out = run_help([]).lower()
-    assert "inventory-search" in out
-
-
 def test_root_help_includes_annotate_command():
     out = run_help([]).lower()
     assert "annotate" in out
@@ -86,24 +81,13 @@ def test_root_help_includes_annotate_command():
 
 def test_annotate_help_shows_core_flags():
     out = run_help(["annotate"]).lower()
-    for token in ["--inventory", "--dry-run", "--triage", "--normalize"]:
+    for token in ["--repairs", "--dry-run", "--normalize"]:
         assert token in out
 
 
-def test_inventory_search_help_includes_fabricator_choices():
-    out = run_help(["inventory-search"]).lower()
-    assert "--fabricator" in out
-
-    import sys
-
-    sys.path.insert(0, str(SRC_DIR))
-    try:
-        from jbom.config.fabricators import get_available_fabricators
-
-        for fab in get_available_fabricators():
-            assert fab in out
-    finally:
-        sys.path.remove(str(SRC_DIR))
+def test_root_help_does_not_include_retired_inventory_search():
+    out = run_help([]).lower()
+    assert "inventory-search" not in out
 
 
 def test_search_help_lists_only_configured_supplier_providers():

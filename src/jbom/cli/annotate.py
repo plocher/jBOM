@@ -1,4 +1,17 @@
-"""Annotate command - back-annotate inventory values into schematic properties."""
+"""Annotate command — apply audit repairs and normalize schematic properties.
+
+Usage
+-----
+Apply audit repairs to a KiCad project::
+
+    jbom annotate <proj> --repairs report.csv [--dry-run]
+
+Normalize property aliases (V->Voltage, Wattage->Power, etc.) in a schematic::
+
+    jbom annotate <proj> --normalize [--dry-run]
+
+Both flags may be used together; ``--normalize`` always runs before ``--repairs``.
+"""
 
 from __future__ import annotations
 
@@ -7,9 +20,9 @@ import sys
 from pathlib import Path
 
 from jbom.services.annotation_service import (
-    annotate_schematic,
+    RepairsAnnotationResult,
+    annotate_from_repairs,
     normalize_schematic_properties,
-    triage_inventory,
 )
 from jbom.services.project_file_resolver import ProjectFileResolver
 
@@ -19,8 +32,17 @@ def register_command(subparsers) -> None:
 
     parser = subparsers.add_parser(
         "annotate",
-        help="Back-annotate inventory fields to schematic by UUID",
-        description="Back-annotate inventory fields to schematic by UUID",
+        help="Apply audit repairs and/or normalize schematic properties",
+        description=(
+            "Apply Action=SET rows from an audit report.csv to schematic symbols,\n"
+            "and/or normalize property aliases to canonical names.\n\n"
+            "REPAIRS MODE  — use after 'jbom audit ... -o report.csv'; fill in\n"
+            "  ApprovedValue and set Action=SET in the report, then run:\n"
+            "    jbom annotate <proj> --repairs report.csv\n\n"
+            "NORMALIZE MODE — rename alias properties (V->Voltage, Wattage->Power ...):\n"
+            "    jbom annotate <proj> --normalize"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
         "input",
@@ -29,21 +51,20 @@ def register_command(subparsers) -> None:
         help="Path to .kicad_sch file or project directory (default: current directory)",
     )
     parser.add_argument(
-        "-i",
-        "--inventory",
+        "--repairs",
+        metavar="REPORT_CSV",
         type=Path,
-        help="Path to inventory CSV used for annotation",
+        default=None,
+        help=(
+            "Path to audit report.csv.  Rows with Action=SET are applied: "
+            "the schematic property named Field is set to ApprovedValue."
+        ),
     )
     parser.add_argument(
         "-n",
         "--dry-run",
         action="store_true",
         help="Show proposed changes without writing the schematic",
-    )
-    parser.add_argument(
-        "--triage",
-        action="store_true",
-        help="Report rows missing required fields (Value, Package)",
     )
     parser.add_argument(
         "--normalize",
@@ -59,43 +80,53 @@ def register_command(subparsers) -> None:
 def handle_annotate(args: argparse.Namespace) -> int:
     """Handle annotate command execution."""
 
+    if not args.repairs and not args.normalize:
+        print(
+            "Error: annotate requires at least one of --repairs or --normalize",
+            file=sys.stderr,
+        )
+        return 1
+
     try:
         resolver = ProjectFileResolver(prefer_pcb=False, target_file_type="schematic")
         resolved = resolver.resolve_input(args.input)
-        schematic_path = resolved.resolved_path
         schematic_files = resolved.get_hierarchical_files()
 
+        exit_code = 0
+
+        # --normalize runs first (field renaming is a prerequisite for repairs).
         if args.normalize:
-            normalize_result = normalize_schematic_properties(
+            result = normalize_schematic_properties(
                 schematic_files, dry_run=args.dry_run
             )
-            _print_normalization_result(normalize_result)
-            if normalize_result.conflicts:
+            _print_normalization_result(result)
+            if result.conflicts:
                 return 1
-            if args.inventory is None and not args.triage:
-                return 0
 
-        if args.inventory is None:
-            print(
-                "Error: annotate requires --inventory unless --normalize is used standalone",
-                file=sys.stderr,
+        # --repairs applies audit SET rows.
+        if args.repairs is not None:
+            repairs_result = annotate_from_repairs(
+                repairs_path=args.repairs,
+                schematic_files=schematic_files,
+                dry_run=args.dry_run,
             )
-            return 1
+            _print_repairs_result(repairs_result)
+            if repairs_result.failed:
+                exit_code = 1
 
-        if args.triage:
-            report = triage_inventory(args.inventory)
-            return _print_triage_report(report)
+        return exit_code
 
-        result = annotate_schematic(
-            schematic_path=schematic_path,
-            inventory_path=args.inventory,
-            dry_run=args.dry_run,
-            schematic_files=schematic_files,
-        )
-        return _print_annotation_result(result, schematic_path)
+    except FileNotFoundError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
     except Exception as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
+
+
+# ---------------------------------------------------------------------------
+# Private output helpers
+# ---------------------------------------------------------------------------
 
 
 def _print_normalization_result(result) -> None:
@@ -127,47 +158,20 @@ def _print_normalization_result(result) -> None:
         )
 
 
-def _print_triage_report(report) -> int:
-    """Print triage report and return command exit code."""
+def _print_repairs_result(result: RepairsAnnotationResult) -> None:
+    """Print repairs execution summary."""
 
-    if not report.rows_with_required_blanks:
-        print(
-            f"Triage complete: no required blanks found in {report.total_data_rows} rows."
-        )
-        return 0
+    for error in result.errors:
+        print(f"Error: {error}", file=sys.stderr)
 
-    print("Triage report (required blank fields: Value, Package):")
-    for issue in report.rows_with_required_blanks:
-        missing = ", ".join(issue.missing_required_fields)
-        print(
-            f"  row {issue.row_number} UUID {issue.uuid or '<blank>'}: missing {missing}"
-        )
-
+    mode_label = "would apply" if result.dry_run else "applied"
     print(
-        f"Rows with required blanks: {len(report.rows_with_required_blanks)}/{report.total_data_rows}"
+        f"Repairs complete: {mode_label} {result.applied} change(s), "
+        f"skipped {result.skipped}, failed {result.failed}."
     )
-    return 0
-
-
-def _print_annotation_result(result, schematic_path: Path) -> int:
-    """Print annotation execution summary."""
-
-    for warning in result.warnings:
-        print(f"Warning: {warning}", file=sys.stderr)
-
-    if result.dry_run:
-        print(
-            f"Dry run complete. {result.updated_components} component(s) would be updated."
-        )
-    else:
-        print(
-            f"Annotation complete. Updated {result.updated_components} component(s) in {schematic_path}."
-        )
 
     for change in result.changes:
         print(
-            f"  row {change.row_number} UUID {change.uuid}: {change.field}: "
+            f"  UUID {change.uuid}: {change.field}: "
             f"'{change.before}' -> '{change.after}'"
         )
-
-    return 0

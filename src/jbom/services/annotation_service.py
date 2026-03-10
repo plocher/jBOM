@@ -103,6 +103,40 @@ class NormalizationResult:
     conflicts: list[NormalizationConflict] = field(default_factory=list)
 
 
+@dataclass(frozen=True)
+class RepairsRow:
+    """One ``Action=SET`` row parsed from an audit ``report.csv``."""
+
+    check_type: str
+    project_path: str
+    ref_des: str
+    uuid: str
+    field_name: str
+    approved_value: str
+
+
+@dataclass
+class RepairsAnnotationResult:
+    """Result of applying repairs from an audit ``report.csv``.
+
+    Attributes:
+        dry_run: Whether changes were written or just simulated.
+        applied: Number of ``Action=SET`` rows successfully applied.
+        skipped: Number of rows with ``Action`` other than ``SET`` (ignored).
+        failed: Number of ``Action=SET`` rows whose UUID was not found in any
+            schematic.  A non-zero ``failed`` count produces exit-code 1.
+        changes: Detailed per-field change records.
+        errors: Human-readable error strings for failed rows.
+    """
+
+    dry_run: bool
+    applied: int = 0
+    skipped: int = 0
+    failed: int = 0
+    changes: list[AnnotationChange] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
+
+
 def normalize_schematic_properties(
     schematic_files: list[Path], *, dry_run: bool = False
 ) -> NormalizationResult:
@@ -513,6 +547,155 @@ def triage_inventory(inventory_path: Path) -> TriageReport:
         total_data_rows=total_data_rows,
         rows_with_required_blanks=row_issues,
     )
+
+
+def annotate_from_repairs(
+    repairs_path: Path,
+    schematic_files: list[Path],
+    *,
+    dry_run: bool = False,
+) -> RepairsAnnotationResult:
+    """Apply ``Action=SET`` rows from an audit ``report.csv`` to schematic files.
+
+    Workflow:
+    1. Load *repairs_path* (audit ``report.csv``).
+    2. Skip any row where ``Action`` is not ``'SET'``
+       (blank / ``SKIP`` / ``IGNORE`` etc.) — counted as *skipped*.
+    3. Validate that ``UUID``, ``Field``, and ``ApprovedValue`` are all
+       non-blank for each ``SET`` row; skip silently if ``ApprovedValue`` is
+       blank (designer cleared it intentionally).
+    4. Build a UUID → (symbol, file-path) index across all *schematic_files*.
+    5. For each ``SET`` row, look up the UUID in the index and write
+       ``Field <- ApprovedValue`` to the matching symbol.  A missing UUID is a
+       **hard failure** (added to *errors*, counted as *failed*); the row is
+       still attempted for all other ``SET`` rows.
+    6. Write modified schematic files (unless *dry_run*).
+
+    Args:
+        repairs_path: Path to the audit ``report.csv`` file.
+        schematic_files: List of ``.kicad_sch`` paths that form the project
+            hierarchy (typically obtained from
+            :class:`~jbom.services.project_file_resolver.ProjectFileResolver`).
+        dry_run: When ``True``, compute all changes but do not write any files.
+
+    Returns:
+        :class:`RepairsAnnotationResult` with counts and change details.
+    """
+    rows = _load_repairs_rows(repairs_path)
+
+    # Build UUID → (symbol_node, schematic_path) index.
+    uuid_to_location: dict[str, tuple[Any, Path]] = {}
+    schematics_cache: dict[Path, Any] = {}
+    warnings: list[str] = []
+
+    for sch_path in schematic_files:
+        if not sch_path.exists():
+            warnings.append(f"Schematic file not found, skipping: {sch_path}")
+            continue
+        schematic = load_kicad_file(sch_path)
+        schematics_cache[sch_path] = schematic
+        for symbol in walk_nodes(schematic, "symbol"):
+            symbol_uuid = _get_symbol_uuid(symbol)
+            if symbol_uuid and symbol_uuid not in uuid_to_location:
+                uuid_to_location[symbol_uuid] = (symbol, sch_path)
+
+    result = RepairsAnnotationResult(dry_run=dry_run)
+    result.errors.extend(warnings)
+    changed_files: set[Path] = set()
+
+    for row in rows:
+        if row.action.upper() != "SET":
+            result.skipped += 1
+            continue
+
+        # Blank ApprovedValue — designer intentionally cleared it; skip silently.
+        if not row.approved_value.strip():
+            result.skipped += 1
+            continue
+
+        if not row.uuid.strip() or not row.field_name.strip():
+            # Malformed SET row — treat as failure.
+            result.failed += 1
+            result.errors.append(
+                f"SET row for RefDes={row.ref_des!r} has blank UUID or Field — skipped"
+            )
+            continue
+
+        location = uuid_to_location.get(row.uuid)
+        if location is None:
+            result.failed += 1
+            result.errors.append(
+                f"UUID {row.uuid!r} (RefDes={row.ref_des!r}, Field={row.field_name!r}) "
+                "not found in any schematic file"
+            )
+            continue
+
+        symbol, sch_path = location
+        current = _get_property_value(symbol, row.field_name)
+        if current == row.approved_value:
+            # Already at the desired value — count as applied (idempotent).
+            result.applied += 1
+            continue
+
+        result.changes.append(
+            AnnotationChange(
+                uuid=row.uuid,
+                field=row.field_name,
+                before=current,
+                after=row.approved_value,
+                row_number=row.row_number,
+            )
+        )
+        result.applied += 1
+        if not dry_run:
+            _set_property_value(symbol, row.field_name, row.approved_value)
+            changed_files.add(sch_path)
+
+    if not dry_run:
+        for sch_path in changed_files:
+            sch_path.write_text(
+                sexpdata.dumps(schematics_cache[sch_path]), encoding="utf-8"
+            )
+
+    return result
+
+
+@dataclass(frozen=True)
+class _RepairsRowRaw:
+    """Internal: one raw row from repairs CSV before filtering."""
+
+    row_number: int
+    uuid: str
+    ref_des: str
+    field_name: str
+    approved_value: str
+    action: str
+
+
+def _load_repairs_rows(repairs_path: Path) -> list[_RepairsRowRaw]:
+    """Load and parse an audit report.csv into raw repairs rows."""
+    rows: list[_RepairsRowRaw] = []
+    with repairs_path.open("r", encoding="utf-8", newline="") as handle:
+        reader = csv.DictReader(handle)
+        if not reader.fieldnames:
+            return rows
+        for line_idx, raw in enumerate(reader, start=2):
+
+            def _cell(col: str) -> str:
+                v = raw.get(col) or ""
+                return v.strip() if isinstance(v, str) else ""
+
+            rows.append(
+                _RepairsRowRaw(
+                    row_number=line_idx,
+                    uuid=_cell("UUID"),
+                    ref_des=_cell("RefDes"),
+                    field_name=_cell("Field"),
+                    approved_value=_cell("ApprovedValue"),
+                    action=_cell("Action"),
+                )
+            )
+    return rows
 
 
 def _load_annotation_rows(inventory_path: Path) -> list[AnnotationRow]:
