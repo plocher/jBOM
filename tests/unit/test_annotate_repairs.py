@@ -377,6 +377,86 @@ def test_repairs_empty_repairs_file_returns_zero_counts(tmp_path: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Multi-project filtering
+# ---------------------------------------------------------------------------
+
+
+def test_repairs_rows_for_other_project_are_silently_skipped(tmp_path: Path) -> None:
+    """ProjectPath rows not matching schematic's parent dir are skipped, not failed."""
+    proj1 = tmp_path / "proj1"
+    proj1.mkdir()
+    proj2 = tmp_path / "proj2"
+    proj2.mkdir()
+
+    sch1 = proj1 / "proj1.kicad_sch"
+    _write_schematic(sch1, uuid="uuid-p1")
+
+    repairs = tmp_path / "report.csv"
+    _write_repairs(
+        repairs,
+        [
+            {
+                "UUID": "uuid-p1",
+                "RefDes": "R1",
+                "Field": "Value",
+                "ApprovedValue": "47K",
+                "Action": "SET",
+                "ProjectPath": str(proj1),
+            },
+            {
+                "UUID": "uuid-p2-does-not-exist",
+                "RefDes": "C1",
+                "Field": "Value",
+                "ApprovedValue": "100nF",
+                "Action": "SET",
+                "ProjectPath": str(proj2),
+            },
+        ],
+    )
+
+    result = annotate_from_repairs(repairs, [sch1], dry_run=False)
+
+    # proj1 row applied; proj2 row silently skipped (not a hard failure)
+    assert result.applied == 1
+    assert result.skipped == 1
+    assert result.failed == 0
+    assert '"Value" "47K"' in sch1.read_text(encoding="utf-8")
+
+
+# ---------------------------------------------------------------------------
+# RefDes mismatch warning
+# ---------------------------------------------------------------------------
+
+
+def test_repairs_refdes_mismatch_emits_info_warning(tmp_path: Path) -> None:
+    """UUID match with a changed RefDes generates an INFO warning but still applies."""
+    sch = tmp_path / "proj.kicad_sch"
+    _write_schematic(sch, uuid="uuid-r1")  # schematic has Reference=R1
+    repairs = tmp_path / "report.csv"
+    _write_repairs(
+        repairs,
+        [
+            {
+                "UUID": "uuid-r1",
+                "RefDes": "R99",  # audit recorded R99, schematic now says R1
+                "Field": "Value",
+                "ApprovedValue": "22K",
+                "Action": "SET",
+            }
+        ],
+    )
+
+    result = annotate_from_repairs(repairs, [sch], dry_run=False)
+
+    # Change is still applied
+    assert result.applied == 1
+    assert result.failed == 0
+    # Warning must mention the UUID and the mismatched RefDes values
+    assert result.warnings
+    assert any("uuid-r1" in w and "R99" in w and "R1" in w for w in result.warnings)
+
+
+# ---------------------------------------------------------------------------
 # normalize_schematic_properties (kept in annotation_service — regression tests)
 # ---------------------------------------------------------------------------
 
