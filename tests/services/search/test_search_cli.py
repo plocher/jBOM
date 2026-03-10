@@ -54,7 +54,7 @@ def test_build_cache_clear_cache_flag_calls_clear_provider(monkeypatch) -> None:
 
 def test_search_console_output(monkeypatch, capsys):
     # Avoid any network calls.
-    from jbom.services.search import mouser_provider
+    import jbom.suppliers.mouser.provider as mouser_provider
 
     monkeypatch.setattr(
         mouser_provider.MouserProvider,
@@ -84,7 +84,7 @@ def test_search_console_output(monkeypatch, capsys):
 
 
 def test_search_csv_stdout(monkeypatch, capsys):
-    from jbom.services.search import mouser_provider
+    import jbom.suppliers.mouser.provider as mouser_provider
 
     monkeypatch.setattr(
         mouser_provider.MouserProvider,
@@ -113,7 +113,7 @@ def test_search_csv_stdout(monkeypatch, capsys):
 
 
 def test_search_csv_file(monkeypatch, tmp_path):
-    from jbom.services.search import mouser_provider
+    import jbom.suppliers.mouser.provider as mouser_provider
 
     monkeypatch.setattr(
         mouser_provider.MouserProvider,
@@ -145,7 +145,7 @@ def test_search_csv_file(monkeypatch, tmp_path):
 
 def test_search_list_fields_exits_without_api_key(monkeypatch, capsys):
     # This should not require an API key and should not call providers.
-    from jbom.services.search import mouser_provider
+    import jbom.suppliers.mouser.provider as mouser_provider
 
     def _boom(*_a, **_kw):
         raise AssertionError("Provider.search should not be called for --list-fields")
@@ -173,7 +173,7 @@ def test_search_list_fields_exits_without_api_key(monkeypatch, capsys):
 
 
 def test_search_fields_override_affects_csv_schema(monkeypatch, capsys):
-    from jbom.services.search import mouser_provider
+    import jbom.suppliers.mouser.provider as mouser_provider
 
     monkeypatch.setattr(
         mouser_provider.MouserProvider,
@@ -203,7 +203,7 @@ def test_search_fields_override_affects_csv_schema(monkeypatch, capsys):
 
 
 def test_search_unknown_field_rejected(monkeypatch, capsys):
-    from jbom.services.search import mouser_provider
+    import jbom.suppliers.mouser.provider as mouser_provider
 
     def _boom(*_a, **_kw):
         raise AssertionError("Provider.search should not be called on invalid --fields")
@@ -232,7 +232,7 @@ def test_search_unknown_field_rejected(monkeypatch, capsys):
 
 def test_search_lcsc_provider_exits_cleanly_when_unavailable(monkeypatch, capsys):
     # Avoid live network calls by forcing the provider to be unavailable.
-    import jbom.services.search.jlcpcb_api as api_mod
+    import jbom.suppliers.lcsc.api as api_mod
 
     monkeypatch.setattr(api_mod, "requests", None)
 

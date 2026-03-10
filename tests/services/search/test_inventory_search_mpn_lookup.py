@@ -6,7 +6,7 @@ from jbom.common.types import InventoryItem
 from jbom.config.providers import SearchProviderConfig
 from jbom.services.search.cache import InMemorySearchCache
 from jbom.services.search.inventory_search_service import InventorySearchService
-from jbom.services.search.jlcpcb_provider import JlcpcbProvider
+from jbom.suppliers.lcsc.provider import JlcpcbProvider
 from jbom.services.search.models import SearchResult
 
 
@@ -52,7 +52,7 @@ def _sr(*, cnum: str, manufacturer: str, mpn: str, stock: int) -> SearchResult:
 
 
 def test_inventory_search_service_uses_mpn_lookup_when_available(monkeypatch) -> None:
-    import jbom.services.search.jlcpcb_api as api_mod
+    import jbom.suppliers.lcsc.api as api_mod
 
     monkeypatch.setattr(api_mod, "requests", Mock())
 
@@ -88,7 +88,7 @@ def test_inventory_search_service_uses_mpn_lookup_when_available(monkeypatch) ->
 
 
 def test_inventory_search_service_deduplicates_mpn_lookup_calls(monkeypatch) -> None:
-    import jbom.services.search.jlcpcb_api as api_mod
+    import jbom.suppliers.lcsc.api as api_mod
 
     monkeypatch.setattr(api_mod, "requests", Mock())
 

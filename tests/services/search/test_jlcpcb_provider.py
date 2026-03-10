@@ -5,7 +5,7 @@ from jbom.common.types import InventoryItem
 
 from jbom.config.providers import SearchProviderConfig
 from jbom.services.search.cache import InMemorySearchCache
-from jbom.services.search.jlcpcb_provider import JlcpcbProvider
+from jbom.suppliers.lcsc.provider import JlcpcbProvider
 
 
 def _fake_api_response() -> dict:
@@ -45,7 +45,7 @@ def _fake_api_response() -> dict:
 
 
 def test_jlcpcb_provider_parses_basic_result(monkeypatch) -> None:
-    import jbom.services.search.jlcpcb_api as api_mod
+    import jbom.suppliers.lcsc.api as api_mod
 
     # Ensure the provider considers itself available even if requests isn't installed
     # in this test environment.
@@ -76,7 +76,7 @@ def test_jlcpcb_provider_parses_basic_result(monkeypatch) -> None:
 
 
 def test_jlcpcb_provider_uses_cache(monkeypatch) -> None:
-    import jbom.services.search.jlcpcb_api as api_mod
+    import jbom.suppliers.lcsc.api as api_mod
 
     monkeypatch.setattr(api_mod, "requests", Mock())
 
@@ -131,7 +131,7 @@ def _inv_item(
 
 
 def test_jlcpcb_provider_lookup_by_mpn_picks_highest_stock(monkeypatch) -> None:
-    import jbom.services.search.jlcpcb_api as api_mod
+    import jbom.suppliers.lcsc.api as api_mod
 
     monkeypatch.setattr(api_mod, "requests", Mock())
 
@@ -208,7 +208,7 @@ def test_jlcpcb_provider_lookup_by_mpn_picks_highest_stock(monkeypatch) -> None:
 def test_jlcpcb_provider_uses_parametric_search_for_resistor_item(
     monkeypatch,
 ) -> None:
-    import jbom.services.search.jlcpcb_api as api_mod
+    import jbom.suppliers.lcsc.api as api_mod
 
     monkeypatch.setattr(api_mod, "requests", Mock())
 
@@ -240,7 +240,7 @@ def test_jlcpcb_provider_uses_parametric_search_for_resistor_item(
 def test_jlcpcb_provider_parametric_search_falls_back_to_keyword_when_empty(
     monkeypatch,
 ) -> None:
-    import jbom.services.search.jlcpcb_api as api_mod
+    import jbom.suppliers.lcsc.api as api_mod
 
     monkeypatch.setattr(api_mod, "requests", Mock())
 

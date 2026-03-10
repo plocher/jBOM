@@ -5,7 +5,7 @@ from datetime import timedelta
 from jbom.config.suppliers import SupplierConfig
 from jbom.services.search.cache import DiskSearchCache, SearchCacheKey
 from jbom.services.search.models import SearchResult
-from jbom.services.search.mouser_provider import MouserProvider
+from jbom.suppliers.mouser.provider import MouserProvider
 
 
 def _sr(**kw) -> SearchResult:
@@ -110,7 +110,7 @@ class _FakeResponse:
 def test_mouser_provider_uses_disk_cache_across_instances(
     tmp_path, monkeypatch
 ) -> None:
-    from jbom.services.search import mouser_provider
+    import jbom.suppliers.mouser.provider as mouser_provider
 
     calls = {"count": 0}
 

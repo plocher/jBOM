@@ -1,6 +1,6 @@
-"""Integration tests: Phase 4 heuristics with custom defaults profiles.
+"""Integration tests: LCSC query planner with custom defaults profiles.
 
-Verifies that build_phase4_parametric_query_plan() uses the provided
+Verifies that build_parametric_query_plan() uses the provided
 DefaultsConfig rather than hard-coded values, and that the defaults
 profile system correctly influences query plan construction.
 """
@@ -11,8 +11,8 @@ from pathlib import Path
 
 from jbom.common.types import InventoryItem
 from jbom.config.defaults import load_defaults
-from jbom.services.search.jlcpcb_phase4_heuristics import (
-    build_phase4_parametric_query_plan,
+from jbom.suppliers.lcsc.query_planner import (
+    build_parametric_query_plan,
 )
 
 
@@ -70,7 +70,7 @@ def test_custom_defaults_override_resistor_tolerance(tmp_path: Path) -> None:
         tolerance="",  # blank → use domain default
         resistance=10_000.0,
     )
-    plan = build_phase4_parametric_query_plan(
+    plan = build_parametric_query_plan(
         item, base_query="10K resistor 0603", defaults=cfg
     )
 
@@ -89,7 +89,7 @@ def test_generic_defaults_resistor_tolerance_is_5pct() -> None:
         tolerance="",
         resistance=10_000.0,
     )
-    plan = build_phase4_parametric_query_plan(
+    plan = build_parametric_query_plan(
         item, base_query="10K resistor 0603", defaults=cfg
     )
 
@@ -119,9 +119,7 @@ def test_custom_defaults_override_capacitor_dielectric(tmp_path: Path) -> None:
         type_="",  # no dielectric hint → use domain default
         capacitance=100e-9,
     )
-    plan = build_phase4_parametric_query_plan(
-        item, base_query="100nF cap 0603", defaults=cfg
-    )
+    plan = build_parametric_query_plan(item, base_query="100nF cap 0603", defaults=cfg)
 
     assert plan.use_parametric is True
     assert "C0G" in plan.keyword_query
@@ -137,7 +135,7 @@ def test_defaults_none_uses_generic_profile() -> None:
         tolerance="",
         resistance=10_000.0,
     )
-    plan = build_phase4_parametric_query_plan(
+    plan = build_parametric_query_plan(
         item, base_query="10K resistor 0603", defaults=None
     )
 
@@ -167,7 +165,7 @@ def test_custom_defaults_routing_rules_respected(tmp_path: Path) -> None:
         smd="SMD",
         resistance=10_000.0,
     )
-    plan = build_phase4_parametric_query_plan(
+    plan = build_parametric_query_plan(
         item, base_query="10K resistor 0603", defaults=cfg
     )
 

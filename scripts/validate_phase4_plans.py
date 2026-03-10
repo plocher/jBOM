@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Validate Phase 4 parametric query plan quality for COMPONENT rows.
 
-Loads combined.csv (or any inventory CSV) and calls build_phase4_parametric_query_plan
+Loads combined.csv (or any inventory CSV) and calls build_parametric_query_plan
 for each COMPONENT row in search-relevant categories (CAP, IND, CON by default).
 Reports per-item plan type and details, then summarises hit rates per category.
 
@@ -28,7 +28,7 @@ from jbom.common.component_classification import normalize_component_type  # noq
 from jbom.common.value_parsing import farad_to_eia, henry_to_eia, ohms_to_eia  # noqa: E402
 from jbom.services.inventory_reader import InventoryReader  # noqa: E402
 from jbom.services.search.inventory_search_service import InventorySearchService  # noqa: E402
-from jbom.services.search.jlcpcb_phase4_heuristics import build_phase4_parametric_query_plan  # noqa: E402
+from jbom.suppliers.lcsc.query_planner import build_parametric_query_plan  # noqa: E402
 # fmt: on
 
 # ---------------------------------------------------------------------------
@@ -141,7 +141,7 @@ def main(argv: list[str] | None = None) -> int:
         else:
             base = f"{item.value} {cat_norm.lower()}"
 
-        plan = build_phase4_parametric_query_plan(item, base_query=base)
+        plan = build_parametric_query_plan(item, base_query=base)
 
         if plan.use_parametric:
             stats[cat]["parametric"] += 1

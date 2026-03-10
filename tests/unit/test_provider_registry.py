@@ -4,9 +4,8 @@ import pytest
 
 from jbom.config.providers import SearchProviderConfig, get_provider
 from jbom.services.search.cache import InMemorySearchCache
-from jbom.services.search.jlcparts_provider import JlcpartsProvider
-from jbom.services.search.jlcpcb_provider import JlcpcbProvider
-from jbom.services.search.mouser_provider import MouserProvider
+from jbom.suppliers.lcsc.provider import JlcpcbProvider
+from jbom.suppliers.mouser.provider import MouserProvider
 
 
 def test_get_provider_unknown_type_raises() -> None:
@@ -27,12 +26,11 @@ def test_get_provider_jlcpcb_api_dispatches() -> None:
     assert isinstance(provider, JlcpcbProvider)
 
 
-def test_get_provider_jlcparts_sqlite_dispatches() -> None:
+def test_get_provider_jlcparts_sqlite_unknown() -> None:
+    """jlcparts_sqlite was retired; the registry should reject it."""
     cfg = SearchProviderConfig(
         type="jlcparts_sqlite",
         extra={"db_path": "~/.cache/jbom/jlcparts/components.db"},
     )
-    provider = get_provider(cfg, cache=InMemorySearchCache())
-    assert isinstance(provider, JlcpartsProvider)
-    assert provider.available() is False
-    assert "not yet implemented" in provider.unavailable_reason().lower()
+    with pytest.raises(ValueError, match=r"Unknown provider type"):
+        get_provider(cfg, cache=InMemorySearchCache())

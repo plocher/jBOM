@@ -1,7 +1,5 @@
 """JLCPCB/LCSC live search API client.
 
-This module implements the minimal HTTP client needed for Issue #115 Phase 2.
-
 Validated by the Phase 1 POC script (scripts/lcsc_api_poc.py):
 - No auth required
 - Keyword search via selectSmtComponentList/v2
@@ -157,7 +155,7 @@ class JlcpcbPartsApi:
         sort_mode: str = "STOCK_SORT",
         sort_asc: str = "DESC",
     ) -> dict[str, Any]:
-        """Search using category/spec/attribute filters (Issue #115 Phase 4).
+        """Search using category/spec/attribute filters.
 
         Args:
             query: Keyword context merged from inventory-derived terms.

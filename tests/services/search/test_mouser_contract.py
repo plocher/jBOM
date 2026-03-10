@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 
 from conftest import load_mouser_fixture
-from jbom.services.search.mouser_provider import MouserProvider
+from jbom.suppliers.mouser.provider import MouserProvider
 
 
 @pytest.mark.parametrize(

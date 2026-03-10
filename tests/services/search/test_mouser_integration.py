@@ -5,7 +5,7 @@ import os
 
 import pytest
 
-from jbom.services.search.mouser_provider import MouserProvider
+from jbom.suppliers.mouser.provider import MouserProvider
 from jbom.services.search.models import SearchResult
 
 

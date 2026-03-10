@@ -1,13 +1,4 @@
-"""LCSC search provider backed by the JLCPCB live API.
-
-This is the Phase 2 deliverable for Issue #115.
-
-Notes:
-- No API key required.
-- Uses DiskSearchCache via the injected SearchCache.
-- Sorting is performed client-side by SearchSorter, but the provider requests
-  stock-desc ordering from the API (sortMode=STOCK_SORT, sortASC=DESC).
-"""
+"""LCSC search provider backed by the JLCPCB live API."""
 
 from __future__ import annotations
 
@@ -16,10 +7,10 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from jbom.services.search.cache import SearchCache, SearchCacheKey
-from jbom.services.search import jlcpcb_api
-from jbom.services.search.jlcpcb_api import JlcpcbPartsApi
-from jbom.services.search.jlcpcb_phase4_heuristics import (
-    build_phase4_parametric_query_plan,
+from jbom.suppliers.lcsc import api as jlcpcb_api
+from jbom.suppliers.lcsc.api import JlcpcbPartsApi
+from jbom.suppliers.lcsc.query_planner import (
+    build_parametric_query_plan,
 )
 from jbom.services.search.models import SearchResult
 from jbom.services.search.provider import SearchProvider
@@ -140,10 +131,10 @@ class JlcpcbProvider(SearchProvider):
     def search_for_inventory_item(
         self, item: "InventoryItem", *, query: str, limit: int = 10
     ) -> list[SearchResult]:
-        """Search using Phase 4 item-aware parametric planning when available.
+        """Search using item-aware parametric planning when available.
 
         Falls back to keyword search when:
-        - Category is unsupported by the Phase 4 planner
+        - Category is unsupported by the parametric planner
         - Required parametric fields are missing (e.g. no RES/CAP value)
         - Parametric API call fails or returns no results
         """
@@ -151,7 +142,7 @@ class JlcpcbProvider(SearchProvider):
         if self._api is None:
             raise RuntimeError(self.unavailable_reason())
 
-        plan = build_phase4_parametric_query_plan(item, base_query=query)
+        plan = build_parametric_query_plan(item, base_query=query)
         if not plan.use_parametric or not plan.first_sort_name:
             return self.search(query, limit=limit)
 

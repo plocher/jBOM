@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from jbom.common.types import InventoryItem
 from jbom.config.defaults import get_defaults
-from jbom.services.search.jlcpcb_phase4_heuristics import (
-    build_phase4_parametric_query_plan,
+from jbom.suppliers.lcsc.query_planner import (
+    build_parametric_query_plan,
 )
 
 
@@ -82,7 +82,7 @@ def test_resistor_plan_uses_static_default_tolerance_and_routing() -> None:
         smd="SMD",
         resistance=10_000.0,
     )
-    plan = build_phase4_parametric_query_plan(item, base_query="10K resistor 0603")
+    plan = build_parametric_query_plan(item, base_query="10K resistor 0603")
 
     assert plan.use_parametric is True
     assert plan.first_sort_name == "Resistors"
@@ -101,7 +101,7 @@ def test_capacitor_plan_uses_static_defaults_in_keyword_context() -> None:
         type_="",
         capacitance=100e-9,
     )
-    plan = build_phase4_parametric_query_plan(item, base_query="100nF capacitor 0603")
+    plan = build_parametric_query_plan(item, base_query="100nF capacitor 0603")
 
     assert plan.use_parametric is True
     assert plan.first_sort_name == "Capacitors"
@@ -112,7 +112,7 @@ def test_capacitor_plan_uses_static_defaults_in_keyword_context() -> None:
 
 def test_unknown_category_returns_keyword_fallback_plan() -> None:
     item = _inv_item(category="IC", value="LM358D")
-    plan = build_phase4_parametric_query_plan(item, base_query="LM358D IC")
+    plan = build_parametric_query_plan(item, base_query="LM358D IC")
 
     assert plan.use_parametric is False
     assert plan.keyword_query == "LM358D IC"
@@ -131,7 +131,7 @@ def test_cap_mlcc_default_gets_mlcc_second_sort() -> None:
         package="0603",
         capacitance=100e-9,
     )
-    plan = build_phase4_parametric_query_plan(item, base_query="100nF cap 0603")
+    plan = build_parametric_query_plan(item, base_query="100nF cap 0603")
 
     assert plan.use_parametric is True
     assert plan.first_sort_name == "Capacitors"
@@ -147,7 +147,7 @@ def test_cap_electrolytic_via_symbol_name() -> None:
         symbol_name="C_Polarized",
         capacitance=100e-6,
     )
-    plan = build_phase4_parametric_query_plan(item, base_query="100uF cap")
+    plan = build_parametric_query_plan(item, base_query="100uF cap")
 
     assert plan.use_parametric is True
     assert plan.second_sort_name == "Aluminum Electrolytic Capacitors"
@@ -162,7 +162,7 @@ def test_cap_electrolytic_via_footprint_entry_name() -> None:
         footprint_full="Capacitor_SMD:CP_Elec_4x5.4mm",
         capacitance=100e-6,
     )
-    plan = build_phase4_parametric_query_plan(item, base_query="100uF cap")
+    plan = build_parametric_query_plan(item, base_query="100uF cap")
 
     assert plan.second_sort_name == "Aluminum Electrolytic Capacitors"
 
@@ -175,7 +175,7 @@ def test_cap_electrolytic_via_non_klc_lib_nickname() -> None:
         footprint_full="SPCoast:CP_Elec_4x5.4mm",  # user lib, non-KLC nickname
         capacitance=100e-6,
     )
-    plan = build_phase4_parametric_query_plan(item, base_query="100uF cap")
+    plan = build_parametric_query_plan(item, base_query="100uF cap")
 
     assert plan.second_sort_name == "Aluminum Electrolytic Capacitors"
 
@@ -193,7 +193,7 @@ def test_ind_signal_inductor_default_route() -> None:
         package="0603",
         inductance=10e-6,
     )
-    plan = build_phase4_parametric_query_plan(item, base_query="10uH inductor 0603")
+    plan = build_parametric_query_plan(item, base_query="10uH inductor 0603")
 
     assert plan.use_parametric is True
     assert plan.first_sort_name == "Inductors"
@@ -210,7 +210,7 @@ def test_ind_power_inductor_via_symbol_name() -> None:
         symbol_name="L_Core",
         inductance=4.7e-6,
     )
-    plan = build_phase4_parametric_query_plan(item, base_query="4.7uH inductor 1210")
+    plan = build_parametric_query_plan(item, base_query="4.7uH inductor 1210")
 
     assert plan.second_sort_name == "Power Inductors"
 
@@ -223,7 +223,7 @@ def test_ind_power_inductor_via_large_package() -> None:
         package="1812",
         inductance=10e-6,
     )
-    plan = build_phase4_parametric_query_plan(item, base_query="10uH inductor 1812")
+    plan = build_parametric_query_plan(item, base_query="10uH inductor 1812")
 
     assert plan.second_sort_name == "Power Inductors"
 
@@ -236,7 +236,7 @@ def test_ind_ferrite_bead_via_description() -> None:
         description="Ferrite Bead 600R@100MHz",
         package="0805",
     )
-    plan = build_phase4_parametric_query_plan(item, base_query="600R ferrite 0805")
+    plan = build_parametric_query_plan(item, base_query="600R ferrite 0805")
 
     assert plan.use_parametric is True
     assert plan.first_sort_name == "Inductors"
@@ -247,7 +247,7 @@ def test_ind_ferrite_bead_via_description() -> None:
 def test_ind_missing_inductance_returns_keyword_fallback() -> None:
     """IND with no inductance value and not ferrite → keyword fallback."""
     item = _inv_item(category="IND", value="")
-    plan = build_phase4_parametric_query_plan(item, base_query="inductor")
+    plan = build_parametric_query_plan(item, base_query="inductor")
 
     assert plan.use_parametric is False
 
@@ -265,7 +265,7 @@ def test_con_with_item_pins_and_pitch() -> None:
         pins="4",
         pitch="2.54mm",
     )
-    plan = build_phase4_parametric_query_plan(item, base_query="connector")
+    plan = build_parametric_query_plan(item, base_query="connector")
 
     assert plan.use_parametric is True
     assert plan.first_sort_name == "Connectors"
@@ -280,7 +280,7 @@ def test_con_footprint_parsed_for_pitch_and_pins() -> None:
         value="Conn_01x04",
         footprint_full="Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical",
     )
-    plan = build_phase4_parametric_query_plan(item, base_query="connector")
+    plan = build_parametric_query_plan(item, base_query="connector")
 
     assert plan.use_parametric is True
     assert plan.first_sort_name == "Connectors"
@@ -296,7 +296,7 @@ def test_con_jst_series_detected_from_footprint() -> None:
         value="JST 4-pin",
         footprint_full="Connector_JST:JST_PH_S4B-PH-K_1x04-1MP_P2.00mm_Vertical",
     )
-    plan = build_phase4_parametric_query_plan(item, base_query="JST connector")
+    plan = build_parametric_query_plan(item, base_query="JST connector")
 
     assert plan.use_parametric is True
     assert "JST_PH" in plan.keyword_query
@@ -305,7 +305,7 @@ def test_con_jst_series_detected_from_footprint() -> None:
 def test_con_no_structured_data_returns_keyword_fallback() -> None:
     """No pins, pitch, or footprint → keyword fallback with explanation."""
     item = _inv_item(category="CON", value="Connector")
-    plan = build_phase4_parametric_query_plan(item, base_query="connector")
+    plan = build_parametric_query_plan(item, base_query="connector")
 
     assert plan.use_parametric is False
     assert "manual search required" in plan.reason

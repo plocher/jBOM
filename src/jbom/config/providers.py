@@ -9,7 +9,7 @@ This module provides:
 - A factory (get_provider) to instantiate providers from config
 
 Note: Provider selection is user-facing by supplier ID (e.g. "mouser", "lcsc").
-Provider *types* are internal (e.g. "mouser_api", "jlcparts_sqlite").
+Provider *types* are internal (e.g. "mouser_api", "jlcpcb_api").
 """
 
 from __future__ import annotations
@@ -48,14 +48,12 @@ class SearchProviderConfig:
 
 def _registry() -> dict[str, type["SearchProvider"]]:
     # Lazily import providers to avoid config<->service circular imports.
-    from jbom.services.search.jlcparts_provider import JlcpartsProvider
-    from jbom.services.search.jlcpcb_provider import JlcpcbProvider
-    from jbom.services.search.mouser_provider import MouserProvider
+    from jbom.suppliers.lcsc.provider import JlcpcbProvider
+    from jbom.suppliers.mouser.provider import MouserProvider
 
     return {
         "mouser_api": MouserProvider,
         "jlcpcb_api": JlcpcbProvider,
-        "jlcparts_sqlite": JlcpartsProvider,
     }
 
 
