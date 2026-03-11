@@ -1,6 +1,35 @@
 # CHANGELOG
 
 
+## v6.39.2 (2026-03-11)
+
+### Bug Fixes
+
+* fix: replace naive CSV split with csv.reader in step definitions
+
+Three step definitions were using str.split(',') or readline()
+to parse CSV content instead of the stdlib csv module.  Although
+all three are currently dead-code (no feature file exercises them),
+they would silently produce wrong results when the output uses
+QUOTE_ALL formatting (PR #172).
+
+Changes:
+- project_centric_steps.py: _extract_ipn_for_reference now uses
+  csv.reader to parse each line and compares row[0] == reference
+  instead of line.startswith(f'{reference},')
+- inventory_steps.py: then_file_contains_inventory_columns now uses
+  csv.reader to parse the header row instead of readline() + 'in header'
+  substring match
+- inventory_steps.py: then_output_contains_inventory_columns now uses
+  csv.reader to count fields per line instead of line.split(',')
+
+Also adds a Gherkin scenario that exercises the full audit→annotate
+roundtrip: jbom audit writes a QUOTE_ALL report.csv which jbom annotate
+--dry-run must read back without error (217 scenarios now pass).
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`28aceb5`](https://github.com/plocher/jBOM/commit/28aceb5bbd22b60fa75e55cbefb9589c57fb30b0))
+
+
 ## v6.39.1 (2026-03-11)
 
 ### Bug Fixes
