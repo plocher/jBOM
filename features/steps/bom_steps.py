@@ -51,9 +51,12 @@ def then_exit_code_is(context, code: int) -> None:
 def then_output_contains_headers(context, headers: str) -> None:
     expected = [h.strip() for h in headers.split(",")]
     output = getattr(context, "last_output", "")
-    # parse first CSV line from output
+    # parse first CSV line from output using csv.reader (handles QUOTE_ALL quoted fields)
     first_line = output.splitlines()[0] if output else ""
-    actual = [h.strip() for h in first_line.split(",") if first_line]
+    if first_line:
+        actual = [h.strip() for h in next(csv.reader([first_line]))]
+    else:
+        actual = []
     assert_with_diagnostics(
         actual == expected,
         "CSV headers mismatch",
@@ -362,14 +365,20 @@ def then_output_should_contain_csv_headers(context, headers: str) -> None:
 @then('the output should not contain CSV headers "{headers}"')
 def then_output_should_not_contain_csv_headers(context, headers: str) -> None:
     """Assert output should not contain specific CSV headers."""
-    expected = headers.strip()
+    expected_fields = [h.strip() for h in headers.split(",")]
     output = getattr(context, "last_output", "")
+    # Parse first CSV line using csv.reader (handles QUOTE_ALL quoted fields)
+    first_line = output.splitlines()[0] if output else ""
+    if first_line:
+        actual_fields = [h.strip() for h in next(csv.reader([first_line]))]
+    else:
+        actual_fields = []
     assert_with_diagnostics(
-        expected not in output,
-        f"Output should not contain CSV headers '{expected}' but it does",
+        actual_fields != expected_fields,
+        f"Output should not contain CSV headers '{headers}' but it does",
         context,
-        expected=f"output without '{expected}'",
-        actual=output,
+        expected=f"output without headers {expected_fields}",
+        actual=actual_fields,
     )
 
 

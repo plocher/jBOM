@@ -4,7 +4,45 @@ This module provides helpers to generate comprehensive diagnostic output
 when test assertions fail, making it easier to understand what went wrong.
 """
 
+import csv
 from typing import Any, Optional
+
+
+def csv_contains_fields(content: str, text: str) -> bool:
+    """Check whether *content* (text with CSV lines) contains *text*.
+
+    Handles both plain substring matching and QUOTE_ALL-quoted CSV output:
+    1. Tries a direct substring match first (fast path, covers plain text).
+    2. If *text* contains a comma, parses *text* as a CSV row and checks
+       whether those field values appear as a consecutive subsequence in any
+       CSV line of *content*.
+    """
+    # Fast path: literal substring present
+    if text in content:
+        return True
+
+    # CSV-aware path: only meaningful when text looks like comma-separated values
+    if "," not in text:
+        return False
+
+    try:
+        expected_fields = next(csv.reader([text]))
+    except Exception:
+        return False
+
+    n = len(expected_fields)
+    for line in content.splitlines():
+        if not line.strip():
+            continue
+        try:
+            row_fields = next(csv.reader([line]))
+        except Exception:
+            continue
+        # Check if expected_fields appears as any consecutive subsequence
+        for i in range(len(row_fields) - n + 1):
+            if row_fields[i : i + n] == expected_fields:
+                return True
+    return False
 
 
 def format_execution_context(context, include_files: bool = True) -> str:
