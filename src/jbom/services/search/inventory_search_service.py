@@ -12,6 +12,7 @@ Design goals:
 from __future__ import annotations
 
 import re
+import sys
 import time
 from collections import defaultdict
 from dataclasses import dataclass
@@ -165,11 +166,13 @@ class InventorySearchService:
         candidate_limit: int = 3,
         request_delay_seconds: float = 0.0,
         defaults: DefaultsConfig | None = None,
+        verbose: bool = False,
     ) -> None:
         self._provider = provider
         self._candidate_limit = max(1, int(candidate_limit))
         self._request_delay_seconds = max(0.0, float(request_delay_seconds))
         self._matcher = SophisticatedInventoryMatcher(MatchingOptions())
+        self._verbose = verbose
         # Load defaults once at construction time (injectable for tests / library users).
         self._defaults: DefaultsConfig = (
             defaults if defaults is not None else get_defaults()
@@ -335,7 +338,14 @@ class InventorySearchService:
         mpn_results: dict[str, SearchResult | None] = {}
         mpn_errors: dict[str, str] = {}
 
-        for key, (mfg, mpn, _indices) in mpn_groups.items():
+        n_mpn_groups = len(mpn_groups)
+        for i, (key, (mfg, mpn, _indices)) in enumerate(mpn_groups.items(), 1):
+            if self._verbose:
+                label = f"{mfg} {mpn}".strip() or mpn
+                print(
+                    f"  [MPN lookup {i}/{n_mpn_groups}] {label}",
+                    file=sys.stderr,
+                )
             try:
                 mpn_results[key] = self._provider.lookup_by_mpn(mfg, mpn)
             except Exception as exc:
@@ -414,10 +424,17 @@ class InventorySearchService:
         ranked_by_query: dict[str, list[SearchResult]] = {}
         error_by_query: dict[str, str] = {}
 
-        for key, group in query_groups.items():
+        n_queries = len(query_groups)
+        for i, (key, group) in enumerate(query_groups.items(), 1):
             # Keep the original (non-normalized) query string for the provider call.
             provider_query = group[0][1]
             representative_item = group[0][0]
+
+            if self._verbose:
+                print(
+                    f"  [keyword search {i}/{n_queries}] {provider_query!r}",
+                    file=sys.stderr,
+                )
 
             try:
                 raw_results = self._provider.search_for_item(

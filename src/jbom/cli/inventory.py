@@ -498,7 +498,10 @@ def _build_inventory_supplier_service(
             api_key=api_key,
             cache=None,  # default DiskSearchCache
         )
-        service = InventorySearchService(provider, request_delay_seconds=0.2)
+        verbose = getattr(args, "verbose", False)
+        service = InventorySearchService(
+            provider, request_delay_seconds=0.2, verbose=verbose
+        )
         return service, supplier_config, supplier_id
     except (ValueError, RuntimeError) as exc:
         print(f"Error: {exc}", file=sys.stderr)
