@@ -19,6 +19,7 @@ from dataclasses import dataclass
 from jbom.common.component_classification import normalize_component_type
 from jbom.common.types import Component, InventoryItem
 from jbom.common.value_parsing import farad_to_eia, henry_to_eia, ohms_to_eia
+from jbom.config.defaults import DefaultsConfig, get_defaults
 from jbom.config.fabricators import FabricatorConfig
 from jbom.config.suppliers import resolve_supplier_by_id
 from jbom.services.search.cache import normalize_query
@@ -163,44 +164,60 @@ class InventorySearchService:
         *,
         candidate_limit: int = 3,
         request_delay_seconds: float = 0.0,
+        defaults: DefaultsConfig | None = None,
     ) -> None:
         self._provider = provider
         self._candidate_limit = max(1, int(candidate_limit))
         self._request_delay_seconds = max(0.0, float(request_delay_seconds))
         self._matcher = SophisticatedInventoryMatcher(MatchingOptions())
+        # Load defaults once at construction time (injectable for tests / library users).
+        self._defaults: DefaultsConfig = (
+            defaults if defaults is not None else get_defaults()
+        )
+        # Build merged category→keyword map once: generic baseline + supplier override.
+        self._type_query_keywords: dict[str, str] = self._build_type_query_keywords()
+
+    def _build_type_query_keywords(self) -> dict[str, str]:
+        """Build merged category→keyword map: generic supplier baseline + specific override."""
+
+        generic = resolve_supplier_by_id("generic")
+        specific = resolve_supplier_by_id(self._provider.provider_id)
+        base: dict[str, str] = dict(
+            (generic.search_type_query_keywords if generic else {}) or {}
+        )
+        override: dict[str, str] = dict(
+            (specific.search_type_query_keywords if specific else {}) or {}
+        )
+        return {**base, **override}
 
     @staticmethod
     def filter_searchable_items(
-        items: list[InventoryItem], *, categories: str | None
+        items: list[InventoryItem],
+        *,
+        categories: str | None,
+        defaults: DefaultsConfig | None = None,
     ) -> list[InventoryItem]:
         """Filter to items suitable for catalog search.
+
+        Uses a denylist model: all categories pass unless explicitly excluded in
+        the defaults profile (``search_excluded_categories``).
+        When ``categories`` is provided it acts as an explicit allowlist selector,
+        restricting results to only those matched categories.
 
         Pure logic — no provider or network access required.
         Safe to call without instantiating the service (e.g. dry-run mode).
         """
 
-        default_searchable = {
-            "RES",
-            "CAP",
-            "IND",
-            "LED",
-            "DIO",
-            "IC",
-            "Q",
-            "REG",
-            "OSC",
-            "CONN",
-            "CON",
-        }
+        cfg = defaults if defaults is not None else get_defaults()
+        excluded = cfg.get_search_excluded_categories()
 
-        excluded = {"SLK", "BOARD", "DOC", "MECH"}
-
+        selectors: set[str] | None
         if categories:
             selectors = {
                 _category_token(t) for t in re.split(r"[\s,]+", categories) if t.strip()
             }
         else:
-            selectors = default_searchable
+            selectors = None  # denylist-only: every non-excluded category is searchable
 
         out: list[InventoryItem] = []
         for item in items:
@@ -216,8 +233,12 @@ class InventorySearchService:
             if not item.value or len(str(item.value).strip()) < min_value_len:
                 continue
 
-            if any(_category_matches(cat_raw, s) for s in selectors):
-                out.append(item)
+            if selectors is not None and not any(
+                _category_matches(cat_raw, s) for s in selectors
+            ):
+                continue
+
+            out.append(item)
 
         return out
 
@@ -255,27 +276,8 @@ class InventorySearchService:
         if value_token:
             parts.append(value_token)
 
-        default_type_keywords = {
-            "RES": "resistor",
-            "CAP": "capacitor",
-            "IND": "inductor",
-            "LED": "LED",
-            "DIO": "diode",
-            "IC": "IC",
-            "Q": "transistor",
-            "REG": "regulator",
-            "CON": "connector",
-            "CONN": "connector",
-        }
-
-        supplier = resolve_supplier_by_id(self._provider.provider_id)
-        type_keywords = dict(default_type_keywords)
-        if supplier is not None and supplier.search_type_query_keywords:
-            # Supplier config overrides/adds to the built-in defaults.
-            type_keywords.update(supplier.search_type_query_keywords)
-
-        if cat in type_keywords:
-            parts.append(type_keywords[cat])
+        if cat in self._type_query_keywords:
+            parts.append(self._type_query_keywords[cat])
 
         if item.package:
             parts.append(_normalize_ascii_value(item.package))

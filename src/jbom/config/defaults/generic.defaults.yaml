@@ -109,6 +109,18 @@ field_synonyms:
     display_name: "Power"
 
 # ---------------------------------------------------------------------------
+# Component categories excluded from supplier catalog search.
+# Items whose normalized category matches any entry here are silently skipped
+# before any query is built.  All other categories are searchable (denylist model).
+# ---------------------------------------------------------------------------
+search_excluded_categories:
+  - SLK      # silk-screen labels
+  - BOARD    # PCB board outline / edge cuts
+  - DOC      # documentation / drawing symbols
+  - MECH     # mechanical (mounting holes, standoffs)
+  - UNKNOWN  # unclassified / unrecognised KiCad components
+
+# ---------------------------------------------------------------------------
 # Camp 2/3 attribute classification per component category.
 # show_in_mode_a: Camp 2 — surfaced for explicit designer confirmation in Mode A.
 # suppress:       Camp 3 — silently filtered from Mode A display and write-back.
