@@ -1,9 +1,13 @@
 """Common step definitions for jBOM CLI testing."""
 
+import csv
 import subprocess
 from pathlib import Path
 from behave import when, then, given
-from diagnostic_utils import assert_with_diagnostics
+from diagnostic_utils import assert_with_diagnostics, csv_contains_fields
+
+# Module-level alias for backward compatibility within this file
+_csv_contains_fields = csv_contains_fields
 
 
 @given("a sandbox")
@@ -407,8 +411,8 @@ def step_error_output_should_mention(context, text):
 @then('the output should contain "{text}"')
 def step_output_should_contain(context, text):
     out = getattr(context, "last_output", "")
-    assert (
-        out and text in out
+    assert out and _csv_contains_fields(
+        out, text
     ), f"Expected text not found in output: {text}\nOutput:\n{out}"
 
 
@@ -641,8 +645,8 @@ def step_file_should_contain(context, filename, text):
     assert file_path.exists(), f"File not found: {file_path}"
     content = file_path.read_text(encoding="utf-8")
     expected_text = text.replace('\\"', '"')
-    assert (
-        expected_text in content
+    assert _csv_contains_fields(
+        content, expected_text
     ), f"Text '{expected_text}' not found in file {filename}\nContent:\n{content}"
 
 
@@ -744,22 +748,31 @@ def step_help_text_shows_bom_and_parts(context):
 def step_output_should_contain_fields(context):
     """Verify that CSV output contains specified fields as headers.
 
+    Parses the first CSV line with csv.reader so it works with both plain and
+    QUOTE_ALL-quoted output.
+
     Table format:
     | Field1 | Field2 | Field3 |
     """
     assert context.last_output is not None, "No command output captured"
     assert context.table is not None, "Expected table data for field validation"
 
-    # Get expected fields from first table row
-    expected_fields = [cell for cell in context.table.headings]
+    expected_fields = list(context.table.headings)
 
-    # Create expected header line
-    expected_header = ",".join(expected_fields)
+    # Parse the first non-empty line as CSV headers
+    lines = [ln for ln in context.last_output.splitlines() if ln.strip()]
+    actual_fields: list = []
+    if lines:
+        try:
+            actual_fields = next(csv.reader([lines[0]]))
+        except Exception:
+            actual_fields = []
 
-    # Check if header exists in output
-    assert expected_header in context.last_output, (
-        f"Expected header fields not found in output.\n"
-        f"Expected: {expected_header}\n"
+    missing = [f for f in expected_fields if f not in actual_fields]
+    assert not missing, (
+        f"Expected fields not found in output headers.\n"
+        f"Missing: {missing}\n"
+        f"Actual headers: {actual_fields}\n"
         f"Output:\n{context.last_output}"
     )
 
@@ -789,6 +802,10 @@ def step_output_should_not_contain_fields(context):
 def step_output_should_contain_component_data(context):
     """Verify that CSV output contains specified component data rows.
 
+    Uses CSV-aware matching so it works with both plain and QUOTE_ALL-quoted
+    output.  The expected values from the table are treated as a consecutive
+    sequence of fields that must appear in at least one CSV data row.
+
     Table format:
     | R1 | 10.0000 | 5.0000 | TOP |
     | C1 | 15.0000 | 8.0000 | TOP |
@@ -796,15 +813,11 @@ def step_output_should_contain_component_data(context):
     assert context.last_output is not None, "No command output captured"
     assert context.table is not None, "Expected table data for component validation"
 
-    # Check each expected data row
     for row in context.table:
-        # Create expected CSV row from table row
         expected_row = ",".join(row.cells)
-
-        # Check if this row exists in output
-        assert expected_row in context.last_output, (
+        assert _csv_contains_fields(context.last_output, expected_row), (
             f"Expected data row not found in output.\n"
-            f"Expected: {expected_row}\n"
+            f"Expected fields: {list(row.cells)}\n"
             f"Output:\n{context.last_output}"
         )
 
