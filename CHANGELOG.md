@@ -1,6 +1,44 @@
 # CHANGELOG
 
 
+## v6.39.1 (2026-03-11)
+
+### Bug Fixes
+
+* fix: update Gherkin step definitions for QUOTE_ALL CSV output
+
+Update step definitions to parse CSV with csv.reader instead of raw
+string matching, fixing 26 failing Gherkin scenarios after QUOTE_ALL
+was added to all csv.writer/DictWriter calls.
+
+Changes:
+- diagnostic_utils.py: add csv_contains_fields() helper that tries
+  direct substring match first, then CSV-aware consecutive-field match
+- common_steps.py: import csv_contains_fields; update
+  step_output_should_contain, step_file_should_contain,
+  step_output_should_contain_fields, step_output_should_contain_component_data
+- bom_steps.py: update then_output_contains_headers and
+  then_output_should_not_contain_csv_headers to use csv.reader
+- inventory_steps.py: update then_file_contains_text to use
+  csv_contains_fields
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`988f6c7`](https://github.com/plocher/jBOM/commit/988f6c7926a7178bff7c2c042f8ffa2ee44ea097))
+
+* fix: quote all CSV fields to preserve leading zeros (e.g. package '0603')
+
+Spreadsheet apps (Excel, LibreOffice) auto-convert bare values like
+0603 to the integer 603.  Add quoting=csv.QUOTE_ALL to every csv.writer
+and csv.DictWriter call so all field values are always quoted.
+
+Affected outputs: inventory, BOM, parts, pos, search results,
+audit report.
+
+Update three test_search_cli assertions to parse CSV via csv.reader
+rather than matching raw strings — more robust against quoting changes.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`ad7775f`](https://github.com/plocher/jBOM/commit/ad7775fc733795684943399b4c24e5182d9fdb6f))
+
+
 ## v6.39.0 (2026-03-11)
 
 ### Features
