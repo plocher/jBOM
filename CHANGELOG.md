@@ -1,6 +1,41 @@
 # CHANGELOG
 
 
+## v6.37.0 (2026-03-11)
+
+### Features
+
+* feat: multi-pass iterative component classification (issue #166)
+
+Phase 1 — Description and Keywords as fallback classification signals:
+- Add TextClassificationSignal dataclass and _TEXT_SIGNALS list to
+  component_classification.py (LED/RLY/IND/OSC/FUS/CON/DIO/RES/CAP/Q/SWI/REG)
+- Text signals activate ONLY when primary signals (name/footprint/refdes)
+  score nothing — pure fallback, never additively inflates primary scores
+- Extend _classify_by_score(), _get_component_type_heuristic(),
+  HeuristicComponentClassifier.classify(), ComponentClassifier protocol,
+  get_component_type(), and component_utils shim with description/keywords params
+
+Phase 2 — Value-consensus category propagation:
+- Add _classify_all_components(): pre-pass using all Phase 0+1 signals
+- Add _propagate_categories_by_value(): build value->category consensus
+  from classified components; promote unclassified siblings where value
+  maps to exactly one category; ambiguous values are left unresolved
+- Refactor load() and load_per_instance() to run the two-pass pipeline
+  before grouping/item creation; category_override flows through
+  _generate_group_key() and _create_inventory_item()
+
+Result: WS2812B Row 1 (Description='RGB LED Neopixel') -> LED via Phase 1;
+Row 2 (no Description, same value) -> LED via Phase 2 value propagation.
+
+- 11 new tests (5 classification, 6 project-inventory)
+- 741/741 tests passing
+
+Closes #166
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`3b44ddb`](https://github.com/plocher/jBOM/commit/3b44ddb2242d3bc019ed56e7845cc2ea1519a6bc))
+
+
 ## v6.36.1 (2026-03-11)
 
 ### Bug Fixes
