@@ -1,6 +1,40 @@
 # CHANGELOG
 
 
+## v6.39.0 (2026-03-11)
+
+### Features
+
+* feat: configurable ComponentID fields per category (issue #171)
+
+Add per-category allowlists in generic.defaults.yaml under
+component_id_fields controlling which optional fields (tolerance,
+voltage, current, wattage, type) contribute to a ComponentID.
+
+- LED: only 'type' — voltage/current/wattage omitted so two WS2812B
+  components where one schematic has Voltage=5V and the other doesn't
+  are correctly treated as the same requirement.
+- RES: tolerance, voltage (derating), wattage, type.
+- CAP: tolerance, voltage (critical rating), type.
+- IND: tolerance, current (saturation), type.
+- Unlisted categories: all optional fields included (conservative
+  backward-compatible fallback).
+
+Add OPTIONAL_ID_FIELD_DEFS + KNOWN_OPTIONAL_FIELD_NAMES to
+component_id.py as the single DRY authority mapping
+  profile_name → ComponentID key → make_component_id param_name.
+Extending to a new field requires one entry there + a new param.
+
+ProjectInventoryGenerator gains cwd: Path | None = None; defaults
+profile is loaded lazily from the project's .jbom/ search path
+without any config injection.
+
+12 new tests (9 in test_defaults_config, 3 in test_project_inventory).
+769/769 tests pass.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`3c32f29`](https://github.com/plocher/jBOM/commit/3c32f29ec2fa5494522b61eab13856fdf468c2b0))
+
+
 ## v6.38.1 (2026-03-11)
 
 ### Bug Fixes
