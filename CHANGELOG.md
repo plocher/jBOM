@@ -1,6 +1,29 @@
 # CHANGELOG
 
 
+## v6.36.1 (2026-03-11)
+
+### Bug Fixes
+
+* fix: replace searchable-category allowlist with denylist (issue #163)
+
+- Add search_excluded_categories to generic.defaults.yaml (SLK, BOARD, DOC, MECH, UNKNOWN)
+- Add DefaultsConfig.search_excluded_categories field + get_search_excluded_categories() accessor
+- Add search.type_query_keywords baseline to generic.supplier.yaml (full set incl. RLY, SWI, FUS)
+- Add search.type_query_keywords to lcsc.supplier.yaml (covers RLY, SWI, FUS explicitly)
+- Refactor filter_searchable_items(): denylist-only from defaults YAML; remove hardcoded allowlist
+  - Adds optional defaults= parameter; static method preserved for dry-run callers
+- Refactor build_query(): remove hardcoded default_type_keywords dict; merge keyword map at
+  __init__ time from generic + supplier profiles via _build_type_query_keywords()
+- InventorySearchService.__init__() now loads DefaultsConfig once; accepts injectable defaults=
+- Add 6 new regression tests (TDD): RLY/FUS/SWI pass, SLK/Unknown excluded, relay keyword in query
+- Fix test_load_supplier_lcsc to assert new LCSC keyword entries
+
+Closes #163
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`a4d8cb6`](https://github.com/plocher/jBOM/commit/a4d8cb6a92747cd1b79bfacf9775c9d5d5ff9518))
+
+
 ## v6.36.0 (2026-03-10)
 
 ### Bug Fixes
