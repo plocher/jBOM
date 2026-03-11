@@ -511,7 +511,9 @@ def _write_csv_handle(
 ) -> None:
     """Write BOM as CSV to a file-like object."""
 
-    writer = csv.writer(f)
+    # QUOTE_ALL ensures values like "0603" are written as "\"0603\"" so
+    # spreadsheet apps treat them as text and preserve leading zeros.
+    writer = csv.writer(f, quoting=csv.QUOTE_ALL)
     writer.writerow(headers)
     for entry in bom_data.entries:
         row = [_get_field_value(entry, field) for field in selected_fields]

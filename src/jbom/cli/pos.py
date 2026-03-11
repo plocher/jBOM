@@ -424,7 +424,9 @@ def _print_csv(
 ) -> None:
     """Print position data as CSV to a file-like object."""
 
-    writer = csv.writer(out)
+    # QUOTE_ALL ensures values like "0603" are written as "\"0603\"" so
+    # spreadsheet apps treat them as text and preserve leading zeros.
+    writer = csv.writer(out, quoting=csv.QUOTE_ALL)
 
     # Use headers exactly as provided by fabricator column mapping
     writer.writerow(headers)

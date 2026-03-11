@@ -424,7 +424,9 @@ def _print_console(results: list[SearchResult], *, fields: list[str]) -> None:
 
 
 def _print_csv(results: list[SearchResult], *, fields: list[str], out: TextIO) -> None:
-    writer = csv.writer(out)
+    # QUOTE_ALL ensures values like "0603" are written as "\"0603\"" so
+    # spreadsheet apps treat them as text and preserve leading zeros.
+    writer = csv.writer(out, quoting=csv.QUOTE_ALL)
     writer.writerow(_csv_headers(fields))
 
     for r in results:

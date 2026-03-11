@@ -1149,7 +1149,11 @@ def _write_csv_rows(
 ) -> None:
     """Write row dictionaries as CSV using the provided field order."""
 
-    writer = csv.DictWriter(out, fieldnames=field_names, extrasaction="ignore")
+    # QUOTE_ALL ensures values like "0603" are written as "\"0603\"" so
+    # spreadsheet apps treat them as text and preserve leading zeros.
+    writer = csv.DictWriter(
+        out, fieldnames=field_names, extrasaction="ignore", quoting=csv.QUOTE_ALL
+    )
     writer.writeheader()
     for row in rows:
         writer.writerow(row)

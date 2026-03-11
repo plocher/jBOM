@@ -305,7 +305,9 @@ def _print_console_table(parts_data: PartsListData) -> None:
 
 def _print_csv(parts_data: PartsListData, *, out: TextIO) -> None:
     """Print Parts List as CSV to a file-like object."""
-    writer = csv.writer(out)
+    # QUOTE_ALL ensures values like "0603" are written as "\"0603\"" so
+    # spreadsheet apps treat them as text and preserve leading zeros.
+    writer = csv.writer(out, quoting=csv.QUOTE_ALL)
     writer.writerow([header for _, header, _ in _PARTS_FIELDS])
     for entry in parts_data.entries:
         writer.writerow(
