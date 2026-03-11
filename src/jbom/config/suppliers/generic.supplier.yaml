@@ -21,3 +21,24 @@ search:
 
   cache:
     ttl_hours: 24
+
+  # Baseline category → search keyword mapping.
+  # Supplier-specific profiles may override individual entries.
+  type_query_keywords:
+    RES: "resistor"
+    CAP: "capacitor"
+    IND: "inductor"
+    LED: "LED"
+    DIO: "diode"
+    Z: "zener diode"
+    Q: "transistor"
+    IC: "IC"
+    OSC: "oscillator"
+    REG: "regulator"
+    CON: "connector"
+    CONN: "connector"
+    RLY: "relay"
+    SWI: "switch"
+    FUS: "fuse"
+    XFMR: "transformer"
+    XTL: "crystal"

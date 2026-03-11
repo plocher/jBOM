@@ -63,6 +63,7 @@ class DefaultsConfig:
         default_factory=dict
     )
     field_synonyms: dict[str, FieldSynonymConfig] = field(default_factory=dict)
+    search_excluded_categories: frozenset[str] = field(default_factory=frozenset)
 
     @staticmethod
     def from_yaml_dict(data: dict[str, Any], *, name: str) -> "DefaultsConfig":
@@ -131,6 +132,11 @@ class DefaultsConfig:
                 synonyms=synonyms,
             )
 
+        raw_excluded = data.get("search_excluded_categories") or []
+        search_excluded_categories: frozenset[str] = frozenset(
+            str(c).upper().strip() for c in raw_excluded if str(c).strip()
+        )
+
         return DefaultsConfig(
             name=name,
             domain_defaults=domain_defaults,
@@ -140,6 +146,7 @@ class DefaultsConfig:
             category_route_rules=category_route_rules,
             enrichment_attributes=enrichment_attributes,
             field_synonyms=field_synonyms,
+            search_excluded_categories=search_excluded_categories,
         )
 
     def get_domain_default(
@@ -174,6 +181,11 @@ class DefaultsConfig:
         """Return field synonym config for a canonical key."""
 
         return self.field_synonyms.get(canonical.strip().lower())
+
+    def get_search_excluded_categories(self) -> frozenset[str]:
+        """Return the set of component categories excluded from supplier search."""
+
+        return self.search_excluded_categories
 
 
 def load_defaults(name: str, *, cwd: Path | None = None) -> DefaultsConfig:

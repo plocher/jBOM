@@ -36,3 +36,21 @@ search:
   providers:
     - type: jlcpcb_api
       rate_limit_seconds: 2
+
+  # LCSC/JLCPCB search keyword overrides.
+  # Inherits baseline from generic.supplier.yaml; add LCSC-specific terms below.
+  type_query_keywords:
+    RES: "resistor"
+    CAP: "capacitor"
+    IND: "inductor"
+    LED: "LED"
+    DIO: "diode"
+    Q: "transistor"
+    IC: "IC"
+    OSC: "oscillator"
+    REG: "regulator"
+    CON: "connector"
+    CONN: "connector"
+    RLY: "relay"
+    SWI: "switch"
+    FUS: "fuse"

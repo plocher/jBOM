@@ -152,6 +152,103 @@ def test_inventory_search_service_deduplicates_provider_calls_and_fans_out() -> 
     assert "Unique queries dispatched: 3 (of 10 items)" in report
 
 
+def test_filter_searchable_items_passes_relay() -> None:
+    """RLY (relay) items must pass through the denylist filter."""
+    item = _inv_item(
+        ipn="RLY-SSR-1",
+        category="RLY",
+        value="CPC1709J",
+        package="RELAY_CPC1709J",
+        tolerance="",
+    )
+    filtered = InventorySearchService.filter_searchable_items([item], categories=None)
+    assert [i.ipn for i in filtered] == ["RLY-SSR-1"]
+
+
+def test_filter_searchable_items_passes_fuse_and_switch() -> None:
+    """FUS and SWI items must pass through the denylist filter."""
+    items = [
+        _inv_item(
+            ipn="FUS-1", category="FUS", value="1A", package="0603", tolerance=""
+        ),
+        _inv_item(
+            ipn="SWI-1", category="SWI", value="SPST", package="SMD", tolerance=""
+        ),
+    ]
+    filtered = InventorySearchService.filter_searchable_items(items, categories=None)
+    assert [i.ipn for i in filtered] == ["FUS-1", "SWI-1"]
+
+
+def test_filter_searchable_items_excludes_silkscreen() -> None:
+    """SLK (silk screen) items must still be excluded by the denylist."""
+    item = _inv_item(
+        ipn="SLK-1",
+        category="SLK",
+        value="Label",
+        package="",
+        tolerance="",
+    )
+    filtered = InventorySearchService.filter_searchable_items([item], categories=None)
+    assert filtered == []
+
+
+def test_filter_searchable_items_excludes_unknown_category() -> None:
+    """Items with category 'Unknown' (as KiCad emits for unclassified parts) are excluded."""
+    item = _inv_item(
+        ipn="UNK-1",
+        category="Unknown",
+        value="WS2812B",
+        package="WS2812B",
+        tolerance="",
+    )
+    filtered = InventorySearchService.filter_searchable_items([item], categories=None)
+    assert filtered == []
+
+
+def test_build_query_includes_relay_keyword_from_supplier() -> None:
+    """build_query for RLY items must include 'relay' sourced from supplier keyword map."""
+
+    class _Provider:
+        provider_id = "mouser"  # mouser.supplier.yaml already has RLY: relay
+
+        def search(self, query: str, *, limit: int = 10) -> list[SearchResult]:
+            return []
+
+    svc = InventorySearchService(_Provider())
+    item = _inv_item(
+        ipn="RLY-SSR-1",
+        category="RLY",
+        value="CPC1709J",
+        package="RELAY_CPC1709J",
+        tolerance="",
+    )
+    query = svc.build_query(item)
+    assert "relay" in query.lower()
+    assert "CPC1709J" in query
+
+
+def test_build_query_relay_keyword_from_generic_supplier() -> None:
+    """build_query for RLY items picks up 'relay' from generic.supplier.yaml when the
+    specific supplier does not override it."""
+
+    class _Provider:
+        provider_id = "lcsc"
+
+        def search(self, query: str, *, limit: int = 10) -> list[SearchResult]:
+            return []
+
+    svc = InventorySearchService(_Provider())
+    item = _inv_item(
+        ipn="RLY-SSR-2",
+        category="RLY",
+        value="CPC1709J",
+        package="RELAY_CPC1709J",
+        tolerance="",
+    )
+    query = svc.build_query(item)
+    assert "relay" in query.lower()
+
+
 def test_filter_searchable_items_allows_led_single_character_value() -> None:
     items = [
         _inv_item(

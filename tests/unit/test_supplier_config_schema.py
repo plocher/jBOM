@@ -56,7 +56,10 @@ def test_load_supplier_lcsc() -> None:
     assert lcsc.search_retry_delay_seconds == 1.0
 
     assert isinstance(lcsc.search_type_query_keywords, dict)
-    assert lcsc.search_type_query_keywords == {}
+    # LCSC profile now provides explicit keyword overrides (issue #163).
+    assert lcsc.search_type_query_keywords.get("RES") == "resistor"
+    assert lcsc.search_type_query_keywords.get("CAP") == "capacitor"
+    assert lcsc.search_type_query_keywords.get("RLY") == "relay"
 
 
 def test_load_supplier_mouser_has_type_query_keywords() -> None:
