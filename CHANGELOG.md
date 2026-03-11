@@ -1,6 +1,25 @@
 # CHANGELOG
 
 
+## v6.38.0 (2026-03-11)
+
+### Features
+
+* feat: add verbose progress feedback for supplier search (issue #167)
+
+- InventorySearchService: accept verbose=True/False in __init__; print
+  per-query progress to stderr during both MPN-lookup and keyword-search
+  phases, showing deduplicated counts (e.g. '[keyword search 2/5]')
+- cli/inventory.py: thread --verbose flag through to InventorySearchService
+  constructor so -v activates search progress output
+- project_inventory.py: add log.debug() markers at each classification
+  phase boundary (start/end of Phase 0+1, Phase 2, load, load_per_instance)
+- tests: 7 new tests covering verbose=False (silent) and verbose=True
+  (MPN and keyword search progress lines on stderr)
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`4f99908`](https://github.com/plocher/jBOM/commit/4f99908e1ab6448d3b5cd97fd1f63bc67f04aacd))
+
+
 ## v6.37.0 (2026-03-11)
 
 ### Features
