@@ -82,3 +82,14 @@ Feature: Audit command core behavior
     Then the command should succeed
     And a file named "report.csv" should exist
     And the file "report.csv" should contain "CheckType"
+
+  Scenario: Audit-generated QUOTE_ALL report.csv is consumable by annotate without error
+    Given a schematic that contains:
+      | UUID    | Reference | Value | Footprint            | Package | LibID    |
+      | uuid-r1 | R1        | 10K   | Resistor_SMD:R_0603  | 0603    | Device:R |
+    When I run jbom command "audit . -o report.csv"
+    Then the command should succeed
+    And a file named "report.csv" should exist
+    When I run jbom command "annotate . --repairs report.csv --dry-run"
+    Then the command should succeed
+    And the output should contain "failed 0"

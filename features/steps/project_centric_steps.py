@@ -2,6 +2,7 @@
 """
 from __future__ import annotations
 
+import csv
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -254,8 +255,12 @@ def _extract_ipn_for_reference(output: str, reference: str) -> str:
 
     # Try BOM/CSV format first (Reference,Quantity,Description,Value...)
     for line in lines:
-        if line.startswith(f"{reference},"):
-            parts = line.split(",")
+        try:
+            row = next(csv.reader([line]))
+        except StopIteration:
+            continue
+        if row and row[0] == reference:
+            parts = row
             # Look for IPN pattern in CSV columns
             for part in parts:
                 if (
