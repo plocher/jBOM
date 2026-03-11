@@ -1,11 +1,13 @@
 """Loader for generating inventory from KiCad project components."""
 
 import logging
+from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
 from jbom.common.component_classification import normalize_component_type
-from jbom.common.component_id import make_component_id
+from jbom.common.component_id import make_component_id, OPTIONAL_ID_FIELD_DEFS
 from jbom.common.types import Component, InventoryItem, DEFAULT_PRIORITY
+from jbom.config.defaults import DefaultsConfig, get_defaults
 from jbom.common.component_utils import (
     derive_package_from_footprint,
     get_component_type,
@@ -24,11 +26,31 @@ log = logging.getLogger(__name__)
 class ProjectInventoryGenerator:
     """Generates inventory items from project components."""
 
-    def __init__(self, components: List[Component]):
-        """Initialize with list of components from schematic."""
+    def __init__(
+        self,
+        components: List[Component],
+        *,
+        cwd: Optional[Path] = None,
+    ):
+        """Initialize with list of components from schematic.
+
+        Args:
+            components: Components loaded from a KiCad schematic.
+            cwd: Working directory for project-local profile search.  When
+                 ``None``, the built-in generic profile is used.  Pass the
+                 project directory to pick up any ``.jbom/`` overrides.
+        """
         self.components = components
+        self._cwd = cwd
+        self._defaults: Optional[DefaultsConfig] = None
         self.inventory: List[InventoryItem] = []
         self.inventory_fields: Set[str] = set()
+
+    def _get_defaults(self) -> DefaultsConfig:
+        """Return the loaded defaults profile, loading lazily on first call."""
+        if self._defaults is None:
+            self._defaults = get_defaults("generic", cwd=self._cwd)
+        return self._defaults
 
     def _classify_all_components(self) -> Dict[int, Optional[str]]:
         """Phase 0+1: classify every component using all available signal sources.
@@ -252,6 +274,12 @@ class ProjectInventoryGenerator:
 
         Always delegates to ``make_component_id`` — never constructs the
         ComponentID string directly.
+
+        Optional fields (tolerance, voltage, current, wattage, type) are
+        filtered by the per-category allowlist from the defaults profile.  When
+        a category is not explicitly listed in the profile the full set of
+        non-empty optional fields is included (conservative / backward-
+        compatible).
         """
         if category_override is None:
             props = component.properties or {}
@@ -270,15 +298,34 @@ class ProjectInventoryGenerator:
         category = normalize_component_type(category_raw) or "UNK"
         props = component.properties or {}
 
+        # Raw values for each optional field, keyed by profile_name.
+        _raw: Dict[str, str] = {
+            "tolerance": props.get(CommonFields.TOLERANCE, props.get("Tolerance", "")),
+            "voltage": props.get(CommonFields.VOLTAGE, props.get("Voltage", "")),
+            "current": props.get(CommonFields.AMPERAGE, props.get("Amperage", "")),
+            "wattage": props.get(CommonFields.WATTAGE, props.get("Wattage", "")),
+            "type": props.get("Type", ""),
+        }
+
+        # Per-category allowlist: None means "unlisted — include all fields".
+        allowed = self._get_defaults().get_component_id_fields(category)
+
+        kwargs: Dict[str, str] = {}
+        for field_def in OPTIONAL_ID_FIELD_DEFS:
+            raw_val = _raw[field_def.profile_name]
+            # Pass the real value when allowed (or when no restriction exists),
+            # empty string otherwise — make_component_id omits empty fields.
+            kwargs[field_def.param_name] = (
+                raw_val
+                if (allowed is None or field_def.profile_name in allowed)
+                else ""
+            )
+
         return make_component_id(
             category=category,
             value=component.value or "",
             package=self._extract_package(component.footprint),
-            tolerance=props.get(CommonFields.TOLERANCE, props.get("Tolerance", "")),
-            voltage=props.get(CommonFields.VOLTAGE, props.get("Voltage", "")),
-            amperage=props.get(CommonFields.AMPERAGE, props.get("Amperage", "")),
-            wattage=props.get(CommonFields.WATTAGE, props.get("Wattage", "")),
-            component_type=props.get("Type", ""),
+            **kwargs,
         )
 
     def _create_inventory_item(

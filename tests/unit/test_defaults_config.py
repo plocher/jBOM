@@ -8,6 +8,7 @@ Covers:
 - from_yaml_dict: all sections parsed correctly
 - Helper methods: get_domain_default, get_package_power, get_package_voltage, etc.
 - _deep_merge semantics
+- component_id_fields: parsing, get_component_id_fields(), validation
 """
 
 from __future__ import annotations
@@ -257,3 +258,121 @@ def test_from_yaml_dict_parses_field_synonyms() -> None:
     assert voltage is not None
     assert voltage.display_name == "Voltage"
     assert voltage.synonyms == ("Voltage", "V")
+
+
+# ---------------------------------------------------------------------------
+# component_id_fields: parsing and get_component_id_fields()
+# ---------------------------------------------------------------------------
+
+
+def test_generic_profile_has_component_id_fields_for_led() -> None:
+    """The built-in generic profile restricts LED ComponentIDs to 'type' only."""
+    cfg = load_defaults("generic")
+    allowed = cfg.get_component_id_fields("led")
+    assert allowed is not None
+    assert "type" in allowed
+    assert "voltage" not in allowed
+    assert "current" not in allowed
+    assert "wattage" not in allowed
+
+
+def test_generic_profile_has_component_id_fields_for_res() -> None:
+    """The built-in generic profile includes tolerance/voltage/wattage for RES."""
+    cfg = load_defaults("generic")
+    allowed = cfg.get_component_id_fields("res")
+    assert allowed is not None
+    assert "tolerance" in allowed
+    assert "voltage" in allowed
+    assert "wattage" in allowed
+    assert "current" not in allowed
+
+
+def test_generic_profile_has_component_id_fields_for_cap() -> None:
+    """The built-in generic profile includes tolerance/voltage for CAP (no wattage)."""
+    cfg = load_defaults("generic")
+    allowed = cfg.get_component_id_fields("cap")
+    assert allowed is not None
+    assert "tolerance" in allowed
+    assert "voltage" in allowed
+    assert "wattage" not in allowed
+
+
+def test_generic_profile_has_component_id_fields_for_ind() -> None:
+    """The built-in generic profile includes tolerance/current for IND (no voltage)."""
+    cfg = load_defaults("generic")
+    allowed = cfg.get_component_id_fields("ind")
+    assert allowed is not None
+    assert "tolerance" in allowed
+    assert "current" in allowed
+    assert "voltage" not in allowed
+
+
+def test_get_component_id_fields_returns_none_for_unlisted_category() -> None:
+    """A category not in the profile returns None — caller uses all fields."""
+    cfg = load_defaults("generic")
+    assert cfg.get_component_id_fields("ic") is None
+    assert cfg.get_component_id_fields("rly") is None
+    assert cfg.get_component_id_fields("totally_custom_cat") is None
+
+
+def test_get_component_id_fields_is_case_insensitive() -> None:
+    """Category lookup is case-insensitive: LED, led, Led all resolve."""
+    cfg = load_defaults("generic")
+    assert cfg.get_component_id_fields("LED") == cfg.get_component_id_fields("led")
+    assert cfg.get_component_id_fields("RES") == cfg.get_component_id_fields("res")
+
+
+def test_from_yaml_dict_parses_component_id_fields() -> None:
+    """from_yaml_dict parses component_id_fields into frozensets of profile names."""
+    data = {
+        "component_id_fields": {
+            "led": ["type"],
+            "res": ["tolerance", "voltage", "wattage"],
+        }
+    }
+    cfg = DefaultsConfig.from_yaml_dict(data, name="test")
+    assert cfg.get_component_id_fields("led") == frozenset({"type"})
+    assert cfg.get_component_id_fields("res") == frozenset(
+        {"tolerance", "voltage", "wattage"}
+    )
+    assert cfg.get_component_id_fields("cap") is None  # not listed
+
+
+def test_from_yaml_dict_warns_and_skips_unknown_field_names(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Unknown profile names are warned about and omitted from the frozenset."""
+    import logging
+
+    data = {
+        "component_id_fields": {
+            "led": ["type", "wavelength"],  # 'wavelength' is not a known field
+        }
+    }
+    with caplog.at_level(logging.WARNING):
+        cfg = DefaultsConfig.from_yaml_dict(data, name="test")
+    allowed = cfg.get_component_id_fields("led")
+    assert allowed == frozenset({"type"})  # 'wavelength' was dropped
+    assert any("wavelength" in r.message for r in caplog.records)
+
+
+def test_component_id_fields_override_via_jbom_dir(tmp_path: Path) -> None:
+    """A project .jbom/ override can customize LED component_id_fields."""
+    jbom_dir = tmp_path / ".jbom"
+    jbom_dir.mkdir()
+    (jbom_dir / "custom.defaults.yaml").write_text(
+        "extends: generic\n"
+        "component_id_fields:\n"
+        "  led:\n"
+        "    - type\n"
+        "    - voltage\n"  # re-add voltage for this project
+    )
+    cfg = load_defaults("custom", cwd=tmp_path)
+    allowed = cfg.get_component_id_fields("led")
+    assert allowed is not None
+    assert "voltage" in allowed
+    assert "type" in allowed
+    # res still inherited from generic
+    res_allowed = cfg.get_component_id_fields("res")
+    assert res_allowed is not None
+    assert "tolerance" in res_allowed

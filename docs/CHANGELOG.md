@@ -7,6 +7,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 
 ### Added
+- **Configurable ComponentID fields per category** (issue #171): optional fields in
+  a ComponentID (tolerance, voltage, current, wattage, type) are now controlled by a
+  per-category allowlist in `generic.defaults.yaml` under `component_id_fields`.  For
+  example, LED ComponentIDs no longer include `V=`/`A=`/`W=` — so two WS2812B
+  components where one schematic annotated `Voltage=5V` and the other did not are now
+  correctly treated as the same requirement.  Unlisted categories retain the previous
+  behavior (all non-empty optional fields included).  The table is overridable per
+  project via a `.jbom/generic.defaults.yaml` override without code changes.
+- **`OPTIONAL_ID_FIELD_DEFS` / `KNOWN_OPTIONAL_FIELD_NAMES`** in
+  `common/component_id.py`: single DRY authority mapping YAML profile names →
+  ComponentID keys → `make_component_id` parameter names.  Extending to a new field
+  (e.g. wavelength) requires one entry here plus a new `make_component_id` parameter.
+
+### Changed
+- `ProjectInventoryGenerator` accepts an optional `cwd: Path | None = None` kwarg;
+  the generic defaults profile is loaded lazily from the project directory's
+  `.jbom/` search path (no config injection required).
+
+### Migration note
+- **Stored ComponentIDs may change** for `led`, `cap`, `ind`, and `res` components
+  that previously had partial optional-field annotations in the schematic.  Re-run
+  `jbom inventory` to regenerate current IDs.
+
+### Added
 - **Catalog-driven supplier assignment** (issue #117): `NullSearchProvider` (`null_api` type) added as the built-in fixture-driven provider always available without credentials. `generic.supplier.yaml` wired with `null_api` as its search provider.
 - **Inventory freshness audit** (issue #117): `jbom audit inventory.csv --supplier NAME` checks each `ITEM` row's supplier PN against a fresh catalog search. Emits `STALE_PART / WARN` when the existing PN is no longer findable; `BETTER_AVAILABLE / WARN` when a different PN ranks higher than the recorded one; silent when the existing PN matches the best result.
 - **`jbom inventory --supplier NAME`** (issue #117): auto-populates `Supplier` and `SPN` columns when generating an inventory from a schematic. Rows that already have a supplier PN are preserved; new rows get the top search result filled in.

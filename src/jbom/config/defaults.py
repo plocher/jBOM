@@ -9,6 +9,7 @@ The defaults profile captures:
   - parametric_query_fields: JLCPCB/LCSC spec fields per category (Phase 4)
   - category_route_rules: JLCPCB taxonomy routing (Phase 4)
   - enrichment_attributes: Camp 2/3 attribute classification per category (#99)
+  - component_id_fields: optional ComponentID fields included per category
 
 See docs/dev/architecture/component-attribute-enrichment.md for the design model.
 """
@@ -22,6 +23,7 @@ from typing import Any
 
 import yaml
 
+from jbom.common.component_id import KNOWN_OPTIONAL_FIELD_NAMES
 from jbom.config.profile_search import find_profile
 
 log = logging.getLogger(__name__)
@@ -64,6 +66,7 @@ class DefaultsConfig:
     )
     field_synonyms: dict[str, FieldSynonymConfig] = field(default_factory=dict)
     search_excluded_categories: frozenset[str] = field(default_factory=frozenset)
+    component_id_fields: dict[str, frozenset[str]] = field(default_factory=dict)
 
     @staticmethod
     def from_yaml_dict(data: dict[str, Any], *, name: str) -> "DefaultsConfig":
@@ -137,6 +140,25 @@ class DefaultsConfig:
             str(c).upper().strip() for c in raw_excluded if str(c).strip()
         )
 
+        component_id_fields: dict[str, frozenset[str]] = {}
+        for category, fields_list in (data.get("component_id_fields") or {}).items():
+            if not isinstance(fields_list, list):
+                continue
+            validated: list[str] = []
+            for fname in fields_list:
+                fname_str = str(fname).strip().lower()
+                if fname_str in KNOWN_OPTIONAL_FIELD_NAMES:
+                    validated.append(fname_str)
+                else:
+                    log.warning(
+                        "component_id_fields[%r]: unknown field name %r "
+                        "(valid names: %s)",
+                        category,
+                        fname_str,
+                        ", ".join(sorted(KNOWN_OPTIONAL_FIELD_NAMES)),
+                    )
+            component_id_fields[str(category).lower()] = frozenset(validated)
+
         return DefaultsConfig(
             name=name,
             domain_defaults=domain_defaults,
@@ -147,6 +169,7 @@ class DefaultsConfig:
             enrichment_attributes=enrichment_attributes,
             field_synonyms=field_synonyms,
             search_excluded_categories=search_excluded_categories,
+            component_id_fields=component_id_fields,
         )
 
     def get_domain_default(
@@ -186,6 +209,23 @@ class DefaultsConfig:
         """Return the set of component categories excluded from supplier search."""
 
         return self.search_excluded_categories
+
+    def get_component_id_fields(self, category: str) -> frozenset[str] | None:
+        """Return the optional-field allowlist for *category*, or ``None``.
+
+        ``None`` means the category is not configured — the caller should fall
+        back to including all optional fields (conservative / backward-compatible).
+
+        Args:
+            category: Component category token, any case (e.g. ``"LED"``,
+                ``"res"``, ``"Cap"``).
+
+        Returns:
+            A ``frozenset`` of ``profile_name`` strings (e.g.
+            ``frozenset({"type"})``) when the category is explicitly configured,
+            or ``None`` when it is not.
+        """
+        return self.component_id_fields.get(category.lower())
 
 
 def load_defaults(name: str, *, cwd: Path | None = None) -> DefaultsConfig:
