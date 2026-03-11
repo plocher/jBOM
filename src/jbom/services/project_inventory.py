@@ -30,22 +30,80 @@ class ProjectInventoryGenerator:
         self.inventory: List[InventoryItem] = []
         self.inventory_fields: Set[str] = set()
 
+    def _classify_all_components(self) -> Dict[int, Optional[str]]:
+        """Phase 0+1: classify every component using all available signal sources.
+
+        Returns a mapping of ``id(component)`` → category token (e.g. "LED",
+        "RES") or ``None`` when the component cannot be classified.
+        """
+        result: Dict[int, Optional[str]] = {}
+        for comp in self.components:
+            props = comp.properties or {}
+            cat = get_component_type(
+                comp.lib_id,
+                comp.footprint,
+                comp.reference,
+                description=props.get("Description", ""),
+                keywords=props.get("Keywords", ""),
+            )  # None when no signals match
+            result[id(comp)] = cat
+        return result
+
+    def _propagate_categories_by_value(
+        self, comp_categories: Dict[int, Optional[str]]
+    ) -> Dict[int, Optional[str]]:
+        """Phase 2: propagate category to unclassified components via value consensus.
+
+        Builds a ``value -> set[category]`` map from already-classified
+        components.  For each still-unclassified component whose ``value``
+        maps to exactly one category, adopt that category.  Ambiguous values
+        (two or more distinct categories) are left unresolved.
+        """
+        # Build value → set of categories (ignoring unclassified)
+        value_categories: Dict[str, set] = {}
+        for comp in self.components:
+            cat = comp_categories[id(comp)]
+            if cat is None:
+                continue
+            val = (comp.value or "").strip()
+            if val:
+                value_categories.setdefault(val, set()).add(cat)
+
+        result: Dict[int, Optional[str]] = dict(comp_categories)
+        for comp in self.components:
+            if result[id(comp)] is not None:
+                continue  # already classified
+            val = (comp.value or "").strip()
+            cats = value_categories.get(val, set())
+            if len(cats) == 1:
+                resolved = next(iter(cats))
+                result[id(comp)] = resolved
+                log.debug(
+                    "category propagated by value: %s %r -> %s",
+                    comp.reference or comp.lib_id,
+                    val,
+                    resolved,
+                )
+        return result
+
     def load(self) -> Tuple[List[InventoryItem], List[str]]:
         """Generate COMPONENT rows from project requirements.
 
         Returns:
             Tuple of (inventory items list, field names list)
         """
+        # Multi-pass classification: Phase 0+1 (signals) then Phase 2 (value consensus).
+        comp_categories = self._propagate_categories_by_value(
+            self._classify_all_components()
+        )
+
         # Group by explicit requirement identity so identical requirements collapse.
         grouped_components: Dict[str, List[Component]] = {}
 
         for comp in self.components:
-            # Skip components not in BOM or DNP if desired?
-            # Usually we want all components to be in inventory even if DNP in this specific project,
-            # but if they are DNP, maybe they aren't "inventory candidates"?
-            # For now, include everything.
-
-            key = self._generate_group_key(comp)
+            key = self._generate_group_key(
+                comp, category_override=comp_categories[id(comp)]
+            )
             if key not in grouped_components:
                 grouped_components[key] = []
             grouped_components[key].append(comp)
@@ -79,7 +137,11 @@ class ProjectInventoryGenerator:
             uuids = [c.uuid for c in comps if c.uuid]
             uuid_str = ",".join(uuids)
 
-            item = self._create_inventory_item(representative, uuid_str)
+            item = self._create_inventory_item(
+                representative,
+                uuid_str,
+                category_override=comp_categories[id(representative)],
+            )
             self.inventory.append(item)
 
             # Add any extra fields found in properties
@@ -126,8 +188,16 @@ class ProjectInventoryGenerator:
             "ki_keywords",
         }
 
+        comp_categories = self._propagate_categories_by_value(
+            self._classify_all_components()
+        )
+
         for component in self.components:
-            item = self._create_inventory_item(component, component.uuid)
+            item = self._create_inventory_item(
+                component,
+                component.uuid,
+                category_override=comp_categories[id(component)],
+            )
             item.raw_data = dict(item.raw_data)
             item.raw_data["Footprint"] = component.footprint
             item.raw_data["Symbol"] = component.lib_id
@@ -150,14 +220,19 @@ class ProjectInventoryGenerator:
         ComponentID string directly.
         """
         if category_override is None:
+            props = component.properties or {}
             category_raw = (
                 get_component_type(
-                    component.lib_id, component.footprint, component.reference
+                    component.lib_id,
+                    component.footprint,
+                    component.reference,
+                    description=props.get("Description", ""),
+                    keywords=props.get("Keywords", ""),
                 )
                 or "UNK"
             )
         else:
-            category_raw = category_override
+            category_raw = category_override or "UNK"
         category = normalize_component_type(category_raw) or "UNK"
         props = component.properties or {}
 
@@ -173,14 +248,27 @@ class ProjectInventoryGenerator:
         )
 
     def _create_inventory_item(
-        self, component: Component, uuid_str: str = ""
+        self,
+        component: Component,
+        uuid_str: str = "",
+        *,
+        category_override: Optional[str] = None,
     ) -> InventoryItem:
         """Create an InventoryItem from a Component."""
 
-        # Determine category
-        comp_type = get_component_type(
-            component.lib_id, component.footprint, component.reference
-        )
+        # Determine category: use pre-computed override when available so the
+        # full multi-pass result is respected; fall back to direct classification.
+        if category_override is not None:
+            comp_type: Optional[str] = category_override if category_override else None
+        else:
+            props_early = component.properties or {}
+            comp_type = get_component_type(
+                component.lib_id,
+                component.footprint,
+                component.reference,
+                description=props_early.get("Description", ""),
+                keywords=props_early.get("Keywords", ""),
+            )
         category = comp_type if comp_type else "Unknown"
 
         # Extract package from footprint

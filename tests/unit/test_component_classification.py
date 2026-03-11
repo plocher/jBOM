@@ -311,6 +311,66 @@ def test_fuse_category_type_constant() -> None:
 
 
 # ---------------------------------------------------------------------------
+# Phase 1 — Description and Keywords as additional classification signal sources
+# (issue #166)
+# ---------------------------------------------------------------------------
+
+
+def test_get_component_type_uses_description_when_name_and_footprint_fail() -> None:
+    """WS2812B: zero signals from name/footprint; Description='RGB LED Neopixel' → LED."""
+    result = get_component_type(
+        lib_id="SPCoast:WS2812B",
+        footprint="PCM_SPCoast:WS2812B5050",
+        description="RGB LED Neopixel",
+    )
+    assert result == "LED", f"expected LED from description, got {result!r}"
+
+
+def test_get_component_type_neopixel_in_description_classifies_as_led() -> None:
+    """'Neopixel' keyword in description is a high-confidence LED signal.
+
+    Uses a component name and footprint that fire zero primary signals so the
+    description fallback is the sole signal source.
+    """
+    result = get_component_type(
+        lib_id="Custom:WS2812B",  # zero primary signals: no LED/IC/etc in name or footprint
+        footprint="Custom:5050",
+        description="Neopixel addressable LED",
+    )
+    assert result == "LED", f"expected LED, got {result!r}"
+
+
+def test_get_component_type_uses_keywords_for_relay() -> None:
+    """Unknown part with Keywords='relay SPST' classifies as RLY."""
+    result = get_component_type(
+        lib_id="Custom:XYZ123",
+        footprint="",
+        keywords="relay SPST",
+    )
+    assert result == "RLY", f"expected RLY, got {result!r}"
+
+
+def test_get_component_type_description_does_not_override_strong_primary_signal() -> (
+    None
+):
+    """Primary signals (IC footprint 6.0) still win over a weak LED in description (3.0)."""
+    result = get_component_type(
+        lib_id="Custom:LEDDRIVER",
+        footprint="Package_SO:SOIC-8_3.9x4.9mm_P1.27mm",
+        description="LED driver IC",
+    )
+    assert (
+        result == "IC"
+    ), f"IC footprint should outweigh description LED hint, got {result!r}"
+
+
+def test_classify_by_score_uses_description_upper_dimension() -> None:
+    """_classify_by_score with description_upper='RGB LED NEOPIXEL' returns LED."""
+    result = _classify_by_score("WS2812B", "", "", description_upper="RGB LED NEOPIXEL")
+    assert result == "LED", f"expected LED, got {result!r}"
+
+
+# ---------------------------------------------------------------------------
 # RefDes precision: prefix+digit constraint prevents false positives
 # ---------------------------------------------------------------------------
 
