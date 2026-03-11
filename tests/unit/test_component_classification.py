@@ -434,3 +434,40 @@ def test_l_refdes_beats_ne_in_generic_lib_id() -> None:
     assert (
         result == "IND"
     ), f"Device:Generic + L1 should classify as IND (not IC), got {result!r}"
+
+
+# ---------------------------------------------------------------------------
+# LED-prefix reference designator (issue follow-up to #166)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "reference",
+    ["LED1", "LED2", "LED10", "LED20", "LED32"],
+)
+def test_led_prefix_ref_classifies_as_led(reference: str) -> None:
+    """LED* reference designators (e.g. LED1, LED20) must classify as LED.
+
+    Components like WS2812B5050 using 'LED' prefix refs had zero primary signals,
+    leaving them all unclassified and blocking Phase 2 value-consensus propagation.
+    """
+    result = get_component_type(
+        lib_id="SPCoast:WS2812B5050",
+        footprint="PCM_SPCoast:WS2812B5050",
+        reference=reference,
+    )
+    assert (
+        result == "LED"
+    ), f"reference={reference!r} should classify as LED, got {result!r}"
+
+
+def test_led_prefix_ref_does_not_fire_on_led_without_digit() -> None:
+    """'LED' alone (no trailing digit) must not fire the LED ref signal."""
+    # No digit after 'LED' → signal does not fire; other signals (LED in name) still win.
+    result = get_component_type(
+        lib_id="Device:LED",
+        footprint="LED_SMD:LED_0603_1608Metric",
+        reference="LED",
+    )
+    # Device:LED has LED in name (3.0) + LED in footprint (4.0) → LED wins regardless
+    assert result == "LED"

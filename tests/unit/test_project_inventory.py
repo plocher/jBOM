@@ -138,3 +138,74 @@ def test_load_aggregated_propagates_category_to_unknown_sibling() -> None:
     # Both components have same value+footprint+category after propagation → one group
     assert len(items) == 1
     assert items[0].category == "LED"
+
+
+# ---------------------------------------------------------------------------
+# LED-prefix reference signal (follow-up to #166)
+# ---------------------------------------------------------------------------
+
+
+def test_led_ref_prefix_classifies_ws2812b_with_no_description() -> None:
+    """WS2812B5050 with 'LED1' reference and no description classifies as LED via ref signal."""
+    comp = _comp(
+        lib_id="SPCoast:WS2812B5050",
+        value="WS2812B5050",
+        footprint="PCM_SPCoast:WS2812B5050",
+        reference="LED1",
+    )
+    gen = ProjectInventoryGenerator([comp])
+    items, _ = gen.load_per_instance()
+    assert (
+        items[0].category == "LED"
+    ), f"expected LED via LED-ref, got {items[0].category!r}"
+
+
+def test_led_ref_prefix_component_id_matches_category() -> None:
+    """ComponentID must reflect the classified LED category, not 'UNK'.
+
+    Regression for the bug where _create_inventory_item() re-derived the
+    ComponentID from scratch (ignoring the multi-pass category_override),
+    producing CAT=UNK even when the category field was correctly LED.
+    """
+    comp = _comp(
+        lib_id="SPCoast:WS2812B5050",
+        value="WS2812B5050",
+        footprint="PCM_SPCoast:WS2812B5050",
+        reference="LED1",
+    )
+    gen = ProjectInventoryGenerator([comp])
+    items, _ = gen.load_per_instance()
+    assert items[0].category == "LED"
+    assert (
+        "CAT=LED" in items[0].component_id
+    ), f"ComponentID should contain CAT=LED, got {items[0].component_id!r}"
+    assert "CAT=UNK" not in items[0].component_id
+
+
+def test_phase2_propagated_category_reflected_in_component_id() -> None:
+    """ComponentID reflects Phase-2-propagated category, not the re-derived UNK.
+
+    When Phase 2 value-consensus promotes a component from Unknown to LED,
+    the ComponentID must show CAT=LED to match the category field and the
+    grouping key used in load().
+    """
+    comp_with_desc = _comp(
+        lib_id="SPCoast:WS2812B",
+        value="WS2812B",
+        footprint="PCM_SPCoast:WS2812B5050",
+        description="RGB LED Neopixel",
+    )
+    comp_without_desc = _comp(
+        lib_id="SPCoast:WS2812B",
+        value="WS2812B",
+        footprint="PCM_SPCoast:WS2812B5050",
+    )
+    gen = ProjectInventoryGenerator([comp_with_desc, comp_without_desc])
+    items, _ = gen.load_per_instance()
+
+    for item in items:
+        assert item.category == "LED"
+        assert "CAT=LED" in item.component_id, (
+            f"component_id should contain CAT=LED after Phase-2 propagation, "
+            f"got {item.component_id!r}"
+        )

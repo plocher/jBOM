@@ -205,6 +205,9 @@ _SIGNALS: list[ClassificationSignal] = [
     ClassificationSignal(
         "CON", 5.0, lambda n, f, r: r[:3] == "CON" and r[3:4].isdigit()
     ),
+    ClassificationSignal(
+        "LED", 4.0, lambda n, f, r: r[:3] == "LED" and r[3:4].isdigit()
+    ),
     ClassificationSignal("CON", 5.0, lambda n, f, r: r[:1] == "J" and r[1:2].isdigit()),
     ClassificationSignal(
         "IND", 6.0, lambda n, f, r: r[:2] == "FB" and r[2:3].isdigit()

@@ -328,9 +328,19 @@ class ProjectInventoryGenerator:
         # jBOM has no knowledge of IPN structure or naming conventions.
         # Leave blank so the user can assign their own IPNs.
         ipn = props.get("IPN", "")
+        # Use the multi-pass category_override when available so the ComponentID
+        # reflects the same category that was used to group this component.
+        # category_was_promoted is only True for typed-parametric RES/CAP/IND
+        # promotion; for LED and other categories promoted by Phase 2 value
+        # consensus, category_override carries the correct answer.
+        id_category = (
+            category_override
+            if category_override is not None
+            else (category if category_was_promoted else None)
+        )
         component_id = self._generate_group_key(
             component,
-            category_override=category if category_was_promoted else None,
+            category_override=id_category,
         )
         # Parse KiCad lib_id (always NICKNAME:ENTRY_NAME for valid components)
         lib_id_parts = component.lib_id.split(":", 1)
