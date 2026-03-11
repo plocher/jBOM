@@ -172,13 +172,13 @@ def given_inventory_matching(context, filename: str) -> None:
 @then('the file "{filename}" contains inventory columns')
 def then_file_contains_inventory_columns(context, filename: str) -> None:
     p = context.project_root / filename
-    with p.open("r", encoding="utf-8") as f:
-        header = f.readline().strip()
+    with p.open("r", encoding="utf-8", newline="") as f:
+        header_row = next(csv.reader(f), [])
     required = ["Manufacturer", "Manufacturer Part", "Description"]
     for col in required:
-        assert (
-            col in header
-        ), f"Missing inventory column '{col}' in {filename}: {header}"
+        assert any(
+            col in field for field in header_row
+        ), f"Missing inventory column '{col}' in {filename}: {header_row}"
 
 
 @given('an inventory file with fields "{field_list}"')
@@ -241,9 +241,12 @@ def then_output_contains_inventory_columns(context) -> None:
     data_lines = lines[1:] if len(lines) > 1 else []
     has_inventory_data = False
     for line in data_lines:
-        fields = line.split(",")
+        try:
+            row = next(csv.reader([line]))
+        except StopIteration:
+            continue
         # Standard BOM has 4 fields, inventory enhancement should have more
-        if len(fields) > 4:
+        if len(row) > 4:
             has_inventory_data = True
             break
 
