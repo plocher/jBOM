@@ -1,6 +1,35 @@
 # CHANGELOG
 
 
+## v6.38.1 (2026-03-11)
+
+### Bug Fixes
+
+* fix: LED-prefix ref signal and ComponentID category consistency
+
+Two bugs found via debug tracing:
+
+1. Missing LED-prefix reference signal: components using 'LED1', 'LED2',
+   etc. reference designators (common for WS2812B5050 and other neopixels)
+   fired zero primary signals, leaving them all None in Phase 1 and
+   giving Phase 2 value-consensus an empty seed map.
+   Fix: add ClassificationSignal('LED', 4.0, r[:3]=='LED' and r[3:].isdigit())
+   to _SIGNALS, consistent with the existing CON-prefix signal.
+
+2. ComponentID regeneration ignored the multi-pass category override:
+   _create_inventory_item() called _generate_group_key() with
+   category_override=None unless category_was_promoted (which is only
+   True for typed-parametric RES/CAP/IND promotion). For Phase-2-
+   propagated categories (LED, etc.) the ComponentID was re-derived
+   from scratch, producing CAT=UNK even when category='LED'.
+   Fix: use category_override directly when provided; only fall back
+   to the category_was_promoted path for typed-parametric cases.
+
+Tests: 757/757 pass (9 new tests).
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`564ddc0`](https://github.com/plocher/jBOM/commit/564ddc07d9b1ba8d2e11372b5fb001087c50ee33))
+
+
 ## v6.38.0 (2026-03-11)
 
 ### Features
