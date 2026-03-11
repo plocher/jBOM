@@ -36,6 +36,9 @@ class ProjectInventoryGenerator:
         Returns a mapping of ``id(component)`` → category token (e.g. "LED",
         "RES") or ``None`` when the component cannot be classified.
         """
+        log.debug(
+            "[classify] Phase 0+1: classifying %d components", len(self.components)
+        )
         result: Dict[int, Optional[str]] = {}
         for comp in self.components:
             props = comp.properties or {}
@@ -47,6 +50,12 @@ class ProjectInventoryGenerator:
                 keywords=props.get("Keywords", ""),
             )  # None when no signals match
             result[id(comp)] = cat
+        n_classified = sum(1 for v in result.values() if v is not None)
+        log.debug(
+            "[classify] Phase 0+1 complete: %d/%d classified",
+            n_classified,
+            len(self.components),
+        )
         return result
 
     def _propagate_categories_by_value(
@@ -59,6 +68,10 @@ class ProjectInventoryGenerator:
         maps to exactly one category, adopt that category.  Ambiguous values
         (two or more distinct categories) are left unresolved.
         """
+        n_unknown = sum(1 for v in comp_categories.values() if v is None)
+        log.debug(
+            "[classify] Phase 2: value-consensus propagation (%d unknown)", n_unknown
+        )
         # Build value → set of categories (ignoring unclassified)
         value_categories: Dict[str, set] = {}
         for comp in self.components:
@@ -84,6 +97,14 @@ class ProjectInventoryGenerator:
                     val,
                     resolved,
                 )
+        n_promoted = sum(
+            1
+            for cid, v in result.items()
+            if v is not None and comp_categories.get(cid) is None
+        )
+        log.debug(
+            "[classify] Phase 2 complete: %d promoted by value consensus", n_promoted
+        )
         return result
 
     def load(self) -> Tuple[List[InventoryItem], List[str]]:
@@ -92,6 +113,10 @@ class ProjectInventoryGenerator:
         Returns:
             Tuple of (inventory items list, field names list)
         """
+        log.debug(
+            "[load] Starting inventory generation for %d components",
+            len(self.components),
+        )
         # Multi-pass classification: Phase 0+1 (signals) then Phase 2 (value consensus).
         comp_categories = self._propagate_categories_by_value(
             self._classify_all_components()
@@ -157,6 +182,11 @@ class ProjectInventoryGenerator:
             if any(getattr(item, attr) is not None for item in self.inventory):
                 self.inventory_fields.add(field)
 
+        log.debug(
+            "[load] Done: %d unique groups from %d components",
+            len(self.inventory),
+            len(self.components),
+        )
         return self.inventory, sorted(list(self.inventory_fields))
 
     def load_per_instance(self) -> Tuple[List[InventoryItem], List[str]]:
@@ -165,6 +195,9 @@ class ProjectInventoryGenerator:
         Returns:
             Tuple of (inventory items list, field names list)
         """
+        log.debug(
+            "[load_per_instance] Starting for %d components", len(self.components)
+        )
         self.inventory = []
         self.inventory_fields = {
             "RowType",
@@ -207,6 +240,7 @@ class ProjectInventoryGenerator:
             for prop in component.properties.keys():
                 self.inventory_fields.add(prop)
 
+        log.debug("[load_per_instance] Done: %d items", len(self.inventory))
         return self.inventory, sorted(list(self.inventory_fields))
 
     def _generate_group_key(
