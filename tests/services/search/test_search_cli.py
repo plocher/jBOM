@@ -107,9 +107,15 @@ def test_search_csv_stdout(monkeypatch, capsys):
     rc = handle_search(args, _cache=InMemorySearchCache())
     assert rc == 0
 
-    out = capsys.readouterr().out.splitlines()
-    assert out[0].startswith("Supplier PN,Price,Stock")
-    assert any("123-ABC" in line for line in out[1:])
+    import csv as csv_mod
+    import io
+
+    out_text = capsys.readouterr().out
+    reader = csv_mod.reader(io.StringIO(out_text))
+    header = next(reader)
+    assert header[:3] == ["Supplier PN", "Price", "Stock"]
+    data_rows = list(reader)
+    assert any("123-ABC" in cell for row in data_rows for cell in row)
 
 
 def test_search_csv_file(monkeypatch, tmp_path):
@@ -138,8 +144,12 @@ def test_search_csv_file(monkeypatch, tmp_path):
     rc = handle_search(args, _cache=InMemorySearchCache())
     assert rc == 0
 
+    import csv as csv_mod
+
     text = outpath.read_text(encoding="utf-8")
-    assert text.splitlines()[0].startswith("Supplier PN,Price,Stock")
+    reader = csv_mod.reader(text.splitlines())
+    header = next(reader)
+    assert header[:3] == ["Supplier PN", "Price", "Stock"]
     assert "123-ABC" in text
 
 
@@ -196,10 +206,16 @@ def test_search_fields_override_affects_csv_schema(monkeypatch, capsys):
     rc = handle_search(args, _cache=InMemorySearchCache())
     assert rc == 0
 
-    out = capsys.readouterr().out.splitlines()
-    assert out[0] == "MPN,Manufacturer"
-    assert any("RC0603FR-0710KL" in line for line in out[1:])
-    assert any("Yageo" in line for line in out[1:])
+    import csv as csv_mod
+    import io
+
+    out_text = capsys.readouterr().out
+    reader = csv_mod.reader(io.StringIO(out_text))
+    header = next(reader)
+    assert header == ["MPN", "Manufacturer"]
+    data_rows = list(reader)
+    assert any("RC0603FR-0710KL" in cell for row in data_rows for cell in row)
+    assert any("Yageo" in cell for row in data_rows for cell in row)
 
 
 def test_search_unknown_field_rejected(monkeypatch, capsys):

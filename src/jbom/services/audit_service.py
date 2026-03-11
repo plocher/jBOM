@@ -205,7 +205,11 @@ class AuditReport:
         Args:
             dest: Writable text stream.
         """
-        writer = csv.DictWriter(dest, fieldnames=REPORT_CSV_COLUMNS)
+        # QUOTE_ALL ensures values like "0603" are written as "\"0603\"" so
+        # spreadsheet apps treat them as text and preserve leading zeros.
+        writer = csv.DictWriter(
+            dest, fieldnames=REPORT_CSV_COLUMNS, quoting=csv.QUOTE_ALL
+        )
         writer.writeheader()
         for row in self.rows:
             writer.writerow(row.to_csv_row())

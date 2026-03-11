@@ -308,7 +308,11 @@ def print_inventory_table(items: Iterable[dict], fieldnames: List[str]) -> None:
     items_list = list(items)
 
     if not fieldnames:
-        writer = csv.DictWriter(sys.stdout, fieldnames=fieldnames)
+        # QUOTE_ALL ensures values like "0603" are written as "\"0603\"" so
+        # spreadsheet apps treat them as text and preserve leading zeros.
+        writer = csv.DictWriter(
+            sys.stdout, fieldnames=fieldnames, quoting=csv.QUOTE_ALL
+        )
         writer.writeheader()
         for row in items_list:
             writer.writerow(row)
