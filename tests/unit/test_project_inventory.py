@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from jbom.common.types import Component
 from jbom.services.project_inventory import ProjectInventoryGenerator
 
@@ -13,12 +15,15 @@ def _comp(
     reference: str = "",
     description: str = "",
     keywords: str = "",
+    extra_props: dict[str, str] | None = None,
 ) -> Component:
     props: dict[str, str] = {}
     if description:
         props["Description"] = description
     if keywords:
         props["Keywords"] = keywords
+    if extra_props:
+        props.update(extra_props)
     return Component(
         reference=reference,
         lib_id=lib_id,
@@ -209,3 +214,109 @@ def test_phase2_propagated_category_reflected_in_component_id() -> None:
             f"component_id should contain CAT=LED after Phase-2 propagation, "
             f"got {item.component_id!r}"
         )
+
+
+# ---------------------------------------------------------------------------
+# component_id_fields: per-category optional field filtering
+# ---------------------------------------------------------------------------
+
+
+def test_led_with_and_without_voltage_produce_identical_component_ids() -> None:
+    """LED with V=5V and LED without V collapse to the same ComponentID.
+
+    Regression for the original WS2812B phantom-duplicate bug: inconsistent
+    schematic annotation of 'V=5V' caused two identical components to be
+    treated as different requirements.
+    """
+    comp_with_v = _comp(
+        lib_id="SPCoast:WS2812B",
+        value="WS2812B",
+        footprint="PCM_SPCoast:WS2812B5050",
+        reference="LED1",
+        extra_props={"Voltage": "5V"},
+    )
+    comp_without_v = _comp(
+        lib_id="SPCoast:WS2812B",
+        value="WS2812B",
+        footprint="PCM_SPCoast:WS2812B5050",
+        reference="LED2",
+    )
+    gen = ProjectInventoryGenerator([comp_with_v, comp_without_v])
+    items, _ = gen.load()
+
+    assert (
+        len(items) == 1
+    ), f"Expected 1 group (same LED), got {len(items)}: " + ", ".join(
+        i.component_id for i in items
+    )
+    assert (
+        "V=" not in items[0].component_id
+    ), f"LED ComponentID must not include voltage, got {items[0].component_id!r}"
+
+
+def test_res_voltage_still_included_in_component_id() -> None:
+    """Resistor with a Voltage property retains V= in the ComponentID.
+
+    Voltage is a meaningful derating spec for resistors — it must remain in
+    the ComponentID even after the LED voltage-exclusion change.
+    """
+    comp = _comp(
+        lib_id="Device:R",
+        value="10K",
+        footprint="Resistor_SMD:R_0603_1608Metric",
+        reference="R1",
+        extra_props={"Voltage": "100V"},
+    )
+    gen = ProjectInventoryGenerator([comp])
+    items, _ = gen.load()
+
+    assert len(items) == 1
+    assert (
+        "V=100V" in items[0].component_id
+    ), f"Resistor ComponentID must include voltage, got {items[0].component_id!r}"
+
+
+def test_led_component_id_fields_overridable_via_jbom_dir(tmp_path: Path) -> None:
+    """A project .jbom/ generic override can re-add voltage to LED ComponentIDs.
+
+    Exercises the full profile-search path: a ``generic.defaults.yaml`` in the
+    project's ``.jbom/`` directory overrides the built-in generic profile.
+    ``ProjectInventoryGenerator(cwd=tmp_path)`` picks it up automatically.
+    """
+    jbom_dir = tmp_path / ".jbom"
+    jbom_dir.mkdir()
+    # Shadow the built-in 'generic' profile for this project directory.
+    # Note: do NOT use 'extends: generic' here — this file IS the 'generic' profile
+    # for this cwd, so extending 'generic' would create a circular reference.
+    # For this test we only need component_id_fields; other sections are omitted.
+    (jbom_dir / "generic.defaults.yaml").write_text(
+        "component_id_fields:\n"
+        "  led:\n"
+        "    - type\n"
+        "    - voltage\n"  # re-add voltage so these two LEDs produce different IDs
+    )
+
+    comp_with_v = _comp(
+        lib_id="SPCoast:WS2812B",
+        value="WS2812B",
+        footprint="PCM_SPCoast:WS2812B5050",
+        reference="LED1",
+        extra_props={"Voltage": "5V"},
+    )
+    comp_without_v = _comp(
+        lib_id="SPCoast:WS2812B",
+        value="WS2812B",
+        footprint="PCM_SPCoast:WS2812B5050",
+        reference="LED2",
+    )
+    # cwd=tmp_path → the generator discovers .jbom/generic.defaults.yaml and
+    # uses it automatically — no config injection required.
+    gen = ProjectInventoryGenerator([comp_with_v, comp_without_v], cwd=tmp_path)
+    items, _ = gen.load()
+
+    # With voltage back in, the two components now differ — two groups.
+    assert (
+        len(items) == 2
+    ), f"Expected 2 groups (voltage now discriminates), got {len(items)}"
+    cids = {i.component_id for i in items}
+    assert any("V=5V" in cid for cid in cids)

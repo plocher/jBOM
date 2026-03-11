@@ -30,11 +30,50 @@ Callers must never construct a ComponentID string directly.
 """
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from jbom.common.value_parsing import canonical_value as _canonical_value_fn
 
 _TILDE = "~"
 _VERSION = (
     1  # Bump when encoding rules change; existing IDs with other versions are stale.
+)
+
+
+@dataclass(frozen=True)
+class _OptionalIdFieldDef:
+    """Mapping between the three representations of one optional ComponentID field.
+
+    Attributes:
+        profile_name:     Name used in the defaults YAML config (e.g. ``"voltage"``).
+        component_id_key: Encoded key in the ComponentID string (e.g. ``"V"``).
+        param_name:       Keyword argument name in ``make_component_id()`` (e.g.
+                          ``"voltage"``).
+
+    Adding a new encodable field requires exactly one new entry in
+    ``OPTIONAL_ID_FIELD_DEFS`` plus a matching parameter in ``make_component_id``.
+    """
+
+    profile_name: str
+    component_id_key: str
+    param_name: str
+
+
+# ---------------------------------------------------------------------------
+# Canonical definition of every optional ComponentID field.
+# This is the single source of truth — do not repeat these names elsewhere.
+# ---------------------------------------------------------------------------
+OPTIONAL_ID_FIELD_DEFS: tuple[_OptionalIdFieldDef, ...] = (
+    _OptionalIdFieldDef("tolerance", "TOL", "tolerance"),
+    _OptionalIdFieldDef("voltage", "V", "voltage"),
+    _OptionalIdFieldDef("current", "A", "amperage"),
+    _OptionalIdFieldDef("wattage", "W", "wattage"),
+    _OptionalIdFieldDef("type", "TYPE", "component_type"),
+)
+
+# Derived convenience set of all valid profile_names — used for validation.
+KNOWN_OPTIONAL_FIELD_NAMES: frozenset[str] = frozenset(
+    d.profile_name for d in OPTIONAL_ID_FIELD_DEFS
 )
 
 # Keys used in a ComponentID, in alphabetical order (for documentation).
@@ -143,3 +182,14 @@ def make_component_id(
 
     parts = [f"{k}={v}" for k, v in sorted(fields.items()) if v or k == "CAT"]
     return "|".join([str(_VERSION)] + parts)
+
+
+__all__ = [
+    "OPTIONAL_ID_FIELD_DEFS",
+    "KNOWN_OPTIONAL_FIELD_NAMES",
+    "COLUMN_NORMALISE",
+    "COMPONENT_ROW_COLUMNS",
+    "is_current_version",
+    "is_null_value",
+    "make_component_id",
+]

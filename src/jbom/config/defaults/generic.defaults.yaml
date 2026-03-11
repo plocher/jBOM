@@ -48,6 +48,42 @@ package_voltage:
   "1206": "50V"
 
 # ---------------------------------------------------------------------------
+# Optional fields to include in the ComponentID hash per component category.
+#
+# CAT, VAL, and PKG are always present in every ComponentID.
+# The fields listed here are the OPTIONAL fields that contribute to identity.
+#
+# Categories NOT listed here fall back to including ALL optional fields
+# (conservative: no information is dropped for unrecognised categories).
+#
+# Available field names (see OPTIONAL_ID_FIELD_DEFS in common/component_id.py):
+#   tolerance  — Tolerance (TOL= in ComponentID)
+#   voltage    — Voltage rating (V= in ComponentID)
+#   current    — Current / Amperage rating (A= in ComponentID)
+#   wattage    — Power / Wattage rating (W= in ComponentID)
+#   type       — Component Type property (TYPE= in ComponentID)
+#
+# To extend: add a new _OptionalIdFieldDef entry in component_id.py first.
+# ---------------------------------------------------------------------------
+component_id_fields:
+  res:
+    - tolerance
+    - voltage    # derating spec
+    - wattage
+    - type
+  cap:
+    - tolerance
+    - voltage    # critical voltage rating
+    - type
+  ind:
+    - tolerance
+    - current    # saturation current
+    - type
+  led:
+    - type       # color / wavelength (encoded in Type field)
+                 # voltage/current/wattage omitted: part number is the identity
+
+# ---------------------------------------------------------------------------
 # Parametric spec fields to include in JLCPCB/LCSC search queries per category.
 # List order reflects preference for query construction.
 # ---------------------------------------------------------------------------
