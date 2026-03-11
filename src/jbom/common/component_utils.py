@@ -34,7 +34,12 @@ def derive_package_from_footprint(footprint: str) -> str:
 
 
 def get_component_type(
-    lib_id: str, footprint: str = "", reference: str = ""
+    lib_id: str,
+    footprint: str = "",
+    reference: str = "",
+    *,
+    description: str = "",
+    keywords: str = "",
 ) -> Optional[str]:
     """Determine component type from library ID, footprint, and reference designator.
 
@@ -42,9 +47,17 @@ def get_component_type(
         lib_id: KiCad library ID (e.g., "Device:R")
         footprint: Component footprint (e.g., "R_0603")
         reference: KiCad reference designator (e.g., "R1", "U3")
+        description: KiCad component Description property (optional).
+        keywords: KiCad component Keywords property (optional).
 
     Returns:
         Component type string or None if unknown
     """
 
-    return _get_component_type(lib_id=lib_id, footprint=footprint, reference=reference)
+    return _get_component_type(
+        lib_id=lib_id,
+        footprint=footprint,
+        reference=reference,
+        description=description,
+        keywords=keywords,
+    )

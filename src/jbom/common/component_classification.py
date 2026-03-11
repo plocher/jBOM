@@ -54,6 +54,52 @@ class ClassificationSignal:
     match: Callable[[str, str, str], bool]
 
 
+@dataclass(frozen=True)
+class TextClassificationSignal:
+    """A weighted classification signal operating on free-text fields (Description, Keywords).
+
+    Attributes:
+        category: The ComponentType identifier this signal votes for.
+        weight: How strongly this signal votes.
+        match: Callable ``(text_upper,) -> bool`` operating on the uppercased combined
+            description + keywords string.
+    """
+
+    category: str
+    weight: float
+    match: Callable[[str], bool]
+
+
+# ---------------------------------------------------------------------------
+# Text-based signal table (Description + Keywords)
+# ---------------------------------------------------------------------------
+# These operate on a combined uppercase string of the KiCad component\'s
+# Description and Keywords properties.  They supplement the primary
+# lib_id/footprint/reference signals; a strong primary signal (e.g. IC
+# footprint at 6.0) will always outweigh a weak text hint (3.0).
+# ---------------------------------------------------------------------------
+
+_TEXT_SIGNALS: list[TextClassificationSignal] = [
+    # Neopixel is brand-specific → very high confidence
+    TextClassificationSignal("LED", 4.0, lambda t: "NEOPIXEL" in t),
+    TextClassificationSignal("LED", 3.0, lambda t: "LED" in t),
+    TextClassificationSignal("RLY", 3.0, lambda t: "RELAY" in t),
+    TextClassificationSignal("IND", 3.0, lambda t: "INDUCTOR" in t),
+    TextClassificationSignal("IND", 3.0, lambda t: "FERRITE" in t),
+    TextClassificationSignal("OSC", 3.0, lambda t: "CRYSTAL" in t),
+    TextClassificationSignal("OSC", 3.0, lambda t: "OSCILLATOR" in t),
+    TextClassificationSignal("OSC", 3.0, lambda t: "XTAL" in t),
+    TextClassificationSignal("FUS", 3.0, lambda t: "FUSE" in t),
+    TextClassificationSignal("CON", 3.0, lambda t: "CONNECTOR" in t),
+    TextClassificationSignal("DIO", 3.0, lambda t: "DIODE" in t),
+    TextClassificationSignal("RES", 3.0, lambda t: "RESISTOR" in t),
+    TextClassificationSignal("CAP", 3.0, lambda t: "CAPACITOR" in t),
+    TextClassificationSignal("Q", 3.0, lambda t: "TRANSISTOR" in t),
+    TextClassificationSignal("SWI", 3.0, lambda t: "SWITCH" in t),
+    TextClassificationSignal("REG", 3.0, lambda t: "REGULATOR" in t),
+]
+
+
 def _is_ic_footprint(footprint_upper: str) -> bool:
     """Return True if the footprint indicates an integrated circuit."""
 
@@ -189,7 +235,11 @@ _SIGNALS: list[ClassificationSignal] = [
 
 
 def _classify_by_score(
-    component_upper: str, footprint_upper: str, ref_upper: str
+    component_upper: str,
+    footprint_upper: str,
+    ref_upper: str,
+    description_upper: str = "",
+    keywords_upper: str = "",
 ) -> Optional[str]:
     """Score all active signals and return the highest-scoring category.
 
@@ -197,6 +247,8 @@ def _classify_by_score(
         component_upper: Uppercased component name (lib_id part after ``:``)
         footprint_upper: Uppercased KiCad footprint string.
         ref_upper: Uppercased reference designator (e.g. ``"R1"``, ``"U3"``).
+        description_upper: Uppercased KiCad Description property (optional).
+        keywords_upper: Uppercased KiCad Keywords property (optional).
 
     Returns:
         The winning category string, or ``None`` if no signals matched.
@@ -206,6 +258,19 @@ def _classify_by_score(
     for signal in _SIGNALS:
         if signal.match(component_upper, footprint_upper, ref_upper):
             scores[signal.category] = scores.get(signal.category, 0.0) + signal.weight
+
+    # Description + Keywords fallback: activated only when the primary signals
+    # (name / footprint / reference) yield no winner.  This prevents description
+    # text from additively inflating scores for components already classified by
+    # more authoritative signals.
+    if not scores:
+        extra_text = f"{description_upper} {keywords_upper}".strip()
+        if extra_text:
+            for text_signal in _TEXT_SIGNALS:
+                if text_signal.match(extra_text):
+                    scores[text_signal.category] = (
+                        scores.get(text_signal.category, 0.0) + text_signal.weight
+                    )
 
     if not scores:
         _logger.debug(
@@ -232,7 +297,12 @@ class ComponentClassifier(Protocol):
     """Classify a schematic component into a standardized component type."""
 
     def classify(
-        self, lib_id: str, footprint: str = "", reference: str = ""
+        self,
+        lib_id: str,
+        footprint: str = "",
+        reference: str = "",
+        description: str = "",
+        keywords: str = "",
     ) -> Optional[str]:
         """Return a standardized component type (e.g., "RES", "CAP") or None."""
 
@@ -250,12 +320,21 @@ class HeuristicComponentClassifier:
     """
 
     def classify(
-        self, lib_id: str, footprint: str = "", reference: str = ""
+        self,
+        lib_id: str,
+        footprint: str = "",
+        reference: str = "",
+        description: str = "",
+        keywords: str = "",
     ) -> Optional[str]:
         """Classify a component by scoring weighted signals."""
 
         return _get_component_type_heuristic(
-            lib_id=lib_id, footprint=footprint, reference=reference
+            lib_id=lib_id,
+            footprint=footprint,
+            reference=reference,
+            description=description,
+            keywords=keywords,
         )
 
 
@@ -306,6 +385,8 @@ def get_component_type(
     footprint: str = "",
     reference: str = "",
     *,
+    description: str = "",
+    keywords: str = "",
     classifier: ComponentClassifier = DEFAULT_COMPONENT_CLASSIFIER,
 ) -> Optional[str]:
     """Determine component type from library ID, footprint, and reference designator.
@@ -315,6 +396,10 @@ def get_component_type(
         footprint: KiCad footprint name.
         reference: KiCad reference designator (e.g., "R1", "U3", "J2").
             When provided, IPC reference designator prefix signals are active.
+        description: KiCad component Description property (optional).  Used as
+            a supplementary scored signal when primary signals yield no winner.
+        keywords: KiCad component Keywords property (optional).  Same role as
+            *description*.
         classifier: The classifier to use.
 
     Returns:
@@ -326,11 +411,15 @@ def get_component_type(
     if not lib_id:
         return None
 
-    return classifier.classify(lib_id, footprint, reference)
+    return classifier.classify(lib_id, footprint, reference, description, keywords)
 
 
 def _get_component_type_heuristic(
-    lib_id: str, footprint: str = "", reference: str = ""
+    lib_id: str,
+    footprint: str = "",
+    reference: str = "",
+    description: str = "",
+    keywords: str = "",
 ) -> Optional[str]:
     """Scoring-based implementation of component type detection.
 
@@ -351,6 +440,8 @@ def _get_component_type_heuristic(
     component_upper = component_part.upper()
     footprint_upper = footprint.upper() if footprint else ""
     ref_upper = reference.upper() if reference else ""
+    description_upper = description.upper() if description else ""
+    keywords_upper = keywords.upper() if keywords else ""
 
     # Fast path: exact name lookup beats any heuristic.
     if component_upper in COMPONENT_TYPE_MAPPING:
@@ -364,4 +455,6 @@ def _get_component_type_heuristic(
         )
         return result
 
-    return _classify_by_score(component_upper, footprint_upper, ref_upper)
+    return _classify_by_score(
+        component_upper, footprint_upper, ref_upper, description_upper, keywords_upper
+    )
