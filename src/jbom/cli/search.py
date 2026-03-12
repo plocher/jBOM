@@ -137,17 +137,17 @@ def register_command(subparsers) -> None:
         "query", help="Search query (keyword, part number, description)"
     )
 
-    # Provider is selected by supplier ID, discovered from supplier YAML profiles.
-    provider_choices = list_searchable_suppliers()
-    default_provider = "mouser" if "mouser" in provider_choices else None
-    if default_provider is None and provider_choices:
-        default_provider = provider_choices[0]
+    # Search backend is selected by supplier ID discovered from supplier YAML profiles.
+    supplier_choices = list_searchable_suppliers()
+    default_supplier = "mouser" if "mouser" in supplier_choices else None
+    if default_supplier is None and supplier_choices:
+        default_supplier = supplier_choices[0]
 
     parser.add_argument(
-        "--provider",
-        choices=provider_choices,
-        default=default_provider,
-        help="Search provider to use (default: derived from supplier profiles)",
+        "--supplier",
+        choices=supplier_choices,
+        default=default_supplier,
+        help="Supplier ID to use for search (default: derived from supplier profiles)",
     )
 
     parser.add_argument(
@@ -168,7 +168,7 @@ def register_command(subparsers) -> None:
     parser.add_argument(
         "--clear-cache",
         action="store_true",
-        help="Clear persistent cache entries for this provider before running",
+        help="Clear persistent cache entries for this supplier before running",
     )
 
     parser.add_argument(
@@ -220,7 +220,7 @@ def handle_search(
     cache = _cache if _cache is not None else _build_cache(args)
 
     try:
-        provider = _create_provider(args.provider, api_key=args.api_key, cache=cache)
+        provider = _create_provider(args.supplier, api_key=args.api_key, cache=cache)
     except (ValueError, RuntimeError) as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
@@ -300,8 +300,8 @@ def _resolve_fields_from_args(args: argparse.Namespace) -> list[str] | None:
     if getattr(args, "fields", None) is not None:
         return _parse_fields_argument(args.fields)
 
-    # 2) Supplier profile fields (provider id is the closest proxy for supplier id)
-    supplier_id = (getattr(args, "provider", "") or "").strip().lower()
+    # 2) Supplier profile fields
+    supplier_id = (getattr(args, "supplier", "") or "").strip().lower()
     supplier = resolve_supplier_by_id(supplier_id)
     if supplier is not None and supplier.search_fields:
         return list(supplier.search_fields)
@@ -332,12 +332,12 @@ def _row_for_result(r: SearchResult) -> dict[str, str]:
 
 def _build_cache(args: argparse.Namespace) -> SearchCache:
     if getattr(args, "clear_cache", False):
-        DiskSearchCache.clear_provider(args.provider)
+        DiskSearchCache.clear_provider(args.supplier)
 
     if getattr(args, "no_cache", False):
         return InMemorySearchCache()
 
-    return DiskSearchCache(args.provider)
+    return DiskSearchCache(args.supplier)
 
 
 def _create_provider(

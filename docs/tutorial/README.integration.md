@@ -31,9 +31,9 @@ YAGEO         RC0603FR-0710KL  10 kOhms ±1% 0603 Thick..  847200  0.004
 
 By default jBOM applies smart parametric filtering: it parses `"10k 0603 resistor"` and adds attribute filters for resistance, package, and tolerance. Disable this with `--no-parametric` if you want raw keyword results.
 
-**Filter to a specific provider:**
+**Filter to a specific supplier:**
 ```bash
-jbom search "100nF 0603 X7R" --provider lcsc --limit 10
+jbom search "100nF 0603 X7R" --supplier lcsc --limit 10
 ```
 
 **See all available fields:**

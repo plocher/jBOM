@@ -88,8 +88,7 @@ def get_provider(
 
 def list_searchable_suppliers() -> list[str]:
     """Return supplier IDs that declare at least one search provider, sorted.
-
-    Used to populate --provider choices in CLI commands.
+    Used to populate --supplier choices in CLI commands.
     """
 
     from jbom.config.suppliers import list_suppliers, load_supplier
