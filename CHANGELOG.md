@@ -1,6 +1,15 @@
 # CHANGELOG
 
 
+## v6.39.5 (2026-03-12)
+
+### Bug Fixes
+
+* fix(search): enforce strict-first core attribute filtering for query matches
+
+Fix issue #175 by applying strict filtering on category core attributes (Resistance/Capacitance/Inductance) when strict matches exist, with automatic fallback to legacy fail-open behavior when strict pass yields no candidates.\n\nCo-Authored-By: Oz <oz-agent@warp.dev> ([`3ff5b0c`](https://github.com/plocher/jBOM/commit/3ff5b0c8007777af80be0ac793e1375c18c18542))
+
+
 ## v6.39.4 (2026-03-12)
 
 ### Bug Fixes
