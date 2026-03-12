@@ -92,6 +92,8 @@ def test_root_help_does_not_include_retired_inventory_search():
 
 def test_search_help_lists_only_configured_supplier_providers():
     out = run_help(["search"]).lower()
+    assert "--supplier" in out
+    assert "--provider" not in out
 
     # Only suppliers with search.providers in YAML should appear as choices.
     assert "mouser" in out

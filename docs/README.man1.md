@@ -354,8 +354,8 @@ Searches distributor catalogs for parts matching a keyword or part number.
 **QUERY**
 : Search query (keyword, part number, description). Required.
 
-**--provider {mouser}**
-: Search provider to use (default: mouser). Set `MOUSER_API_KEY` environment variable or use `--api-key`.
+**--supplier {mouser}**
+: Supplier ID to search (default: mouser). Set `MOUSER_API_KEY` environment variable or use `--api-key`.
 
 **--limit N**
 : Maximum results to display (default: 10).
@@ -388,7 +388,7 @@ Searches distributor catalogs for parts matching a keyword or part number.
 
 The `inventory-search` subcommand has been retired as of this release. Its catalog-search functionality has been consolidated into `jbom audit --supplier`.
 
-**Migration**: replace `jbom inventory-search inventory.csv --provider mouser` with:
+**Migration**: replace old `jbom inventory-search ...` usage with:
 
 ```sh
 jbom audit ./my_project --supplier mouser --api-key YOUR_KEY -o report.csv

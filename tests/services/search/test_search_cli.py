@@ -31,7 +31,7 @@ def _sr(**kw) -> SearchResult:
 
 
 def test_build_cache_no_cache_flag_returns_inmemory(monkeypatch) -> None:
-    args = argparse.Namespace(provider="mouser", no_cache=True, clear_cache=False)
+    args = argparse.Namespace(supplier="mouser", no_cache=True, clear_cache=False)
     cache = _build_search_cache(args)
     assert isinstance(cache, InMemorySearchCache)
 
@@ -46,7 +46,7 @@ def test_build_cache_clear_cache_flag_calls_clear_provider(monkeypatch) -> None:
         DiskSearchCache, "clear_provider", staticmethod(_clear_provider)
     )
 
-    args = argparse.Namespace(provider="mouser", no_cache=True, clear_cache=True)
+    args = argparse.Namespace(supplier="mouser", no_cache=True, clear_cache=True)
     cache = _build_search_cache(args)
     assert isinstance(cache, InMemorySearchCache)
     assert calls["provider_id"] == "mouser"
@@ -64,7 +64,7 @@ def test_search_console_output(monkeypatch, capsys):
 
     args = argparse.Namespace(
         query="10K resistor 0603",
-        provider="mouser",
+        supplier="mouser",
         limit=1,
         api_key="dummy",
         all=True,
@@ -94,7 +94,7 @@ def test_search_csv_stdout(monkeypatch, capsys):
 
     args = argparse.Namespace(
         query="10K resistor 0603",
-        provider="mouser",
+        supplier="mouser",
         limit=1,
         api_key="dummy",
         all=True,
@@ -131,7 +131,7 @@ def test_search_csv_file(monkeypatch, tmp_path):
 
     args = argparse.Namespace(
         query="10K resistor 0603",
-        provider="mouser",
+        supplier="mouser",
         limit=1,
         api_key="dummy",
         all=True,
@@ -164,7 +164,7 @@ def test_search_list_fields_exits_without_api_key(monkeypatch, capsys):
 
     args = argparse.Namespace(
         query="ignored",
-        provider="mouser",
+        supplier="mouser",
         limit=1,
         api_key=None,
         all=True,
@@ -193,7 +193,7 @@ def test_search_fields_override_affects_csv_schema(monkeypatch, capsys):
 
     args = argparse.Namespace(
         query="10K resistor 0603",
-        provider="mouser",
+        supplier="mouser",
         limit=1,
         api_key="dummy",
         all=True,
@@ -254,7 +254,7 @@ def test_search_lcsc_provider_exits_cleanly_when_unavailable(monkeypatch, capsys
 
     args = argparse.Namespace(
         query="10K resistor 0603",
-        provider="lcsc",
+        supplier="lcsc",
         limit=1,
         api_key=None,
         all=True,
