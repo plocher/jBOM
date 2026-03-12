@@ -1,6 +1,37 @@
 # CHANGELOG
 
 
+## v6.39.4 (2026-03-12)
+
+### Bug Fixes
+
+* fix(inventory): normalize manufacturer and mfgpn aliases at intake
+
+Add defaults-profile aliases for Manufacturer and MFGPN standard fields.
+
+Apply canonical alias resolution in project schematic intake and CSV inventory intake so alias headers/properties populate InventoryItem.manufacturer and InventoryItem.mfgpn.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`2e9810a`](https://github.com/plocher/jBOM/commit/2e9810abf4a83b65352aaa00c4b94dd30f5d5425))
+
+### Refactoring
+
+* refactor(defaults): remove legacy mfgpn canonical-key shim
+
+Keep defaults field_synonyms canonical-key parsing strict and rely on current profile schema keys.
+
+Update defaults tests to match canonical mpn-only behavior.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`41ffdff`](https://github.com/plocher/jBOM/commit/41ffdffa6849afa897af937350a946211d046aa0))
+
+* refactor(aliases): unify canonical mpn schema key and synonym matching
+
+Normalize legacy defaults field_synonyms.mfgpn to canonical mpn in parser logic.
+
+Make alias resolution separator-insensitive across inventory intake and fabricator field synonym matching using shared normalization helpers.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`a9df008`](https://github.com/plocher/jBOM/commit/a9df0084809871ca8513e7e53d51e4cd3fd98d44))
+
+
 ## v6.39.3 (2026-03-12)
 
 ### Bug Fixes
