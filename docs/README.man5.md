@@ -23,8 +23,12 @@ Each row represents either a project requirement (`COMPONENT`) or a stocked part
 : Required for `ITEM` rows.
 : Leave blank for `COMPONENT` rows.
 
+An IPN represents the unique Electronic & mechanical identity of an item.
+By intent, an inventory spreadsheet will have many rows with the same IPN; each shares the same EM fingerprint, but will have different supply chain fields.  An example might be a dual sourced part - from the designer's perspectivem there are multiple equivalent parts available from different manufacturers, each with its own costs, availability etc
+Each of these rows is a candidate for inclusion in a BOM; navigating the choice among candidates is where jBOM's usefulness shines.
+
 **Category**
-: Component classification (RES, CAP, IND, LED, DIO, IC, MCU, CON, etc.). Must match the schematic component type detected from lib_id or footprint. Used as first-stage filter.
+: Component classification (RES, CAP, IND, LED, DIO, IC, MCU, CON, etc.). Matches the schematic component type detected from lib_id or footprint. Used as first-stage filter.
 
 **Value**
 : Component value in appropriate units. Format depends on category:
@@ -38,7 +42,7 @@ Each row represents either a project requirement (`COMPONENT`) or a stocked part
 : Physical package code (0603, 0805, 1206, SOT-23, SOIC-8, QFN-32, etc.). Extracted from schematic footprint and matched exactly.
 
 **Priority**
-: Integer ranking (1 = most preferred, higher = less preferred). When multiple parts match equally, the lowest Priority is selected. Allows you to prefer stocked parts (Priority=1) over others (Priority=2+).
+: Integer ranking (1 = most preferred, higher = less preferred). When multiple equivalent candidates are found, the lowest Priority is selected. Allows the inventory author to prefer certain parts (Priority=1) over others (Priority=2+) for stock rotation and prioritization.
 
 ## OPTIONAL COLUMNS
 
@@ -48,9 +52,8 @@ Each row represents either a project requirement (`COMPONENT`) or a stocked part
 **MFGPN**
 : Manufacturer part number (0603WAJ0331T5E, CC0603KRX7R9BB104, etc.).
 
-
 **Supplier**
-: Supplier name for this part. Used by `jbom audit --supplier` to identify which supplier PN to validate, and by `jbom inventory --supplier` to record which distributor assigned the PN. Typical values: `lcsc`, `mouser`, `generic`.
+: Supplier name for this part. Used by `jbom audit --supplier` to identify which parts catalog is associated with the supplier SPN for validation, and by `jbom inventory --supplier` to record which distributor assigned the PN. Typical values: `lcsc`, `mouser`, `generic`.
 
 **SPN** (Supplier Part Number)
 : The supplier-assigned part number corresponding to the `Supplier` field. Used as the part number identifier in BOM output when present.
@@ -68,7 +71,7 @@ Each row represents either a project requirement (`COMPONENT`) or a stocked part
 : Surface mount indicator (SMD, Y, YES, TRUE, 1 for SMD; PTH, THT, TH, N, NO, FALSE, 0 for through-hole). If omitted or unclear, jBOM infers from footprint.
 
 **Tolerance**
-: Tolerance rating (5%, 1%, ±10%, etc.). Used in scoring to prefer tighter tolerances when available.
+: Tolerance rating (5%, 1%, ±10%, etc.). Used in component matching to widen or narrow candidate pools.
 
 **Voltage**
 : Working voltage rating (25V, 50V, 75V, 400V, etc.).
@@ -116,14 +119,14 @@ Each row represents either a project requirement (`COMPONENT`) or a stocked part
 
 Column names are case-insensitive and flexible:
 - Spaces accepted: "Mfg PN" or "MFGPN" both work
-- Title Case preferred for readability: "Manufacturer" not "MANUFACTURER"
-- Legacy aliases accepted via defaults field synonyms:
+- Title Case preferred for readability, but "Manufacturer" and "MANUFACTURER" are both accepted
+- Legacy aliases accepted via field synonyms:
   - "V" / "Volts" -> Voltage
   - "A" / "Amperage" -> Current
   - "W" / "Wattage" -> Power
-- Standard notation: "mcd" for millicandela (lowercase)
+- Standard notation: "mcd" for millicandela
 
-jBOM normalizes all field names internally to snake_case (mfg_pn, mcd, etc.), so naming variations are handled automatically.
+jBOM normalizes all field names internally to snake_case (mfg_pn, mcd, etc.), and back to CamelCase or Title Case as needed, so naming variations are handled automatically.
 
 ## EXAMPLE CSV
 
@@ -142,7 +145,7 @@ When using custom BOM output (`-f` option), field names can be prefixed to disam
 : Force use of inventory field (e.g., `I:Tolerance` → inventory tolerance)
 
 **C:fieldname**
-: Force use of component property (e.g., `C:Tolerance` → schematic component tolerance)
+: Force use of component attribute (e.g., `C:Tolerance` → schematic component tolerance)
 
 **fieldname** (no prefix)
 : Ambiguous: if both exist, BOM includes both as separate columns

@@ -2,11 +2,17 @@
 
 ## Why jBOM?
 
-Designing a PCB in KiCad is only half the battle. Before you can manufacture your board, you need a **Bill of Materials (BOM)** and a **Placement file (CPL/POS)**.
+Designing a PCB in KiCad is only part of the journey that results in a fabricated and assembled electronic product.  The PCB fabrication just needs the KiCad-produced Gerber files, but the assembly process requires a **Bill of Materials (BOM)** and a **Placement file (CPL/POS)**.
 
-Most BOM tools force you to hardcode specific part numbers (like "LCSC:C123456") directly into your KiCad symbols. This locks your design to specific vendors and makes it hard to manage out-of-stock parts or second sources.
+The common KiCad workflow has you annotate your KiCad symbols with supply chain details such as "IPN:RES-331-0603", "MFG:Yageo", "MPN:CC0603KRX7R9BB104", "LCSC:C123456", and then use KiCad's fabrication plugins to generate BOM and CPL files.  This mechanism is easy to understand, and, through KiCad's web/database library integration, plugins such as Part-DB, InvenTree, PartsBox and GitPLM connect to extensive parts databases.  While these this workflow has proven sufficient for many developers, it inadvertently makes it difficult to decouple supply chain evolution from a project's electronic and mechanical specifications.
 
-**jBOM solves this** by separating part selection from circuit design. You design with generic values ("10kΩ resistor, 0603"), maintain a separate inventory file with your available parts, and jBOM intelligently matches them at BOM generation time.
+**jBOM solves this** by separating part selection from circuit design. You design with generic values ("10k, 5%, Resistor_SMD:R_0603_1608Metric"), maintain a currated inventory file with your desired parts, and jBOM intelligently matches them at BOM generation time.  Changing suppliers or cost reducing a set of projects is as simple as updating an inventory spreadsheet.
+
+## Documentation
+Command line: [docs/README.man1.md](docs/README.man1.md)
+Python Library API: [docs/README.man3.md](docs/README.man3.md)
+KiCad Eeschema Integration: [docs/README.man4.md](docs/README.man4.md)
+jBOM Inventory File Format: [docs/README.man5.md](docs/README.man5.md)
 
 ## Installation
 Requires Python 3.10 or newer.
@@ -14,205 +20,95 @@ Requires Python 3.10 or newer.
 **From PyPI (recommended):**
 
 ```bash
-# Basic installation (CSV inventory support)
+# Basic installation (with only CSV inventory support)
 pip install jbom
 
-# With Excel support
-pip install jbom[excel]
+# With CSV, Excel and Numbers spreadsheet support
+pip install jbom[all]
 
-# With Apple Numbers support
+# With CSV and Excel support
+pip install jbom[excel]
+# With CSV and Apple Numbers support
 pip install jbom[numbers]
 
 # With Mouser Search support
 pip install jbom[search]
-
-# Everything
-pip install jbom[all]
 ```
 
-## Quick Start - using the jBOM command
-**Scenario: You have a project but no inventory file and wish to have JLC fabricate your design.**
+## Quick Start
 
-Refer to the full command line documentation found in [docs/README.man1.md](docs/README.man1.md).
+**Scenario: New KiCad project → JLCPCB manufacturing files.**
 
-### 1. Start with an existing KiCad project
-
-Run jBOM to extract a prototype inventory from the components used in your project:
+### 1. Extract an inventory template
 
 ```bash
-jbom inventory MyProject/ -o my_new_inventory.csv
+jbom inventory MyProject/ -o inventory.csv
 ```
 
-This creates a CSV file listing all the parts found in your schematics (Resistors, Capacitors, ICs, etc.) with their values and packages.
+This writes one row per unique Value + Package combination found in your schematics. IPN, Category, Value, and Package are pre-filled; supplier columns (LCSC, Manufacturer, MFGPN) are blank for you to complete.
 
-### 2. Edit/Update your inventory
+### 2. Audit schematic field quality
 
-This new `my_new_inventory.csv` inventory is missing some fabrication details needed by JLC:
+Before filling in part numbers, verify your schematic fields are complete:
 
-1.  Open the file in Excel, Numbers, or a text editor.
-2.  **Crucial**: If your schematic symbols were generic, fill in the missing **Value** and **Package** columns now.
-3.  Fill in the **LCSC** column (or **MFGPN**) for the parts you want to buy.
-    *   **Pro Tip**: You can export your existing JLC private library into a file and load it alongside your project inventory: `jbom bom ... --inventory project_inv.csv --inventory jlc_private_lib.xlsx`
-    *   **Export Instructions**: Login to JLCPCB -> User Center -> My Inventory -> My Parts Lib -> Click "Export".
-    *   **Search**: Use `jbom search "part description" --provider mouser` to find parts.
-4.  (Optional) Add your own parts from other sources (e.g., local stock).
-
-### 3. Generate your BOM and Placement files
-
-Now run jBOM to verify your inventory and generate the manufacturing files.
-
-**Generate BOM:**
 ```bash
-# BOM with JLCPCB-optimized columns
-jbom bom MyProject/ --jlc --inventory my_new_inventory.csv
-
-# Or from within the project directory (defaults to current directory)
-cd MyProject
-jbom bom --jlc --inventory my_new_inventory.csv
+jbom audit MyProject/ -o report.csv
 ```
 
-**Generate Placement (CPL):**
+This checks every component against jBOM's field taxonomy and writes findings to `report.csv`. Open it in a spreadsheet, fill in `ApprovedValue` for any `QUALITY_ISSUE` rows, set `Action` to `SET`, then apply the fixes back to your schematic:
+
 ```bash
-# Auto-detects PCB file in project directory
+jbom annotate MyProject/ --repairs report.csv
+```
+
+Once the schematic is clean, verify your inventory covers every component:
+
+```bash
+jbom audit MyProject/ --inventory inventory.csv
+```
+
+### 3. Fill in part numbers for JLC's LCSC supplier
+
+An inventory file maps your generic schematic values to real parts from a supplier's catalog — in this case LCSC, which JLCPCB uses for sourcing. Open `inventory.csv` and fill in the **LCSC** column for each part you want JLCPCB to source. Set **Priority** to `1` on rows you want matched first.
+
+To find LCSC part numbers:
+- Search interactively: `jbom search "10k 0603 resistor" --supplier lcsc`
+- Look up manually at [jlcpcb.com/parts](https://jlcpcb.com/parts)
+- Export your JLCPCB private parts library (*User Center → My Inventory → My Parts Lib → Export*) and load it alongside: `--inventory project.csv --inventory jlc_library.xlsx`
+
+> **Coming soon**: `jbom inventory MyProject/ --supplier lcsc --limit 3 -o inventory.csv` will search and populate part numbers automatically.
+
+### 4. Generate BOM and placement files
+
+```bash
+jbom bom MyProject/ --jlc --inventory inventory.csv
 jbom pos MyProject/ --jlc
-
-# Or from within the project directory
-cd MyProject
-jbom pos --jlc
-
-# Can also pass .kicad_sch - auto-swaps to matching .kicad_pcb
-jbom pos MyProject.kicad_sch --jlc
 ```
 
-**Generate Inventory:**
-```bash
-# Extract components to initial inventory
-jbom inventory MyProject/ -o my_new_inventory.csv
-```
+This produces `MyProject.bom.csv` and `MyProject.pos.csv`, ready to upload to JLCPCB.
+Preview first without writing files: `jbom bom MyProject/ --jlc --inventory inventory.csv -o console`
 
-**Generate Parts List** (electro-mechanical aggregation with collapsed `Refs`):
-```bash
-jbom parts MyProject/ -o parts.csv
-```
+---
 
-**Search for Parts:**
-```bash
-jbom search "10k 0603 resistor" --limit 5
-```
+For the full step-by-step walkthrough, options, and troubleshooting tips, see the **[Tutorial series](docs/tutorial/README.md)**.
 
-**Bulk Inventory Search** (find supplier part numbers for your inventory):
-```bash
-export MOUSER_API_KEY=your_api_key
-jbom inventory-search my_new_inventory.csv -o enriched.csv
-```
+## KiCad Integration
 
-> **Note:** The `annotate` command (back-annotate schematics from inventory) is available in `legacy/` and is planned for v8.x.
+Run jBOM directly from KiCad's **Generate BOM** dialog — see [docs/README.man4.md](docs/README.man4.md) for setup.
 
-## Quick Start - integrating into KiCad
-
-Refer to the full plugin documentation found in [docs/README.man4.md](docs/README.man4.md).
-
-You can run jBOM directly from KiCad's **Generate BOM** dialog:
-
-1.  In KiCad Eeschema, go to `Tools` → `Generate BOM`.
-2.  Add a new plugin with the command:
-    ```
-    python3 /path/to/kicad_jbom_plugin.py "%I" --inventory /path/to/inventory.csv -o "%O" --jlc
-    ```
-3.  Click `Generate`.
+Quick summary:
+1. In Eeschema, go to `Tools` → `Generate BOM`.
+2. Add a plugin with the command:
+   ```
+   python3 /path/to/kicad_jbom_plugin.py "%I" --inventory /path/to/inventory.csv -o "%O" --jlc
+   ```
+3. Click `Generate`.
 
 ## Configuration
 
-jBOM uses a hierarchical configuration system that makes it easy to customize fabricator settings without hardcoding.
+Built-in fabricator profiles: `--jlc`, `--pcbway`, `--seeed`.
 
-### Built-in Fabricators
-
-jBOM includes built-in support for popular PCB fabricators:
-
-```bash
-# Use built-in fabricator configs
-jbom bom project/ --jlc        # JLCPCB format
-jbom bom project/ --pcbway     # PCBWay format
-jbom bom project/ --seeed      # Seeed Studio format
-```
-
-### Configuration Hierarchy
-
-Configurations load in order of precedence:
-
-1. **Package Defaults**: Built-in configs (JLC, PCBWay, Seeed)
-2. **System Configs**:
-   - macOS: `/Library/Application Support/jbom/config.yaml`
-   - Windows: `%PROGRAMDATA%\jbom\config.yaml`
-   - Linux: `/etc/jbom/config.yaml`
-3. **User Home**:
-   - macOS: `~/Library/Application Support/jbom/config.yaml`
-   - Windows: `%APPDATA%\jbom\config.yaml`
-   - Linux: `~/.config/jbom/config.yaml`
-4. **Project**: `.jbom/config.yaml` or `jbom.yaml` in project directory
-
-### Customization
-
-To customize a fabricator:
-
-1. **Copy a built-in config**:
-   ```bash
-   # macOS
-   mkdir -p "~/Library/Application Support/jbom/fabricators/"
-   cp $(python -c "import jbom; print(jbom.__path__[0])")/config/fabricators/jlc.fab.yaml \
-      "~/Library/Application Support/jbom/fabricators/myjlc.fab.yaml"
-
-   # Linux
-   mkdir -p ~/.config/jbom/fabricators/
-   cp $(python -c "import jbom; print(jbom.__path__[0])")/config/fabricators/jlc.fab.yaml \
-      ~/.config/jbom/fabricators/myjlc.fab.yaml
-
-   # Windows (PowerShell)
-   mkdir "$env:APPDATA\jbom\fabricators"
-   cp (python -c "import jbom; print(jbom.__path__[0])")\config\fabricators\jlc.fab.yaml \
-      "$env:APPDATA\jbom\fabricators\myjlc.fab.yaml"
-   ```
-
-2. **Edit your copy** (change BOM columns, part number priorities, etc.):
-   ```yaml
-   name: "My JLC Config"
-   based_on: "jlc"  # Optional: inherit from built-in
-   bom_columns:
-     "Designator": "reference"
-     "Comment": "value"        # Changed from "description"
-     "LCSC": "fabricator_part_number"
-   ```
-
-3. **Add to your configuration**:
-   ```yaml
-   # In your OS-specific config file:
-   # macOS: ~/Library/Application Support/jbom/config.yaml
-   # Windows: %APPDATA%\jbom\config.yaml
-   # Linux: ~/.config/jbom/config.yaml
-
-   # Entries here are merged with the built-in defaults.
-   # New IDs are added; existing IDs override the default.
-   fabricators:
-     - name: "myjlc"
-       file: "fabricators/myjlc.fab.yaml"
-   ```
-
-4. **Use your custom config**:
-   ```bash
-   jbom bom project/ --myjlc
-   ```
-
-The `id` field in fabricator configs automatically generates CLI flags (`--{id}`) and presets (`+{id}`).
-
-## Documentation
-
-Detailed documentation is available in the `docs/` directory:
-
-- [**docs/README.man1.md**](docs/README.man1.md) — CLI reference (all 6 commands)
-- [**docs/README.man3.md**](docs/README.man3.md) — Python library API (planned for v8.x)
-- [**docs/README.man4.md**](docs/README.man4.md) — KiCad plugin setup
-- [**docs/README.man5.md**](docs/README.man5.md) — Inventory file format
-- [**docs/README.developer.md**](docs/README.developer.md) — Technical architecture
+To create a custom profile or configure organisation-wide defaults, see [docs/tutorial/README.documentation.md](docs/tutorial/README.documentation.md) and [docs/README.configuration.md](docs/README.configuration.md).
 
 ## Contributing
 
