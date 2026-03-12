@@ -46,17 +46,18 @@ class SearchFilter:
         results: list[SearchResult], query: str, *, category: str = ""
     ) -> list[SearchResult]:
         """Filter results based on query terms matching parametric attributes.
-
+        Category-aware behavior:
         Current behavior mirrors legacy jBOM's implementation for resistors:
         - If the query contains a parseable resistance, keep only results whose
           "Resistance" attribute matches.
         - If the query contains a tolerance percentage, keep only exact matches
           when the result includes "Tolerance".
-
-        Filtering is "fail open" when a result lacks parametric attributes.
+        - When a strict core-attribute pass (Resistance/Capacitance/Inductance)
+          yields at least one match, candidates missing that core attribute are
+          excluded.
+        - If strict pass yields zero results, automatically fall back to
+          fail-open behavior so users still get clueful context.
         """
-
-        filtered: list[SearchResult] = []
 
         cat = normalize_component_type(category or "")
 
@@ -97,49 +98,64 @@ class SearchFilter:
                 target_tol = float(tol_match.group(1))
             except ValueError:
                 target_tol = None
+        attr_name = _CATEGORY_ATTR_NAME.get(cat, "")
+        strict_core_attr = target_value is not None and bool(attr_name)
 
-        for r in results:
-            if not r.attributes:
-                filtered.append(r)
-                continue
+        def _filter_pass(*, require_core_attr: bool) -> list[SearchResult]:
+            filtered: list[SearchResult] = []
 
-            keep = True
+            for r in results:
+                if not r.attributes:
+                    if require_core_attr and strict_core_attr:
+                        continue
+                    filtered.append(r)
+                    continue
 
-            if target_value is not None:
-                attr_name = _CATEGORY_ATTR_NAME.get(cat, "")
-                if attr_name:
+                keep = True
+
+                if target_value is not None and attr_name:
                     raw_attr = r.attributes.get(attr_name, "")
-                    if raw_attr:
+                    if not raw_attr:
+                        if require_core_attr:
+                            keep = False
+                    else:
                         attr_value = parse_value_to_normal(cat, raw_attr)
                         if attr_value is None or not _close_enough(
                             attr_value, target_value
                         ):
                             keep = False
 
-            if keep and cat == "CAP" and target_volts is not None:
-                vr_attr = r.attributes.get("Voltage Rating", "")
-                if vr_attr:
-                    attr_volts = parse_voltage_to_volts(vr_attr)
-                    # Interpret voltage rating as a minimum requirement.
-                    if attr_volts is None or attr_volts + 1e-12 < target_volts:
-                        keep = False
-
-            if keep and target_tol is not None:
-                tol_attr = r.attributes.get("Tolerance", "")
-                if tol_attr:
-                    clean_tol = tol_attr.replace("%", "").replace("+/-", "").strip()
-                    try:
-                        attr_tol = float(clean_tol)
-                        if attr_tol != target_tol:
+                if keep and cat == "CAP" and target_volts is not None:
+                    vr_attr = r.attributes.get("Voltage Rating", "")
+                    if vr_attr:
+                        attr_volts = parse_voltage_to_volts(vr_attr)
+                        # Interpret voltage rating as a minimum requirement.
+                        if attr_volts is None or attr_volts + 1e-12 < target_volts:
                             keep = False
-                    except ValueError:
-                        # If the result tolerance is unparsable, fail open.
-                        pass
 
-            if keep:
-                filtered.append(r)
+                if keep and target_tol is not None:
+                    tol_attr = r.attributes.get("Tolerance", "")
+                    if tol_attr:
+                        clean_tol = tol_attr.replace("%", "").replace("+/-", "").strip()
+                        try:
+                            attr_tol = float(clean_tol)
+                            if attr_tol != target_tol:
+                                keep = False
+                        except ValueError:
+                            # If the result tolerance is unparsable, fail open.
+                            pass
 
-        return filtered
+                if keep:
+                    filtered.append(r)
+
+            return filtered
+
+        if strict_core_attr:
+            strict_filtered = _filter_pass(require_core_attr=True)
+            if strict_filtered:
+                return strict_filtered
+
+        return _filter_pass(require_core_attr=False)
 
 
 def apply_default_filters(results: Iterable[SearchResult]) -> list[SearchResult]:

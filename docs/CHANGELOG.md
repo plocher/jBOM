@@ -24,6 +24,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - `ProjectInventoryGenerator` accepts an optional `cwd: Path | None = None` kwarg;
   the generic defaults profile is loaded lazily from the project directory's
   `.jbom/` search path (no config injection required).
+- `jbom search` query filtering now uses a strict-first pass for category core
+  attributes (`Resistance`, `Capacitance`, `Inductance`): when strict matches
+  exist, candidates missing the core attribute are excluded (fixes resistor
+  queries returning capacitor false positives). If strict pass yields no matches,
+  filtering falls back to legacy fail-open behavior to preserve clueful results
+  (issue #175).
 
 ### Migration note
 - **Stored ComponentIDs may change** for `led`, `cap`, `ind`, and `res` components
