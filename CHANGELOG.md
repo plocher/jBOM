@@ -1,6 +1,23 @@
 # CHANGELOG
 
 
+## v6.39.3 (2026-03-12)
+
+### Bug Fixes
+
+* fix(search): replace --provider with --supplier flag
+
+Remove --provider from jbom search and standardize on --supplier.
+
+Update search CLI help, docs, unit tests, and Gherkin coverage for new flag behavior.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`3e63c83`](https://github.com/plocher/jBOM/commit/3e63c8337b4b84e66b4ff7eaafedf1082d396bd5))
+
+### Unknown
+
+* doc:cleanup ([`30ff889`](https://github.com/plocher/jBOM/commit/30ff889f2af3001b7ee1a523145616dd58a8345e))
+
+
 ## v6.39.2 (2026-03-11)
 
 ### Bug Fixes
