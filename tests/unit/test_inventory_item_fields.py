@@ -166,3 +166,13 @@ class TestInventoryReaderHarvestFidelityRoundtrip:
         assert items[0].symbol_name == ""
         assert items[0].pins == ""
         assert items[0].pitch == ""
+
+    def test_alias_columns_populate_manufacturer_and_mfgpn(self):
+        """Standard alias headers should populate canonical manufacturer/mfgpn fields."""
+        csv = (
+            "IPN,Category,Value,Package,Manufacturer_Name,Manufacturer_Part_Number\n"
+            "R-001,RES,10K,0603,LITTELFUSE,CPC1709J\n"
+        )
+        items = _csv_reader(csv)
+        assert items[0].manufacturer == "LITTELFUSE"
+        assert items[0].mfgpn == "CPC1709J"

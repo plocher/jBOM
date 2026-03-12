@@ -125,6 +125,23 @@ category_route_rules:
 # Canonical schema field synonyms for inventory header intake/output.
 # ---------------------------------------------------------------------------
 field_synonyms:
+  manufacturer:
+    synonyms:
+      - "Manufacturer"
+      - "Manufacturer_Name"
+      - "Mfr"
+      - "MFR"
+      - "Brand"
+    display_name: "Manufacturer"
+  mfgpn:
+    synonyms:
+      - "MFGPN"
+      - "Manufacturer_Part_Number"
+      - "MPN"
+      - "Mfr_PN"
+      - "Part Number"
+      - "PartNumber"
+    display_name: "MFGPN"
   voltage:
     synonyms:
       - "Voltage"

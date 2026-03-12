@@ -101,6 +101,16 @@ def test_generic_profile_has_field_synonyms() -> None:
     assert voltage.display_name == "Voltage"
     assert "V" in voltage.synonyms
 
+    manufacturer = cfg.get_field_synonym_config("manufacturer")
+    assert manufacturer is not None
+    assert manufacturer.display_name == "Manufacturer"
+    assert "Manufacturer_Name" in manufacturer.synonyms
+
+    mfgpn = cfg.get_field_synonym_config("mfgpn")
+    assert mfgpn is not None
+    assert mfgpn.display_name == "MFGPN"
+    assert "Manufacturer_Part_Number" in mfgpn.synonyms
+
 
 # ---------------------------------------------------------------------------
 # Error handling

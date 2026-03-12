@@ -420,8 +420,16 @@ class ProjectInventoryGenerator:
                 props.get("Power", props.get("Wattage", props.get("W", ""))),
             ),
             lcsc=props.get("LCSC", ""),
-            manufacturer=props.get("Manufacturer", ""),
-            mfgpn=props.get("MFGPN", props.get("MPN", "")),
+            manufacturer=self._get_canonical_field_value(
+                props,
+                canonical="manufacturer",
+                fallback_keys=("Manufacturer",),
+            ),
+            mfgpn=self._get_canonical_field_value(
+                props,
+                canonical="mfgpn",
+                fallback_keys=("MFGPN", "MPN"),
+            ),
             datasheet=props.get("Datasheet", ""),
             package=package,
             uuid=uuid_str,
@@ -458,6 +466,36 @@ class ProjectInventoryGenerator:
                 "ki_keywords": props.get("Keywords", ""),
             },
         )
+
+    def _get_canonical_field_value(
+        self,
+        row: Dict[str, str],
+        *,
+        canonical: str,
+        fallback_keys: tuple[str, ...] = (),
+    ) -> str:
+        """Resolve a canonical field value from defaults-profile aliases."""
+
+        keys: list[str] = []
+        config = self._get_defaults().get_field_synonym_config(canonical)
+        if config is not None:
+            keys.extend([config.display_name, *config.synonyms])
+        keys.extend(fallback_keys)
+
+        deduped_keys: list[str] = []
+        seen: set[str] = set()
+        for key in keys:
+            normalized = key.strip()
+            if not normalized or normalized.lower() in seen:
+                continue
+            seen.add(normalized.lower())
+            deduped_keys.append(normalized)
+
+        for key in deduped_keys:
+            value = str(row.get(key, "")).strip()
+            if value:
+                return value
+        return ""
 
     def _resolve_category_for_typed_decode(
         self,
