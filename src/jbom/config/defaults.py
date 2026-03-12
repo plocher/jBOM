@@ -32,12 +32,9 @@ _BUILTIN_DIR = Path(__file__).parent / "defaults"
 
 
 def _normalize_field_synonym_canonical_key(canonical: str) -> str:
-    """Normalize field-synonym canonical keys for schema consistency."""
+    """Normalize field-synonym canonical keys."""
 
-    normalized = str(canonical).strip().lower()
-    if normalized == "mfgpn":
-        return "mpn"
-    return normalized
+    return str(canonical).strip().lower()
 
 
 @dataclass(frozen=True)
