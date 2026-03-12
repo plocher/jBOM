@@ -19,6 +19,7 @@ from jbom.common.value_parsing import (
     UNCLASSIFIED_CATEGORIES,
     decode_typed_parametric,
 )
+from jbom.common.synonym_normalization import first_non_empty_alias_value
 
 log = logging.getLogger(__name__)
 
@@ -427,7 +428,7 @@ class ProjectInventoryGenerator:
             ),
             mfgpn=self._get_canonical_field_value(
                 props,
-                canonical="mfgpn",
+                canonical="mpn",
                 fallback_keys=("MFGPN", "MPN"),
             ),
             datasheet=props.get("Datasheet", ""),
@@ -490,11 +491,7 @@ class ProjectInventoryGenerator:
                 continue
             seen.add(normalized.lower())
             deduped_keys.append(normalized)
-
-        for key in deduped_keys:
-            value = str(row.get(key, "")).strip()
-            if value:
-                return value
+        return first_non_empty_alias_value(row, deduped_keys)
         return ""
 
     def _resolve_category_for_typed_decode(

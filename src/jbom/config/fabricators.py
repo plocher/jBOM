@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional
 
 import yaml
+from jbom.common.synonym_normalization import normalize_synonym_token
 
 from jbom.config.profile_search import find_profile
 from jbom.config.suppliers import resolve_supplier_by_id
@@ -220,14 +221,14 @@ class FabricatorConfig:
         Matching is forgiving (case-insensitive, ignores surrounding whitespace).
         Returns None when the field name is unknown.
         """
-        field_normalized = field_name.strip().lower()
+        field_normalized = normalize_synonym_token(field_name)
 
         for canonical, config in self.field_synonyms.items():
-            if canonical.strip().lower() == field_normalized:
+            if normalize_synonym_token(canonical) == field_normalized:
                 return canonical
 
             for synonym in config.synonyms:
-                if synonym.strip().lower() == field_normalized:
+                if normalize_synonym_token(synonym) == field_normalized:
                     return canonical
 
         return None
