@@ -390,11 +390,15 @@ class InventoryReader:
                 ),
                 # Phase 4 inventory schema: LCSC is an explicit column (no DPN fallback).
                 lcsc=self._get_first_value(row, ["LCSC", "LCSC Part", "LCSC Part #"]),
-                manufacturer=row.get("Manufacturer", ""),
-                # MPN header varies across inventories; treat these as synonyms.
-                mfgpn=self._get_first_value(
+                manufacturer=self._get_canonical_profile_value(
                     row,
-                    [
+                    canonical="manufacturer",
+                    fallback_keys=["Manufacturer"],
+                ),
+                mfgpn=self._get_canonical_profile_value(
+                    row,
+                    canonical="mfgpn",
+                    fallback_keys=[
                         "MFGPN",
                         "MPN",
                         "Manufacturer Part Number",
@@ -490,12 +494,24 @@ class InventoryReader:
         is authoritative, and intentional omission means aliases are disabled.
         """
 
-        keys: list[str] = []
+        return self._get_canonical_profile_value(row, canonical=canonical)
+
+    def _get_canonical_profile_value(
+        self,
+        row: Dict[str, str],
+        *,
+        canonical: str,
+        fallback_keys: Optional[List[str]] = None,
+    ) -> str:
+        """Resolve a canonical value via defaults-profile synonym mappings."""
+
+        keys: List[str] = []
         config = _DEFAULTS_PROFILE.get_field_synonym_config(canonical)
         if config is not None:
             keys.extend([config.display_name, *config.synonyms])
+        keys.extend(fallback_keys or [])
 
-        deduped_keys: list[str] = []
+        deduped_keys: List[str] = []
         seen: set[str] = set()
         for key in keys:
             normalized = key.strip()

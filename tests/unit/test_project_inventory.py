@@ -216,6 +216,27 @@ def test_phase2_propagated_category_reflected_in_component_id() -> None:
         )
 
 
+def test_load_per_instance_maps_manufacturer_aliases_to_canonical_fields() -> None:
+    """Schematic alias properties populate canonical manufacturer and mfgpn fields."""
+
+    comp = _comp(
+        lib_id="Device:Relay",
+        value="CPC1709J",
+        footprint="Relay_THT:Relay_SPST",
+        reference="K1",
+        extra_props={
+            "Manufacturer_Name": "LITTELFUSE",
+            "Manufacturer_Part_Number": "CPC1709J",
+        },
+    )
+    gen = ProjectInventoryGenerator([comp])
+    items, _ = gen.load_per_instance()
+
+    assert len(items) == 1
+    assert items[0].manufacturer == "LITTELFUSE"
+    assert items[0].mfgpn == "CPC1709J"
+
+
 # ---------------------------------------------------------------------------
 # component_id_fields: per-category optional field filtering
 # ---------------------------------------------------------------------------
