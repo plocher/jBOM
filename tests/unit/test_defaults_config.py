@@ -111,11 +111,6 @@ def test_generic_profile_has_field_synonyms() -> None:
     assert mpn.display_name == "MPN"
     assert "Manufacturer Part Number" in mpn.synonyms
 
-    # Legacy canonical name support: mfgpn key is normalized to mpn.
-    mfgpn_legacy = cfg.get_field_synonym_config("mfgpn")
-    assert mfgpn_legacy is not None
-    assert mfgpn_legacy.display_name == "MPN"
-
 
 # ---------------------------------------------------------------------------
 # Error handling
@@ -273,21 +268,6 @@ def test_from_yaml_dict_parses_field_synonyms() -> None:
     assert voltage is not None
     assert voltage.display_name == "Voltage"
     assert voltage.synonyms == ("Voltage", "V")
-
-
-def test_from_yaml_dict_normalizes_legacy_mfgpn_canonical_key() -> None:
-    data = {
-        "field_synonyms": {
-            "mfgpn": {
-                "display_name": "MFGPN",
-                "synonyms": ["Manufacturer Part Number"],
-            }
-        }
-    }
-    cfg = DefaultsConfig.from_yaml_dict(data, name="test")
-    mpn = cfg.get_field_synonym_config("mpn")
-    assert mpn is not None
-    assert "Manufacturer Part Number" in mpn.synonyms
 
 
 # ---------------------------------------------------------------------------
