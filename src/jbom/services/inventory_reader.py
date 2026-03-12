@@ -22,6 +22,7 @@ from jbom.common.value_parsing import (
     UNCLASSIFIED_CATEGORIES,
     decode_typed_parametric,
 )
+from jbom.common.synonym_normalization import first_non_empty_alias_value
 from jbom.config.defaults import get_defaults
 from jbom.services.jlc_loader import JLCPrivateInventoryLoader
 
@@ -397,7 +398,7 @@ class InventoryReader:
                 ),
                 mfgpn=self._get_canonical_profile_value(
                     row,
-                    canonical="mfgpn",
+                    canonical="mpn",
                     fallback_keys=[
                         "MFGPN",
                         "MPN",
@@ -519,7 +520,7 @@ class InventoryReader:
                 continue
             seen.add(normalized.lower())
             deduped_keys.append(normalized)
-
+        return first_non_empty_alias_value(row, deduped_keys)
         return self._get_first_value(row, deduped_keys)
 
     def _get_first_value(self, row: Dict[str, str], keys: List[str]) -> str:

@@ -31,6 +31,15 @@ log = logging.getLogger(__name__)
 _BUILTIN_DIR = Path(__file__).parent / "defaults"
 
 
+def _normalize_field_synonym_canonical_key(canonical: str) -> str:
+    """Normalize field-synonym canonical keys for schema consistency."""
+
+    normalized = str(canonical).strip().lower()
+    if normalized == "mfgpn":
+        return "mpn"
+    return normalized
+
+
 @dataclass(frozen=True)
 class EnrichmentCategoryConfig:
     """Camp 2/3 attribute classification for one component category."""
@@ -130,10 +139,22 @@ class DefaultsConfig:
                 synonyms = tuple(str(s).strip() for s in synonyms_cfg if str(s).strip())
             else:
                 synonyms = tuple()
-            field_synonyms[str(canonical).strip().lower()] = FieldSynonymConfig(
-                display_name=display_name or str(canonical).strip(),
-                synonyms=synonyms,
-            )
+            canonical_key = _normalize_field_synonym_canonical_key(canonical)
+
+            existing = field_synonyms.get(canonical_key)
+            if existing is not None:
+                merged_synonyms = tuple(
+                    dict.fromkeys([*existing.synonyms, *synonyms]).keys()
+                )
+                field_synonyms[canonical_key] = FieldSynonymConfig(
+                    display_name=existing.display_name or display_name or canonical_key,
+                    synonyms=merged_synonyms,
+                )
+            else:
+                field_synonyms[canonical_key] = FieldSynonymConfig(
+                    display_name=display_name or canonical_key,
+                    synonyms=synonyms,
+                )
 
         raw_excluded = data.get("search_excluded_categories") or []
         search_excluded_categories: frozenset[str] = frozenset(
@@ -202,7 +223,9 @@ class DefaultsConfig:
 
     def get_field_synonym_config(self, canonical: str) -> FieldSynonymConfig | None:
         """Return field synonym config for a canonical key."""
-
+        return self.field_synonyms.get(
+            _normalize_field_synonym_canonical_key(canonical)
+        )
         return self.field_synonyms.get(canonical.strip().lower())
 
     def get_search_excluded_categories(self) -> frozenset[str]:

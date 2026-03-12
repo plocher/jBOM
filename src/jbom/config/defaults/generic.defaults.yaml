@@ -133,15 +133,15 @@ field_synonyms:
       - "MFR"
       - "Brand"
     display_name: "Manufacturer"
-  mfgpn:
+  mpn:
     synonyms:
-      - "MFGPN"
-      - "Manufacturer_Part_Number"
       - "MPN"
-      - "Mfr_PN"
+      - "MFGPN"
+      - "Manufacturer Part Number"
+      - "Mfr PN"
       - "Part Number"
       - "PartNumber"
-    display_name: "MFGPN"
+    display_name: "MPN"
   voltage:
     synonyms:
       - "Voltage"
