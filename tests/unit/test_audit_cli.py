@@ -12,7 +12,7 @@ from unittest.mock import patch
 
 import pytest
 
-from jbom.cli.audit import handle_audit
+from jbom.cli.audit import _build_project_couplet_rows, handle_audit
 from jbom.cli.main import create_parser
 from jbom.services.audit_service import AuditReport, AuditRow, CheckType, Severity
 
@@ -248,7 +248,8 @@ def test_output_file_is_written(tmp_path: Path) -> None:
 
     assert report_path.exists(), "Report file should be created at -o path"
     content = report_path.read_text(encoding="utf-8")
-    assert "QUALITY_ISSUE" in content
+    assert "RowType" in content
+    assert "MISSING" in content
     assert "R1" in content
 
 
@@ -256,12 +257,14 @@ def test_output_file_has_all_csv_columns(tmp_path: Path) -> None:
     from jbom.services.audit_service import REPORT_CSV_COLUMNS
 
     report_path = tmp_path / "report.csv"
+    catalog = tmp_path / "catalog.csv"
+    catalog.write_text("RowType,IPN,Category\nITEM,R001,RES\n", encoding="utf-8")
 
     with patch("jbom.cli.audit.AuditService") as MockService:
         instance = MockService.return_value
-        instance.audit_project.return_value = _mock_report()
+        instance.audit_inventory.return_value = _mock_report()
 
-        args = _make_args(inputs=[str(tmp_path)], output=report_path)
+        args = _make_args(inputs=[str(catalog)], output=report_path)
         handle_audit(args)
 
     assert report_path.exists()
@@ -271,7 +274,7 @@ def test_output_file_has_all_csv_columns(tmp_path: Path) -> None:
 
 
 def test_output_to_stdout_contains_csv_header(tmp_path: Path, capsys) -> None:
-    """When -o is not specified, CSV should be written to stdout."""
+    """When -o is not specified in project mode, couplet CSV should be written to stdout."""
     with patch("jbom.cli.audit.AuditService") as MockService:
         instance = MockService.return_value
         instance.audit_project.return_value = _mock_report()
@@ -280,7 +283,124 @@ def test_output_to_stdout_contains_csv_header(tmp_path: Path, capsys) -> None:
         handle_audit(args)
 
     captured = capsys.readouterr()
-    assert "CheckType" in captured.out, "CSV header should appear in stdout"
+    assert (
+        "RowType" in captured.out
+    ), "Project couplet CSV header should appear in stdout"
+
+
+def test_project_mode_output_is_couplet_rows(tmp_path: Path) -> None:
+    report_path = tmp_path / "report.csv"
+    rows = [
+        AuditRow(
+            check_type=CheckType.QUALITY_ISSUE,
+            severity=Severity.WARN,
+            project_path=str(tmp_path),
+            ref_des="R1",
+            uuid="uuid-r1",
+            category="RES",
+            field="Tolerance",
+            current_value="",
+            suggested_value="e.g. 1%, 5%, 10%",
+            description="R1: best-practice field 'Tolerance' is missing",
+        ),
+        AuditRow(
+            check_type=CheckType.QUALITY_ISSUE,
+            severity=Severity.WARN,
+            project_path=str(tmp_path),
+            ref_des="R1",
+            uuid="uuid-r1",
+            category="RES",
+            field="Power",
+            current_value="",
+            suggested_value="e.g. 0.1W",
+            description="R1: best-practice field 'Power' is missing",
+        ),
+    ]
+
+    with patch("jbom.cli.audit.AuditService") as MockService:
+        instance = MockService.return_value
+        instance.audit_project.return_value = _mock_report(warn_count=2, rows=rows)
+
+        args = _make_args(inputs=[str(tmp_path)], output=report_path)
+        handle_audit(args)
+
+    with report_path.open(encoding="utf-8", newline="") as handle:
+        written = list(csv.DictReader(handle))
+
+    assert len(written) == 2
+    assert {r["RowType"] for r in written} == {"CURRENT", "SUGGESTED"}
+    current = next(r for r in written if r["RowType"] == "CURRENT")
+    suggested = next(r for r in written if r["RowType"] == "SUGGESTED")
+    assert current["Notes"] == "R1: Missing attributes: Tolerance, Power"
+    assert suggested["Action"] == "SKIP"
+    assert suggested["Tolerance"] == "5%"
+    assert suggested["Power"] == "MISSING"
+
+
+def test_project_mode_suggests_package_and_domain_defaults() -> None:
+    rows = [
+        AuditRow(
+            check_type=CheckType.QUALITY_ISSUE,
+            severity=Severity.WARN,
+            project_path="/proj/example.kicad_pro",
+            ref_des="R1",
+            uuid="uuid-r1",
+            category="RES",
+            field="Tolerance",
+            current_value="",
+            suggested_value="",
+            description="R1 missing tolerance",
+        ),
+        AuditRow(
+            check_type=CheckType.QUALITY_ISSUE,
+            severity=Severity.WARN,
+            project_path="/proj/example.kicad_pro",
+            ref_des="R1",
+            uuid="uuid-r1",
+            category="RES",
+            field="Power",
+            current_value="",
+            suggested_value="",
+            description="R1 missing power",
+        ),
+        AuditRow(
+            check_type=CheckType.QUALITY_ISSUE,
+            severity=Severity.WARN,
+            project_path="/proj/example.kicad_pro",
+            ref_des="C1",
+            uuid="uuid-c1",
+            category="CAP",
+            field="Voltage",
+            current_value="",
+            suggested_value="",
+            description="C1 missing voltage",
+        ),
+    ]
+
+    context = {
+        ("/proj/example.kicad_pro", "R1", "uuid-r1", "RES"): {
+            "Value": "10K",
+            "Footprint": "SPCoast:0603-RES",
+            "Package": "603",
+            "Description": "Resistor",
+        },
+        ("/proj/example.kicad_pro", "C1", "uuid-c1", "CAP"): {
+            "Value": "100nF",
+            "Footprint": "SPCoast:0603-CAP",
+            "Package": "603",
+            "Description": "Capacitor",
+        },
+    }
+
+    _fieldnames, written = _build_project_couplet_rows(rows, component_context=context)
+    suggested_rows = [row for row in written if row["RowType"] == "SUGGESTED"]
+
+    r1_suggested = next(row for row in suggested_rows if row["RefDes"] == "R1")
+    assert r1_suggested["Tolerance"] == "5%"
+    assert r1_suggested["Power"] == "100mW"
+
+    c1_suggested = next(row for row in suggested_rows if row["RefDes"] == "C1")
+    assert c1_suggested["Voltage"] == "25V"
 
 
 # ---------------------------------------------------------------------------

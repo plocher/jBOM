@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import argparse
-from typing import TYPE_CHECKING
+import copy
+from typing import TYPE_CHECKING, Any
 import csv
 import sys
 from datetime import datetime
@@ -124,7 +125,7 @@ def register_command(subparsers) -> None:
         "-o",
         "--output",
         help=(
-            "Output destination: omit for default file output (part-inventory.csv), "
+            "Output destination: omit for console table output, "
             "use 'console' for table, '-' for stdout, or a file path"
         ),
         default=None,
@@ -187,6 +188,16 @@ def register_command(subparsers) -> None:
         metavar="KEY",
         default=None,
         help="API key for the supplier search provider (overrides env vars)",
+    )
+    parser.add_argument(
+        "--limit",
+        metavar="N",
+        type=int,
+        default=1,
+        help=(
+            "Maximum supplier candidates to apply per unmatched row. "
+            "Use 1 (default) to apply best match only; use >1 to emit ranked alternatives."
+        ),
     )
 
     parser.set_defaults(handler=handle_inventory)
@@ -410,6 +421,7 @@ def _handle_batch_inventory(input_paths: list[str], args: argparse.Namespace) ->
             service,
             supplier_config,
             supplier_id,
+            limit=max(1, int(getattr(args, "limit", 1))),
             verbose=args.verbose,
         )
 
@@ -515,6 +527,7 @@ def _enrich_items_with_supplier(
     supplier_config: "SupplierConfig",
     supplier_id: str,
     *,
+    limit: int = 1,
     verbose: bool = False,
 ) -> "tuple[list[InventoryItem], list[str]]":
     """Auto-populate supplier PN column for items that lack one.
@@ -529,6 +542,9 @@ def _enrich_items_with_supplier(
         service: Instantiated :class:`InventorySearchService`.
         supplier_config: Resolved :class:`SupplierConfig` for the supplier.
         supplier_id: Normalized supplier ID string.
+        limit: Number of ranked candidates to emit per row when available.
+            ``1`` applies only the top result (default behavior).
+            ``>1`` emits up to ``limit`` ranked alternatives.
         verbose: When True, progress is printed to stderr.
 
     Returns:
@@ -538,10 +554,13 @@ def _enrich_items_with_supplier(
 
     col = supplier_config.inventory_column
     is_lcsc = supplier_id == "lcsc"
+    candidate_limit = max(1, int(limit))
 
     # Ensure supplier column is present in field list.
     if col not in field_names:
         field_names = list(field_names) + [col]
+    if candidate_limit > 1 and "Priority" not in field_names:
+        field_names = list(field_names) + ["Priority"]
 
     # Enrich both ITEM rows (inventory catalog) and COMPONENT rows (schematic-generated).
     item_rows = [
@@ -574,36 +593,107 @@ def _enrich_items_with_supplier(
         )
 
     records = service.search(searchable)
+    records_by_item_id = {id(record.inventory_item): record for record in records}
+    needs_pn_ids = {id(item) for item in needs_pn}
 
-    for record in records:
-        if not record.candidates:
+    enriched_items: list[InventoryItem] = []
+    for item in items:
+        item_id = id(item)
+        if item_id not in needs_pn_ids:
+            enriched_items.append(item)
             continue
-        best = record.candidates[0].result
-        pn = best.distributor_part_number or ""
-        if not pn:
-            continue
-        item = record.inventory_item
-        if is_lcsc:
-            item.lcsc = pn
-        else:
-            if item.raw_data is None:
-                item.raw_data = {}
-            item.raw_data[col] = pn
-        if not (item.manufacturer or "").strip() and best.manufacturer:
-            item.manufacturer = best.manufacturer
-        if not (item.mfgpn or "").strip() and best.mpn:
-            item.mfgpn = best.mpn
-        if verbose:
-            print(f"  {item.ipn}: set {col}={pn!r}", file=sys.stderr)
 
-    return items, field_names
+        record = records_by_item_id.get(item_id)
+        if record is None or not record.candidates:
+            if candidate_limit > 1:
+                if item.raw_data is None:
+                    item.raw_data = {}
+                item.raw_data.setdefault("Notes", "No supplier matches found")
+                if "Notes" not in field_names:
+                    field_names = list(field_names) + ["Notes"]
+            enriched_items.append(item)
+            continue
+
+        candidates = record.candidates[:candidate_limit]
+        if candidate_limit == 1:
+            _apply_supplier_candidate_to_item(
+                item=item,
+                supplier_column=col,
+                is_lcsc=is_lcsc,
+                candidate=candidates[0].result,
+            )
+            if verbose:
+                applied_pn = (
+                    item.lcsc
+                    if is_lcsc
+                    else str((item.raw_data or {}).get(col, "")).strip()
+                )
+                print(f"  {item.ipn}: set {col}={applied_pn!r}", file=sys.stderr)
+            enriched_items.append(item)
+            continue
+
+        emitted_any = False
+        for rank, candidate in enumerate(candidates, start=1):
+            distributor_pn = candidate.result.distributor_part_number or ""
+            if not distributor_pn:
+                continue
+            ranked_item = copy.deepcopy(item)
+            _apply_supplier_candidate_to_item(
+                item=ranked_item,
+                supplier_column=col,
+                is_lcsc=is_lcsc,
+                candidate=candidate.result,
+            )
+            if ranked_item.raw_data is None:
+                ranked_item.raw_data = {}
+            ranked_item.raw_data["Priority"] = str(rank)
+            ranked_item.priority = rank
+            enriched_items.append(ranked_item)
+            emitted_any = True
+            if verbose:
+                print(
+                    f"  {ranked_item.ipn}: candidate {rank} {col}={distributor_pn!r}",
+                    file=sys.stderr,
+                )
+
+        if not emitted_any:
+            if candidate_limit > 1:
+                if item.raw_data is None:
+                    item.raw_data = {}
+                item.raw_data.setdefault("Notes", "No supplier matches found")
+                if "Notes" not in field_names:
+                    field_names = list(field_names) + ["Notes"]
+            enriched_items.append(item)
+
+    return enriched_items, field_names
+
+
+def _apply_supplier_candidate_to_item(
+    *,
+    item: InventoryItem,
+    supplier_column: str,
+    is_lcsc: bool,
+    candidate: Any,
+) -> None:
+    """Apply one supplier candidate result onto an inventory item."""
+    pn = candidate.distributor_part_number or ""
+    if is_lcsc:
+        item.lcsc = pn
+    else:
+        if item.raw_data is None:
+            item.raw_data = {}
+        item.raw_data[supplier_column] = pn
+    if not (item.manufacturer or "").strip() and candidate.manufacturer:
+        item.manufacturer = candidate.manufacturer
+    if not (item.mfgpn or "").strip() and candidate.mpn:
+        item.mfgpn = candidate.mpn
 
 
 def _handle_generate_inventory(input_path: str, args: argparse.Namespace) -> int:
     """Generate inventory from project components with project-centric input resolution.
 
     Output destination handling (following BOM command pattern):
-    - None (default): write to 'part-inventory.csv'
+    - None (default): print formatted table to stdout
     - "console": pretty print table to stdout
     - "-": write CSV format to stdout
     - otherwise: treat as a file path
@@ -640,6 +730,7 @@ def _handle_generate_inventory(input_path: str, args: argparse.Namespace) -> int
             service,
             supplier_config,
             supplier_id,
+            limit=max(1, int(getattr(args, "limit", 1))),
             verbose=args.verbose,
         )
 
@@ -915,16 +1006,15 @@ def _output_inventory(
     """Output inventory data in the requested format.
 
     Defaults:
-    - output omitted => write to part-inventory.csv in the current working directory
+    - output omitted => print formatted table to stdout
     - output == "console" => formatted table to stdout
     - output == "-" => CSV to stdout
     - otherwise => treat as file path with safety checks
     """
-    default_path = Path("part-inventory.csv")
 
     dest = resolve_output_destination(
         output,
-        default_destination=OutputDestination(OutputKind.FILE, path=default_path),
+        default_destination=OutputDestination(OutputKind.CONSOLE),
     )
 
     if dest.kind == OutputKind.CONSOLE:
@@ -975,11 +1065,10 @@ def _output_inventory_rows(
     verbose: bool = False,
 ) -> int:
     """Output pre-built inventory row dictionaries in the requested format."""
-    default_path = Path("part-inventory.csv")
 
     dest = resolve_output_destination(
         output,
-        default_destination=OutputDestination(OutputKind.FILE, path=default_path),
+        default_destination=OutputDestination(OutputKind.CONSOLE),
     )
 
     if dest.kind == OutputKind.CONSOLE:
@@ -1119,6 +1208,8 @@ def _inventory_item_to_row(
         "LCSC": item.lcsc,
         "Datasheet": item.datasheet,
         "UUID": item.uuid,
+        "Priority": str((item.raw_data or {}).get("Priority", "")),
+        "Notes": str((item.raw_data or {}).get("Notes", "")),
     }
 
     # Write canonical EIA text for typed parametric fields, overriding the
