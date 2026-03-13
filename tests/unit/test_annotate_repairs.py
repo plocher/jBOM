@@ -169,6 +169,13 @@ def test_repairs_wide_suggested_row_applies_all_non_metadata_fields(
                 "Value": "68K",
                 "Manufacturer": "Yageo",
                 "MFGPN": "RC0603FR-0768KL",
+                "EMMatchability": "EM_EXACT",
+                "EMBasis": "EM attrs hit matcher exact threshold (score=120)",
+                "SupplierMatchability": "SUPPLIER_EXACT_SPN",
+                "SupplierBasis": "Supplier SPN via field LCSC",
+                "Debug": "em_debug: current_score=120; supplier_debug: spn_field=LCSC",
+                "Matchability": "MATCH_EXACT",
+                "MatchBasis": "legacy column compatibility",
                 "Action": "SET",
             },
         ],
@@ -182,6 +189,9 @@ def test_repairs_wide_suggested_row_applies_all_non_metadata_fields(
     assert '"Value" "68K"' in updated
     assert '"Manufacturer" "Yageo"' in updated
     assert '"MFGPN" "RC0603FR-0768KL"' in updated
+    assert "EMMatchability" not in updated
+    assert "SupplierMatchability" not in updated
+    assert "em_debug:" not in updated
 
 
 def test_repairs_wide_missing_placeholders_are_not_applied(tmp_path: Path) -> None:
