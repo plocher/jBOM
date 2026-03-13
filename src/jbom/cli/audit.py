@@ -36,6 +36,7 @@ from jbom.cli.formatting import Column, print_table
 from jbom.cli.output import OutputDestination, OutputKind, resolve_output_destination
 from jbom.common.component_classification import get_component_type
 from jbom.common.component_filters import apply_component_filters
+from jbom.common.field_taxonomy import get_required_fields
 from jbom.common.package_matching import extract_package_from_footprint
 from jbom.config.defaults import DefaultsConfig, get_defaults
 from jbom.services.audit_service import (
@@ -55,8 +56,6 @@ _PROJECT_REPORT_BASE_COLUMNS: list[str] = [
     "RefDes",
     "UUID",
     "Category",
-    "Matchability",
-    "MatchBasis",
 ]
 _PROJECT_REPORT_CONTEXT_COLUMNS: list[str] = [
     "Value",
@@ -69,6 +68,7 @@ _PROJECT_REPORT_TRAILING_COLUMNS: list[str] = [
     "Action",
     "Notes",
 ]
+_PROJECT_REPORT_VERBOSE_COLUMNS: list[str] = ["Debug"]
 _PROJECT_SUPPLY_CHAIN_FIELDS: set[str] = {
     "Manufacturer",
     "MFGPN",
@@ -77,14 +77,27 @@ _PROJECT_ACTION_GUIDANCE = (
     "SKIP=no change to kicad project, SET=update with new attribute values"
 )
 _PROJECT_MISSING_VALUE = "MISSING"
-_PROJECT_MATCH_EXACT = "MATCH_EXACT"
-_PROJECT_MATCH_HEURISTIC = "MATCH_HEURISTIC"
-_PROJECT_MATCH_NEEDS_CLUE = "NEEDS_CLUE"
 _PROJECT_MATCH_EXACT_THRESHOLD = _AUDIT_MATCH_EXACT_THRESHOLD
+_PROJECT_EM_MATCH_EXACT = "EM_EXACT"
+_PROJECT_EM_MATCH_HEURISTIC = "EM_HEURISTIC"
+_PROJECT_EM_MATCH_NEEDS_CLUE = "EM_NEEDS_CLUE"
+_PROJECT_SUPPLIER_NOT_REQUESTED = "NOT_REQUESTED"
+_PROJECT_SUPPLIER_EXACT_SPN = "SUPPLIER_EXACT_SPN"
+_PROJECT_SUPPLIER_MPN_CANDIDATE = "SUPPLIER_MPN_CANDIDATE"
+_PROJECT_SUPPLIER_NEEDS_CLUE = "SUPPLIER_NEEDS_CLUE"
+_PROJECT_EM_BASIS_SUFFICIENT = "EM attributes sufficient"
+_PROJECT_EM_BASIS_HEURISTIC = "EM attributes + heuristics sufficient"
+_PROJECT_EM_BASIS_INSUFFICIENT = "EM attributes + heuristics insufficient"
+_PROJECT_SUPPLIER_BASIS_NOT_REQUESTED = "Supplier pass not requested"
+_PROJECT_SUPPLIER_BASIS_SPN = "Supplier SPN present (overrides EM ambiguity)"
+_PROJECT_SUPPLIER_BASIS_MPN = "MPN provided (supplier candidate override)"
+_PROJECT_SUPPLIER_BASIS_NEEDS_CLUE = "Supplier anchor missing (need SPN or MPN)"
+_PROJECT_REQUIRED_FIELDS: tuple[str, ...] = tuple(
+    spec.name for spec in get_required_fields()
+)
 _PROJECT_RES_CATEGORY = "RES"
 _PROJECT_CAP_CATEGORY = "CAP"
 _PROJECT_LED_CATEGORY = "LED"
-_PROJECT_PRIMARY_IDENTIFIER_FIELDS: tuple[str, ...] = ("IPN", "MFGPN", "MPN")
 _PROJECT_FALLBACK_SUPPLIER_IDENTIFIER_FIELDS: tuple[str, ...] = (
     "LCSC",
     "Mouser",
@@ -203,6 +216,13 @@ def register_command(subparsers: argparse._SubParsersAction) -> None:  # type: i
         "--strict",
         action="store_true",
         help="Exit with non-zero status when WARN-severity rows exist (default: only on ERROR)",
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="count",
+        default=0,
+        help="Include debug diagnostics in project output (may be repeated)",
     )
 
     # Supplier validation options (optional; require live API access)
@@ -345,6 +365,7 @@ def _write_project_report(
         report.rows,
         component_context=component_context,
         supplier_id=supplier_id,
+        verbose_level=int(getattr(args, "verbose", 0) or 0),
     )
     destination = _resolve_audit_output_destination(getattr(args, "output", None))
 
@@ -457,9 +478,11 @@ def _build_project_couplet_rows(
     *,
     component_context: dict[tuple[str, str, str, str], dict[str, str]],
     supplier_id: str = "",
+    verbose_level: int = 0,
 ) -> tuple[list[str], list[dict[str, str]]]:
     """Build wide CURRENT/SUGGESTED rows from tall QUALITY_ISSUE findings."""
     defaults = get_defaults()
+    include_debug = verbose_level > 0
     supplier_identifier_fields = _resolve_supplier_identifier_fields(supplier_id)
     grouped: OrderedDict[tuple[str, str, str, str], dict[str, Any]] = OrderedDict()
     field_order: list[str] = []
@@ -479,6 +502,7 @@ def _build_project_couplet_rows(
                 "current": {},
                 "suggested": {},
                 "missing_fields": [],
+                "heuristic_suggestions": {},
             },
         )
 
@@ -495,6 +519,7 @@ def _build_project_couplet_rows(
     fieldnames = (
         _PROJECT_REPORT_BASE_COLUMNS
         + _PROJECT_REPORT_CONTEXT_COLUMNS
+        + (_PROJECT_REPORT_VERBOSE_COLUMNS if include_debug else [])
         + field_order
         + _PROJECT_REPORT_TRAILING_COLUMNS
     )
@@ -527,29 +552,51 @@ def _build_project_couplet_rows(
             current_row[field_name] = group["current"].get(field_name, "")
             raw_suggested = group["suggested"].get(field_name, "")
             if raw_suggested:
-                suggested_row[field_name] = _resolve_project_default_suggestion(
+                heuristic_suggestion = _resolve_project_default_suggestion(
                     category=category,
                     field_name=field_name,
                     context=context,
                     defaults=defaults,
                 )
+                group["heuristic_suggestions"][field_name] = heuristic_suggestion
+                suggested_row[field_name] = _format_project_suggested_cell(
+                    heuristic_suggestion
+                )
             else:
                 suggested_row[field_name] = raw_suggested
 
-        matchability, match_basis = _classify_project_matchability(
+        em_matchability, _em_basis, em_debug = _classify_em_matchability(
             category=category,
             context=context,
             missing_fields=group["missing_fields"],
             suggested_row=suggested_row,
-            supplier_identifier_fields=supplier_identifier_fields,
+            include_debug=include_debug,
         )
-        current_row["Matchability"] = matchability
-        current_row["MatchBasis"] = match_basis
-        suggested_row["Matchability"] = matchability
-        suggested_row["MatchBasis"] = match_basis
-        if group["missing_fields"]:
-            missing_fields = ", ".join(group["missing_fields"])
-            current_row["Notes"] = f"{ref_des}: Missing attributes: {missing_fields}"
+        (
+            supplier_matchability,
+            _supplier_basis,
+            supplier_debug,
+        ) = _classify_supplier_matchability(
+            context=context,
+            supplier_id=supplier_id,
+            supplier_identifier_fields=supplier_identifier_fields,
+            include_debug=include_debug,
+        )
+        audit_summary = _build_project_audit_summary(
+            ref_des=ref_des,
+            missing_fields=group["missing_fields"],
+            heuristic_suggestions=group["heuristic_suggestions"],
+            em_matchability=em_matchability,
+            supplier_matchability=supplier_matchability,
+            supplier_id=supplier_id,
+        )
+        if include_debug:
+            debug_details = "; ".join(
+                part for part in (em_debug, supplier_debug) if part
+            )
+            current_row["Debug"] = debug_details
+            suggested_row["Debug"] = debug_details
+        current_row["Notes"] = audit_summary
         suggested_row["Notes"] = _PROJECT_ACTION_GUIDANCE
         current_row["Action"] = "SKIP"
         suggested_row["Action"] = "SKIP"
@@ -557,6 +604,83 @@ def _build_project_couplet_rows(
         output_rows.extend([current_row, suggested_row])
 
     return fieldnames, output_rows
+
+
+def _build_project_audit_summary(
+    *,
+    ref_des: str,
+    missing_fields: list[str],
+    heuristic_suggestions: dict[str, str],
+    em_matchability: str,
+    supplier_matchability: str,
+    supplier_id: str,
+) -> str:
+    """Build designer-facing summary text for project-mode audit rows."""
+    missing_required = [f for f in missing_fields if f in _PROJECT_REQUIRED_FIELDS]
+    heuristic_pairs: list[tuple[str, str]] = []
+    unresolved_missing: list[str] = []
+    for field_name in missing_fields:
+        heuristic_value = str(heuristic_suggestions.get(field_name, "")).strip()
+        if _is_meaningful_match_value(heuristic_value):
+            heuristic_pairs.append((field_name, heuristic_value))
+        else:
+            unresolved_missing.append(field_name)
+
+    notes_parts: list[str] = []
+    if missing_fields:
+        notes_parts.append(
+            f"{ref_des}: Missing attributes: {', '.join(missing_fields)}"
+        )
+    if missing_required:
+        notes_parts.append(
+            f"Required fields still missing: {', '.join(missing_required)}"
+        )
+    else:
+        notes_parts.append("Audit successful: all required fields have values")
+
+    if em_matchability == _PROJECT_EM_MATCH_EXACT:
+        notes_parts.append("EM matching clues are sufficient")
+    elif em_matchability == _PROJECT_EM_MATCH_HEURISTIC:
+        notes_parts.append("EM matching is sufficient with heuristics")
+    else:
+        notes_parts.append("EM matching needs stronger clues")
+
+    if heuristic_pairs:
+        notes_parts.append(
+            "Heuristic fill candidates: "
+            + ", ".join(f"{field}={value}" for field, value in heuristic_pairs)
+        )
+    if unresolved_missing:
+        notes_parts.append(
+            "No heuristic fill available for: " + ", ".join(unresolved_missing)
+        )
+
+    supplier_tag = (supplier_id or "supplier").upper()
+    if supplier_matchability == _PROJECT_SUPPLIER_EXACT_SPN:
+        notes_parts.append(
+            f"{supplier_tag} part number present; uniquely identifies this component"
+        )
+        notes_parts.append(
+            "For other suppliers, required fields and heuristics should be sufficient"
+        )
+    elif supplier_matchability == _PROJECT_SUPPLIER_MPN_CANDIDATE:
+        notes_parts.append("Supplier matching can use MPN as a candidate override")
+    elif supplier_matchability == _PROJECT_SUPPLIER_NOT_REQUESTED:
+        notes_parts.append(
+            "For other suppliers, required fields and heuristics should be sufficient"
+        )
+    else:
+        notes_parts.append("Supplier anchor missing (need SPN or MPN)")
+
+    return "; ".join(notes_parts)
+
+
+def _format_project_suggested_cell(suggestion: str) -> str:
+    """Format suggested cell text for missing-field rows."""
+    normalized = str(suggestion or "").strip()
+    if not _is_meaningful_match_value(normalized):
+        return _PROJECT_MISSING_VALUE
+    return f"{_PROJECT_MISSING_VALUE}\n({normalized})"
 
 
 def _resolve_project_default_suggestion(
@@ -605,21 +729,15 @@ def _resolve_project_default_suggestion(
     return _PROJECT_MISSING_VALUE
 
 
-def _classify_project_matchability(
+def _classify_em_matchability(
     *,
     category: str,
     context: dict[str, str],
     missing_fields: list[str],
     suggested_row: dict[str, str],
-    supplier_identifier_fields: list[str],
-) -> tuple[str, str]:
-    """Classify project-component matchability using matcher-aligned semantics."""
-    identifier_basis = _resolve_project_direct_identifier_basis(
-        context,
-        supplier_identifier_fields=supplier_identifier_fields,
-    )
-    if identifier_basis:
-        return _PROJECT_MATCH_EXACT, identifier_basis
+    include_debug: bool,
+) -> tuple[str, str, str]:
+    """Classify EM-only matchability using matcher-aligned semantics."""
     current_score = _estimate_matcher_score_from_context(
         category=category, context=context
     )
@@ -632,37 +750,30 @@ def _classify_project_matchability(
         category=category,
         context=enriched_context,
     )
+    debug_text = (
+        "em_debug:"
+        f" current_score={current_score}, enriched_score={enriched_score},"
+        f" exact_threshold={_PROJECT_MATCH_EXACT_THRESHOLD}"
+    )
 
     if current_score >= _PROJECT_MATCH_EXACT_THRESHOLD:
         return (
-            _PROJECT_MATCH_EXACT,
-            f"Current attrs hit matcher exact threshold (score={current_score})",
+            _PROJECT_EM_MATCH_EXACT,
+            _PROJECT_EM_BASIS_SUFFICIENT,
+            debug_text if include_debug else "",
         )
 
-    if (
-        enriched_score >= _PROJECT_MATCH_EXACT_THRESHOLD
-        and enriched_score > current_score
-    ):
+    if max(current_score, enriched_score) > 0:
         return (
-            _PROJECT_MATCH_HEURISTIC,
-            f"Defaults lift matcher score {current_score}->{enriched_score}",
-        )
-
-    best_score = max(current_score, enriched_score)
-    if best_score > 0:
-        if enriched_score > current_score:
-            return (
-                _PROJECT_MATCH_HEURISTIC,
-                f"Defaults improve matcher score {current_score}->{enriched_score} (heuristic)",
-            )
-        return (
-            _PROJECT_MATCH_HEURISTIC,
-            f"Current attrs support heuristic matcher score (score={best_score})",
+            _PROJECT_EM_MATCH_HEURISTIC,
+            _PROJECT_EM_BASIS_HEURISTIC,
+            debug_text if include_debug else "",
         )
 
     return (
-        _PROJECT_MATCH_NEEDS_CLUE,
-        "Insufficient matcher clues (need identifier/value/package/category)",
+        _PROJECT_EM_MATCH_NEEDS_CLUE,
+        _PROJECT_EM_BASIS_INSUFFICIENT,
+        debug_text if include_debug else "",
     )
 
 
@@ -712,23 +823,77 @@ def _estimate_matcher_score_from_context(
     return score
 
 
-def _resolve_project_direct_identifier_basis(
+def _classify_supplier_matchability(
+    *,
+    context: dict[str, str],
+    supplier_id: str,
+    supplier_identifier_fields: list[str],
+    include_debug: bool,
+) -> tuple[str, str, str]:
+    """Classify supplier-anchor readiness (SPN first, then MPN candidate)."""
+    sid = (supplier_id or "").strip().lower()
+    if not sid:
+        return (
+            _PROJECT_SUPPLIER_NOT_REQUESTED,
+            _PROJECT_SUPPLIER_BASIS_NOT_REQUESTED,
+            "supplier_debug: supplier pass disabled" if include_debug else "",
+        )
+
+    supplier_spn_field = _resolve_supplier_identifier_field(
+        context,
+        supplier_identifier_fields=supplier_identifier_fields,
+    )
+    if supplier_spn_field:
+        return (
+            _PROJECT_SUPPLIER_EXACT_SPN,
+            _PROJECT_SUPPLIER_BASIS_SPN,
+            ("supplier_debug:" f" supplier_id={sid}, spn_field={supplier_spn_field}")
+            if include_debug
+            else "",
+        )
+
+    mpn_value = _get_context_value(context, ("MFGPN", "MPN"))
+    if mpn_value:
+        manufacturer = _get_context_value(context, ("Manufacturer", "MFR", "Brand"))
+        if manufacturer:
+            return (
+                _PROJECT_SUPPLIER_MPN_CANDIDATE,
+                _PROJECT_SUPPLIER_BASIS_MPN,
+                (
+                    "supplier_debug:"
+                    f" supplier_id={sid}, mpn={mpn_value}, manufacturer={manufacturer}"
+                )
+                if include_debug
+                else "",
+            )
+        return (
+            _PROJECT_SUPPLIER_MPN_CANDIDATE,
+            _PROJECT_SUPPLIER_BASIS_MPN,
+            (f"supplier_debug: supplier_id={sid}, mpn={mpn_value}, manufacturer=")
+            if include_debug
+            else "",
+        )
+
+    return (
+        _PROJECT_SUPPLIER_NEEDS_CLUE,
+        _PROJECT_SUPPLIER_BASIS_NEEDS_CLUE,
+        f"supplier_debug: supplier_id={sid}, no_spn_or_mpn" if include_debug else "",
+    )
+
+
+def _resolve_supplier_identifier_field(
     context: dict[str, str],
     *,
     supplier_identifier_fields: list[str],
 ) -> str:
-    """Return match basis text when direct identifiers are present."""
-    if _find_context_value(context, _PROJECT_PRIMARY_IDENTIFIER_FIELDS):
-        return "Direct part identifier (IPN/MPN)"
+    """Return supplier SPN field name when supplier alias fields are present."""
     supplier_match = _find_context_value(context, supplier_identifier_fields)
     if supplier_match:
-        return f"Supplier identifier ({supplier_match})"
+        return supplier_match
     fallback_match = _find_context_value(
         context, _PROJECT_FALLBACK_SUPPLIER_IDENTIFIER_FIELDS
     )
-    if fallback_match:
-        return f"Supplier identifier ({fallback_match})"
-    return ""
+    return fallback_match or ""
 
 
 def _resolve_supplier_identifier_fields(supplier_id: str) -> list[str]:

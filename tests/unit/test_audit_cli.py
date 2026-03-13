@@ -78,9 +78,16 @@ def _make_args(**kwargs):
         "requirements": None,
         "output": None,
         "strict": False,
+        "verbose": 0,
     }
     defaults.update(kwargs)
     return argparse.Namespace(**defaults)
+
+
+def test_audit_verbose_flag_parsed() -> None:
+    parser = create_parser()
+    args = parser.parse_args(["audit", ".", "-vv"])
+    assert args.verbose == 2
 
 
 def _mock_report(*, error_count=0, warn_count=0, info_count=0, rows=None):
@@ -436,9 +443,21 @@ def test_project_mode_output_is_couplet_rows(tmp_path: Path) -> None:
     assert {r["RowType"] for r in written} == {"CURRENT", "SUGGESTED"}
     current = next(r for r in written if r["RowType"] == "CURRENT")
     suggested = next(r for r in written if r["RowType"] == "SUGGESTED")
-    assert current["Notes"] == "R1: Missing attributes: Tolerance, Power"
+    assert "R1: Missing attributes: Tolerance, Power" in current["Notes"]
+    assert "Audit successful: all required fields have values" in current["Notes"]
+    assert "EM matching" in current["Notes"]
+    assert "Heuristic fill candidates: Tolerance=5%" in current["Notes"]
+    assert "No heuristic fill available for: Power" in current["Notes"]
+    assert (
+        "For other suppliers, required fields and heuristics should be sufficient"
+        in current["Notes"]
+    )
     assert suggested["Action"] == "SKIP"
-    assert suggested["Tolerance"] == "5%"
+    assert (
+        suggested["Notes"]
+        == "SKIP=no change to kicad project, SET=update with new attribute values"
+    )
+    assert suggested["Tolerance"] == "MISSING\n(5%)"
     assert suggested["Power"] == "MISSING"
 
 
@@ -501,11 +520,11 @@ def test_project_mode_suggests_package_and_domain_defaults() -> None:
     suggested_rows = [row for row in written if row["RowType"] == "SUGGESTED"]
 
     r1_suggested = next(row for row in suggested_rows if row["RefDes"] == "R1")
-    assert r1_suggested["Tolerance"] == "5%"
-    assert r1_suggested["Power"] == "100mW"
+    assert r1_suggested["Tolerance"] == "MISSING\n(5%)"
+    assert r1_suggested["Power"] == "MISSING\n(100mW)"
 
     c1_suggested = next(row for row in suggested_rows if row["RefDes"] == "C1")
-    assert c1_suggested["Voltage"] == "25V"
+    assert c1_suggested["Voltage"] == "MISSING\n(25V)"
 
 
 def test_project_mode_matchability_exact_for_supplier_identifier_and_led_color() -> (
@@ -535,18 +554,34 @@ def test_project_mode_matchability_exact_for_supplier_identifier_and_led_color()
         }
     }
 
-    _fieldnames, written = _build_project_couplet_rows(
+    fieldnames, written = _build_project_couplet_rows(
         rows,
         component_context=context,
         supplier_id="lcsc",
     )
     current = next(row for row in written if row["RowType"] == "CURRENT")
     suggested = next(row for row in written if row["RowType"] == "SUGGESTED")
-
-    assert current["Matchability"] == "MATCH_EXACT"
-    assert "LCSC" in current["MatchBasis"]
-    assert suggested["Matchability"] == "MATCH_EXACT"
-    assert suggested["Wavelength"] == "620-750nm"
+    assert "EMMatchability" not in fieldnames
+    assert "EMBasis" not in fieldnames
+    assert "SupplierMatchability" not in fieldnames
+    assert "SupplierBasis" not in fieldnames
+    assert "Audit successful: all required fields have values" in current["Notes"]
+    assert "EM matching clues are sufficient" in current["Notes"]
+    assert "Heuristic fill candidates: Wavelength=620-750nm" in current["Notes"]
+    assert (
+        "LCSC part number present; uniquely identifies this component"
+        in current["Notes"]
+    )
+    assert (
+        "For other suppliers, required fields and heuristics should be sufficient"
+        in current["Notes"]
+    )
+    assert (
+        suggested["Notes"]
+        == "SKIP=no change to kicad project, SET=update with new attribute values"
+    )
+    assert suggested["Wavelength"] == "MISSING\n(620-750nm)"
+    assert "Debug" not in current
 
 
 def test_project_mode_matchability_exact_when_current_attrs_meet_matcher_threshold() -> (
@@ -589,9 +624,11 @@ def test_project_mode_matchability_exact_when_current_attrs_meet_matcher_thresho
 
     _fieldnames, written = _build_project_couplet_rows(rows, component_context=context)
     current = next(row for row in written if row["RowType"] == "CURRENT")
-
-    assert current["Matchability"] == "MATCH_EXACT"
-    assert "score=" in current["MatchBasis"]
+    assert "EM matching clues are sufficient" in current["Notes"]
+    assert (
+        "For other suppliers, required fields and heuristics should be sufficient"
+        in current["Notes"]
+    )
 
 
 def test_project_mode_matchability_heuristic_when_defaults_lift_score() -> None:
@@ -632,9 +669,12 @@ def test_project_mode_matchability_heuristic_when_defaults_lift_score() -> None:
 
     _fieldnames, written = _build_project_couplet_rows(rows, component_context=context)
     current = next(row for row in written if row["RowType"] == "CURRENT")
-
-    assert current["Matchability"] == "MATCH_HEURISTIC"
-    assert "Defaults lift matcher score" in current["MatchBasis"]
+    assert "EM matching is sufficient with heuristics" in current["Notes"]
+    assert "Heuristic fill candidates: Tolerance=5%, Power=100mW" in current["Notes"]
+    assert (
+        "For other suppliers, required fields and heuristics should be sufficient"
+        in current["Notes"]
+    )
 
 
 def test_project_mode_matchability_exact_when_led_color_unknown() -> None:
@@ -664,9 +704,12 @@ def test_project_mode_matchability_exact_when_led_color_unknown() -> None:
     _fieldnames, written = _build_project_couplet_rows(rows, component_context=context)
     current = next(row for row in written if row["RowType"] == "CURRENT")
     suggested = next(row for row in written if row["RowType"] == "SUGGESTED")
-
-    assert current["Matchability"] == "MATCH_EXACT"
-    assert "score=" in current["MatchBasis"]
+    assert "EM matching clues are sufficient" in current["Notes"]
+    assert "No heuristic fill available for: Wavelength" in current["Notes"]
+    assert (
+        "For other suppliers, required fields and heuristics should be sufficient"
+        in current["Notes"]
+    )
     assert suggested["Wavelength"] == "MISSING"
 
 
@@ -696,9 +739,47 @@ def test_project_mode_matchability_needs_clue_when_no_match_clues() -> None:
 
     _fieldnames, written = _build_project_couplet_rows(rows, component_context=context)
     current = next(row for row in written if row["RowType"] == "CURRENT")
+    assert "EM matching needs stronger clues" in current["Notes"]
+    assert "No heuristic fill available for: Voltage" in current["Notes"]
+    assert (
+        "For other suppliers, required fields and heuristics should be sufficient"
+        in current["Notes"]
+    )
 
-    assert current["Matchability"] == "NEEDS_CLUE"
-    assert "Insufficient matcher clues" in current["MatchBasis"]
+
+def test_project_mode_verbose_includes_debug_column() -> None:
+    rows = [
+        AuditRow(
+            check_type=CheckType.QUALITY_ISSUE,
+            severity=Severity.WARN,
+            project_path="/proj/example.kicad_pro",
+            ref_des="R2",
+            uuid="uuid-r2",
+            category="RES",
+            field="Tolerance",
+            current_value="",
+            suggested_value="",
+            description="R2 missing tolerance",
+        ),
+    ]
+    context = {
+        ("/proj/example.kicad_pro", "R2", "uuid-r2", "RES"): {
+            "Value": "",
+            "Footprint": "Resistor_SMD:R_0603_1608Metric",
+            "Package": "0603",
+            "Description": "Resistor",
+        }
+    }
+    fieldnames, written = _build_project_couplet_rows(
+        rows,
+        component_context=context,
+        verbose_level=1,
+    )
+    current = next(row for row in written if row["RowType"] == "CURRENT")
+
+    assert "Debug" in fieldnames
+    assert "em_debug:" in current["Debug"]
+    assert "supplier_debug:" in current["Debug"]
 
 
 @pytest.mark.parametrize(
@@ -738,8 +819,7 @@ def test_project_mode_led_named_color_aliases_map_to_expected_ranges(
 
     _fieldnames, written = _build_project_couplet_rows(rows, component_context=context)
     suggested = next(row for row in written if row["RowType"] == "SUGGESTED")
-
-    assert suggested["Wavelength"] == expected_wavelength
+    assert suggested["Wavelength"] == f"MISSING\n({expected_wavelength})"
 
 
 # ---------------------------------------------------------------------------
