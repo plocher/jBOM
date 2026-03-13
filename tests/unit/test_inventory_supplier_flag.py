@@ -135,6 +135,7 @@ def _enrich(
     supplier_config=None,
     supplier_id: str = "generic",
     *,
+    limit: int = 1,
     verbose: bool = False,
     filter_returns: list[InventoryItem] | None = None,
 ) -> tuple[list[InventoryItem], list[str]]:
@@ -149,7 +150,13 @@ def _enrich(
         return_value=filter_returns if filter_returns is not None else items,
     ):
         return _enrich_items_with_supplier(
-            items, field_names, service, supplier_config, supplier_id, verbose=verbose
+            items,
+            field_names,
+            service,
+            supplier_config,
+            supplier_id,
+            limit=limit,
+            verbose=verbose,
         )
 
 
@@ -294,6 +301,28 @@ class TestEnrichSuccessful:
         items_out, _ = _enrich([item], ["IPN"], service, filter_returns=[item])
 
         assert items_out[0].mfgpn == "RC0402FR-07100KL"
+
+    def test_limit_gt_one_emits_ranked_alternatives(self) -> None:
+        item = _make_item()
+        record = InventorySearchRecord(
+            inventory_item=item,
+            query="10K",
+            candidates=[_candidate("S0001"), _candidate("S0002"), _candidate("S0003")],
+        )
+        service = _mock_service([record])
+
+        items_out, names = _enrich(
+            [item],
+            ["IPN", "Supplier"],
+            service,
+            limit=2,
+            filter_returns=[item],
+        )
+
+        assert len(items_out) == 2
+        assert [i.raw_data.get("Supplier") for i in items_out] == ["S0001", "S0002"]
+        assert [i.raw_data.get("Priority") for i in items_out] == ["1", "2"]
+        assert "Priority" in names
 
 
 # ---------------------------------------------------------------------------

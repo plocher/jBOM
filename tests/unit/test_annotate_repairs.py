@@ -48,7 +48,7 @@ def _write_repairs(
     rows: list[dict[str, str]],
 ) -> None:
     """Write an audit report.csv with the given rows."""
-    fieldnames = [
+    base_fieldnames = [
         "CheckType",
         "Severity",
         "ProjectPath",
@@ -65,7 +65,16 @@ def _write_repairs(
         "Supplier",
         "SupplierPN",
         "Description",
+        "RowType",
+        "Notes",
     ]
+    dynamic_fields: list[str] = []
+    known = set(base_fieldnames)
+    for row in rows:
+        for key in row.keys():
+            if key not in known and key not in dynamic_fields:
+                dynamic_fields.append(key)
+    fieldnames = base_fieldnames + dynamic_fields
     with path.open("w", encoding="utf-8", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction="ignore")
         writer.writeheader()
@@ -134,6 +143,72 @@ def test_repairs_multiple_set_rows_all_applied(tmp_path: Path) -> None:
     updated = sch.read_text(encoding="utf-8")
     assert '"Value" "33K"' in updated
     assert '"Manufacturer" "Yageo"' in updated
+
+
+def test_repairs_wide_suggested_row_applies_all_non_metadata_fields(
+    tmp_path: Path,
+) -> None:
+    """Wide couplet row should apply every populated suggestion column."""
+    sch = tmp_path / "proj.kicad_sch"
+    _write_schematic(sch)
+    repairs = tmp_path / "report.csv"
+    _write_repairs(
+        repairs,
+        [
+            {
+                "RowType": "CURRENT",
+                "UUID": "uuid-r1",
+                "RefDes": "R1",
+                "Value": "10K",
+                "Action": "",
+            },
+            {
+                "RowType": "SUGGESTED",
+                "UUID": "uuid-r1",
+                "RefDes": "R1",
+                "Value": "68K",
+                "Manufacturer": "Yageo",
+                "MFGPN": "RC0603FR-0768KL",
+                "Action": "SET",
+            },
+        ],
+    )
+
+    result = annotate_from_repairs(repairs, [sch], dry_run=False)
+
+    assert result.failed == 0
+    assert result.applied == 3
+    updated = sch.read_text(encoding="utf-8")
+    assert '"Value" "68K"' in updated
+    assert '"Manufacturer" "Yageo"' in updated
+    assert '"MFGPN" "RC0603FR-0768KL"' in updated
+
+
+def test_repairs_wide_missing_placeholders_are_not_applied(tmp_path: Path) -> None:
+    sch = tmp_path / "proj.kicad_sch"
+    _write_schematic(sch, value="10K")
+    repairs = tmp_path / "report.csv"
+    _write_repairs(
+        repairs,
+        [
+            {
+                "RowType": "SUGGESTED",
+                "UUID": "uuid-r1",
+                "RefDes": "R1",
+                "Value": "MISSING",
+                "Tolerance": "MISSING",
+                "Action": "SET",
+            }
+        ],
+    )
+
+    result = annotate_from_repairs(repairs, [sch], dry_run=False)
+
+    assert result.failed == 0
+    assert result.applied == 0
+    assert result.skipped == 1
+    updated = sch.read_text(encoding="utf-8")
+    assert '"Value" "10K"' in updated
 
 
 def test_repairs_non_set_actions_are_skipped(tmp_path: Path) -> None:

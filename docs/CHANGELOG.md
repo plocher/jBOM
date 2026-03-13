@@ -21,6 +21,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   (e.g. wavelength) requires one entry here plus a new `make_component_id` parameter.
 
 ### Changed
+- `jbom audit PROJECT` now emits review-first CURRENT/SUGGESTED couplet rows with
+  richer component context (`Value`, `Footprint`, `Package`, `Description`), concise
+  per-reference missing-attribute notes, and safe default `Action=SKIP` guidance.
+  SUGGESTED values now use profile-backed EM defaults where deterministic (e.g.
+  resistor `Tolerance=5%`, package-based resistor `Power=100mW` for 0603, capacitor
+  `Tolerance=10%`, package-based capacitor `Voltage=25V` for 0603) and fall back to
+  `MISSING` otherwise.
+- `jbom annotate --repairs` now ignores `MISSING` placeholder values in repairs CSVs,
+  preventing placeholder text from being written into schematic properties.
 - All jBOM subcommands now accept `--defaults <profile>` (defaulting to
   `generic` when omitted). The selected defaults profile is applied for the
   command runtime and then restored, so profile selection does not leak across

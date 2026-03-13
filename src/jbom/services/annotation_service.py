@@ -219,14 +219,15 @@ def annotate_from_repairs(
     1. Load *repairs_path* (audit ``report.csv``).
     2. Skip any row where ``Action`` is not ``'SET'``
        (blank / ``SKIP`` / ``IGNORE`` etc.) — counted as *skipped*.
-    3. Validate that ``UUID``, ``Field``, and ``ApprovedValue`` are all
-       non-blank for each ``SET`` row; skip silently if ``ApprovedValue`` is
-       blank (designer cleared it intentionally).
+    3. Parse updates from either:
+       - legacy tall rows (``Field`` + ``ApprovedValue``), or
+       - wide rows (``RowType=SUGGESTED`` + non-metadata suggestion columns).
+       Skip silently when a row has no actionable updates.
     4. Build a UUID → (symbol, file-path) index across all *schematic_files*.
-    5. For each ``SET`` row, look up the UUID in the index and write
-       ``Field <- ApprovedValue`` to the matching symbol.  A missing UUID is a
-       **hard failure** (added to *errors*, counted as *failed*); the row is
-       still attempted for all other ``SET`` rows.
+    5. For each actionable ``SET`` row, look up the UUID in the index and write
+       one or more field updates to the matching symbol. A missing UUID is a
+       **hard failure** (added to *errors*, counted as *failed*); processing
+       continues for subsequent rows.
     6. Write modified schematic files (unless *dry_run*).
 
     Args:
@@ -265,72 +266,88 @@ def annotate_from_repairs(
     changed_files: set[Path] = set()
 
     for row in rows:
-        if row.action.upper() != "SET":
+        action = _repairs_cell(row, "Action").upper()
+        if action != "SET":
             result.skipped += 1
             continue
 
-        # Blank ApprovedValue — designer intentionally cleared it; skip silently.
-        if not row.approved_value.strip():
+        row_type = _repairs_cell(row, "RowType").upper()
+        if row_type and row_type != "SUGGESTED":
+            result.skipped += 1
+            continue
+        row_field_name = _repairs_cell(row, "Field")
+        row_approved_value = _repairs_cell(row, "ApprovedValue")
+        has_legacy_columns = bool(row_field_name or row_approved_value)
+        if has_legacy_columns and not row_field_name:
+            result.failed += 1
+            result.errors.append(
+                f"SET row for RefDes={_repairs_cell(row, 'RefDes')!r} has blank UUID or Field — skipped"
+            )
+            continue
+
+        row_uuid = _repairs_cell(row, "UUID")
+        row_ref_des = _repairs_cell(row, "RefDes")
+        row_project_path = _repairs_cell(row, "ProjectPath")
+        if not row_uuid:
+            result.failed += 1
+            result.errors.append(
+                f"SET row for RefDes={row_ref_des!r} has blank UUID — skipped"
+            )
+            continue
+        updates = _extract_row_updates(row)
+        if not updates:
             result.skipped += 1
             continue
 
         # Multi-project filter: silently skip rows that belong to a different project.
-        if row.project_path:
-            rp = Path(row.project_path).resolve()
+        if row_project_path:
+            rp = Path(row_project_path).resolve()
             if rp.suffix == ".kicad_pro":
                 rp = rp.parent
             if rp not in project_dirs:
                 result.skipped += 1
                 continue
 
-        if not row.uuid.strip() or not row.field_name.strip():
-            # Malformed SET row — treat as failure.
-            result.failed += 1
-            result.errors.append(
-                f"SET row for RefDes={row.ref_des!r} has blank UUID or Field — skipped"
-            )
-            continue
-
-        location = uuid_to_location.get(row.uuid)
+        location = uuid_to_location.get(row_uuid)
         if location is None:
             result.failed += 1
+            field_names = ", ".join(field for field, _ in updates)
             result.errors.append(
-                f"UUID {row.uuid!r} (RefDes={row.ref_des!r}, Field={row.field_name!r}) "
+                f"UUID {row_uuid!r} (RefDes={row_ref_des!r}, Fields={field_names!r}) "
                 "not found in any schematic file"
             )
             continue
 
         symbol, sch_path = location
 
-        # RefDes mismatch warning (UUID matched but RefDes differs — informational).
-        if row.ref_des:
+        if row_ref_des:
             current_ref = _get_property_value(symbol, "Reference")
-            if current_ref and current_ref != row.ref_des:
+            if current_ref and current_ref != row_ref_des:
                 result.warnings.append(
-                    f"INFO: UUID {row.uuid!r}: RefDes changed "
-                    f"from {row.ref_des!r} (audit) to {current_ref!r} (schematic) "
+                    f"INFO: UUID {row_uuid!r}: RefDes changed "
+                    f"from {row_ref_des!r} (audit) to {current_ref!r} (schematic) "
                     f"\u2014 applying by UUID"
                 )
 
-        current = _get_property_value(symbol, row.field_name)
-        if current == row.approved_value:
-            # Already at the desired value — count as applied (idempotent).
-            result.applied += 1
-            continue
+        for field_name, approved_value in updates:
+            current = _get_property_value(symbol, field_name)
+            if current == approved_value:
+                result.applied += 1
+                continue
 
-        result.changes.append(
-            AnnotationChange(
-                uuid=row.uuid,
-                field=row.field_name,
-                before=current,
-                after=row.approved_value,
-                row_number=row.row_number,
+            result.changes.append(
+                AnnotationChange(
+                    uuid=row_uuid,
+                    field=field_name,
+                    before=current,
+                    after=approved_value,
+                    row_number=row.row_number,
+                )
             )
-        )
-        result.applied += 1
-        if not dry_run:
-            _set_property_value(symbol, row.field_name, row.approved_value)
-            changed_files.add(sch_path)
+            result.applied += 1
+            if not dry_run:
+                _set_property_value(symbol, field_name, approved_value)
+                changed_files.add(sch_path)
 
     if not dry_run:
         for sch_path in changed_files:
@@ -346,12 +363,7 @@ class _RepairsRowRaw:
     """Internal: one raw row from repairs CSV before filtering."""
 
     row_number: int
-    uuid: str
-    ref_des: str
-    field_name: str
-    approved_value: str
-    action: str
-    project_path: str
+    cells: dict[str, str]
 
 
 def _load_repairs_rows(repairs_path: Path) -> list[_RepairsRowRaw]:
@@ -362,23 +374,72 @@ def _load_repairs_rows(repairs_path: Path) -> list[_RepairsRowRaw]:
         if not reader.fieldnames:
             return rows
         for line_idx, raw in enumerate(reader, start=2):
-
-            def _cell(col: str) -> str:
-                v = raw.get(col) or ""
-                return v.strip() if isinstance(v, str) else ""
+            cells: dict[str, str] = {}
+            for col, val in raw.items():
+                if not col:
+                    continue
+                if isinstance(val, str):
+                    cells[col] = val.strip()
+                else:
+                    cells[col] = ""
 
             rows.append(
                 _RepairsRowRaw(
                     row_number=line_idx,
-                    uuid=_cell("UUID"),
-                    ref_des=_cell("RefDes"),
-                    field_name=_cell("Field"),
-                    approved_value=_cell("ApprovedValue"),
-                    action=_cell("Action"),
-                    project_path=_cell("ProjectPath"),
+                    cells=cells,
                 )
             )
     return rows
+
+
+_WIDE_REPAIRS_METADATA_COLUMNS: set[str] = {
+    "RowType",
+    "ProjectPath",
+    "RefDes",
+    "UUID",
+    "Category",
+    "CheckType",
+    "Severity",
+    "CatalogFile",
+    "IPN",
+    "Field",
+    "CurrentValue",
+    "SuggestedValue",
+    "ApprovedValue",
+    "Action",
+    "Supplier",
+    "SupplierPN",
+    "Description",
+    "Notes",
+}
+
+
+def _repairs_cell(row: _RepairsRowRaw, col: str) -> str:
+    """Return a normalized cell value from a parsed repairs CSV row."""
+    return (row.cells.get(col) or "").strip()
+
+
+def _extract_row_updates(row: _RepairsRowRaw) -> list[tuple[str, str]]:
+    """Extract field updates from a repairs row (legacy tall or wide format)."""
+    field_name = _repairs_cell(row, "Field")
+    approved_value = _repairs_cell(row, "ApprovedValue")
+    has_legacy_columns = bool(field_name or approved_value)
+    if has_legacy_columns:
+        if not field_name:
+            return []
+        if not approved_value or approved_value.upper() == "MISSING":
+            return []
+        return [(field_name, approved_value)]
+
+    updates: list[tuple[str, str]] = []
+    for col, val in row.cells.items():
+        if col in _WIDE_REPAIRS_METADATA_COLUMNS:
+            continue
+        cell_value = (val or "").strip()
+        if not cell_value or cell_value.upper() == "MISSING":
+            continue
+        updates.append((col, cell_value))
+    return updates
 
 
 def _get_symbol_uuid(symbol: list[Any]) -> str:
