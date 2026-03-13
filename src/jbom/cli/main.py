@@ -14,6 +14,10 @@ from jbom.cli import (
     parts,
     search,
 )
+from jbom.config.defaults import (
+    get_active_defaults_profile,
+    set_active_defaults_profile,
+)
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -51,8 +55,25 @@ def create_parser() -> argparse.ArgumentParser:
     pos.register_command(subparsers)
     parts.register_command(subparsers)
     search.register_command(subparsers)
+    _add_defaults_argument_to_subcommands(subparsers)
 
     return parser
+
+
+def _add_defaults_argument_to_subcommands(
+    subparsers: argparse._SubParsersAction,  # type: ignore[type-arg]
+) -> None:
+    """Add a shared defaults-profile selector to every subcommand parser."""
+
+    for command_parser in subparsers.choices.values():
+        command_parser.add_argument(
+            "--defaults",
+            metavar="PROFILE",
+            default="generic",
+            help=(
+                "Defaults profile name for configurable behavior " "(default: generic)"
+            ),
+        )
 
 
 def main(argv: Optional[List[str]] = None) -> int:
@@ -80,7 +101,13 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     # Execute command handler (already set by register_command)
     if hasattr(args, "handler"):
-        return args.handler(args)
+        selected_profile = getattr(args, "defaults", "generic")
+        previous_profile = get_active_defaults_profile()
+        set_active_defaults_profile(selected_profile)
+        try:
+            return args.handler(args)
+        finally:
+            set_active_defaults_profile(previous_profile)
 
     # This shouldn't happen with proper command registration
     print(f"Error: No handler for command '{args.command}'", file=sys.stderr)

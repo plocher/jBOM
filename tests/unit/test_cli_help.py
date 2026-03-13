@@ -90,6 +90,12 @@ def test_root_help_does_not_include_retired_inventory_search():
     assert "inventory-search" not in out
 
 
+def test_all_subcommands_show_defaults_option_in_help():
+    for command in ["annotate", "audit", "bom", "inventory", "parts", "pos", "search"]:
+        out = run_help([command]).lower()
+        assert "--defaults" in out
+
+
 def test_search_help_lists_only_configured_supplier_providers():
     out = run_help(["search"]).lower()
     assert "--supplier" in out

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import re
 import sys
 from dataclasses import dataclass
 from typing import Callable, Optional, TextIO
@@ -17,6 +18,7 @@ from jbom.cli.output import (
     open_output_text_file,
     resolve_output_destination,
 )
+from jbom.config.defaults import get_defaults
 from jbom.config.providers import get_provider, list_searchable_suppliers
 from jbom.config.suppliers import load_supplier, resolve_supplier_by_id
 from jbom.services.search.cache import DiskSearchCache, InMemorySearchCache, SearchCache
@@ -27,6 +29,8 @@ from jbom.services.search.filtering import (
 )
 from jbom.services.search.models import SearchResult
 from jbom.services.search.provider import SearchProvider
+
+_MAX_ADAPTIVE_FETCH_LIMIT = 1024
 
 
 @dataclass(frozen=True)
@@ -41,6 +45,73 @@ class _FieldDef:
 def _s(r: SearchResult, value: object) -> str:
     # Ensure everything is a safe string for console/CSV output.
     return str(value if value is not None else "")
+
+
+_PACKAGE_PATTERN = re.compile(
+    r"\b(0201|0402|0603|0805|1206|1210|1812|2010|2512)\b", re.IGNORECASE
+)
+
+
+def _package_value(r: SearchResult) -> str:
+    """Resolve package from normalized attrs or provider raw fields."""
+
+    if r.attributes and r.attributes.get("Package"):
+        return _s(r, r.attributes.get("Package", ""))
+
+    if r.raw_data:
+        for key in ("componentSpecificationEn", "Package", "package"):
+            raw = str(r.raw_data.get(key, "")).strip()
+            if raw:
+                return raw
+
+    match = _PACKAGE_PATTERN.search((r.description or "").upper())
+    if match:
+        return match.group(1).upper()
+
+    return ""
+
+
+def _component_library_tier_label(r: SearchResult) -> str:
+    """Return display label for provider library tier metadata."""
+
+    if not r.raw_data:
+        return ""
+
+    raw = str(r.raw_data.get("componentLibraryType", "")).strip().lower()
+    if raw in {"base", "basic"}:
+        return "basic"
+    if raw in {"expand", "extended"}:
+        return "extended"
+    return ""
+
+
+def _description_value(r: SearchResult) -> str:
+    """Render description with optional basic/extended tier notation."""
+
+    desc = str(r.description or "").strip()
+    tier = _component_library_tier_label(r)
+    if not tier:
+        return desc
+    if not desc:
+        return f"[{tier}]"
+    return f"[{tier}] {desc}"
+
+
+def _category_value(r: SearchResult) -> str:
+    """Resolve category from normalized field or provider raw payload."""
+
+    if r.category:
+        return r.category
+    if r.raw_data:
+        primary = str(r.raw_data.get("firstSortName", "")).strip()
+        secondary = str(r.raw_data.get("secondSortName", "")).strip()
+        if primary and secondary:
+            return f"{secondary}: {primary}"
+        if primary:
+            return primary
+        if secondary:
+            return secondary
+    return ""
 
 
 _FIELD_REGISTRY: dict[str, _FieldDef] = {
@@ -67,6 +138,16 @@ _FIELD_REGISTRY: dict[str, _FieldDef] = {
             header="Manufacturer", key="manufacturer", preferred_width=16, wrap=True
         ),
         extractor=lambda r: _s(r, r.manufacturer),
+    ),
+    "package": _FieldDef(
+        key="package",
+        column=Column(header="Package", key="package", preferred_width=10, wrap=True),
+        extractor=lambda r: _s(r, _package_value(r)),
+    ),
+    "category": _FieldDef(
+        key="category",
+        column=Column(header="Category", key="category", preferred_width=18, wrap=True),
+        extractor=lambda r: _s(r, _category_value(r)),
     ),
     "price": _FieldDef(
         key="price",
@@ -105,7 +186,7 @@ _FIELD_REGISTRY: dict[str, _FieldDef] = {
         column=Column(
             header="Description", key="description", preferred_width=60, wrap=True
         ),
-        extractor=lambda r: _s(r, r.description),
+        extractor=lambda r: _s(r, _description_value(r)),
     ),
     "availability": _FieldDef(
         key="availability",
@@ -123,6 +204,20 @@ _FIELD_REGISTRY: dict[str, _FieldDef] = {
     ),
 }
 
+_FIELD_ALIASES: dict[str, str] = {
+    "stock": "stock_quantity",
+    "supplier_pn": "supplier_part_number",
+    "supplierpn": "supplier_part_number",
+    "supplier_part": "supplier_part_number",
+}
+
+
+def _normalize_field_key(field_token: str) -> str:
+    """Normalize a user-supplied field token to a registry key."""
+
+    normalized = field_token.strip().lower().replace("-", "_").replace(" ", "_")
+    return _FIELD_ALIASES.get(normalized, normalized)
+
 
 def register_command(subparsers) -> None:
     """Register search command with argument parser."""
@@ -139,7 +234,7 @@ def register_command(subparsers) -> None:
 
     # Search backend is selected by supplier ID discovered from supplier YAML profiles.
     supplier_choices = list_searchable_suppliers()
-    default_supplier = "mouser" if "mouser" in supplier_choices else None
+    default_supplier = "generic" if "generic" in supplier_choices else None
     if default_supplier is None and supplier_choices:
         default_supplier = supplier_choices[0]
 
@@ -227,22 +322,16 @@ def handle_search(
 
     # Pull extra results to allow client-side filtering.
     display_limit = max(1, int(args.limit))
-    fetch_limit = min(100, max(50, display_limit * 3))
+    initial_fetch_limit = min(100, max(50, display_limit * 3))
 
-    try:
-        results = provider.search(args.query, limit=fetch_limit)
-    except Exception as exc:
-        print(f"Error: search failed: {exc}", file=sys.stderr)
+    results = _run_adaptive_search_pipeline(
+        provider=provider,
+        args=args,
+        display_limit=display_limit,
+        initial_fetch_limit=initial_fetch_limit,
+    )
+    if results is None:
         return 1
-
-    if not args.all:
-        results = apply_default_filters(results)
-
-    # Parametric filtering is optional.
-    if not args.no_parametric:
-        results = SearchFilter.filter_by_query(results, args.query)
-
-    results = SearchSorter.rank(results)
     results = results[:display_limit]
 
     force = bool(getattr(args, "force", False))
@@ -252,6 +341,68 @@ def handle_search(
         force=force,
         fields=resolved_fields,
     )
+
+
+def _run_adaptive_search_pipeline(
+    *,
+    provider: SearchProvider,
+    args: argparse.Namespace,
+    display_limit: int,
+    initial_fetch_limit: int,
+    max_fetch_limit: int = _MAX_ADAPTIVE_FETCH_LIMIT,
+) -> list[SearchResult] | None:
+    """Fetch, filter, and rank with progressive window expansion when needed."""
+
+    fetch_limit = max(1, int(initial_fetch_limit))
+    max_limit = max(fetch_limit, int(max_fetch_limit))
+    best_results: list[SearchResult] = []
+    last_raw_count = -1
+
+    while True:
+        try:
+            raw_results = provider.search(args.query, limit=fetch_limit)
+        except Exception as exc:
+            if not best_results:
+                print(f"Error: search failed: {exc}", file=sys.stderr)
+                return None
+            break
+
+        candidate_results = _apply_result_pipeline(raw_results, args)
+        if len(candidate_results) > len(best_results):
+            best_results = candidate_results
+
+        if len(best_results) >= display_limit:
+            break
+        if fetch_limit >= max_limit:
+            break
+
+        raw_count = len(raw_results)
+        if last_raw_count >= 0 and raw_count <= last_raw_count:
+            # Provider appears saturated for this query; larger limits are unlikely to help.
+            break
+        last_raw_count = raw_count
+
+        next_fetch_limit = min(max_limit, max(fetch_limit * 2, fetch_limit + 1))
+        if next_fetch_limit == fetch_limit:
+            break
+        fetch_limit = next_fetch_limit
+
+    return best_results
+
+
+def _apply_result_pipeline(
+    results: list[SearchResult], args: argparse.Namespace
+) -> list[SearchResult]:
+    """Apply default filters, parametric filtering, and ranking."""
+
+    filtered = list(results)
+    if not args.all:
+        filtered = apply_default_filters(filtered)
+
+    if not args.no_parametric:
+        filtered = SearchFilter.filter_by_query(filtered, args.query)
+
+    return SearchSorter.rank(filtered, query=args.query)
 
 
 def _print_list_fields() -> None:
@@ -276,7 +427,7 @@ def _parse_fields_argument(fields: str) -> list[str] | None:
         return None
 
     # Registry keys only.
-    normalized = [t.strip().lower() for t in tokens]
+    normalized = [_normalize_field_key(t) for t in tokens]
 
     unknown = [f for f in normalized if f not in _FIELD_REGISTRY]
     if unknown:
@@ -299,29 +450,57 @@ def _resolve_fields_from_args(args: argparse.Namespace) -> list[str] | None:
     # 1) CLI override
     if getattr(args, "fields", None) is not None:
         return _parse_fields_argument(args.fields)
-
     # 2) Supplier profile fields
     supplier_id = (getattr(args, "supplier", "") or "").strip().lower()
     supplier = resolve_supplier_by_id(supplier_id)
     if supplier is not None and supplier.search_fields:
-        return list(supplier.search_fields)
+        validated_supplier_fields = _validate_profile_field_list(
+            supplier.search_fields, source=f"supplier profile '{supplier_id}'"
+        )
+        if validated_supplier_fields is None:
+            return None
+        return validated_supplier_fields
 
-    # 3) Generic profile fields
-    try:
-        generic = load_supplier("generic")
-        if generic.search_fields:
-            return list(generic.search_fields)
-    except ValueError:
-        pass
+    # 3) Defaults profile fields (selected by --defaults, default: generic).
+    defaults_cfg = get_defaults()
+    defaults_fields = defaults_cfg.get_search_output_fields_default()
+    if defaults_fields:
+        validated_defaults_fields = _validate_profile_field_list(
+            defaults_fields, source=f"defaults profile '{defaults_cfg.name}'"
+        )
+        if validated_defaults_fields is None:
+            return None
+        return validated_defaults_fields
 
-    # 4) Emergency fallback (keep it simple and always include description)
-    return [
-        "supplier_part_number",
-        "price",
-        "stock_quantity",
-        "lifecycle_status",
-        "description",
-    ]
+    print(
+        "Error: No default search fields configured. Set supplier.search.fields "
+        "or defaults.search.output_fields.default.",
+        file=sys.stderr,
+    )
+    return None
+
+
+def _validate_profile_field_list(fields: list[str], *, source: str) -> list[str] | None:
+    """Validate and normalize profile-provided field lists."""
+
+    normalized = [str(field).strip().lower() for field in fields if str(field).strip()]
+    unknown = [field for field in normalized if field not in _FIELD_REGISTRY]
+    if unknown:
+        print(
+            f"Error: {source} defines unknown search field(s): {', '.join(unknown)}",
+            file=sys.stderr,
+        )
+        print("Use --list-fields to see valid field keys.", file=sys.stderr)
+        return None
+
+    deduped: list[str] = []
+    seen: set[str] = set()
+    for field in normalized:
+        if field in seen:
+            continue
+        seen.add(field)
+        deduped.append(field)
+    return deduped
 
 
 def _row_for_result(r: SearchResult) -> dict[str, str]:

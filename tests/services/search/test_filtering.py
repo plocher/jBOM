@@ -124,7 +124,53 @@ def test_filter_by_query_falls_back_to_fail_open_when_strict_pass_is_empty():
     assert "D" in mpns
 
 
-def test_sorter_prefers_higher_stock_then_lower_price():
+def test_filter_by_query_strict_package_match_when_query_includes_package():
+    results = [
+        _sr(
+            attributes={"Resistance": "10 kOhms"},
+            description="10k 0603 resistor",
+            raw_data={"componentSpecificationEn": "0603"},
+            mpn="A",
+        ),
+        _sr(
+            attributes={"Resistance": "10 kOhms"},
+            description="10k 0805 resistor",
+            raw_data={"componentSpecificationEn": "0805"},
+            mpn="B",
+        ),
+        _sr(
+            attributes={"Resistance": "10 kOhms"},
+            description="10k 0402 resistor",
+            raw_data={"componentSpecificationEn": "0402"},
+            mpn="C",
+        ),
+    ]
+
+    filtered = SearchFilter.filter_by_query(results, "10k 0603 resistor")
+    assert [r.mpn for r in filtered] == ["A"]
+
+
+def test_filter_by_query_package_filter_falls_open_when_no_package_matches():
+    results = [
+        _sr(
+            attributes={"Resistance": "10 kOhms"},
+            description="10k 0805 resistor",
+            raw_data={"componentSpecificationEn": "0805"},
+            mpn="A",
+        ),
+        _sr(
+            attributes={"Resistance": "10 kOhms"},
+            description="10k 0402 resistor",
+            raw_data={"componentSpecificationEn": "0402"},
+            mpn="B",
+        ),
+    ]
+
+    filtered = SearchFilter.filter_by_query(results, "10k 0603 resistor")
+    assert {r.mpn for r in filtered} == {"A", "B"}
+
+
+def test_sorter_prefers_lower_price_over_stock_when_relevance_equal():
     results = [
         _sr(stock_quantity=10, price="$0.20", mpn="A"),
         _sr(stock_quantity=10, price="$0.10", mpn="B"),
@@ -132,7 +178,7 @@ def test_sorter_prefers_higher_stock_then_lower_price():
     ]
 
     ranked = SearchSorter.rank(results)
-    assert [r.mpn for r in ranked] == ["C", "B", "A"]
+    assert [r.mpn for r in ranked] == ["B", "A", "C"]
 
 
 def test_sorter_uses_numeric_value_as_tertiary_key_when_category_provided():
@@ -159,3 +205,144 @@ def test_sorter_uses_numeric_value_as_tertiary_key_when_category_provided():
 
     ranked = SearchSorter.rank(results, category="CAP")
     assert [r.mpn for r in ranked] == ["B", "A", "C"]
+
+
+def test_sorter_prefers_requested_package_match_from_query():
+    results = [
+        _sr(
+            mpn="A",
+            category="Thick Film Resistors - SMD",
+            description="10K 0603 Chip Resistor",
+            stock_quantity=2500,
+            price="$0.20",
+        ),
+        _sr(
+            mpn="B",
+            category="Thick Film Resistors - SMD",
+            description="10K 0805 Chip Resistor",
+            stock_quantity=10000,
+            price="$0.10",
+        ),
+    ]
+
+    ranked = SearchSorter.rank(results, query="10k 0603 resistor")
+    assert [r.mpn for r in ranked] == ["A", "B"]
+
+
+def test_sorter_filters_low_stock_passive_results_when_alternatives_exist():
+    results = [
+        _sr(
+            mpn="LOW",
+            category="Thick Film Resistors - SMD",
+            description="10K 0603 Chip Resistor",
+            stock_quantity=1500,
+            price="$0.01",
+        ),
+        _sr(
+            mpn="OK",
+            category="Thick Film Resistors - SMD",
+            description="10K 0603 Chip Resistor",
+            stock_quantity=2500,
+            price="$0.03",
+        ),
+        _sr(
+            mpn="HIGH",
+            category="Thick Film Resistors - SMD",
+            description="10K 0603 Chip Resistor",
+            stock_quantity=500000,
+            price="$0.02",
+        ),
+    ]
+
+    ranked = SearchSorter.rank(results, query="10k 0603 resistor")
+    assert [r.mpn for r in ranked] == ["HIGH", "OK"]
+
+
+def test_sorter_passive_low_stock_gate_fails_open_when_no_alternatives():
+    results = [
+        _sr(
+            mpn="A",
+            category="Thick Film Resistors - SMD",
+            description="10K 0603 Chip Resistor",
+            stock_quantity=1000,
+            price="$0.03",
+        ),
+        _sr(
+            mpn="B",
+            category="Thick Film Resistors - SMD",
+            description="10K 0603 Chip Resistor",
+            stock_quantity=1500,
+            price="$0.02",
+        ),
+    ]
+
+    ranked = SearchSorter.rank(results, query="10k 0603 resistor")
+    assert [r.mpn for r in ranked] == ["B", "A"]
+
+
+def test_sorter_does_not_apply_passive_stock_gate_for_inductors():
+    results = [
+        _sr(
+            mpn="LOW",
+            category="Power Inductors",
+            description="10uH 0603 Inductor",
+            stock_quantity=1500,
+            price="$0.01",
+        ),
+        _sr(
+            mpn="HIGH",
+            category="Power Inductors",
+            description="10uH 0603 Inductor",
+            stock_quantity=3000,
+            price="$0.02",
+        ),
+    ]
+
+    ranked = SearchSorter.rank(results, query="10uH 0603 inductor")
+    assert [r.mpn for r in ranked] == ["LOW", "HIGH"]
+
+
+def test_sorter_demotes_thermistors_for_resistor_query():
+    results = [
+        _sr(
+            mpn="RES",
+            category="Thick Film Resistors - SMD",
+            description="10K 0603 Chip Resistor",
+            stock_quantity=2500,
+            price="$0.20",
+        ),
+        _sr(
+            mpn="NTC",
+            category="NTC Thermistors",
+            description="10Kohms 1% NTC Thermistor 0603",
+            stock_quantity=100000,
+            price="$0.10",
+        ),
+    ]
+
+    ranked = SearchSorter.rank(results, query="10k 0603 resistor")
+    assert [r.mpn for r in ranked] == ["RES", "NTC"]
+
+
+def test_sorter_prefers_basic_part_tier_when_relevance_is_otherwise_equal():
+    results = [
+        _sr(
+            mpn="BASE",
+            category="Thick Film Resistors - SMD",
+            description="10K 0603 Chip Resistor",
+            raw_data={"componentLibraryType": "base"},
+            stock_quantity=5000,
+            price="$0.20",
+        ),
+        _sr(
+            mpn="EXPAND",
+            category="Thick Film Resistors - SMD",
+            description="10K 0603 Chip Resistor",
+            raw_data={"componentLibraryType": "expand"},
+            stock_quantity=5000,
+            price="$0.01",
+        ),
+    ]
+
+    ranked = SearchSorter.rank(results, query="10k 0603 resistor")
+    assert [r.mpn for r in ranked] == ["BASE", "EXPAND"]

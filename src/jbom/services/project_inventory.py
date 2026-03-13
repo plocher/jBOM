@@ -50,7 +50,7 @@ class ProjectInventoryGenerator:
     def _get_defaults(self) -> DefaultsConfig:
         """Return the loaded defaults profile, loading lazily on first call."""
         if self._defaults is None:
-            self._defaults = get_defaults("generic", cwd=self._cwd)
+            self._defaults = get_defaults(cwd=self._cwd)
         return self._defaults
 
     def _classify_all_components(self) -> Dict[int, Optional[str]]:

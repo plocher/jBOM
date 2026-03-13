@@ -22,8 +22,10 @@ from jbom.config.defaults import (
     DefaultsConfig,
     EnrichmentCategoryConfig,
     _deep_merge,
+    get_active_defaults_profile,
     get_defaults,
     load_defaults,
+    set_active_defaults_profile,
 )
 
 
@@ -112,6 +114,19 @@ def test_generic_profile_has_field_synonyms() -> None:
     assert "Manufacturer Part Number" in mpn.synonyms
 
 
+def test_generic_profile_has_default_search_output_fields() -> None:
+    cfg = load_defaults("generic")
+    assert cfg.get_search_output_fields_default() == [
+        "supplier_part_number",
+        "manufacturer",
+        "mpn",
+        "package",
+        "category",
+        "price",
+        "description",
+    ]
+
+
 # ---------------------------------------------------------------------------
 # Error handling
 # ---------------------------------------------------------------------------
@@ -126,6 +141,26 @@ def test_get_defaults_returns_generic_on_unknown_name() -> None:
     cfg = get_defaults("nonexistent_xyz_profile_abc")
     assert cfg.name == "generic"
     assert cfg.get_domain_default("resistor", "tolerance") == "5%"
+
+
+def test_get_defaults_uses_active_profile_when_name_omitted(tmp_path: Path) -> None:
+    jbom_dir = tmp_path / ".jbom"
+    jbom_dir.mkdir()
+    (jbom_dir / "tight.defaults.yaml").write_text(
+        "extends: generic\n"
+        "domain_defaults:\n"
+        "  resistor:\n"
+        "    tolerance: '1%'\n"
+    )
+
+    previous = get_active_defaults_profile()
+    set_active_defaults_profile("tight")
+    try:
+        cfg = get_defaults(cwd=tmp_path)
+        assert cfg.name == "tight"
+        assert cfg.get_domain_default("resistor", "tolerance") == "1%"
+    finally:
+        set_active_defaults_profile(previous)
 
 
 # ---------------------------------------------------------------------------
