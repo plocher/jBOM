@@ -1,6 +1,29 @@
 # CHANGELOG
 
 
+## v6.41.0 (2026-03-13)
+
+### Features
+
+* feat(audit): refine couplet actions and simplify notes
+
+Removes redundant heuristic-detail text from CURRENT notes now that suggested cells carry MISSING-with-candidate values, leaves CURRENT action blank, and uses SKIP/SET for SUGGESTED actions. Updates unit tests and README.man1 audit/annotate docs to match the current project-mode couplet contract.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`679e488`](https://github.com/plocher/jBOM/commit/679e488d90f9cdfde368ee7111360748e7d29dae))
+
+* feat(audit): de-duplicate notes and show heuristic missing cells
+
+Refines project-mode notes so narrative appears on CURRENT rows only, while SUGGESTED rows keep action guidance. Adds an experimental suggested-cell format for heuristic candidates: MISSING\n(value). Updates audit and annotate tests to match current behavior and regression expectations.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`4b8c358`](https://github.com/plocher/jBOM/commit/4b8c358c071d02dfcea3515673b4fac24921c848))
+
+* feat(audit): align matchability with matcher behavior
+
+Matchability now reflects jBOM score semantics and exact threshold behavior, while preserving direct identifier precedence. Also extends LED color alias heuristics and range suggestions with updated audit tests.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`bdafe53`](https://github.com/plocher/jBOM/commit/bdafe530b17883fc0e73db196326be1e91745be3))
+
+
 ## v6.40.0 (2026-03-13)
 
 ### Features
