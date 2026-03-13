@@ -29,12 +29,20 @@ from jbom.config.profile_search import find_profile
 log = logging.getLogger(__name__)
 
 _BUILTIN_DIR = Path(__file__).parent / "defaults"
+_ACTIVE_DEFAULTS_PROFILE = "generic"
 
 
 def _normalize_field_synonym_canonical_key(canonical: str) -> str:
     """Normalize field-synonym canonical keys."""
 
     return str(canonical).strip().lower()
+
+
+def _normalize_defaults_profile_name(name: str) -> str:
+    """Normalize a defaults profile name, falling back to 'generic'."""
+
+    normalized = str(name or "").strip()
+    return normalized or "generic"
 
 
 @dataclass(frozen=True)
@@ -71,6 +79,7 @@ class DefaultsConfig:
         default_factory=dict
     )
     field_synonyms: dict[str, FieldSynonymConfig] = field(default_factory=dict)
+    search_output_fields_default: tuple[str, ...] = field(default_factory=tuple)
     search_excluded_categories: frozenset[str] = field(default_factory=frozenset)
     component_id_fields: dict[str, frozenset[str]] = field(default_factory=dict)
 
@@ -153,6 +162,37 @@ class DefaultsConfig:
                     synonyms=synonyms,
                 )
 
+        search_cfg = data.get("search") or {}
+        search_output_fields_default: tuple[str, ...] = tuple()
+        if isinstance(search_cfg, dict):
+            output_fields_cfg = search_cfg.get("output_fields") or {}
+            if isinstance(output_fields_cfg, dict):
+                default_output_fields = output_fields_cfg.get("default") or []
+                if isinstance(default_output_fields, list):
+                    normalized_fields: list[str] = []
+                    for field_name in default_output_fields:
+                        normalized = str(field_name).strip().lower()
+                        if normalized:
+                            normalized_fields.append(normalized)
+                    search_output_fields_default = tuple(
+                        dict.fromkeys(normalized_fields).keys()
+                    )
+                else:
+                    log.warning(
+                        "search.output_fields.default must be a list; found %r",
+                        type(default_output_fields).__name__,
+                    )
+            else:
+                log.warning(
+                    "search.output_fields must be a mapping; found %r",
+                    type(output_fields_cfg).__name__,
+                )
+        else:
+            log.warning(
+                "search must be a mapping; found %r",
+                type(search_cfg).__name__,
+            )
+
         raw_excluded = data.get("search_excluded_categories") or []
         search_excluded_categories: frozenset[str] = frozenset(
             str(c).upper().strip() for c in raw_excluded if str(c).strip()
@@ -186,6 +226,7 @@ class DefaultsConfig:
             category_route_rules=category_route_rules,
             enrichment_attributes=enrichment_attributes,
             field_synonyms=field_synonyms,
+            search_output_fields_default=search_output_fields_default,
             search_excluded_categories=search_excluded_categories,
             component_id_fields=component_id_fields,
         )
@@ -230,6 +271,11 @@ class DefaultsConfig:
 
         return self.search_excluded_categories
 
+    def get_search_output_fields_default(self) -> list[str]:
+        """Return default search output fields from the active defaults profile."""
+
+        return list(self.search_output_fields_default)
+
     def get_component_id_fields(self, category: str) -> frozenset[str] | None:
         """Return the optional-field allowlist for *category*, or ``None``.
 
@@ -265,20 +311,38 @@ def load_defaults(name: str, *, cwd: Path | None = None) -> DefaultsConfig:
     return DefaultsConfig.from_yaml_dict(data, name=name)
 
 
-def get_defaults(name: str = "generic", *, cwd: Path | None = None) -> DefaultsConfig:
+def get_defaults(name: str | None = None, *, cwd: Path | None = None) -> DefaultsConfig:
     """Load a defaults profile, returning built-in generic on any error.
 
     Safe wrapper for callers that must not fail (e.g. query building).
 
     Args:
-        name: Profile name to load.
+        name: Profile name to load. When omitted, uses the active profile.
         cwd: Working directory for project-local search.
     """
+    resolved_name = _normalize_defaults_profile_name(
+        name if name is not None else _ACTIVE_DEFAULTS_PROFILE
+    )
     try:
-        return load_defaults(name, cwd=cwd)
+        return load_defaults(resolved_name, cwd=cwd)
     except Exception:
-        log.warning("Could not load defaults profile %r; using built-in generic", name)
+        log.warning(
+            "Could not load defaults profile %r; using built-in generic", resolved_name
+        )
         return _load_builtin_generic()
+
+
+def get_active_defaults_profile() -> str:
+    """Return the active defaults profile name used by get_defaults()."""
+
+    return _ACTIVE_DEFAULTS_PROFILE
+
+
+def set_active_defaults_profile(name: str) -> None:
+    """Set the active defaults profile name used by get_defaults()."""
+
+    global _ACTIVE_DEFAULTS_PROFILE
+    _ACTIVE_DEFAULTS_PROFILE = _normalize_defaults_profile_name(name)
 
 
 def _load_yaml_resolved(name: str, *, cwd: Path | None = None) -> dict[str, Any]:
@@ -336,6 +400,8 @@ __all__ = [
     "DefaultsConfig",
     "EnrichmentCategoryConfig",
     "FieldSynonymConfig",
+    "get_active_defaults_profile",
     "get_defaults",
     "load_defaults",
+    "set_active_defaults_profile",
 ]

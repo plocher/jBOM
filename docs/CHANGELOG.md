@@ -21,6 +21,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   (e.g. wavelength) requires one entry here plus a new `make_component_id` parameter.
 
 ### Changed
+- All jBOM subcommands now accept `--defaults <profile>` (defaulting to
+  `generic` when omitted). The selected defaults profile is applied for the
+  command runtime and then restored, so profile selection does not leak across
+  commands.
+- `jbom search` now defaults to `--supplier generic` when no supplier is
+  specified (instead of implicitly selecting Mouser behavior).
+- `jbom search --fields` now accepts common aliases (e.g. `stock` →
+  `stock_quantity`, `supplier_pn` → `supplier_part_number`) while preserving
+  canonical field keys.
+- `jbom search` default output fields are now profile-driven via
+  `defaults.search.output_fields.default` (with supplier `search.fields`
+  override). Missing/invalid profile field configuration now fails loudly
+  instead of silently falling back to hardcoded fields.
+- Search ranking now includes query-aware relevance signals (token overlap,
+  requested package boosts, and explicit non-requested package penalties), and
+  demotes obvious category mismatches such as thermistors for resistor queries.
+- When provider metadata includes library tier (`componentLibraryType`), search
+  ranking now gives a small preference to basic/base parts, and `Description`
+  output includes `[basic]`/`[extended]` notation for visibility.
+- For passive-intent searches (currently resistor/capacitor), low-stock
+  candidates are now treated as a coarse eligibility gate (below 2000 is
+  filtered when better-stocked alternatives exist), and in-rank ordering now
+  prioritizes lower price instead of raw stock-count differences.
+- `jbom search` now adaptively expands the raw provider fetch window
+  progressively (50 → 100 → 200 → … up to 1024) when post-filter results are
+  below the requested display limit, improving recall for valid parts that rank
+  beyond the first page-sized slice.
 - `ProjectInventoryGenerator` accepts an optional `cwd: Path | None = None` kwarg;
   the generic defaults profile is loaded lazily from the project directory's
   `.jbom/` search path (no config injection required).

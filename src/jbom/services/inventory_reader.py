@@ -23,11 +23,10 @@ from jbom.common.value_parsing import (
     decode_typed_parametric,
 )
 from jbom.common.synonym_normalization import first_non_empty_alias_value
-from jbom.config.defaults import get_defaults
+from jbom.config.defaults import DefaultsConfig, get_defaults
 from jbom.services.jlc_loader import JLCPrivateInventoryLoader
 
 log = logging.getLogger(__name__)
-_DEFAULTS_PROFILE = get_defaults("generic")
 
 _ROW_TYPE_ITEM = "ITEM"
 _ROW_TYPE_COMPONENT = "COMPONENT"
@@ -100,6 +99,14 @@ class InventoryReader:
 
         self.inventory: List[InventoryItem] = []
         self.inventory_fields: List[str] = []
+        self._defaults_profile: DefaultsConfig | None = None
+
+    def _get_defaults_profile(self) -> DefaultsConfig:
+        """Return the active defaults profile for this reader instance."""
+
+        if self._defaults_profile is None:
+            self._defaults_profile = get_defaults()
+        return self._defaults_profile
 
     def load(self) -> tuple[List[InventoryItem], List[str]]:
         """Load inventory from all provided files.
@@ -507,7 +514,7 @@ class InventoryReader:
         """Resolve a canonical value via defaults-profile synonym mappings."""
 
         keys: List[str] = []
-        config = _DEFAULTS_PROFILE.get_field_synonym_config(canonical)
+        config = self._get_defaults_profile().get_field_synonym_config(canonical)
         if config is not None:
             keys.extend([config.display_name, *config.synonyms])
         keys.extend(fallback_keys or [])

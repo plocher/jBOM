@@ -162,6 +162,20 @@ field_synonyms:
     display_name: "Power"
 
 # ---------------------------------------------------------------------------
+# Default CLI search output fields (used when supplier profile has no override).
+# ---------------------------------------------------------------------------
+search:
+  output_fields:
+    default:
+      - supplier_part_number
+      - manufacturer
+      - mpn
+      - package
+      - category
+      - price
+      - description
+
+# ---------------------------------------------------------------------------
 # Component categories excluded from supplier catalog search.
 # Items whose normalized category matches any entry here are silently skipped
 # before any query is built.  All other categories are searchable (denylist model).
