@@ -1,6 +1,17 @@
 # CHANGELOG
 
 
+## v6.40.0 (2026-03-13)
+
+### Features
+
+* feat(audit): make project repair workflow safer and actionable
+
+Issue #176: emit context-rich CURRENT/SUGGESTED couplet rows with SKIP-first defaults, profile-backed EM suggestions, and concise notes; keep supplier fields out of actionable suggestions and harden annotate to ignore MISSING placeholders.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`657d315`](https://github.com/plocher/jBOM/commit/657d31509545b292d59571df1655101635895df9))
+
+
 ## v6.39.6 (2026-03-13)
 
 ### Bug Fixes
