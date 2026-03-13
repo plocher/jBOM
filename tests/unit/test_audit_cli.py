@@ -446,17 +446,13 @@ def test_project_mode_output_is_couplet_rows(tmp_path: Path) -> None:
     assert "R1: Missing attributes: Tolerance, Power" in current["Notes"]
     assert "Audit successful: all required fields have values" in current["Notes"]
     assert "EM matching" in current["Notes"]
-    assert "Heuristic fill candidates: Tolerance=5%" in current["Notes"]
-    assert "No heuristic fill available for: Power" in current["Notes"]
     assert (
         "For other suppliers, required fields and heuristics should be sufficient"
         in current["Notes"]
     )
-    assert suggested["Action"] == "SKIP"
-    assert (
-        suggested["Notes"]
-        == "SKIP=no change to kicad project, SET=update with new attribute values"
-    )
+    assert current["Action"] == ""
+    assert suggested["Action"] == "SKIP/SET"
+    assert suggested["Notes"] == ""
     assert suggested["Tolerance"] == "MISSING\n(5%)"
     assert suggested["Power"] == "MISSING"
 
@@ -567,7 +563,6 @@ def test_project_mode_matchability_exact_for_supplier_identifier_and_led_color()
     assert "SupplierBasis" not in fieldnames
     assert "Audit successful: all required fields have values" in current["Notes"]
     assert "EM matching clues are sufficient" in current["Notes"]
-    assert "Heuristic fill candidates: Wavelength=620-750nm" in current["Notes"]
     assert (
         "LCSC part number present; uniquely identifies this component"
         in current["Notes"]
@@ -576,10 +571,8 @@ def test_project_mode_matchability_exact_for_supplier_identifier_and_led_color()
         "For other suppliers, required fields and heuristics should be sufficient"
         in current["Notes"]
     )
-    assert (
-        suggested["Notes"]
-        == "SKIP=no change to kicad project, SET=update with new attribute values"
-    )
+    assert suggested["Action"] == "SKIP/SET"
+    assert suggested["Notes"] == ""
     assert suggested["Wavelength"] == "MISSING\n(620-750nm)"
     assert "Debug" not in current
 
@@ -670,7 +663,6 @@ def test_project_mode_matchability_heuristic_when_defaults_lift_score() -> None:
     _fieldnames, written = _build_project_couplet_rows(rows, component_context=context)
     current = next(row for row in written if row["RowType"] == "CURRENT")
     assert "EM matching is sufficient with heuristics" in current["Notes"]
-    assert "Heuristic fill candidates: Tolerance=5%, Power=100mW" in current["Notes"]
     assert (
         "For other suppliers, required fields and heuristics should be sufficient"
         in current["Notes"]
@@ -705,7 +697,6 @@ def test_project_mode_matchability_exact_when_led_color_unknown() -> None:
     current = next(row for row in written if row["RowType"] == "CURRENT")
     suggested = next(row for row in written if row["RowType"] == "SUGGESTED")
     assert "EM matching clues are sufficient" in current["Notes"]
-    assert "No heuristic fill available for: Wavelength" in current["Notes"]
     assert (
         "For other suppliers, required fields and heuristics should be sufficient"
         in current["Notes"]
@@ -740,7 +731,6 @@ def test_project_mode_matchability_needs_clue_when_no_match_clues() -> None:
     _fieldnames, written = _build_project_couplet_rows(rows, component_context=context)
     current = next(row for row in written if row["RowType"] == "CURRENT")
     assert "EM matching needs stronger clues" in current["Notes"]
-    assert "No heuristic fill available for: Voltage" in current["Notes"]
     assert (
         "For other suppliers, required fields and heuristics should be sufficient"
         in current["Notes"]

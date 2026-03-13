@@ -8,7 +8,7 @@ jbom — generate Bill of Materials, Placement Files, and Parts Lists from KiCad
 
 ```
 jbom [-q] [--version]
-jbom audit PATH [PATH ...] [--inventory CATALOG_CSV] [--supplier NAME] [--api-key KEY] [--requirements REQ_CSV] [-o REPORT_CSV] [--strict]
+jbom audit PATH [PATH ...] [--inventory CATALOG_CSV] [--supplier NAME] [--api-key KEY] [--requirements REQ_CSV] [-o REPORT_CSV] [--strict] [-v]
 jbom annotate INPUT [--repairs REPORT_CSV] [--normalize] [--dry-run]
 jbom bom [PROJECT] [--inventory FILE ...] [-o OUTPUT] [BOM OPTIONS]
 jbom pos [PROJECT] [-o OUTPUT] [POS OPTIONS]
@@ -42,8 +42,8 @@ The BOM workflow keeps designs supplier-neutral: components carry generic values
 ## AUDIT COMMAND
 
 ```
-jbom audit PATH [PATH ...]  [--inventory CATALOG_CSV]  [--supplier NAME] [--api-key KEY]  [-o REPORT_CSV]  [--strict]
-jbom audit CAT.CSV [...]    [--requirements REQ_CSV]   [--supplier NAME] [--api-key KEY]  [-o REPORT_CSV]  [--strict]
+jbom audit PATH [PATH ...]  [--inventory CATALOG_CSV]  [--supplier NAME] [--api-key KEY]  [-o REPORT_CSV]  [--strict] [-v]
+jbom audit CAT.CSV [...]    [--requirements REQ_CSV]   [--supplier NAME] [--api-key KEY]  [-o REPORT_CSV]  [--strict] [-v]
 ```
 
 Diagnoses field-quality issues and inventory coverage gaps. Mode is detected automatically from the positional arguments:
@@ -104,12 +104,28 @@ Diagnoses field-quality issues and inventory coverage gaps. Mode is detected aut
 
 **--strict**
 : Treat `WARN`-severity rows as failures: exit code is 1 even if there are no `ERROR` rows.
-
+**-v, --verbose**
+: Include a `Debug` column in project-mode output with matcher/supplier diagnostics.
 ### report.csv schema (stable)
 
-Columns: `CheckType`, `Severity`, `ProjectPath`, `RefDes`, `UUID`, `CatalogFile`, `IPN`, `Category`, `Field`, `CurrentValue`, `SuggestedValue`, `ApprovedValue`, `Action`, `Supplier`, `SupplierPN`, `Description`.
+### report.csv schema
 
-The `ApprovedValue` and `Action` columns are blank in `audit` output. Open the file in a spreadsheet, fill in `ApprovedValue` and set `Action` to `SET` / `SKIP` / `IGNORE` for each `QUALITY_ISSUE` row, then pass it to `jbom annotate proj --repairs report.csv`.
+**Project mode (wide CURRENT/SUGGESTED couplets)**
+: Output contains two rows per component (`RowType=CURRENT` and `RowType=SUGGESTED`).
+: Identity/context columns include `ProjectPath`, `RefDes`, `UUID`, `Category`, `Value`, `Footprint`, `Package`, `Description`.
+: Missing-field columns are emitted as:
+  - `MISSING` (no deterministic heuristic value), or
+  - `MISSING\n(value)` (deterministic heuristic/default candidate available).
+: `Action` defaults:
+  - `CURRENT` row: blank
+  - `SUGGESTED` row: `SKIP/SET`
+: `Notes` defaults:
+  - `CURRENT` row: concise audit summary
+  - `SUGGESTED` row: blank
+: With `-v`, a `Debug` column is added.
+
+**Inventory mode (stable tall schema)**
+: Columns: `CheckType`, `Severity`, `ProjectPath`, `RefDes`, `UUID`, `CatalogFile`, `IPN`, `Category`, `Field`, `CurrentValue`, `SuggestedValue`, `ApprovedValue`, `Action`, `Supplier`, `SupplierPN`, `Description`.
 
 ### Exit codes
 
@@ -121,7 +137,7 @@ The `ApprovedValue` and `Action` columns are blank in `audit` output. Open the f
 ```sh
 # 1. Check field quality and inventory coverage for a project
 jbom audit ./my_project --inventory catalog.csv -o report.csv
-
+# 2. Review SUGGESTED rows, set Action=SET where you want to apply changes
 # 2. Review QUALITY_ISSUE rows, fill ApprovedValue + Action, then annotate
 jbom annotate ./my_project --repairs report.csv
 
@@ -142,7 +158,11 @@ Back-annotates KiCad schematics with approved field values from an audit report,
 : Path to a KiCad project directory or `.kicad_sch` file.
 
 **--repairs REPORT_CSV**
-: Audit report CSV (output of `jbom audit`). Rows with `Action=SET` and a non-blank `ApprovedValue` are applied: each component matching by UUID has its `Field` updated to `ApprovedValue`. Rows with other `Action` values or blank `ApprovedValue` are silently skipped. A row with `Action=SET` but no matching UUID is a hard failure.
+: Audit report CSV (output of `jbom audit`).
+: Supports both:
+  - project-mode wide couplets (`RowType=SUGGESTED`, `Action=SET` applies all non-metadata suggestion columns), and
+  - legacy/inventory tall rows (`Field` + `ApprovedValue` with `Action=SET`).
+: Rows with other `Action` values are skipped. `MISSING` placeholders are not written back. A row with `Action=SET` but no matching UUID is a hard failure.
 
 **--normalize**
 : Normalize schematic property formatting (canonical capitalization and field ordering). May be used standalone or combined with `--repairs`.
@@ -158,7 +178,7 @@ Back-annotates KiCad schematics with approved field values from an audit report,
 ### Example workflow
 
 ```sh
-# Audit first; fill in ApprovedValue + Action=SET for QUALITY_ISSUE rows
+# Audit first; in project-mode report set SUGGESTED Action=SET for rows to apply
 jbom audit ./my_project --inventory catalog.csv -o report.csv
 
 # Apply approved changes back to schematic
