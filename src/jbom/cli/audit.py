@@ -73,9 +73,7 @@ _PROJECT_SUPPLY_CHAIN_FIELDS: set[str] = {
     "Manufacturer",
     "MFGPN",
 }
-_PROJECT_ACTION_GUIDANCE = (
-    "SKIP=no change to kicad project, SET=update with new attribute values"
-)
+_PROJECT_SUGGESTED_ACTION = "SKIP/SET"
 _PROJECT_MISSING_VALUE = "MISSING"
 _PROJECT_MATCH_EXACT_THRESHOLD = _AUDIT_MATCH_EXACT_THRESHOLD
 _PROJECT_EM_MATCH_EXACT = "EM_EXACT"
@@ -585,7 +583,6 @@ def _build_project_couplet_rows(
         audit_summary = _build_project_audit_summary(
             ref_des=ref_des,
             missing_fields=group["missing_fields"],
-            heuristic_suggestions=group["heuristic_suggestions"],
             em_matchability=em_matchability,
             supplier_matchability=supplier_matchability,
             supplier_id=supplier_id,
@@ -597,9 +594,9 @@ def _build_project_couplet_rows(
             current_row["Debug"] = debug_details
             suggested_row["Debug"] = debug_details
         current_row["Notes"] = audit_summary
-        suggested_row["Notes"] = _PROJECT_ACTION_GUIDANCE
-        current_row["Action"] = "SKIP"
-        suggested_row["Action"] = "SKIP"
+        suggested_row["Notes"] = ""
+        current_row["Action"] = ""
+        suggested_row["Action"] = _PROJECT_SUGGESTED_ACTION
 
         output_rows.extend([current_row, suggested_row])
 
@@ -610,21 +607,12 @@ def _build_project_audit_summary(
     *,
     ref_des: str,
     missing_fields: list[str],
-    heuristic_suggestions: dict[str, str],
     em_matchability: str,
     supplier_matchability: str,
     supplier_id: str,
 ) -> str:
     """Build designer-facing summary text for project-mode audit rows."""
     missing_required = [f for f in missing_fields if f in _PROJECT_REQUIRED_FIELDS]
-    heuristic_pairs: list[tuple[str, str]] = []
-    unresolved_missing: list[str] = []
-    for field_name in missing_fields:
-        heuristic_value = str(heuristic_suggestions.get(field_name, "")).strip()
-        if _is_meaningful_match_value(heuristic_value):
-            heuristic_pairs.append((field_name, heuristic_value))
-        else:
-            unresolved_missing.append(field_name)
 
     notes_parts: list[str] = []
     if missing_fields:
@@ -644,16 +632,6 @@ def _build_project_audit_summary(
         notes_parts.append("EM matching is sufficient with heuristics")
     else:
         notes_parts.append("EM matching needs stronger clues")
-
-    if heuristic_pairs:
-        notes_parts.append(
-            "Heuristic fill candidates: "
-            + ", ".join(f"{field}={value}" for field, value in heuristic_pairs)
-        )
-    if unresolved_missing:
-        notes_parts.append(
-            "No heuristic fill available for: " + ", ".join(unresolved_missing)
-        )
 
     supplier_tag = (supplier_id or "supplier").upper()
     if supplier_matchability == _PROJECT_SUPPLIER_EXACT_SPN:
