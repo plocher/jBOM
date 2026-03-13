@@ -26,16 +26,25 @@ from __future__ import annotations
 import argparse
 import csv
 import io
+import re
 import sys
 from collections import OrderedDict
 from pathlib import Path
 from typing import Any
+
+from jbom.cli.formatting import Column, print_table
+from jbom.cli.output import OutputDestination, OutputKind, resolve_output_destination
 from jbom.common.component_classification import get_component_type
 from jbom.common.component_filters import apply_component_filters
 from jbom.common.package_matching import extract_package_from_footprint
 from jbom.config.defaults import DefaultsConfig, get_defaults
-
-from jbom.services.audit_service import AuditRow, AuditService, CheckType
+from jbom.services.audit_service import (
+    REPORT_CSV_COLUMNS,
+    AuditRow,
+    AuditService,
+    CheckType,
+    _EXACT_THRESHOLD as _AUDIT_MATCH_EXACT_THRESHOLD,
+)
 from jbom.services.audit_service import _resolve_project as _resolve_project_for_cli
 from jbom.services.schematic_reader import SchematicReader
 from jbom.services.search.inventory_search_service import InventorySearchService
@@ -46,6 +55,8 @@ _PROJECT_REPORT_BASE_COLUMNS: list[str] = [
     "RefDes",
     "UUID",
     "Category",
+    "Matchability",
+    "MatchBasis",
 ]
 _PROJECT_REPORT_CONTEXT_COLUMNS: list[str] = [
     "Value",
@@ -66,8 +77,67 @@ _PROJECT_ACTION_GUIDANCE = (
     "SKIP=no change to kicad project, SET=update with new attribute values"
 )
 _PROJECT_MISSING_VALUE = "MISSING"
+_PROJECT_MATCH_EXACT = "MATCH_EXACT"
+_PROJECT_MATCH_HEURISTIC = "MATCH_HEURISTIC"
+_PROJECT_MATCH_NEEDS_CLUE = "NEEDS_CLUE"
+_PROJECT_MATCH_EXACT_THRESHOLD = _AUDIT_MATCH_EXACT_THRESHOLD
 _PROJECT_RES_CATEGORY = "RES"
 _PROJECT_CAP_CATEGORY = "CAP"
+_PROJECT_LED_CATEGORY = "LED"
+_PROJECT_PRIMARY_IDENTIFIER_FIELDS: tuple[str, ...] = ("IPN", "MFGPN", "MPN")
+_PROJECT_FALLBACK_SUPPLIER_IDENTIFIER_FIELDS: tuple[str, ...] = (
+    "LCSC",
+    "Mouser",
+    "DigiKey",
+    "Digikey",
+    "Farnell",
+    "Newark",
+    "Seeed",
+    "Supplier",
+    "SupplierPN",
+    "Supplier Part Number",
+    "Distributor Part Number",
+)
+_PROJECT_LED_COLOR_WAVELENGTH_RULES: tuple[tuple[frozenset[str], str], ...] = (
+    (frozenset({"ULTRAVIOLET", "UV"}), "<380nm"),
+    (frozenset({"VIOLET", "PURPLE"}), "370-450nm"),
+    (frozenset({"BLUE"}), "450-495nm"),
+    (frozenset({"CYAN", "AQUA"}), "495-520nm"),
+    (frozenset({"GREEN"}), "495-570nm"),
+    (frozenset({"YELLOW", "AMBER"}), "570-595nm"),
+    (frozenset({"ORANGE"}), "590-620nm"),
+    (frozenset({"RED"}), "620-750nm"),
+    (frozenset({"INFRARED", "IR"}), ">750nm (typ. 850-940nm)"),
+    (frozenset({"WHITE"}), "400-700nm"),
+)
+_PROJECT_LED_NAMED_COLOR_WAVELENGTH_RULES: tuple[tuple[frozenset[str], str], ...] = (
+    (frozenset({"RAILROAD", "GREEN"}), "505-508nm"),
+    (frozenset({"RAILROAD", "RED"}), "627-635nm"),
+    (frozenset({"RAILROAD", "YELLOW"}), "589-599nm"),
+    (frozenset({"LUNAR", "WHITE"}), "400-700nm (cool white, CCT 3250-5600K)"),
+)
+_AUDIT_CONSOLE_WRAP_FIELDS: frozenset[str] = frozenset(
+    {"Description", "Notes", "ProjectPath"}
+)
+_AUDIT_CONSOLE_FIELD_WIDTHS: dict[str, int] = {
+    "RowType": 10,
+    "CheckType": 16,
+    "Severity": 8,
+    "RefDes": 8,
+    "UUID": 14,
+    "Category": 10,
+    "Field": 12,
+    "CurrentValue": 16,
+    "SuggestedValue": 16,
+    "Action": 8,
+    "Supplier": 10,
+    "SupplierPN": 14,
+    "Value": 12,
+    "Footprint": 18,
+    "Package": 12,
+    "Description": 28,
+    "Notes": 28,
+}
 
 
 def register_command(subparsers: argparse._SubParsersAction) -> None:  # type: ignore[type-arg]
@@ -121,10 +191,12 @@ def register_command(subparsers: argparse._SubParsersAction) -> None:  # type: i
     parser.add_argument(
         "-o",
         "--output",
-        metavar="REPORT_CSV",
-        type=Path,
+        metavar="DEST",
         default=None,
-        help="Write report to this CSV file (default: stdout)",
+        help=(
+            "Output destination: omit for CSV to stdout, use 'console' for table output, "
+            "'-' for CSV to stdout, or a file path"
+        ),
     )
 
     parser.add_argument(
@@ -203,7 +275,12 @@ def _run_project_mode(args: argparse.Namespace, inputs: list[Path]) -> int:
         supplier_id=supplier_id,
     )
     component_context = _collect_project_component_contexts(inputs)
-    _write_project_report(args, report, component_context=component_context)
+    _write_project_report(
+        args,
+        report,
+        component_context=component_context,
+        supplier_id=supplier_id,
+    )
     _print_summary(report)
 
     return report.exit_code_strict() if args.strict else report.exit_code
@@ -261,46 +338,129 @@ def _write_project_report(
     report: Any,
     *,
     component_context: dict[tuple[str, str, str, str], dict[str, str]],
+    supplier_id: str,
 ) -> None:
     """Write project-mode report as wide CURRENT/SUGGESTED couplets."""
     fieldnames, rows = _build_project_couplet_rows(
-        report.rows, component_context=component_context
+        report.rows,
+        component_context=component_context,
+        supplier_id=supplier_id,
     )
-    output_path: Path | None = getattr(args, "output", None)
+    destination = _resolve_audit_output_destination(getattr(args, "output", None))
 
-    if output_path is not None:
-        with output_path.open("w", encoding="utf-8", newline="") as handle:
-            _write_csv_rows(handle, fieldnames, rows)
-        print(f"Audit report written to {output_path}", file=sys.stderr)
+    if destination.kind == OutputKind.CONSOLE:
+        _print_audit_console_table(
+            rows,
+            fieldnames,
+            title="Audit report (project mode)",
+        )
+        return
+    if destination.kind == OutputKind.STDOUT:
+        buf = io.StringIO()
+        _write_csv_rows(buf, fieldnames, rows)
+        print(buf.getvalue(), end="")
         return
 
-    buf = io.StringIO()
-    _write_csv_rows(buf, fieldnames, rows)
-    print(buf.getvalue(), end="")
+    if not destination.path:
+        raise ValueError("Internal error: file output selected but no path provided")
+
+    with destination.path.open("w", encoding="utf-8", newline="") as handle:
+        _write_csv_rows(handle, fieldnames, rows)
+    print(f"Audit report written to {destination.path}", file=sys.stderr)
 
 
 def _write_inventory_report(args: argparse.Namespace, report: Any) -> None:
     """Write inventory-mode report using the stable audit CSV schema."""
-    output_path: Path | None = getattr(args, "output", None)
+    destination = _resolve_audit_output_destination(getattr(args, "output", None))
 
-    if output_path is not None:
-        with output_path.open("w", encoding="utf-8", newline="") as handle:
-            report.write_csv(handle)
-        print(f"Audit report written to {output_path}", file=sys.stderr)
+    if destination.kind == OutputKind.CONSOLE:
+        rows = [row.to_csv_row() for row in report.rows]
+        _print_audit_console_table(
+            rows,
+            REPORT_CSV_COLUMNS,
+            title="Audit report (inventory mode)",
+        )
+        return
+    if destination.kind == OutputKind.STDOUT:
+        buf = io.StringIO()
+        report.write_csv(buf)
+        print(buf.getvalue(), end="")
         return
 
-    buf = io.StringIO()
-    report.write_csv(buf)
-    print(buf.getvalue(), end="")
+    if not destination.path:
+        raise ValueError("Internal error: file output selected but no path provided")
+
+    with destination.path.open("w", encoding="utf-8", newline="") as handle:
+        report.write_csv(handle)
+    print(f"Audit report written to {destination.path}", file=sys.stderr)
+
+
+def _resolve_audit_output_destination(output: str | Path | None) -> OutputDestination:
+    """Resolve audit output destination using shared CLI output semantics."""
+    raw_output = str(output) if output is not None else None
+    return resolve_output_destination(
+        raw_output,
+        default_destination=OutputDestination(OutputKind.STDOUT),
+    )
+
+
+def _print_audit_console_table(
+    rows: list[dict[str, str]],
+    fieldnames: list[str],
+    *,
+    title: str,
+) -> None:
+    """Print audit rows as a human-readable console table."""
+    if not rows:
+        print(f"{title}: no rows")
+        return
+
+    normalized_rows: list[dict[str, str]] = [
+        {
+            field_name: _normalize_audit_console_cell(row.get(field_name, ""))
+            for field_name in fieldnames
+        }
+        for row in rows
+    ]
+
+    columns = [
+        Column(
+            header=field_name,
+            key=field_name,
+            preferred_width=_AUDIT_CONSOLE_FIELD_WIDTHS.get(field_name, 14),
+            wrap=field_name in _AUDIT_CONSOLE_WRAP_FIELDS,
+            align="left",
+        )
+        for field_name in fieldnames
+    ]
+    print_table(
+        normalized_rows,
+        columns,
+        terminal_width=None,
+        title=title,
+    )
+    print(f"\nTotal: {len(normalized_rows)} rows")
+
+
+def _normalize_audit_console_cell(value: Any) -> str:
+    """Normalize audit console table cell text for readability."""
+    text = str(value or "")
+    if text.startswith("CheckType."):
+        return text.removeprefix("CheckType.")
+    if text.startswith("Severity."):
+        return text.removeprefix("Severity.")
+    return text
 
 
 def _build_project_couplet_rows(
     report_rows: list[AuditRow],
     *,
     component_context: dict[tuple[str, str, str, str], dict[str, str]],
+    supplier_id: str = "",
 ) -> tuple[list[str], list[dict[str, str]]]:
     """Build wide CURRENT/SUGGESTED rows from tall QUALITY_ISSUE findings."""
     defaults = get_defaults()
+    supplier_identifier_fields = _resolve_supplier_identifier_fields(supplier_id)
     grouped: OrderedDict[tuple[str, str, str, str], dict[str, Any]] = OrderedDict()
     field_order: list[str] = []
 
@@ -375,6 +535,18 @@ def _build_project_couplet_rows(
                 )
             else:
                 suggested_row[field_name] = raw_suggested
+
+        matchability, match_basis = _classify_project_matchability(
+            category=category,
+            context=context,
+            missing_fields=group["missing_fields"],
+            suggested_row=suggested_row,
+            supplier_identifier_fields=supplier_identifier_fields,
+        )
+        current_row["Matchability"] = matchability
+        current_row["MatchBasis"] = match_basis
+        suggested_row["Matchability"] = matchability
+        suggested_row["MatchBasis"] = match_basis
         if group["missing_fields"]:
             missing_fields = ", ".join(group["missing_fields"])
             current_row["Notes"] = f"{ref_des}: Missing attributes: {missing_fields}"
@@ -422,8 +594,233 @@ def _resolve_project_default_suggestion(
             suggestion = defaults.get_package_voltage(package_code).strip()
             if suggestion:
                 return suggestion
+    if (
+        normalized_category == _PROJECT_LED_CATEGORY
+        and normalized_field == "Wavelength"
+    ):
+        suggestion = _resolve_led_wavelength_from_context(context)
+        if suggestion:
+            return suggestion
 
     return _PROJECT_MISSING_VALUE
+
+
+def _classify_project_matchability(
+    *,
+    category: str,
+    context: dict[str, str],
+    missing_fields: list[str],
+    suggested_row: dict[str, str],
+    supplier_identifier_fields: list[str],
+) -> tuple[str, str]:
+    """Classify project-component matchability using matcher-aligned semantics."""
+    identifier_basis = _resolve_project_direct_identifier_basis(
+        context,
+        supplier_identifier_fields=supplier_identifier_fields,
+    )
+    if identifier_basis:
+        return _PROJECT_MATCH_EXACT, identifier_basis
+    current_score = _estimate_matcher_score_from_context(
+        category=category, context=context
+    )
+    enriched_context = _build_matchability_enriched_context(
+        context=context,
+        missing_fields=missing_fields,
+        suggested_row=suggested_row,
+    )
+    enriched_score = _estimate_matcher_score_from_context(
+        category=category,
+        context=enriched_context,
+    )
+
+    if current_score >= _PROJECT_MATCH_EXACT_THRESHOLD:
+        return (
+            _PROJECT_MATCH_EXACT,
+            f"Current attrs hit matcher exact threshold (score={current_score})",
+        )
+
+    if (
+        enriched_score >= _PROJECT_MATCH_EXACT_THRESHOLD
+        and enriched_score > current_score
+    ):
+        return (
+            _PROJECT_MATCH_HEURISTIC,
+            f"Defaults lift matcher score {current_score}->{enriched_score}",
+        )
+
+    best_score = max(current_score, enriched_score)
+    if best_score > 0:
+        if enriched_score > current_score:
+            return (
+                _PROJECT_MATCH_HEURISTIC,
+                f"Defaults improve matcher score {current_score}->{enriched_score} (heuristic)",
+            )
+        return (
+            _PROJECT_MATCH_HEURISTIC,
+            f"Current attrs support heuristic matcher score (score={best_score})",
+        )
+
+    return (
+        _PROJECT_MATCH_NEEDS_CLUE,
+        "Insufficient matcher clues (need identifier/value/package/category)",
+    )
+
+
+def _build_matchability_enriched_context(
+    *,
+    context: dict[str, str],
+    missing_fields: list[str],
+    suggested_row: dict[str, str],
+) -> dict[str, str]:
+    """Return context enriched with deterministic suggestions for matching."""
+    enriched = dict(context)
+    for field_name in missing_fields:
+        suggested_value = str(suggested_row.get(field_name, "")).strip()
+        if not _is_meaningful_match_value(suggested_value):
+            continue
+        current_value = str(enriched.get(field_name, "")).strip()
+        if _is_meaningful_match_value(current_value):
+            continue
+        enriched[field_name] = suggested_value
+    return enriched
+
+
+def _estimate_matcher_score_from_context(
+    *, category: str, context: dict[str, str]
+) -> int:
+    """Estimate jBOM matcher score from known component attributes."""
+    score = 0
+    normalized_category = (category or "").strip().upper()
+    if normalized_category and normalized_category not in {"UNK", "UNKNOWN"}:
+        score += 50
+
+    if _is_meaningful_match_value(str(context.get("Value", ""))):
+        score += 40
+
+    if _extract_context_package_code(context):
+        score += 30
+
+    if _get_context_value(context, ("Tolerance",)):
+        score += 15
+
+    if _get_context_value(context, ("Voltage", "V")):
+        score += 10
+
+    if _get_context_value(context, ("Power", "Wattage", "W", "P")):
+        score += 10
+
+    return score
+
+
+def _resolve_project_direct_identifier_basis(
+    context: dict[str, str],
+    *,
+    supplier_identifier_fields: list[str],
+) -> str:
+    """Return match basis text when direct identifiers are present."""
+    if _find_context_value(context, _PROJECT_PRIMARY_IDENTIFIER_FIELDS):
+        return "Direct part identifier (IPN/MPN)"
+    supplier_match = _find_context_value(context, supplier_identifier_fields)
+    if supplier_match:
+        return f"Supplier identifier ({supplier_match})"
+    fallback_match = _find_context_value(
+        context, _PROJECT_FALLBACK_SUPPLIER_IDENTIFIER_FIELDS
+    )
+    if fallback_match:
+        return f"Supplier identifier ({fallback_match})"
+    return ""
+
+
+def _resolve_supplier_identifier_fields(supplier_id: str) -> list[str]:
+    """Return candidate property names that represent supplier-specific identifiers."""
+    sid = (supplier_id or "").strip().lower()
+    if not sid:
+        return []
+    try:
+        from jbom.config.suppliers import resolve_supplier_by_id
+
+        supplier = resolve_supplier_by_id(sid)
+    except Exception:
+        supplier = None
+    if supplier is None:
+        return []
+    fields: list[str] = [supplier.inventory_column]
+    fields.extend(supplier.inventory_column_synonyms)
+    seen: set[str] = set()
+    deduped: list[str] = []
+    for field_name in fields:
+        normalized = field_name.strip().lower()
+        if not normalized or normalized in seen:
+            continue
+        seen.add(normalized)
+        deduped.append(field_name)
+    return deduped
+
+
+def _find_context_value(
+    context: dict[str, str], field_names: tuple[str, ...] | list[str]
+) -> str:
+    """Find first present context key among *field_names* and return its key name."""
+    normalized_context: dict[str, str] = {
+        str(key or "").strip().lower(): str(value or "").strip()
+        for key, value in context.items()
+    }
+    for field_name in field_names:
+        normalized_name = field_name.strip().lower()
+        if not normalized_name:
+            continue
+        value = normalized_context.get(normalized_name, "")
+        if _is_meaningful_match_value(value):
+            return field_name
+    return ""
+
+
+def _get_context_value(
+    context: dict[str, str],
+    field_names: tuple[str, ...] | list[str],
+) -> str:
+    """Return the first meaningful context value for any of the provided aliases."""
+    normalized_context: dict[str, str] = {
+        str(key or "").strip().lower(): str(value or "").strip()
+        for key, value in context.items()
+    }
+    for field_name in field_names:
+        normalized_name = field_name.strip().lower()
+        if not normalized_name:
+            continue
+        value = normalized_context.get(normalized_name, "")
+        if _is_meaningful_match_value(value):
+            return value
+    return ""
+
+
+def _is_meaningful_match_value(value: str) -> bool:
+    """Return True when a value is useful as a matching clue."""
+    normalized = str(value or "").strip()
+    if not normalized:
+        return False
+    return normalized.upper() not in {"~", _PROJECT_MISSING_VALUE}
+
+
+def _resolve_led_wavelength_from_context(context: dict[str, str]) -> str:
+    """Infer LED wavelength range from color cues in Value/Type/Description."""
+    search_blob = " ".join(
+        [
+            str(context.get("Value", "")).strip(),
+            str(context.get("Type", "")).strip(),
+            str(context.get("Description", "")).strip(),
+        ]
+    ).upper()
+    if not search_blob:
+        return ""
+    tokens = {token for token in re.split(r"[^A-Z0-9]+", search_blob) if token}
+    for required_tokens, wavelength in _PROJECT_LED_NAMED_COLOR_WAVELENGTH_RULES:
+        if required_tokens.issubset(tokens):
+            return wavelength
+    for color_tokens, wavelength in _PROJECT_LED_COLOR_WAVELENGTH_RULES:
+        if tokens.intersection(color_tokens):
+            return wavelength
+    return ""
 
 
 def _extract_context_package_code(context: dict[str, str]) -> str:
@@ -473,12 +870,19 @@ def _collect_project_component_contexts(
                 )
                 props = comp.properties or {}
                 key = (pro_str, comp.reference, comp.uuid, category)
-                contexts[key] = {
+                context_values: dict[str, str] = {
                     "Value": comp.value or "",
                     "Footprint": comp.footprint or "",
                     "Package": (props.get("Package") or "").strip(),
                     "Description": (props.get("Description") or "").strip(),
                 }
+                for prop_name, prop_value in props.items():
+                    normalized_name = str(prop_name or "").strip()
+                    normalized_value = str(prop_value or "").strip()
+                    if not normalized_name or not normalized_value:
+                        continue
+                    context_values[normalized_name] = normalized_value
+                contexts[key] = context_values
 
     return contexts
 

@@ -60,7 +60,7 @@ def test_audit_requirements_flag_parsed() -> None:
 def test_audit_output_flag_parsed() -> None:
     parser = create_parser()
     args = parser.parse_args(["audit", ".", "-o", "report.csv"])
-    assert args.output == Path("report.csv")
+    assert args.output == "report.csv"
 
 
 # ---------------------------------------------------------------------------
@@ -288,6 +288,111 @@ def test_output_to_stdout_contains_csv_header(tmp_path: Path, capsys) -> None:
     ), "Project couplet CSV header should appear in stdout"
 
 
+def test_output_dash_writes_csv_to_stdout_in_project_mode(
+    tmp_path: Path, capsys, monkeypatch
+) -> None:
+    with patch("jbom.cli.audit.AuditService") as MockService:
+        instance = MockService.return_value
+        instance.audit_project.return_value = _mock_report()
+
+        monkeypatch.chdir(tmp_path)
+        args = _make_args(inputs=[str(tmp_path)], output="-")
+        handle_audit(args)
+
+    captured = capsys.readouterr()
+    assert "RowType" in captured.out
+    assert not (tmp_path / "-").exists()
+
+
+def test_output_console_prints_table_in_project_mode(
+    tmp_path: Path, capsys, monkeypatch
+) -> None:
+    rows = [
+        AuditRow(
+            check_type=CheckType.QUALITY_ISSUE,
+            severity=Severity.ERROR,
+            project_path=str(tmp_path),
+            ref_des="R1",
+            uuid="uuid-r1",
+            category="RES",
+            field="Value",
+            current_value="",
+            suggested_value="",
+            description="missing Value",
+        )
+    ]
+    with patch("jbom.cli.audit.AuditService") as MockService:
+        instance = MockService.return_value
+        instance.audit_project.return_value = _mock_report(error_count=1, rows=rows)
+
+        monkeypatch.chdir(tmp_path)
+        args = _make_args(inputs=[str(tmp_path)], output="console")
+        handle_audit(args)
+
+    captured = capsys.readouterr()
+    assert "Audit report (project mode)" in captured.out
+    assert "CURRENT" in captured.out
+    assert not (tmp_path / "console").exists()
+
+
+def test_inventory_output_dash_writes_csv_to_stdout(
+    tmp_path: Path, capsys, monkeypatch
+) -> None:
+    catalog = tmp_path / "catalog.csv"
+    catalog.write_text("RowType,IPN,Category\nITEM,R001,RES\n", encoding="utf-8")
+    rows = [
+        AuditRow(
+            check_type=CheckType.COVERAGE_GAP,
+            severity=Severity.ERROR,
+            catalog_file=str(catalog),
+            ipn="R001",
+            category="RES",
+            description="no match",
+        )
+    ]
+    with patch("jbom.cli.audit.AuditService") as MockService:
+        instance = MockService.return_value
+        instance.audit_inventory.return_value = _mock_report(error_count=1, rows=rows)
+
+        monkeypatch.chdir(tmp_path)
+        args = _make_args(inputs=[str(catalog)], output="-")
+        handle_audit(args)
+
+    captured = capsys.readouterr()
+    assert "CheckType" in captured.out
+    assert "COVERAGE_GAP" in captured.out
+    assert not (tmp_path / "-").exists()
+
+
+def test_inventory_output_console_prints_table(
+    tmp_path: Path, capsys, monkeypatch
+) -> None:
+    catalog = tmp_path / "catalog.csv"
+    catalog.write_text("RowType,IPN,Category\nITEM,R001,RES\n", encoding="utf-8")
+    rows = [
+        AuditRow(
+            check_type=CheckType.COVERAGE_GAP,
+            severity=Severity.ERROR,
+            catalog_file=str(catalog),
+            ipn="R001",
+            category="RES",
+            description="no match",
+        )
+    ]
+    with patch("jbom.cli.audit.AuditService") as MockService:
+        instance = MockService.return_value
+        instance.audit_inventory.return_value = _mock_report(error_count=1, rows=rows)
+
+        monkeypatch.chdir(tmp_path)
+        args = _make_args(inputs=[str(catalog)], output="console")
+        handle_audit(args)
+
+    captured = capsys.readouterr()
+    assert "Audit report (inventory mode)" in captured.out
+    assert "COVERAGE_GAP" in captured.out
+    assert not (tmp_path / "console").exists()
+
+
 def test_project_mode_output_is_couplet_rows(tmp_path: Path) -> None:
     report_path = tmp_path / "report.csv"
     rows = [
@@ -401,6 +506,240 @@ def test_project_mode_suggests_package_and_domain_defaults() -> None:
 
     c1_suggested = next(row for row in suggested_rows if row["RefDes"] == "C1")
     assert c1_suggested["Voltage"] == "25V"
+
+
+def test_project_mode_matchability_exact_for_supplier_identifier_and_led_color() -> (
+    None
+):
+    rows = [
+        AuditRow(
+            check_type=CheckType.QUALITY_ISSUE,
+            severity=Severity.WARN,
+            project_path="/proj/example.kicad_pro",
+            ref_des="D1",
+            uuid="uuid-d1",
+            category="LED",
+            field="Wavelength",
+            current_value="",
+            suggested_value="",
+            description="D1 missing wavelength",
+        ),
+    ]
+    context = {
+        ("/proj/example.kicad_pro", "D1", "uuid-d1", "LED"): {
+            "Value": "Red",
+            "Footprint": "LED_SMD:LED_0603_1608Metric",
+            "Package": "0603",
+            "Description": "Status LED",
+            "LCSC": "C2286",
+        }
+    }
+
+    _fieldnames, written = _build_project_couplet_rows(
+        rows,
+        component_context=context,
+        supplier_id="lcsc",
+    )
+    current = next(row for row in written if row["RowType"] == "CURRENT")
+    suggested = next(row for row in written if row["RowType"] == "SUGGESTED")
+
+    assert current["Matchability"] == "MATCH_EXACT"
+    assert "LCSC" in current["MatchBasis"]
+    assert suggested["Matchability"] == "MATCH_EXACT"
+    assert suggested["Wavelength"] == "620-750nm"
+
+
+def test_project_mode_matchability_exact_when_current_attrs_meet_matcher_threshold() -> (
+    None
+):
+    rows = [
+        AuditRow(
+            check_type=CheckType.QUALITY_ISSUE,
+            severity=Severity.WARN,
+            project_path="/proj/example.kicad_pro",
+            ref_des="R1",
+            uuid="uuid-r1",
+            category="RES",
+            field="Tolerance",
+            current_value="",
+            suggested_value="",
+            description="R1 missing tolerance",
+        ),
+        AuditRow(
+            check_type=CheckType.QUALITY_ISSUE,
+            severity=Severity.WARN,
+            project_path="/proj/example.kicad_pro",
+            ref_des="R1",
+            uuid="uuid-r1",
+            category="RES",
+            field="Power",
+            current_value="",
+            suggested_value="",
+            description="R1 missing power",
+        ),
+    ]
+    context = {
+        ("/proj/example.kicad_pro", "R1", "uuid-r1", "RES"): {
+            "Value": "10K",
+            "Footprint": "Resistor_SMD:R_0603_1608Metric",
+            "Package": "0603",
+            "Description": "Resistor",
+        }
+    }
+
+    _fieldnames, written = _build_project_couplet_rows(rows, component_context=context)
+    current = next(row for row in written if row["RowType"] == "CURRENT")
+
+    assert current["Matchability"] == "MATCH_EXACT"
+    assert "score=" in current["MatchBasis"]
+
+
+def test_project_mode_matchability_heuristic_when_defaults_lift_score() -> None:
+    rows = [
+        AuditRow(
+            check_type=CheckType.QUALITY_ISSUE,
+            severity=Severity.WARN,
+            project_path="/proj/example.kicad_pro",
+            ref_des="R2",
+            uuid="uuid-r2",
+            category="RES",
+            field="Tolerance",
+            current_value="",
+            suggested_value="",
+            description="R2 missing tolerance",
+        ),
+        AuditRow(
+            check_type=CheckType.QUALITY_ISSUE,
+            severity=Severity.WARN,
+            project_path="/proj/example.kicad_pro",
+            ref_des="R2",
+            uuid="uuid-r2",
+            category="RES",
+            field="Power",
+            current_value="",
+            suggested_value="",
+            description="R2 missing power",
+        ),
+    ]
+    context = {
+        ("/proj/example.kicad_pro", "R2", "uuid-r2", "RES"): {
+            "Value": "",
+            "Footprint": "Resistor_SMD:R_0603_1608Metric",
+            "Package": "0603",
+            "Description": "Resistor",
+        }
+    }
+
+    _fieldnames, written = _build_project_couplet_rows(rows, component_context=context)
+    current = next(row for row in written if row["RowType"] == "CURRENT")
+
+    assert current["Matchability"] == "MATCH_HEURISTIC"
+    assert "Defaults lift matcher score" in current["MatchBasis"]
+
+
+def test_project_mode_matchability_exact_when_led_color_unknown() -> None:
+    rows = [
+        AuditRow(
+            check_type=CheckType.QUALITY_ISSUE,
+            severity=Severity.WARN,
+            project_path="/proj/example.kicad_pro",
+            ref_des="D2",
+            uuid="uuid-d2",
+            category="LED",
+            field="Wavelength",
+            current_value="",
+            suggested_value="",
+            description="D2 missing wavelength",
+        ),
+    ]
+    context = {
+        ("/proj/example.kicad_pro", "D2", "uuid-d2", "LED"): {
+            "Value": "Pink",
+            "Footprint": "LED_SMD:LED_0603_1608Metric",
+            "Package": "0603",
+            "Description": "Indicator LED",
+        }
+    }
+
+    _fieldnames, written = _build_project_couplet_rows(rows, component_context=context)
+    current = next(row for row in written if row["RowType"] == "CURRENT")
+    suggested = next(row for row in written if row["RowType"] == "SUGGESTED")
+
+    assert current["Matchability"] == "MATCH_EXACT"
+    assert "score=" in current["MatchBasis"]
+    assert suggested["Wavelength"] == "MISSING"
+
+
+def test_project_mode_matchability_needs_clue_when_no_match_clues() -> None:
+    rows = [
+        AuditRow(
+            check_type=CheckType.QUALITY_ISSUE,
+            severity=Severity.WARN,
+            project_path="/proj/example.kicad_pro",
+            ref_des="U1",
+            uuid="uuid-u1",
+            category="",
+            field="Voltage",
+            current_value="",
+            suggested_value="",
+            description="U1 missing voltage",
+        ),
+    ]
+    context = {
+        ("/proj/example.kicad_pro", "U1", "uuid-u1", ""): {
+            "Value": "",
+            "Footprint": "",
+            "Package": "",
+            "Description": "Unknown part",
+        }
+    }
+
+    _fieldnames, written = _build_project_couplet_rows(rows, component_context=context)
+    current = next(row for row in written if row["RowType"] == "CURRENT")
+
+    assert current["Matchability"] == "NEEDS_CLUE"
+    assert "Insufficient matcher clues" in current["MatchBasis"]
+
+
+@pytest.mark.parametrize(
+    "value, expected_wavelength",
+    [
+        ("railroad-green", "505-508nm"),
+        ("railroad red", "627-635nm"),
+        ("railroad-yellow", "589-599nm"),
+        ("lunar-white", "400-700nm (cool white, CCT 3250-5600K)"),
+    ],
+)
+def test_project_mode_led_named_color_aliases_map_to_expected_ranges(
+    value: str, expected_wavelength: str
+) -> None:
+    rows = [
+        AuditRow(
+            check_type=CheckType.QUALITY_ISSUE,
+            severity=Severity.WARN,
+            project_path="/proj/example.kicad_pro",
+            ref_des="D3",
+            uuid="uuid-d3",
+            category="LED",
+            field="Wavelength",
+            current_value="",
+            suggested_value="",
+            description="D3 missing wavelength",
+        ),
+    ]
+    context = {
+        ("/proj/example.kicad_pro", "D3", "uuid-d3", "LED"): {
+            "Value": value,
+            "Footprint": "LED_SMD:LED_0603_1608Metric",
+            "Package": "0603",
+            "Description": "Signal LED",
+        }
+    }
+
+    _fieldnames, written = _build_project_couplet_rows(rows, component_context=context)
+    suggested = next(row for row in written if row["RowType"] == "SUGGESTED")
+
+    assert suggested["Wavelength"] == expected_wavelength
 
 
 # ---------------------------------------------------------------------------
