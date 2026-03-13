@@ -1,6 +1,23 @@
 # CHANGELOG
 
 
+## v6.39.6 (2026-03-13)
+
+### Bug Fixes
+
+* fix(search): stabilize defaults profiles and improve LCSC search quality
+
+- add global --defaults runtime profile support across commands
+
+- make search fields profile-driven and default supplier generic
+
+- improve search relevance with strict package handling, adaptive fetch expansion, and basic-tier preference
+
+- add aliases/fallbacks and new regression coverage for CLI/filtering behavior
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`8f82c02`](https://github.com/plocher/jBOM/commit/8f82c02fb941f29620bf649145245e09b5a302b4))
+
+
 ## v6.39.5 (2026-03-12)
 
 ### Bug Fixes
