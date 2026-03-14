@@ -5,7 +5,7 @@ import csv
 import os
 import sys
 from pathlib import Path
-from typing import Any, Mapping, Optional
+from typing import Any, Optional
 
 from jbom.cli.output import (
     OutputDestination,
@@ -17,16 +17,17 @@ from jbom.cli.output import (
 )
 from jbom.services.schematic_reader import SchematicReader
 from jbom.services.bom_generator import BOMGenerator, BOMData, BOMEntry
+from jbom.services.fabricator_projection_service import (
+    FabricatorProjectionService,
+)
 from jbom.services.inventory_overlay_service import InventoryOverlayService
 from jbom.services.pcb_reader import DefaultKiCadReaderService
 from jbom.services.project_file_resolver import ProjectFileResolver
 from jbom.common.options import GeneratorOptions
 from jbom.config.fabricators import (
     FabricatorConfig,
-    load_fabricator,
     get_available_fabricators,
     get_fabricator_presets,
-    apply_fabricator_column_mapping,
 )
 from jbom.common.field_parser import (
     parse_fields_argument,
@@ -612,9 +613,14 @@ def _output_bom(
     force: bool,
 ) -> int:
     """Output BOM data in the requested format with field customization."""
-
-    headers = apply_fabricator_column_mapping(fabricator, "bom", selected_fields)
-    fabricator_config = _load_fabricator_config(fabricator)
+    projection_service = FabricatorProjectionService()
+    projection = projection_service.build_projection(
+        fabricator_id=fabricator,
+        output_type="bom",
+        selected_fields=selected_fields,
+    )
+    headers = list(projection.headers)
+    fabricator_config = projection.fabricator_config
 
     dest = resolve_output_destination(
         output,
@@ -764,71 +770,19 @@ def _write_csv_handle(
         writer.writerow(row)
 
 
-def _load_fabricator_config(fabricator_id: str) -> Optional[FabricatorConfig]:
-    """Best-effort load of a fabricator configuration."""
-
-    try:
-        return load_fabricator(fabricator_id)
-    except ValueError:
-        return None
-
-
-def _normalize_fabricator_attributes(
-    raw_attributes: Mapping[str, Any], fabricator_config: FabricatorConfig
-) -> dict[str, str]:
-    """Add canonical synonym keys to a raw attributes mapping."""
-
-    normalized: dict[str, str] = {
-        str(key): str(value) for key, value in raw_attributes.items()
-    }
-
-    for header, value in list(normalized.items()):
-        canonical = fabricator_config.resolve_field_synonym(header)
-        if canonical is None:
-            continue
-
-        existing_value = normalized.get(canonical, "").strip()
-        if existing_value:
-            continue
-
-        normalized[canonical] = value
-
-    return normalized
-
-
-def _part_number_precedence_for_fabricator(fabricator_id: str) -> list[str]:
-    """Return canonical part-number precedence for the given fabricator."""
-
-    if (fabricator_id or "").strip().lower() == "pcbway":
-        return ["mpn", "supplier_pn", "fab_pn"]
-    return ["fab_pn", "supplier_pn", "mpn"]
-
-
 def _resolve_fabricator_part_number(
     entry,
     *,
     fabricator_id: str,
     fabricator_config: Optional[FabricatorConfig],
 ) -> str:
-    """Resolve fabricator part number via explicit and synonym-driven attributes."""
+    """Resolve fabricator part number using shared projection service behavior."""
 
-    explicit = str(entry.attributes.get("fabricator_part_number", "")).strip()
-    if explicit:
-        return explicit
-
-    effective_config = fabricator_config or _load_fabricator_config(fabricator_id)
-    if effective_config is None:
-        return ""
-
-    normalized_attributes = _normalize_fabricator_attributes(
-        entry.attributes, effective_config
+    return FabricatorProjectionService.resolve_fabricator_part_number(
+        entry.attributes,
+        fabricator_id=fabricator_id,
+        fabricator_config=fabricator_config,
     )
-    for canonical in _part_number_precedence_for_fabricator(fabricator_id):
-        candidate = normalized_attributes.get(canonical, "").strip()
-        if candidate:
-            return candidate
-
-    return ""
 
 
 def _is_smd_token(value: str) -> bool:
@@ -895,7 +849,6 @@ def _get_attribute_value(entry: BOMEntry, key: str) -> str:
 def _resolve_inventory_field_value(entry: BOMEntry, inventory_field: str) -> str:
     """Resolve an inventory-prefixed field with schema-aware fallbacks."""
     raw_value = entry.attributes.get(f"i:{inventory_field}", "")
-    raw_value = entry.attributes.get(inventory_field, "")
     if isinstance(raw_value, str):
         if raw_value.strip():
             return raw_value
@@ -907,7 +860,6 @@ def _resolve_inventory_field_value(entry: BOMEntry, inventory_field: str) -> str
             return legacy_value
     elif legacy_value:
         return str(legacy_value)
-        return derive_package_from_footprint(entry.footprint)
 
     return ""
 
