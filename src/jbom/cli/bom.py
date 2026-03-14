@@ -792,6 +792,27 @@ def _resolve_smd_indicator(entry: BOMEntry) -> str:
     return "No"
 
 
+def _coerce_output_value(raw_value: Any) -> str:
+    """Convert raw values to output-ready strings while preserving empties."""
+
+    if isinstance(raw_value, str):
+        return raw_value if raw_value.strip() else ""
+
+    if raw_value is None:
+        return ""
+
+    if isinstance(raw_value, bool):
+        return "Yes" if raw_value else "No"
+
+    return str(raw_value)
+
+
+def _get_attribute_value(entry: BOMEntry, key: str) -> str:
+    """Return a normalized attribute value from a BOM entry."""
+
+    return _coerce_output_value(entry.attributes.get(key, ""))
+
+
 def _resolve_inventory_field_value(entry: BOMEntry, inventory_field: str) -> str:
     """Resolve an inventory-prefixed field with schema-aware fallbacks."""
 
@@ -811,6 +832,122 @@ def _resolve_inventory_field_value(entry: BOMEntry, inventory_field: str) -> str
     return ""
 
 
+def _resolve_standard_field_value(
+    entry: BOMEntry,
+    field: str,
+    *,
+    fabricator_id: str,
+    fabricator_config: Optional[FabricatorConfig],
+) -> str:
+    """Resolve a standard (non-prefixed) BOM field."""
+
+    field_mapping = {
+        "reference": lambda e: e.references_string,
+        "quantity": lambda e: str(e.quantity),
+        "value": lambda e: e.value,
+        "description": lambda e: _get_attribute_value(e, "description"),
+        "footprint": lambda e: e.footprint,
+        "manufacturer": lambda e: _get_attribute_value(e, "manufacturer"),
+        "mfgpn": lambda e: _get_attribute_value(e, "manufacturer_part"),
+        "fabricator_part_number": lambda e: _resolve_fabricator_part_number(
+            e,
+            fabricator_id=fabricator_id,
+            fabricator_config=fabricator_config,
+        ),
+        "smd": lambda e: _resolve_smd_indicator(e),
+        "lcsc": lambda e: _get_attribute_value(e, "lcsc")
+        or _get_attribute_value(e, "LCSC"),
+        "package": lambda e: _get_attribute_value(e, "package")
+        or derive_package_from_footprint(e.footprint),
+    }
+
+    if field in field_mapping:
+        return field_mapping[field](entry)
+
+    return _get_attribute_value(entry, field)
+
+
+def _resolve_namespaced_field_value(
+    entry: BOMEntry,
+    namespace: str,
+    namespaced_field: str,
+    *,
+    fabricator_id: str,
+    fabricator_config: Optional[FabricatorConfig],
+) -> str:
+    """Resolve a namespace-qualified field with deterministic fallbacks."""
+
+    explicit = _get_attribute_value(entry, f"{namespace}:{namespaced_field}")
+    if explicit:
+        return explicit
+
+    if namespace == "i":
+        return _resolve_inventory_field_value(entry, namespaced_field)
+
+    if namespace in {"s", "c"}:
+        return _resolve_standard_field_value(
+            entry,
+            namespaced_field,
+            fabricator_id=fabricator_id,
+            fabricator_config=fabricator_config,
+        )
+
+    return ""
+
+
+def _resolve_annotation_field_value(
+    entry: BOMEntry,
+    annotation_field: str,
+    *,
+    fabricator_id: str,
+    fabricator_config: Optional[FabricatorConfig],
+) -> str:
+    """Render `a:*` fields as deterministic source annotation lines."""
+
+    explicit = _get_attribute_value(entry, f"a:{annotation_field}")
+    if explicit:
+        return explicit
+
+    lines: list[tuple[str, str]] = []
+
+    for namespace in ("s", "p"):
+        value = _resolve_namespaced_field_value(
+            entry,
+            namespace,
+            annotation_field,
+            fabricator_id=fabricator_id,
+            fabricator_config=fabricator_config,
+        )
+        if value:
+            lines.append((namespace, value))
+
+    inventory_value = _resolve_namespaced_field_value(
+        entry,
+        "i",
+        annotation_field,
+        fabricator_id=fabricator_id,
+        fabricator_config=fabricator_config,
+    )
+    if inventory_value:
+        lines.append(("i", inventory_value))
+
+    canonical_value = _resolve_namespaced_field_value(
+        entry,
+        "c",
+        annotation_field,
+        fabricator_id=fabricator_id,
+        fabricator_config=fabricator_config,
+    )
+    if canonical_value:
+        if not lines or any(value != canonical_value for _, value in lines):
+            lines.append(("c", canonical_value))
+
+    if not lines:
+        return ""
+
+    return "\n".join(f"{namespace}:{value}" for namespace, value in lines)
+
+
 def _get_field_value(
     entry,
     field: str,
@@ -827,33 +964,55 @@ def _get_field_value(
     Returns:
         String value for the field
     """
-    # Handle inventory fields with I: prefix
+    # Handle namespaced fields
     if field.startswith("i:"):
-        inventory_field = field[2:]  # Remove "i:" prefix
-        return _resolve_inventory_field_value(entry, inventory_field)
-
-    # Handle standard BOM fields
-    field_mapping = {
-        "reference": lambda e: e.references_string,
-        "quantity": lambda e: str(e.quantity),
-        "value": lambda e: e.value,
-        "description": lambda e: e.attributes.get("description", ""),
-        "footprint": lambda e: e.footprint,
-        "manufacturer": lambda e: e.attributes.get("manufacturer", ""),
-        "mfgpn": lambda e: e.attributes.get("manufacturer_part", ""),
-        "fabricator_part_number": lambda e: _resolve_fabricator_part_number(
-            e,
+        return _resolve_namespaced_field_value(
+            entry,
+            "i",
+            field[2:],
             fabricator_id=fabricator_id,
             fabricator_config=fabricator_config,
-        ),
-        "smd": lambda e: _resolve_smd_indicator(e),
-        "lcsc": lambda e: e.attributes.get("lcsc", "") or e.attributes.get("LCSC", ""),
-        "package": lambda e: e.attributes.get("package", "")
-        or derive_package_from_footprint(e.footprint),
-    }
+        )
 
-    if field in field_mapping:
-        return field_mapping[field](entry)
+    if field.startswith("s:"):
+        return _resolve_namespaced_field_value(
+            entry,
+            "s",
+            field[2:],
+            fabricator_id=fabricator_id,
+            fabricator_config=fabricator_config,
+        )
 
-    # Fall back to attribute lookup for unknown fields
-    return entry.attributes.get(field, "")
+    if field.startswith("p:"):
+        return _resolve_namespaced_field_value(
+            entry,
+            "p",
+            field[2:],
+            fabricator_id=fabricator_id,
+            fabricator_config=fabricator_config,
+        )
+
+    if field.startswith("c:"):
+        return _resolve_namespaced_field_value(
+            entry,
+            "c",
+            field[2:],
+            fabricator_id=fabricator_id,
+            fabricator_config=fabricator_config,
+        )
+
+    if field.startswith("a:"):
+        return _resolve_annotation_field_value(
+            entry,
+            field[2:],
+            fabricator_id=fabricator_id,
+            fabricator_config=fabricator_config,
+        )
+
+    # Handle standard BOM fields
+    return _resolve_standard_field_value(
+        entry,
+        field,
+        fabricator_id=fabricator_id,
+        fabricator_config=fabricator_config,
+    )
