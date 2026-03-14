@@ -76,14 +76,19 @@ def test_entry_smd_lookup_requires_all_known_references_smd() -> None:
     assert _entry_smd_from_reference_lookup(entry, {"R1": True, "R2": False}) is False
 
 
-def test_inventory_package_field_falls_back_to_derived_package() -> None:
-    entry = _make_entry({}, footprint="SignalMast-ColorLight-SingleHead:0603-LED")
+def test_inventory_package_field_uses_namespaced_value_when_present() -> None:
+    entry = _make_entry({"i:package": "0603-LED"})
     assert _get_field_value(entry, "i:package", fabricator_id="jlc") == "0603-LED"
 
 
 def test_inventory_package_field_prefers_explicit_package_attribute() -> None:
     entry = _make_entry({"package": "0603-LED"})
     assert _get_field_value(entry, "i:package", fabricator_id="jlc") == "0603-LED"
+
+
+def test_inventory_package_field_is_blank_without_overlay_projection() -> None:
+    entry = _make_entry({}, footprint="SignalMast-ColorLight-SingleHead:0603-LED")
+    assert _get_field_value(entry, "i:package", fabricator_id="jlc") == ""
 
 
 def test_s_namespace_field_falls_back_to_standard_field_resolution() -> None:
