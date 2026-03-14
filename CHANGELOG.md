@@ -1,6 +1,17 @@
 # CHANGELOG
 
 
+## v6.41.2 (2026-03-14)
+
+### Bug Fixes
+
+* fix(bom): unify --fields header mapping and SMD resolution
+
+Resolve explicit --fields tokens through fabricator column mappings so header-style inputs (Designator/Comment/LCSC/Surface_Mount) map to canonical internal fields. Populate BOM SMD values from project PCB mount metadata with package-based fallback and add regression coverage for parity and warnings.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`211891a`](https://github.com/plocher/jBOM/commit/211891a22bc58729a84553d451911832c00ec2ad))
+
+
 ## v6.41.1 (2026-03-14)
 
 ### Bug Fixes
