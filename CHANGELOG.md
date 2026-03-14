@@ -1,6 +1,17 @@
 # CHANGELOG
 
 
+## v6.41.1 (2026-03-14)
+
+### Bug Fixes
+
+* fix(bom): resolve fabricator part numbers via config synonyms
+
+Use fabricator profile synonym resolution in BOM output so schematic-only --jlc can emit LCSC values without inventory enrichment. Thread fabricator context through output field extraction and add regression tests for JLC aliases and explicit override precedence.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`8cbd841`](https://github.com/plocher/jBOM/commit/8cbd841aa9eb4a4a1ee77ddfff38dad7453116bf))
+
+
 ## v6.41.0 (2026-03-13)
 
 ### Features
