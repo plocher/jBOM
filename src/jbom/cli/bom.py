@@ -2,6 +2,7 @@
 
 import argparse
 import csv
+import os
 import sys
 from pathlib import Path
 from typing import Any, Mapping, Optional
@@ -39,6 +40,63 @@ from jbom.common.component_filters import (
 from jbom.common.component_utils import derive_package_from_footprint
 from jbom.common.package_matching import PackageType
 from jbom.cli.formatting import Column, print_table, get_terminal_width
+
+_PHASE1_SCAFFOLD_ENV = "JBOM_ENABLE_PHASE1_SCAFFOLD"
+
+
+def _phase1_scaffold_enabled() -> bool:
+    """Return True when Phase-1 service scaffolding is explicitly enabled."""
+
+    flag = os.environ.get(_PHASE1_SCAFFOLD_ENV, "")
+    return flag.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _run_phase1_bom_scaffold(
+    *,
+    components: list,
+    schematic_files: list[Path],
+    pcb_file: Optional[Path],
+    verbose: bool,
+) -> tuple[int, int] | None:
+    """Best-effort Phase-1 collector/merge execution for diagnostics only."""
+
+    if not _phase1_scaffold_enabled():
+        return None
+
+    try:
+        from jbom.services.component_merge_service import ComponentMergeService
+        from jbom.services.project_component_collector import ProjectComponentCollector
+
+        pcb_components = []
+        if pcb_file is not None and pcb_file.exists():
+            board = DefaultKiCadReaderService().read_pcb_file(pcb_file)
+            pcb_components = list(board.footprints)
+
+        collector = ProjectComponentCollector()
+        project_graph = collector.collect(
+            schematic_components=components,
+            pcb_components=pcb_components,
+            schematic_files=schematic_files,
+            pcb_file=pcb_file,
+        )
+        merge_service = ComponentMergeService()
+        merge_result = merge_service.merge(project_graph)
+
+        if verbose:
+            print(
+                "Phase1 scaffold active: "
+                f"{project_graph.reference_count} references, "
+                f"{len(merge_result.mismatches)} mismatch record(s)",
+                file=sys.stderr,
+            )
+        return project_graph.reference_count, len(merge_result.mismatches)
+    except Exception as exc:
+        if verbose:
+            print(
+                f"Warning: Phase1 scaffold execution skipped due to error: {exc}",
+                file=sys.stderr,
+            )
+        return None
 
 
 def register_command(subparsers) -> None:
@@ -230,6 +288,7 @@ def handle_bom(args: argparse.Namespace) -> int:
         if resolved_input.project_context:
             # Get all hierarchical schematic files for complete BOM
             hierarchical_files = resolved_input.get_hierarchical_files()
+            schematic_files = list(hierarchical_files)
             if args.verbose and len(hierarchical_files) > 1:
                 print(
                     f"Processing hierarchical design with {len(hierarchical_files)} schematic files",
@@ -245,7 +304,15 @@ def handle_bom(args: argparse.Namespace) -> int:
                 components.extend(file_components)
         else:
             # Load components from single schematic
+            schematic_files = [schematic_file]
             components = reader.load_components(schematic_file)
+
+        phase1_scaffold_summary = _run_phase1_bom_scaffold(
+            components=components,
+            schematic_files=schematic_files,
+            pcb_file=project_context.pcb_file if project_context else None,
+            verbose=args.verbose,
+        )
 
         # Parse field selection
         fabricator_presets = get_fabricator_presets(fabricator)
@@ -312,6 +379,22 @@ def handle_bom(args: argparse.Namespace) -> int:
             project_context.pcb_file if project_context else None,
             verbose=args.verbose,
         )
+
+        if phase1_scaffold_summary is not None:
+            reference_count, mismatch_count = phase1_scaffold_summary
+            metadata = dict(bom_data.metadata)
+            metadata.update(
+                {
+                    "phase1_scaffold_enabled": True,
+                    "phase1_reference_count": reference_count,
+                    "phase1_mismatch_count": mismatch_count,
+                }
+            )
+            bom_data = BOMData(
+                project_name=bom_data.project_name,
+                entries=bom_data.entries,
+                metadata=metadata,
+            )
 
         # Handle output
         return _output_bom(

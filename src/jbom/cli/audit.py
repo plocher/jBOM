@@ -26,6 +26,7 @@ from __future__ import annotations
 import argparse
 import csv
 import io
+import os
 import re
 import sys
 from collections import OrderedDict
@@ -149,6 +150,64 @@ _AUDIT_CONSOLE_FIELD_WIDTHS: dict[str, int] = {
     "Description": 28,
     "Notes": 28,
 }
+_PHASE1_SCAFFOLD_ENV = "JBOM_ENABLE_PHASE1_SCAFFOLD"
+
+
+def _phase1_scaffold_enabled() -> bool:
+    """Return True when Phase-1 scaffold integration is explicitly enabled."""
+
+    flag = os.environ.get(_PHASE1_SCAFFOLD_ENV, "")
+    return flag.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _run_phase1_audit_scaffold(
+    project_paths: list[Path], *, verbose_level: int
+) -> None:
+    """Instantiate collector/merge scaffolds in project mode without output changes."""
+
+    if not _phase1_scaffold_enabled():
+        return
+
+    from jbom.services.component_merge_service import ComponentMergeService
+    from jbom.services.project_component_collector import ProjectComponentCollector
+
+    collector = ProjectComponentCollector()
+    merge_service = ComponentMergeService()
+
+    total_references = 0
+    total_mismatches = 0
+
+    for project_path in project_paths:
+        try:
+            resolved_pro, schematic_files = _resolve_project_for_cli(project_path)
+        except (FileNotFoundError, ValueError):
+            continue
+
+        pcb_file = resolved_pro.with_suffix(".kicad_pcb")
+        if not pcb_file.exists():
+            pcb_file = None
+
+        try:
+            project_graph = collector.collect_from_files(
+                schematic_files=schematic_files,
+                pcb_file=pcb_file,
+            )
+            merge_result = merge_service.merge(project_graph)
+            total_references += project_graph.reference_count
+            total_mismatches += len(merge_result.mismatches)
+        except Exception as exc:
+            if verbose_level > 0:
+                print(
+                    f"Warning: Phase1 audit scaffold skipped for {project_path}: {exc}",
+                    file=sys.stderr,
+                )
+
+    if verbose_level > 0:
+        print(
+            "Phase1 scaffold active (audit): "
+            f"{total_references} references, {total_mismatches} mismatch record(s)",
+            file=sys.stderr,
+        )
 
 
 def register_command(subparsers: argparse._SubParsersAction) -> None:  # type: ignore[type-arg]
@@ -291,6 +350,10 @@ def _run_project_mode(args: argparse.Namespace, inputs: list[Path]) -> int:
         inventory_path=getattr(args, "inventory", None),
         supplier_service=supplier_service,
         supplier_id=supplier_id,
+    )
+    _run_phase1_audit_scaffold(
+        inputs,
+        verbose_level=int(getattr(args, "verbose", 0) or 0),
     )
     component_context = _collect_project_component_contexts(inputs)
     _write_project_report(
