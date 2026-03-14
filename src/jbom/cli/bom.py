@@ -15,8 +15,9 @@ from jbom.cli.output import (
     resolve_output_destination,
 )
 from jbom.services.schematic_reader import SchematicReader
-from jbom.services.bom_generator import BOMGenerator, BOMData
+from jbom.services.bom_generator import BOMGenerator, BOMData, BOMEntry
 from jbom.services.inventory_matcher import InventoryMatcher
+from jbom.services.pcb_reader import DefaultKiCadReaderService
 from jbom.services.project_file_resolver import ProjectFileResolver
 from jbom.common.options import GeneratorOptions
 from jbom.config.fabricators import (
@@ -36,6 +37,7 @@ from jbom.common.component_filters import (
     create_filter_config,
 )
 from jbom.common.component_utils import derive_package_from_footprint
+from jbom.common.package_matching import PackageType
 from jbom.cli.formatting import Column, print_table, get_terminal_width
 
 
@@ -305,6 +307,12 @@ def handle_bom(args: argparse.Namespace) -> int:
                 project_name=project_name,
             )
 
+        bom_data = _enrich_bom_smd_from_project_pcb(
+            bom_data,
+            project_context.pcb_file if project_context else None,
+            verbose=args.verbose,
+        )
+
         # Handle output
         return _output_bom(
             bom_data,
@@ -413,6 +421,106 @@ def _get_available_bom_fields(components) -> dict[str, str]:
                         fields[normalized_key] = f"Component property: {attr_key}"
 
     return fields
+
+
+def _load_pcb_smd_lookup(
+    pcb_file: Optional[Path], *, verbose: bool = False
+) -> dict[str, bool]:
+    """Return reference -> is_smd lookup from a KiCad PCB file."""
+
+    if pcb_file is None or not pcb_file.exists():
+        return {}
+
+    try:
+        board = DefaultKiCadReaderService().read_pcb_file(pcb_file)
+    except Exception as exc:
+        if verbose:
+            print(
+                f"Warning: Could not read PCB mount metadata from {pcb_file}: {exc}",
+                file=sys.stderr,
+            )
+        return {}
+
+    smd_by_reference: dict[str, bool] = {}
+    for footprint in board.footprints:
+        reference = (footprint.reference or "").strip()
+        if not reference:
+            continue
+
+        mount_type = str(footprint.attributes.get("mount_type", "")).strip().lower()
+        if mount_type == "smd":
+            smd_by_reference[reference] = True
+        elif mount_type in {"through_hole", "through-hole", "tht"}:
+            smd_by_reference[reference] = False
+
+    return smd_by_reference
+
+
+def _entry_smd_from_reference_lookup(
+    entry: BOMEntry, smd_by_reference: dict[str, bool]
+) -> Optional[bool]:
+    """Resolve an entry-level SMD boolean from per-reference PCB mount metadata."""
+
+    known_values = [
+        smd_by_reference[ref] for ref in entry.references if ref in smd_by_reference
+    ]
+    if not known_values:
+        return None
+
+    # Aggregated BOM groups should be homogeneous by footprint.
+    return all(known_values)
+
+
+def _enrich_bom_smd_from_project_pcb(
+    bom_data: BOMData,
+    pcb_file: Optional[Path],
+    *,
+    verbose: bool = False,
+) -> BOMData:
+    """Populate missing BOM `smd` attributes from PCB mount metadata."""
+
+    smd_by_reference = _load_pcb_smd_lookup(pcb_file, verbose=verbose)
+    if not smd_by_reference:
+        return bom_data
+
+    updated = False
+    enriched_entries: list[BOMEntry] = []
+
+    for entry in bom_data.entries:
+        current_smd = str(entry.attributes.get("smd", "")).strip()
+        if current_smd:
+            enriched_entries.append(entry)
+            continue
+
+        resolved = _entry_smd_from_reference_lookup(entry, smd_by_reference)
+        if resolved is None:
+            enriched_entries.append(entry)
+            continue
+
+        attrs = dict(entry.attributes)
+        attrs["smd"] = resolved
+        enriched_entries.append(
+            BOMEntry(
+                references=entry.references,
+                value=entry.value,
+                footprint=entry.footprint,
+                quantity=entry.quantity,
+                lib_id=entry.lib_id,
+                attributes=attrs,
+            )
+        )
+        updated = True
+
+    if not updated:
+        return bom_data
+
+    metadata = dict(bom_data.metadata)
+    metadata["pcb_mount_metadata_used"] = True
+    return BOMData(
+        project_name=bom_data.project_name,
+        entries=enriched_entries,
+        metadata=metadata,
+    )
 
 
 def _output_bom(
@@ -644,6 +752,46 @@ def _resolve_fabricator_part_number(
     return ""
 
 
+def _is_smd_token(value: str) -> bool:
+    """Return True when a token contains known SMD package patterns."""
+
+    token = (value or "").strip().lower()
+    if not token:
+        return False
+
+    for pattern in sorted(PackageType.SMD_PACKAGES, key=len, reverse=True):
+        if pattern in token:
+            return True
+    return False
+
+
+def _resolve_smd_indicator(entry: BOMEntry) -> str:
+    """Resolve BOM SMD value as `Yes`/`No` from explicit and inferred signals."""
+
+    raw = entry.attributes.get("smd", "")
+    if isinstance(raw, bool):
+        return "Yes" if raw else "No"
+
+    raw_text = str(raw).strip().lower()
+    if raw_text in {"yes", "y", "true", "1", "smd"}:
+        return "Yes"
+    if raw_text in {"no", "n", "false", "0", "tht", "through_hole", "through-hole"}:
+        return "No"
+
+    package = str(entry.attributes.get("package", "")).strip()
+    if _is_smd_token(package):
+        return "Yes"
+
+    derived_package = derive_package_from_footprint(entry.footprint)
+    if _is_smd_token(derived_package):
+        return "Yes"
+
+    if _is_smd_token(entry.footprint):
+        return "Yes"
+
+    return "No"
+
+
 def _get_field_value(
     entry,
     field: str,
@@ -679,7 +827,7 @@ def _get_field_value(
             fabricator_id=fabricator_id,
             fabricator_config=fabricator_config,
         ),
-        "smd": lambda e: "Yes" if e.attributes.get("smd", False) else "No",
+        "smd": lambda e: _resolve_smd_indicator(e),
         "lcsc": lambda e: e.attributes.get("lcsc", "") or e.attributes.get("LCSC", ""),
         "package": lambda e: e.attributes.get("package", "")
         or derive_package_from_footprint(e.footprint),
