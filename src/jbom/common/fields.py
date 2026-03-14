@@ -60,13 +60,22 @@ def normalize_field_name(field: str) -> str:
     if not field:
         return ""
 
-    # Handle prefixes (I: and C:) separately
+    # Handle prefixes (I:, C:, S:, P:, and A:) separately
     prefix = ""
     if field.lower().startswith("i:"):
         prefix = "i:"
         field = field[2:]
     elif field.lower().startswith("c:"):
         prefix = "c:"
+        field = field[2:]
+    elif field.lower().startswith("s:"):
+        prefix = "s:"
+        field = field[2:]
+    elif field.lower().startswith("p:"):
+        prefix = "p:"
+        field = field[2:]
+    elif field.lower().startswith("a:"):
+        prefix = "a:"
         field = field[2:]
 
     # Replace spaces and hyphens with underscores
@@ -114,6 +123,15 @@ def field_to_header(field: str) -> str:
         field = field[2:]
     elif field.lower().startswith("c:"):
         prefix = "C:"
+        field = field[2:]
+    elif field.lower().startswith("s:"):
+        prefix = "S:"
+        field = field[2:]
+    elif field.lower().startswith("p:"):
+        prefix = "P:"
+        field = field[2:]
+    elif field.lower().startswith("a:"):
+        prefix = "A:"
         field = field[2:]
 
     # Split on underscores and handle each part
