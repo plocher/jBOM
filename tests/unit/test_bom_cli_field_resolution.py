@@ -84,3 +84,49 @@ def test_inventory_package_field_falls_back_to_derived_package() -> None:
 def test_inventory_package_field_prefers_explicit_package_attribute() -> None:
     entry = _make_entry({"package": "0603-LED"})
     assert _get_field_value(entry, "i:package", fabricator_id="jlc") == "0603-LED"
+
+
+def test_s_namespace_field_falls_back_to_standard_field_resolution() -> None:
+    entry = _make_entry({"description": "Pull-up resistor"})
+    assert _get_field_value(entry, "s:value", fabricator_id="jlc") == "10k"
+    assert (
+        _get_field_value(entry, "s:description", fabricator_id="jlc")
+        == "Pull-up resistor"
+    )
+
+
+def test_c_namespace_field_prefers_explicit_value_and_falls_back_to_standard() -> None:
+    explicit_entry = _make_entry({"c:value": "9k99"})
+    assert _get_field_value(explicit_entry, "c:value", fabricator_id="jlc") == "9k99"
+
+    fallback_entry = _make_entry({})
+    assert _get_field_value(fallback_entry, "c:value", fabricator_id="jlc") == "10k"
+
+
+def test_p_namespace_field_returns_explicit_value_only() -> None:
+    explicit_entry = _make_entry({"p:footprint": "PCB:0603"})
+    assert (
+        _get_field_value(explicit_entry, "p:footprint", fabricator_id="jlc")
+        == "PCB:0603"
+    )
+
+    fallback_entry = _make_entry({})
+    assert _get_field_value(fallback_entry, "p:footprint", fabricator_id="jlc") == ""
+
+
+def test_a_namespace_field_renders_annotation_lines_with_canonical_on_mismatch() -> (
+    None
+):
+    entry = _make_entry(
+        {"s:footprint": "SCH:0603", "p:footprint": "PCB:0402"},
+        footprint="SCH:0603",
+    )
+    assert (
+        _get_field_value(entry, "a:footprint", fabricator_id="jlc")
+        == "s:SCH:0603\np:PCB:0402\nc:SCH:0603"
+    )
+
+
+def test_a_namespace_field_prefers_explicit_annotation_value() -> None:
+    entry = _make_entry({"a:value": "s:10k\np:9k99"})
+    assert _get_field_value(entry, "a:value", fabricator_id="jlc") == "s:10k\np:9k99"
