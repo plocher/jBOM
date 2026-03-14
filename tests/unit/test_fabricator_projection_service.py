@@ -45,6 +45,25 @@ def test_build_projection_unknown_fabricator_uses_default_headers() -> None:
     assert projection.headers == ("Reference", "I:Package")
 
 
+def test_build_projection_maps_jlc_pos_headers() -> None:
+    service = FabricatorProjectionService()
+    projection = service.build_projection(
+        fabricator_id="jlc",
+        output_type="pos",
+        selected_fields=["reference", "x", "y", "side", "rotation", "package"],
+    )
+
+    assert projection.fabricator_config is not None
+    assert projection.headers == (
+        "Designator",
+        "Mid X",
+        "Mid Y",
+        "Layer",
+        "Rotation",
+        "Package",
+    )
+
+
 def test_resolve_fabricator_part_number_prefers_explicit_attribute() -> None:
     config = FabricatorProjectionService().load_config("jlc")
     assert config is not None

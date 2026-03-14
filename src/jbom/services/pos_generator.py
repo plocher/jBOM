@@ -4,6 +4,7 @@ This service generates component placement files from PCB data.
 """
 from typing import List
 
+from jbom.common.fields import normalize_field_name
 from jbom.common.pcb_types import BoardModel, PcbComponent
 from jbom.common.options import PlacementOptions
 
@@ -32,6 +33,9 @@ class POSGenerator:
 
         for component in board.footprints:
             if self._should_include_component(component):
+                normalized_attributes = self._normalize_component_attributes(
+                    component.attributes
+                )
                 entry = {
                     "reference": component.reference,
                     "x_mm": component.center_x_mm,
@@ -56,9 +60,12 @@ class POSGenerator:
                     entry["value"] = ""
 
                 # Include other common attributes that might be requested
-                entry["fabricator_part_number"] = component.attributes.get(
-                    "fabricator_part_number", ""
+                entry["fabricator_part_number"] = normalized_attributes.get(
+                    "fabricator_part_number",
+                    "",
                 )
+                for attribute_key, attribute_value in normalized_attributes.items():
+                    entry.setdefault(attribute_key, attribute_value)
 
                 pos_entries.append(entry)
 
@@ -78,3 +85,16 @@ class POSGenerator:
                 return False
 
         return True
+
+    @staticmethod
+    def _normalize_component_attributes(attributes: dict[str, str]) -> dict[str, str]:
+        """Normalize component attributes to canonical field IDs."""
+
+        normalized: dict[str, str] = {}
+        for key, value in attributes.items():
+            normalized_key = normalize_field_name(key)
+            if not normalized_key:
+                continue
+            normalized[normalized_key] = value
+
+        return normalized
