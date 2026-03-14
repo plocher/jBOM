@@ -16,9 +16,13 @@ from pathlib import Path
 import pytest
 
 from jbom.common.component_utils import derive_package_from_footprint
-from jbom.common.field_parser import parse_fields_argument
+from jbom.common.field_parser import (
+    parse_fields_argument,
+    check_fabricator_field_completeness,
+)
 from jbom.common.component_filters import apply_component_filters
 from jbom.common.types import Component
+from jbom.config.fabricators import get_fabricator_presets
 from jbom.services.bom_generator import BOMGenerator
 from jbom.services.project_inventory import ProjectInventoryGenerator
 
@@ -265,3 +269,34 @@ class TestBug5PermissiveFields:
     def test_empty_fields_still_raises(self) -> None:
         with pytest.raises(ValueError, match="cannot be empty"):
             parse_fields_argument("", self._available)
+
+    def test_jlc_header_tokens_map_to_internal_fields_without_warning(self) -> None:
+        available = {
+            "reference": "Reference",
+            "quantity": "Quantity",
+            "value": "Value",
+            "description": "Description",
+            "footprint": "Footprint",
+            "i:package": "Inventory package",
+            "fabricator_part_number": "Fabricator part number",
+            "smd": "Surface mount indicator",
+        }
+        presets = get_fabricator_presets("jlc")
+        selected = parse_fields_argument(
+            "Designator,Quantity,Value,Comment,Footprint,LCSC,Surface_Mount",
+            available,
+            fabricator_id="jlc",
+            fabricator_presets=presets,
+            context="bom",
+        )
+        assert selected == [
+            "reference",
+            "quantity",
+            "value",
+            "description",
+            "i:package",
+            "fabricator_part_number",
+            "smd",
+        ]
+        warning = check_fabricator_field_completeness(selected, "jlc", presets)
+        assert warning is None

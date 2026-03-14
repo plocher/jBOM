@@ -7,6 +7,38 @@ from __future__ import annotations
 from typing import Dict, List, Optional, Any
 
 from .fields import normalize_field_name, FIELD_PRESETS
+from .synonym_normalization import normalize_synonym_token
+
+
+def _resolve_field_token(
+    token: str,
+    *,
+    fabricator_id: str,
+    context: str,
+) -> str:
+    """Resolve a user field token to an internal field ID.
+
+    This accepts either internal field IDs (e.g. ``reference``) or fabricator
+    output column headers (e.g. ``Designator`` / ``Surface Mount``).
+    """
+
+    normalized_token = normalize_field_name(token)
+
+    from jbom.config.fabricators import get_fabricator_column_mapping
+
+    column_mapping = get_fabricator_column_mapping(fabricator_id, context)
+    if not column_mapping:
+        return normalized_token
+
+    if normalized_token in column_mapping.values():
+        return normalized_token
+
+    token_key = normalize_synonym_token(token)
+    for header, internal_field in column_mapping.items():
+        if normalize_synonym_token(header) == token_key:
+            return internal_field
+
+    return normalized_token
 
 
 def parse_fields_argument(
@@ -104,7 +136,11 @@ def parse_fields_argument(
             else:
                 # Not a preset — treat as a field addition request.
                 # Permissive: accept any field name. Unknown fields produce blank cells.
-                field_name = normalize_field_name(tok[1:])
+                field_name = _resolve_field_token(
+                    tok[1:],
+                    fabricator_id=fabricator_id,
+                    context=context,
+                )
                 # Add appropriate context defaults first if result is empty
                 if not result:
                     if fabricator_id != "generic":
@@ -155,7 +191,11 @@ def parse_fields_argument(
         else:
             # Custom field name — permissive: normalize and accept regardless of whether
             # the field exists in available_fields. Unknown fields produce blank cells.
-            normalized = normalize_field_name(tok)
+            normalized = _resolve_field_token(
+                tok,
+                fabricator_id=fabricator_id,
+                context=context,
+            )
             result.append(normalized)
 
     # Deduplicate while preserving order
