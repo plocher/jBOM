@@ -4,7 +4,7 @@ import argparse
 import csv
 import sys
 from pathlib import Path
-from typing import TextIO
+from typing import Any, Optional, TextIO
 
 from jbom.cli.output import (
     OutputDestination,
@@ -29,10 +29,11 @@ from jbom.common.component_filters import (
     create_filter_config,
 )
 from jbom.config.fabricators import (
+    FabricatorConfig,
     get_fabricator_default_fields,
-    apply_fabricator_column_mapping,
 )
 from jbom.cli.formatting import Column, print_table, get_terminal_width
+from jbom.services.fabricator_projection_service import FabricatorProjectionService
 
 _NUMERIC_POS_FIELDS: frozenset[str] = frozenset({"x", "y", "rotation"})
 
@@ -315,6 +316,42 @@ def _list_available_pos_fields(fabricator: str) -> None:
         print(f"  {', '.join(default_fields)}")
 
 
+def _resolve_pos_output_projection(
+    *,
+    selected_fields: list[str] | None,
+    fabricator: str,
+    user_specified_fields: bool,
+    projection_service: FabricatorProjectionService | None = None,
+) -> tuple[list[str], list[str], Optional[FabricatorConfig]]:
+    """Resolve effective POS fields, headers, and fabricator config."""
+
+    effective_fields = list(selected_fields) if selected_fields else []
+    if not effective_fields:
+        effective_fields = get_fabricator_default_fields(fabricator, "pos") or [
+            "reference",
+            "x",
+            "y",
+            "rotation",
+            "side",
+            "footprint",
+            "package",
+        ]
+
+    service = projection_service or FabricatorProjectionService()
+    projection = service.build_projection(
+        fabricator_id=fabricator,
+        output_type="pos",
+        selected_fields=effective_fields,
+    )
+
+    headers = (
+        [field_to_header(field) for field in effective_fields]
+        if user_specified_fields
+        else list(projection.headers)
+    )
+    return effective_fields, headers, projection.fabricator_config
+
+
 def _output_pos(
     pos_data: list,
     output: str | None,
@@ -326,30 +363,11 @@ def _output_pos(
     force: bool,
 ) -> int:
     """Output position data in the requested format."""
-    # Use default fields if none selected
-    if not selected_fields:
-        # Try to get fabricator default fields, fall back to standard set
-        selected_fields = get_fabricator_default_fields(fabricator, "pos")
-        if not selected_fields:
-            selected_fields = [
-                "reference",
-                "x",
-                "y",
-                "rotation",
-                "side",
-                "footprint",
-                "package",
-            ]
-        # Mark that these came from fabricator defaults, not user specification
-        user_specified_fields = False
-
-    # Apply fabricator column mapping only for fabricator presets, not user-specified fields
-    if user_specified_fields:
-        # User specified exact field names - use them as headers with proper display names
-        headers = [field_to_header(field) for field in selected_fields]
-    else:
-        # Fabricator preset - use fabricator-specific column names
-        headers = apply_fabricator_column_mapping(fabricator, "pos", selected_fields)
+    selected_fields, headers, fabricator_config = _resolve_pos_output_projection(
+        selected_fields=selected_fields,
+        fabricator=fabricator,
+        user_specified_fields=user_specified_fields,
+    )
 
     dest = resolve_output_destination(
         output,
@@ -359,11 +377,24 @@ def _output_pos(
     )
 
     if dest.kind == OutputKind.CONSOLE:
-        _print_console_table(pos_data, selected_fields, headers)
+        _print_console_table(
+            pos_data,
+            selected_fields,
+            headers,
+            fabricator_id=fabricator,
+            fabricator_config=fabricator_config,
+        )
         return 0
 
     if dest.kind == OutputKind.STDOUT:
-        _print_csv(pos_data, selected_fields, headers, out=sys.stdout)
+        _print_csv(
+            pos_data,
+            selected_fields,
+            headers,
+            out=sys.stdout,
+            fabricator_id=fabricator,
+            fabricator_config=fabricator_config,
+        )
         return 0
 
     if not dest.path:
@@ -378,7 +409,14 @@ def _output_pos(
             force=force,
             refused_message=refused,
         ) as f:
-            _print_csv(pos_data, selected_fields, headers, out=f)
+            _print_csv(
+                pos_data,
+                selected_fields,
+                headers,
+                out=f,
+                fabricator_id=fabricator,
+                fabricator_config=fabricator_config,
+            )
     except OutputRefusedError as exc:
         print(str(exc), file=sys.stderr)
         return 1
@@ -387,7 +425,14 @@ def _output_pos(
     return 0
 
 
-def _print_console_table(pos_data: list, selected_fields: list, headers: list) -> None:
+def _print_console_table(
+    pos_data: list,
+    selected_fields: list,
+    headers: list,
+    *,
+    fabricator_id: str,
+    fabricator_config: Optional[FabricatorConfig],
+) -> None:
     """Print position data as formatted console table."""
     print(f"\nComponent Placement Data ({len(pos_data)} components)")
     print("=" * 80)
@@ -397,7 +442,15 @@ def _print_console_table(pos_data: list, selected_fields: list, headers: list) -
         return
 
     rows = [
-        {h: _get_pos_field_value(entry, f) for f, h in zip(selected_fields, headers)}
+        {
+            h: _get_pos_field_value(
+                entry,
+                f,
+                fabricator_id=fabricator_id,
+                fabricator_config=fabricator_config,
+            )
+            for f, h in zip(selected_fields, headers)
+        }
         for entry in pos_data
     ]
     columns = [
@@ -421,6 +474,8 @@ def _print_csv(
     headers: list,
     *,
     out: TextIO,
+    fabricator_id: str,
+    fabricator_config: Optional[FabricatorConfig],
 ) -> None:
     """Print position data as CSV to a file-like object."""
 
@@ -435,12 +490,38 @@ def _print_csv(
     for entry in pos_data:
         row = []
         for field in selected_fields:
-            value = _get_pos_field_value(entry, field)
+            value = _get_pos_field_value(
+                entry,
+                field,
+                fabricator_id=fabricator_id,
+                fabricator_config=fabricator_config,
+            )
             row.append(value)
         writer.writerow(row)
 
 
-def _get_pos_field_value(entry: dict, field: str) -> str:
+def _resolve_fabricator_part_number(
+    entry: dict[str, Any],
+    *,
+    fabricator_id: str,
+    fabricator_config: Optional[FabricatorConfig],
+) -> str:
+    """Resolve fabricator part number using shared projection service behavior."""
+
+    return FabricatorProjectionService.resolve_fabricator_part_number(
+        entry,
+        fabricator_id=fabricator_id,
+        fabricator_config=fabricator_config,
+    )
+
+
+def _get_pos_field_value(
+    entry: dict[str, Any],
+    field: str,
+    *,
+    fabricator_id: str = "generic",
+    fabricator_config: Optional[FabricatorConfig] = None,
+) -> str:
     """Extract field value from POS entry.
 
     Args:
@@ -464,6 +545,13 @@ def _get_pos_field_value(entry: dict, field: str) -> str:
             return str(entry["rotation_raw"])  # echo raw if available
         return f"{entry['rotation']:.1f}"
 
+    if field == "fabricator_part_number":
+        return _resolve_fabricator_part_number(
+            entry,
+            fabricator_id=fabricator_id,
+            fabricator_config=fabricator_config,
+        )
+
     # Handle standard POS fields
     field_mapping = {
         "reference": "reference",
@@ -471,7 +559,6 @@ def _get_pos_field_value(entry: dict, field: str) -> str:
         "footprint": "footprint",
         "package": "package",
         "value": "value",  # This would need to come from schematic data
-        "fabricator_part_number": "fabricator_part_number",  # From component properties
     }
 
     if field in field_mapping:
