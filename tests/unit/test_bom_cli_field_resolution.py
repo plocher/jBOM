@@ -4,12 +4,16 @@ from jbom.cli.bom import _entry_smd_from_reference_lookup, _get_field_value
 from jbom.services.bom_generator import BOMEntry
 
 
-def _make_entry(attributes: dict[str, object]) -> BOMEntry:
+def _make_entry(
+    attributes: dict[str, object],
+    *,
+    footprint: str = "Resistor_SMD:R_0603_1608Metric",
+) -> BOMEntry:
     """Create a minimal BOM entry for field resolution tests."""
     return BOMEntry(
         references=["R1"],
         value="10k",
-        footprint="Resistor_SMD:R_0603_1608Metric",
+        footprint=footprint,
         quantity=1,
         attributes=attributes,
     )
@@ -70,3 +74,13 @@ def test_entry_smd_lookup_requires_all_known_references_smd() -> None:
     )
     assert _entry_smd_from_reference_lookup(entry, {"R1": True, "R2": True}) is True
     assert _entry_smd_from_reference_lookup(entry, {"R1": True, "R2": False}) is False
+
+
+def test_inventory_package_field_falls_back_to_derived_package() -> None:
+    entry = _make_entry({}, footprint="SignalMast-ColorLight-SingleHead:0603-LED")
+    assert _get_field_value(entry, "i:package", fabricator_id="jlc") == "0603-LED"
+
+
+def test_inventory_package_field_prefers_explicit_package_attribute() -> None:
+    entry = _make_entry({"package": "0603-LED"})
+    assert _get_field_value(entry, "i:package", fabricator_id="jlc") == "0603-LED"

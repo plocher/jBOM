@@ -792,6 +792,25 @@ def _resolve_smd_indicator(entry: BOMEntry) -> str:
     return "No"
 
 
+def _resolve_inventory_field_value(entry: BOMEntry, inventory_field: str) -> str:
+    """Resolve an inventory-prefixed field with schema-aware fallbacks."""
+
+    raw_value = entry.attributes.get(inventory_field, "")
+    if isinstance(raw_value, str):
+        if raw_value.strip():
+            return raw_value
+    elif raw_value:
+        return str(raw_value)
+
+    if inventory_field == "package":
+        package = str(entry.attributes.get("package", "")).strip()
+        if package:
+            return package
+        return derive_package_from_footprint(entry.footprint)
+
+    return ""
+
+
 def _get_field_value(
     entry,
     field: str,
@@ -811,7 +830,7 @@ def _get_field_value(
     # Handle inventory fields with I: prefix
     if field.startswith("i:"):
         inventory_field = field[2:]  # Remove "i:" prefix
-        return entry.attributes.get(inventory_field, "")
+        return _resolve_inventory_field_value(entry, inventory_field)
 
     # Handle standard BOM fields
     field_mapping = {
