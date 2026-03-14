@@ -17,7 +17,7 @@ from jbom.cli.output import (
 )
 from jbom.services.schematic_reader import SchematicReader
 from jbom.services.bom_generator import BOMGenerator, BOMData, BOMEntry
-from jbom.services.inventory_matcher import InventoryMatcher
+from jbom.services.inventory_overlay_service import InventoryOverlayService
 from jbom.services.pcb_reader import DefaultKiCadReaderService
 from jbom.services.project_file_resolver import ProjectFileResolver
 from jbom.common.options import GeneratorOptions
@@ -341,38 +341,34 @@ def handle_bom(args: argparse.Namespace) -> int:
         filters = create_filter_config(args)
         bom_data = generator.generate_bom_data(components, project_name, filters)
 
-        # Enhance with inventory if requested
+        inventory_file: Path | None = None
         if args.inventory_files:
             if args.verbose:
                 print(
                     f"Enhancing BOM with {len(args.inventory_files)} inventory file(s)",
                     file=sys.stderr,
                 )
-
-            # For now, use the first inventory file (single-file enhancement)
-            # TODO: Implement multi-file enhancement in InventoryMatcher service
             inventory_file = Path(args.inventory_files[0])
-
             if not inventory_file.exists():
                 print(
                     f"Error: Inventory file not found: {inventory_file}",
                     file=sys.stderr,
                 )
                 return 1
-
             if len(args.inventory_files) > 1 and args.verbose:
                 print(
                     f"Note: Using primary inventory file {inventory_file}, multi-file enhancement coming soon",
                     file=sys.stderr,
                 )
 
-            matcher = InventoryMatcher()
-            bom_data = matcher.enhance_bom_with_inventory(
-                bom_data,
-                inventory_file,
-                fabricator_id=fabricator,
-                project_name=project_name,
-            )
+        overlay_service = InventoryOverlayService()
+        overlay_result = overlay_service.overlay_bom_data(
+            bom_data,
+            inventory_file=inventory_file,
+            fabricator_id=fabricator,
+            project_name=project_name,
+        )
+        bom_data = overlay_result.bom_data
 
         bom_data = _enrich_bom_smd_from_project_pcb(
             bom_data,
@@ -898,18 +894,19 @@ def _get_attribute_value(entry: BOMEntry, key: str) -> str:
 
 def _resolve_inventory_field_value(entry: BOMEntry, inventory_field: str) -> str:
     """Resolve an inventory-prefixed field with schema-aware fallbacks."""
-
+    raw_value = entry.attributes.get(f"i:{inventory_field}", "")
     raw_value = entry.attributes.get(inventory_field, "")
     if isinstance(raw_value, str):
         if raw_value.strip():
             return raw_value
     elif raw_value:
         return str(raw_value)
-
-    if inventory_field == "package":
-        package = str(entry.attributes.get("package", "")).strip()
-        if package:
-            return package
+    legacy_value = entry.attributes.get(inventory_field, "")
+    if isinstance(legacy_value, str):
+        if legacy_value.strip():
+            return legacy_value
+    elif legacy_value:
+        return str(legacy_value)
         return derive_package_from_footprint(entry.footprint)
 
     return ""
