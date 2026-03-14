@@ -4,7 +4,7 @@ import argparse
 import csv
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Any, Mapping, Optional
 
 from jbom.cli.output import (
     OutputDestination,
@@ -20,6 +20,8 @@ from jbom.services.inventory_matcher import InventoryMatcher
 from jbom.services.project_file_resolver import ProjectFileResolver
 from jbom.common.options import GeneratorOptions
 from jbom.config.fabricators import (
+    FabricatorConfig,
+    load_fabricator,
     get_available_fabricators,
     get_fabricator_presets,
     apply_fabricator_column_mapping,
@@ -425,6 +427,7 @@ def _output_bom(
     """Output BOM data in the requested format with field customization."""
 
     headers = apply_fabricator_column_mapping(fabricator, "bom", selected_fields)
+    fabricator_config = _load_fabricator_config(fabricator)
 
     dest = resolve_output_destination(
         output,
@@ -434,11 +437,23 @@ def _output_bom(
     )
 
     if dest.kind == OutputKind.CONSOLE:
-        _print_console_table(bom_data, selected_fields, headers)
+        _print_console_table(
+            bom_data,
+            selected_fields,
+            headers,
+            fabricator_id=fabricator,
+            fabricator_config=fabricator_config,
+        )
         return 0
 
     if dest.kind == OutputKind.STDOUT:
-        _print_csv(bom_data, selected_fields, headers)
+        _print_csv(
+            bom_data,
+            selected_fields,
+            headers,
+            fabricator_id=fabricator,
+            fabricator_config=fabricator_config,
+        )
         return 0
 
     if not dest.path:
@@ -453,7 +468,14 @@ def _output_bom(
             force=force,
             refused_message=refused,
         ) as f:
-            _write_csv_handle(bom_data, f, selected_fields, headers)
+            _write_csv_handle(
+                bom_data,
+                f,
+                selected_fields,
+                headers,
+                fabricator_id=fabricator,
+                fabricator_config=fabricator_config,
+            )
     except OutputRefusedError as exc:
         print(str(exc), file=sys.stderr)
         return 1
@@ -463,7 +485,12 @@ def _output_bom(
 
 
 def _print_console_table(
-    bom_data: BOMData, selected_fields: list[str], headers: list[str]
+    bom_data: BOMData,
+    selected_fields: list[str],
+    headers: list[str],
+    *,
+    fabricator_id: str,
+    fabricator_config: Optional[FabricatorConfig],
 ) -> None:
     """Print BOM as formatted console table with dynamic fields."""
     print(f"\n{bom_data.project_name} - Bill of Materials")
@@ -474,7 +501,15 @@ def _print_console_table(
         return
 
     rows = [
-        {h: _get_field_value(entry, f) for f, h in zip(selected_fields, headers)}
+        {
+            h: _get_field_value(
+                entry,
+                f,
+                fabricator_id=fabricator_id,
+                fabricator_config=fabricator_config,
+            )
+            for f, h in zip(selected_fields, headers)
+        }
         for entry in bom_data.entries
     ]
     columns = [
@@ -496,11 +531,22 @@ def _print_console_table(
 
 
 def _print_csv(
-    bom_data: BOMData, selected_fields: list[str], headers: list[str]
+    bom_data: BOMData,
+    selected_fields: list[str],
+    headers: list[str],
+    *,
+    fabricator_id: str,
+    fabricator_config: Optional[FabricatorConfig],
 ) -> None:
     """Print BOM as CSV to stdout with dynamic fields."""
-
-    _write_csv_handle(bom_data, sys.stdout, selected_fields, headers)
+    _write_csv_handle(
+        bom_data,
+        sys.stdout,
+        selected_fields,
+        headers,
+        fabricator_id=fabricator_id,
+        fabricator_config=fabricator_config,
+    )
 
 
 def _write_csv_handle(
@@ -508,6 +554,9 @@ def _write_csv_handle(
     f,
     selected_fields: list[str],
     headers: list[str],
+    *,
+    fabricator_id: str,
+    fabricator_config: Optional[FabricatorConfig],
 ) -> None:
     """Write BOM as CSV to a file-like object."""
 
@@ -516,11 +565,92 @@ def _write_csv_handle(
     writer = csv.writer(f, quoting=csv.QUOTE_ALL)
     writer.writerow(headers)
     for entry in bom_data.entries:
-        row = [_get_field_value(entry, field) for field in selected_fields]
+        row = [
+            _get_field_value(
+                entry,
+                field,
+                fabricator_id=fabricator_id,
+                fabricator_config=fabricator_config,
+            )
+            for field in selected_fields
+        ]
         writer.writerow(row)
 
 
-def _get_field_value(entry, field: str) -> str:
+def _load_fabricator_config(fabricator_id: str) -> Optional[FabricatorConfig]:
+    """Best-effort load of a fabricator configuration."""
+
+    try:
+        return load_fabricator(fabricator_id)
+    except ValueError:
+        return None
+
+
+def _normalize_fabricator_attributes(
+    raw_attributes: Mapping[str, Any], fabricator_config: FabricatorConfig
+) -> dict[str, str]:
+    """Add canonical synonym keys to a raw attributes mapping."""
+
+    normalized: dict[str, str] = {
+        str(key): str(value) for key, value in raw_attributes.items()
+    }
+
+    for header, value in list(normalized.items()):
+        canonical = fabricator_config.resolve_field_synonym(header)
+        if canonical is None:
+            continue
+
+        existing_value = normalized.get(canonical, "").strip()
+        if existing_value:
+            continue
+
+        normalized[canonical] = value
+
+    return normalized
+
+
+def _part_number_precedence_for_fabricator(fabricator_id: str) -> list[str]:
+    """Return canonical part-number precedence for the given fabricator."""
+
+    if (fabricator_id or "").strip().lower() == "pcbway":
+        return ["mpn", "supplier_pn", "fab_pn"]
+    return ["fab_pn", "supplier_pn", "mpn"]
+
+
+def _resolve_fabricator_part_number(
+    entry,
+    *,
+    fabricator_id: str,
+    fabricator_config: Optional[FabricatorConfig],
+) -> str:
+    """Resolve fabricator part number via explicit and synonym-driven attributes."""
+
+    explicit = str(entry.attributes.get("fabricator_part_number", "")).strip()
+    if explicit:
+        return explicit
+
+    effective_config = fabricator_config or _load_fabricator_config(fabricator_id)
+    if effective_config is None:
+        return ""
+
+    normalized_attributes = _normalize_fabricator_attributes(
+        entry.attributes, effective_config
+    )
+    for canonical in _part_number_precedence_for_fabricator(fabricator_id):
+        candidate = normalized_attributes.get(canonical, "").strip()
+        if candidate:
+            return candidate
+
+    return ""
+
+
+def _get_field_value(
+    entry,
+    field: str,
+    *,
+    fabricator_id: str = "generic",
+    fabricator_config: Optional[FabricatorConfig] = None,
+) -> str:
     """Extract field value from BOM entry.
 
     Args:
@@ -544,8 +674,10 @@ def _get_field_value(entry, field: str) -> str:
         "footprint": lambda e: e.footprint,
         "manufacturer": lambda e: e.attributes.get("manufacturer", ""),
         "mfgpn": lambda e: e.attributes.get("manufacturer_part", ""),
-        "fabricator_part_number": lambda e: e.attributes.get(
-            "fabricator_part_number", ""
+        "fabricator_part_number": lambda e: _resolve_fabricator_part_number(
+            e,
+            fabricator_id=fabricator_id,
+            fabricator_config=fabricator_config,
         ),
         "smd": lambda e: "Yes" if e.attributes.get("smd", False) else "No",
         "lcsc": lambda e: e.attributes.get("lcsc", "") or e.attributes.get("LCSC", ""),
