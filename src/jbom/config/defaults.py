@@ -82,6 +82,7 @@ class DefaultsConfig:
     search_output_fields_default: tuple[str, ...] = field(default_factory=tuple)
     search_excluded_categories: frozenset[str] = field(default_factory=frozenset)
     component_id_fields: dict[str, frozenset[str]] = field(default_factory=dict)
+    field_precedence_policy: dict[str, tuple[str, ...]] = field(default_factory=dict)
 
     @staticmethod
     def from_yaml_dict(data: dict[str, Any], *, name: str) -> "DefaultsConfig":
@@ -217,6 +218,29 @@ class DefaultsConfig:
                     )
             component_id_fields[str(category).lower()] = frozenset(validated)
 
+        field_precedence_policy: dict[str, tuple[str, ...]] = {}
+        for policy_key, raw_fields in (
+            data.get("field_precedence_policy") or {}
+        ).items():
+            normalized_key = str(policy_key or "").strip().lower()
+            if not normalized_key:
+                continue
+            if not isinstance(raw_fields, list):
+                log.warning(
+                    "field_precedence_policy[%r] must be a list; found %r",
+                    normalized_key,
+                    type(raw_fields).__name__,
+                )
+                continue
+            normalized_fields: list[str] = []
+            for field_name in raw_fields:
+                normalized = str(field_name or "").strip().lower()
+                if normalized:
+                    normalized_fields.append(normalized)
+            field_precedence_policy[normalized_key] = tuple(
+                dict.fromkeys(normalized_fields).keys()
+            )
+
         return DefaultsConfig(
             name=name,
             domain_defaults=domain_defaults,
@@ -229,6 +253,7 @@ class DefaultsConfig:
             search_output_fields_default=search_output_fields_default,
             search_excluded_categories=search_excluded_categories,
             component_id_fields=component_id_fields,
+            field_precedence_policy=field_precedence_policy,
         )
 
     def get_domain_default(
@@ -292,6 +317,11 @@ class DefaultsConfig:
             or ``None`` when it is not.
         """
         return self.component_id_fields.get(category.lower())
+
+    def get_field_precedence_policy(self) -> dict[str, tuple[str, ...]]:
+        """Return configured canonical field precedence policy entries."""
+
+        return dict(self.field_precedence_policy)
 
 
 def load_defaults(name: str, *, cwd: Path | None = None) -> DefaultsConfig:
