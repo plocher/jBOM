@@ -84,6 +84,32 @@ component_id_fields:
                  # voltage/current/wattage omitted: part number is the identity
 
 # ---------------------------------------------------------------------------
+# Canonical merge precedence policy scaffold (Phase 1).
+# Service consumers may read these lists to decide c:* values when source
+# namespaces disagree.
+# ---------------------------------------------------------------------------
+field_precedence_policy:
+  schematic_biased:
+    - value
+    - tolerance
+    - voltage
+    - current
+    - wavelength
+  pcb_biased:
+    - footprint
+    - package
+    - mount_type
+    - side
+    - x
+    - y
+    - rotation
+  inventory_biased:
+    - manufacturer
+    - manufacturer_part
+    - fabricator_part_number
+    - lcsc
+
+# ---------------------------------------------------------------------------
 # Parametric spec fields to include in JLCPCB/LCSC search queries per category.
 # List order reflects preference for query construction.
 # ---------------------------------------------------------------------------

@@ -127,6 +127,17 @@ def test_generic_profile_has_default_search_output_fields() -> None:
     ]
 
 
+def test_generic_profile_has_field_precedence_policy() -> None:
+    cfg = load_defaults("generic")
+    policy = cfg.get_field_precedence_policy()
+    assert "schematic_biased" in policy
+    assert "pcb_biased" in policy
+    assert "inventory_biased" in policy
+    assert "value" in policy["schematic_biased"]
+    assert "footprint" in policy["pcb_biased"]
+    assert "lcsc" in policy["inventory_biased"]
+
+
 # ---------------------------------------------------------------------------
 # Error handling
 # ---------------------------------------------------------------------------
@@ -303,6 +314,19 @@ def test_from_yaml_dict_parses_field_synonyms() -> None:
     assert voltage is not None
     assert voltage.display_name == "Voltage"
     assert voltage.synonyms == ("Voltage", "V")
+
+
+def test_from_yaml_dict_parses_field_precedence_policy() -> None:
+    data = {
+        "field_precedence_policy": {
+            "schematic_biased": ["value", "tolerance", "value"],
+            "pcb_biased": ["footprint", "package"],
+        }
+    }
+    cfg = DefaultsConfig.from_yaml_dict(data, name="test")
+    policy = cfg.get_field_precedence_policy()
+    assert policy["schematic_biased"] == ("value", "tolerance")
+    assert policy["pcb_biased"] == ("footprint", "package")
 
 
 # ---------------------------------------------------------------------------
