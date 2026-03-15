@@ -138,6 +138,20 @@ def test_generic_profile_has_field_precedence_policy() -> None:
     assert "lcsc" in policy["inventory_biased"]
 
 
+def test_generic_profile_has_inventory_schema_contract() -> None:
+    cfg = load_defaults("generic")
+    schema = cfg.get_inventory_schema()
+    assert "inventory_ipn" in schema.canonical_fields
+    assert "fabricator_part_number" in schema.canonical_fields
+    assert schema.alias_to_canonical["ipn"] == "inventory_ipn"
+    assert schema.alias_to_canonical["mfgpn"] == "manufacturer_part"
+    assert schema.enrichment_bindings["manufacturer_part"] == "mfgpn"
+    assert (
+        schema.enrichment_bindings["fabricator_part_number"]
+        == "__resolved_fabricator_part_number__"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Error handling
 # ---------------------------------------------------------------------------
@@ -327,6 +341,33 @@ def test_from_yaml_dict_parses_field_precedence_policy() -> None:
     policy = cfg.get_field_precedence_policy()
     assert policy["schematic_biased"] == ("value", "tolerance")
     assert policy["pcb_biased"] == ("footprint", "package")
+
+
+def test_from_yaml_dict_parses_inventory_schema() -> None:
+    data = {
+        "inventory_schema": {
+            "canonical_fields": ["inventory_ipn", "manufacturer_part"],
+            "alias_to_canonical": {
+                "ipn": "inventory_ipn",
+                "mfgpn": "manufacturer_part",
+            },
+            "enrichment_bindings": {
+                "inventory_ipn": "ipn",
+                "manufacturer_part": "mfgpn",
+            },
+        }
+    }
+    cfg = DefaultsConfig.from_yaml_dict(data, name="test")
+    schema = cfg.get_inventory_schema()
+    assert schema.canonical_fields == ("inventory_ipn", "manufacturer_part")
+    assert schema.alias_to_canonical == {
+        "ipn": "inventory_ipn",
+        "mfgpn": "manufacturer_part",
+    }
+    assert schema.enrichment_bindings == {
+        "inventory_ipn": "ipn",
+        "manufacturer_part": "mfgpn",
+    }
 
 
 # ---------------------------------------------------------------------------

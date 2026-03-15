@@ -8,6 +8,7 @@ The defaults profile captures:
   - package_power / package_voltage: SMD package-level electrical defaults
   - parametric_query_fields: JLCPCB/LCSC spec fields per category (Phase 4)
   - category_route_rules: JLCPCB taxonomy routing (Phase 4)
+  - inventory_schema: canonical inventory overlay/matcher schema contract
   - enrichment_attributes: Camp 2/3 attribute classification per category (#99)
   - component_id_fields: optional ComponentID fields included per category
 
@@ -61,6 +62,59 @@ class FieldSynonymConfig:
     synonyms: tuple[str, ...]
 
 
+@dataclass(frozen=True)
+class InventorySchemaConfig:
+    """Canonical inventory overlay schema and source-field bindings."""
+
+    canonical_fields: tuple[str, ...]
+    alias_to_canonical: dict[str, str]
+    enrichment_bindings: dict[str, str]
+
+    @staticmethod
+    def default() -> "InventorySchemaConfig":
+        """Return the built-in canonical inventory schema contract."""
+
+        return InventorySchemaConfig(
+            canonical_fields=(
+                "inventory_ipn",
+                "manufacturer",
+                "manufacturer_part",
+                "description",
+                "datasheet",
+                "lcsc",
+                "tolerance",
+                "voltage",
+                "wattage",
+                "package",
+                "smd",
+                "fabricator_part_number",
+            ),
+            alias_to_canonical={
+                "ipn": "inventory_ipn",
+                "mfgpn": "manufacturer_part",
+                "mpn": "manufacturer_part",
+                "manufacturer_part_number": "manufacturer_part",
+                "power": "wattage",
+                "fab_pn": "fabricator_part_number",
+                "supplier_pn": "fabricator_part_number",
+            },
+            enrichment_bindings={
+                "inventory_ipn": "ipn",
+                "manufacturer": "manufacturer",
+                "manufacturer_part": "mfgpn",
+                "description": "description",
+                "datasheet": "datasheet",
+                "lcsc": "lcsc",
+                "tolerance": "tolerance",
+                "voltage": "voltage",
+                "wattage": "wattage",
+                "package": "package",
+                "smd": "smd",
+                "fabricator_part_number": "__resolved_fabricator_part_number__",
+            },
+        )
+
+
 @dataclass
 class DefaultsConfig:
     """Loaded defaults profile.
@@ -79,6 +133,9 @@ class DefaultsConfig:
         default_factory=dict
     )
     field_synonyms: dict[str, FieldSynonymConfig] = field(default_factory=dict)
+    inventory_schema: InventorySchemaConfig = field(
+        default_factory=InventorySchemaConfig.default
+    )
     search_output_fields_default: tuple[str, ...] = field(default_factory=tuple)
     search_excluded_categories: frozenset[str] = field(default_factory=frozenset)
     component_id_fields: dict[str, frozenset[str]] = field(default_factory=dict)
@@ -162,6 +219,77 @@ class DefaultsConfig:
                     display_name=display_name or canonical_key,
                     synonyms=synonyms,
                 )
+
+        inventory_schema = InventorySchemaConfig.default()
+        inventory_schema_cfg = data.get("inventory_schema") or {}
+        if isinstance(inventory_schema_cfg, dict):
+            canonical_fields_cfg = inventory_schema_cfg.get("canonical_fields") or []
+            parsed_canonical_fields = list(inventory_schema.canonical_fields)
+            if isinstance(canonical_fields_cfg, list):
+                normalized_canonical: list[str] = []
+                for field_name in canonical_fields_cfg:
+                    normalized = str(field_name or "").strip().lower()
+                    if normalized:
+                        normalized_canonical.append(normalized)
+                if normalized_canonical:
+                    parsed_canonical_fields = list(
+                        dict.fromkeys(normalized_canonical).keys()
+                    )
+            else:
+                log.warning(
+                    "inventory_schema.canonical_fields must be a list; found %r",
+                    type(canonical_fields_cfg).__name__,
+                )
+
+            alias_cfg = inventory_schema_cfg.get("alias_to_canonical") or {}
+            parsed_aliases = dict(inventory_schema.alias_to_canonical)
+            if isinstance(alias_cfg, dict):
+                parsed_aliases = {}
+                for raw_alias, raw_canonical in alias_cfg.items():
+                    alias_key = str(raw_alias or "").strip().lower()
+                    canonical_key = str(raw_canonical or "").strip().lower()
+                    if not alias_key or not canonical_key:
+                        continue
+                    parsed_aliases[alias_key] = canonical_key
+            else:
+                log.warning(
+                    "inventory_schema.alias_to_canonical must be a mapping; found %r",
+                    type(alias_cfg).__name__,
+                )
+
+            bindings_cfg = inventory_schema_cfg.get("enrichment_bindings") or {}
+            parsed_bindings = dict(inventory_schema.enrichment_bindings)
+            if isinstance(bindings_cfg, dict):
+                parsed_bindings = {}
+                for raw_canonical, raw_source in bindings_cfg.items():
+                    canonical_key = str(raw_canonical or "").strip().lower()
+                    source_key = str(raw_source or "").strip()
+                    if not canonical_key or not source_key:
+                        continue
+                    parsed_bindings[canonical_key] = source_key
+            else:
+                log.warning(
+                    "inventory_schema.enrichment_bindings must be a mapping; found %r",
+                    type(bindings_cfg).__name__,
+                )
+
+            for mapped_canonical in parsed_aliases.values():
+                if mapped_canonical not in parsed_canonical_fields:
+                    parsed_canonical_fields.append(mapped_canonical)
+            for canonical_key in parsed_bindings.keys():
+                if canonical_key not in parsed_canonical_fields:
+                    parsed_canonical_fields.append(canonical_key)
+
+            inventory_schema = InventorySchemaConfig(
+                canonical_fields=tuple(parsed_canonical_fields),
+                alias_to_canonical=parsed_aliases,
+                enrichment_bindings=parsed_bindings,
+            )
+        else:
+            log.warning(
+                "inventory_schema must be a mapping; found %r",
+                type(inventory_schema_cfg).__name__,
+            )
 
         search_cfg = data.get("search") or {}
         search_output_fields_default: tuple[str, ...] = tuple()
@@ -250,6 +378,7 @@ class DefaultsConfig:
             category_route_rules=category_route_rules,
             enrichment_attributes=enrichment_attributes,
             field_synonyms=field_synonyms,
+            inventory_schema=inventory_schema,
             search_output_fields_default=search_output_fields_default,
             search_excluded_categories=search_excluded_categories,
             component_id_fields=component_id_fields,
@@ -289,7 +418,15 @@ class DefaultsConfig:
         return self.field_synonyms.get(
             _normalize_field_synonym_canonical_key(canonical)
         )
-        return self.field_synonyms.get(canonical.strip().lower())
+
+    def get_inventory_schema(self) -> InventorySchemaConfig:
+        """Return canonical inventory schema config for overlay/matcher workflows."""
+
+        return InventorySchemaConfig(
+            canonical_fields=tuple(self.inventory_schema.canonical_fields),
+            alias_to_canonical=dict(self.inventory_schema.alias_to_canonical),
+            enrichment_bindings=dict(self.inventory_schema.enrichment_bindings),
+        )
 
     def get_search_excluded_categories(self) -> frozenset[str]:
         """Return the set of component categories excluded from supplier search."""
@@ -430,6 +567,7 @@ __all__ = [
     "DefaultsConfig",
     "EnrichmentCategoryConfig",
     "FieldSynonymConfig",
+    "InventorySchemaConfig",
     "get_active_defaults_profile",
     "get_defaults",
     "load_defaults",

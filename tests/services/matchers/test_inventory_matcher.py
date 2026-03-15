@@ -6,6 +6,7 @@ from unittest.mock import patch
 from jbom.services.inventory_matcher import InventoryMatcher
 from jbom.services.bom_generator import BOMEntry, BOMData
 from jbom.common.types import Component, InventoryItem, DEFAULT_PRIORITY
+from jbom.config.defaults import InventorySchemaConfig
 
 
 def _make_inventory_item(
@@ -250,6 +251,55 @@ class TestInventoryMatcher:
         assert "fabricator_id" in result.metadata
         assert "eligible_items" in result.metadata
         assert result.metadata["fabricator_id"] == "generic"
+
+    def test_enrich_entry_uses_defaults_inventory_schema_bindings(self) -> None:
+        """Enrichment keys and source bindings come from defaults inventory schema."""
+        item = _make_inventory_item(
+            ipn="R_10K",
+            manufacturer="Yageo",
+            mfgpn="RC0603FR-0710KL",
+            lcsc="C25804",
+        )
+        entry = BOMEntry(
+            references=["R1"],
+            value="10K",
+            footprint="R_0603_1608Metric",
+            quantity=1,
+            lib_id="Device:R",
+            attributes={},
+        )
+
+        class _StubDefaults:
+            def get_inventory_schema(self) -> InventorySchemaConfig:
+                return InventorySchemaConfig(
+                    canonical_fields=(
+                        "inventory_ipn",
+                        "manufacturer_part",
+                        "fabricator_part_number",
+                    ),
+                    alias_to_canonical={"ipn": "inventory_ipn"},
+                    enrichment_bindings={
+                        "inventory_ipn": "ipn",
+                        "manufacturer_part": "mfgpn",
+                        "fabricator_part_number": "__resolved_fabricator_part_number__",
+                    },
+                )
+
+        with patch(
+            "jbom.services.inventory_matcher.get_defaults",
+            return_value=_StubDefaults(),
+        ):
+            enriched = InventoryMatcher._enrich_entry(
+                entry,
+                item,
+                fabricator_id="generic",
+                fabricator_config=None,
+            )
+
+        assert enriched.attributes["inventory_matched"] is True
+        assert enriched.attributes["inventory_ipn"] == "R_10K"
+        assert enriched.attributes["manufacturer_part"] == "RC0603FR-0710KL"
+        assert enriched.attributes["fabricator_part_number"] == "C25804"
 
 
 class TestInventoryMatcherIntegration:
