@@ -1,6 +1,14 @@
 """Unit tests for POS CLI projection and field resolution helpers."""
 
-from jbom.cli.pos import _get_pos_field_value, _resolve_pos_output_projection
+from jbom.cli.pos import (
+    _enrich_pos_with_merge_namespaces,
+    _get_pos_field_value,
+    _resolve_pos_output_projection,
+)
+from jbom.services.component_merge_service import (
+    ComponentMergeResult,
+    MergedReferenceRecord,
+)
 
 
 def test_resolve_pos_output_projection_uses_jlc_defaults() -> None:
@@ -52,3 +60,43 @@ def test_fabricator_part_number_prefers_explicit_value() -> None:
         )
         == "JLC-OVERRIDE-777"
     )
+
+
+def test_enrich_pos_with_merge_namespaces_adds_namespaced_fields() -> None:
+    pos_rows = [{"reference": "R1", "x_mm": 1.0, "y_mm": 2.0, "rotation": 0.0}]
+    merge_result = ComponentMergeResult(
+        records={
+            "R1": MergedReferenceRecord(
+                reference="R1",
+                source_fields={"s:value": "10k"},
+                canonical_fields={"c:value": "9k99"},
+                annotated_fields={"a:value": "s:10k\np:9k99\nc:9k99"},
+            )
+        },
+        mismatches=tuple(),
+        metadata={},
+    )
+
+    enriched = _enrich_pos_with_merge_namespaces(pos_rows, merge_result)
+
+    assert enriched[0]["s:value"] == "10k"
+    assert enriched[0]["c:value"] == "9k99"
+    assert enriched[0]["a:value"] == "s:10k\np:9k99\nc:9k99"
+
+
+def test_enrich_pos_with_merge_namespaces_keeps_rows_without_reference_match() -> None:
+    pos_rows = [{"reference": "R1", "x_mm": 1.0, "y_mm": 2.0, "rotation": 0.0}]
+    merge_result = ComponentMergeResult(
+        records={
+            "R2": MergedReferenceRecord(
+                reference="R2",
+                canonical_fields={"c:value": "1k"},
+            )
+        },
+        mismatches=tuple(),
+        metadata={},
+    )
+
+    enriched = _enrich_pos_with_merge_namespaces(pos_rows, merge_result)
+
+    assert "c:value" not in enriched[0]
