@@ -28,7 +28,11 @@ from jbom.services.component_merge_service import (
 from jbom.services.pcb_reader import DefaultKiCadReaderService
 from jbom.services.project_component_collector import ProjectComponentCollector
 from jbom.services.project_file_resolver import ProjectFileResolver
-from jbom.services.field_listing_service import FieldListingService
+from jbom.services.field_listing_service import (
+    FieldListingService,
+    FieldSourceRequirements,
+    is_namespace_applicable,
+)
 from jbom.common.options import GeneratorOptions
 from jbom.common.field_parser import parse_fields_argument
 from jbom.common.fields import field_to_header
@@ -38,6 +42,12 @@ from jbom.common.component_filters import (
 )
 from jbom.config.fabricators import get_available_fabricators
 from jbom.cli.formatting import Column, print_table, get_terminal_width
+
+_PARTS_SOURCE_REQUIREMENTS = FieldSourceRequirements(
+    require_sch=True,
+    require_pcb=False,
+    require_inv=False,
+)
 
 
 def _run_parts_component_merge(
@@ -224,7 +234,10 @@ def _list_available_parts_fields() -> None:
     """List known parts fields and presets, then exit."""
 
     known_fields = _get_available_parts_fields()
-    matrix_rows = FieldListingService().build_namespace_matrix(known_fields.keys())
+    matrix_rows = FieldListingService().build_namespace_matrix(
+        known_fields.keys(),
+        requirements=_PARTS_SOURCE_REQUIREMENTS,
+    )
     print(
         "\nKnown parts fields (any field name is accepted — unknown fields produce blank cells):"
     )
@@ -564,7 +577,13 @@ def _get_parts_field_value(entry: PartsListEntry, field: str) -> str:
     if mapped_attr:
         return str(getattr(entry, mapped_attr, "") or "")
 
-    if field.startswith(("s:", "p:", "i:", "c:", "a:")):
+    namespace_prefix, separator, _ = field.partition(":")
+    if separator and namespace_prefix in {"s", "p", "i", "c", "a"}:
+        if not is_namespace_applicable(
+            namespace_prefix,
+            requirements=_PARTS_SOURCE_REQUIREMENTS,
+        ):
+            return ""
         return str(entry.attributes.get(field, "") or "")
 
     return str(entry.attributes.get(field, "") or "")

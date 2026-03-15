@@ -61,19 +61,19 @@ Feature: Parts List Generation (Core Functionality)
       | C1        | 8 | 3 | C_0603_1608 |
       | C20       | 9 | 3 | C_0603_1608 |
       | U1        | 1 | 1 | SOIC-8_3.9x4.9mm |
-    When I run jbom command "parts -f refs,s:footprint,p:footprint,c:footprint"
+    When I run jbom command "parts -f refs,s:footprint,c:footprint"
     Then the command should succeed
     And the output should contain these fields:
-      | Refs | S:Footprint | P:Footprint | C:Footprint |
+      | Refs | S:Footprint | C:Footprint |
     And the CSV output has rows where:
-      | Refs      | S:Footprint | P:Footprint | C:Footprint |
-      | R1,R2,R10 | R_0805_2012 | R_0805_2012 | R_0805_2012 |
+      | Refs      | S:Footprint | C:Footprint |
+      | R1,R2,R10 | R_0805_2012 | R_0805_2012 |
 
   Scenario: Parts list-fields includes merge namespace fields
     When I run jbom command "parts --list-fields"
     Then the command should succeed
     And the output should contain "Known parts fields"
     And the output should contain "s:value"
-    And the output should contain "p:footprint"
+    And the output should not contain "p:footprint"
     And the output should contain "c:value"
     And the output should contain "a:value"

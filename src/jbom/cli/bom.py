@@ -21,7 +21,10 @@ from jbom.services.fabricator_projection_service import (
 )
 from jbom.services.inventory_overlay_service import InventoryOverlayService
 from jbom.services.pcb_reader import DefaultKiCadReaderService
-from jbom.services.field_listing_service import FieldListingService
+from jbom.services.field_listing_service import (
+    FieldListingService,
+    FieldSourceRequirements,
+)
 from jbom.services.component_merge_service import (
     ComponentMergeResult,
     ComponentMergeService,
@@ -533,7 +536,14 @@ def _list_available_fields(
     print(
         "\nKnown fields (any field name is accepted \u2014 unknown fields produce blank cells):"
     )
-    matrix_rows = FieldListingService().build_namespace_matrix(known_fields.keys())
+    matrix_rows = FieldListingService().build_namespace_matrix(
+        known_fields.keys(),
+        requirements=FieldSourceRequirements(
+            require_sch=True,
+            require_pcb=True,
+            require_inv=bool(inventory_column_names),
+        ),
+    )
     columns = [
         Column(header="Name", key="Name", preferred_width=22, wrap=False),
         Column(header="s:", key="s:", preferred_width=16, wrap=False),

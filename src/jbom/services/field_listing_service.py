@@ -39,12 +39,41 @@ class FieldNamespaceMatrixRow:
         }
 
 
+@dataclass(frozen=True)
+class FieldSourceRequirements:
+    """Source requirements controlling namespace applicability."""
+
+    require_sch: bool
+    require_pcb: bool
+    require_inv: bool
+
+
+def is_namespace_applicable(
+    namespace_prefix: str,
+    *,
+    requirements: FieldSourceRequirements,
+) -> bool:
+    """Return whether a namespace prefix is applicable for a source contract."""
+
+    if namespace_prefix == "s":
+        return requirements.require_sch
+    if namespace_prefix == "p":
+        return requirements.require_pcb
+    if namespace_prefix == "i":
+        return requirements.require_inv
+    if namespace_prefix in {"c", "a"}:
+        return True
+    return True
+
+
 class FieldListingService:
     """Build list-fields matrix data grouped by canonical field name."""
 
     def build_namespace_matrix(
         self,
         field_tokens: Iterable[str],
+        *,
+        requirements: FieldSourceRequirements | None = None,
     ) -> list[FieldNamespaceMatrixRow]:
         """Group available field tokens into Name|s:|p:|i:|c:|a: rows."""
 
@@ -61,6 +90,13 @@ class FieldListingService:
             else:
                 canonical_name = normalized_token
                 slot = "name"
+
+            if (
+                requirements is not None
+                and slot in _NAMESPACE_PREFIXES
+                and not is_namespace_applicable(slot, requirements=requirements)
+            ):
+                continue
 
             row = grouped.setdefault(
                 canonical_name,

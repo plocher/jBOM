@@ -22,7 +22,11 @@ from jbom.services.component_merge_service import (
     ComponentMergeResult,
     ComponentMergeService,
 )
-from jbom.services.field_listing_service import FieldListingService
+from jbom.services.field_listing_service import (
+    FieldListingService,
+    FieldSourceRequirements,
+    is_namespace_applicable,
+)
 from jbom.services.project_component_collector import ProjectComponentCollector
 from jbom.common.options import PlacementOptions, GeneratorOptions
 from jbom.common.cli_fabricator import (
@@ -43,6 +47,11 @@ from jbom.cli.formatting import Column, print_table, get_terminal_width
 from jbom.services.fabricator_projection_service import FabricatorProjectionService
 
 _NUMERIC_POS_FIELDS: frozenset[str] = frozenset({"x", "y", "rotation"})
+_POS_SOURCE_REQUIREMENTS = FieldSourceRequirements(
+    require_sch=False,
+    require_pcb=True,
+    require_inv=False,
+)
 
 
 def _run_pos_component_merge(
@@ -430,7 +439,10 @@ def _list_available_pos_fields(fabricator: str) -> None:
     """
 
     known_fields = _get_available_pos_fields()
-    matrix_rows = FieldListingService().build_namespace_matrix(known_fields.keys())
+    matrix_rows = FieldListingService().build_namespace_matrix(
+        known_fields.keys(),
+        requirements=_POS_SOURCE_REQUIREMENTS,
+    )
 
     print(
         "\nKnown POS fields (any field name is accepted — unknown fields produce blank cells):"
@@ -682,6 +694,14 @@ def _get_pos_field_value(
     Returns:
         String value for the field
     """
+    namespace_prefix, separator, _ = field.partition(":")
+    if separator and namespace_prefix in {"s", "p", "i", "c", "a"}:
+        if not is_namespace_applicable(
+            namespace_prefix,
+            requirements=_POS_SOURCE_REQUIREMENTS,
+        ):
+            return ""
+        return str(entry.get(field, "") or "")
     # Handle coordinate/rotation fields
     if field == "x":
         if entry.get("x_raw"):
