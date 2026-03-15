@@ -190,6 +190,48 @@ def test_merge_namespace_enrichment_adds_uniform_values_to_grouped_entry() -> No
     assert enriched.metadata["merge_precedence_profile"] == "generic"
 
 
+def test_merge_namespace_enrichment_summarizes_divergent_grouped_annotations() -> None:
+    bom_data = BOMData(
+        project_name="Project",
+        entries=[
+            BOMEntry(
+                references=["R1", "R2", "R10"],
+                value="10k",
+                footprint="SCH:0603",
+                quantity=3,
+                attributes={},
+            )
+        ],
+        metadata={},
+    )
+    merge_result = ComponentMergeResult(
+        records={
+            "R1": MergedReferenceRecord(
+                reference="R1",
+                annotated_fields={"a:footprint": "s:SCH:0603\np:PCB:0402\nc:PCB:0402"},
+            ),
+            "R2": MergedReferenceRecord(
+                reference="R2",
+                annotated_fields={"a:footprint": "s:SCH:0603\np:PCB:0603\nc:PCB:0603"},
+            ),
+            "R10": MergedReferenceRecord(
+                reference="R10",
+                annotated_fields={"a:footprint": "s:SCH:0603\np:PCB:0402\nc:PCB:0402"},
+            ),
+        },
+        mismatches=tuple(),
+        metadata={"precedence_profile": "generic"},
+    )
+
+    enriched = _enrich_bom_with_merge_namespaces(bom_data, merge_result)
+
+    assert (
+        enriched.entries[0].attributes["a:footprint"]
+        == "R1,R10 -> s:SCH:0603 | p:PCB:0402 | c:PCB:0402 || "
+        "R2 -> s:SCH:0603 | p:PCB:0603 | c:PCB:0603"
+    )
+
+
 def test_merge_namespace_enrichment_skips_conflicting_grouped_values() -> None:
     bom_data = BOMData(
         project_name="Project",

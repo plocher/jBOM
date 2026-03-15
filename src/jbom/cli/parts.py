@@ -24,6 +24,7 @@ from jbom.services.component_merge_service import (
     ComponentMergeResult,
     ComponentMergeService,
     MergedReferenceRecord,
+    resolve_grouped_merge_namespace_values,
 )
 from jbom.services.pcb_reader import DefaultKiCadReaderService
 from jbom.services.project_component_collector import ProjectComponentCollector
@@ -91,51 +92,12 @@ def _run_parts_component_merge(
         return None
 
 
-def _resolve_uniform_merge_field_value(
-    reference_records: list[MergedReferenceRecord],
-    *,
-    namespace_field: str,
-    field_key: str,
-) -> str:
-    """Resolve one merge namespace field when grouped references agree."""
-
-    resolved_value = ""
-    for record in reference_records:
-        namespace_values = getattr(record, namespace_field)
-        candidate_value = str(namespace_values.get(field_key, "")).strip()
-        if not candidate_value:
-            continue
-        if not resolved_value:
-            resolved_value = candidate_value
-            continue
-        if candidate_value != resolved_value:
-            return ""
-    return resolved_value
-
-
 def _resolve_parts_entry_merge_namespace_fields(
     reference_records: list[MergedReferenceRecord],
 ) -> dict[str, str]:
-    """Resolve stable merge namespace values for one aggregated parts entry."""
+    """Resolve grouped merge namespace values for one aggregated parts entry."""
 
-    resolved_fields: dict[str, str] = {}
-    for namespace_field in ("source_fields", "canonical_fields", "annotated_fields"):
-        field_keys = sorted(
-            {
-                field_key
-                for record in reference_records
-                for field_key in getattr(record, namespace_field).keys()
-            }
-        )
-        for field_key in field_keys:
-            resolved_value = _resolve_uniform_merge_field_value(
-                reference_records,
-                namespace_field=namespace_field,
-                field_key=field_key,
-            )
-            if resolved_value:
-                resolved_fields[field_key] = resolved_value
-    return resolved_fields
+    return resolve_grouped_merge_namespace_values(reference_records)
 
 
 def _enrich_parts_with_merge_namespaces(
