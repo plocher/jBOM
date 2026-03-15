@@ -101,6 +101,7 @@ class FabricatorConfig:
     id: str
     name: str
     pos_columns: Dict[str, str]  # Header -> internal field mapping
+    pos_additive_default_fields: Optional[List[str]] = None
 
     # Phase 1 schema: ordered supplier profile IDs.
     # Position encodes priority (first entry is most preferred).
@@ -137,6 +138,21 @@ class FabricatorConfig:
         pos_columns = data.get("pos_columns", {}) or {}
         if not isinstance(pos_columns, dict) or not pos_columns:
             raise ValueError(f"Fabricator '{default_id}' missing pos_columns")
+        pos_additive_default_fields_raw = (
+            data.get("pos_additive_default_fields") or None
+        )
+        pos_additive_default_fields: Optional[List[str]] = None
+        if pos_additive_default_fields_raw is not None:
+            if not isinstance(pos_additive_default_fields_raw, list) or not all(
+                isinstance(field_name, str) and field_name.strip()
+                for field_name in pos_additive_default_fields_raw
+            ):
+                raise ValueError(
+                    "pos_additive_default_fields must be a list of non-empty strings"
+                )
+            pos_additive_default_fields = [
+                field_name.strip() for field_name in pos_additive_default_fields_raw
+            ]
 
         # Optional fields
         description = data.get("description")
@@ -202,6 +218,7 @@ class FabricatorConfig:
             id=pid,
             name=name,
             pos_columns=pos_columns,
+            pos_additive_default_fields=pos_additive_default_fields,
             suppliers=suppliers,
             field_synonyms=field_synonyms,
             tier_rules=tier_rules,
@@ -535,6 +552,7 @@ def apply_fabricator_column_mapping(
     Args:
         fabricator_id: ID of fabricator
         output_type: Either 'bom' or 'pos'
+        mode: 'standard' for normal defaults, 'additive' for POS +field baseline
         fields: List of internal field names
 
     Returns:
@@ -567,9 +585,12 @@ def apply_fabricator_column_mapping(
 
 
 def get_fabricator_default_fields(
-    fabricator_id: str, output_type: str
+    fabricator_id: str,
+    output_type: str,
+    *,
+    mode: str = "standard",
 ) -> Optional[List[str]]:
-    """Get default fields for a fabricator based on its column mapping.
+    """Get default output fields for a fabricator context.
 
     Args:
         fabricator_id: ID of fabricator
@@ -578,10 +599,26 @@ def get_fabricator_default_fields(
     Returns:
         List of default field names based on fabricator config, or None
     """
-    column_mapping = get_fabricator_column_mapping(fabricator_id, output_type)
+    if mode not in {"standard", "additive"}:
+        raise ValueError(f"Unknown mode: {mode!r}. Expected 'standard' or 'additive'.")
 
-    if column_mapping:
-        # Return the internal field names from the column mapping
-        return list(column_mapping.values())
+    try:
+        config = load_fabricator(fabricator_id)
+    except ValueError:
+        return None
 
-    return None
+    if output_type == "pos" and mode == "additive":
+        if config.pos_additive_default_fields:
+            return list(config.pos_additive_default_fields)
+
+    if output_type == "bom":
+        column_mapping = config.bom_columns
+    elif output_type == "pos":
+        column_mapping = config.pos_columns
+    else:
+        raise ValueError(f"Unknown output_type: {output_type}. Must be 'bom' or 'pos'")
+
+    if not column_mapping:
+        return None
+
+    return list(column_mapping.values())

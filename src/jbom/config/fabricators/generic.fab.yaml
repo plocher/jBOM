@@ -46,6 +46,17 @@ pos_columns:
   "Rotation": "rotation"
   "Package": "package"
 
+# Baseline field set used when users append fields via +syntax (for example,
+# --fields +Value) so additive behavior stays profile-driven and predictable.
+pos_additive_default_fields:
+  - "reference"
+  - "x"
+  - "y"
+  - "rotation"
+  - "side"
+  - "footprint"
+  - "package"
+
 presets:
   default:
     description: "Generic BOM format"
