@@ -22,6 +22,7 @@ from jbom.services.component_merge_service import (
     ComponentMergeResult,
     ComponentMergeService,
 )
+from jbom.services.field_listing_service import FieldListingService
 from jbom.services.project_component_collector import ProjectComponentCollector
 from jbom.common.options import PlacementOptions, GeneratorOptions
 from jbom.common.cli_fabricator import (
@@ -408,6 +409,13 @@ def _get_available_pos_fields() -> dict:
         "package": "Component package/case size",
         "value": "Component value",
         "fabricator_part_number": "Fabricator-specific part number",
+        "s:value": "Schematic source value",
+        "s:footprint": "Schematic source footprint",
+        "p:footprint": "PCB source footprint",
+        "c:value": "Canonical merged value",
+        "c:footprint": "Canonical merged footprint",
+        "a:value": "Merge annotation value",
+        "a:footprint": "Merge annotation footprint",
     }
 
 
@@ -420,18 +428,26 @@ def _list_available_pos_fields(fabricator: str) -> None:
     Args:
         fabricator: Current fabricator ID
     """
-    from jbom.common.fields import field_to_header
 
     known_fields = _get_available_pos_fields()
+    matrix_rows = FieldListingService().build_namespace_matrix(known_fields.keys())
 
     print(
         "\nKnown POS fields (any field name is accepted — unknown fields produce blank cells):"
     )
-    print("=" * 60)
-    for field_name in sorted(known_fields.keys()):
-        desc = known_fields[field_name]
-        header = field_to_header(field_name)
-        print(f"  {field_name:<30}  ({header}):  {desc}")
+    columns = [
+        Column(header="Name", key="Name", preferred_width=22, wrap=False),
+        Column(header="s:", key="s:", preferred_width=16, wrap=False),
+        Column(header="p:", key="p:", preferred_width=16, wrap=False),
+        Column(header="i:", key="i:", preferred_width=16, wrap=False),
+        Column(header="c:", key="c:", preferred_width=16, wrap=False),
+        Column(header="a:", key="a:", preferred_width=16, wrap=False),
+    ]
+    print_table(
+        [row.to_console_row() for row in matrix_rows],
+        columns,
+        terminal_width=get_terminal_width(),
+    )
 
     # Show default fields for the active fabricator
     default_fields = get_fabricator_default_fields(fabricator, "pos")
