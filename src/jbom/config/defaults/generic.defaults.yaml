@@ -208,14 +208,26 @@ inventory_schema:
     - package
     - smd
     - fabricator_part_number
-  alias_to_canonical:
-    ipn: inventory_ipn
-    mfgpn: manufacturer_part
-    mpn: manufacturer_part
-    manufacturer_part_number: manufacturer_part
-    power: wattage
-    fab_pn: fabricator_part_number
-    supplier_pn: fabricator_part_number
+  field_synonyms:
+    inventory_ipn:
+      display_name: "IPN"
+      synonyms:
+        - "ipn"
+    manufacturer_part:
+      display_name: "Manufacturer Part Number"
+      synonyms:
+        - "mfgpn"
+        - "mpn"
+        - "manufacturer_part_number"
+    wattage:
+      display_name: "Power"
+      synonyms:
+        - "power"
+    fabricator_part_number:
+      display_name: "Fabricator Part Number"
+      synonyms:
+        - "fab_pn"
+        - "supplier_pn"
   enrichment_bindings:
     inventory_ipn: ipn
     manufacturer: manufacturer

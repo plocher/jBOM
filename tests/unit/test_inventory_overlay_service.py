@@ -6,7 +6,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from jbom.common.component_utils import derive_package_from_footprint
-from jbom.config.defaults import InventorySchemaConfig
+from jbom.config.defaults import FieldSynonymConfig, InventorySchemaConfig
 from jbom.services.bom_generator import BOMData, BOMEntry
 from jbom.services.inventory_overlay_service import InventoryOverlayService
 
@@ -119,7 +119,12 @@ def test_namespace_fields_are_loaded_from_defaults_inventory_schema() -> None:
         def get_inventory_schema(self) -> InventorySchemaConfig:
             return InventorySchemaConfig(
                 canonical_fields=("inventory_ipn", "manufacturer_part"),
-                alias_to_canonical={"ipn": "inventory_ipn"},
+                field_synonyms={
+                    "inventory_ipn": FieldSynonymConfig(
+                        display_name="IPN",
+                        synonyms=("ipn",),
+                    )
+                },
                 enrichment_bindings={
                     "inventory_ipn": "ipn",
                     "manufacturer_part": "mfgpn",

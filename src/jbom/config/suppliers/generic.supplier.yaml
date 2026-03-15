@@ -2,7 +2,10 @@ name: "Generic"
 id: "generic"
 description: "No-op supplier profile (fallback / unknown supplier)"
 website: ""
-inventory_column: "Supplier"
+field_synonyms:
+  supplier_pn:
+    display_name: "Supplier"
+    synonyms: []
 url_template: null
 search_url_template: null
 part_number: {}

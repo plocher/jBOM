@@ -143,8 +143,10 @@ def test_generic_profile_has_inventory_schema_contract() -> None:
     schema = cfg.get_inventory_schema()
     assert "inventory_ipn" in schema.canonical_fields
     assert "fabricator_part_number" in schema.canonical_fields
-    assert schema.alias_to_canonical["ipn"] == "inventory_ipn"
-    assert schema.alias_to_canonical["mfgpn"] == "manufacturer_part"
+    assert schema.field_synonyms["inventory_ipn"].display_name == "IPN"
+    assert "ipn" in schema.field_synonyms["inventory_ipn"].synonyms
+    assert "mfgpn" in schema.field_synonyms["manufacturer_part"].synonyms
+    assert "mpn" in schema.field_synonyms["manufacturer_part"].synonyms
     assert schema.enrichment_bindings["manufacturer_part"] == "mfgpn"
     assert (
         schema.enrichment_bindings["fabricator_part_number"]
@@ -347,9 +349,15 @@ def test_from_yaml_dict_parses_inventory_schema() -> None:
     data = {
         "inventory_schema": {
             "canonical_fields": ["inventory_ipn", "manufacturer_part"],
-            "alias_to_canonical": {
-                "ipn": "inventory_ipn",
-                "mfgpn": "manufacturer_part",
+            "field_synonyms": {
+                "inventory_ipn": {
+                    "display_name": "IPN",
+                    "synonyms": ["ipn"],
+                },
+                "manufacturer_part": {
+                    "display_name": "Manufacturer Part Number",
+                    "synonyms": ["mfgpn"],
+                },
             },
             "enrichment_bindings": {
                 "inventory_ipn": "ipn",
@@ -360,10 +368,13 @@ def test_from_yaml_dict_parses_inventory_schema() -> None:
     cfg = DefaultsConfig.from_yaml_dict(data, name="test")
     schema = cfg.get_inventory_schema()
     assert schema.canonical_fields == ("inventory_ipn", "manufacturer_part")
-    assert schema.alias_to_canonical == {
-        "ipn": "inventory_ipn",
-        "mfgpn": "manufacturer_part",
-    }
+    assert schema.field_synonyms["inventory_ipn"].display_name == "IPN"
+    assert schema.field_synonyms["inventory_ipn"].synonyms == ("ipn",)
+    assert (
+        schema.field_synonyms["manufacturer_part"].display_name
+        == "Manufacturer Part Number"
+    )
+    assert schema.field_synonyms["manufacturer_part"].synonyms == ("mfgpn",)
     assert schema.enrichment_bindings == {
         "inventory_ipn": "ipn",
         "manufacturer_part": "mfgpn",
