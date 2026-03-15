@@ -41,6 +41,60 @@ def _resolve_field_token(
     return normalized_token
 
 
+def _resolve_default_fields_for_context(
+    *, fabricator_id: str, context: str, mode: str = "standard"
+) -> List[str]:
+    """Resolve context defaults from profile configuration.
+
+    POS defaults are sourced from fabricator profile mappings with generic
+    fallback to keep baseline field policy data-driven.
+    """
+
+    if context == "pos":
+        from jbom.config.fabricators import get_fabricator_default_fields
+
+        fabricator_defaults = get_fabricator_default_fields(
+            fabricator_id,
+            context,
+            mode=mode,
+        )
+        if fabricator_defaults:
+            return list(fabricator_defaults)
+
+        if mode == "additive":
+            standard_fabricator_defaults = get_fabricator_default_fields(
+                fabricator_id,
+                context,
+                mode="standard",
+            )
+            if standard_fabricator_defaults:
+                return list(standard_fabricator_defaults)
+
+        generic_defaults = get_fabricator_default_fields(
+            "generic",
+            context,
+            mode=mode,
+        )
+        if generic_defaults:
+            return list(generic_defaults)
+
+        if mode == "additive":
+            standard_generic_defaults = get_fabricator_default_fields(
+                "generic",
+                context,
+                mode="standard",
+            )
+            if standard_generic_defaults:
+                return list(standard_generic_defaults)
+
+        raise ValueError(
+            "No POS default fields found in profile configuration for "
+            f"'{fabricator_id}' or 'generic'"
+        )
+
+    return ["reference", "quantity", "value", "footprint"]
+
+
 def parse_fields_argument(
     fields_arg: Optional[str],
     available_fields: Dict[str, str],
@@ -77,15 +131,10 @@ def parse_fields_argument(
     # Case 1: No fields argument (None) - use context-appropriate defaults
     if fields_arg is None:
         if context == "pos":
-            # For POS, use fabricator's column mapping to determine defaults
-            from jbom.config.fabricators import get_fabricator_default_fields
-
-            default_fields = get_fabricator_default_fields(fabricator_id, context)
-            if default_fields:
-                return default_fields.copy()
-
-            # Fallback for POS if no fabricator mapping exists
-            return ["reference", "x", "y", "rotation", "side", "footprint", "package"]
+            return _resolve_default_fields_for_context(
+                fabricator_id=fabricator_id,
+                context=context,
+            )
         else:
             # For BOM, use fabricator presets first, then global presets
             if fabricator_presets and "default" in fabricator_presets:
@@ -99,7 +148,10 @@ def parse_fields_argument(
                 return standard_preset["fields"].copy()
 
             # Ultimate fallback for BOM
-            return ["reference", "quantity", "value", "footprint"]
+            return _resolve_default_fields_for_context(
+                fabricator_id=fabricator_id,
+                context=context,
+            )
 
     # Case 2: User provided fields - parse exactly what they specified
     # Build tokens, trimming whitespace and surrounding quotes per token
@@ -143,50 +195,13 @@ def parse_fields_argument(
                 )
                 # Add appropriate context defaults first if result is empty
                 if not result:
-                    if fabricator_id != "generic":
-                        from jbom.config.fabricators import (
-                            get_fabricator_default_fields,
+                    result.extend(
+                        _resolve_default_fields_for_context(
+                            fabricator_id=fabricator_id,
+                            context=context,
+                            mode="additive",
                         )
-
-                        fabricator_defaults = get_fabricator_default_fields(
-                            fabricator_id, context
-                        )
-                        if fabricator_defaults:
-                            result.extend(fabricator_defaults)
-                        else:
-                            if context == "pos":
-                                result.extend(
-                                    [
-                                        "reference",
-                                        "x",
-                                        "y",
-                                        "rotation",
-                                        "side",
-                                        "footprint",
-                                        "package",
-                                    ]
-                                )
-                            else:
-                                result.extend(
-                                    ["reference", "quantity", "value", "footprint"]
-                                )
-                    else:
-                        if context == "pos":
-                            result.extend(
-                                [
-                                    "reference",
-                                    "x",
-                                    "y",
-                                    "rotation",
-                                    "side",
-                                    "footprint",
-                                    "package",
-                                ]
-                            )
-                        else:
-                            result.extend(
-                                ["reference", "quantity", "value", "footprint"]
-                            )
+                    )
                 result.append(field_name)
         else:
             # Custom field name — permissive: normalize and accept regardless of whether
@@ -208,10 +223,10 @@ def parse_fields_argument(
 
     # Final fallback if no fields were selected
     if not deduped:
-        if context == "pos":
-            return ["reference", "x", "y", "rotation", "side", "footprint", "package"]
-        else:
-            return ["reference", "quantity", "value", "footprint"]
+        return _resolve_default_fields_for_context(
+            fabricator_id=fabricator_id,
+            context=context,
+        )
 
     return deduped
 

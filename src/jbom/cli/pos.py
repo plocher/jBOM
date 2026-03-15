@@ -327,15 +327,7 @@ def _resolve_pos_output_projection(
 
     effective_fields = list(selected_fields) if selected_fields else []
     if not effective_fields:
-        effective_fields = get_fabricator_default_fields(fabricator, "pos") or [
-            "reference",
-            "x",
-            "y",
-            "rotation",
-            "side",
-            "footprint",
-            "package",
-        ]
+        effective_fields = _resolve_default_pos_fields(fabricator)
 
     service = projection_service or FabricatorProjectionService()
     projection = service.build_projection(
@@ -350,6 +342,23 @@ def _resolve_pos_output_projection(
         else list(projection.headers)
     )
     return effective_fields, headers, projection.fabricator_config
+
+
+def _resolve_default_pos_fields(fabricator: str) -> list[str]:
+    """Resolve POS default output fields from fabricator profile metadata."""
+
+    fabricator_defaults = get_fabricator_default_fields(fabricator, "pos")
+    if fabricator_defaults:
+        return list(fabricator_defaults)
+
+    generic_defaults = get_fabricator_default_fields("generic", "pos")
+    if generic_defaults:
+        return list(generic_defaults)
+
+    raise ValueError(
+        "No POS default fields found in fabricator profile configuration for "
+        f"'{fabricator}' or 'generic'"
+    )
 
 
 def _output_pos(

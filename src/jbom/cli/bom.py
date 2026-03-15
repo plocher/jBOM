@@ -42,26 +42,26 @@ from jbom.common.component_utils import derive_package_from_footprint
 from jbom.common.package_matching import PackageType
 from jbom.cli.formatting import Column, print_table, get_terminal_width
 
-_PHASE1_SCAFFOLD_ENV = "JBOM_ENABLE_PHASE1_SCAFFOLD"
+_MERGE_DIAGNOSTICS_ENV = "JBOM_ENABLE_MERGE_DIAGNOSTICS"
 
 
-def _phase1_scaffold_enabled() -> bool:
-    """Return True when Phase-1 service scaffolding is explicitly enabled."""
+def _merge_diagnostics_enabled() -> bool:
+    """Return True when merge diagnostics are explicitly enabled."""
 
-    flag = os.environ.get(_PHASE1_SCAFFOLD_ENV, "")
+    flag = os.environ.get(_MERGE_DIAGNOSTICS_ENV, "")
     return flag.strip().lower() in {"1", "true", "yes", "on"}
 
 
-def _run_phase1_bom_scaffold(
+def _run_bom_merge_diagnostics(
     *,
     components: list,
     schematic_files: list[Path],
     pcb_file: Optional[Path],
     verbose: bool,
 ) -> tuple[int, int] | None:
-    """Best-effort Phase-1 collector/merge execution for diagnostics only."""
+    """Best-effort collector/merge execution for diagnostics metadata only."""
 
-    if not _phase1_scaffold_enabled():
+    if not _merge_diagnostics_enabled():
         return None
 
     try:
@@ -85,7 +85,7 @@ def _run_phase1_bom_scaffold(
 
         if verbose:
             print(
-                "Phase1 scaffold active: "
+                "Merge diagnostics active: "
                 f"{project_graph.reference_count} references, "
                 f"{len(merge_result.mismatches)} mismatch record(s)",
                 file=sys.stderr,
@@ -94,7 +94,7 @@ def _run_phase1_bom_scaffold(
     except Exception as exc:
         if verbose:
             print(
-                f"Warning: Phase1 scaffold execution skipped due to error: {exc}",
+                f"Warning: Merge diagnostics execution skipped due to error: {exc}",
                 file=sys.stderr,
             )
         return None
@@ -308,7 +308,7 @@ def handle_bom(args: argparse.Namespace) -> int:
             schematic_files = [schematic_file]
             components = reader.load_components(schematic_file)
 
-        phase1_scaffold_summary = _run_phase1_bom_scaffold(
+        merge_diagnostics_summary = _run_bom_merge_diagnostics(
             components=components,
             schematic_files=schematic_files,
             pcb_file=project_context.pcb_file if project_context else None,
@@ -377,14 +377,14 @@ def handle_bom(args: argparse.Namespace) -> int:
             verbose=args.verbose,
         )
 
-        if phase1_scaffold_summary is not None:
-            reference_count, mismatch_count = phase1_scaffold_summary
+        if merge_diagnostics_summary is not None:
+            reference_count, mismatch_count = merge_diagnostics_summary
             metadata = dict(bom_data.metadata)
             metadata.update(
                 {
-                    "phase1_scaffold_enabled": True,
-                    "phase1_reference_count": reference_count,
-                    "phase1_mismatch_count": mismatch_count,
+                    "merge_diagnostics_enabled": True,
+                    "merge_diagnostics_reference_count": reference_count,
+                    "merge_diagnostics_mismatch_count": mismatch_count,
                 }
             )
             bom_data = BOMData(

@@ -1,9 +1,12 @@
-"""Project component collection scaffolding for canonical merge pipeline.
+"""Project component collection for canonical merge workflows.
 
-Phase-1 goal:
-- collect schematic and PCB component records keyed by reference designator
-- expose a stable, typed contract for downstream merge services
-- keep behavior non-breaking by not changing existing BOM/audit outputs
+This service is intentionally narrow: it only gathers project-local component
+facts and groups them by reference designator. It does not apply precedence,
+inventory overlays, or fabricator projection rules.
+
+Downstream services (merge, overlay, projection, audit) consume this graph as
+their shared input contract so each stage can evolve independently without
+duplicating file-reading logic.
 """
 
 from __future__ import annotations
