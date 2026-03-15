@@ -11,7 +11,6 @@ from __future__ import annotations
 import csv
 import shutil
 import sys
-import textwrap
 from dataclasses import dataclass
 from typing import (
     Any,
@@ -59,18 +58,49 @@ def _wrap_text(text: str, *, width: int) -> list[str]:
     result: list[str] = []
     for segment in text.split("\n"):
         if segment:
-            result.extend(
-                textwrap.wrap(
-                    segment,
-                    width=width,
-                    break_long_words=True,
-                    break_on_hyphens=False,
-                    drop_whitespace=True,
-                )
-            )
+            result.extend(_wrap_segment(segment, width=width))
         else:
             result.append("")
     return result or [""]
+
+
+def _wrap_segment(segment: str, *, width: int) -> list[str]:
+    """Wrap a single line segment with delimiter-aware soft break points."""
+
+    if len(segment) <= width:
+        return [segment]
+
+    lines: list[str] = []
+    remaining = segment
+
+    while len(remaining) > width:
+        wrapped, next_remaining = _split_segment_at_wrap_boundary(
+            remaining, width=width
+        )
+        lines.append(wrapped)
+        remaining = next_remaining
+
+    lines.append(remaining)
+    return lines
+
+
+def _split_segment_at_wrap_boundary(segment: str, *, width: int) -> tuple[str, str]:
+    """Split a segment at preferred wrap boundaries (space, then :, _, -)."""
+
+    whitespace_index = segment.rfind(" ", 0, width + 1)
+    if whitespace_index > 0:
+        head = segment[:whitespace_index].rstrip()
+        tail = segment[whitespace_index + 1 :].lstrip()
+        if head:
+            return head, tail
+
+    for delimiter in (":", "_", "-"):
+        delimiter_index = segment.rfind(delimiter, 0, width + 1)
+        if delimiter_index > 0:
+            split_index = delimiter_index + 1
+            return segment[:split_index], segment[split_index:]
+
+    return segment[:width], segment[width:]
 
 
 def _truncate(text: str, *, width: int, align: str) -> str:

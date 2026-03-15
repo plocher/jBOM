@@ -247,6 +247,23 @@ class TestConsoleFormatting(unittest.TestCase):
         # Row separator contains only dashes
         self.assertTrue(all(c in "-+" for c in set(lines[4])))
 
+    def test_delimiter_wrap_prefers_colon_over_hard_split(self):
+        """Delimiter-aware wrapping should split at ':' before hard truncation."""
+        cols = [Column("Field", "f", preferred_width=15, wrap=True)]
+        rows = [{"f": "SPCoast:0603-LED"}]
+        lines = self.render(rows, cols, width=15)
+        # header(0), sep(1), first wrapped line(2), second wrapped line(3), row_sep(4)
+        self.assertEqual(lines[2].strip(), "SPCoast:")
+        self.assertEqual(lines[3].strip(), "0603-LED")
+
+    def test_delimiter_wrap_supports_underscore_and_hyphen(self):
+        """Delimiter-aware wrapping should split long unspaced tokens on '_' and '-'."""
+        cols = [Column("Field", "f", preferred_width=10, wrap=True)]
+        rows = [{"f": "Library_Name-Variant"}]
+        lines = self.render(rows, cols, width=10)
+        wrapped_lines = [line.strip() for line in lines[2:5]]
+        self.assertEqual(wrapped_lines, ["Library_", "Name-", "Variant"])
+
 
 if __name__ == "__main__":
     unittest.main()
