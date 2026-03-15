@@ -65,6 +65,27 @@ def _write_kicad_pro(path: Path) -> None:
     path.write_text("{}", encoding="utf-8")
 
 
+def _write_pcb(
+    path: Path,
+    *,
+    reference: str = "R1",
+    value: str = "10K",
+    footprint: str = "Resistor_SMD:R_0402_1005Metric",
+) -> None:
+    """Write a minimal .kicad_pcb file containing one footprint."""
+
+    content = f"""(kicad_pcb (version 20211014) (generator pcbnew)
+  (footprint "{footprint}" (layer "F.Cu")
+    (at 10 5 0)
+    (property "Reference" "{reference}")
+    (property "Value" "{value}")
+    (attr smd)
+  )
+)
+"""
+    path.write_text(content, encoding="utf-8")
+
+
 def _write_inventory_csv(path: Path, rows: list[dict]) -> None:
     """Write a minimal inventory CSV with RowType, IPN, Category, Value, Package columns."""
     fieldnames = [
@@ -288,6 +309,41 @@ def test_audit_project_required_tilde_treated_as_missing(tmp_path: Path) -> None
         and r.field == "Value"
     ]
     assert quality_errors, "Tilde value should be treated as missing (ERROR)"
+
+
+def test_audit_project_emits_merge_mismatch_rows_for_pcb_disagreement(
+    tmp_path: Path,
+) -> None:
+    """Schematic/PCB footprint disagreement should emit MERGE_MISMATCH diagnostics."""
+
+    proj = _make_project(
+        tmp_path,
+        [
+            {
+                "reference": "R1",
+                "value": "10K",
+                "footprint": "Resistor_SMD:R_0603_1608Metric",
+                "lib_id": "Device:R",
+            }
+        ],
+    )
+    _write_pcb(
+        proj / "proj.kicad_pcb",
+        reference="R1",
+        value="10K",
+        footprint="Resistor_SMD:R_0402_1005Metric",
+    )
+
+    service = AuditService()
+    report = service.audit_project([proj])
+
+    mismatch_rows = [r for r in report.rows if r.check_type == CheckType.MERGE_MISMATCH]
+    assert mismatch_rows, "Expected merge mismatch diagnostics when PCB disagrees"
+    mismatch_row = mismatch_rows[0]
+    assert mismatch_row.severity == Severity.WARN
+    assert mismatch_row.ref_des == "R1"
+    assert mismatch_row.field == "footprint"
+    assert "pcb_biased_precedence" in mismatch_row.description
 
 
 # ---------------------------------------------------------------------------
