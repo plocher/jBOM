@@ -4,36 +4,20 @@ The overlay workflow has two stages:
 1. optionally enrich merged BOM entries with inventory matching results.
 2. project inventory-facing attributes into explicit `i:*` namespace fields.
 
-Projected namespace fields are profile-driven. The service derives canonical
-field candidates from defaults, supplier profiles, fabricator profiles, and
-the inventory item schema, then normalizes aliases to the BOM attribute names
-emitted by inventory matching.
+Projected namespace fields are defined by defaults `inventory_schema`
+canonical fields so schema evolution is centralized in one profile.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass, fields as dataclass_fields
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
 from jbom.common.component_utils import derive_package_from_footprint
-from jbom.common.fields import normalize_field_name
-from jbom.common.types import InventoryItem
 from jbom.config.defaults import get_defaults
-from jbom.config.fabricators import get_available_fabricators, load_fabricator
-from jbom.config.suppliers import get_available_suppliers, load_supplier
 from jbom.services.bom_generator import BOMData, BOMEntry
 from jbom.services.inventory_matcher import InventoryMatcher
-
-_PROFILE_TO_OVERLAY_FIELD_ALIASES: dict[str, str] = {
-    "ipn": "inventory_ipn",
-    "mfgpn": "manufacturer_part",
-    "mpn": "manufacturer_part",
-    "manufacturer_part_number": "manufacturer_part",
-    "power": "wattage",
-    "fab_pn": "fabricator_part_number",
-    "supplier_pn": "fabricator_part_number",
-}
 
 
 @dataclass(frozen=True)
@@ -45,12 +29,7 @@ class InventoryOverlayResult:
 
 
 class InventoryOverlayService:
-    """Apply inventory enhancement and project explicit `i:*` namespace fields.
-
-    Namespace projection is intentionally derived from configuration profiles so
-    new suppliers/fabricators can introduce relevant inventory attributes
-    without requiring code edits to this service.
-    """
+    """Apply inventory enhancement and project explicit `i:*` namespace fields."""
 
     def __init__(
         self,
@@ -58,11 +37,11 @@ class InventoryOverlayService:
         inventory_matcher: Optional[InventoryMatcher] = None,
         namespace_fields: tuple[str, ...] | None = None,
     ) -> None:
-        """Initialize service dependencies and resolved namespace projection set."""
+        """Initialize service dependencies and resolved namespace field set."""
 
         self._inventory_matcher = inventory_matcher or InventoryMatcher()
         self._namespace_fields = (
-            namespace_fields or self._resolve_namespace_fields_from_profiles()
+            namespace_fields or self._resolve_namespace_fields_from_defaults()
         )
 
     @property
@@ -151,62 +130,7 @@ class InventoryOverlayService:
             return "Yes" if value else "No"
         return str(value).strip()
 
-    def _resolve_namespace_fields_from_profiles(self) -> tuple[str, ...]:
-        """Resolve namespace projection fields from defaults and profile metadata.
+    def _resolve_namespace_fields_from_defaults(self) -> tuple[str, ...]:
+        """Resolve canonical namespace projection fields from defaults profile."""
 
-        Resolution order is deterministic:
-        1. defaults profile canonical field names,
-        2. supplier inventory column identifiers,
-        3. fabricator projection canonical fields,
-        4. inventory schema attributes.
-
-        Normalized profile tokens are aliased to overlay attribute names and
-        deduplicated while preserving first-seen ordering.
-        """
-
-        ordered_tokens: list[str] = []
-        seen_tokens: set[str] = set()
-
-        def _append_token(raw_token: str | None) -> None:
-            if not raw_token:
-                return
-            normalized = normalize_field_name(raw_token)
-            if not normalized or normalized in seen_tokens:
-                return
-            seen_tokens.add(normalized)
-            ordered_tokens.append(normalized)
-
-        defaults = get_defaults()
-        for canonical_name in defaults.field_synonyms.keys():
-            _append_token(canonical_name)
-
-        for supplier_id in get_available_suppliers():
-            try:
-                supplier_profile = load_supplier(supplier_id)
-            except ValueError:
-                continue
-            _append_token(supplier_profile.inventory_column)
-            for synonym in supplier_profile.inventory_column_synonyms:
-                _append_token(synonym)
-
-        for fabricator_id in get_available_fabricators():
-            try:
-                fabricator_profile = load_fabricator(fabricator_id)
-            except ValueError:
-                continue
-            for canonical_name in fabricator_profile.field_synonyms.keys():
-                _append_token(canonical_name)
-
-        for schema_field in dataclass_fields(InventoryItem):
-            _append_token(schema_field.name)
-
-        mapped_fields: list[str] = []
-        seen_fields: set[str] = set()
-        for token in ordered_tokens:
-            mapped_name = _PROFILE_TO_OVERLAY_FIELD_ALIASES.get(token, token)
-            if mapped_name in seen_fields:
-                continue
-            seen_fields.add(mapped_name)
-            mapped_fields.append(mapped_name)
-
-        return tuple(mapped_fields)
+        return tuple(get_defaults().get_inventory_schema().canonical_fields)

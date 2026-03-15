@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 from pathlib import Path
+from unittest.mock import patch
 
 from jbom.common.component_utils import derive_package_from_footprint
+from jbom.config.defaults import InventorySchemaConfig
 from jbom.services.bom_generator import BOMData, BOMEntry
 from jbom.services.inventory_overlay_service import InventoryOverlayService
 
@@ -110,3 +112,24 @@ def test_overlay_without_inventory_match_does_not_project_non_package_fields() -
     assert attributes["i:package"] == derive_package_from_footprint(
         "Resistor_SMD:R_0603_1608Metric"
     )
+
+
+def test_namespace_fields_are_loaded_from_defaults_inventory_schema() -> None:
+    class _StubDefaults:
+        def get_inventory_schema(self) -> InventorySchemaConfig:
+            return InventorySchemaConfig(
+                canonical_fields=("inventory_ipn", "manufacturer_part"),
+                alias_to_canonical={"ipn": "inventory_ipn"},
+                enrichment_bindings={
+                    "inventory_ipn": "ipn",
+                    "manufacturer_part": "mfgpn",
+                },
+            )
+
+    with patch(
+        "jbom.services.inventory_overlay_service.get_defaults",
+        return_value=_StubDefaults(),
+    ):
+        service = InventoryOverlayService()
+
+    assert service.namespace_fields == ("inventory_ipn", "manufacturer_part")

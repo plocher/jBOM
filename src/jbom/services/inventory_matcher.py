@@ -8,10 +8,12 @@ This service implements the core matching pipeline:
 """
 
 import logging
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 from pathlib import Path
+from jbom.common.synonym_normalization import first_non_empty_alias_value
 
 from jbom.common.types import Component, InventoryItem
+from jbom.config.defaults import get_defaults
 from jbom.config.fabricators import FabricatorConfig, load_fabricator
 from jbom.services.bom_generator import BOMEntry, BOMData
 from jbom.services.fabricator_inventory_selector import FabricatorInventorySelector
@@ -248,43 +250,23 @@ class InventoryMatcher:
             fabricator_id=fabricator_id,
             fabricator_config=fabricator_config,
         )
+        schema = get_defaults().get_inventory_schema()
+        enhanced_attributes["inventory_matched"] = True
+        for canonical_key, source_key in schema.enrichment_bindings.items():
+            resolved_value = InventoryMatcher._resolve_enrichment_source_value(
+                item,
+                source_key=source_key,
+                fabricator_part_number=fabricator_part_number,
+            )
 
-        enhanced_attributes.update(
-            {
-                "inventory_matched": True,
-                "inventory_ipn": item.ipn,
-                "manufacturer": item.manufacturer
-                if item.manufacturer
-                else enhanced_attributes.get("manufacturer", ""),
-                "manufacturer_part": item.mfgpn
-                if item.mfgpn
-                else enhanced_attributes.get("manufacturer_part", ""),
-                "description": item.description
-                if item.description
-                else enhanced_attributes.get("description", ""),
-                "datasheet": item.datasheet
-                if item.datasheet
-                else enhanced_attributes.get("datasheet", ""),
-                # Canonical attribute key used by CLI field system.
-                "lcsc": item.lcsc if item.lcsc else enhanced_attributes.get("lcsc", ""),
-                "tolerance": item.tolerance
-                if item.tolerance
-                else enhanced_attributes.get("tolerance", ""),
-                "voltage": item.voltage
-                if item.voltage
-                else enhanced_attributes.get("voltage", ""),
-                "wattage": item.wattage
-                if item.wattage
-                else enhanced_attributes.get("wattage", ""),
-                "package": item.package
-                if item.package
-                else enhanced_attributes.get("package", ""),
-                "smd": item.smd if item.smd else enhanced_attributes.get("smd", ""),
-                "fabricator_part_number": fabricator_part_number
-                if fabricator_part_number
-                else enhanced_attributes.get("fabricator_part_number", ""),
-            }
-        )
+            if isinstance(resolved_value, str):
+                resolved_value = resolved_value.strip()
+            if resolved_value:
+                enhanced_attributes[canonical_key] = resolved_value
+            else:
+                enhanced_attributes[canonical_key] = enhanced_attributes.get(
+                    canonical_key, ""
+                )
 
         return BOMEntry(
             references=entry.references,
@@ -294,3 +276,24 @@ class InventoryMatcher:
             quantity=entry.quantity,
             attributes=enhanced_attributes,
         )
+
+    @staticmethod
+    def _resolve_enrichment_source_value(
+        item: InventoryItem,
+        *,
+        source_key: str,
+        fabricator_part_number: str,
+    ) -> Any:
+        """Resolve one enrichment source token into an inventory-derived value."""
+
+        source_token = str(source_key or "").strip()
+        if not source_token:
+            return ""
+
+        if source_token == "__resolved_fabricator_part_number__":
+            return fabricator_part_number
+
+        if hasattr(item, source_token):
+            return getattr(item, source_token)
+
+        return first_non_empty_alias_value(item.raw_data, [source_token])

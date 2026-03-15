@@ -188,6 +188,49 @@ field_synonyms:
     display_name: "Power"
 
 # ---------------------------------------------------------------------------
+# Canonical inventory overlay schema contract.
+# This is the single source of truth for:
+# - canonical internal attribute keys used by matcher/overlay/CLI paths
+# - normalized alias tokens that map into canonical keys
+# - source bindings from InventoryItem fields into canonical attributes
+# ---------------------------------------------------------------------------
+inventory_schema:
+  canonical_fields:
+    - inventory_ipn
+    - manufacturer
+    - manufacturer_part
+    - description
+    - datasheet
+    - lcsc
+    - tolerance
+    - voltage
+    - wattage
+    - package
+    - smd
+    - fabricator_part_number
+  alias_to_canonical:
+    ipn: inventory_ipn
+    mfgpn: manufacturer_part
+    mpn: manufacturer_part
+    manufacturer_part_number: manufacturer_part
+    power: wattage
+    fab_pn: fabricator_part_number
+    supplier_pn: fabricator_part_number
+  enrichment_bindings:
+    inventory_ipn: ipn
+    manufacturer: manufacturer
+    manufacturer_part: mfgpn
+    description: description
+    datasheet: datasheet
+    lcsc: lcsc
+    tolerance: tolerance
+    voltage: voltage
+    wattage: wattage
+    package: package
+    smd: smd
+    fabricator_part_number: __resolved_fabricator_part_number__
+
+# ---------------------------------------------------------------------------
 # Default CLI search output fields (used when supplier profile has no override).
 # ---------------------------------------------------------------------------
 search:
