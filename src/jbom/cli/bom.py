@@ -2,7 +2,6 @@
 
 import argparse
 import csv
-import os
 import sys
 from pathlib import Path
 from typing import Any, Optional
@@ -22,6 +21,12 @@ from jbom.services.fabricator_projection_service import (
 )
 from jbom.services.inventory_overlay_service import InventoryOverlayService
 from jbom.services.pcb_reader import DefaultKiCadReaderService
+from jbom.services.component_merge_service import (
+    ComponentMergeResult,
+    ComponentMergeService,
+    MergedReferenceRecord,
+)
+from jbom.services.project_component_collector import ProjectComponentCollector
 from jbom.services.project_file_resolver import ProjectFileResolver
 from jbom.common.options import GeneratorOptions
 from jbom.config.fabricators import (
@@ -42,32 +47,17 @@ from jbom.common.component_utils import derive_package_from_footprint
 from jbom.common.package_matching import PackageType
 from jbom.cli.formatting import Column, print_table, get_terminal_width
 
-_MERGE_DIAGNOSTICS_ENV = "JBOM_ENABLE_MERGE_DIAGNOSTICS"
 
-
-def _merge_diagnostics_enabled() -> bool:
-    """Return True when merge diagnostics are explicitly enabled."""
-
-    flag = os.environ.get(_MERGE_DIAGNOSTICS_ENV, "")
-    return flag.strip().lower() in {"1", "true", "yes", "on"}
-
-
-def _run_bom_merge_diagnostics(
+def _run_component_merge(
     *,
     components: list,
     schematic_files: list[Path],
     pcb_file: Optional[Path],
     verbose: bool,
-) -> tuple[int, int] | None:
-    """Best-effort collector/merge execution for diagnostics metadata only."""
-
-    if not _merge_diagnostics_enabled():
-        return None
+) -> ComponentMergeResult | None:
+    """Best-effort collector/merge execution for canonical namespace enrichment."""
 
     try:
-        from jbom.services.component_merge_service import ComponentMergeService
-        from jbom.services.project_component_collector import ProjectComponentCollector
-
         pcb_components = []
         if pcb_file is not None and pcb_file.exists():
             board = DefaultKiCadReaderService().read_pcb_file(pcb_file)
@@ -85,19 +75,136 @@ def _run_bom_merge_diagnostics(
 
         if verbose:
             print(
-                "Merge diagnostics active: "
+                "Merge model active: "
                 f"{project_graph.reference_count} references, "
                 f"{len(merge_result.mismatches)} mismatch record(s)",
                 file=sys.stderr,
             )
-        return project_graph.reference_count, len(merge_result.mismatches)
+        return merge_result
     except Exception as exc:
         if verbose:
             print(
-                f"Warning: Merge diagnostics execution skipped due to error: {exc}",
+                f"Warning: merge model execution skipped due to error: {exc}",
                 file=sys.stderr,
             )
         return None
+
+
+def _resolve_uniform_merge_field_value(
+    reference_records: list[MergedReferenceRecord],
+    *,
+    namespace_field: str,
+    field_key: str,
+) -> str:
+    """Resolve a merge namespace field only when grouped references agree."""
+
+    resolved_value = ""
+    for record in reference_records:
+        namespace_values = getattr(record, namespace_field)
+        candidate_value = str(namespace_values.get(field_key, "")).strip()
+        if not candidate_value:
+            continue
+        if not resolved_value:
+            resolved_value = candidate_value
+            continue
+        if candidate_value != resolved_value:
+            return ""
+    return resolved_value
+
+
+def _resolve_entry_merge_namespace_values(
+    reference_records: list[MergedReferenceRecord],
+) -> dict[str, str]:
+    """Resolve stable merge namespace fields for one aggregated BOM entry."""
+
+    resolved_fields: dict[str, str] = {}
+    for namespace_field in ("source_fields", "canonical_fields", "annotated_fields"):
+        field_keys = sorted(
+            {
+                field_key
+                for record in reference_records
+                for field_key in getattr(record, namespace_field).keys()
+            }
+        )
+        for field_key in field_keys:
+            resolved_value = _resolve_uniform_merge_field_value(
+                reference_records,
+                namespace_field=namespace_field,
+                field_key=field_key,
+            )
+            if resolved_value:
+                resolved_fields[field_key] = resolved_value
+    return resolved_fields
+
+
+def _enrich_bom_with_merge_namespaces(
+    bom_data: BOMData,
+    merge_result: ComponentMergeResult | None,
+) -> BOMData:
+    """Attach stable merge-model namespaces (`s:/p:/c:/a:`) onto BOM entries."""
+
+    if merge_result is None or not merge_result.records:
+        return bom_data
+
+    updated_entries: list[BOMEntry] = []
+    any_entry_updated = False
+    for entry in bom_data.entries:
+        entry_merge_records = [
+            merge_result.records[reference]
+            for reference in entry.references
+            if reference in merge_result.records
+        ]
+        if not entry_merge_records:
+            updated_entries.append(entry)
+            continue
+
+        merge_namespace_fields = _resolve_entry_merge_namespace_values(
+            entry_merge_records
+        )
+        if not merge_namespace_fields:
+            updated_entries.append(entry)
+            continue
+
+        attributes = dict(entry.attributes)
+        entry_updated = False
+        for field_key, field_value in merge_namespace_fields.items():
+            if attributes.get(field_key) == field_value:
+                continue
+            attributes[field_key] = field_value
+            entry_updated = True
+
+        if not entry_updated:
+            updated_entries.append(entry)
+            continue
+
+        any_entry_updated = True
+        updated_entries.append(
+            BOMEntry(
+                references=entry.references,
+                value=entry.value,
+                footprint=entry.footprint,
+                quantity=entry.quantity,
+                lib_id=entry.lib_id,
+                attributes=attributes,
+            )
+        )
+
+    metadata = dict(bom_data.metadata)
+    metadata.update(
+        {
+            "merge_model_enabled": True,
+            "merge_model_reference_count": merge_result.reference_count,
+            "merge_model_mismatch_count": len(merge_result.mismatches),
+            "merge_precedence_profile": merge_result.metadata.get(
+                "precedence_profile", ""
+            ),
+        }
+    )
+    return BOMData(
+        project_name=bom_data.project_name,
+        entries=updated_entries if any_entry_updated else bom_data.entries,
+        metadata=metadata,
+    )
 
 
 def register_command(subparsers) -> None:
@@ -308,7 +415,7 @@ def handle_bom(args: argparse.Namespace) -> int:
             schematic_files = [schematic_file]
             components = reader.load_components(schematic_file)
 
-        merge_diagnostics_summary = _run_bom_merge_diagnostics(
+        merge_result = _run_component_merge(
             components=components,
             schematic_files=schematic_files,
             pcb_file=project_context.pcb_file if project_context else None,
@@ -341,6 +448,7 @@ def handle_bom(args: argparse.Namespace) -> int:
         # Generate basic BOM with common filtering logic
         filters = create_filter_config(args)
         bom_data = generator.generate_bom_data(components, project_name, filters)
+        bom_data = _enrich_bom_with_merge_namespaces(bom_data, merge_result)
 
         inventory_file: Path | None = None
         if args.inventory_files:
@@ -376,22 +484,6 @@ def handle_bom(args: argparse.Namespace) -> int:
             project_context.pcb_file if project_context else None,
             verbose=args.verbose,
         )
-
-        if merge_diagnostics_summary is not None:
-            reference_count, mismatch_count = merge_diagnostics_summary
-            metadata = dict(bom_data.metadata)
-            metadata.update(
-                {
-                    "merge_diagnostics_enabled": True,
-                    "merge_diagnostics_reference_count": reference_count,
-                    "merge_diagnostics_mismatch_count": mismatch_count,
-                }
-            )
-            bom_data = BOMData(
-                project_name=bom_data.project_name,
-                entries=bom_data.entries,
-                metadata=metadata,
-            )
 
         # Handle output
         return _output_bom(

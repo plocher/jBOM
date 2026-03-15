@@ -1,7 +1,15 @@
 """Unit tests for BOM CLI field resolution helpers."""
 
-from jbom.cli.bom import _entry_smd_from_reference_lookup, _get_field_value
-from jbom.services.bom_generator import BOMEntry
+from jbom.cli.bom import (
+    _enrich_bom_with_merge_namespaces,
+    _entry_smd_from_reference_lookup,
+    _get_field_value,
+)
+from jbom.services.bom_generator import BOMData, BOMEntry
+from jbom.services.component_merge_service import (
+    ComponentMergeResult,
+    MergedReferenceRecord,
+)
 
 
 def _make_entry(
@@ -135,3 +143,84 @@ def test_a_namespace_field_renders_annotation_lines_with_canonical_on_mismatch()
 def test_a_namespace_field_prefers_explicit_annotation_value() -> None:
     entry = _make_entry({"a:value": "s:10k\np:9k99"})
     assert _get_field_value(entry, "a:value", fabricator_id="jlc") == "s:10k\np:9k99"
+
+
+def test_merge_namespace_enrichment_adds_uniform_values_to_grouped_entry() -> None:
+    bom_data = BOMData(
+        project_name="Project",
+        entries=[
+            BOMEntry(
+                references=["R1", "R2"],
+                value="10k",
+                footprint="SCH:0603",
+                quantity=2,
+                attributes={},
+            )
+        ],
+        metadata={},
+    )
+    merge_result = ComponentMergeResult(
+        records={
+            "R1": MergedReferenceRecord(
+                reference="R1",
+                source_fields={"s:footprint": "SCH:0603"},
+                canonical_fields={"c:footprint": "PCB:0603"},
+                annotated_fields={"a:footprint": "s:SCH:0603\np:PCB:0603\nc:PCB:0603"},
+            ),
+            "R2": MergedReferenceRecord(
+                reference="R2",
+                source_fields={"s:footprint": "SCH:0603"},
+                canonical_fields={"c:footprint": "PCB:0603"},
+                annotated_fields={"a:footprint": "s:SCH:0603\np:PCB:0603\nc:PCB:0603"},
+            ),
+        },
+        mismatches=tuple(),
+        metadata={"precedence_profile": "generic"},
+    )
+
+    enriched = _enrich_bom_with_merge_namespaces(bom_data, merge_result)
+
+    attrs = enriched.entries[0].attributes
+    assert attrs["s:footprint"] == "SCH:0603"
+    assert attrs["c:footprint"] == "PCB:0603"
+    assert attrs["a:footprint"] == "s:SCH:0603\np:PCB:0603\nc:PCB:0603"
+    assert enriched.metadata["merge_model_enabled"] is True
+    assert enriched.metadata["merge_model_reference_count"] == 2
+    assert enriched.metadata["merge_model_mismatch_count"] == 0
+    assert enriched.metadata["merge_precedence_profile"] == "generic"
+
+
+def test_merge_namespace_enrichment_skips_conflicting_grouped_values() -> None:
+    bom_data = BOMData(
+        project_name="Project",
+        entries=[
+            BOMEntry(
+                references=["R1", "R2"],
+                value="10k",
+                footprint="SCH:0603",
+                quantity=2,
+                attributes={},
+            )
+        ],
+        metadata={},
+    )
+    merge_result = ComponentMergeResult(
+        records={
+            "R1": MergedReferenceRecord(
+                reference="R1",
+                canonical_fields={"c:value": "10k", "c:rotation": "0"},
+            ),
+            "R2": MergedReferenceRecord(
+                reference="R2",
+                canonical_fields={"c:value": "10k", "c:rotation": "90"},
+            ),
+        },
+        mismatches=tuple(),
+        metadata={"precedence_profile": "generic"},
+    )
+
+    enriched = _enrich_bom_with_merge_namespaces(bom_data, merge_result)
+
+    attrs = enriched.entries[0].attributes
+    assert attrs["c:value"] == "10k"
+    assert "c:rotation" not in attrs
