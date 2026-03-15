@@ -1,6 +1,157 @@
 # CHANGELOG
 
 
+## v6.42.0 (2026-03-15)
+
+### Bug Fixes
+
+* fix(bom): fallback i:package to package/footprint when inventory is missing
+
+Ensure inventory-prefixed package output remains populated even when no inventory row matched by using explicit package first and footprint-derived package as fallback.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`644f0e8`](https://github.com/plocher/jBOM/commit/644f0e837b59c12f32acc7c6a360364cdbddb68a))
+
+### Features
+
+* feat(merge): make grouped a-namespace diagnostics concise
+
+Refine grouped a:* rendering to summarize mismatches as readable diagnostics and collapse source-agreeing groups to a compact canonical value.
+
+Keep deterministic reference-indexed grouping only when grouped summaries differ.
+
+Update BOM/PARTS unit expectations for concise grouped annotation behavior.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`d897d75`](https://github.com/plocher/jBOM/commit/d897d7514c84edde5222bf9adee4d941fb4d639f))
+
+* feat(merge): summarize grouped a-namespace mismatches
+
+Add shared grouped namespace resolution for aggregated outputs and keep strict-uniform semantics for source/canonical fields.
+
+When grouped a:* values diverge across references, render deterministic reference-indexed summaries instead of dropping annotations.
+
+Wire BOM and PARTS enrichment to shared policy and add unit regression coverage.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`b698591`](https://github.com/plocher/jBOM/commit/b698591b1f959a1c96c643419c577e2098cde082))
+
+* feat(cli): apply source requirements to namespace field behavior
+
+Add FieldSourceRequirements and namespace applicability policy in field listing service, then apply the same contract to list-fields matrix rendering and namespaced field interpretation for BOM/POS/PARTS.
+
+Update unit and feature coverage to reflect source-scoped namespace availability, including PARTS matrix behavior that omits non-applicable p:/i: tokens.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`4a5118b`](https://github.com/plocher/jBOM/commit/4a5118b487e840fff6786a535e7aa419af09d0b1))
+
+* feat(cli): render list-fields as namespace matrix
+
+Add shared FieldListingService API for Name|s:|p:|i:|c:|a: grouping and use it in bom/pos/parts --list-fields output so namespace variants are presented in a learning-oriented matrix view with copy-pastable tokens. Extend known namespace examples in bom/pos list catalogs and add unit coverage for matrix generation semantics.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`319a007`](https://github.com/plocher/jBOM/commit/319a007a70afbe586283ade3802e5fdc95f8e11e))
+
+* feat(parts): add fields and merge namespace projection
+
+Add parts --fields/--list-fields support with dynamic output projection while preserving legacy default columns. Run canonical project merge in parts workflow and project stable s:/p:/c:/a: fields onto aggregated entries when grouped references agree. Extend shared field parser with parts defaults and add unit coverage for parts field resolution and merge enrichment behavior.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`cc6dcda`](https://github.com/plocher/jBOM/commit/cc6dcda1e7794ada5b8c8333490e5add340c7627))
+
+* feat(pos): enrich POS rows with merge namespaces
+
+Run canonical component merge during POS generation and project s:/p:/c:/a: fields onto per-reference POS rows when merge data is available. Filter schematic merge sources to real schematic files for safe project cross-resolution behavior and add unit coverage for merge namespace enrichment paths.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`9f0e56f`](https://github.com/plocher/jBOM/commit/9f0e56fa2a204e09b8b8c1f29010032e6605fd2d))
+
+* feat(bom): apply merge namespaces to grouped BOM entries
+
+Replace diagnostics-only merge scaffolding in BOM flow with canonical merge execution and attach stable s:/p:/c:/a: namespace attributes onto aggregated BOM entries when grouped references agree. Add unit coverage for uniform merge projection and conflict-safe omission behavior in grouped lines.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`9fe82a1`](https://github.com/plocher/jBOM/commit/9fe82a1c8e0007052973524c7b2ffde767e5149d))
+
+* feat(audit): surface canonical merge mismatches
+
+Generate precedence-driven merge mismatches in ComponentMergeService and pipe diagnostics into audit project reporting notes.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`ce2a620`](https://github.com/plocher/jBOM/commit/ce2a62073dae015929da910818aa25a98f1e0131))
+
+* feat(cli): add delimiter-aware console cell wrapping
+
+Prefer soft breaks at ':', '_' and '-' (after whitespace) before hard width splits for table cells in -o console output.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`166c78b`](https://github.com/plocher/jBOM/commit/166c78b9dceeef01add1caa1b9382a1e1a7fcf32))
+
+* feat(services): add fabricator projection service
+
+Introduce FabricatorProjectionService to centralize fabricator header mapping, config loading, and fabricator-part-number resolution rules.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`ae244e3`](https://github.com/plocher/jBOM/commit/ae244e33ae64e5f399afcbf7d4e7998f00b7afed))
+
+* feat(services): add inventory overlay service for i namespace projection
+
+Introduce InventoryOverlayService to centralize inventory application and explicit i:* field projection, including deterministic i:package fallback for no-inventory flows.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`414dbc1`](https://github.com/plocher/jBOM/commit/414dbc14e7a74ecbba79013f0e42261c3da10182))
+
+* feat(cli): gate phase1 collector/merge scaffolds behind env flag
+
+Add diagnostics-only Phase-1 scaffold execution in bom/audit when JBOM_ENABLE_PHASE1_SCAFFOLD is enabled, preserving default command behavior.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`db0930f`](https://github.com/plocher/jBOM/commit/db0930f16b11ec16fefc11a9fea18ce8fb0c3513))
+
+* feat(services): scaffold project collector and merge contracts
+
+Add Phase-1 ProjectComponentCollector and ComponentMergeService scaffolds with typed namespace contracts, placeholder mismatch records, and defaults-backed precedence policy loading.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`acb141c`](https://github.com/plocher/jBOM/commit/acb141cbbd94e97614acc837b22a2f48dbe6bbc6))
+
+* feat(bom): add namespace-aware field resolution and a:* annotations
+
+Add explicit s:/p:/c:/i: resolver paths in BOM field extraction and introduce deterministic a:* annotation rendering with canonical mismatch surfacing.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`24e8cdd`](https://github.com/plocher/jBOM/commit/24e8cddc2129910f08570cc85b1e0cfb01680c7d))
+
+* feat(fields): add s/p/a namespace prefix support
+
+Extend shared field normalization and header rendering to accept schematic, pcb, and annotation namespace prefixes and add focused unit coverage.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`1f109bc`](https://github.com/plocher/jBOM/commit/1f109bc335d9303ca03f9944d4cf13a90a57af4a))
+
+### Refactoring
+
+* refactor: unify profile alias schema on field_synonyms
+
+Standardize defaults inventory_schema and supplier profiles on a single field_synonyms shape (display_name + synonyms), remove inventory_schema alias_to_canonical config, and derive inventory column metadata from supplier_pn synonyms. Updated BDD supplier fixture generation and unit tests accordingly.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`4beacc5`](https://github.com/plocher/jBOM/commit/4beacc57a656032ad3fe3977ba120e6868dfe6f3))
+
+* refactor: centralize inventory canonical schema in defaults profile
+
+Define inventory_schema (canonical fields, alias mapping, enrichment bindings) in generic.defaults.yaml and parse it in DefaultsConfig. Inventory overlay now uses defaults canonical fields directly, and inventory matcher enrichment is driven by defaults bindings instead of hardcoded attribute updates. Added unit coverage for defaults schema parsing plus overlay/matcher consumption.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`57861d3`](https://github.com/plocher/jBOM/commit/57861d388f38f5c150fca54392a4e146670baf75))
+
+* refactor: replace phase scaffolding terms and profile-drive POS/inventory defaults
+
+Remove phase-token naming from BOM/audit/collector paths, centralize merge diagnostics naming, and drop obsolete audit scaffold path. POS +field baseline defaults now resolve from fabricator profile metadata (including generic additive defaults), and inventory overlay namespace projection fields are derived from defaults/supplier/fabricator profiles plus inventory schema aliases for maintainable config-driven behavior.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`2d380b1`](https://github.com/plocher/jBOM/commit/2d380b1f6a052654f497eeccfe68f0ac6818e3e1))
+
+* refactor(pos): adopt projection service for output mapping
+
+Use FabricatorProjectionService for POS header projection and fabricator part-number resolution, and add POS projection field-resolution unit coverage.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`c23cbbb`](https://github.com/plocher/jBOM/commit/c23cbbbb41ae8642630f663400a960c169700ad7))
+
+* refactor(bom): use fabricator projection service for output mapping
+
+Use FabricatorProjectionService for BOM header/config projection, delegate fabricator part-number resolution to the service, and fix i:* resolver flow to prefer projected namespace values.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`12eda69`](https://github.com/plocher/jBOM/commit/12eda695d0e2f3223001e57030f00b51298ea818))
+
+* refactor(bom): apply inventory overlay service in command flow
+
+Route BOM inventory enhancement through InventoryOverlayService and simplify i:* field resolution to prefer projected namespace keys over ad hoc per-field fallback logic.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`e3fbbd3`](https://github.com/plocher/jBOM/commit/e3fbbd3466fbe1b93d61a3a4834fa321c3eea8ff))
+
+
 ## v6.41.2 (2026-03-14)
 
 ### Bug Fixes
