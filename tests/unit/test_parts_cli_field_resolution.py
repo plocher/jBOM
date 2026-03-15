@@ -1,0 +1,148 @@
+"""Unit tests for parts CLI field projection and merge namespace enrichment."""
+
+from jbom.cli.parts import (
+    _enrich_parts_with_merge_namespaces,
+    _get_parts_field_value,
+    _resolve_parts_output_projection,
+)
+from jbom.common.field_parser import parse_fields_argument
+from jbom.services.component_merge_service import (
+    ComponentMergeResult,
+    MergedReferenceRecord,
+)
+from jbom.services.parts_list_generator import PartsListData, PartsListEntry
+
+
+def test_parse_fields_argument_uses_parts_defaults() -> None:
+    selected = parse_fields_argument(
+        None,
+        {"refs": "refs"},
+        fabricator_id="generic",
+        context="parts",
+    )
+
+    assert selected == [
+        "refs",
+        "value",
+        "footprint",
+        "package",
+        "part_type",
+        "tolerance",
+        "voltage",
+        "dielectric",
+    ]
+
+
+def test_resolve_parts_output_projection_uses_legacy_default_headers() -> None:
+    fields, headers, widths = _resolve_parts_output_projection(None)
+
+    assert fields == [
+        "refs",
+        "value",
+        "footprint",
+        "package",
+        "part_type",
+        "tolerance",
+        "voltage",
+        "dielectric",
+    ]
+    assert headers == [
+        "Refs",
+        "Value",
+        "Footprint",
+        "Package",
+        "Type",
+        "Tolerance",
+        "Voltage",
+        "Dielectric",
+    ]
+    assert widths == [20, 12, 20, 14, 10, 10, 8, 10]
+
+
+def test_get_parts_field_value_reads_namespaced_attributes() -> None:
+    entry = PartsListEntry(
+        refs=["R1"],
+        value="10k",
+        footprint="R_0603",
+        attributes={"c:value": "9k99"},
+    )
+
+    assert _get_parts_field_value(entry, "refs") == "R1"
+    assert _get_parts_field_value(entry, "c:value") == "9k99"
+
+
+def test_enrich_parts_with_merge_namespaces_adds_uniform_fields() -> None:
+    parts_data = PartsListData(
+        project_name="Project",
+        entries=[
+            PartsListEntry(
+                refs=["R1", "R2"],
+                value="10k",
+                footprint="R_0603",
+                attributes={},
+            )
+        ],
+        metadata={},
+    )
+    merge_result = ComponentMergeResult(
+        records={
+            "R1": MergedReferenceRecord(
+                reference="R1",
+                source_fields={"s:value": "10k"},
+                canonical_fields={"c:value": "9k99"},
+                annotated_fields={"a:value": "s:10k\np:9k99\nc:9k99"},
+            ),
+            "R2": MergedReferenceRecord(
+                reference="R2",
+                source_fields={"s:value": "10k"},
+                canonical_fields={"c:value": "9k99"},
+                annotated_fields={"a:value": "s:10k\np:9k99\nc:9k99"},
+            ),
+        },
+        mismatches=tuple(),
+        metadata={"precedence_profile": "generic"},
+    )
+
+    enriched = _enrich_parts_with_merge_namespaces(parts_data, merge_result)
+
+    attrs = enriched.entries[0].attributes
+    assert attrs["s:value"] == "10k"
+    assert attrs["c:value"] == "9k99"
+    assert attrs["a:value"] == "s:10k\np:9k99\nc:9k99"
+    assert enriched.metadata["merge_model_enabled"] is True
+    assert enriched.metadata["merge_model_reference_count"] == 2
+    assert enriched.metadata["merge_model_mismatch_count"] == 0
+
+
+def test_enrich_parts_with_merge_namespaces_skips_conflicting_grouped_values() -> None:
+    parts_data = PartsListData(
+        project_name="Project",
+        entries=[
+            PartsListEntry(
+                refs=["R1", "R2"],
+                value="10k",
+                footprint="R_0603",
+                attributes={},
+            )
+        ],
+        metadata={},
+    )
+    merge_result = ComponentMergeResult(
+        records={
+            "R1": MergedReferenceRecord(
+                reference="R1",
+                canonical_fields={"c:value": "9k99", "c:rotation": "0"},
+            ),
+            "R2": MergedReferenceRecord(
+                reference="R2",
+                canonical_fields={"c:value": "9k99", "c:rotation": "90"},
+            ),
+        },
+        mismatches=tuple(),
+        metadata={"precedence_profile": "generic"},
+    )
+
+    enriched = _enrich_parts_with_merge_namespaces(parts_data, merge_result)
+    attrs = enriched.entries[0].attributes
+    assert attrs["c:value"] == "9k99"
+    assert "c:rotation" not in attrs
