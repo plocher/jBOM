@@ -133,6 +133,46 @@ def test_enrich_parts_with_merge_namespaces_adds_uniform_fields() -> None:
     assert enriched.metadata["merge_model_mismatch_count"] == 0
 
 
+def test_enrich_parts_with_merge_namespaces_summarizes_divergent_annotations() -> None:
+    parts_data = PartsListData(
+        project_name="Project",
+        entries=[
+            PartsListEntry(
+                refs=["R1", "R2", "R10"],
+                value="10k",
+                footprint="R_0603",
+                attributes={},
+            )
+        ],
+        metadata={},
+    )
+    merge_result = ComponentMergeResult(
+        records={
+            "R1": MergedReferenceRecord(
+                reference="R1",
+                annotated_fields={"a:footprint": "s:SCH:0603\np:PCB:0402\nc:PCB:0402"},
+            ),
+            "R2": MergedReferenceRecord(
+                reference="R2",
+                annotated_fields={"a:footprint": "s:SCH:0603\np:PCB:0603\nc:PCB:0603"},
+            ),
+            "R10": MergedReferenceRecord(
+                reference="R10",
+                annotated_fields={"a:footprint": "s:SCH:0603\np:PCB:0402\nc:PCB:0402"},
+            ),
+        },
+        mismatches=tuple(),
+        metadata={"precedence_profile": "generic"},
+    )
+
+    enriched = _enrich_parts_with_merge_namespaces(parts_data, merge_result)
+    assert (
+        enriched.entries[0].attributes["a:footprint"]
+        == "R1,R10 -> s:SCH:0603 | p:PCB:0402 | c:PCB:0402 || "
+        "R2 -> s:SCH:0603 | p:PCB:0603 | c:PCB:0603"
+    )
+
+
 def test_enrich_parts_with_merge_namespaces_skips_conflicting_grouped_values() -> None:
     parts_data = PartsListData(
         project_name="Project",

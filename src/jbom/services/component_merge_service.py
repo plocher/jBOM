@@ -92,6 +92,136 @@ class ComponentMergeResult:
         return len(self.records)
 
 
+def resolve_grouped_merge_namespace_values(
+    reference_records: list[MergedReferenceRecord],
+) -> dict[str, str]:
+    """Resolve grouped namespace values for one aggregated output entry.
+
+    `s:*` and `c:*` fields are emitted only when grouped references agree.
+    `a:*` fields are always human-oriented: when grouped references disagree on
+    annotation text, render a deterministic reference-indexed summary.
+    """
+
+    resolved_fields: dict[str, str] = {}
+    for namespace_field in ("source_fields", "canonical_fields", "annotated_fields"):
+        field_keys = sorted(
+            {
+                field_key
+                for record in reference_records
+                for field_key in getattr(record, namespace_field).keys()
+            }
+        )
+        for field_key in field_keys:
+            if namespace_field == "annotated_fields":
+                resolved_value = _resolve_grouped_annotation_field_value(
+                    reference_records,
+                    field_key=field_key,
+                )
+            else:
+                resolved_value = _resolve_uniform_group_field_value(
+                    reference_records,
+                    namespace_field=namespace_field,
+                    field_key=field_key,
+                )
+            if resolved_value:
+                resolved_fields[field_key] = resolved_value
+    return resolved_fields
+
+
+def _resolve_uniform_group_field_value(
+    reference_records: list[MergedReferenceRecord],
+    *,
+    namespace_field: str,
+    field_key: str,
+) -> str:
+    """Resolve one namespace field only when grouped references agree."""
+
+    resolved_value = ""
+    for record in reference_records:
+        namespace_values = getattr(record, namespace_field)
+        candidate_value = str(namespace_values.get(field_key, "")).strip()
+        if not candidate_value:
+            continue
+        if not resolved_value:
+            resolved_value = candidate_value
+            continue
+        if candidate_value != resolved_value:
+            return ""
+    return resolved_value
+
+
+def _resolve_grouped_annotation_field_value(
+    reference_records: list[MergedReferenceRecord],
+    *,
+    field_key: str,
+) -> str:
+    """Resolve grouped `a:*` annotation text for one field key.
+
+    When all grouped references share one annotation value, return that value.
+    When values differ, emit compact reference-indexed segments:
+    `R1,R2 -> s:... | p:... | c:... || R3 -> s:... | p:... | c:...`.
+    """
+
+    annotation_groups: dict[str, list[str]] = {}
+    for record in reference_records:
+        annotation_value = str(record.annotated_fields.get(field_key, "")).strip()
+        if not annotation_value:
+            continue
+        annotation_groups.setdefault(annotation_value, []).append(record.reference)
+
+    if not annotation_groups:
+        return ""
+    if len(annotation_groups) == 1:
+        return next(iter(annotation_groups))
+
+    grouped_segments: list[str] = []
+    sorted_groups = sorted(
+        annotation_groups.items(),
+        key=lambda item: _group_reference_sort_key(item[1]),
+    )
+    for annotation_value, references in sorted_groups:
+        ordered_references = sorted(
+            {str(reference or "").strip() for reference in references if reference},
+            key=_natural_reference_sort_key,
+        )
+        if not ordered_references:
+            continue
+        collapsed_annotation = annotation_value.replace("\n", " | ")
+        grouped_segments.append(
+            f"{','.join(ordered_references)} -> {collapsed_annotation}"
+        )
+    return " || ".join(grouped_segments)
+
+
+def _group_reference_sort_key(references: list[str]) -> list[object]:
+    """Sort annotation groups by their first natural-sorted reference."""
+
+    if not references:
+        return []
+    ordered_references = sorted(
+        {str(reference or "").strip() for reference in references if reference},
+        key=_natural_reference_sort_key,
+    )
+    if not ordered_references:
+        return []
+    return _natural_reference_sort_key(ordered_references[0])
+
+
+def _natural_reference_sort_key(reference: str) -> list[object]:
+    """Generate natural sort keys for reference designators."""
+
+    import re
+
+    parts = re.split(r"(\d+)", str(reference or ""))
+    key: list[object] = []
+    for part in parts:
+        if part.isdigit():
+            key.append(int(part))
+        else:
+            key.append(part)
+    return key
+
+
 class ComponentMergeService:
     """Merge project component graphs into canonical namespace-aware records."""
 
