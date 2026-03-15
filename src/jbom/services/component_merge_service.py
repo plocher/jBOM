@@ -1,9 +1,9 @@
-"""Component merge scaffolding for canonical namespace-aware workflows.
+"""Component merge service for canonical namespace-aware workflows.
 
-Phase-1 scope:
-- define stable input/output contracts for project-component merge
+Current scope:
 - load field precedence policy metadata from defaults configuration
-- provide deterministic placeholder merge + mismatch artifacts
+- build deterministic source/canonical/annotation fields (`s:*`, `p:*`, `c:*`, `a:*`)
+- emit structured mismatch metadata with canonical decision reasons
 """
 
 from __future__ import annotations
@@ -93,12 +93,12 @@ class ComponentMergeResult:
 
 
 class ComponentMergeService:
-    """Phase-1 placeholder merge service for canonical namespace contracts."""
+    """Merge project component graphs into canonical namespace-aware records."""
 
     def __init__(
         self, *, defaults_profile: str = "generic", cwd: Path | None = None
     ) -> None:
-        """Initialize merge scaffolding and load defaults-backed policy metadata."""
+        """Initialize merge service and load defaults-backed policy metadata."""
 
         self._defaults = get_defaults(defaults_profile, cwd=cwd)
         self._policy = self._load_precedence_policy()
@@ -161,8 +161,12 @@ class ComponentMergeService:
         """Merge one reference record into source/canonical/annotated namespaces."""
 
         source_fields = self._build_source_fields(project_record)
-        canonical_fields = self._build_canonical_fields(project_record, source_fields)
-        mismatches = self._build_mismatches(project_record, canonical_fields)
+        canonical_fields = self._build_canonical_fields(source_fields)
+        mismatches = self._build_mismatches(
+            project_record.reference,
+            source_fields,
+            canonical_fields,
+        )
         annotated_fields = self._build_annotated_fields(mismatches)
 
         return MergedReferenceRecord(
@@ -179,103 +183,60 @@ class ComponentMergeService:
         """Build source namespace fields (`s:*`, `p:*`) for one reference."""
 
         source_fields: dict[str, str] = {}
-
-        schematic_component = (
-            project_record.schematic_components[0]
-            if project_record.schematic_components
-            else None
-        )
-        pcb_component = (
-            project_record.pcb_components[0] if project_record.pcb_components else None
-        )
-
-        if schematic_component is not None:
-            if schematic_component.value:
-                source_fields["s:value"] = schematic_component.value
-            if schematic_component.footprint:
-                source_fields["s:footprint"] = schematic_component.footprint
-
-        if pcb_component is not None:
-            if pcb_component.footprint_name:
-                source_fields["p:footprint"] = pcb_component.footprint_name
-            if pcb_component.package_token:
-                source_fields["p:package"] = pcb_component.package_token
-
+        schematic_fields = self._extract_schematic_fields(project_record)
+        pcb_fields = self._extract_pcb_fields(project_record)
+        for field_name, field_value in schematic_fields.items():
+            source_fields[f"s:{field_name}"] = field_value
+        for field_name, field_value in pcb_fields.items():
+            source_fields[f"p:{field_name}"] = field_value
         return source_fields
 
-    def _build_canonical_fields(
-        self,
-        project_record: ProjectReferenceRecord,
-        source_fields: dict[str, str],
-    ) -> dict[str, str]:
-        """Build canonical `c:*` placeholder fields from source namespaces."""
+    def _build_canonical_fields(self, source_fields: dict[str, str]) -> dict[str, str]:
+        """Build canonical `c:*` fields using precedence policy resolution."""
 
         canonical_fields: dict[str, str] = {}
-
-        schematic_component = (
-            project_record.schematic_components[0]
-            if project_record.schematic_components
-            else None
-        )
-        pcb_component = (
-            project_record.pcb_components[0] if project_record.pcb_components else None
-        )
-
-        if schematic_component is not None and schematic_component.value:
-            canonical_fields["c:value"] = schematic_component.value
-
-        schematic_footprint = source_fields.get("s:footprint", "")
-        pcb_footprint = source_fields.get("p:footprint", "")
-        if (
-            schematic_footprint
-            and pcb_footprint
-            and schematic_footprint != pcb_footprint
-        ):
-            if "footprint" in self._policy.pcb_biased_fields:
-                canonical_fields["c:footprint"] = pcb_footprint
-            else:
-                canonical_fields["c:footprint"] = schematic_footprint
-        elif schematic_footprint:
-            canonical_fields["c:footprint"] = schematic_footprint
-        elif pcb_footprint:
-            canonical_fields["c:footprint"] = pcb_footprint
-        elif pcb_component is not None and pcb_component.footprint_name:
-            canonical_fields["c:footprint"] = pcb_component.footprint_name
-
-        if pcb_component is not None and pcb_component.package_token:
-            canonical_fields["c:package"] = pcb_component.package_token
-
+        for field_name in self._iter_source_field_names(source_fields):
+            schematic_value = source_fields.get(f"s:{field_name}", "")
+            pcb_value = source_fields.get(f"p:{field_name}", "")
+            canonical_value, _ = self._resolve_canonical_value(
+                field_name,
+                schematic_value=schematic_value,
+                pcb_value=pcb_value,
+            )
+            if canonical_value:
+                canonical_fields[f"c:{field_name}"] = canonical_value
         return canonical_fields
 
     def _build_mismatches(
         self,
-        project_record: ProjectReferenceRecord,
+        reference: str,
+        source_fields: dict[str, str],
         canonical_fields: dict[str, str],
     ) -> list[MergeMismatchRecord]:
-        """Build placeholder mismatch records for explicit source disagreement."""
+        """Build structured mismatch records for source namespace disagreements."""
 
         mismatches: list[MergeMismatchRecord] = []
-        if not project_record.schematic_components or not project_record.pcb_components:
-            return mismatches
+        for field_name in self._iter_source_field_names(source_fields):
+            schematic_value = source_fields.get(f"s:{field_name}", "")
+            pcb_value = source_fields.get(f"p:{field_name}", "")
+            if not schematic_value or not pcb_value or schematic_value == pcb_value:
+                continue
 
-        schematic_footprint = project_record.schematic_components[0].footprint
-        pcb_footprint = project_record.pcb_components[0].footprint_name
-        if (
-            schematic_footprint
-            and pcb_footprint
-            and schematic_footprint != pcb_footprint
-        ):
+            _, decision_reason = self._resolve_canonical_value(
+                field_name,
+                schematic_value=schematic_value,
+                pcb_value=pcb_value,
+            )
             mismatches.append(
                 MergeMismatchRecord(
-                    reference=project_record.reference,
-                    field_key="footprint",
+                    reference=reference,
+                    field_key=field_name,
                     severity="warning",
-                    decision_reason="phase1_placeholder_precedence_resolution",
-                    source_values={"s": schematic_footprint, "p": pcb_footprint},
-                    canonical_value=canonical_fields.get("c:footprint", ""),
+                    decision_reason=decision_reason,
+                    source_values={"s": schematic_value, "p": pcb_value},
+                    canonical_value=canonical_fields.get(f"c:{field_name}", ""),
                 )
             )
-
         return mismatches
 
     def _build_annotated_fields(
@@ -295,6 +256,190 @@ class ComponentMergeService:
             if source_lines:
                 annotated[f"a:{mismatch.field_key}"] = "\n".join(source_lines)
         return annotated
+
+    def _extract_schematic_fields(
+        self, project_record: ProjectReferenceRecord
+    ) -> dict[str, str]:
+        """Extract canonical schematic source fields for one reference."""
+
+        if not project_record.schematic_components:
+            return {}
+
+        component = project_record.schematic_components[0]
+        schematic_fields: dict[str, str] = {}
+
+        self._set_if_present(schematic_fields, "value", component.value)
+        self._set_if_present(schematic_fields, "footprint", component.footprint)
+        self._set_if_present(
+            schematic_fields,
+            "package",
+            self._get_component_property(component, ("Package",)),
+        )
+        self._set_if_present(
+            schematic_fields,
+            "tolerance",
+            self._get_component_property(component, ("Tolerance",)),
+        )
+        self._set_if_present(
+            schematic_fields,
+            "voltage",
+            self._get_component_property(component, ("Voltage",)),
+        )
+        self._set_if_present(
+            schematic_fields,
+            "current",
+            self._get_component_property(component, ("Current", "Amperage")),
+        )
+        self._set_if_present(
+            schematic_fields,
+            "wavelength",
+            self._get_component_property(component, ("Wavelength",)),
+        )
+        self._set_if_present(
+            schematic_fields,
+            "manufacturer",
+            self._get_component_property(component, ("Manufacturer",)),
+        )
+        self._set_if_present(
+            schematic_fields,
+            "manufacturer_part",
+            self._get_component_property(
+                component,
+                ("MFGPN", "MPN", "Manufacturer Part Number"),
+            ),
+        )
+        self._set_if_present(
+            schematic_fields,
+            "fabricator_part_number",
+            self._get_component_property(component, ("fabricator_part_number",)),
+        )
+        self._set_if_present(
+            schematic_fields,
+            "lcsc",
+            self._get_component_property(component, ("LCSC", "lcsc")),
+        )
+
+        return schematic_fields
+
+    def _extract_pcb_fields(
+        self, project_record: ProjectReferenceRecord
+    ) -> dict[str, str]:
+        """Extract canonical PCB source fields for one reference."""
+
+        if not project_record.pcb_components:
+            return {}
+
+        component = project_record.pcb_components[0]
+        pcb_fields: dict[str, str] = {}
+
+        self._set_if_present(pcb_fields, "footprint", component.footprint_name)
+        self._set_if_present(pcb_fields, "package", component.package_token)
+        self._set_if_present(pcb_fields, "side", component.side)
+        self._set_if_present(
+            pcb_fields,
+            "mount_type",
+            component.attributes.get("mount_type", ""),
+        )
+        self._set_if_present(
+            pcb_fields,
+            "x",
+            component.center_x_raw
+            if component.center_x_raw is not None
+            else f"{component.center_x_mm:.4f}",
+        )
+        self._set_if_present(
+            pcb_fields,
+            "y",
+            component.center_y_raw
+            if component.center_y_raw is not None
+            else f"{component.center_y_mm:.4f}",
+        )
+        self._set_if_present(
+            pcb_fields,
+            "rotation",
+            component.rotation_raw
+            if component.rotation_raw is not None
+            else f"{component.rotation_deg:.1f}",
+        )
+
+        return pcb_fields
+
+    def _iter_source_field_names(
+        self, source_fields: dict[str, str]
+    ) -> tuple[str, ...]:
+        """Return sorted source field names without namespace prefixes."""
+
+        field_names: set[str] = set()
+        for prefixed_name in source_fields:
+            if prefixed_name.startswith("s:") or prefixed_name.startswith("p:"):
+                field_names.add(prefixed_name[2:])
+
+        field_names.update(self._policy.schematic_biased_fields)
+        field_names.update(self._policy.pcb_biased_fields)
+        field_names.update(self._policy.inventory_biased_fields)
+        return tuple(sorted(field_names))
+
+    def _resolve_canonical_value(
+        self,
+        field_name: str,
+        *,
+        schematic_value: str,
+        pcb_value: str,
+    ) -> tuple[str, str]:
+        """Resolve canonical value and decision reason for one field."""
+
+        if schematic_value and pcb_value:
+            if schematic_value == pcb_value:
+                return schematic_value, "sources_agree"
+            if field_name in self._policy.pcb_biased_fields:
+                return pcb_value, "pcb_biased_precedence"
+            if field_name in self._policy.schematic_biased_fields:
+                return schematic_value, "schematic_biased_precedence"
+            return schematic_value, "schematic_default_precedence"
+
+        if schematic_value:
+            return schematic_value, "schematic_only"
+        if pcb_value:
+            return pcb_value, "pcb_only"
+        return "", "no_source_value"
+
+    def _get_component_property(
+        self,
+        component: object,
+        aliases: tuple[str, ...],
+    ) -> str:
+        """Return the first populated schematic property matching aliases."""
+
+        properties = getattr(component, "properties", {}) or {}
+        normalized_properties = {
+            str(key or "").strip().lower(): self._normalize_value(value)
+            for key, value in properties.items()
+        }
+        for alias in aliases:
+            direct_value = self._normalize_value(properties.get(alias, ""))
+            if direct_value:
+                return direct_value
+            lowered = normalized_properties.get(alias.strip().lower(), "")
+            if lowered:
+                return lowered
+        return ""
+
+    def _set_if_present(
+        self,
+        container: dict[str, str],
+        key: str,
+        raw_value: object,
+    ) -> None:
+        """Set a container key only when the normalized value is present."""
+
+        value = self._normalize_value(raw_value)
+        if value:
+            container[key] = value
+
+    def _normalize_value(self, raw_value: object) -> str:
+        """Normalize scalar values to stripped string form."""
+
+        return str(raw_value or "").strip()
 
     def _dedupe_fields(self, fields: tuple[str, ...] | list[str]) -> tuple[str, ...]:
         """Normalize and deduplicate field tokens while preserving order."""

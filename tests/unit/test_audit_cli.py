@@ -523,6 +523,48 @@ def test_project_mode_suggests_package_and_domain_defaults() -> None:
     assert c1_suggested["Voltage"] == "MISSING\n(25V)"
 
 
+def test_project_mode_includes_merge_mismatch_diagnostics_in_notes() -> None:
+    rows = [
+        AuditRow(
+            check_type=CheckType.QUALITY_ISSUE,
+            severity=Severity.WARN,
+            project_path="/proj/example.kicad_pro",
+            ref_des="R1",
+            uuid="uuid-r1",
+            category="RES",
+            field="Tolerance",
+            current_value="",
+            suggested_value="",
+            description="R1 missing tolerance",
+        ),
+        AuditRow(
+            check_type=CheckType.MERGE_MISMATCH,
+            severity=Severity.WARN,
+            project_path="/proj/example.kicad_pro",
+            ref_des="R1",
+            uuid="uuid-r1",
+            category="RES",
+            field="footprint",
+            current_value="s:SCH:0603, p:PCB:0402",
+            suggested_value="PCB:0402",
+            description="R1 footprint mismatch",
+        ),
+    ]
+    context = {
+        ("/proj/example.kicad_pro", "R1", "uuid-r1", "RES"): {
+            "Value": "10K",
+            "Footprint": "SCH:0603",
+            "Package": "0603",
+            "Description": "Resistor",
+        }
+    }
+
+    _fieldnames, written = _build_project_couplet_rows(rows, component_context=context)
+    current = next(row for row in written if row["RowType"] == "CURRENT")
+    assert "Merge mismatch diagnostics:" in current["Notes"]
+    assert "footprint (s:SCH:0603, p:PCB:0402) -> c:PCB:0402" in current["Notes"]
+
+
 def test_project_mode_matchability_exact_for_supplier_identifier_and_led_color() -> (
     None
 ):

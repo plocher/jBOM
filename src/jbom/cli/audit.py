@@ -549,11 +549,7 @@ def _build_project_couplet_rows(
     field_order: list[str] = []
 
     for row in report_rows:
-        if row.check_type != CheckType.QUALITY_ISSUE:
-            continue
-
-        field_name = (row.field or "").strip()
-        if not field_name or field_name in _PROJECT_SUPPLY_CHAIN_FIELDS:
+        if row.check_type not in {CheckType.QUALITY_ISSUE, CheckType.MERGE_MISMATCH}:
             continue
 
         key = (row.project_path, row.ref_des, row.uuid, row.category)
@@ -564,18 +560,30 @@ def _build_project_couplet_rows(
                 "suggested": {},
                 "missing_fields": [],
                 "heuristic_suggestions": {},
+                "mismatch_notes": [],
             },
         )
 
-        if field_name not in field_order:
-            field_order.append(field_name)
-        if field_name not in group["missing_fields"]:
-            group["missing_fields"].append(field_name)
+        if row.check_type == CheckType.QUALITY_ISSUE:
+            field_name = (row.field or "").strip()
+            if not field_name or field_name in _PROJECT_SUPPLY_CHAIN_FIELDS:
+                continue
 
-        current_value = (row.current_value or "").strip()
-        if field_name not in group["current"] and current_value:
-            group["current"][field_name] = current_value
-        group["suggested"][field_name] = _PROJECT_MISSING_VALUE
+            if field_name not in field_order:
+                field_order.append(field_name)
+            if field_name not in group["missing_fields"]:
+                group["missing_fields"].append(field_name)
+
+            current_value = (row.current_value or "").strip()
+            if field_name not in group["current"] and current_value:
+                group["current"][field_name] = current_value
+            group["suggested"][field_name] = _PROJECT_MISSING_VALUE
+            continue
+
+        if row.check_type == CheckType.MERGE_MISMATCH:
+            mismatch_note = _format_merge_mismatch_note(row)
+            if mismatch_note and mismatch_note not in group["mismatch_notes"]:
+                group["mismatch_notes"].append(mismatch_note)
 
     fieldnames = (
         _PROJECT_REPORT_BASE_COLUMNS
@@ -656,7 +664,14 @@ def _build_project_couplet_rows(
             )
             current_row["Debug"] = debug_details
             suggested_row["Debug"] = debug_details
-        current_row["Notes"] = audit_summary
+        notes_segments = [audit_summary]
+        if group["mismatch_notes"]:
+            notes_segments.append(
+                "Merge mismatch diagnostics: " + " | ".join(group["mismatch_notes"])
+            )
+        current_row["Notes"] = "; ".join(
+            segment for segment in notes_segments if segment
+        )
         suggested_row["Notes"] = ""
         current_row["Action"] = ""
         suggested_row["Action"] = _PROJECT_SUGGESTED_ACTION
@@ -664,6 +679,22 @@ def _build_project_couplet_rows(
         output_rows.extend([current_row, suggested_row])
 
     return fieldnames, output_rows
+
+
+def _format_merge_mismatch_note(row: AuditRow) -> str:
+    """Format a concise merge mismatch note for project couplet summaries."""
+
+    field_name = (row.field or "").strip() or "field"
+    source_summary = (row.current_value or "").strip()
+    canonical_value = (row.suggested_value or "").strip()
+
+    if source_summary and canonical_value:
+        return f"{field_name} ({source_summary}) -> c:{canonical_value}"
+    if source_summary:
+        return f"{field_name} ({source_summary})"
+    if canonical_value:
+        return f"{field_name} -> c:{canonical_value}"
+    return field_name
 
 
 def _build_project_audit_summary(

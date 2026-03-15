@@ -31,7 +31,9 @@ from jbom.common.field_taxonomy import (
     get_required_fields,
 )
 from jbom.common.types import Component, InventoryItem
+from jbom.services.component_merge_service import ComponentMergeService
 from jbom.services.inventory_reader import InventoryReader
+from jbom.services.project_component_collector import ProjectComponentCollector
 from jbom.services.schematic_reader import SchematicReader
 from jbom.services.search.inventory_search_service import InventorySearchService
 from jbom.services.sophisticated_inventory_matcher import (
@@ -70,6 +72,8 @@ class CheckType(str, Enum):
     INVENTORY_GAP
         Component was found in the supplier catalog but is absent from the
         local inventory.
+    MERGE_MISMATCH
+        Canonical merge pipeline detected schematic/PCB source disagreement.
     """
 
     QUALITY_ISSUE = "QUALITY_ISSUE"
@@ -79,6 +83,7 @@ class CheckType(str, Enum):
     UNUSED_ITEM = "UNUSED_ITEM"
     SUPPLIER_MISS = "SUPPLIER_MISS"  # PR-2: supplier validation
     INVENTORY_GAP = "INVENTORY_GAP"  # PR-2: supplier validation
+    MERGE_MISMATCH = "MERGE_MISMATCH"
     STALE_PART = "STALE_PART"  # existing PN not found in fresh catalog search
     BETTER_AVAILABLE = "BETTER_AVAILABLE"  # fresh search found a different/better PN
     SPEC_MISMATCH = "SPEC_MISMATCH"  # reserved: supplier PN doesn't match item spec
@@ -251,6 +256,8 @@ class AuditService:
         self._matcher = SophisticatedInventoryMatcher(
             MatchingOptions(include_debug_info=include_debug_info)
         )
+        self._collector = ProjectComponentCollector()
+        self._merge_service = ComponentMergeService()
 
     # ------------------------------------------------------------------
     # Public entry points
@@ -290,8 +297,9 @@ class AuditService:
         # Load all components across all project paths.
         components: list[tuple[str, Component]] = []
         for proj_path in project_paths:
-            resolved_pro, sch_files = _resolve_project(proj_path)
-            pro_str = project_path_override or str(resolved_pro)
+            resolved_project_path, sch_files = _resolve_project(proj_path)
+            pro_str = project_path_override or str(resolved_project_path)
+            project_components: list[Component] = []
             for sch_file in sch_files:
                 raw = self._reader.load_components(sch_file)
                 filtered = apply_component_filters(
@@ -304,6 +312,17 @@ class AuditService:
                 )
                 for comp in filtered:
                     components.append((pro_str, comp))
+                    project_components.append(comp)
+
+            merge_rows = self._collect_merge_mismatch_rows(
+                project_path=pro_str,
+                resolved_project_path=Path(resolved_project_path),
+                schematic_files=sch_files,
+                components=project_components,
+            )
+            for row in merge_rows:
+                report.rows.append(row)
+                _increment_counter(report, row.severity)
 
         # Load inventory for coverage checks (once, outside component loop).
         inventory_items: list[InventoryItem] = []
@@ -346,6 +365,117 @@ class AuditService:
                     _increment_counter(report, supplier_row.severity)
 
         return report
+
+    def _collect_merge_mismatch_rows(
+        self,
+        *,
+        project_path: str,
+        resolved_project_path: Path,
+        schematic_files: list[Path],
+        components: list[Component],
+    ) -> list[AuditRow]:
+        """Return MERGE_MISMATCH rows for one project when PCB data is available."""
+
+        pcb_file = self._resolve_project_pcb_file(
+            resolved_project_path=resolved_project_path,
+            schematic_files=schematic_files,
+        )
+        if pcb_file is None:
+            return []
+
+        project_graph = self._collector.collect_from_files(
+            schematic_files=schematic_files,
+            pcb_file=pcb_file,
+        )
+        merge_result = self._merge_service.merge(project_graph)
+        if not merge_result.mismatches:
+            return []
+
+        components_by_reference = self._index_components_by_reference(components)
+        rows: list[AuditRow] = []
+
+        for mismatch in merge_result.mismatches:
+            matched_component = components_by_reference.get(mismatch.reference)
+            category = ""
+            component_uuid = ""
+            if matched_component is not None:
+                category = (
+                    get_component_type(
+                        matched_component.lib_id,
+                        matched_component.footprint,
+                        matched_component.reference,
+                    )
+                    or ""
+                )
+                component_uuid = matched_component.uuid
+
+            source_segments = [
+                f"{source}:{value}"
+                for source, value in mismatch.source_values.items()
+                if str(value or "").strip()
+            ]
+            source_summary = ", ".join(source_segments)
+            canonical_value = mismatch.canonical_value
+            severity = Severity.ERROR if mismatch.severity == "error" else Severity.WARN
+            description = (
+                f"{mismatch.reference}: merge mismatch for {mismatch.field_key}"
+                f" ({source_summary})"
+                f" -> c:{canonical_value or '(empty)'}"
+                f" [{mismatch.decision_reason}]"
+            )
+            rows.append(
+                AuditRow(
+                    check_type=CheckType.MERGE_MISMATCH,
+                    severity=severity,
+                    project_path=project_path,
+                    ref_des=mismatch.reference,
+                    uuid=component_uuid,
+                    category=category,
+                    field=mismatch.field_key,
+                    current_value=source_summary,
+                    suggested_value=canonical_value,
+                    description=description,
+                )
+            )
+
+        return rows
+
+    def _resolve_project_pcb_file(
+        self,
+        *,
+        resolved_project_path: Path,
+        schematic_files: list[Path],
+    ) -> Path | None:
+        """Best-effort resolve of the PCB file corresponding to a project input."""
+
+        candidate_paths: list[Path] = []
+        if resolved_project_path.suffix.lower() == ".kicad_pro":
+            candidate_paths.append(resolved_project_path.with_suffix(".kicad_pcb"))
+        elif resolved_project_path.suffix.lower() == ".kicad_sch":
+            candidate_paths.append(resolved_project_path.with_suffix(".kicad_pcb"))
+        elif resolved_project_path.is_dir():
+            candidate_paths.extend(sorted(resolved_project_path.glob("*.kicad_pcb")))
+
+        for schematic_file in schematic_files:
+            candidate_paths.append(schematic_file.with_suffix(".kicad_pcb"))
+
+        for candidate in candidate_paths:
+            if candidate.exists():
+                return candidate
+        return None
+
+    def _index_components_by_reference(
+        self, components: list[Component]
+    ) -> dict[str, Component]:
+        """Index schematic components by reference for mismatch row enrichment."""
+
+        indexed: dict[str, Component] = {}
+        for component in components:
+            reference = str(component.reference or "").strip()
+            if not reference or reference in indexed:
+                continue
+            indexed[reference] = component
+        return indexed
 
     def audit_inventory(
         self,
