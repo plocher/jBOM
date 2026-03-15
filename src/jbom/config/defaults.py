@@ -62,12 +62,64 @@ class FieldSynonymConfig:
     synonyms: tuple[str, ...]
 
 
+def _parse_field_synonym_configs(
+    raw: Any,
+    *,
+    context: str,
+) -> dict[str, FieldSynonymConfig]:
+    """Parse canonical field-synonym config maps with tolerant validation."""
+
+    if raw is None:
+        return {}
+    if not isinstance(raw, dict):
+        log.warning("%s must be a mapping; found %r", context, type(raw).__name__)
+        return {}
+
+    parsed: dict[str, FieldSynonymConfig] = {}
+    for canonical, cfg in raw.items():
+        if not isinstance(cfg, dict):
+            continue
+
+        display_name = str(cfg.get("display_name") or canonical).strip()
+        synonyms_cfg = cfg.get("synonyms") or []
+        if not isinstance(synonyms_cfg, list):
+            log.warning(
+                "%s[%r].synonyms must be a list; found %r",
+                context,
+                canonical,
+                type(synonyms_cfg).__name__,
+            )
+            synonyms_cfg = []
+
+        synonyms = tuple(str(s).strip() for s in synonyms_cfg if str(s).strip())
+        canonical_key = _normalize_field_synonym_canonical_key(canonical)
+        if not canonical_key:
+            continue
+
+        existing = parsed.get(canonical_key)
+        if existing is not None:
+            merged_synonyms = tuple(
+                dict.fromkeys([*existing.synonyms, *synonyms]).keys()
+            )
+            parsed[canonical_key] = FieldSynonymConfig(
+                display_name=existing.display_name or display_name or canonical_key,
+                synonyms=merged_synonyms,
+            )
+        else:
+            parsed[canonical_key] = FieldSynonymConfig(
+                display_name=display_name or canonical_key,
+                synonyms=synonyms,
+            )
+
+    return parsed
+
+
 @dataclass(frozen=True)
 class InventorySchemaConfig:
     """Canonical inventory overlay schema and source-field bindings."""
 
     canonical_fields: tuple[str, ...]
-    alias_to_canonical: dict[str, str]
+    field_synonyms: dict[str, FieldSynonymConfig]
     enrichment_bindings: dict[str, str]
 
     @staticmethod
@@ -89,14 +141,23 @@ class InventorySchemaConfig:
                 "smd",
                 "fabricator_part_number",
             ),
-            alias_to_canonical={
-                "ipn": "inventory_ipn",
-                "mfgpn": "manufacturer_part",
-                "mpn": "manufacturer_part",
-                "manufacturer_part_number": "manufacturer_part",
-                "power": "wattage",
-                "fab_pn": "fabricator_part_number",
-                "supplier_pn": "fabricator_part_number",
+            field_synonyms={
+                "inventory_ipn": FieldSynonymConfig(
+                    display_name="IPN",
+                    synonyms=("ipn",),
+                ),
+                "manufacturer_part": FieldSynonymConfig(
+                    display_name="Manufacturer Part Number",
+                    synonyms=("mfgpn", "mpn", "manufacturer_part_number"),
+                ),
+                "wattage": FieldSynonymConfig(
+                    display_name="Power",
+                    synonyms=("power",),
+                ),
+                "fabricator_part_number": FieldSynonymConfig(
+                    display_name="Fabricator Part Number",
+                    synonyms=("fab_pn", "supplier_pn"),
+                ),
             },
             enrichment_bindings={
                 "inventory_ipn": "ipn",
@@ -193,32 +254,10 @@ class DefaultsConfig:
                     suppress=suppress,
                 )
 
-        field_synonyms: dict[str, FieldSynonymConfig] = {}
-        for canonical, cfg in (data.get("field_synonyms") or {}).items():
-            if not isinstance(cfg, dict):
-                continue
-            display_name = str(cfg.get("display_name") or canonical).strip()
-            synonyms_cfg = cfg.get("synonyms") or []
-            if isinstance(synonyms_cfg, list):
-                synonyms = tuple(str(s).strip() for s in synonyms_cfg if str(s).strip())
-            else:
-                synonyms = tuple()
-            canonical_key = _normalize_field_synonym_canonical_key(canonical)
-
-            existing = field_synonyms.get(canonical_key)
-            if existing is not None:
-                merged_synonyms = tuple(
-                    dict.fromkeys([*existing.synonyms, *synonyms]).keys()
-                )
-                field_synonyms[canonical_key] = FieldSynonymConfig(
-                    display_name=existing.display_name or display_name or canonical_key,
-                    synonyms=merged_synonyms,
-                )
-            else:
-                field_synonyms[canonical_key] = FieldSynonymConfig(
-                    display_name=display_name or canonical_key,
-                    synonyms=synonyms,
-                )
+        field_synonyms = _parse_field_synonym_configs(
+            data.get("field_synonyms"),
+            context="field_synonyms",
+        )
 
         inventory_schema = InventorySchemaConfig.default()
         inventory_schema_cfg = data.get("inventory_schema") or {}
@@ -241,21 +280,14 @@ class DefaultsConfig:
                     type(canonical_fields_cfg).__name__,
                 )
 
-            alias_cfg = inventory_schema_cfg.get("alias_to_canonical") or {}
-            parsed_aliases = dict(inventory_schema.alias_to_canonical)
-            if isinstance(alias_cfg, dict):
-                parsed_aliases = {}
-                for raw_alias, raw_canonical in alias_cfg.items():
-                    alias_key = str(raw_alias or "").strip().lower()
-                    canonical_key = str(raw_canonical or "").strip().lower()
-                    if not alias_key or not canonical_key:
-                        continue
-                    parsed_aliases[alias_key] = canonical_key
+            parsed_schema_field_synonyms = _parse_field_synonym_configs(
+                inventory_schema_cfg.get("field_synonyms"),
+                context="inventory_schema.field_synonyms",
+            )
+            if parsed_schema_field_synonyms:
+                schema_field_synonyms = parsed_schema_field_synonyms
             else:
-                log.warning(
-                    "inventory_schema.alias_to_canonical must be a mapping; found %r",
-                    type(alias_cfg).__name__,
-                )
+                schema_field_synonyms = dict(inventory_schema.field_synonyms)
 
             bindings_cfg = inventory_schema_cfg.get("enrichment_bindings") or {}
             parsed_bindings = dict(inventory_schema.enrichment_bindings)
@@ -273,16 +305,16 @@ class DefaultsConfig:
                     type(bindings_cfg).__name__,
                 )
 
-            for mapped_canonical in parsed_aliases.values():
-                if mapped_canonical not in parsed_canonical_fields:
-                    parsed_canonical_fields.append(mapped_canonical)
+            for canonical_key in schema_field_synonyms.keys():
+                if canonical_key not in parsed_canonical_fields:
+                    parsed_canonical_fields.append(canonical_key)
             for canonical_key in parsed_bindings.keys():
                 if canonical_key not in parsed_canonical_fields:
                     parsed_canonical_fields.append(canonical_key)
 
             inventory_schema = InventorySchemaConfig(
                 canonical_fields=tuple(parsed_canonical_fields),
-                alias_to_canonical=parsed_aliases,
+                field_synonyms=schema_field_synonyms,
                 enrichment_bindings=parsed_bindings,
             )
         else:
@@ -424,7 +456,7 @@ class DefaultsConfig:
 
         return InventorySchemaConfig(
             canonical_fields=tuple(self.inventory_schema.canonical_fields),
-            alias_to_canonical=dict(self.inventory_schema.alias_to_canonical),
+            field_synonyms=dict(self.inventory_schema.field_synonyms),
             enrichment_bindings=dict(self.inventory_schema.enrichment_bindings),
         )
 

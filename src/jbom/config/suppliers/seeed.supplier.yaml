@@ -1,16 +1,17 @@
 id: "seeed"
 name: "Seeed Studio"
 
-# Canonical inventory column name used for the Seeed native catalog.
-# `inventory_column_synonyms` captures the real-world header variants we accept.
-inventory_column: "Seeed"
-inventory_column_synonyms:
-  - "Seeed Part Number"
-  - "Seeed Part"
-  - "Seeed Part #"
-  - "Seeed Studio"
-  - "Seeed SKU"
-  - "SKU"
+# Canonical supplier field synonym map.
+field_synonyms:
+  supplier_pn:
+    display_name: "Seeed"
+    synonyms:
+      - "Seeed Part Number"
+      - "Seeed Part"
+      - "Seeed Part #"
+      - "Seeed Studio"
+      - "Seeed SKU"
+      - "SKU"
 
 # Optional metadata (kept minimal for the stub profile).
 description: "Seeed Studio Fusion PCBA parts catalog"

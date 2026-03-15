@@ -22,6 +22,14 @@ import yaml
 
 
 @dataclass(frozen=True)
+class SupplierFieldSynonym:
+    """Canonical supplier field naming plus accepted synonym headers."""
+
+    display_name: str
+    synonyms: list[str]
+
+
+@dataclass(frozen=True)
 class SupplierConfig:
     """Configuration for a parts supplier/distributor."""
 
@@ -29,6 +37,7 @@ class SupplierConfig:
     name: str
     inventory_column: str
     inventory_column_synonyms: list[str] = field(default_factory=list)
+    field_synonyms: dict[str, SupplierFieldSynonym] = field(default_factory=dict)
 
     description: Optional[str] = None
     website: Optional[str] = None
@@ -73,8 +82,7 @@ class SupplierConfig:
 
         sid = data.get("id", default_id)
         name = data.get("name", default_id)
-        inventory_column = data.get("inventory_column")
-        inventory_column_synonyms_cfg = data.get("inventory_column_synonyms") or []
+        field_synonyms_cfg = data.get("field_synonyms")
 
         if not isinstance(sid, str) or not sid.strip():
             raise ValueError("Supplier id must be a non-empty string")
@@ -82,23 +90,48 @@ class SupplierConfig:
         if not isinstance(name, str) or not name.strip():
             raise ValueError(f"Supplier '{sid}' name must be a non-empty string")
 
-        if not isinstance(inventory_column, str) or not inventory_column.strip():
+        if not isinstance(field_synonyms_cfg, dict):
             raise ValueError(
-                f"Supplier '{sid}' missing inventory_column (canonical CSV column name)"
+                f"Supplier '{sid}' field_synonyms must be a mapping with supplier_pn"
             )
 
-        if not isinstance(inventory_column_synonyms_cfg, list):
-            raise ValueError(
-                f"Supplier '{sid}' inventory_column_synonyms must be a list of strings"
-            )
-
-        inventory_column_synonyms: list[str] = []
-        for syn in inventory_column_synonyms_cfg:
-            if not isinstance(syn, str) or not syn.strip():
+        parsed_field_synonyms: dict[str, SupplierFieldSynonym] = {}
+        for canonical, cfg in field_synonyms_cfg.items():
+            if not isinstance(canonical, str) or not canonical.strip():
                 raise ValueError(
-                    f"Supplier '{sid}' inventory_column_synonyms entries must be non-empty strings"
+                    f"Supplier '{sid}' field_synonyms keys must be non-empty strings"
                 )
-            inventory_column_synonyms.append(syn.strip())
+            if not isinstance(cfg, dict):
+                raise ValueError(
+                    f"Supplier '{sid}' field_synonyms[{canonical!r}] must be a mapping"
+                )
+
+            display_name = cfg.get("display_name")
+            if not isinstance(display_name, str) or not display_name.strip():
+                raise ValueError(
+                    f"Supplier '{sid}' field_synonyms[{canonical!r}].display_name must be a non-empty string"
+                )
+
+            synonyms_cfg = cfg.get("synonyms") or []
+            if not isinstance(synonyms_cfg, list) or not all(
+                isinstance(s, str) and s.strip() for s in synonyms_cfg
+            ):
+                raise ValueError(
+                    f"Supplier '{sid}' field_synonyms[{canonical!r}].synonyms must be a list of non-empty strings"
+                )
+
+            parsed_field_synonyms[canonical.strip().lower()] = SupplierFieldSynonym(
+                display_name=display_name.strip(),
+                synonyms=[s.strip() for s in synonyms_cfg],
+            )
+
+        supplier_pn_synonym = parsed_field_synonyms.get("supplier_pn")
+        if supplier_pn_synonym is None:
+            raise ValueError(
+                f"Supplier '{sid}' field_synonyms must define canonical 'supplier_pn'"
+            )
+        inventory_column = supplier_pn_synonym.display_name
+        inventory_column_synonyms = list(supplier_pn_synonym.synonyms)
 
         part_number_cfg = data.get("part_number") or {}
 
@@ -245,6 +278,7 @@ class SupplierConfig:
             name=name,
             inventory_column=inventory_column,
             inventory_column_synonyms=inventory_column_synonyms,
+            field_synonyms=parsed_field_synonyms,
             description=description,
             website=website,
             url_template=url_template,

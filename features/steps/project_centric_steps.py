@@ -607,7 +607,8 @@ def given_a_generic_supplier(context) -> None:
     jbom_dir = Path(context.sandbox_root) / ".jbom"
     jbom_dir.mkdir(exist_ok=True)
     (jbom_dir / "generic.supplier.yaml").write_text(
-        "id: generic\nname: Generic\ninventory_column: Supplier\n"
+        "id: generic\nname: Generic\n"
+        "field_synonyms:\n  supplier_pn:\n    display_name: Supplier\n    synonyms: []\n"
         "search:\n  providers:\n    - type: null_api\n",
         encoding="utf-8",
     )
@@ -648,7 +649,8 @@ def given_a_supplier_catalog(context) -> None:
     fixture_file.write_text(_json.dumps(results), encoding="utf-8")
     # Write (or overwrite) the supplier yaml with absolute fixtures path.
     (jbom_dir / "generic.supplier.yaml").write_text(
-        "id: generic\nname: Generic\ninventory_column: Supplier\n"
+        "id: generic\nname: Generic\n"
+        "field_synonyms:\n  supplier_pn:\n    display_name: Supplier\n    synonyms: []\n"
         "search:\n  providers:\n    - type: null_api\n"
         f"      fixtures: {fixture_file}\n",
         encoding="utf-8",

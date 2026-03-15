@@ -6,7 +6,7 @@ from unittest.mock import patch
 from jbom.services.inventory_matcher import InventoryMatcher
 from jbom.services.bom_generator import BOMEntry, BOMData
 from jbom.common.types import Component, InventoryItem, DEFAULT_PRIORITY
-from jbom.config.defaults import InventorySchemaConfig
+from jbom.config.defaults import FieldSynonymConfig, InventorySchemaConfig
 
 
 def _make_inventory_item(
@@ -277,7 +277,12 @@ class TestInventoryMatcher:
                         "manufacturer_part",
                         "fabricator_part_number",
                     ),
-                    alias_to_canonical={"ipn": "inventory_ipn"},
+                    field_synonyms={
+                        "inventory_ipn": FieldSynonymConfig(
+                            display_name="IPN",
+                            synonyms=("ipn",),
+                        )
+                    },
                     enrichment_bindings={
                         "inventory_ipn": "ipn",
                         "manufacturer_part": "mfgpn",
