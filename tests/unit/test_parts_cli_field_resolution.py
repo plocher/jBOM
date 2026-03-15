@@ -71,6 +71,25 @@ def test_get_parts_field_value_reads_namespaced_attributes() -> None:
     assert _get_parts_field_value(entry, "c:value") == "9k99"
 
 
+def test_get_parts_field_value_respects_source_requirements() -> None:
+    entry = PartsListEntry(
+        refs=["R1"],
+        value="10k",
+        footprint="R_0603",
+        attributes={
+            "s:footprint": "R_0603",
+            "p:footprint": "R_0603",
+            "i:voltage": "25V",
+            "c:footprint": "R_0603",
+        },
+    )
+
+    assert _get_parts_field_value(entry, "s:footprint") == "R_0603"
+    assert _get_parts_field_value(entry, "p:footprint") == ""
+    assert _get_parts_field_value(entry, "i:voltage") == ""
+    assert _get_parts_field_value(entry, "c:footprint") == "R_0603"
+
+
 def test_enrich_parts_with_merge_namespaces_adds_uniform_fields() -> None:
     parts_data = PartsListData(
         project_name="Project",
