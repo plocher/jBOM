@@ -91,6 +91,17 @@ def _resolve_default_fields_for_context(
             "No POS default fields found in profile configuration for "
             f"'{fabricator_id}' or 'generic'"
         )
+    if context == "parts":
+        return [
+            "refs",
+            "value",
+            "footprint",
+            "package",
+            "part_type",
+            "tolerance",
+            "voltage",
+            "dielectric",
+        ]
 
     return ["reference", "quantity", "value", "footprint"]
 
@@ -100,7 +111,7 @@ def parse_fields_argument(
     available_fields: Dict[str, str],
     fabricator_id: str = "generic",
     fabricator_presets: Optional[Dict[str, Any]] = None,
-    context: str = "bom",  # "bom" or "pos"
+    context: str = "bom",  # "bom", "pos", or "parts"
 ) -> List[str]:
     """Parse field argument with simple, predictable logic.
 
@@ -118,7 +129,7 @@ def parse_fields_argument(
         available_fields: Dict of available field names and descriptions
         fabricator_id: Current fabricator ID (used for default preset)
         fabricator_presets: Optional fabricator-specific presets from config
-        context: Context for field selection ("bom" or "pos")
+        context: Context for field selection ("bom", "pos", or "parts")
 
     Returns:
         List of normalized field names (deduplicated, preserving order)
@@ -131,6 +142,11 @@ def parse_fields_argument(
     # Case 1: No fields argument (None) - use context-appropriate defaults
     if fields_arg is None:
         if context == "pos":
+            return _resolve_default_fields_for_context(
+                fabricator_id=fabricator_id,
+                context=context,
+            )
+        elif context == "parts":
             return _resolve_default_fields_for_context(
                 fabricator_id=fabricator_id,
                 context=context,
