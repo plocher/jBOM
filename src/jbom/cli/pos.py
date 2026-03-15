@@ -17,6 +17,12 @@ from jbom.cli.output import (
 from jbom.services.pcb_reader import DefaultKiCadReaderService
 from jbom.services.pos_generator import POSGenerator
 from jbom.services.project_file_resolver import ProjectFileResolver
+from jbom.services.schematic_reader import SchematicReader
+from jbom.services.component_merge_service import (
+    ComponentMergeResult,
+    ComponentMergeService,
+)
+from jbom.services.project_component_collector import ProjectComponentCollector
 from jbom.common.options import PlacementOptions, GeneratorOptions
 from jbom.common.cli_fabricator import (
     add_fabricator_arguments,
@@ -36,6 +42,89 @@ from jbom.cli.formatting import Column, print_table, get_terminal_width
 from jbom.services.fabricator_projection_service import FabricatorProjectionService
 
 _NUMERIC_POS_FIELDS: frozenset[str] = frozenset({"x", "y", "rotation"})
+
+
+def _run_pos_component_merge(
+    *,
+    schematic_components: list[Any],
+    pcb_components: list[Any],
+    schematic_files: list[Path],
+    pcb_file: Optional[Path],
+    verbose: bool,
+) -> ComponentMergeResult | None:
+    """Best-effort collector/merge execution for POS namespace enrichment."""
+
+    try:
+        collector = ProjectComponentCollector()
+        project_graph = collector.collect(
+            schematic_components=schematic_components,
+            pcb_components=pcb_components,
+            schematic_files=schematic_files,
+            pcb_file=pcb_file,
+        )
+        merge_service = ComponentMergeService()
+        merge_result = merge_service.merge(project_graph)
+        if verbose:
+            print(
+                "Merge model active: "
+                f"{project_graph.reference_count} references, "
+                f"{len(merge_result.mismatches)} mismatch record(s)",
+                file=sys.stderr,
+            )
+        return merge_result
+    except Exception as exc:
+        if verbose:
+            print(
+                f"Warning: merge model execution skipped due to error: {exc}",
+                file=sys.stderr,
+            )
+        return None
+
+
+def _enrich_pos_with_merge_namespaces(
+    pos_data: list[dict[str, Any]],
+    merge_result: ComponentMergeResult | None,
+) -> list[dict[str, Any]]:
+    """Attach merge namespace fields (`s:/p:/c:/a:`) onto POS row dictionaries."""
+
+    if merge_result is None or not merge_result.records:
+        return pos_data
+
+    enriched_rows: list[dict[str, Any]] = []
+    any_updated = False
+    for row in pos_data:
+        reference = str(row.get("reference", "")).strip()
+        merge_record = merge_result.records.get(reference)
+        if merge_record is None:
+            enriched_rows.append(row)
+            continue
+
+        merged_fields: dict[str, str] = {}
+        merged_fields.update(merge_record.source_fields)
+        merged_fields.update(merge_record.canonical_fields)
+        merged_fields.update(merge_record.annotated_fields)
+        if not merged_fields:
+            enriched_rows.append(row)
+            continue
+
+        updated_row = dict(row)
+        row_updated = False
+        for field_key, field_value in merged_fields.items():
+            normalized_value = str(field_value or "").strip()
+            if not normalized_value:
+                continue
+            if str(updated_row.get(field_key, "")).strip() == normalized_value:
+                continue
+            updated_row[field_key] = normalized_value
+            row_updated = True
+
+        if row_updated:
+            any_updated = True
+            enriched_rows.append(updated_row)
+        else:
+            enriched_rows.append(row)
+
+    return enriched_rows if any_updated else pos_data
 
 
 def register_command(subparsers) -> None:
@@ -210,6 +299,43 @@ def handle_pos(args: argparse.Namespace) -> int:
 
         # Generate position data
         pos_data = generator.generate_pos_data(board)
+        schematic_files: list[Path] = []
+        try:
+            discovered_files = list(resolved_input.get_hierarchical_files())
+            schematic_files = [
+                file_path
+                for file_path in discovered_files
+                if file_path.suffix.lower() == ".kicad_sch" and file_path.exists()
+            ]
+        except Exception as exc:
+            if args.verbose:
+                print(
+                    f"Warning: could not load schematic files for merge enrichment: {exc}",
+                    file=sys.stderr,
+                )
+        schematic_components: list[Any] = []
+        if schematic_files:
+            schematic_reader = SchematicReader(gen_options)
+            for schematic_file in schematic_files:
+                try:
+                    schematic_components.extend(
+                        schematic_reader.load_components(schematic_file)
+                    )
+                except Exception as exc:
+                    if args.verbose:
+                        print(
+                            "Warning: skipping schematic source for merge enrichment "
+                            f"({schematic_file}): {exc}",
+                            file=sys.stderr,
+                        )
+        merge_result = _run_pos_component_merge(
+            schematic_components=schematic_components,
+            pcb_components=list(board.footprints),
+            schematic_files=schematic_files,
+            pcb_file=pcb_file,
+            verbose=args.verbose,
+        )
+        pos_data = _enrich_pos_with_merge_namespaces(pos_data, merge_result)
 
         # Parse field selection with fabricator awareness
         available_pos_fields = _get_available_pos_fields()
