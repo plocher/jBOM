@@ -28,6 +28,7 @@ from jbom.services.component_merge_service import (
 from jbom.services.pcb_reader import DefaultKiCadReaderService
 from jbom.services.project_component_collector import ProjectComponentCollector
 from jbom.services.project_file_resolver import ProjectFileResolver
+from jbom.services.field_listing_service import FieldListingService
 from jbom.common.options import GeneratorOptions
 from jbom.common.field_parser import parse_fields_argument
 from jbom.common.fields import field_to_header
@@ -223,14 +224,23 @@ def _list_available_parts_fields() -> None:
     """List known parts fields and presets, then exit."""
 
     known_fields = _get_available_parts_fields()
+    matrix_rows = FieldListingService().build_namespace_matrix(known_fields.keys())
     print(
         "\nKnown parts fields (any field name is accepted — unknown fields produce blank cells):"
     )
-    print("=" * 60)
-    for field_name in sorted(known_fields.keys()):
-        print(
-            f"  {field_name:<30}  ({field_to_header(field_name)}):  {known_fields[field_name]}"
-        )
+    columns = [
+        Column(header="Name", key="Name", preferred_width=22, wrap=False),
+        Column(header="s:", key="s:", preferred_width=16, wrap=False),
+        Column(header="p:", key="p:", preferred_width=16, wrap=False),
+        Column(header="i:", key="i:", preferred_width=16, wrap=False),
+        Column(header="c:", key="c:", preferred_width=16, wrap=False),
+        Column(header="a:", key="a:", preferred_width=16, wrap=False),
+    ]
+    print_table(
+        [row.to_console_row() for row in matrix_rows],
+        columns,
+        terminal_width=get_terminal_width(),
+    )
 
 
 def register_command(subparsers) -> None:
