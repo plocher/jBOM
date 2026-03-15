@@ -157,40 +157,147 @@ def _resolve_grouped_annotation_field_value(
 ) -> str:
     """Resolve grouped `a:*` annotation text for one field key.
 
-    When all grouped references share one annotation value, return that value.
-    When values differ, emit compact reference-indexed segments:
-    `R1,R2 -> s:... | p:... | c:... || R3 -> s:... | p:... | c:...`.
+    Contract:
+    - If all grouped references resolve to one summary, return only the summary.
+    - If grouped references resolve to multiple summaries, render deterministic
+      reference-indexed segments joined by ` || `.
+    - Mismatch summaries prefer concise diagnostic wording:
+      `S: and P: differ\\np:<value> chosen\\ns:<value>`.
+    - Non-mismatch summaries collapse to the canonical value when available.
     """
 
-    annotation_groups: dict[str, list[str]] = {}
+    field_name = _annotation_field_name(field_key)
+    summary_groups: dict[str, list[str]] = {}
     for record in reference_records:
-        annotation_value = str(record.annotated_fields.get(field_key, "")).strip()
-        if not annotation_value:
+        summary = _build_grouped_annotation_summary(
+            record,
+            field_key=field_key,
+            field_name=field_name,
+        )
+        if not summary:
             continue
-        annotation_groups.setdefault(annotation_value, []).append(record.reference)
+        summary_groups.setdefault(summary, []).append(record.reference)
 
-    if not annotation_groups:
+    if not summary_groups:
         return ""
-    if len(annotation_groups) == 1:
-        return next(iter(annotation_groups))
+    if len(summary_groups) == 1:
+        return next(iter(summary_groups))
 
     grouped_segments: list[str] = []
     sorted_groups = sorted(
-        annotation_groups.items(),
+        summary_groups.items(),
         key=lambda item: _group_reference_sort_key(item[1]),
     )
-    for annotation_value, references in sorted_groups:
+    for summary, references in sorted_groups:
         ordered_references = sorted(
             {str(reference or "").strip() for reference in references if reference},
             key=_natural_reference_sort_key,
         )
         if not ordered_references:
             continue
-        collapsed_annotation = annotation_value.replace("\n", " | ")
-        grouped_segments.append(
-            f"{','.join(ordered_references)} -> {collapsed_annotation}"
-        )
+        grouped_segments.append(f"{','.join(ordered_references)} -> {summary}")
     return " || ".join(grouped_segments)
+
+
+def _annotation_field_name(field_key: str) -> str:
+    """Return the unprefixed field name for an annotation key."""
+
+    prefix, separator, remainder = str(field_key or "").partition(":")
+    if separator and prefix == "a" and remainder:
+        return remainder
+    return str(field_key or "")
+
+
+def _build_grouped_annotation_summary(
+    record: MergedReferenceRecord,
+    *,
+    field_key: str,
+    field_name: str,
+) -> str:
+    """Build one grouped annotation summary for a merged reference record."""
+
+    source_s = str(record.source_fields.get(f"s:{field_name}", "")).strip()
+    source_p = str(record.source_fields.get(f"p:{field_name}", "")).strip()
+    canonical_value = str(record.canonical_fields.get(f"c:{field_name}", "")).strip()
+    explicit_annotation = str(record.annotated_fields.get(field_key, "")).strip()
+
+    if source_s and source_p and source_s != source_p:
+        return _format_mismatch_annotation_summary(
+            source_s=source_s,
+            source_p=source_p,
+            canonical_value=canonical_value,
+        )
+
+    if canonical_value:
+        return canonical_value
+    if source_s and source_p and source_s == source_p:
+        return source_s
+    if source_s:
+        return source_s
+    if source_p:
+        return source_p
+    if explicit_annotation:
+        return explicit_annotation
+    return ""
+
+
+def _format_mismatch_annotation_summary(
+    *,
+    source_s: str,
+    source_p: str,
+    canonical_value: str,
+) -> str:
+    """Render concise mismatch annotation text for grouped `a:*` output."""
+
+    chosen_prefix, chosen_value = _resolve_annotation_choice(
+        source_s=source_s,
+        source_p=source_p,
+        canonical_value=canonical_value,
+    )
+    lines: list[str] = ["S: and P: differ"]
+    if chosen_prefix and chosen_value:
+        lines.append(f"{chosen_prefix}:{chosen_value} chosen")
+
+    candidate_lines: list[tuple[str, str]] = [
+        ("s", source_s),
+        ("p", source_p),
+        ("c", canonical_value),
+    ]
+    seen_values: set[tuple[str, str]] = set()
+    for prefix, value in candidate_lines:
+        normalized_value = str(value or "").strip()
+        if not normalized_value:
+            continue
+        if chosen_value and normalized_value == chosen_value:
+            continue
+        pair = (prefix, normalized_value)
+        if pair in seen_values:
+            continue
+        seen_values.add(pair)
+        lines.append(f"{prefix}:{normalized_value}")
+
+    return "\n".join(lines)
+
+
+def _resolve_annotation_choice(
+    *,
+    source_s: str,
+    source_p: str,
+    canonical_value: str,
+) -> tuple[str, str]:
+    """Resolve which source/canonical value should be marked as chosen."""
+
+    if canonical_value and source_p and canonical_value == source_p:
+        return "p", source_p
+    if canonical_value and source_s and canonical_value == source_s:
+        return "s", source_s
+    if canonical_value:
+        return "c", canonical_value
+    if source_p:
+        return "p", source_p
+    if source_s:
+        return "s", source_s
+    return "", ""
 
 
 def _group_reference_sort_key(references: list[str]) -> list[object]:
