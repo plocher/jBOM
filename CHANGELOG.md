@@ -1,6 +1,28 @@
 # CHANGELOG
 
 
+## v6.44.1 (2026-03-16)
+
+### Bug Fixes
+
+* fix: Issue #191
+
+1. Malformed console/cell rendering
+◦  Audit console cells now normalize embedded newlines so table columns don’t break.
+2. MISSING\n(...) regression
+◦  Suggested values are now emitted as single-line text: MISSING (...) (no hardcoded newline).
+3. Warning-count mismatch
+◦  Project-mode summary now counts only findings actually surfaced in couplet output (excludes hidden supply-chain fields like Manufacturer/MFGPN).
+4. Verbose note improvement (Issue request)
+◦  When optional fields are missing but a supplier identifier is present (e.g. LCSC), note is now concise: Ref: LCSC part number used.
+
+Validation status
+•  ✅ pytest tests/unit/test_audit_cli.py tests/unit/test_audit_service.py → 65 passed
+•  ✅ behave features/audit/core.feature → 1 feature, 8 scenarios passed
+•  ✅ Full pytest tests → 891 passed
+•  ⚠️ Full behave features run was started but final summary capture was interrupted, so I haven’t recorded a definitive full-suite behave result yet. ([`3a4fd4b`](https://github.com/plocher/jBOM/commit/3a4fd4b4da40877362a359cd9da30664dfa799c1))
+
+
 ## v6.44.0 (2026-03-16)
 
 ### Features
