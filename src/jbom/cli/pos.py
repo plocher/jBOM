@@ -95,7 +95,7 @@ def _enrich_pos_with_merge_namespaces(
     pos_data: list[dict[str, Any]],
     merge_result: ComponentMergeResult | None,
 ) -> list[dict[str, Any]]:
-    """Attach merge namespace fields (`s:/p:/c:/a:`) onto POS row dictionaries."""
+    """Attach merge namespace fields (`s:/p:/a:`) onto POS row dictionaries."""
 
     if merge_result is None or not merge_result.records:
         return pos_data
@@ -111,7 +111,6 @@ def _enrich_pos_with_merge_namespaces(
 
         merged_fields: dict[str, str] = {}
         merged_fields.update(merge_record.source_fields)
-        merged_fields.update(merge_record.canonical_fields)
         merged_fields.update(merge_record.annotated_fields)
         if not merged_fields:
             enriched_rows.append(row)
@@ -421,8 +420,6 @@ def _get_available_pos_fields() -> dict:
         "s:value": "Schematic source value",
         "s:footprint": "Schematic source footprint",
         "p:footprint": "PCB source footprint",
-        "c:value": "Canonical merged value",
-        "c:footprint": "Canonical merged footprint",
         "a:value": "Merge annotation value",
         "a:footprint": "Merge annotation footprint",
     }
@@ -452,7 +449,6 @@ def _list_available_pos_fields(fabricator: str) -> None:
         Column(header="s:", key="s:", preferred_width=16, wrap=False),
         Column(header="p:", key="p:", preferred_width=16, wrap=False),
         Column(header="i:", key="i:", preferred_width=16, wrap=False),
-        Column(header="c:", key="c:", preferred_width=16, wrap=False),
         Column(header="a:", key="a:", preferred_width=16, wrap=False),
     ]
     print_table(
@@ -695,7 +691,7 @@ def _get_pos_field_value(
         String value for the field
     """
     namespace_prefix, separator, _ = field.partition(":")
-    if separator and namespace_prefix in {"s", "p", "i", "c", "a"}:
+    if separator and namespace_prefix in {"s", "p", "i", "a"}:
         if not is_namespace_applicable(
             namespace_prefix,
             requirements=_POS_SOURCE_REQUIREMENTS,

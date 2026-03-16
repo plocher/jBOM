@@ -64,11 +64,11 @@ def test_get_parts_field_value_reads_namespaced_attributes() -> None:
         refs=["R1"],
         value="10k",
         footprint="R_0603",
-        attributes={"c:value": "9k99"},
+        attributes={"s:value": "9k99"},
     )
 
     assert _get_parts_field_value(entry, "refs") == "R1"
-    assert _get_parts_field_value(entry, "c:value") == "9k99"
+    assert _get_parts_field_value(entry, "s:value") == "9k99"
 
 
 def test_get_parts_field_value_respects_source_requirements() -> None:
@@ -80,14 +80,12 @@ def test_get_parts_field_value_respects_source_requirements() -> None:
             "s:footprint": "R_0603",
             "p:footprint": "R_0603",
             "i:voltage": "25V",
-            "c:footprint": "R_0603",
         },
     )
 
     assert _get_parts_field_value(entry, "s:footprint") == "R_0603"
     assert _get_parts_field_value(entry, "p:footprint") == ""
     assert _get_parts_field_value(entry, "i:voltage") == ""
-    assert _get_parts_field_value(entry, "c:footprint") == "R_0603"
 
 
 def test_enrich_parts_with_merge_namespaces_adds_uniform_fields() -> None:
@@ -108,26 +106,24 @@ def test_enrich_parts_with_merge_namespaces_adds_uniform_fields() -> None:
             "R1": MergedReferenceRecord(
                 reference="R1",
                 source_fields={"s:value": "10k", "p:value": "9k99"},
-                canonical_fields={"c:value": "9k99"},
-                annotated_fields={"a:value": "s:10k\np:9k99\nc:9k99"},
+                annotated_fields={"a:value": "s:10k\np:9k99"},
             ),
             "R2": MergedReferenceRecord(
                 reference="R2",
                 source_fields={"s:value": "10k", "p:value": "9k99"},
-                canonical_fields={"c:value": "9k99"},
-                annotated_fields={"a:value": "s:10k\np:9k99\nc:9k99"},
+                annotated_fields={"a:value": "s:10k\np:9k99"},
             ),
         },
         mismatches=tuple(),
-        metadata={"precedence_profile": "generic"},
+        metadata={},
     )
 
     enriched = _enrich_parts_with_merge_namespaces(parts_data, merge_result)
 
     attrs = enriched.entries[0].attributes
     assert attrs["s:value"] == "10k"
-    assert attrs["c:value"] == "9k99"
-    assert attrs["a:value"] == "S: and P: differ\np:9k99 chosen\ns:10k"
+    assert attrs["p:value"] == "9k99"
+    assert attrs["a:value"] == "S: and P: differ\ns:10k\np:9k99"
     assert enriched.metadata["merge_model_enabled"] is True
     assert enriched.metadata["merge_model_reference_count"] == 2
     assert enriched.metadata["merge_model_mismatch_count"] == 0
@@ -154,8 +150,7 @@ def test_enrich_parts_with_merge_namespaces_summarizes_divergent_annotations() -
                     "s:footprint": "SCH:0603",
                     "p:footprint": "PCB:0402",
                 },
-                canonical_fields={"c:footprint": "PCB:0402"},
-                annotated_fields={"a:footprint": "s:SCH:0603\np:PCB:0402\nc:PCB:0402"},
+                annotated_fields={"a:footprint": "s:SCH:0603\np:PCB:0402"},
             ),
             "R2": MergedReferenceRecord(
                 reference="R2",
@@ -163,7 +158,6 @@ def test_enrich_parts_with_merge_namespaces_summarizes_divergent_annotations() -
                     "s:footprint": "PCB:0603",
                     "p:footprint": "PCB:0603",
                 },
-                canonical_fields={"c:footprint": "PCB:0603"},
             ),
             "R10": MergedReferenceRecord(
                 reference="R10",
@@ -171,18 +165,17 @@ def test_enrich_parts_with_merge_namespaces_summarizes_divergent_annotations() -
                     "s:footprint": "SCH:0603",
                     "p:footprint": "PCB:0402",
                 },
-                canonical_fields={"c:footprint": "PCB:0402"},
-                annotated_fields={"a:footprint": "s:SCH:0603\np:PCB:0402\nc:PCB:0402"},
+                annotated_fields={"a:footprint": "s:SCH:0603\np:PCB:0402"},
             ),
         },
         mismatches=tuple(),
-        metadata={"precedence_profile": "generic"},
+        metadata={},
     )
 
     enriched = _enrich_parts_with_merge_namespaces(parts_data, merge_result)
     assert (
         enriched.entries[0].attributes["a:footprint"]
-        == "R1,R10 -> S: and P: differ\np:PCB:0402 chosen\ns:SCH:0603 || "
+        == "R1,R10 -> S: and P: differ\ns:SCH:0603\np:PCB:0402 || "
         "R2 -> PCB:0603"
     )
 
@@ -204,11 +197,11 @@ def test_enrich_parts_with_merge_namespaces_skips_conflicting_grouped_values() -
         records={
             "R1": MergedReferenceRecord(
                 reference="R1",
-                canonical_fields={"c:value": "9k99", "c:rotation": "0"},
+                source_fields={"s:value": "9k99", "p:rotation": "0"},
             ),
             "R2": MergedReferenceRecord(
                 reference="R2",
-                canonical_fields={"c:value": "9k99", "c:rotation": "90"},
+                source_fields={"s:value": "9k99", "p:rotation": "90"},
             ),
         },
         mismatches=tuple(),
@@ -217,5 +210,5 @@ def test_enrich_parts_with_merge_namespaces_skips_conflicting_grouped_values() -
 
     enriched = _enrich_parts_with_merge_namespaces(parts_data, merge_result)
     attrs = enriched.entries[0].attributes
-    assert attrs["c:value"] == "9k99"
-    assert "c:rotation" not in attrs
+    assert attrs["s:value"] == "9k99"
+    assert "p:rotation" not in attrs

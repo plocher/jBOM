@@ -52,7 +52,7 @@ Feature: Parts List Generation (Core Functionality)
       | R1   | 10K   | R_0805_2012 | 0603    |
       | R2   | 10K   | R_0805_2012 | 0805    |
 
-  Scenario: Explicit namespace fields are available in parts output
+  Scenario: Explicit source and annotation namespace fields are available in parts output
     Given a PCB that contains:
       | Reference | X | Y | Footprint   |
       | R1        | 5 | 3 | R_0805_2012 |
@@ -61,13 +61,13 @@ Feature: Parts List Generation (Core Functionality)
       | C1        | 8 | 3 | C_0603_1608 |
       | C20       | 9 | 3 | C_0603_1608 |
       | U1        | 1 | 1 | SOIC-8_3.9x4.9mm |
-    When I run jbom command "parts -f refs,s:footprint,c:footprint"
+    When I run jbom command "parts -f refs,s:footprint,a:footprint"
     Then the command should succeed
     And the output should contain these fields:
-      | Refs | S:Footprint | C:Footprint |
+      | Refs | S:Footprint | A:Footprint |
     And the CSV output has rows where:
-      | Refs      | S:Footprint | C:Footprint |
-      | R1,R2,R10 | R_0805_2012 | R_0805_2012 |
+      | Refs      | S:Footprint | A:Footprint |
+      | R1,R2,R10 | R_0805_2012 |             |
 
   Scenario: Parts list-fields includes merge namespace fields
     When I run jbom command "parts --list-fields"
@@ -75,5 +75,5 @@ Feature: Parts List Generation (Core Functionality)
     And the output should contain "Known parts fields"
     And the output should contain "s:value"
     And the output should not contain "p:footprint"
-    And the output should contain "c:value"
+    And the output should not contain "c:value"
     And the output should contain "a:value"

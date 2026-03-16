@@ -623,14 +623,9 @@ def _format_merge_mismatch_note(row: AuditRow) -> str:
 
     field_name = (row.field or "").strip() or "field"
     source_summary = (row.current_value or "").strip()
-    canonical_value = (row.suggested_value or "").strip()
 
-    if source_summary and canonical_value:
-        return f"{field_name} ({source_summary}) -> c:{canonical_value}"
     if source_summary:
         return f"{field_name} ({source_summary})"
-    if canonical_value:
-        return f"{field_name} -> c:{canonical_value}"
     return field_name
 
 

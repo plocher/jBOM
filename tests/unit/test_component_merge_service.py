@@ -54,14 +54,12 @@ def _make_graph_with_footprint_mismatch() -> ProjectComponentGraph:
     )
 
 
-def test_merge_service_loads_precedence_policy_from_defaults() -> None:
+def test_merge_service_reports_mismatch_count_metadata() -> None:
     service = ComponentMergeService()
-    policy = service.precedence_policy
+    graph = _make_graph_with_footprint_mismatch()
 
-    assert policy.profile_name == "generic"
-    assert "value" in policy.schematic_biased_fields
-    assert "footprint" in policy.pcb_biased_fields
-    assert "lcsc" in policy.inventory_biased_fields
+    result = service.merge(graph)
+    assert result.metadata["mismatch_count"] == 1
 
 
 def test_merge_creates_namespaced_records_and_mismatch_annotations() -> None:
@@ -74,19 +72,14 @@ def test_merge_creates_namespaced_records_and_mismatch_annotations() -> None:
     assert len(result.mismatches) == 1
     mismatch = result.mismatches[0]
     assert mismatch.field_key == "footprint"
-    assert mismatch.decision_reason == "pcb_biased_precedence"
     assert mismatch.source_values == {"s": "SCH:0603", "p": "PCB:0402"}
     merged = result.records["R1"]
     assert merged.source_fields["s:footprint"] == "SCH:0603"
     assert merged.source_fields["p:footprint"] == "PCB:0402"
-    assert merged.canonical_fields["c:footprint"] == "PCB:0402"
-    assert merged.canonical_fields["c:package"] == "0402"
-    assert (
-        merged.annotated_fields["a:footprint"] == "s:SCH:0603\np:PCB:0402\nc:PCB:0402"
-    )
+    assert merged.annotated_fields["a:footprint"] == "s:SCH:0603\np:PCB:0402"
 
 
-def test_merge_without_pcb_record_still_produces_canonical_schematic_fields() -> None:
+def test_merge_without_pcb_record_has_no_source_disagreement() -> None:
     collector = ProjectComponentCollector()
     graph = collector.collect(
         schematic_components=[_make_component("R2", value="1k", footprint="SCH:0805")],
@@ -97,6 +90,6 @@ def test_merge_without_pcb_record_still_produces_canonical_schematic_fields() ->
     result = service.merge(graph)
 
     merged = result.records["R2"]
-    assert merged.canonical_fields["c:value"] == "1k"
-    assert merged.canonical_fields["c:footprint"] == "SCH:0805"
+    assert merged.source_fields["s:value"] == "1k"
+    assert merged.source_fields["s:footprint"] == "SCH:0805"
     assert merged.mismatches == tuple()

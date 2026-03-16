@@ -107,7 +107,7 @@ def _enrich_bom_with_merge_namespaces(
     bom_data: BOMData,
     merge_result: ComponentMergeResult | None,
 ) -> BOMData:
-    """Attach stable merge-model namespaces (`s:/p:/c:/a:`) onto BOM entries."""
+    """Attach stable merge-model namespaces (`s:/p:/a:`) onto BOM entries."""
 
     if merge_result is None or not merge_result.records:
         return bom_data
@@ -161,9 +161,6 @@ def _enrich_bom_with_merge_namespaces(
             "merge_model_enabled": True,
             "merge_model_reference_count": merge_result.reference_count,
             "merge_model_mismatch_count": len(merge_result.mismatches),
-            "merge_precedence_profile": merge_result.metadata.get(
-                "precedence_profile", ""
-            ),
         }
     )
     return BOMData(
@@ -511,7 +508,6 @@ def _list_available_fields(
         Column(header="s:", key="s:", preferred_width=16, wrap=False),
         Column(header="p:", key="p:", preferred_width=16, wrap=False),
         Column(header="i:", key="i:", preferred_width=16, wrap=False),
-        Column(header="c:", key="c:", preferred_width=16, wrap=False),
         Column(header="a:", key="a:", preferred_width=16, wrap=False),
     ]
     print_table(
@@ -561,8 +557,6 @@ def _get_available_bom_fields(components) -> dict[str, str]:
         "s:value": "Schematic source value",
         "s:footprint": "Schematic source footprint",
         "p:footprint": "PCB source footprint",
-        "c:value": "Canonical merged value",
-        "c:footprint": "Canonical merged footprint",
         "a:value": "Merge annotation value",
         "a:footprint": "Merge annotation footprint",
         # Add inventory fields with I: prefix
@@ -928,21 +922,9 @@ def _get_attribute_value(entry: BOMEntry, key: str) -> str:
 
 
 def _resolve_inventory_field_value(entry: BOMEntry, inventory_field: str) -> str:
-    """Resolve an inventory-prefixed field with schema-aware fallbacks."""
-    raw_value = entry.attributes.get(f"i:{inventory_field}", "")
-    if isinstance(raw_value, str):
-        if raw_value.strip():
-            return raw_value
-    elif raw_value:
-        return str(raw_value)
-    legacy_value = entry.attributes.get(inventory_field, "")
-    if isinstance(legacy_value, str):
-        if legacy_value.strip():
-            return legacy_value
-    elif legacy_value:
-        return str(legacy_value)
+    """Resolve an inventory-prefixed field from the inventory namespace only."""
 
-    return ""
+    return _get_attribute_value(entry, f"i:{inventory_field}")
 
 
 def _resolve_standard_field_value(
@@ -988,24 +970,15 @@ def _resolve_namespaced_field_value(
     fabricator_id: str,
     fabricator_config: Optional[FabricatorConfig],
 ) -> str:
-    """Resolve a namespace-qualified field with deterministic fallbacks."""
-
-    explicit = _get_attribute_value(entry, f"{namespace}:{namespaced_field}")
-    if explicit:
-        return explicit
+    """Resolve a namespace-qualified field under strict source semantics."""
 
     if namespace == "i":
         return _resolve_inventory_field_value(entry, namespaced_field)
 
-    if namespace in {"s", "c"}:
-        return _resolve_standard_field_value(
-            entry,
-            namespaced_field,
-            fabricator_id=fabricator_id,
-            fabricator_config=fabricator_config,
-        )
+    if namespace in {"s", "p"}:
+        return _get_attribute_value(entry, f"{namespace}:{namespaced_field}")
 
-    return ""
+    return _get_attribute_value(entry, f"{namespace}:{namespaced_field}")
 
 
 def _resolve_annotation_field_value(
@@ -1044,21 +1017,18 @@ def _resolve_annotation_field_value(
     if inventory_value:
         lines.append(("i", inventory_value))
 
-    canonical_value = _resolve_namespaced_field_value(
-        entry,
-        "c",
-        annotation_field,
-        fabricator_id=fabricator_id,
-        fabricator_config=fabricator_config,
-    )
-    if canonical_value:
-        if not lines or any(value != canonical_value for _, value in lines):
-            lines.append(("c", canonical_value))
-
     if not lines:
         return ""
 
-    return "\n".join(f"{namespace}:{value}" for namespace, value in lines)
+    unique_lines: list[tuple[str, str]] = []
+    seen_pairs: set[tuple[str, str]] = set()
+    for namespace_value in lines:
+        if namespace_value in seen_pairs:
+            continue
+        seen_pairs.add(namespace_value)
+        unique_lines.append(namespace_value)
+
+    return "\n".join(f"{namespace}:{value}" for namespace, value in unique_lines)
 
 
 def _get_field_value(
@@ -1100,15 +1070,6 @@ def _get_field_value(
         return _resolve_namespaced_field_value(
             entry,
             "p",
-            field[2:],
-            fabricator_id=fabricator_id,
-            fabricator_config=fabricator_config,
-        )
-
-    if field.startswith("c:"):
-        return _resolve_namespaced_field_value(
-            entry,
-            "c",
             field[2:],
             fabricator_id=fabricator_id,
             fabricator_config=fabricator_config,

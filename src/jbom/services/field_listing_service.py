@@ -12,7 +12,7 @@ from typing import Iterable
 from jbom.common.fields import normalize_field_name
 
 
-_NAMESPACE_PREFIXES: tuple[str, ...] = ("s", "p", "i", "c", "a")
+_NAMESPACE_PREFIXES: tuple[str, ...] = ("s", "p", "i", "a")
 
 
 @dataclass(frozen=True)
@@ -23,7 +23,6 @@ class FieldNamespaceMatrixRow:
     s_token: str = ""
     p_token: str = ""
     i_token: str = ""
-    c_token: str = ""
     a_token: str = ""
 
     def to_console_row(self) -> dict[str, str]:
@@ -34,7 +33,6 @@ class FieldNamespaceMatrixRow:
             "s:": self.s_token,
             "p:": self.p_token,
             "i:": self.i_token,
-            "c:": self.c_token,
             "a:": self.a_token,
         }
 
@@ -61,7 +59,7 @@ def is_namespace_applicable(
         return requirements.require_pcb
     if namespace_prefix == "i":
         return requirements.require_inv
-    if namespace_prefix in {"c", "a"}:
+    if namespace_prefix == "a":
         return True
     return True
 
@@ -105,7 +103,6 @@ class FieldListingService:
                     "s": "",
                     "p": "",
                     "i": "",
-                    "c": "",
                     "a": "",
                 },
             )
@@ -121,7 +118,6 @@ class FieldListingService:
                     s_token=row["s"],
                     p_token=row["p"],
                     i_token=row["i"],
-                    c_token=row["c"],
                     a_token=row["a"],
                 )
             )
