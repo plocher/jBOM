@@ -23,7 +23,10 @@ from jbom.services.inventory_overlay_service import InventoryOverlayService
 from jbom.services.pcb_reader import DefaultKiCadReaderService
 from jbom.services.field_listing_service import (
     FieldListingService,
-    FieldSourceRequirements,
+    get_field_names,
+    get_namespaced_field_tokens,
+    resolve_namespaced_field,
+    resolve_unqualified_field,
 )
 from jbom.services.component_merge_service import (
     ComponentMergeResult,
@@ -43,7 +46,7 @@ from jbom.common.field_parser import (
     parse_fields_argument,
     check_fabricator_field_completeness,
 )
-from jbom.common.fields import get_available_presets
+from jbom.common.fields import get_available_presets, normalize_field_name
 from jbom.common.component_filters import (
     add_component_filter_arguments,
     create_filter_config,
@@ -51,6 +54,21 @@ from jbom.common.component_filters import (
 from jbom.common.component_utils import derive_package_from_footprint
 from jbom.common.package_matching import PackageType
 from jbom.cli.formatting import Column, print_table, get_terminal_width
+
+_BOM_SOURCE_PRIORITY = "pis"
+_BOM_COMPUTED_FIELDS: tuple[str, ...] = (
+    "reference",
+    "quantity",
+    "value",
+    "description",
+    "footprint",
+    "manufacturer",
+    "mfgpn",
+    "fabricator_part_number",
+    "smd",
+    "lcsc",
+    "package",
+)
 
 
 def _run_component_merge(
@@ -262,20 +280,29 @@ def handle_bom(args: argparse.Namespace) -> int:
         # Handle --list-fields - best-effort: try to load runtime data for richer output
         if args.list_fields:
             list_components: list = []
+            list_pcb_components: list = []
             list_inv_columns: list[str] = []
+            try:
+                list_resolver = ProjectFileResolver(
+                    prefer_pcb=False, target_file_type="schematic"
+                )
+                list_resolved = list_resolver.resolve_input(args.input)
+                list_reader = SchematicReader()
+                for sch_f in list_resolved.get_hierarchical_files():
+                    list_components.extend(list_reader.load_components(sch_f))
 
-            # Try to load project components if a specific input was given
-            if args.input and args.input != ".":
-                try:
-                    list_resolver = ProjectFileResolver(
-                        prefer_pcb=False, target_file_type="schematic"
+                list_project_context = list_resolved.project_context
+                if (
+                    list_project_context is not None
+                    and list_project_context.pcb_file is not None
+                    and list_project_context.pcb_file.exists()
+                ):
+                    list_board = DefaultKiCadReaderService().read_pcb_file(
+                        list_project_context.pcb_file
                     )
-                    list_resolved = list_resolver.resolve_input(args.input)
-                    list_reader = SchematicReader()
-                    for sch_f in list_resolved.get_hierarchical_files():
-                        list_components.extend(list_reader.load_components(sch_f))
-                except Exception:
-                    pass  # Fall back to statically-known fields
+                    list_pcb_components.extend(list_board.footprints)
+            except Exception:
+                pass
 
             # Try to load inventory columns if --inventory was given
             if args.inventory_files:
@@ -293,6 +320,7 @@ def handle_bom(args: argparse.Namespace) -> int:
             _list_available_fields(
                 fabricator,
                 components=list_components or None,
+                pcb_components=list_pcb_components or None,
                 inventory_column_names=list_inv_columns or None,
             )
             return 0
@@ -466,6 +494,7 @@ def handle_bom(args: argparse.Namespace) -> int:
 def _list_available_fields(
     fabricator: str,
     components: list | None = None,
+    pcb_components: list | None = None,
     inventory_column_names: list[str] | None = None,
 ) -> None:
     """List known BOM fields and presets for the given fabricator.
@@ -477,50 +506,30 @@ def _list_available_fields(
     Args:
         fabricator: Current fabricator ID (for fabricator-specific presets)
         components: Optional loaded components for runtime field discovery
+        pcb_components: Optional loaded PCB footprints for runtime field discovery
         inventory_column_names: Optional list of inventory CSV column headers
     """
-    from jbom.common.fields import normalize_field_name
-
-    # Build known fields dynamically from project + inventory union
-    known_fields = _get_available_bom_fields(components or [])
-
-    # Merge in inventory-discovered columns (with i: prefix for unambiguous access)
-    if inventory_column_names:
-        for col in inventory_column_names:
-            normalized_col = normalize_field_name(col)
-            i_key = f"i:{normalized_col}"
-            if i_key not in known_fields:
-                known_fields[i_key] = f"Inventory: {col}"
+    known_fields = _get_available_bom_fields(
+        components or [],
+        pcb_components=pcb_components or [],
+        inventory_column_names=inventory_column_names or [],
+    )
 
     print(
         "\nKnown fields (any field name is accepted \u2014 unknown fields produce blank cells):"
     )
-    matrix_rows = FieldListingService().build_namespace_matrix(
-        known_fields.keys(),
-        requirements=FieldSourceRequirements(
-            require_sch=True,
-            require_pcb=True,
-            require_inv=bool(inventory_column_names),
-        ),
-    )
+    matrix_rows = FieldListingService().build_namespace_matrix(known_fields.keys())
     columns = [
         Column(header="Name", key="Name", preferred_width=22, wrap=False),
         Column(header="s:", key="s:", preferred_width=16, wrap=False),
         Column(header="p:", key="p:", preferred_width=16, wrap=False),
         Column(header="i:", key="i:", preferred_width=16, wrap=False),
-        Column(header="a:", key="a:", preferred_width=16, wrap=False),
     ]
     print_table(
         [row.to_console_row() for row in matrix_rows],
         columns,
         terminal_width=get_terminal_width(),
     )
-
-    if not components and not inventory_column_names:
-        print(
-            "\n  Tip: Run with a project path or --inventory to see runtime-discovered fields."
-        )
-        print("  Example: jbom bom --list-fields [input] [--inventory file.csv]")
 
     print("\nAvailable presets:")
     print("=" * 40)
@@ -540,40 +549,30 @@ def _list_available_fields(
             print(f"  +{name}: {desc}")
 
 
-def _get_available_bom_fields(components) -> dict[str, str]:
-    """Get available fields based on component data and inventory enhancement."""
-    # Standard BOM fields available from components
-    fields = {
-        "reference": "Component reference (R1, C2, etc.)",
-        "quantity": "Number of components",
-        "value": "Component value",
-        "description": "Component description",
-        "footprint": "Component footprint",
-        "manufacturer": "Component manufacturer",
-        "mfgpn": "Manufacturer part number",
-        "fabricator_part_number": "Fabricator-specific part number",
-        "smd": "Surface mount indicator",
-        "lcsc": "LCSC part number",
-        "s:value": "Schematic source value",
-        "s:footprint": "Schematic source footprint",
-        "p:footprint": "PCB source footprint",
-        "a:value": "Merge annotation value",
-        "a:footprint": "Merge annotation footprint",
-        # Add inventory fields with I: prefix
-        "i:voltage": "Inventory: Component voltage",
-        "i:tolerance": "Inventory: Component tolerance",
-        "i:package": "Inventory: Component package",
-    }
+def _get_available_bom_fields(
+    components: list,
+    *,
+    pcb_components: list | None = None,
+    inventory_column_names: list[str] | None = None,
+) -> dict[str, str]:
+    """Return known BOM fields from computed contract plus discovered source fields."""
 
-    # Add any additional fields found in component properties
-    if components:
-        for comp in components:
-            # Components have .properties, not .attributes
-            if hasattr(comp, "properties"):
-                for attr_key in comp.properties.keys():
-                    normalized_key = attr_key.lower().replace(" ", "_")
-                    if normalized_key not in fields:
-                        fields[normalized_key] = f"Component property: {attr_key}"
+    fields = {field_name: "Computed BOM field" for field_name in _BOM_COMPUTED_FIELDS}
+    for source_token in get_namespaced_field_tokens(
+        schematic_components=components,
+        pcb_components=pcb_components or [],
+        inventory_column_names=inventory_column_names or [],
+    ):
+        fields[source_token] = "Discovered source field"
+
+    # Include unqualified field names discovered from source data.
+    for field_name in get_field_names(
+        schematic_components=components,
+        pcb_components=pcb_components or [],
+        inventory_column_names=inventory_column_names or [],
+        source="all",
+    ):
+        fields.setdefault(field_name, "Discovered field")
 
     return fields
 
@@ -921,12 +920,6 @@ def _get_attribute_value(entry: BOMEntry, key: str) -> str:
     return _coerce_output_value(entry.attributes.get(key, ""))
 
 
-def _resolve_inventory_field_value(entry: BOMEntry, inventory_field: str) -> str:
-    """Resolve an inventory-prefixed field from the inventory namespace only."""
-
-    return _get_attribute_value(entry, f"i:{inventory_field}")
-
-
 def _resolve_standard_field_value(
     entry: BOMEntry,
     field: str,
@@ -936,28 +929,50 @@ def _resolve_standard_field_value(
 ) -> str:
     """Resolve a standard (non-prefixed) BOM field."""
 
-    field_mapping = {
-        "reference": lambda e: e.references_string,
-        "quantity": lambda e: str(e.quantity),
-        "value": lambda e: e.value,
-        "description": lambda e: _get_attribute_value(e, "description"),
-        "footprint": lambda e: e.footprint,
-        "manufacturer": lambda e: _get_attribute_value(e, "manufacturer"),
-        "mfgpn": lambda e: _get_attribute_value(e, "manufacturer_part"),
-        "fabricator_part_number": lambda e: _resolve_fabricator_part_number(
-            e,
+    if field == "reference":
+        return entry.references_string
+    if field == "quantity":
+        return str(entry.quantity)
+    if field == "fabricator_part_number":
+        return _resolve_fabricator_part_number(
+            entry,
             fabricator_id=fabricator_id,
             fabricator_config=fabricator_config,
-        ),
-        "smd": lambda e: _resolve_smd_indicator(e),
-        "lcsc": lambda e: _get_attribute_value(e, "lcsc")
-        or _get_attribute_value(e, "LCSC"),
-        "package": lambda e: _get_attribute_value(e, "package")
-        or derive_package_from_footprint(e.footprint),
-    }
+        )
+    if field == "smd":
+        return _resolve_smd_indicator(entry)
 
-    if field in field_mapping:
-        return field_mapping[field](entry)
+    row_sources = _build_bom_row_sources(entry, include_unqualified_fallback=True)
+    if field == "mfgpn":
+        return resolve_unqualified_field(
+            "manufacturer_part",
+            row_sources,
+            priority=_BOM_SOURCE_PRIORITY,
+        ) or resolve_unqualified_field(
+            "mfgpn",
+            row_sources,
+            priority=_BOM_SOURCE_PRIORITY,
+        )
+    if field == "package":
+        return resolve_unqualified_field(
+            "package",
+            row_sources,
+            priority=_BOM_SOURCE_PRIORITY,
+        ) or derive_package_from_footprint(entry.footprint)
+    if field == "lcsc":
+        return resolve_unqualified_field(
+            "lcsc",
+            row_sources,
+            priority=_BOM_SOURCE_PRIORITY,
+        ) or _get_attribute_value(entry, "LCSC")
+
+    resolved_value = resolve_unqualified_field(
+        field,
+        row_sources,
+        priority=_BOM_SOURCE_PRIORITY,
+    )
+    if resolved_value:
+        return resolved_value
 
     return _get_attribute_value(entry, field)
 
@@ -972,13 +987,35 @@ def _resolve_namespaced_field_value(
 ) -> str:
     """Resolve a namespace-qualified field under strict source semantics."""
 
-    if namespace == "i":
-        return _resolve_inventory_field_value(entry, namespaced_field)
+    row_sources = _build_bom_row_sources(entry, include_unqualified_fallback=False)
+    return resolve_namespaced_field(namespace, namespaced_field, row_sources)
 
-    if namespace in {"s", "p"}:
-        return _get_attribute_value(entry, f"{namespace}:{namespaced_field}")
 
-    return _get_attribute_value(entry, f"{namespace}:{namespaced_field}")
+def _build_bom_row_sources(
+    entry: BOMEntry,
+    *,
+    include_unqualified_fallback: bool,
+) -> dict[str, dict[str, object]]:
+    """Build source field maps for one BOM row (`s`, `p`, `i`)."""
+
+    row_sources: dict[str, dict[str, object]] = {"s": {}, "p": {}, "i": {}}
+    for attr_key, attr_value in entry.attributes.items():
+        normalized_key = normalize_field_name(str(attr_key or ""))
+        prefix, separator, remainder = normalized_key.partition(":")
+        if separator and prefix in {"s", "p", "i"} and remainder:
+            row_sources[prefix][remainder] = attr_value
+
+    if include_unqualified_fallback:
+        # Keep unqualified behavior stable when merge enrichment is absent.
+        if entry.value:
+            row_sources["s"].setdefault("value", entry.value)
+        if entry.footprint:
+            row_sources["s"].setdefault("footprint", entry.footprint)
+        package_value = _get_attribute_value(entry, "package")
+        if package_value:
+            row_sources["s"].setdefault("package", package_value)
+
+    return row_sources
 
 
 def _resolve_annotation_field_value(

@@ -31,12 +31,14 @@ from jbom.services.project_component_collector import ProjectComponentCollector
 from jbom.services.project_file_resolver import ProjectFileResolver
 from jbom.services.field_listing_service import (
     FieldListingService,
-    FieldSourceRequirements,
-    is_namespace_applicable,
+    get_field_names,
+    get_namespaced_field_tokens,
+    resolve_namespaced_field,
+    resolve_unqualified_field,
 )
 from jbom.common.options import GeneratorOptions
 from jbom.common.field_parser import parse_fields_argument
-from jbom.common.fields import field_to_header
+from jbom.common.fields import field_to_header, normalize_field_name
 from jbom.common.component_filters import (
     add_component_filter_arguments,
     create_filter_config,
@@ -44,10 +46,17 @@ from jbom.common.component_filters import (
 from jbom.config.fabricators import get_available_fabricators
 from jbom.cli.formatting import Column, print_table, get_terminal_width
 
-_PARTS_SOURCE_REQUIREMENTS = FieldSourceRequirements(
-    require_sch=True,
-    require_pcb=False,
-    require_inv=False,
+_PARTS_SOURCE_PRIORITY = "sip"
+_PARTS_COMPUTED_FIELDS: tuple[str, ...] = (
+    "refs",
+    "value",
+    "footprint",
+    "package",
+    "part_type",
+    "tolerance",
+    "voltage",
+    "dielectric",
+    "lib_id",
 )
 
 
@@ -170,32 +179,47 @@ def _enrich_parts_with_merge_namespaces(
     )
 
 
-def _get_available_parts_fields() -> dict[str, str]:
-    """Return known parts output fields for discovery and presets."""
+def _get_available_parts_fields(
+    *,
+    schematic_components: list | None = None,
+    pcb_components: list | None = None,
+    inventory_column_names: list[str] | None = None,
+) -> dict[str, str]:
+    """Return known parts fields from computed contract plus discovered sources."""
 
-    return {
-        "refs": "Aggregated reference designators",
-        "value": "Component value",
-        "footprint": "Component footprint",
-        "package": "Package token",
-        "part_type": "Component type",
-        "tolerance": "Tolerance value",
-        "voltage": "Voltage rating",
-        "dielectric": "Dielectric type",
-        "s:value": "Schematic source value",
-        "p:footprint": "PCB source footprint",
-        "a:value": "Merge annotation value",
+    known_fields = {
+        field_name: "Computed parts field" for field_name in _PARTS_COMPUTED_FIELDS
     }
+    for source_token in get_namespaced_field_tokens(
+        schematic_components=schematic_components or [],
+        pcb_components=pcb_components or [],
+        inventory_column_names=inventory_column_names or [],
+    ):
+        known_fields[source_token] = "Discovered source field"
+    for field_name in get_field_names(
+        schematic_components=schematic_components or [],
+        pcb_components=pcb_components or [],
+        inventory_column_names=inventory_column_names or [],
+        source="all",
+    ):
+        known_fields.setdefault(field_name, "Discovered field")
+    return known_fields
 
 
-def _list_available_parts_fields() -> None:
+def _list_available_parts_fields(
+    *,
+    components: list | None = None,
+    pcb_components: list | None = None,
+    inventory_column_names: list[str] | None = None,
+) -> None:
     """List known parts fields and presets, then exit."""
 
-    known_fields = _get_available_parts_fields()
-    matrix_rows = FieldListingService().build_namespace_matrix(
-        known_fields.keys(),
-        requirements=_PARTS_SOURCE_REQUIREMENTS,
+    known_fields = _get_available_parts_fields(
+        schematic_components=components,
+        pcb_components=pcb_components,
+        inventory_column_names=inventory_column_names,
     )
+    matrix_rows = FieldListingService().build_namespace_matrix(known_fields.keys())
     print(
         "\nKnown parts fields (any field name is accepted — unknown fields produce blank cells):"
     )
@@ -204,7 +228,6 @@ def _list_available_parts_fields() -> None:
         Column(header="s:", key="s:", preferred_width=16, wrap=False),
         Column(header="p:", key="p:", preferred_width=16, wrap=False),
         Column(header="i:", key="i:", preferred_width=16, wrap=False),
-        Column(header="a:", key="a:", preferred_width=16, wrap=False),
     ]
     print_table(
         [row.to_console_row() for row in matrix_rows],
@@ -282,7 +305,47 @@ def handle_parts(args: argparse.Namespace) -> int:
         options = GeneratorOptions(verbose=args.verbose) if args.verbose else None
 
         if args.list_fields:
-            _list_available_parts_fields()
+            list_components: list[Any] = []
+            list_pcb_components: list[Any] = []
+            list_inv_columns: list[str] = []
+            try:
+                list_resolver = ProjectFileResolver(
+                    prefer_pcb=False,
+                    target_file_type="schematic",
+                    options=options,
+                )
+                list_resolved = list_resolver.resolve_input(args.input)
+                list_reader = SchematicReader(options)
+                for sch_file in list_resolved.get_hierarchical_files():
+                    list_components.extend(list_reader.load_components(sch_file))
+                list_project_context = list_resolved.project_context
+                if (
+                    list_project_context is not None
+                    and list_project_context.pcb_file is not None
+                    and list_project_context.pcb_file.exists()
+                ):
+                    list_board = DefaultKiCadReaderService().read_pcb_file(
+                        list_project_context.pcb_file
+                    )
+                    list_pcb_components.extend(list_board.footprints)
+            except Exception:
+                pass
+
+            if args.inventory:
+                from jbom.services.inventory_reader import InventoryReader as _InvReader
+
+                list_inventory_path = Path(args.inventory)
+                if list_inventory_path.exists():
+                    try:
+                        _, list_inv_columns = _InvReader(list_inventory_path).load()
+                    except Exception:
+                        pass
+
+            _list_available_parts_fields(
+                components=list_components or None,
+                pcb_components=list_pcb_components or None,
+                inventory_column_names=list_inv_columns or None,
+            )
             return 0
 
         # Use ProjectFileResolver for intelligent input resolution
@@ -389,6 +452,7 @@ def handle_parts(args: argparse.Namespace) -> int:
         parts_data = _enrich_parts_with_merge_namespaces(parts_data, merge_result)
 
         # Enhance with inventory if requested
+        inventory_columns_for_fields: list[str] = []
         if args.inventory:
             inventory_file = Path(args.inventory)
             if not inventory_file.exists():
@@ -400,8 +464,28 @@ def handle_parts(args: argparse.Namespace) -> int:
 
             # TODO: Implement inventory enhancement for parts list
             parts_data = _enhance_parts_with_inventory(parts_data, inventory_file)
+            try:
+                from jbom.services.inventory_reader import InventoryReader as _InvReader
 
-        available_parts_fields = _get_available_parts_fields()
+                _, inventory_columns_for_fields = _InvReader(inventory_file).load()
+            except Exception:
+                inventory_columns_for_fields = []
+
+        parts_field_pcb_components: list[Any] = []
+        if project_context.pcb_file and project_context.pcb_file.exists():
+            try:
+                parts_field_board = DefaultKiCadReaderService().read_pcb_file(
+                    project_context.pcb_file
+                )
+                parts_field_pcb_components = list(parts_field_board.footprints)
+            except Exception:
+                parts_field_pcb_components = []
+
+        available_parts_fields = _get_available_parts_fields(
+            schematic_components=components,
+            pcb_components=parts_field_pcb_components,
+            inventory_column_names=inventory_columns_for_fields,
+        )
         try:
             selected_fields = parse_fields_argument(
                 args.fields,
@@ -519,31 +603,73 @@ def _get_parts_field_value(entry: PartsListEntry, field: str) -> str:
     if field in {"refs", "reference", "refs_csv"}:
         return entry.refs_csv
 
-    direct_mapping = {
-        "value": "value",
-        "footprint": "footprint",
-        "package": "package",
-        "part_type": "part_type",
-        "type": "part_type",
-        "tolerance": "tolerance",
-        "voltage": "voltage",
-        "dielectric": "dielectric",
-        "lib_id": "lib_id",
-    }
-    mapped_attr = direct_mapping.get(field)
-    if mapped_attr:
-        return str(getattr(entry, mapped_attr, "") or "")
-
     namespace_prefix, separator, _ = field.partition(":")
-    if separator and namespace_prefix in {"s", "p", "i", "a"}:
-        if not is_namespace_applicable(
+    if separator and namespace_prefix in {"s", "p", "i"}:
+        return resolve_namespaced_field(
             namespace_prefix,
-            requirements=_PARTS_SOURCE_REQUIREMENTS,
-        ):
-            return ""
+            field[2:],
+            _build_parts_row_sources(entry),
+        )
+    if separator and namespace_prefix == "a":
         return str(entry.attributes.get(field, "") or "")
+    row_sources = _build_parts_row_sources(entry)
+    if field in {"value", "footprint", "package", "tolerance", "voltage", "dielectric"}:
+        return resolve_unqualified_field(
+            field,
+            row_sources,
+            priority=_PARTS_SOURCE_PRIORITY,
+        )
+    if field in {"part_type", "type"}:
+        return resolve_unqualified_field(
+            "part_type",
+            row_sources,
+            priority=_PARTS_SOURCE_PRIORITY,
+        ) or resolve_unqualified_field(
+            "type",
+            row_sources,
+            priority=_PARTS_SOURCE_PRIORITY,
+        )
+    if field == "lib_id":
+        return str(entry.lib_id or "")
 
-    return str(entry.attributes.get(field, "") or "")
+    return resolve_unqualified_field(
+        field,
+        row_sources,
+        priority=_PARTS_SOURCE_PRIORITY,
+    ) or str(entry.attributes.get(field, "") or "")
+
+
+def _build_parts_row_sources(entry: PartsListEntry) -> dict[str, dict[str, object]]:
+    """Build source field maps for one parts row (`s`, `p`, `i`)."""
+
+    row_sources: dict[str, dict[str, object]] = {"s": {}, "p": {}, "i": {}}
+    for key, value in entry.attributes.items():
+        normalized_key = normalize_field_name(str(key or ""))
+        prefix, separator, remainder = normalized_key.partition(":")
+        if separator and prefix in {"s", "p", "i"} and remainder:
+            row_sources[prefix][remainder] = value
+        elif normalized_key:
+            row_sources["s"].setdefault(normalized_key, value)
+
+    if entry.value:
+        row_sources["s"].setdefault("value", entry.value)
+    if entry.footprint:
+        row_sources["s"].setdefault("footprint", entry.footprint)
+    if entry.package:
+        row_sources["s"].setdefault("package", entry.package)
+    if entry.part_type:
+        row_sources["s"].setdefault("part_type", entry.part_type)
+        row_sources["s"].setdefault("type", entry.part_type)
+    if entry.tolerance:
+        row_sources["s"].setdefault("tolerance", entry.tolerance)
+    if entry.voltage:
+        row_sources["s"].setdefault("voltage", entry.voltage)
+    if entry.dielectric:
+        row_sources["s"].setdefault("dielectric", entry.dielectric)
+    if entry.lib_id:
+        row_sources["s"].setdefault("lib_id", entry.lib_id)
+
+    return row_sources
 
 
 def _print_console_table(
