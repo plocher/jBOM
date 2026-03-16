@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v6.43.0 (2026-03-16)
+
+### Features
+
+* feat(namespaces): remove canonical c-field model
+
+Drop c: namespace from merge/listing/output paths and keep source-only mismatch diagnostics via s:/p:/a:.
+
+Align audit reporting, CLI behavior, and unit/BDD tests with the source-only contract.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`65437b4`](https://github.com/plocher/jBOM/commit/65437b461c2b7876367f610760643999b97854dc))
+
+
 ## v6.42.0 (2026-03-15)
 
 ### Bug Fixes
