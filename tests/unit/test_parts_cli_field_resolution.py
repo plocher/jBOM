@@ -71,7 +71,7 @@ def test_get_parts_field_value_reads_namespaced_attributes() -> None:
     assert _get_parts_field_value(entry, "s:value") == "9k99"
 
 
-def test_get_parts_field_value_respects_source_requirements() -> None:
+def test_get_parts_field_value_reads_explicit_namespaced_fields() -> None:
     entry = PartsListEntry(
         refs=["R1"],
         value="10k",
@@ -84,8 +84,8 @@ def test_get_parts_field_value_respects_source_requirements() -> None:
     )
 
     assert _get_parts_field_value(entry, "s:footprint") == "R_0603"
-    assert _get_parts_field_value(entry, "p:footprint") == ""
-    assert _get_parts_field_value(entry, "i:voltage") == ""
+    assert _get_parts_field_value(entry, "p:footprint") == "R_0603"
+    assert _get_parts_field_value(entry, "i:voltage") == "25V"
 
 
 def test_unqualified_parts_value_prefers_s_then_i_then_p() -> None:

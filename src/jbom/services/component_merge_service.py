@@ -415,6 +415,11 @@ class ComponentMergeService:
         )
         self._set_if_present(
             pcb_fields,
+            "value",
+            self._get_pcb_attribute(component, ("Value", "value")),
+        )
+        self._set_if_present(
+            pcb_fields,
             "x",
             component.center_x_raw
             if component.center_x_raw is not None
@@ -465,6 +470,27 @@ class ComponentMergeService:
             if direct_value:
                 return direct_value
             lowered = normalized_properties.get(alias.strip().lower(), "")
+            if lowered:
+                return lowered
+        return ""
+
+    def _get_pcb_attribute(
+        self,
+        component: object,
+        aliases: tuple[str, ...],
+    ) -> str:
+        """Return the first populated PCB attribute value matching aliases."""
+
+        attributes = getattr(component, "attributes", {}) or {}
+        normalized_attributes = {
+            str(key or "").strip().lower(): self._normalize_value(value)
+            for key, value in attributes.items()
+        }
+        for alias in aliases:
+            direct_value = self._normalize_value(attributes.get(alias, ""))
+            if direct_value:
+                return direct_value
+            lowered = normalized_attributes.get(alias.strip().lower(), "")
             if lowered:
                 return lowered
         return ""

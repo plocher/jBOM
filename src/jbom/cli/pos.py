@@ -24,8 +24,10 @@ from jbom.services.component_merge_service import (
 )
 from jbom.services.field_listing_service import (
     FieldListingService,
-    FieldSourceRequirements,
-    is_namespace_applicable,
+    get_field_names,
+    get_namespaced_field_tokens,
+    resolve_namespaced_field,
+    resolve_unqualified_field,
 )
 from jbom.services.project_component_collector import ProjectComponentCollector
 from jbom.common.options import PlacementOptions, GeneratorOptions
@@ -34,7 +36,7 @@ from jbom.common.cli_fabricator import (
     resolve_fabricator_from_args,
 )
 from jbom.common.field_parser import parse_fields_argument
-from jbom.common.fields import field_to_header
+from jbom.common.fields import field_to_header, normalize_field_name
 from jbom.common.component_filters import (
     add_component_filter_arguments,
     create_filter_config,
@@ -47,10 +49,17 @@ from jbom.cli.formatting import Column, print_table, get_terminal_width
 from jbom.services.fabricator_projection_service import FabricatorProjectionService
 
 _NUMERIC_POS_FIELDS: frozenset[str] = frozenset({"x", "y", "rotation"})
-_POS_SOURCE_REQUIREMENTS = FieldSourceRequirements(
-    require_sch=False,
-    require_pcb=True,
-    require_inv=False,
+_POS_SOURCE_PRIORITY = "pis"
+_POS_COMPUTED_FIELDS: tuple[str, ...] = (
+    "reference",
+    "x",
+    "y",
+    "rotation",
+    "side",
+    "footprint",
+    "package",
+    "value",
+    "fabricator_part_number",
 )
 
 
@@ -225,10 +234,48 @@ def handle_pos(args: argparse.Namespace) -> int:
 
         # Resolve fabricator from arguments
         fabricator = resolve_fabricator_from_args(args)
-
-        # Handle --list-fields before processing
         if args.list_fields:
-            _list_available_pos_fields(fabricator)
+            list_pcb_components: list[Any] = []
+            list_schematic_components: list[Any] = []
+            try:
+                list_resolver = ProjectFileResolver(
+                    prefer_pcb=True,
+                    target_file_type="pcb",
+                    options=gen_options,
+                )
+                list_resolved = list_resolver.resolve_input(args.input)
+                if not list_resolved.is_pcb:
+                    list_resolved = list_resolver.resolve_for_wrong_file_type(
+                        list_resolved,
+                        "pcb",
+                    )
+                list_pcb_path = list_resolved.resolved_path
+                if list_pcb_path.exists():
+                    list_board = DefaultKiCadReaderService().read_pcb_file(
+                        list_pcb_path
+                    )
+                    list_pcb_components = list(list_board.footprints)
+                list_project_context = list_resolved.project_context
+                if list_project_context is not None:
+                    list_schematic_files = [
+                        file_path
+                        for file_path in list_project_context.get_hierarchical_schematic_files()
+                        if file_path.suffix.lower() == ".kicad_sch"
+                        and file_path.exists()
+                    ]
+                    list_schematic_reader = SchematicReader(gen_options)
+                    for schematic_file in list_schematic_files:
+                        list_schematic_components.extend(
+                            list_schematic_reader.load_components(schematic_file)
+                        )
+            except Exception:
+                pass
+
+            _list_available_pos_fields(
+                fabricator,
+                schematic_components=list_schematic_components or None,
+                pcb_components=list_pcb_components or None,
+            )
             return 0
 
         # Use ProjectFileResolver for intelligent input resolution
@@ -310,7 +357,7 @@ def handle_pos(args: argparse.Namespace) -> int:
         pos_data = generator.generate_pos_data(board)
         schematic_files: list[Path] = []
         try:
-            discovered_files = list(resolved_input.get_hierarchical_files())
+            discovered_files = list(project_context.get_hierarchical_schematic_files())
             schematic_files = [
                 file_path
                 for file_path in discovered_files
@@ -347,7 +394,10 @@ def handle_pos(args: argparse.Namespace) -> int:
         pos_data = _enrich_pos_with_merge_namespaces(pos_data, merge_result)
 
         # Parse field selection with fabricator awareness
-        available_pos_fields = _get_available_pos_fields()
+        available_pos_fields = _get_available_pos_fields(
+            schematic_components=schematic_components,
+            pcb_components=list(board.footprints),
+        )
         # NOTE: Don't pass BOM fabricator_presets to POS - they contain incompatible fields
         # POS uses get_fabricator_default_fields() instead
 
@@ -401,31 +451,43 @@ def handle_pos(args: argparse.Namespace) -> int:
         return 1
 
 
-def _get_available_pos_fields() -> dict:
+def _get_available_pos_fields(
+    *,
+    schematic_components: list | None = None,
+    pcb_components: list | None = None,
+    inventory_column_names: list[str] | None = None,
+) -> dict[str, str]:
     """Get available POS fields with descriptions.
 
     Returns:
         Dict mapping field names to descriptions
     """
-    return {
-        "reference": "Component reference designator (R1, C1, etc.)",
-        "x": "X coordinate",
-        "y": "Y coordinate",
-        "rotation": "Rotation angle in degrees",
-        "side": "PCB side (TOP/BOTTOM)",
-        "footprint": "KiCad footprint name",
-        "package": "Component package/case size",
-        "value": "Component value",
-        "fabricator_part_number": "Fabricator-specific part number",
-        "s:value": "Schematic source value",
-        "s:footprint": "Schematic source footprint",
-        "p:footprint": "PCB source footprint",
-        "a:value": "Merge annotation value",
-        "a:footprint": "Merge annotation footprint",
+    known_fields = {
+        field_name: "Computed POS field" for field_name in _POS_COMPUTED_FIELDS
     }
+    for source_token in get_namespaced_field_tokens(
+        schematic_components=schematic_components or [],
+        pcb_components=pcb_components or [],
+        inventory_column_names=inventory_column_names or [],
+    ):
+        known_fields[source_token] = "Discovered source field"
+    for field_name in get_field_names(
+        schematic_components=schematic_components or [],
+        pcb_components=pcb_components or [],
+        inventory_column_names=inventory_column_names or [],
+        source="all",
+    ):
+        known_fields.setdefault(field_name, "Discovered field")
+    return known_fields
 
 
-def _list_available_pos_fields(fabricator: str) -> None:
+def _list_available_pos_fields(
+    fabricator: str,
+    *,
+    schematic_components: list | None = None,
+    pcb_components: list | None = None,
+    inventory_column_names: list[str] | None = None,
+) -> None:
     """List known POS fields and fabricator defaults.
 
     Fields are dynamically derived from the POS schema. Any field name is accepted;
@@ -435,11 +497,12 @@ def _list_available_pos_fields(fabricator: str) -> None:
         fabricator: Current fabricator ID
     """
 
-    known_fields = _get_available_pos_fields()
-    matrix_rows = FieldListingService().build_namespace_matrix(
-        known_fields.keys(),
-        requirements=_POS_SOURCE_REQUIREMENTS,
+    known_fields = _get_available_pos_fields(
+        schematic_components=schematic_components,
+        pcb_components=pcb_components,
+        inventory_column_names=inventory_column_names,
     )
+    matrix_rows = FieldListingService().build_namespace_matrix(known_fields.keys())
 
     print(
         "\nKnown POS fields (any field name is accepted — unknown fields produce blank cells):"
@@ -449,7 +512,6 @@ def _list_available_pos_fields(fabricator: str) -> None:
         Column(header="s:", key="s:", preferred_width=16, wrap=False),
         Column(header="p:", key="p:", preferred_width=16, wrap=False),
         Column(header="i:", key="i:", preferred_width=16, wrap=False),
-        Column(header="a:", key="a:", preferred_width=16, wrap=False),
     ]
     print_table(
         [row.to_console_row() for row in matrix_rows],
@@ -691,12 +753,13 @@ def _get_pos_field_value(
         String value for the field
     """
     namespace_prefix, separator, _ = field.partition(":")
-    if separator and namespace_prefix in {"s", "p", "i", "a"}:
-        if not is_namespace_applicable(
+    if separator and namespace_prefix in {"s", "p", "i"}:
+        return resolve_namespaced_field(
             namespace_prefix,
-            requirements=_POS_SOURCE_REQUIREMENTS,
-        ):
-            return ""
+            field[2:],
+            _build_pos_row_sources(entry),
+        )
+    if separator and namespace_prefix == "a":
         return str(entry.get(field, "") or "")
     # Handle coordinate/rotation fields
     if field == "x":
@@ -723,14 +786,53 @@ def _get_pos_field_value(
     field_mapping = {
         "reference": "reference",
         "side": "side",
-        "footprint": "footprint",
-        "package": "package",
-        "value": "value",  # This would need to come from schematic data
     }
 
     if field in field_mapping:
         pos_key = field_mapping[field]
         return str(entry.get(pos_key, ""))
 
+    row_sources = _build_pos_row_sources(entry)
+    if field in {"value", "footprint", "package"}:
+        return resolve_unqualified_field(
+            field,
+            row_sources,
+            priority=_POS_SOURCE_PRIORITY,
+        )
+
     # Fallback for unknown fields
-    return str(entry.get(field, ""))
+    return resolve_unqualified_field(
+        field,
+        row_sources,
+        priority=_POS_SOURCE_PRIORITY,
+    ) or str(entry.get(field, ""))
+
+
+def _build_pos_row_sources(entry: dict[str, Any]) -> dict[str, dict[str, object]]:
+    """Build source field maps for one POS row (`s`, `p`, `i`)."""
+
+    row_sources: dict[str, dict[str, object]] = {"s": {}, "p": {}, "i": {}}
+    for key, value in entry.items():
+        normalized_key = normalize_field_name(str(key or ""))
+        prefix, separator, remainder = normalized_key.partition(":")
+        if separator and prefix in {"s", "p", "i"} and remainder:
+            row_sources[prefix][remainder] = value
+        elif normalized_key:
+            row_sources["p"].setdefault(normalized_key, value)
+
+    if entry.get("x_raw"):
+        row_sources["p"].setdefault("x", entry.get("x_raw"))
+    elif entry.get("x_mm") is not None:
+        row_sources["p"].setdefault("x", f"{entry['x_mm']:.4f}")
+
+    if entry.get("y_raw"):
+        row_sources["p"].setdefault("y", entry.get("y_raw"))
+    elif entry.get("y_mm") is not None:
+        row_sources["p"].setdefault("y", f"{entry['y_mm']:.4f}")
+
+    if entry.get("rotation_raw") is not None:
+        row_sources["p"].setdefault("rotation", entry.get("rotation_raw"))
+    elif entry.get("rotation") is not None:
+        row_sources["p"].setdefault("rotation", f"{entry['rotation']:.1f}")
+
+    return row_sources

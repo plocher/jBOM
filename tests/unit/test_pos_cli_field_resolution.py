@@ -101,13 +101,13 @@ def test_enrich_pos_with_merge_namespaces_keeps_rows_without_reference_match() -
     assert "s:value" not in enriched[0]
 
 
-def test_get_pos_field_value_respects_source_requirements() -> None:
+def test_get_pos_field_value_reads_explicit_namespaced_fields() -> None:
     entry = {
         "s:value": "10k",
         "p:footprint": "R_0603",
     }
 
-    assert _get_pos_field_value(entry, "s:value") == ""
+    assert _get_pos_field_value(entry, "s:value") == "10k"
     assert _get_pos_field_value(entry, "p:footprint") == "R_0603"
 
 
