@@ -58,7 +58,37 @@ def normalize_priority(priority: str | Sequence[str]) -> tuple[str, ...]:
     return tuple(tokens)
 
 
-def resolve_namespaced_field(
+def resolve_field(
+    field_name: str,
+    row_sources: Mapping[str, Mapping[str, object] | None],
+    *,
+    priority: str | Sequence[str] = "pis",
+) -> str:
+    """Resolve one field token from row source maps under source-priority rules."""
+
+    normalized_field_name = normalize_field_name(str(field_name or ""))
+    if not normalized_field_name:
+        return ""
+
+    source_prefix, separator, namespaced_field_name = normalized_field_name.partition(
+        ":"
+    )
+    if separator:
+        if source_prefix not in _SOURCE_PREFIXES or not namespaced_field_name:
+            return ""
+        return _resolve_namespaced_field(
+            source_prefix,
+            namespaced_field_name,
+            row_sources,
+        )
+    return _resolve_unqualified_field(
+        normalized_field_name,
+        row_sources,
+        priority=priority,
+    )
+
+
+def _resolve_namespaced_field(
     source: str,
     field_name: str,
     row_sources: Mapping[str, Mapping[str, object] | None],
@@ -73,7 +103,7 @@ def resolve_namespaced_field(
     return _lookup_normalized_value(source_fields, field_name)
 
 
-def resolve_unqualified_field(
+def _resolve_unqualified_field(
     field_name: str,
     row_sources: Mapping[str, Mapping[str, object] | None],
     *,
@@ -82,7 +112,7 @@ def resolve_unqualified_field(
     """Resolve an unqualified field using ordered source-priority lookup."""
 
     for source in normalize_priority(priority):
-        value = resolve_namespaced_field(source, field_name, row_sources)
+        value = _resolve_namespaced_field(source, field_name, row_sources)
         if value:
             return value
     return ""

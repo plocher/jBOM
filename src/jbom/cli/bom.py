@@ -25,8 +25,7 @@ from jbom.services.field_listing_service import (
     FieldListingService,
     get_field_names,
     get_namespaced_field_tokens,
-    resolve_namespaced_field,
-    resolve_unqualified_field,
+    resolve_field,
 )
 from jbom.services.component_merge_service import (
     ComponentMergeResult,
@@ -944,29 +943,28 @@ def _resolve_standard_field_value(
 
     row_sources = _build_bom_row_sources(entry, include_unqualified_fallback=True)
     if field == "mfgpn":
-        return resolve_unqualified_field(
+        return resolve_field(
             "manufacturer_part",
             row_sources,
             priority=_BOM_SOURCE_PRIORITY,
-        ) or resolve_unqualified_field(
+        ) or resolve_field(
             "mfgpn",
             row_sources,
             priority=_BOM_SOURCE_PRIORITY,
         )
     if field == "package":
-        return resolve_unqualified_field(
+        return resolve_field(
             "package",
             row_sources,
             priority=_BOM_SOURCE_PRIORITY,
         ) or derive_package_from_footprint(entry.footprint)
     if field == "lcsc":
-        return resolve_unqualified_field(
+        return resolve_field(
             "lcsc",
             row_sources,
             priority=_BOM_SOURCE_PRIORITY,
         ) or _get_attribute_value(entry, "LCSC")
-
-    resolved_value = resolve_unqualified_field(
+    resolved_value = resolve_field(
         field,
         row_sources,
         priority=_BOM_SOURCE_PRIORITY,
@@ -988,7 +986,11 @@ def _resolve_namespaced_field_value(
     """Resolve a namespace-qualified field under strict source semantics."""
 
     row_sources = _build_bom_row_sources(entry, include_unqualified_fallback=False)
-    return resolve_namespaced_field(namespace, namespaced_field, row_sources)
+    return resolve_field(
+        f"{namespace}:{namespaced_field}",
+        row_sources,
+        priority=_BOM_SOURCE_PRIORITY,
+    )
 
 
 def _build_bom_row_sources(

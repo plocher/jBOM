@@ -26,8 +26,7 @@ from jbom.services.field_listing_service import (
     FieldListingService,
     get_field_names,
     get_namespaced_field_tokens,
-    resolve_namespaced_field,
-    resolve_unqualified_field,
+    resolve_field,
 )
 from jbom.services.project_component_collector import ProjectComponentCollector
 from jbom.common.options import PlacementOptions, GeneratorOptions
@@ -752,13 +751,10 @@ def _get_pos_field_value(
     Returns:
         String value for the field
     """
+    row_sources = _build_pos_row_sources(entry)
     namespace_prefix, separator, _ = field.partition(":")
     if separator and namespace_prefix in {"s", "p", "i"}:
-        return resolve_namespaced_field(
-            namespace_prefix,
-            field[2:],
-            _build_pos_row_sources(entry),
-        )
+        return resolve_field(field, row_sources, priority=_POS_SOURCE_PRIORITY)
     if separator and namespace_prefix == "a":
         return str(entry.get(field, "") or "")
     # Handle coordinate/rotation fields
@@ -791,17 +787,15 @@ def _get_pos_field_value(
     if field in field_mapping:
         pos_key = field_mapping[field]
         return str(entry.get(pos_key, ""))
-
-    row_sources = _build_pos_row_sources(entry)
     if field in {"value", "footprint", "package"}:
-        return resolve_unqualified_field(
+        return resolve_field(
             field,
             row_sources,
             priority=_POS_SOURCE_PRIORITY,
         )
 
     # Fallback for unknown fields
-    return resolve_unqualified_field(
+    return resolve_field(
         field,
         row_sources,
         priority=_POS_SOURCE_PRIORITY,
