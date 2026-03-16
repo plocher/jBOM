@@ -241,7 +241,7 @@ def print_table(
         per_col_lines: list[list[str]] = []
         for c, w in zip(col_list, widths):
             raw = str(row.get(c.key, ""))
-            if c.wrap:
+            if c.wrap or "\n" in raw:
                 lines = _wrap_text(raw, width=w)
             else:
                 lines = [_truncate(raw, width=w, align=c.align)]

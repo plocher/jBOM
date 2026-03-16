@@ -247,6 +247,21 @@ class TestConsoleFormatting(unittest.TestCase):
         # Row separator contains only dashes
         self.assertTrue(all(c in "-+" for c in set(lines[4])))
 
+    def test_explicit_newline_in_non_wrapping_column_is_bounded(self):
+        """Explicit \\n in a non-wrapping column should still render bounded multiline output."""
+        cols = [
+            Column("A", "a", preferred_width=8, wrap=False),
+            Column("B", "b", preferred_width=8, wrap=False),
+        ]
+        rows = [{"a": "X", "b": "MISSING\n(620-750nm)"}]
+        lines = self.render(rows, cols, width=24)
+        data_lines = [line for line in lines[2:] if " | " in line]
+        self.assertGreaterEqual(len(data_lines), 2)
+        for line in data_lines:
+            self.assertEqual(line.find(" | "), lines[0].find(" | "))
+        self.assertTrue(any("MISSING" in line for line in data_lines))
+        self.assertTrue(any("(620-" in line for line in data_lines))
+
     def test_delimiter_wrap_prefers_colon_over_hard_split(self):
         """Delimiter-aware wrapping should split at ':' before hard truncation."""
         cols = [Column("Field", "f", preferred_width=15, wrap=True)]
