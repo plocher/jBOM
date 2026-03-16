@@ -1,6 +1,21 @@
 # CHANGELOG
 
 
+## v6.44.0 (2026-03-16)
+
+### Features
+
+* feat(fields): unify source-priority resolution and runtime discovery
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`2107952`](https://github.com/plocher/jBOM/commit/2107952407d0db6d6cfef4a9619a84bb5d8d02c9))
+
+### Refactoring
+
+* refactor(fields): unify public resolver service API
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`c059898`](https://github.com/plocher/jBOM/commit/c059898f1eeda2f77a73dbd021f8fa53a2ef2b4e))
+
+
 ## v6.43.0 (2026-03-16)
 
 ### Features
