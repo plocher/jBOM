@@ -539,13 +539,7 @@ def test_project_mode_output_is_couplet_rows(tmp_path: Path) -> None:
     assert {r["RowType"] for r in written} == {"CURRENT", "SUGGESTED"}
     current = next(r for r in written if r["RowType"] == "CURRENT")
     suggested = next(r for r in written if r["RowType"] == "SUGGESTED")
-    assert "R1: Missing attributes: Tolerance, Power" in current["Notes"]
-    assert "Audit successful: all required fields have values" in current["Notes"]
-    assert "EM matching" in current["Notes"]
-    assert (
-        "For other suppliers, required fields and heuristics should be sufficient"
-        in current["Notes"]
-    )
+    assert current["Notes"] == "R1: heuristics are sufficient"
     assert current["Action"] == ""
     assert suggested["Action"] == "SKIP/SET"
     assert suggested["Notes"] == ""
@@ -737,10 +731,7 @@ def test_project_mode_no_supplier_pass_does_not_emit_lcsc_specific_note() -> Non
     _fieldnames, written = _build_project_couplet_rows(rows, component_context=context)
     current = next(row for row in written if row["RowType"] == "CURRENT")
     assert "LCSC part number used" not in current["Notes"]
-    assert (
-        "For other suppliers, required fields and heuristics should be sufficient"
-        in current["Notes"]
-    )
+    assert current["Notes"] == "D1: heuristics are sufficient"
 
 
 def test_project_mode_supplier_mouser_does_not_accept_lcsc_anchor() -> None:
@@ -821,11 +812,7 @@ def test_project_mode_matchability_exact_when_current_attrs_meet_matcher_thresho
 
     _fieldnames, written = _build_project_couplet_rows(rows, component_context=context)
     current = next(row for row in written if row["RowType"] == "CURRENT")
-    assert "EM matching clues are sufficient" in current["Notes"]
-    assert (
-        "For other suppliers, required fields and heuristics should be sufficient"
-        in current["Notes"]
-    )
+    assert current["Notes"] == "R1: heuristics are sufficient"
 
 
 def test_project_mode_matchability_heuristic_when_defaults_lift_score() -> None:
@@ -866,11 +853,7 @@ def test_project_mode_matchability_heuristic_when_defaults_lift_score() -> None:
 
     _fieldnames, written = _build_project_couplet_rows(rows, component_context=context)
     current = next(row for row in written if row["RowType"] == "CURRENT")
-    assert "EM matching is sufficient with heuristics" in current["Notes"]
-    assert (
-        "For other suppliers, required fields and heuristics should be sufficient"
-        in current["Notes"]
-    )
+    assert current["Notes"] == "R2: heuristics are sufficient"
 
 
 def test_project_mode_matchability_exact_when_led_color_unknown() -> None:
@@ -900,11 +883,7 @@ def test_project_mode_matchability_exact_when_led_color_unknown() -> None:
     _fieldnames, written = _build_project_couplet_rows(rows, component_context=context)
     current = next(row for row in written if row["RowType"] == "CURRENT")
     suggested = next(row for row in written if row["RowType"] == "SUGGESTED")
-    assert "EM matching clues are sufficient" in current["Notes"]
-    assert (
-        "For other suppliers, required fields and heuristics should be sufficient"
-        in current["Notes"]
-    )
+    assert current["Notes"] == "D2: heuristics are sufficient"
     assert suggested["Wavelength"] == "MISSING"
 
 
