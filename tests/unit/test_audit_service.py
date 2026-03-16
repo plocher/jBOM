@@ -343,7 +343,8 @@ def test_audit_project_emits_merge_mismatch_rows_for_pcb_disagreement(
     assert mismatch_row.severity == Severity.WARN
     assert mismatch_row.ref_des == "R1"
     assert mismatch_row.field == "footprint"
-    assert "pcb_biased_precedence" in mismatch_row.description
+    assert "s:Resistor_SMD:R_0603_1608Metric" in mismatch_row.description
+    assert "p:Resistor_SMD:R_0402_1005Metric" in mismatch_row.description
 
 
 # ---------------------------------------------------------------------------

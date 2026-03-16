@@ -415,13 +415,10 @@ class AuditService:
                 if str(value or "").strip()
             ]
             source_summary = ", ".join(source_segments)
-            canonical_value = mismatch.canonical_value
             severity = Severity.ERROR if mismatch.severity == "error" else Severity.WARN
             description = (
                 f"{mismatch.reference}: merge mismatch for {mismatch.field_key}"
                 f" ({source_summary})"
-                f" -> c:{canonical_value or '(empty)'}"
-                f" [{mismatch.decision_reason}]"
             )
             rows.append(
                 AuditRow(
@@ -433,7 +430,7 @@ class AuditService:
                     category=category,
                     field=mismatch.field_key,
                     current_value=source_summary,
-                    suggested_value=canonical_value,
+                    suggested_value="",
                     description=description,
                 )
             )

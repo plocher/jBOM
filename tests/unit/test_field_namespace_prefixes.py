@@ -8,7 +8,6 @@ def test_normalize_field_name_preserves_supported_namespace_prefixes() -> None:
     assert normalize_field_name("s:Footprint") == "s:footprint"
     assert normalize_field_name("p:Mount Type") == "p:mount_type"
     assert normalize_field_name("a:Value") == "a:value"
-    assert normalize_field_name("c:Value") == "c:value"
     assert normalize_field_name("i:Package") == "i:package"
 
 
@@ -16,7 +15,7 @@ def test_field_to_header_formats_supported_namespace_prefixes() -> None:
     assert field_to_header("s:footprint") == "S:Footprint"
     assert field_to_header("p:mount_type") == "P:Mount Type"
     assert field_to_header("a:value") == "A:Value"
-    assert field_to_header("c:value") == "C:Value"
+    assert field_to_header("c:value") == "C:value"
     assert field_to_header("i:package") == "I:Package"
 
 
@@ -28,7 +27,7 @@ def test_parse_fields_argument_accepts_namespace_prefixed_tokens() -> None:
     }
 
     selected = parse_fields_argument(
-        "reference,s:footprint,p:mount_type,a:value,c:value,i:package",
+        "reference,s:footprint,p:mount_type,a:value,i:package",
         available,
         fabricator_id="generic",
         context="bom",
@@ -39,6 +38,5 @@ def test_parse_fields_argument_accepts_namespace_prefixed_tokens() -> None:
         "s:footprint",
         "p:mount_type",
         "a:value",
-        "c:value",
         "i:package",
     ]

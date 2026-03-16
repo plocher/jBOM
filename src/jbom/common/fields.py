@@ -60,13 +60,10 @@ def normalize_field_name(field: str) -> str:
     if not field:
         return ""
 
-    # Handle prefixes (I:, C:, S:, P:, and A:) separately
+    # Handle prefixes (I:, S:, P:, and A:) separately
     prefix = ""
     if field.lower().startswith("i:"):
         prefix = "i:"
-        field = field[2:]
-    elif field.lower().startswith("c:"):
-        prefix = "c:"
         field = field[2:]
     elif field.lower().startswith("s:"):
         prefix = "s:"
@@ -120,9 +117,6 @@ def field_to_header(field: str) -> str:
     prefix = ""
     if field.lower().startswith("i:"):
         prefix = "I:"
-        field = field[2:]
-    elif field.lower().startswith("c:"):
-        prefix = "C:"
         field = field[2:]
     elif field.lower().startswith("s:"):
         prefix = "S:"

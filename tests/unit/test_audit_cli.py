@@ -562,7 +562,7 @@ def test_project_mode_includes_merge_mismatch_diagnostics_in_notes() -> None:
     _fieldnames, written = _build_project_couplet_rows(rows, component_context=context)
     current = next(row for row in written if row["RowType"] == "CURRENT")
     assert "Merge mismatch diagnostics:" in current["Notes"]
-    assert "footprint (s:SCH:0603, p:PCB:0402) -> c:PCB:0402" in current["Notes"]
+    assert "footprint (s:SCH:0603, p:PCB:0402)" in current["Notes"]
 
 
 def test_project_mode_matchability_exact_for_supplier_identifier_and_led_color() -> (

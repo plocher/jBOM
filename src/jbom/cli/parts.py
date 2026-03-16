@@ -104,7 +104,7 @@ def _enrich_parts_with_merge_namespaces(
     parts_data: PartsListData,
     merge_result: ComponentMergeResult | None,
 ) -> PartsListData:
-    """Attach merge namespace attributes (`s:/p:/c:/a:`) to parts entries."""
+    """Attach merge namespace attributes (`s:/p:/a:`) to parts entries."""
 
     if merge_result is None or not merge_result.records:
         return parts_data
@@ -161,9 +161,6 @@ def _enrich_parts_with_merge_namespaces(
             "merge_model_enabled": True,
             "merge_model_reference_count": merge_result.reference_count,
             "merge_model_mismatch_count": len(merge_result.mismatches),
-            "merge_precedence_profile": merge_result.metadata.get(
-                "precedence_profile", ""
-            ),
         }
     )
     return PartsListData(
@@ -187,7 +184,6 @@ def _get_available_parts_fields() -> dict[str, str]:
         "dielectric": "Dielectric type",
         "s:value": "Schematic source value",
         "p:footprint": "PCB source footprint",
-        "c:value": "Canonical merged value",
         "a:value": "Merge annotation value",
     }
 
@@ -208,7 +204,6 @@ def _list_available_parts_fields() -> None:
         Column(header="s:", key="s:", preferred_width=16, wrap=False),
         Column(header="p:", key="p:", preferred_width=16, wrap=False),
         Column(header="i:", key="i:", preferred_width=16, wrap=False),
-        Column(header="c:", key="c:", preferred_width=16, wrap=False),
         Column(header="a:", key="a:", preferred_width=16, wrap=False),
     ]
     print_table(
@@ -540,7 +535,7 @@ def _get_parts_field_value(entry: PartsListEntry, field: str) -> str:
         return str(getattr(entry, mapped_attr, "") or "")
 
     namespace_prefix, separator, _ = field.partition(":")
-    if separator and namespace_prefix in {"s", "p", "i", "c", "a"}:
+    if separator and namespace_prefix in {"s", "p", "i", "a"}:
         if not is_namespace_applicable(
             namespace_prefix,
             requirements=_PARTS_SOURCE_REQUIREMENTS,

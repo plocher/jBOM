@@ -68,9 +68,8 @@ def test_enrich_pos_with_merge_namespaces_adds_namespaced_fields() -> None:
         records={
             "R1": MergedReferenceRecord(
                 reference="R1",
-                source_fields={"s:value": "10k"},
-                canonical_fields={"c:value": "9k99"},
-                annotated_fields={"a:value": "s:10k\np:9k99\nc:9k99"},
+                source_fields={"s:value": "10k", "p:value": "9k99"},
+                annotated_fields={"a:value": "s:10k\np:9k99"},
             )
         },
         mismatches=tuple(),
@@ -80,8 +79,8 @@ def test_enrich_pos_with_merge_namespaces_adds_namespaced_fields() -> None:
     enriched = _enrich_pos_with_merge_namespaces(pos_rows, merge_result)
 
     assert enriched[0]["s:value"] == "10k"
-    assert enriched[0]["c:value"] == "9k99"
-    assert enriched[0]["a:value"] == "s:10k\np:9k99\nc:9k99"
+    assert enriched[0]["p:value"] == "9k99"
+    assert enriched[0]["a:value"] == "s:10k\np:9k99"
 
 
 def test_enrich_pos_with_merge_namespaces_keeps_rows_without_reference_match() -> None:
@@ -90,7 +89,7 @@ def test_enrich_pos_with_merge_namespaces_keeps_rows_without_reference_match() -
         records={
             "R2": MergedReferenceRecord(
                 reference="R2",
-                canonical_fields={"c:value": "1k"},
+                source_fields={"s:value": "1k"},
             )
         },
         mismatches=tuple(),
@@ -99,16 +98,14 @@ def test_enrich_pos_with_merge_namespaces_keeps_rows_without_reference_match() -
 
     enriched = _enrich_pos_with_merge_namespaces(pos_rows, merge_result)
 
-    assert "c:value" not in enriched[0]
+    assert "s:value" not in enriched[0]
 
 
 def test_get_pos_field_value_respects_source_requirements() -> None:
     entry = {
         "s:value": "10k",
         "p:footprint": "R_0603",
-        "c:value": "9k99",
     }
 
     assert _get_pos_field_value(entry, "s:value") == ""
     assert _get_pos_field_value(entry, "p:footprint") == "R_0603"
-    assert _get_pos_field_value(entry, "c:value") == "9k99"
