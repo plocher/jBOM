@@ -709,6 +709,40 @@ def test_project_mode_matchability_exact_for_supplier_identifier_and_led_color()
     assert "Debug" not in current
 
 
+def test_project_mode_no_supplier_pass_does_not_emit_lcsc_specific_note() -> None:
+    rows = [
+        AuditRow(
+            check_type=CheckType.QUALITY_ISSUE,
+            severity=Severity.WARN,
+            project_path="/proj/example.kicad_pro",
+            ref_des="D1",
+            uuid="uuid-d1",
+            category="LED",
+            field="Wavelength",
+            current_value="",
+            suggested_value="",
+            description="D1 missing wavelength",
+        ),
+    ]
+    context = {
+        ("/proj/example.kicad_pro", "D1", "uuid-d1", "LED"): {
+            "Value": "Red",
+            "Footprint": "LED_SMD:LED_0603_1608Metric",
+            "Package": "0603",
+            "Description": "Status LED",
+            "LCSC": "C2286",
+        }
+    }
+
+    _fieldnames, written = _build_project_couplet_rows(rows, component_context=context)
+    current = next(row for row in written if row["RowType"] == "CURRENT")
+    assert "LCSC part number used" not in current["Notes"]
+    assert (
+        "For other suppliers, required fields and heuristics should be sufficient"
+        in current["Notes"]
+    )
+
+
 def test_project_mode_matchability_exact_when_current_attrs_meet_matcher_threshold() -> (
     None
 ):
