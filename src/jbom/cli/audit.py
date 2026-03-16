@@ -168,11 +168,12 @@ def register_command(subparsers: argparse._SubParsersAction) -> None:  # type: i
 
     parser.add_argument(
         "inputs",
-        nargs="+",
+        nargs="*",
+        default=["."],
         metavar="PATH",
         help=(
             "One or more KiCad project directories (project mode) "
-            "or inventory CSV files (inventory mode)"
+            "or inventory CSV files (inventory mode). Defaults to current directory."
         ),
     )
 
@@ -439,7 +440,10 @@ def _print_audit_console_table(
 
     normalized_rows: list[dict[str, str]] = [
         {
-            field_name: _normalize_audit_console_cell(row.get(field_name, ""))
+            field_name: _normalize_audit_console_cell(
+                field_name,
+                row.get(field_name, ""),
+            )
             for field_name in fieldnames
         }
         for row in rows
@@ -464,15 +468,41 @@ def _print_audit_console_table(
     print(f"\nTotal: {len(normalized_rows)} rows")
 
 
-def _normalize_audit_console_cell(value: Any) -> str:
+def _normalize_audit_console_cell(field_name: str, value: Any) -> str:
     """Normalize audit console table cell text for readability."""
     text = str(value or "")
-    text = re.sub(r"\s*[\r\n]+\s*", " ", text)
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
+    text = "\n".join(line.strip() for line in text.split("\n"))
+    text = re.sub(r"[ \t]{2,}", " ", text)
+    if field_name == "ProjectPath":
+        text = _format_project_path_for_console(text)
     if text.startswith("CheckType."):
         return text.removeprefix("CheckType.")
     if text.startswith("Severity."):
         return text.removeprefix("Severity.")
     return text
+
+
+def _format_project_path_for_console(project_path: str) -> str:
+    """Render project paths compactly for console tables."""
+    normalized = str(project_path or "").strip()
+    if not normalized:
+        return ""
+    if not normalized.startswith("/"):
+        return normalized
+
+    display_path = Path(normalized)
+    if display_path.suffix.lower() == ".kicad_pro":
+        display_path = display_path.parent
+
+    home_path = Path.home()
+    if display_path == home_path:
+        return "~"
+    try:
+        relative_to_home = display_path.relative_to(home_path)
+    except ValueError:
+        return str(display_path)
+    return f"~/{relative_to_home}"
 
 
 def _build_project_couplet_rows(
@@ -710,7 +740,7 @@ def _format_project_suggested_cell(suggestion: str) -> str:
     normalized = str(suggestion or "").strip()
     if not _is_meaningful_match_value(normalized):
         return _PROJECT_MISSING_VALUE
-    return f"{_PROJECT_MISSING_VALUE} ({normalized})"
+    return f"{_PROJECT_MISSING_VALUE}\n({normalized})"
 
 
 def _resolve_project_default_suggestion(

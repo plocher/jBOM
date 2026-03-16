@@ -85,8 +85,8 @@ def _wrap_segment(segment: str, *, width: int) -> list[str]:
 
 
 def _split_segment_at_wrap_boundary(segment: str, *, width: int) -> tuple[str, str]:
-    """Split a segment at preferred wrap boundaries (space, then :, _, -)."""
-
+    """Split a segment at preferred wrap boundaries (space, then :, _, -, /)."""
+    whitespace_index = segment.rfind(" ", 0, width)
     whitespace_index = segment.rfind(" ", 0, width + 1)
     if whitespace_index > 0:
         head = segment[:whitespace_index].rstrip()
@@ -94,8 +94,8 @@ def _split_segment_at_wrap_boundary(segment: str, *, width: int) -> tuple[str, s
         if head:
             return head, tail
 
-    for delimiter in (":", "_", "-"):
-        delimiter_index = segment.rfind(delimiter, 0, width + 1)
+    for delimiter in (":", "_", "-", "/"):
+        delimiter_index = segment.rfind(delimiter, 0, width)
         if delimiter_index > 0:
             split_index = delimiter_index + 1
             return segment[:split_index], segment[split_index:]

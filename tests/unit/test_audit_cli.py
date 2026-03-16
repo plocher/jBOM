@@ -39,6 +39,13 @@ def test_audit_command_registered() -> None:
     assert args.inputs == ["."]
 
 
+def test_audit_defaults_to_current_directory_input() -> None:
+    parser = create_parser()
+    args = parser.parse_args(["audit"])
+    assert args.command == "audit"
+    assert args.inputs == ["."]
+
+
 def test_audit_strict_flag_parsed() -> None:
     parser = create_parser()
     args = parser.parse_args(["audit", ".", "--strict"])
@@ -342,6 +349,42 @@ def test_output_console_prints_table_in_project_mode(
     assert not (tmp_path / "console").exists()
 
 
+def test_output_console_simplifies_project_path_to_home_directory(
+    capsys, monkeypatch
+) -> None:
+    project_file = (
+        Path.home()
+        / "Dropbox/KiCad/projects/Signal-ColorLight-Single/SignalMast-ColorLight-SingleHead.kicad_pro"
+    )
+    rows = [
+        AuditRow(
+            check_type=CheckType.QUALITY_ISSUE,
+            severity=Severity.ERROR,
+            project_path=str(project_file),
+            ref_des="D1",
+            uuid="uuid-d1",
+            category="LED",
+            field="Wavelength",
+            current_value="",
+            suggested_value="",
+            description="missing Wavelength",
+        )
+    ]
+    with patch("jbom.cli.audit.AuditService") as MockService:
+        instance = MockService.return_value
+        instance.audit_project.return_value = _mock_report(error_count=1, rows=rows)
+
+        monkeypatch.chdir(Path.home())
+        args = _make_args(inputs=["."], output="console")
+        handle_audit(args)
+
+    captured = capsys.readouterr()
+    assert "~/" in captured.out
+    assert "ColorLight-" in captured.out
+    assert "Single" in captured.out
+    assert "SignalMast-ColorLight-SingleHead.kicad_pro" not in captured.out
+
+
 def test_project_summary_counts_only_visible_quality_fields(
     tmp_path: Path, capsys
 ) -> None:
@@ -506,7 +549,7 @@ def test_project_mode_output_is_couplet_rows(tmp_path: Path) -> None:
     assert current["Action"] == ""
     assert suggested["Action"] == "SKIP/SET"
     assert suggested["Notes"] == ""
-    assert suggested["Tolerance"] == "MISSING (5%)"
+    assert suggested["Tolerance"] == "MISSING\n(5%)"
     assert suggested["Power"] == "MISSING"
 
 
@@ -569,11 +612,11 @@ def test_project_mode_suggests_package_and_domain_defaults() -> None:
     suggested_rows = [row for row in written if row["RowType"] == "SUGGESTED"]
 
     r1_suggested = next(row for row in suggested_rows if row["RefDes"] == "R1")
-    assert r1_suggested["Tolerance"] == "MISSING (5%)"
-    assert r1_suggested["Power"] == "MISSING (100mW)"
+    assert r1_suggested["Tolerance"] == "MISSING\n(5%)"
+    assert r1_suggested["Power"] == "MISSING\n(100mW)"
 
     c1_suggested = next(row for row in suggested_rows if row["RefDes"] == "C1")
-    assert c1_suggested["Voltage"] == "MISSING (25V)"
+    assert c1_suggested["Voltage"] == "MISSING\n(25V)"
 
 
 def test_project_mode_includes_merge_mismatch_diagnostics_in_notes() -> None:
@@ -659,7 +702,7 @@ def test_project_mode_matchability_exact_for_supplier_identifier_and_led_color()
     assert "D1: LCSC part number used" in current["Notes"]
     assert suggested["Action"] == "SKIP/SET"
     assert suggested["Notes"] == ""
-    assert suggested["Wavelength"] == "MISSING (620-750nm)"
+    assert suggested["Wavelength"] == "MISSING\n(620-750nm)"
     assert "Debug" not in current
 
 
@@ -895,7 +938,7 @@ def test_project_mode_led_named_color_aliases_map_to_expected_ranges(
 
     _fieldnames, written = _build_project_couplet_rows(rows, component_context=context)
     suggested = next(row for row in written if row["RowType"] == "SUGGESTED")
-    assert suggested["Wavelength"] == f"MISSING ({expected_wavelength})"
+    assert suggested["Wavelength"] == f"MISSING\n({expected_wavelength})"
 
 
 # ---------------------------------------------------------------------------
