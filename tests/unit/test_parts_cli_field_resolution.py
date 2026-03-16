@@ -88,6 +88,35 @@ def test_get_parts_field_value_respects_source_requirements() -> None:
     assert _get_parts_field_value(entry, "i:voltage") == ""
 
 
+def test_unqualified_parts_value_prefers_s_then_i_then_p() -> None:
+    entry = PartsListEntry(
+        refs=["R1"],
+        value="",
+        footprint="R_0603",
+        attributes={
+            "s:value": "10K",
+            "i:value": "10K-INV",
+            "p:value": "9K99",
+        },
+    )
+
+    assert _get_parts_field_value(entry, "value") == "10K"
+
+
+def test_unqualified_parts_value_uses_inventory_when_schematic_missing() -> None:
+    entry = PartsListEntry(
+        refs=["R1"],
+        value="",
+        footprint="R_0603",
+        attributes={
+            "i:value": "10K-INV",
+            "p:value": "9K99",
+        },
+    )
+
+    assert _get_parts_field_value(entry, "value") == "10K-INV"
+
+
 def test_enrich_parts_with_merge_namespaces_adds_uniform_fields() -> None:
     parts_data = PartsListData(
         project_name="Project",

@@ -109,3 +109,24 @@ def test_get_pos_field_value_respects_source_requirements() -> None:
 
     assert _get_pos_field_value(entry, "s:value") == ""
     assert _get_pos_field_value(entry, "p:footprint") == "R_0603"
+
+
+def test_unqualified_pos_value_prefers_p_then_i_then_s() -> None:
+    entry = {
+        "value": "",
+        "s:value": "10K",
+        "p:value": "9K99",
+        "i:value": "10K-INV",
+    }
+
+    assert _get_pos_field_value(entry, "value") == "9K99"
+
+
+def test_unqualified_pos_value_uses_inventory_when_pcb_missing() -> None:
+    entry = {
+        "value": "",
+        "s:value": "10K",
+        "i:value": "10K-INV",
+    }
+
+    assert _get_pos_field_value(entry, "value") == "10K-INV"
