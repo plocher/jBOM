@@ -8,8 +8,7 @@ from jbom.services.field_listing_service import (
     FieldListingService,
     get_field_names,
     normalize_priority,
-    resolve_namespaced_field,
-    resolve_unqualified_field,
+    resolve_field,
 )
 
 
@@ -102,25 +101,35 @@ def test_normalize_priority_rejects_invalid_forms() -> None:
         normalize_priority("pix")
 
 
-def test_resolve_namespaced_field_reads_only_requested_source() -> None:
+def test_resolve_field_reads_only_requested_source_for_namespaced_tokens() -> None:
     row_sources = {
         "s": {"value": "10K"},
         "p": {"value": "9K99"},
         "i": {"value": "10K-INV"},
     }
 
-    assert resolve_namespaced_field("s", "value", row_sources) == "10K"
-    assert resolve_namespaced_field("p", "value", row_sources) == "9K99"
-    assert resolve_namespaced_field("i", "value", row_sources) == "10K-INV"
-    assert resolve_namespaced_field("p", "footprint", row_sources) == ""
+    assert resolve_field("s:value", row_sources) == "10K"
+    assert resolve_field("p:value", row_sources) == "9K99"
+    assert resolve_field("i:value", row_sources) == "10K-INV"
+    assert resolve_field("p:footprint", row_sources) == ""
 
 
-def test_resolve_unqualified_field_uses_priority_order() -> None:
+def test_resolve_field_uses_priority_order_for_unqualified_tokens() -> None:
     row_sources = {
         "s": {"value": "10K"},
         "p": {"value": "9K99"},
         "i": {"value": "10K-INV"},
     }
 
-    assert resolve_unqualified_field("value", row_sources, priority="pis") == "9K99"
-    assert resolve_unqualified_field("value", row_sources, priority="sip") == "10K"
+    assert resolve_field("value", row_sources, priority="pis") == "9K99"
+    assert resolve_field("value", row_sources, priority="sip") == "10K"
+
+
+def test_resolve_field_returns_empty_for_unsupported_namespace() -> None:
+    row_sources = {
+        "s": {"value": "10K"},
+        "p": {"value": "9K99"},
+        "i": {"value": "10K-INV"},
+    }
+
+    assert resolve_field("a:value", row_sources) == ""

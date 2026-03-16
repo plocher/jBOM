@@ -33,8 +33,7 @@ from jbom.services.field_listing_service import (
     FieldListingService,
     get_field_names,
     get_namespaced_field_tokens,
-    resolve_namespaced_field,
-    resolve_unqualified_field,
+    resolve_field,
 )
 from jbom.common.options import GeneratorOptions
 from jbom.common.field_parser import parse_fields_argument
@@ -602,37 +601,32 @@ def _get_parts_field_value(entry: PartsListEntry, field: str) -> str:
 
     if field in {"refs", "reference", "refs_csv"}:
         return entry.refs_csv
+    row_sources = _build_parts_row_sources(entry)
 
     namespace_prefix, separator, _ = field.partition(":")
     if separator and namespace_prefix in {"s", "p", "i"}:
-        return resolve_namespaced_field(
-            namespace_prefix,
-            field[2:],
-            _build_parts_row_sources(entry),
-        )
+        return resolve_field(field, row_sources, priority=_PARTS_SOURCE_PRIORITY)
     if separator and namespace_prefix == "a":
         return str(entry.attributes.get(field, "") or "")
-    row_sources = _build_parts_row_sources(entry)
     if field in {"value", "footprint", "package", "tolerance", "voltage", "dielectric"}:
-        return resolve_unqualified_field(
+        return resolve_field(
             field,
             row_sources,
             priority=_PARTS_SOURCE_PRIORITY,
         )
     if field in {"part_type", "type"}:
-        return resolve_unqualified_field(
+        return resolve_field(
             "part_type",
             row_sources,
             priority=_PARTS_SOURCE_PRIORITY,
-        ) or resolve_unqualified_field(
+        ) or resolve_field(
             "type",
             row_sources,
             priority=_PARTS_SOURCE_PRIORITY,
         )
     if field == "lib_id":
         return str(entry.lib_id or "")
-
-    return resolve_unqualified_field(
+    return resolve_field(
         field,
         row_sources,
         priority=_PARTS_SOURCE_PRIORITY,
