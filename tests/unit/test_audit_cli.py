@@ -695,6 +695,9 @@ def test_project_mode_matchability_exact_for_supplier_identifier_and_led_color()
     )
     current = next(row for row in written if row["RowType"] == "CURRENT")
     suggested = next(row for row in written if row["RowType"] == "SUGGESTED")
+    assert "LCSC" in fieldnames
+    assert current["LCSC"] == "C2286"
+    assert suggested["LCSC"] == "C2286"
     assert "EMMatchability" not in fieldnames
     assert "EMBasis" not in fieldnames
     assert "SupplierMatchability" not in fieldnames
