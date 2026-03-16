@@ -680,6 +680,13 @@ def _build_project_audit_summary(
         and supplier_matchability == _PROJECT_SUPPLIER_EXACT_SPN
     ):
         return f"{ref_des}: {supplier_identifier_note} used"
+    if (
+        missing_fields
+        and not missing_required
+        and supplier_matchability == _PROJECT_SUPPLIER_NOT_REQUESTED
+        and em_matchability in {_PROJECT_EM_MATCH_EXACT, _PROJECT_EM_MATCH_HEURISTIC}
+    ):
+        return f"{ref_des}: heuristics are sufficient"
 
     notes_parts: list[str] = []
     if missing_fields:
