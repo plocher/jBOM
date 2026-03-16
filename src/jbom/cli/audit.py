@@ -44,6 +44,7 @@ from jbom.services.audit_service import (
     AuditRow,
     AuditService,
     CheckType,
+    Severity,
     _EXACT_THRESHOLD as _AUDIT_MATCH_EXACT_THRESHOLD,
 )
 from jbom.services.audit_service import _resolve_project as _resolve_project_for_cli
@@ -293,13 +294,13 @@ def _run_project_mode(args: argparse.Namespace, inputs: list[Path]) -> int:
         supplier_id=supplier_id,
     )
     component_context = _collect_project_component_contexts(inputs)
-    _write_project_report(
+    visible_counts = _write_project_report(
         args,
         report,
         component_context=component_context,
         supplier_id=supplier_id,
     )
-    _print_summary(report)
+    _print_summary(report, counts_override=visible_counts)
 
     return report.exit_code_strict() if args.strict else report.exit_code
 
@@ -357,8 +358,9 @@ def _write_project_report(
     *,
     component_context: dict[tuple[str, str, str, str], dict[str, str]],
     supplier_id: str,
-) -> None:
+) -> tuple[int, int, int]:
     """Write project-mode report as wide CURRENT/SUGGESTED couplets."""
+    visible_counts = _count_visible_project_findings(report.rows)
     fieldnames, rows = _build_project_couplet_rows(
         report.rows,
         component_context=component_context,
@@ -373,12 +375,12 @@ def _write_project_report(
             fieldnames,
             title="Audit report (project mode)",
         )
-        return
+        return visible_counts
     if destination.kind == OutputKind.STDOUT:
         buf = io.StringIO()
         _write_csv_rows(buf, fieldnames, rows)
         print(buf.getvalue(), end="")
-        return
+        return visible_counts
 
     if not destination.path:
         raise ValueError("Internal error: file output selected but no path provided")
@@ -386,6 +388,7 @@ def _write_project_report(
     with destination.path.open("w", encoding="utf-8", newline="") as handle:
         _write_csv_rows(handle, fieldnames, rows)
     print(f"Audit report written to {destination.path}", file=sys.stderr)
+    return visible_counts
 
 
 def _write_inventory_report(args: argparse.Namespace, report: Any) -> None:
@@ -464,6 +467,7 @@ def _print_audit_console_table(
 def _normalize_audit_console_cell(value: Any) -> str:
     """Normalize audit console table cell text for readability."""
     text = str(value or "")
+    text = re.sub(r"\s*[\r\n]+\s*", " ", text)
     if text.startswith("CheckType."):
         return text.removeprefix("CheckType.")
     if text.startswith("Severity."):
@@ -588,12 +592,17 @@ def _build_project_couplet_rows(
             supplier_identifier_fields=supplier_identifier_fields,
             include_debug=include_debug,
         )
+        supplier_identifier_field = _resolve_supplier_identifier_field(
+            context,
+            supplier_identifier_fields=supplier_identifier_fields,
+        )
         audit_summary = _build_project_audit_summary(
             ref_des=ref_des,
             missing_fields=group["missing_fields"],
             em_matchability=em_matchability,
             supplier_matchability=supplier_matchability,
             supplier_id=supplier_id,
+            supplier_identifier_field=supplier_identifier_field,
         )
         if include_debug:
             debug_details = "; ".join(
@@ -636,9 +645,16 @@ def _build_project_audit_summary(
     em_matchability: str,
     supplier_matchability: str,
     supplier_id: str,
+    supplier_identifier_field: str,
 ) -> str:
     """Build designer-facing summary text for project-mode audit rows."""
     missing_required = [f for f in missing_fields if f in _PROJECT_REQUIRED_FIELDS]
+    supplier_identifier_note = _format_supplier_identifier_note(
+        supplier_identifier_field
+    )
+
+    if missing_fields and not missing_required and supplier_identifier_note:
+        return f"{ref_des}: {supplier_identifier_note} used"
 
     notes_parts: list[str] = []
     if missing_fields:
@@ -679,12 +695,22 @@ def _build_project_audit_summary(
     return "; ".join(notes_parts)
 
 
+def _format_supplier_identifier_note(supplier_identifier_field: str) -> str:
+    """Return a concise note label for a resolved supplier identifier field."""
+    normalized = str(supplier_identifier_field or "").strip().lower()
+    if not normalized:
+        return ""
+    if normalized == "lcsc":
+        return "LCSC part number"
+    return "Supplier part number"
+
+
 def _format_project_suggested_cell(suggestion: str) -> str:
     """Format suggested cell text for missing-field rows."""
     normalized = str(suggestion or "").strip()
     if not _is_meaningful_match_value(normalized):
         return _PROJECT_MISSING_VALUE
-    return f"{_PROJECT_MISSING_VALUE}\n({normalized})"
+    return f"{_PROJECT_MISSING_VALUE} ({normalized})"
 
 
 def _resolve_project_default_suggestion(
@@ -1068,17 +1094,52 @@ def _write_csv_rows(
         writer.writerow(row)
 
 
-def _print_summary(report) -> None:
+def _count_visible_project_findings(
+    report_rows: list[AuditRow],
+) -> tuple[int, int, int]:
+    """Count severities for findings that are rendered in project couplet output."""
+    error_count = 0
+    warn_count = 0
+    info_count = 0
+    for row in report_rows:
+        if row.check_type == CheckType.QUALITY_ISSUE:
+            field_name = (row.field or "").strip()
+            if not field_name or field_name in _PROJECT_SUPPLY_CHAIN_FIELDS:
+                continue
+        elif row.check_type != CheckType.MERGE_MISMATCH:
+            continue
+
+        if row.severity == Severity.ERROR:
+            error_count += 1
+        elif row.severity == Severity.WARN:
+            warn_count += 1
+        else:
+            info_count += 1
+    return error_count, warn_count, info_count
+
+
+def _print_summary(
+    report,
+    *,
+    counts_override: tuple[int, int, int] | None = None,
+) -> None:
     """Print a one-line count summary to stderr."""
-    total = len(report.rows)
+    if counts_override is None:
+        error_count = report.error_count
+        warn_count = report.warn_count
+        info_count = report.info_count
+    else:
+        error_count, warn_count, info_count = counts_override
+
+    total = error_count + warn_count + info_count
     if total == 0:
         print("Audit complete: no issues found.", file=sys.stderr)
     else:
         parts = []
-        if report.error_count:
-            parts.append(f"{report.error_count} error(s)")
-        if report.warn_count:
-            parts.append(f"{report.warn_count} warning(s)")
-        if report.info_count:
-            parts.append(f"{report.info_count} info(s)")
+        if error_count:
+            parts.append(f"{error_count} error(s)")
+        if warn_count:
+            parts.append(f"{warn_count} warning(s)")
+        if info_count:
+            parts.append(f"{info_count} info(s)")
         print(f"Audit complete: {', '.join(parts)}.", file=sys.stderr)

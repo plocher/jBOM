@@ -342,6 +342,59 @@ def test_output_console_prints_table_in_project_mode(
     assert not (tmp_path / "console").exists()
 
 
+def test_project_summary_counts_only_visible_quality_fields(
+    tmp_path: Path, capsys
+) -> None:
+    rows = [
+        AuditRow(
+            check_type=CheckType.QUALITY_ISSUE,
+            severity=Severity.WARN,
+            project_path=str(tmp_path),
+            ref_des="D1",
+            uuid="uuid-d1",
+            category="LED",
+            field="Manufacturer",
+            current_value="",
+            suggested_value="",
+            description="D1: best-practice field 'Manufacturer' is missing",
+        ),
+        AuditRow(
+            check_type=CheckType.QUALITY_ISSUE,
+            severity=Severity.WARN,
+            project_path=str(tmp_path),
+            ref_des="D1",
+            uuid="uuid-d1",
+            category="LED",
+            field="MFGPN",
+            current_value="",
+            suggested_value="",
+            description="D1: best-practice field 'MFGPN' is missing",
+        ),
+        AuditRow(
+            check_type=CheckType.QUALITY_ISSUE,
+            severity=Severity.WARN,
+            project_path=str(tmp_path),
+            ref_des="D1",
+            uuid="uuid-d1",
+            category="LED",
+            field="Wavelength",
+            current_value="",
+            suggested_value="",
+            description="D1: best-practice field 'Wavelength' is missing",
+        ),
+    ]
+
+    with patch("jbom.cli.audit.AuditService") as MockService:
+        instance = MockService.return_value
+        instance.audit_project.return_value = _mock_report(warn_count=3, rows=rows)
+
+        args = _make_args(inputs=[str(tmp_path)], output="-")
+        handle_audit(args)
+
+    captured = capsys.readouterr()
+    assert "Audit complete: 1 warning(s)." in captured.err
+
+
 def test_inventory_output_dash_writes_csv_to_stdout(
     tmp_path: Path, capsys, monkeypatch
 ) -> None:
@@ -453,7 +506,7 @@ def test_project_mode_output_is_couplet_rows(tmp_path: Path) -> None:
     assert current["Action"] == ""
     assert suggested["Action"] == "SKIP/SET"
     assert suggested["Notes"] == ""
-    assert suggested["Tolerance"] == "MISSING\n(5%)"
+    assert suggested["Tolerance"] == "MISSING (5%)"
     assert suggested["Power"] == "MISSING"
 
 
@@ -516,11 +569,11 @@ def test_project_mode_suggests_package_and_domain_defaults() -> None:
     suggested_rows = [row for row in written if row["RowType"] == "SUGGESTED"]
 
     r1_suggested = next(row for row in suggested_rows if row["RefDes"] == "R1")
-    assert r1_suggested["Tolerance"] == "MISSING\n(5%)"
-    assert r1_suggested["Power"] == "MISSING\n(100mW)"
+    assert r1_suggested["Tolerance"] == "MISSING (5%)"
+    assert r1_suggested["Power"] == "MISSING (100mW)"
 
     c1_suggested = next(row for row in suggested_rows if row["RefDes"] == "C1")
-    assert c1_suggested["Voltage"] == "MISSING\n(25V)"
+    assert c1_suggested["Voltage"] == "MISSING (25V)"
 
 
 def test_project_mode_includes_merge_mismatch_diagnostics_in_notes() -> None:
@@ -603,19 +656,10 @@ def test_project_mode_matchability_exact_for_supplier_identifier_and_led_color()
     assert "EMBasis" not in fieldnames
     assert "SupplierMatchability" not in fieldnames
     assert "SupplierBasis" not in fieldnames
-    assert "Audit successful: all required fields have values" in current["Notes"]
-    assert "EM matching clues are sufficient" in current["Notes"]
-    assert (
-        "LCSC part number present; uniquely identifies this component"
-        in current["Notes"]
-    )
-    assert (
-        "For other suppliers, required fields and heuristics should be sufficient"
-        in current["Notes"]
-    )
+    assert "D1: LCSC part number used" in current["Notes"]
     assert suggested["Action"] == "SKIP/SET"
     assert suggested["Notes"] == ""
-    assert suggested["Wavelength"] == "MISSING\n(620-750nm)"
+    assert suggested["Wavelength"] == "MISSING (620-750nm)"
     assert "Debug" not in current
 
 
@@ -851,7 +895,7 @@ def test_project_mode_led_named_color_aliases_map_to_expected_ranges(
 
     _fieldnames, written = _build_project_couplet_rows(rows, component_context=context)
     suggested = next(row for row in written if row["RowType"] == "SUGGESTED")
-    assert suggested["Wavelength"] == f"MISSING\n({expected_wavelength})"
+    assert suggested["Wavelength"] == f"MISSING ({expected_wavelength})"
 
 
 # ---------------------------------------------------------------------------
