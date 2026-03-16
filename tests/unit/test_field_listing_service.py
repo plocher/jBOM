@@ -1,87 +1,126 @@
-"""Unit tests for FieldListingService namespace matrix generation."""
+"""Unit tests for field discovery/listing and source-priority resolution services."""
 
+import pytest
+
+from jbom.common.pcb_types import PcbComponent
+from jbom.common.types import Component
 from jbom.services.field_listing_service import (
     FieldListingService,
-    FieldSourceRequirements,
-    is_namespace_applicable,
+    get_field_names,
+    normalize_priority,
+    resolve_namespaced_field,
+    resolve_unqualified_field,
 )
 
 
-def test_build_namespace_matrix_groups_tokens_by_canonical_name() -> None:
-    service = FieldListingService()
-
-    rows = service.build_namespace_matrix(
-        [
-            "value",
-            "s:value",
-            "p:value",
-            "reference",
-            "i:voltage",
-        ]
+def _make_schematic_component() -> Component:
+    return Component(
+        reference="R1",
+        lib_id="Device:R",
+        value="10K",
+        footprint="R_0805_2012",
+        properties={
+            "LCSC": "C17414",
+            "Manufacturer": "Yageo",
+        },
     )
-    as_dict = {row.name: row for row in rows}
-
-    assert as_dict["value"].name == "value"
-    assert as_dict["value"].s_token == "s:value"
-    assert as_dict["value"].p_token == "p:value"
-    assert as_dict["value"].i_token == ""
-    assert as_dict["reference"].name == "reference"
-    assert as_dict["voltage"].i_token == "i:voltage"
 
 
-def test_build_namespace_matrix_normalizes_tokens_and_deduplicates() -> None:
-    service = FieldListingService()
-
-    rows = service.build_namespace_matrix(
-        [
-            " Value ",
-            "S:Value",
-            "s:value",
-            "P:Foot Print",
-        ]
+def _make_pcb_component() -> PcbComponent:
+    return PcbComponent(
+        reference="R1",
+        footprint_name="R_0805_2012",
+        package_token="0805",
+        center_x_mm=5.0,
+        center_y_mm=3.0,
+        rotation_deg=0.0,
+        side="TOP",
+        attributes={"Value": "9K99", "LCSC": "C17414"},
     )
-    as_dict = {row.name: row for row in rows}
-
-    assert as_dict["value"].name == "value"
-    assert as_dict["value"].s_token == "s:value"
-    assert as_dict["foot_print"].p_token == "p:foot_print"
 
 
-def test_matrix_row_to_console_row_exposes_fixed_columns() -> None:
-    row = FieldListingService().build_namespace_matrix(["value", "s:value"])[0]
+def test_get_field_names_discovers_schematic_fields() -> None:
+    names = get_field_names(
+        schematic_components=[_make_schematic_component()],
+        source="s",
+    )
+
+    assert {"value", "footprint", "lcsc", "manufacturer"} <= names
+
+
+def test_get_field_names_discovers_pcb_fields() -> None:
+    names = get_field_names(
+        pcb_components=[_make_pcb_component()],
+        source="p",
+    )
+
+    assert {"footprint", "package", "value", "lcsc"} <= names
+
+
+def test_get_field_names_discovers_inventory_column_names() -> None:
+    names = get_field_names(
+        inventory_column_names=["Voltage", "Tolerance"],
+        source="i",
+    )
+
+    assert names == {"voltage", "tolerance"}
+
+
+def test_get_field_names_source_all_returns_union() -> None:
+    names = get_field_names(
+        schematic_components=[_make_schematic_component()],
+        pcb_components=[_make_pcb_component()],
+        inventory_column_names=["Voltage"],
+        source="all",
+    )
+
+    assert {"value", "footprint", "lcsc", "voltage"} <= names
+
+
+def test_build_namespace_matrix_excludes_annotation_namespace_column() -> None:
+    row = FieldListingService().build_namespace_matrix(
+        ["value", "s:value", "p:value", "i:value", "a:value"]
+    )[0]
     console = row.to_console_row()
 
-    assert set(console.keys()) == {"Name", "s:", "p:", "i:", "a:"}
-    assert console["Name"] == "value"
-    assert console["s:"] == "s:value"
+    assert set(console.keys()) == {"Name", "s:", "p:", "i:"}
+    assert row.s_token == "s:value"
+    assert row.p_token == "p:value"
+    assert row.i_token == "i:value"
 
 
-def test_build_namespace_matrix_respects_source_requirements() -> None:
-    service = FieldListingService()
-    rows = service.build_namespace_matrix(
-        ["s:value", "p:value", "i:value", "a:value"],
-        requirements=FieldSourceRequirements(
-            require_sch=True,
-            require_pcb=False,
-            require_inv=False,
-        ),
-    )
-    value_row = {row.name: row for row in rows}["value"]
-
-    assert value_row.s_token == "s:value"
-    assert value_row.p_token == ""
-    assert value_row.i_token == ""
-    assert value_row.a_token == "a:value"
+def test_normalize_priority_accepts_string_and_sequence_forms() -> None:
+    assert normalize_priority("pis") == ("p", "i", "s")
+    assert normalize_priority(("s", "i", "p")) == ("s", "i", "p")
 
 
-def test_is_namespace_applicable_matches_requirements_contract() -> None:
-    requirements = FieldSourceRequirements(
-        require_sch=False,
-        require_pcb=True,
-        require_inv=False,
-    )
+def test_normalize_priority_rejects_invalid_forms() -> None:
+    with pytest.raises(ValueError):
+        normalize_priority("ppi")
 
-    assert is_namespace_applicable("s", requirements=requirements) is False
-    assert is_namespace_applicable("p", requirements=requirements) is True
-    assert is_namespace_applicable("i", requirements=requirements) is False
-    assert is_namespace_applicable("a", requirements=requirements) is True
+    with pytest.raises(ValueError):
+        normalize_priority("pix")
+
+
+def test_resolve_namespaced_field_reads_only_requested_source() -> None:
+    row_sources = {
+        "s": {"value": "10K"},
+        "p": {"value": "9K99"},
+        "i": {"value": "10K-INV"},
+    }
+
+    assert resolve_namespaced_field("s", "value", row_sources) == "10K"
+    assert resolve_namespaced_field("p", "value", row_sources) == "9K99"
+    assert resolve_namespaced_field("i", "value", row_sources) == "10K-INV"
+    assert resolve_namespaced_field("p", "footprint", row_sources) == ""
+
+
+def test_resolve_unqualified_field_uses_priority_order() -> None:
+    row_sources = {
+        "s": {"value": "10K"},
+        "p": {"value": "9K99"},
+        "i": {"value": "10K-INV"},
+    }
+
+    assert resolve_unqualified_field("value", row_sources, priority="pis") == "9K99"
+    assert resolve_unqualified_field("value", row_sources, priority="sip") == "10K"

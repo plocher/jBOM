@@ -71,3 +71,25 @@ Feature: POS Generation (Core Functionality)
     When I run jbom command "pos -o console"
     Then the command should succeed
     And the output should contain "No components found"
+
+  Scenario: POS unqualified fields use PIS source priority
+    Given a schematic that contains:
+      | Reference | Value | Footprint   |
+      | R1        | 10K   | R_0805_2012 |
+    And a PCB that contains:
+      | Reference | X | Y | Side | Footprint   | Value |
+      | R1        | 5 | 3 | TOP  | R_0805_2012 | 9K99  |
+    When I run jbom command "pos -f reference,value,s:value,p:value -o -"
+    Then the command should succeed
+    And the CSV output has rows where:
+      | Reference | Value | S:Value | P:Value |
+      | R1        | 9K99  | 10K     | 9K99    |
+
+  Scenario: POS list-fields excludes annotation namespace column
+    When I run jbom command "pos --list-fields"
+    Then the command should succeed
+    And the output should contain "Known POS fields"
+    And the output should contain "s:"
+    And the output should contain "p:"
+    And the output should contain "i:"
+    And the output should not contain "a:"

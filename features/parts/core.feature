@@ -73,7 +73,23 @@ Feature: Parts List Generation (Core Functionality)
     When I run jbom command "parts --list-fields"
     Then the command should succeed
     And the output should contain "Known parts fields"
+    And the output should contain "s:"
+    And the output should contain "p:"
+    And the output should contain "i:"
     And the output should contain "s:value"
     And the output should not contain "p:footprint"
     And the output should not contain "c:value"
-    And the output should contain "a:value"
+    And the output should not contain "a:"
+
+  Scenario: Parts unqualified fields use SIP source priority
+    Given a schematic that contains:
+      | Reference | Value | Footprint   |
+      | R1        | 10K   | R_0805_2012 |
+    And a PCB that contains:
+      | Reference | X | Y | Footprint   | Value |
+      | R1        | 5 | 3 | R_0805_2012 | 9K99  |
+    When I run jbom command "parts -f refs,value,s:value,p:value"
+    Then the command should succeed
+    And the CSV output has rows where:
+      | Refs | Value | S:Value | P:Value |
+      | R1   | 10K   | 10K     | 9K99    |

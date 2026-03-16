@@ -116,6 +116,29 @@ def test_p_namespace_field_returns_explicit_value_only() -> None:
     assert _get_field_value(fallback_entry, "p:footprint", fabricator_id="jlc") == ""
 
 
+def test_unqualified_value_prefers_p_then_i_then_s_sources() -> None:
+    entry = _make_entry(
+        {
+            "s:value": "10K",
+            "p:value": "9K99",
+            "i:value": "10K-INV",
+        }
+    )
+
+    assert _get_field_value(entry, "value", fabricator_id="jlc") == "9K99"
+
+
+def test_unqualified_value_uses_inventory_when_pcb_value_missing() -> None:
+    entry = _make_entry(
+        {
+            "s:value": "10K",
+            "i:value": "10K-INV",
+        }
+    )
+
+    assert _get_field_value(entry, "value", fabricator_id="jlc") == "10K-INV"
+
+
 def test_a_namespace_field_renders_source_annotation_lines_on_mismatch() -> None:
     entry = _make_entry(
         {"s:footprint": "SCH:0603", "p:footprint": "PCB:0402"},
