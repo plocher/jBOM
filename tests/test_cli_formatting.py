@@ -264,6 +264,29 @@ class TestConsoleFormatting(unittest.TestCase):
         wrapped_lines = [line.strip() for line in lines[2:5]]
         self.assertEqual(wrapped_lines, ["Library_", "Name-", "Variant"])
 
+    def test_delimiter_wrap_supports_slash_for_paths(self):
+        """Delimiter-aware wrapping should split path-like values on '/'."""
+        cols = [Column("Path", "p", preferred_width=12, wrap=True)]
+        rows = [{"p": "/Users/jplocher/Dropbox/KiCad/projects"}]
+        lines = self.render(rows, cols, width=12)
+        wrapped_lines = [
+            line.strip()
+            for line in lines[2:]
+            if line.strip() and not all(char in "-+" for char in line.strip())
+        ]
+        self.assertEqual(
+            wrapped_lines,
+            ["/Users/", "jplocher/", "Dropbox/", "KiCad/", "projects"],
+        )
+
+    def test_delimiter_at_exact_boundary_does_not_overflow_column(self):
+        """Preferred delimiter at width boundary must not create over-width chunks."""
+        cols = [Column("Field", "f", preferred_width=10, wrap=True)]
+        rows = [{"f": "1234567890-abc"}]
+        lines = self.render(rows, cols, width=10)
+        wrapped_lines = [line.strip() for line in lines[2:4]]
+        self.assertEqual(wrapped_lines, ["1234567890", "-abc"])
+
 
 if __name__ == "__main__":
     unittest.main()
