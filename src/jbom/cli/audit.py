@@ -98,19 +98,6 @@ _PROJECT_REQUIRED_FIELDS: tuple[str, ...] = tuple(
 _PROJECT_RES_CATEGORY = "RES"
 _PROJECT_CAP_CATEGORY = "CAP"
 _PROJECT_LED_CATEGORY = "LED"
-_PROJECT_FALLBACK_SUPPLIER_IDENTIFIER_FIELDS: tuple[str, ...] = (
-    "LCSC",
-    "Mouser",
-    "DigiKey",
-    "Digikey",
-    "Farnell",
-    "Newark",
-    "Seeed",
-    "Supplier",
-    "SupplierPN",
-    "Supplier Part Number",
-    "Distributor Part Number",
-)
 _PROJECT_LED_COLOR_WAVELENGTH_RULES: tuple[tuple[frozenset[str], str], ...] = (
     (frozenset({"ULTRAVIOLET", "UV"}), "<380nm"),
     (frozenset({"VIOLET", "PURPLE"}), "370-450nm"),
@@ -627,13 +614,17 @@ def _build_project_couplet_rows(
             context,
             supplier_identifier_fields=supplier_identifier_fields,
         )
+        supplier_identifier_label = _resolve_supplier_identifier_label(
+            supplier_id=supplier_id,
+            supplier_identifier_field=supplier_identifier_field,
+        )
         audit_summary = _build_project_audit_summary(
             ref_des=ref_des,
             missing_fields=group["missing_fields"],
             em_matchability=em_matchability,
             supplier_matchability=supplier_matchability,
             supplier_id=supplier_id,
-            supplier_identifier_field=supplier_identifier_field,
+            supplier_identifier_label=supplier_identifier_label,
         )
         if include_debug:
             debug_details = "; ".join(
@@ -676,13 +667,11 @@ def _build_project_audit_summary(
     em_matchability: str,
     supplier_matchability: str,
     supplier_id: str,
-    supplier_identifier_field: str,
+    supplier_identifier_label: str,
 ) -> str:
     """Build designer-facing summary text for project-mode audit rows."""
     missing_required = [f for f in missing_fields if f in _PROJECT_REQUIRED_FIELDS]
-    supplier_identifier_note = _format_supplier_identifier_note(
-        supplier_identifier_field
-    )
+    supplier_identifier_note = str(supplier_identifier_label or "").strip()
 
     if (
         missing_fields
@@ -731,14 +720,28 @@ def _build_project_audit_summary(
     return "; ".join(notes_parts)
 
 
-def _format_supplier_identifier_note(supplier_identifier_field: str) -> str:
-    """Return a concise note label for a resolved supplier identifier field."""
-    normalized = str(supplier_identifier_field or "").strip().lower()
-    if not normalized:
+def _resolve_supplier_identifier_label(
+    *, supplier_id: str, supplier_identifier_field: str
+) -> str:
+    """Resolve a human-readable supplier identifier label from supplier profile data."""
+    if not str(supplier_identifier_field or "").strip():
         return ""
-    if normalized == "lcsc":
-        return "LCSC part number"
-    return "Supplier part number"
+
+    sid = (supplier_id or "").strip().lower()
+    if not sid:
+        return "Supplier part number"
+    try:
+        from jbom.config.suppliers import resolve_supplier_by_id
+
+        supplier = resolve_supplier_by_id(sid)
+    except Exception:
+        supplier = None
+    if supplier is None:
+        return "Supplier part number"
+    display_name = str(supplier.inventory_column or "").strip()
+    if not display_name:
+        return "Supplier part number"
+    return f"{display_name} part number"
 
 
 def _format_project_suggested_cell(suggestion: str) -> str:
@@ -953,13 +956,7 @@ def _resolve_supplier_identifier_field(
     supplier_identifier_fields: list[str],
 ) -> str:
     """Return supplier SPN field name when supplier alias fields are present."""
-    supplier_match = _find_context_value(context, supplier_identifier_fields)
-    if supplier_match:
-        return supplier_match
-    fallback_match = _find_context_value(
-        context, _PROJECT_FALLBACK_SUPPLIER_IDENTIFIER_FIELDS
-    )
-    return fallback_match or ""
+    return _find_context_value(context, supplier_identifier_fields)
 
 
 def _resolve_supplier_identifier_fields(supplier_id: str) -> list[str]:
