@@ -63,6 +63,7 @@ _PROJECT_REPORT_CONTEXT_COLUMNS: list[str] = [
     "Footprint",
     "Package",
     "Description",
+    "LCSC",
 ]
 
 _PROJECT_REPORT_TRAILING_COLUMNS: list[str] = [
