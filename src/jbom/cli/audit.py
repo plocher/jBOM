@@ -684,7 +684,12 @@ def _build_project_audit_summary(
         supplier_identifier_field
     )
 
-    if missing_fields and not missing_required and supplier_identifier_note:
+    if (
+        missing_fields
+        and not missing_required
+        and supplier_identifier_note
+        and supplier_matchability == _PROJECT_SUPPLIER_EXACT_SPN
+    ):
         return f"{ref_des}: {supplier_identifier_note} used"
 
     notes_parts: list[str] = []
