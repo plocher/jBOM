@@ -264,6 +264,13 @@ def annotate_from_repairs(
     result = RepairsAnnotationResult(dry_run=dry_run)
     result.errors.extend(load_warnings)
     changed_files: set[Path] = set()
+    current_rows_by_uuid: dict[str, _RepairsRowRaw] = {}
+    for loaded_row in rows:
+        if _repairs_cell(loaded_row, "RowType").upper() != "CURRENT":
+            continue
+        current_uuid = _repairs_cell(loaded_row, "UUID")
+        if current_uuid:
+            current_rows_by_uuid[current_uuid] = loaded_row
 
     for row in rows:
         action = _repairs_cell(row, "Action").upper()
@@ -294,7 +301,10 @@ def annotate_from_repairs(
                 f"SET row for RefDes={row_ref_des!r} has blank UUID — skipped"
             )
             continue
-        updates = _extract_row_updates(row)
+        updates = _extract_row_updates(
+            row,
+            current_row=current_rows_by_uuid.get(row_uuid),
+        )
         if not updates:
             result.skipped += 1
             continue
@@ -426,7 +436,11 @@ def _repairs_cell(row: _RepairsRowRaw, col: str) -> str:
     return (row.cells.get(col) or "").strip()
 
 
-def _extract_row_updates(row: _RepairsRowRaw) -> list[tuple[str, str]]:
+def _extract_row_updates(
+    row: _RepairsRowRaw,
+    *,
+    current_row: _RepairsRowRaw | None = None,
+) -> list[tuple[str, str]]:
     """Extract field updates from a repairs row (legacy tall or wide format)."""
     field_name = _repairs_cell(row, "Field")
     approved_value = _repairs_cell(row, "ApprovedValue")
@@ -443,7 +457,11 @@ def _extract_row_updates(row: _RepairsRowRaw) -> list[tuple[str, str]]:
     for col, val in row.cells.items():
         if col in _WIDE_REPAIRS_METADATA_COLUMNS:
             continue
-        cell_value = _normalize_repair_update_value(val)
+        baseline_value = _repairs_cell(current_row, col) if current_row else ""
+        cell_value = _normalize_repair_update_value_with_baseline(
+            val,
+            baseline_value=baseline_value,
+        )
         if not cell_value or cell_value.upper() == "MISSING":
             continue
         updates.append((col, cell_value))
@@ -451,27 +469,76 @@ def _extract_row_updates(row: _RepairsRowRaw) -> list[tuple[str, str]]:
 
 
 def _normalize_repair_update_value(raw_value: str) -> str:
-    """Normalize a repairs update value, preferring pcb value from s:/p: merge notation."""
+    """Normalize a repairs update value for schematic annotation."""
+    return _normalize_repair_update_value_with_baseline(
+        raw_value,
+        baseline_value="",
+    )
+
+
+def _normalize_repair_update_value_with_baseline(
+    raw_value: str,
+    *,
+    baseline_value: str,
+) -> str:
+    """Normalize a repairs update value using CURRENT row content as fallback."""
     text = str(raw_value or "").strip()
     if not text:
         return ""
-    if "\n" not in text:
-        return text
+    parsed_value = _parse_merge_notation_value(text)
+    if not parsed_value["has_merge_notation"]:
+        return parsed_value["bare_value"]
 
-    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    parsed_baseline = _parse_merge_notation_value(baseline_value)
+    baseline_s = parsed_baseline["source_values"].get(
+        "s", parsed_baseline["bare_value"]
+    )
+    baseline_p = parsed_baseline["source_values"].get(
+        "p", parsed_baseline["bare_value"]
+    )
+
+    resolved_s = parsed_value["source_values"].get("s", baseline_s)
+    resolved_p = parsed_value["source_values"].get("p", baseline_p)
+
+    if resolved_s:
+        return resolved_s
+    if resolved_p:
+        return resolved_p
+    return ""
+
+
+def _parse_merge_notation_value(raw_value: str) -> dict[str, Any]:
+    """Parse s:/p: merge notation from a repairs cell value."""
+    text = str(raw_value or "").strip()
+    if not text:
+        return {
+            "has_merge_notation": False,
+            "source_values": {},
+            "bare_value": "",
+        }
+    expanded_text = text.replace("\\n", "\n")
+    lines = [line.strip() for line in expanded_text.splitlines() if line.strip()]
     source_values: dict[str, str] = {}
+    bare_parts: list[str] = []
+    has_merge_notation = False
+
     for line in lines:
-        if ":" not in line:
-            continue
-        source, value = line.split(":", 1)
-        source_key = source.strip().lower()
-        if source_key in {"s", "p"}:
-            source_values[source_key] = value.strip()
-    if "p" in source_values:
-        return source_values["p"]
-    if "s" in source_values:
-        return source_values["s"]
-    return text
+        if ":" in line:
+            source, value = line.split(":", 1)
+            source_key = source.strip().lower()
+            if source_key in {"s", "p"}:
+                source_values[source_key] = value.strip()
+                has_merge_notation = True
+                continue
+        bare_parts.append(line)
+
+    bare_value = "\n".join(bare_parts).strip()
+
+    return {
+        "has_merge_notation": has_merge_notation,
+        "source_values": source_values,
+        "bare_value": bare_value,
+    }
 
 
 def _get_symbol_uuid(symbol: list[Any]) -> str:
