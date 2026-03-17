@@ -316,6 +316,14 @@ Generates an initial inventory template from schematic components. The output is
 
 **--filter-matches**
 : When used with `--inventory`, exclude components that already match items in the existing inventory (show only new/unmatched components).
+**--supplier SUPPLIER_ID**
+: Auto-populate supplier part numbers during inventory generation. Repeat the flag to enrich from multiple suppliers in one run (for example: `--supplier lcsc --supplier mouser`).
+
+**--api-key KEY**
+: API key override for supplier catalog providers.
+
+**--limit N**
+: Maximum candidates applied per supplier per unmatched seed row (default: `1`). In multi-supplier mode, the limit is evaluated independently for each supplier pass.
 
 
 **-v, --verbose**
@@ -503,6 +511,11 @@ jbom pos MyBoard.kicad_pcb -o placement.csv -f "Reference,X,Y,Footprint,Side"
 Generate inventory template:
 ```
 jbom inventory MyProject/ -o my_inventory.csv
+```
+
+Generate inventory with one-pass multi-supplier enrichment:
+```
+jbom inventory MyProject/ --supplier lcsc --supplier mouser --limit 2 -o inventory.csv
 ```
 
 Show only components not yet in an existing inventory:

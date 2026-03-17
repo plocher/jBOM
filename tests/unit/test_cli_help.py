@@ -62,6 +62,8 @@ def test_inventory_help_shows_inventory_interface_tokens():
         "--inventory",
         "--filter-matches",
         "--per-instance",
+        "--supplier",
+        "--limit",
         "-o",
         "--output",
     ]

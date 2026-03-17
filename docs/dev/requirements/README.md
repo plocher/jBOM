@@ -75,15 +75,15 @@ While this process obviously works, it has a couple of downsides:
 
 ### Meet Alex, an Electronic Product Development Engineer
 
-Alex runs a small electronics consulting company. One day, Alex is designing analog circuits in KiCad. tbe next afternoon, Alex is researching component suppliers and updating inventory spreadsheets. Later, Alex is generating manufacturing files for projects going out to three different fabricators. Once he catches his breath, Alex is updating his inventory stock, adding new components and replacing obsolete and expensive ones.
+Alex runs a small electronics consulting company. One day, Alex is designing analog circuits in KiCad. tbe next afternoon, Alex is researching component suppliers and updating inventory spreadsheets. Later, Alex is generating manufacturing files for projects going out to three different fabricators. Once Alex catches Alex's breath, Alex is updating Alex's inventory stock, adding new components and replacing obsolete and expensive ones.
 
 Some might have the luxury of separate engineering and procurement teams, but Alex needs to wear multiple hats efficiently without getting bogged down in the complexity of each role.
 
 ### The Challenge: Context Switching
 
-When Alex is in "circuit design mode," thinking about op-amp slew rates and filter responses, the last thing he wants to worry about is whether JLCPCB stocks a particular resistor value or what the Mouser stock number is for a specific capacitor.
+When Alex is in "circuit design mode," thinking about op-amp slew rates and filter responses, the last thing Alex wants to worry about is whether JLCPCB stocks a particular resistor value or what the Mouser stock number is for a specific capacitor.
 
-But when Alex switches to "procurement mode," he needs detailed supplier information, current pricing, and availability data to make smart business decisions about which fabricator to use and which components to stock.
+But when Alex switches to "procurement mode," Alex needs detailed supplier information, current pricing, and availability data to make smart business decisions about which fabricator to use and which components to stock.
 
 ### How jBOM Enables Efficient Context Switching
 
@@ -130,7 +130,7 @@ jBOM lets Alex work in the appropriate context for each task without losing the 
 #### The Problem Without jBOM:
 Alex could
 1. produce a minimal design using the standard KiCad libraries that do not provide supply chain details, or
-2. manually fully specify supply chain attributes in the symbols he uses, or use custom-curated component libraries that have this information, or he could use KiCad's database/Web library integration with `git-plm`'s inventory management system, each of which embeds supply chain choices as component attributes directly into the project's KiCad design files.
+2. manually fully specify supply chain attributes in the symbols Alex uses, or use custom-curated component libraries that have this information, or Alex could use KiCad's database/Web library integration with `git-plm`'s inventory management system, each of which embeds supply chain choices as component attributes directly into the project's KiCad design files.
 
 After the KiCad project is complete, Alex would use KiCad to generate the artifacts needed for fabrication, including a BOM.
 With the first option above, the BOM would **not** contain the manufacturer and supplier information needed for fabrication, so someone would need to manually research and add that information for every component.
@@ -182,8 +182,8 @@ Use the jBOM app to identify the new components, search for candidates using sup
 #### The Problem Without jBOM:
 
 1. Alex would manually generate Gerbers in KiCad, export CPL and BOM files BOM, and manually add the required supply chain information to the BOM file.
-2. Alex would choose to add LCSC part numbers to his KiCad projects and use the JLC Fabrication Plugin to automatically create all the Gerber, CPL and BOM files required by JLCPCB.
-3. Alex would choose to add Manufacture Part Numbers to his KiCad projects and use the PCBWay Fabrication Plugin to automatically create all the Gerber, CPL and BOM files required by PCBWay.
+2. Alex would choose to add LCSC part numbers to Alex's KiCad projects and use the JLC Fabrication Plugin to automatically create all the Gerber, CPL and BOM files required by JLCPCB.
+3. Alex would choose to add Manufacture Part Numbers to Alex's KiCad projects and use the PCBWay Fabrication Plugin to automatically create all the Gerber, CPL and BOM files required by PCBWay.
 
 #### The Solution With jBOM:
 

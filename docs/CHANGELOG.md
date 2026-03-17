@@ -73,6 +73,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   only enforces strict core-attribute matching when that core attribute is
   present in the provider results, preserving strict package matching for sparse
   Mouser payloads.
+- `jbom inventory` now accepts repeatable `--supplier` flags for one-pass
+  multi-supplier enrichment (e.g. `--supplier lcsc --supplier mouser`). In this
+  mode, enrichment is additive: original rows are preserved, supplier-specific
+  matched rows are appended, and added rows receive global per-IPN priority
+  assignment while `--limit` remains supplier-local (issue #197).
 
 ### Migration note
 - **Stored ComponentIDs may change** for `led`, `cap`, `ind`, and `res` components

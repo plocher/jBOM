@@ -177,10 +177,12 @@ def register_command(subparsers) -> None:
     parser.add_argument(
         "--supplier",
         metavar="SUPPLIER_ID",
+        action="append",
         default=None,
         help=(
-            "Supplier ID for auto-populating the supplier PN column "
-            "(e.g. 'lcsc', 'mouser', 'generic'). Items already having a PN are skipped."
+            "Supplier ID for auto-populating supplier PN columns. "
+            "Repeat to enrich from multiple suppliers in one run "
+            "(e.g. --supplier lcsc --supplier mouser)."
         ),
     )
     parser.add_argument(
@@ -413,14 +415,12 @@ def _handle_batch_inventory(input_paths: list[str], args: argparse.Namespace) ->
     ordered_fields = _merge_field_names(all_field_names)
 
     # Supplier enrichment (batch path)
-    service, supplier_config, supplier_id = _build_inventory_supplier_service(args)
-    if service is not None and supplier_config is not None:
-        accumulated_items, ordered_fields = _enrich_items_with_supplier(
+    supplier_services = _build_inventory_supplier_services(args)
+    if supplier_services:
+        accumulated_items, ordered_fields = _enrich_items_with_suppliers(
             accumulated_items,
             ordered_fields,
-            service,
-            supplier_config,
-            supplier_id,
+            supplier_services,
             limit=max(1, int(getattr(args, "limit", 1))),
             verbose=args.verbose,
         )
@@ -477,47 +477,272 @@ def _merge_field_names(all_field_names: set[str]) -> list[str]:
     return ordered
 
 
-def _build_inventory_supplier_service(
+def _normalize_supplier_ids(raw_suppliers: Any) -> list[str]:
+    """Normalize and de-duplicate supplier IDs while preserving input order."""
+
+    if raw_suppliers is None:
+        return []
+
+    if isinstance(raw_suppliers, str):
+        candidates = [raw_suppliers]
+    elif isinstance(raw_suppliers, list):
+        candidates = [str(value) for value in raw_suppliers]
+    else:
+        candidates = [str(raw_suppliers)]
+
+    normalized: list[str] = []
+    seen: set[str] = set()
+    for candidate in candidates:
+        supplier_id = candidate.strip().lower()
+        if not supplier_id or supplier_id in seen:
+            continue
+        seen.add(supplier_id)
+        normalized.append(supplier_id)
+
+    return normalized
+
+
+def _build_inventory_supplier_services(
     args: argparse.Namespace,
-) -> "tuple[InventorySearchService | None, SupplierConfig | None, str]":
-    """Build a supplier search service from CLI args, or return (None, None, '').
+) -> "list[tuple[InventorySearchService, SupplierConfig, str]]":
+    """Build ordered supplier search services from CLI args.
 
-    Mirrors ``cli/audit.py``'s ``_build_supplier_service()`` but also returns
-    the resolved :class:`SupplierConfig` so callers can find the inventory column.
-
-    Returns:
-        Tuple of (service, supplier_config, supplier_id).  All three are falsy
-        when ``--supplier`` is not given or the supplier has no search providers.
+    Returns a list of (service, supplier_config, supplier_id) tuples preserving
+    ``--supplier`` order.
     """
-    supplier_id = (getattr(args, "supplier", None) or "").strip().lower()
-    if not supplier_id:
-        return None, None, ""
+    supplier_ids = _normalize_supplier_ids(getattr(args, "supplier", None))
+    if not supplier_ids:
+        return []
 
     api_key = getattr(args, "api_key", None)
+    resolved_services: list[tuple[InventorySearchService, SupplierConfig, str]] = []
 
     try:
         from jbom.config.suppliers import resolve_supplier_by_id
         from jbom.services.search.provider_factory import create_search_provider
         from jbom.services.search.inventory_search_service import InventorySearchService
 
-        supplier_config = resolve_supplier_by_id(supplier_id)
-        if supplier_config is None:
-            print(f"Error: Unknown supplier '{supplier_id}'", file=sys.stderr)
-            return None, None, ""
+        for supplier_id in supplier_ids:
+            supplier_config = resolve_supplier_by_id(supplier_id)
+            if supplier_config is None:
+                print(f"Error: Unknown supplier '{supplier_id}'", file=sys.stderr)
+                continue
 
-        provider = create_search_provider(
-            supplier_id,
-            api_key=api_key,
-            cache=None,  # default DiskSearchCache
-        )
-        verbose = getattr(args, "verbose", False)
-        service = InventorySearchService(
-            provider, request_delay_seconds=0.2, verbose=verbose
-        )
-        return service, supplier_config, supplier_id
+            provider = create_search_provider(
+                supplier_id,
+                api_key=api_key,
+                cache=None,  # default DiskSearchCache
+            )
+            verbose = getattr(args, "verbose", False)
+            service = InventorySearchService(
+                provider, request_delay_seconds=0.2, verbose=verbose
+            )
+            resolved_services.append((service, supplier_config, supplier_id))
+
+        return resolved_services
     except (ValueError, RuntimeError) as exc:
         print(f"Error: {exc}", file=sys.stderr)
-        return None, None, ""
+        return []
+
+
+def _supplier_part_number(
+    item: "InventoryItem", *, supplier_column: str, is_lcsc: bool
+) -> str:
+    """Return the normalized PN value for this supplier from one inventory row."""
+
+    if is_lcsc:
+        return (item.lcsc or "").strip()
+    return str((item.raw_data or {}).get(supplier_column, "")).strip()
+
+
+def _has_any_target_supplier_pn(
+    item: "InventoryItem",
+    supplier_services: "list[tuple[InventorySearchService, SupplierConfig, str]]",
+) -> bool:
+    """Return True if row already has a PN for any target supplier."""
+
+    for _service, supplier_config, supplier_id in supplier_services:
+        if _supplier_part_number(
+            item,
+            supplier_column=supplier_config.inventory_column,
+            is_lcsc=(supplier_id == "lcsc"),
+        ):
+            return True
+    return False
+
+
+def _supplier_item_key(
+    item: "InventoryItem", *, supplier_column: str, is_lcsc: bool
+) -> tuple[str, str, str]:
+    """Return a stable de-duplication key for one supplier-assigned row."""
+
+    pn = _supplier_part_number(item, supplier_column=supplier_column, is_lcsc=is_lcsc)
+    identity = (
+        (item.ipn or "").strip()
+        or (item.component_id or "").strip()
+        or f"{(item.category or '').strip()}|{(item.value or '').strip()}|{(item.package or '').strip()}"
+    )
+    return identity, supplier_column, pn
+
+
+def _extract_explicit_priority(item: "InventoryItem") -> int | None:
+    """Return explicit row priority from raw inventory data, when present."""
+
+    raw_priority = str((item.raw_data or {}).get("Priority", "")).strip()
+    if not raw_priority:
+        return None
+    try:
+        value = int(raw_priority)
+    except ValueError:
+        return None
+    return value if value > 0 else None
+
+
+def _build_next_priority_by_ipn(items: "list[InventoryItem]") -> dict[str, int]:
+    """Return per-IPN next priority counters based on explicit inventory values."""
+
+    max_priority_by_ipn: dict[str, int] = {}
+    for item in items:
+        ipn = (item.ipn or "").strip()
+        if not ipn:
+            continue
+        explicit_priority = _extract_explicit_priority(item)
+        if explicit_priority is None:
+            continue
+        max_priority_by_ipn[ipn] = max(
+            explicit_priority, max_priority_by_ipn.get(ipn, 0)
+        )
+
+    return {
+        ipn: (max_priority + 1) for ipn, max_priority in max_priority_by_ipn.items()
+    }
+
+
+def _assign_next_priority(
+    item: "InventoryItem", *, next_priority_by_ipn: dict[str, int]
+) -> bool:
+    """Assign the next global per-IPN priority to an added row.
+
+    Returns True when a priority value was assigned.
+    """
+
+    ipn = (item.ipn or "").strip()
+    if not ipn:
+        return False
+
+    next_priority = next_priority_by_ipn.get(ipn, 1)
+    if item.raw_data is None:
+        item.raw_data = {}
+    item.raw_data["Priority"] = str(next_priority)
+    item.priority = next_priority
+    next_priority_by_ipn[ipn] = next_priority + 1
+    return True
+
+
+def _enrich_items_with_suppliers(
+    items: "list[InventoryItem]",
+    field_names: list[str],
+    supplier_services: "list[tuple[InventorySearchService, SupplierConfig, str]]",
+    *,
+    limit: int = 1,
+    verbose: bool = False,
+) -> "tuple[list[InventoryItem], list[str]]":
+    """Apply supplier enrichment for one or more suppliers.
+
+    Multi-supplier mode is additive: original rows are preserved and supplier-
+    specific rows are appended for discovered candidates.
+    """
+
+    if not supplier_services:
+        return items, field_names
+
+    if len(supplier_services) == 1:
+        service, supplier_config, supplier_id = supplier_services[0]
+        return _enrich_items_with_supplier(
+            items,
+            field_names,
+            service,
+            supplier_config,
+            supplier_id,
+            limit=limit,
+            verbose=verbose,
+        )
+
+    candidate_limit = max(1, int(limit))
+    base_items = list(items)
+    working_field_names = list(field_names)
+    added_items: list[InventoryItem] = []
+
+    seed_items = [
+        item
+        for item in base_items
+        if (item.row_type or "ITEM").strip().upper() in {"ITEM", "COMPONENT"}
+        and not _has_any_target_supplier_pn(item, supplier_services)
+    ]
+
+    if not seed_items:
+        return base_items, working_field_names
+
+    next_priority_by_ipn = _build_next_priority_by_ipn(base_items)
+    seen_keys: set[tuple[str, str, str]] = set()
+
+    for base_item in base_items:
+        for _service, supplier_config, supplier_id in supplier_services:
+            key = _supplier_item_key(
+                base_item,
+                supplier_column=supplier_config.inventory_column,
+                is_lcsc=(supplier_id == "lcsc"),
+            )
+            if key[-1]:
+                seen_keys.add(key)
+
+    priority_assigned = False
+    for service, supplier_config, supplier_id in supplier_services:
+        supplier_seed = copy.deepcopy(seed_items)
+        enriched_items, working_field_names = _enrich_items_with_supplier(
+            supplier_seed,
+            working_field_names,
+            service,
+            supplier_config,
+            supplier_id,
+            limit=candidate_limit,
+            verbose=verbose,
+        )
+        supplier_column = supplier_config.inventory_column
+        is_lcsc = supplier_id == "lcsc"
+
+        for enriched_item in enriched_items:
+            supplier_pn = _supplier_part_number(
+                enriched_item,
+                supplier_column=supplier_column,
+                is_lcsc=is_lcsc,
+            )
+            if not supplier_pn:
+                continue
+
+            key = _supplier_item_key(
+                enriched_item,
+                supplier_column=supplier_column,
+                is_lcsc=is_lcsc,
+            )
+            if key in seen_keys:
+                continue
+
+            priority_assigned = (
+                _assign_next_priority(
+                    enriched_item, next_priority_by_ipn=next_priority_by_ipn
+                )
+                or priority_assigned
+            )
+            added_items.append(enriched_item)
+            seen_keys.add(key)
+
+    if priority_assigned and "Priority" not in working_field_names:
+        working_field_names = list(working_field_names) + ["Priority"]
+
+    if not added_items:
+        return base_items, working_field_names
+    return base_items + added_items, working_field_names
 
 
 def _enrich_items_with_supplier(
@@ -722,14 +947,12 @@ def _handle_generate_inventory(input_path: str, args: argparse.Namespace) -> int
     inventory_items, field_names = generator.load()
 
     # Supplier enrichment (single-project path)
-    service, supplier_config, supplier_id = _build_inventory_supplier_service(args)
-    if service is not None and supplier_config is not None:
-        inventory_items, field_names = _enrich_items_with_supplier(
+    supplier_services = _build_inventory_supplier_services(args)
+    if supplier_services:
+        inventory_items, field_names = _enrich_items_with_suppliers(
             inventory_items,
             list(field_names),
-            service,
-            supplier_config,
-            supplier_id,
+            supplier_services,
             limit=max(1, int(getattr(args, "limit", 1))),
             verbose=args.verbose,
         )

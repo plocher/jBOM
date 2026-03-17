@@ -16,9 +16,9 @@ Profiles capture supply chain context to enable fabricator switching without des
 ### Scenario: `[Discover.Profiles]`
 System finds and loads supply chain configuration files
 
-Alex needs jBOM to work with his supply chain preferences without hardcoded assumptions. Maybe Alex prefers Mouser over Digikey, or his company mandates specific manufacturers. Maybe Alex's fabricator expects "LCSC Part#" column while another expects "Supplier PN".
+Alex needs jBOM to work with Alex's supply chain preferences without hardcoded assumptions. Maybe Alex prefers Mouser over Digikey, or Alex's company mandates specific manufacturers. Maybe Alex's fabricator expects "LCSC Part#" column while another expects "Supplier PN".
 
-jBOM should find configuration files that define these preferences - from the project folder, user settings, or system defaults. This lets Alex (or his team) customize supplier APIs, BOM formatting, component matching rules without code changes.
+jBOM should find configuration files that define these preferences - from the project folder, user settings, or system defaults. This lets Alex (or Alex's team) customize supplier APIs, BOM formatting, component matching rules without code changes.
 
 The system searches multiple locations in priority order: project directory, git repository root, user home directory, system installation. Higher priority profiles can extend or override lower priority ones.
 
@@ -27,7 +27,7 @@ Select which supply chain configuration to use for this operation
 
 Alex operates in different supply chain contexts - hobby projects use LCSC/JLCPCB, client work uses Mouser/PCBWay, company projects have approved vendor lists. Each context needs different supplier preferences, BOM formats, and component matching rules.
 
-The system should let Alex choose his supply chain context explicitly or automatically detect it based on project location. Company projects in shared repositories might automatically use organization-wide profiles. Personal projects use Alex's preferred suppliers.
+The system should let Alex choose Alex's supply chain context explicitly or automatically detect it based on project location. Company projects in shared repositories might automatically use organization-wide profiles. Personal projects use Alex's preferred suppliers.
 
 Profiles define everything from "prefer YAGEO resistors" to "BOM needs LCSC column for JLCPCB" to "search Mouser first, Digikey as backup." Alex shouldn't need to reconfigure these preferences for each project.
 
@@ -43,18 +43,18 @@ jBOM should automatically discover project files, resolve file dependencies (sch
 ### Scenario: `[Specify.Inventory]`
 Determine which inventory sources to use for component matching
 
-Alex maintains component inventory in spreadsheets - maybe one master CSV file, maybe separate files per supplier, maybe Excel files shared with teammates. His inventory maps design requirements ("1kΩ resistor, 0603") to real parts he can actually order ("YAGEO RC0603JR-071KL from Mouser").
+Alex maintains component inventory in spreadsheets - maybe one master CSV file, maybe separate files per supplier, maybe Excel files shared with teammates. Alex's inventory maps design requirements ("1kΩ resistor, 0603") to real parts Alex can actually order ("YAGEO RC0603JR-071KL from Mouser").
 
-The system should find Alex's inventory files automatically or let him specify them explicitly. Alex might have multiple inventory sources - his personal parts collection, company-approved parts list, supplier-specific catalogs. The system should combine these intelligently and handle missing or corrupted files gracefully.
+The system should find Alex's inventory files automatically or let Alex specify them explicitly. Alex might have multiple inventory sources - Alex's personal parts collection, company-approved parts list, supplier-specific catalogs. The system should combine these intelligently and handle missing or corrupted files gracefully.
 
-When Alex adds new components to projects, the system should help him update his inventory with suitable supplier options rather than requiring manual research every time.
+When Alex adds new components to projects, the system should help Alex update Alex's inventory with suitable supplier options rather than requiring manual research every time.
 
 ## read and extract data from sources
 
 ### Scenario: `[Extract.Components]`
 Get component specifications from KiCad project files
 
-Alex's KiCad project contains components with design requirements: "R1: 1kΩ resistor, 0603 package, 5% tolerance" or "U1: ESP32-WROOM-32 microcontroller." The system needs to extract these components and their attributes from schematic files to understand what Alex actually needs to build his board.
+Alex's KiCad project contains components with design requirements: "R1: 1kΩ resistor, 0603 package, 5% tolerance" or "U1: ESP32-WROOM-32 microcontroller." The system needs to extract these components and their attributes from schematic files to understand what Alex actually needs to build Alex's board.
 
 The system should handle hierarchical schematics, multiple sheets, and all the different ways KiCad stores component information. It should capture reference designators (R1, C5, U3), values (1kΩ, 100nF), footprints (0603, SOIC-8), and any custom fields Alex added.
 
@@ -63,7 +63,7 @@ This gives jBOM the complete component requirements list that can be matched aga
 ### Scenario: `[Extract.Items]`
 Load inventory data from Alex's spreadsheets and databases
 
-Alex maintains his component inventory in various formats - maybe a master CSV file, maybe separate Excel sheets per supplier, maybe Apple Numbers files shared with teammates. Each inventory item maps design requirements to real, orderable parts with supplier details.
+Alex maintains Alex's component inventory in various formats - maybe a master CSV file, maybe separate Excel sheets per supplier, maybe Apple Numbers files shared with teammates. Each inventory item maps design requirements to real, orderable parts with supplier details.
 
 The system should read Alex's inventory files regardless of format (CSV, Excel, Numbers, KiCad databases) and extract the component specifications, supplier part numbers, manufacturer details, and any custom attributes Alex tracks like "preferred for new designs" or "bulk pricing available."
 
@@ -73,20 +73,20 @@ This gives jBOM the pool of available parts that can satisfy the component requi
 ### Scenario: `[Search.Suppliers]`
 Find parts using configured supplier catalogs
 
-Alex has inventory items missing supplier details or encounters new components not in his inventory. Rather than manually browsing Mouser, Digikey, or LCSC websites, Alex needs the system to search supplier catalogs automatically using component specifications.
+Alex has inventory items missing supplier details or encounters new components not in Alex's inventory. Rather than manually browsing Mouser, Digikey, or LCSC websites, Alex needs the system to search supplier catalogs automatically using component specifications.
 
 The system should use Alex's configured supplier APIs (Mouser REST, Digikey OAuth, LCSC databases) to find parts matching electrical and mechanical requirements. For a "1kΩ, 0603, 5%" resistor, it should return candidate parts with full supplier details, stock levels, and pricing.
 
-This lets Alex quickly expand his inventory with real, orderable parts rather than doing repetitive manual research for every new component.
+This lets Alex quickly expand Alex's inventory with real, orderable parts rather than doing repetitive manual research for every new component.
 
 ### Scenario: `[Select.Items]`
 Narrow supplier search results to reasonable candidate parts
 
-Supplier catalogs return thousands of parts for "1kΩ resistor" - different manufacturers, packages, tolerances, power ratings, prices. Alex doesn't want to manually review hundreds of options; he needs the system to identify a manageable set of good candidates.
+Supplier catalogs return thousands of parts for "1kΩ resistor" - different manufacturers, packages, tolerances, power ratings, prices. Alex doesn't want to manually review hundreds of options; Alex needs the system to identify a manageable set of good candidates.
 
 The system should apply heuristics to rank and filter results: prefer active parts over obsolete, higher stock quantities suggest popular/reliable parts, reasonable pricing, minimum order quantities that make sense for Alex's typical volumes.
 
-Alex gets a short, ranked list of suitable candidates with clear explanations of why each was selected. He can quickly approve good options or reject unsuitable ones, building his inventory efficiently without endless catalog browsing.
+Alex gets a short, ranked list of suitable candidates with clear explanations of why each was selected. Alex can quickly approve good options or reject unsuitable ones, building Alex's inventory efficiently without endless catalog browsing.
 
 
 ## Data processing - Heuristics and filtering
@@ -97,12 +97,12 @@ Alex generates BOMs for different fabricators with different supplier ecosystems
 
 The system should apply supply chain context to prioritize suitable inventory items. For JLCPCB BOMs, rank LCSC parts higher than Mouser parts. For company projects, prioritize approved manufacturers over random alternatives.
 
-This isn't hard filtering (eliminating options) but intelligent ranking so Alex gets the most suitable parts for his chosen fabricator while keeping fallback options available when preferred parts aren't available.
+This isn't hard filtering (eliminating options) but intelligent ranking so Alex gets the most suitable parts for Alex's chosen fabricator while keeping fallback options available when preferred parts aren't available.
 
 ### Scenario: `[Match.Components]`
 Find inventory items that can satisfy each KiCad component requirement
 
-Alex's KiCad design specifies "R1: 1kΩ, 0603, 5%" but his inventory contains specific supplier parts with full specifications. The system needs to intelligently match loose design requirements with precise inventory capabilities.
+Alex's KiCad design specifies "R1: 1kΩ, 0603, 5%" but Alex's inventory contains specific supplier parts with full specifications. The system needs to intelligently match loose design requirements with precise inventory capabilities.
 
 A KiCad "1kΩ, 5%" requirement could be satisfied by inventory items with 1% tolerance (better than required) but not 10% tolerance (worse than required). "1K" in KiCad should match "1000Ω" or "1k0" in inventory through value normalization.
 
@@ -112,7 +112,7 @@ The system orchestrates multiple sub-processes: normalize values for comparison,
 ### Scenario: `[Resolve.Conflicts]`
 Handle uncertain component matches and missing inventory items
 
-Matching doesn't always produce clear winners. Sometimes Alex gets multiple equally-good candidates, sometimes low-confidence matches that might not be suitable, sometimes no matches at all for components not in his inventory.
+Matching doesn't always produce clear winners. Sometimes Alex gets multiple equally-good candidates, sometimes low-confidence matches that might not be suitable, sometimes no matches at all for components not in Alex's inventory.
 
 The system should present these situations clearly to Alex with actionable options. For ambiguous matches, show the candidates with explanations of differences. For low-confidence matches, explain what requirements aren't well-satisfied. For missing matches, suggest supplier catalog searches to find suitable parts.
 
@@ -123,18 +123,18 @@ This gives Alex the information needed to make informed decisions: update KiCad 
 ### Scenario: `[Grade.Items]`
 Quantify how well inventory items satisfy component requirements
 
-Alex needs to understand match quality when the system suggests inventory items for his components. A "perfect match" means the inventory item meets or exceeds all requirements. Lower grades indicate potential issues that Alex should review.
+Alex needs to understand match quality when the system suggests inventory items for Alex's components. A "perfect match" means the inventory item meets or exceeds all requirements. Lower grades indicate potential issues that Alex should review.
 
 The system should provide confidence scores with clear explanations. A 1% resistor matching a 5% requirement gets high confidence ("tolerance upgrade"). A 10% resistor matching 5% requirement gets low confidence ("tolerance downgrade - verify if acceptable"). Value mismatches, package incompatibilities, or missing specifications reduce confidence.
 
-This helps Alex make informed decisions about whether suggested matches are suitable for his design or if he needs to search for better alternatives.
+This helps Alex make informed decisions about whether suggested matches are suitable for Alex's design or if Alex needs to search for better alternatives.
 
 ### Scenario: `[Rank.Items]`
 Manage inventory priorities to optimize cost and avoid waste
 
 Alex has real inventory management challenges: expensive parts already purchased that need to be used up before ordering cheaper alternatives, partial reels that shouldn't be wasted, preferred suppliers for consistency, and evolving cost optimization as market conditions change.
 
-For example, Alex bought an expensive reel of resistors from LCSC for JLC assembly, then found cheaper equivalents. He wants to rank the expensive reel as Priority 1 (use first) and the basic part as Priority 2 (use after expensive stock is consumed). Later, when the expensive parts are used up, he can flip the priorities.
+For example, Alex bought an expensive reel of resistors from LCSC for JLC assembly, then found cheaper equivalents. Alex wants to rank the expensive reel as Priority 1 (use first) and the basic part as Priority 2 (use after expensive stock is consumed). Later, when the expensive parts are used up, Alex can flip the priorities.
 
 The system should respect Alex's explicit inventory priorities while providing flexibility to adjust rankings as business needs evolve. This prevents waste of already-purchased parts while enabling long-term cost optimization.
 
@@ -142,11 +142,11 @@ The system should respect Alex's explicit inventory priorities while providing f
 ### Scenario: `[Identify.Ambiguous]`
 Flag components with unclear or multiple inventory matches
 
-Alex needs to know when component matching produces uncertain results that require his attention. Sometimes multiple inventory items match equally well, sometimes the single match has low confidence, sometimes the component specification is too vague or too restrictive.
+Alex needs to know when component matching produces uncertain results that require Alex's attention. Sometimes multiple inventory items match equally well, sometimes the single match has low confidence, sometimes the component specification is too vague or too restrictive.
 
 The system should clearly identify ambiguous situations: "R5 matched 3 equally-suitable 1kΩ resistors - choose preferred supplier" or "C12 has only one low-confidence match - verify 25V rating is sufficient for 12V design" or "U3 found no matches - specifications may be incomplete."
 
-This validation feedback helps Alex decide whether his BOM is fabrication-ready or needs component specification improvements, inventory updates, or supplier searches.
+This validation feedback helps Alex decide whether Alex's BOM is fabrication-ready or needs component specification improvements, inventory updates, or supplier searches.
 
 
 ### Scenario: `[Identify.Gaps]`
@@ -156,7 +156,7 @@ Alex's inventory may have components that lack critical supply chain details nee
 
 The system should identify inventory gaps that could block fabrication: "10 components missing supplier part numbers - cannot generate fabricator BOM" or "5 items lack power ratings - verify specifications before high-power applications."
 
-This inventory audit helps Alex prioritize which components need supplier research (`[Search.Suppliers]`) to find complete part specifications and update his inventory for fabrication readiness.
+This inventory audit helps Alex prioritize which components need supplier research (`[Search.Suppliers]`) to find complete part specifications and update Alex's inventory for fabrication readiness.
 
 
 ### Scenario: `[Identify.Obsolete]`
@@ -166,13 +166,13 @@ Alex's inventory may contain parts that are no longer suitable - supplier catalo
 
 The system should identify lifecycle issues: "R12, C5 using discontinued LCSC parts - find alternatives before production" or "U7 marked 'not recommended for new designs' - consider upgrade" or "Q3 price increased 300% - evaluate cheaper alternatives."
 
-This proactive warning helps Alex update his designs and inventory before supply chain problems block fabrication or inflate costs.
+This proactive warning helps Alex update Alex's designs and inventory before supply chain problems block fabrication or inflate costs.
 
 
 ### Scenario: `[Identify.Orphans]`
 Highlight project components with no inventory matches
 
-Alex needs to know which components in his project have no corresponding inventory items. These orphaned components block BOM generation and fabrication until Alex finds suitable supplier options.
+Alex needs to know which components in Alex's project have no corresponding inventory items. These orphaned components block BOM generation and fabrication until Alex finds suitable supplier options.
 
 The system should clearly list unmatched components: "5 components need inventory: U4 (STM32F103), C15 (22pF, NP0), D3 (Schottky, SOD-123)" with enough detail for Alex to search supplier catalogs effectively.
 
@@ -237,7 +237,7 @@ Alex needs to bootstrap inventory from scratch or merge multiple sources into ne
 
 The system should extract unique components from KiCad projects, set up proper inventory file structures, and merge multiple inventory sources intelligently. Uses `[Manage.Inventory]` for all file operations and data handling.
 
-This gives Alex the ability to create inventory foundations from his existing KiCad projects and consolidate inventory sources as his operations grow.
+This gives Alex the ability to create inventory foundations from Alex's existing KiCad projects and consolidate inventory sources as Alex's operations grow.
 
 ### Scenario: `[Update.Inventory]`
 Add supplier details and components to existing inventory
@@ -246,4 +246,18 @@ Alex needs to enhance existing inventory with new supplier information, add comp
 
 The system should match new components against existing inventory items, add supplier details from search results (`[Search.Suppliers]` → `[Select.Items]`), and incrementally expand inventory without data loss. Uses `[Manage.Inventory]` for all file operations.
 
-This enables Alex to continuously improve his inventory as he encounters new components and finds better supplier options.
+This enables Alex to continuously improve Alex's inventory as Alex encounters new components and finds better supplier options.
+
+### Scenario: `[Update.Inventory.MultiSupplier]`
+Enrich one inventory run against multiple suppliers with additive semantics
+
+Alex often needs alternates from more than one supplier for the same project requirements. Running separate commands per supplier is repetitive and makes reconciliation harder. Alex needs one enrichment run that gathers supplier candidates across multiple catalogs.
+
+The system should accept repeatable supplier inputs in one command, execute supplier searches in deterministic order, and merge results into one consolidated inventory output.
+
+Functional expectations:
+- supplier passes are additive; existing rows are preserved and new candidate rows are appended
+- candidate limit is evaluated independently for each supplier pass
+- added rows participate in global same-IPN priority ordering so downstream matching remains deterministic
+- no automatic deletion/rotation of rows in this phase; lifecycle cleanup is a separate explicit workflow
+- automatic safe-refresh mutation of existing rows is deferred pending edge-condition validation against examples/fixtures
