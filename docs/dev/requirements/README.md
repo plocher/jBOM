@@ -75,9 +75,9 @@ While this process obviously works, it has a couple of downsides:
 
 ### Meet Alex, an Electronic Product Development Engineer
 
-Alex runs a small electronics consulting company. One day, Alex is designing analog circuits in KiCad. tbe next afternoon, Alex is researching component suppliers and updating inventory spreadsheets. Later, Alex is generating manufacturing files for projects going out to three different fabricators. Once Alex catches Alex's breath, Alex is updating Alex's inventory stock, adding new components and replacing obsolete and expensive ones.
+Alex runs a small electronics consulting company. One day might be spent designing analog circuits in KiCad, while the next, researching component suppliers and updating inventory spreadsheets. Once those tasks are complete, manufacturing files need to be generated for projects going out to three different fabricators. In the midst of all this, choices about suppliers, invoices, inventory management need to be made, all of which impact product production.
 
-Some might have the luxury of separate engineering and procurement teams, but Alex needs to wear multiple hats efficiently without getting bogged down in the complexity of each role.
+Some might have the luxury of separate engineering and procurement teams, but Alex needs to wear multiple hats efficiently without getting bogged down in the complexity of each role.  The following scenarios demonstrate how Alex integrates jBOM into their electronic project workflow.
 
 ### The Challenge: Context Switching
 

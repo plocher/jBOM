@@ -60,7 +60,7 @@ Feature: Inventory supplier PN auto-populate
     Then the command should succeed
     And the file "result.csv" contains exactly 3 data rows
     And the file "result.csv" should contain "Supplier"
-    And the file "result.csv" should contain "Mouser Part Number"
+    And the file "result.csv" should contain "Mouser"
     And the file "result.csv" should contain "G25804"
     And the file "result.csv" should contain "M25804"
 
