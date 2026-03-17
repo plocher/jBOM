@@ -66,6 +66,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   queries returning capacitor false positives). If strict pass yields no matches,
   filtering falls back to legacy fail-open behavior to preserve clueful results
   (issue #175).
+- Mouser provider parsing now normalizes common parametric attribute names and
+  derives missing package/value/tolerance clues from description text when
+  structured attributes are sparse, improving ranking/filtering quality for
+  passive queries such as `10k 0603 resistor` (issue #182). Query filtering now
+  only enforces strict core-attribute matching when that core attribute is
+  present in the provider results, preserving strict package matching for sparse
+  Mouser payloads.
 
 ### Migration note
 - **Stored ComponentIDs may change** for `led`, `cap`, `ind`, and `res` components

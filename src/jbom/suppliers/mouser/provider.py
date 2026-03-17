@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 import time
 from typing import TYPE_CHECKING, Any, Optional
 
@@ -16,6 +17,38 @@ if TYPE_CHECKING:
     from jbom.config.providers import SearchProviderConfig
 
 logger = logging.getLogger(__name__)
+
+_PACKAGE_TOKEN_PATTERN = re.compile(
+    r"\b(0201|0402|0603|0805|1206|1210|1812|2010|2512)\b", re.IGNORECASE
+)
+_RESISTANCE_TOKEN_PATTERN = re.compile(
+    r"\b(?:\d+(?:\.\d+)?(?:R|K|M)\d*|\d+(?:\.\d+)?\s*(?:OHM|OHMS|KOHM|KOHMS|MOHM|MOHMS|Ω))\b",
+    re.IGNORECASE,
+)
+_CAPACITANCE_TOKEN_PATTERN = re.compile(
+    r"\b\d+(?:\.\d+)?\s*(?:PF|NF|UF|µF|μF|MF)\b", re.IGNORECASE
+)
+_INDUCTANCE_TOKEN_PATTERN = re.compile(
+    r"\b\d+(?:\.\d+)?\s*(?:NH|UH|µH|μH|MH|H)\b", re.IGNORECASE
+)
+_TOLERANCE_TOKEN_PATTERN = re.compile(r"(?:\+/-\s*)?(\d+(?:\.\d+)?)\s*%", re.IGNORECASE)
+
+_ATTRIBUTE_NORMALIZATION_MAP: dict[str, str] = {
+    "resistance": "Resistance",
+    "resistance value": "Resistance",
+    "resistor value": "Resistance",
+    "capacitance": "Capacitance",
+    "capacitance value": "Capacitance",
+    "inductance": "Inductance",
+    "tolerance": "Tolerance",
+    "voltage rating": "Voltage Rating",
+    "rated voltage": "Voltage Rating",
+    "package": "Package",
+    "package / case": "Package",
+    "package case": "Package",
+    "case code - in": "Package",
+    "case code - mm": "Package",
+}
 
 try:
     import requests  # type: ignore
@@ -277,6 +310,79 @@ class MouserProvider(SearchProvider):
         except ValueError:
             return 0
 
+    @staticmethod
+    def _normalize_attribute_name(name: str) -> str:
+        key = " ".join((name or "").strip().lower().split())
+        return _ATTRIBUTE_NORMALIZATION_MAP.get(key, (name or "").strip())
+
+    @staticmethod
+    def _extract_package_token(*texts: str) -> str:
+        for text in texts:
+            if not text:
+                continue
+            match = _PACKAGE_TOKEN_PATTERN.search(text.upper())
+            if match:
+                return match.group(1).upper()
+        return ""
+
+    @staticmethod
+    def _extract_first(pattern: re.Pattern[str], text: str) -> str:
+        if not text:
+            return ""
+        match = pattern.search(text)
+        if not match:
+            return ""
+        return match.group(0).strip()
+
+    @staticmethod
+    def _infer_passive_intent(category: str, description: str) -> str:
+        haystack = f"{category} {description}".upper()
+        if "RESISTOR" in haystack:
+            return "RES"
+        if "CAPACITOR" in haystack:
+            return "CAP"
+        if "INDUCTOR" in haystack:
+            return "IND"
+        return ""
+
+    def _enrich_attributes_from_description(
+        self,
+        *,
+        attributes: dict[str, str],
+        description: str,
+        category: str,
+        mpn: str,
+    ) -> dict[str, str]:
+        out = dict(attributes)
+
+        if not out.get("Package"):
+            package = self._extract_package_token(description, mpn)
+            if package:
+                out["Package"] = package
+
+        if not out.get("Tolerance"):
+            tolerance_num = self._extract_first(_TOLERANCE_TOKEN_PATTERN, description)
+            if tolerance_num:
+                norm = tolerance_num.replace("+/-", "").replace(" ", "")
+                if norm.endswith("%"):
+                    out["Tolerance"] = norm
+
+        intent = self._infer_passive_intent(category, description)
+        if intent == "RES" and not out.get("Resistance"):
+            resistance = self._extract_first(_RESISTANCE_TOKEN_PATTERN, description)
+            if resistance:
+                out["Resistance"] = resistance
+        if intent == "CAP" and not out.get("Capacitance"):
+            capacitance = self._extract_first(_CAPACITANCE_TOKEN_PATTERN, description)
+            if capacitance:
+                out["Capacitance"] = capacitance
+        if intent == "IND" and not out.get("Inductance"):
+            inductance = self._extract_first(_INDUCTANCE_TOKEN_PATTERN, description)
+            if inductance:
+                out["Inductance"] = inductance
+
+        return out
+
     def _parse_results(self, data: dict[str, Any]) -> list[SearchResult]:
         search_results = data.get("SearchResults", {})
         parts = search_results.get("Parts", [])
@@ -306,7 +412,19 @@ class MouserProvider(SearchProvider):
                 name = str(attr.get("AttributeName", "") or "").strip()
                 value = str(attr.get("AttributeValue", "") or "").strip()
                 if name and value:
-                    attributes[name] = value
+                    canonical_name = self._normalize_attribute_name(name)
+                    if canonical_name and canonical_name not in attributes:
+                        attributes[canonical_name] = value
+
+            description = str(part.get("Description", ""))
+            category = str(part.get("Category", ""))
+            mpn = str(part.get("ManufacturerPartNumber", ""))
+            attributes = self._enrich_attributes_from_description(
+                attributes=attributes,
+                description=description,
+                category=category,
+                mpn=mpn,
+            )
 
             lifecycle = str(part.get("LifecycleStatus", "Unknown"))
             min_order_raw = str(part.get("Min", "1"))
@@ -318,8 +436,8 @@ class MouserProvider(SearchProvider):
             results.append(
                 SearchResult(
                     manufacturer=str(part.get("Manufacturer", "")),
-                    mpn=str(part.get("ManufacturerPartNumber", "")),
-                    description=str(part.get("Description", "")),
+                    mpn=mpn,
+                    description=description,
                     datasheet=str(part.get("DataSheetUrl", "")),
                     distributor=self.provider_id,
                     distributor_part_number=str(part.get("MouserPartNumber", "")),
@@ -329,7 +447,7 @@ class MouserProvider(SearchProvider):
                     raw_data=part,
                     lifecycle_status=lifecycle,
                     min_order_qty=min_order,
-                    category=str(part.get("Category", "")),
+                    category=category,
                     attributes=attributes,
                     stock_quantity=stock_qty,
                 )
