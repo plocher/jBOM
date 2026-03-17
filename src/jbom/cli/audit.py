@@ -525,6 +525,7 @@ def _build_project_couplet_rows(
                 "missing_fields": [],
                 "heuristic_suggestions": {},
                 "mismatch_notes": [],
+                "mismatch_values": {},
             },
         )
 
@@ -548,6 +549,18 @@ def _build_project_couplet_rows(
             mismatch_note = _format_merge_mismatch_note(row)
             if mismatch_note and mismatch_note not in group["mismatch_notes"]:
                 group["mismatch_notes"].append(mismatch_note)
+            mismatch_field = _normalize_mismatch_field_name(row.field or "")
+            mismatch_value = _format_merge_mismatch_cell_value(row.current_value or "")
+            if mismatch_field and mismatch_value:
+                group["mismatch_values"][mismatch_field] = mismatch_value
+                if (
+                    mismatch_field not in _PROJECT_REPORT_BASE_COLUMNS
+                    and mismatch_field not in _PROJECT_REPORT_CONTEXT_COLUMNS
+                    and mismatch_field not in _PROJECT_REPORT_TRAILING_COLUMNS
+                    and mismatch_field not in _PROJECT_REPORT_VERBOSE_COLUMNS
+                    and mismatch_field not in field_order
+                ):
+                    field_order.append(mismatch_field)
 
     fieldnames = (
         _PROJECT_REPORT_BASE_COLUMNS
@@ -597,6 +610,10 @@ def _build_project_couplet_rows(
                 )
             else:
                 suggested_row[field_name] = raw_suggested
+        for mismatch_field, mismatch_value in group["mismatch_values"].items():
+            if mismatch_field in current_row:
+                current_row[mismatch_field] = mismatch_value
+                suggested_row[mismatch_field] = mismatch_value
 
         em_matchability, _em_basis, em_debug = _classify_em_matchability(
             category=category,
@@ -663,6 +680,37 @@ def _format_merge_mismatch_note(row: AuditRow) -> str:
     if source_summary:
         return f"{field_name} ({source_summary})"
     return field_name
+
+
+def _normalize_mismatch_field_name(raw_field: str) -> str:
+    """Normalize mismatch field keys into display column names."""
+    normalized = str(raw_field or "").strip()
+    if not normalized:
+        return ""
+    field_lookup: dict[str, str] = {
+        "value": "Value",
+        "footprint": "Footprint",
+        "package": "Package",
+        "description": "Description",
+    }
+    lowered = normalized.lower()
+    if lowered in field_lookup:
+        return field_lookup[lowered]
+    return normalized
+
+
+def _format_merge_mismatch_cell_value(raw_value: str) -> str:
+    """Render mismatch source summary as multiline s:/p: cell text when possible."""
+    text = str(raw_value or "").strip()
+    if not text:
+        return ""
+    schematic_match = re.search(r"\bs:\s*(.*?)(?:,\s*p:\s*|$)", text)
+    pcb_match = re.search(r"\bp:\s*(.*)$", text)
+    if schematic_match and pcb_match:
+        schematic_value = schematic_match.group(1).strip()
+        pcb_value = pcb_match.group(1).strip()
+        return f"s:{schematic_value}\np:{pcb_value}"
+    return text.replace(", p:", "\np:")
 
 
 def _build_project_audit_summary(
@@ -1178,13 +1226,7 @@ def _count_visible_project_findings(
             continue
         elif row.check_type != CheckType.MERGE_MISMATCH:
             continue
-
-        if row.severity == Severity.ERROR:
-            error_count += 1
-        elif row.severity == Severity.WARN:
-            warn_count += 1
-        else:
-            info_count += 1
+        warn_count += 1
     for (project_path, ref_des, uuid, category), group in grouped_best_practice.items():
         context = component_context.get((project_path, ref_des, uuid, category), {})
         suggested_row: dict[str, str] = {}
