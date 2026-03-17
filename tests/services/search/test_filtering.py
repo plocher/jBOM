@@ -150,6 +150,26 @@ def test_filter_by_query_strict_package_match_when_query_includes_package():
     assert [r.mpn for r in filtered] == ["A"]
 
 
+def test_filter_by_query_package_strictness_survives_missing_core_attributes():
+    results = [
+        _sr(
+            attributes={},
+            description="10k 0603 resistor",
+            category="Thick Film Resistors - SMD",
+            mpn="A",
+        ),
+        _sr(
+            attributes={},
+            description="10k 0805 resistor",
+            category="Thick Film Resistors - SMD",
+            mpn="B",
+        ),
+    ]
+
+    filtered = SearchFilter.filter_by_query(results, "10k 0603 resistor")
+    assert [r.mpn for r in filtered] == ["A"]
+
+
 def test_filter_by_query_package_filter_falls_open_when_no_package_matches():
     results = [
         _sr(

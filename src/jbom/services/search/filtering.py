@@ -156,7 +156,15 @@ class SearchFilter:
                 break
 
         attr_name = _CATEGORY_ATTR_NAME.get(cat, "")
-        strict_core_attr = target_value is not None and bool(attr_name)
+        has_core_attr_observations = bool(
+            attr_name
+            and any(
+                str((r.attributes or {}).get(attr_name, "")).strip() for r in results
+            )
+        )
+        strict_core_attr = (
+            target_value is not None and bool(attr_name) and has_core_attr_observations
+        )
         strict_package = bool(
             target_package and any(_extract_package_token(r) for r in results)
         )

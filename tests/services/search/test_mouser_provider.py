@@ -80,6 +80,103 @@ def test_mouser_provider_parses_basic_result(monkeypatch):
     assert r.attributes.get("Resistance") == "10 kOhms"
 
 
+def test_mouser_provider_normalizes_common_attribute_names(monkeypatch):
+    cache = InMemorySearchCache()
+
+    import jbom.suppliers.mouser.provider as mp
+
+    post = Mock(
+        return_value=_mock_response(
+            {
+                "SearchResults": {
+                    "Parts": [
+                        {
+                            "Manufacturer": "Yageo",
+                            "ManufacturerPartNumber": "RC0603FR-0710KL",
+                            "Description": "Thick Film Resistors - SMD 10k 1% 0603",
+                            "DataSheetUrl": "http://example",
+                            "MouserPartNumber": "123-ABC",
+                            "Availability": "6,609 In Stock",
+                            "PriceBreaks": [{"Price": "$0.10"}],
+                            "ProductDetailUrl": "http://detail",
+                            "LifecycleStatus": "Active",
+                            "Min": "1",
+                            "Category": "Resistors",
+                            "ProductAttributes": [
+                                {
+                                    "AttributeName": "Resistance Value",
+                                    "AttributeValue": "10 kOhms",
+                                },
+                                {
+                                    "AttributeName": "Package / Case",
+                                    "AttributeValue": "0603 (1608 Metric)",
+                                },
+                                {
+                                    "AttributeName": "Rated Voltage",
+                                    "AttributeValue": "50 V",
+                                },
+                            ],
+                        }
+                    ]
+                }
+            }
+        )
+    )
+    monkeypatch.setattr(mp, "requests", Mock(post=post))
+
+    cfg = SearchProviderConfig(type="mouser_api", extra={"api_key": "dummy"})
+    provider = MouserProvider.from_config(cfg, cache=cache)
+    results = provider.search("10K resistor", limit=5)
+
+    assert len(results) == 1
+    r = results[0]
+    assert r.attributes.get("Resistance") == "10 kOhms"
+    assert r.attributes.get("Package") == "0603 (1608 Metric)"
+    assert r.attributes.get("Voltage Rating") == "50 V"
+
+
+def test_mouser_provider_extracts_fallback_attributes_from_description(monkeypatch):
+    cache = InMemorySearchCache()
+
+    import jbom.suppliers.mouser.provider as mp
+
+    post = Mock(
+        return_value=_mock_response(
+            {
+                "SearchResults": {
+                    "Parts": [
+                        {
+                            "Manufacturer": "Yageo",
+                            "ManufacturerPartNumber": "RC0603FR-0710KL",
+                            "Description": "Thick Film Resistors - SMD 10k 1% 0603",
+                            "DataSheetUrl": "http://example",
+                            "MouserPartNumber": "123-ABC",
+                            "Availability": "6,609 In Stock",
+                            "PriceBreaks": [{"Price": "$0.10"}],
+                            "ProductDetailUrl": "http://detail",
+                            "LifecycleStatus": "Active",
+                            "Min": "1",
+                            "Category": "Thick Film Resistors - SMD",
+                            "ProductAttributes": [],
+                        }
+                    ]
+                }
+            }
+        )
+    )
+    monkeypatch.setattr(mp, "requests", Mock(post=post))
+
+    cfg = SearchProviderConfig(type="mouser_api", extra={"api_key": "dummy"})
+    provider = MouserProvider.from_config(cfg, cache=cache)
+    results = provider.search("10K resistor", limit=5)
+
+    assert len(results) == 1
+    r = results[0]
+    assert r.attributes.get("Resistance") == "10k"
+    assert r.attributes.get("Tolerance") == "1%"
+    assert r.attributes.get("Package") == "0603"
+
+
 def test_mouser_provider_uses_cache(monkeypatch):
     cache = InMemorySearchCache()
 
