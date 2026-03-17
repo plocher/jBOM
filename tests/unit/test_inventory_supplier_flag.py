@@ -17,7 +17,11 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-from jbom.cli.inventory import _enrich_items_with_supplier
+from jbom.cli.inventory import (
+    _enrich_items_with_supplier,
+    _enrich_items_with_suppliers,
+    _normalize_supplier_ids,
+)
 from jbom.common.types import InventoryItem
 from jbom.services.search.inventory_search_service import (
     InventorySearchCandidate,
@@ -110,10 +114,12 @@ def _record_no_candidates(item: InventoryItem) -> InventorySearchRecord:
     )
 
 
-def _supplier_config(inventory_column: str = "Supplier") -> MagicMock:
+def _supplier_config(
+    inventory_column: str = "Supplier", supplier_id: str = "generic"
+) -> MagicMock:
     cfg = MagicMock()
     cfg.inventory_column = inventory_column
-    cfg.id = "generic"
+    cfg.id = supplier_id
     return cfg
 
 
@@ -437,3 +443,125 @@ class TestEnrichNoOp:
 
         assert items_out == []
         assert "Supplier" in names  # column is still added to field list
+
+
+class TestNormalizeSupplierIds:
+    def test_normalizes_and_deduplicates_preserving_order(self) -> None:
+        assert _normalize_supplier_ids([" Mouser ", "LCSC", "mouser", ""]) == [
+            "mouser",
+            "lcsc",
+        ]
+
+    def test_accepts_single_string(self) -> None:
+        assert _normalize_supplier_ids(" Mouser ") == ["mouser"]
+
+
+def _dynamic_service_with_candidates(
+    supplier_pns: list[str], *, manufacturer: str = "Yageo", mpn: str = "RC0603"
+) -> MagicMock:
+    service = MagicMock(spec=InventorySearchService)
+
+    def _search(items: list[InventoryItem]) -> list[InventorySearchRecord]:
+        return [
+            InventorySearchRecord(
+                inventory_item=item,
+                query="10K resistor",
+                candidates=[
+                    InventorySearchCandidate(
+                        result=_make_result(pn=pn, mfr=manufacturer, mpn=mpn),
+                        match_score=80,
+                    )
+                    for pn in supplier_pns
+                ],
+            )
+            for item in items
+        ]
+
+    service.search.side_effect = _search
+    return service
+
+
+class TestEnrichMultipleSuppliers:
+    def test_multi_supplier_adds_rows_without_replacing_base_item(self) -> None:
+        seed = _make_item(ipn="RES_10K_0603")
+        mouser_service = _dynamic_service_with_candidates(["M-1001"])
+        lcsc_service = _dynamic_service_with_candidates(["C-2001"])
+        supplier_services = [
+            (
+                mouser_service,
+                _supplier_config("Mouser Part Number", "mouser"),
+                "mouser",
+            ),
+            (lcsc_service, _supplier_config("LCSC", "lcsc"), "lcsc"),
+        ]
+
+        items_out, names = _enrich_items_with_suppliers(
+            [seed],
+            ["IPN"],
+            supplier_services,
+            limit=1,
+            verbose=False,
+        )
+
+        assert len(items_out) == 3
+        # Base requirement row preserved (add-only semantics).
+        assert items_out[0].raw_data.get("Mouser Part Number", "") == ""
+        assert items_out[0].lcsc == ""
+
+        assert items_out[1].raw_data.get("Mouser Part Number") == "M-1001"
+        assert items_out[1].lcsc == ""
+        assert items_out[2].lcsc == "C-2001"
+        assert items_out[2].raw_data.get("Mouser Part Number", "") == ""
+
+        assert items_out[1].raw_data.get("Priority") == "1"
+        assert items_out[2].raw_data.get("Priority") == "2"
+        assert "Mouser Part Number" in names
+        assert "LCSC" in names
+        assert "Priority" in names
+
+    def test_limit_applies_per_supplier_and_global_priority_is_monotonic(self) -> None:
+        seed = _make_item(ipn="RES_10K_0603")
+        mouser_service = _dynamic_service_with_candidates(["M-1", "M-2"])
+        lcsc_service = _dynamic_service_with_candidates(["C-1", "C-2"])
+        supplier_services = [
+            (
+                mouser_service,
+                _supplier_config("Mouser Part Number", "mouser"),
+                "mouser",
+            ),
+            (lcsc_service, _supplier_config("LCSC", "lcsc"), "lcsc"),
+        ]
+
+        items_out, names = _enrich_items_with_suppliers(
+            [seed],
+            ["IPN"],
+            supplier_services,
+            limit=2,
+            verbose=False,
+        )
+
+        assert len(items_out) == 5  # base + 2 mouser + 2 lcsc
+        priorities = [
+            row.raw_data.get("Priority", "") for row in items_out[1:]  # skip base
+        ]
+        assert priorities == ["1", "2", "3", "4"]
+        assert "Priority" in names
+
+    def test_single_supplier_path_remains_backward_compatible(self) -> None:
+        seed = _make_item(ipn="RES_10K_0603")
+        service = _dynamic_service_with_candidates(["M-1001"])
+        supplier_services = [
+            (service, _supplier_config("Supplier", "generic"), "generic"),
+        ]
+
+        items_out, _ = _enrich_items_with_suppliers(
+            [seed],
+            ["IPN"],
+            supplier_services,
+            limit=1,
+            verbose=False,
+        )
+
+        # Single supplier path keeps existing behavior (mutate in-place, no append).
+        assert len(items_out) == 1
+        assert items_out[0].raw_data.get("Supplier") == "M-1001"

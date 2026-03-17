@@ -596,40 +596,54 @@ def then_inventory_file_contains_value(context, value: str) -> None:
 # -------------------------
 
 
-@given("a generic supplier")
-def given_a_generic_supplier(context) -> None:
-    """Set up an empty generic supplier config (null_api, returns no results).
+def _supplier_display_name(supplier_id: str) -> str:
+    sid = (supplier_id or "").strip().lower()
+    if sid == "lcsc":
+        return "LCSC"
+    if sid == "mouser":
+        return "Mouser Part Number"
+    if sid == "generic":
+        return "Supplier"
+    return sid.upper() if sid else "Supplier"
 
-    Writes .jbom/generic.supplier.yaml with null_api and no fixtures key.
-    The null_api provider always returns [] when no fixtures are configured.
-    Use 'And a supplier catalog that contains:' to add specific results.
-    """
+
+def _write_supplier_profile(
+    context,
+    *,
+    supplier_id: str,
+    results: list[dict[str, Any]] | None = None,
+) -> None:
+    """Write a null_api supplier profile (with optional fixture results)."""
+    import json as _json
+
+    sid = (supplier_id or "").strip().lower()
+    display_name = _supplier_display_name(sid)
     jbom_dir = Path(context.sandbox_root) / ".jbom"
     jbom_dir.mkdir(exist_ok=True)
-    (jbom_dir / "generic.supplier.yaml").write_text(
-        "id: generic\nname: Generic\n"
-        "field_synonyms:\n  supplier_pn:\n    display_name: Supplier\n    synonyms: []\n"
-        "search:\n  providers:\n    - type: null_api\n",
+
+    fixtures_block = ""
+    if results is not None:
+        fixture_file = jbom_dir / f"{sid}_results.json"
+        fixture_file.write_text(_json.dumps(results), encoding="utf-8")
+        fixtures_block = f"      fixtures: {fixture_file}\n"
+
+    (jbom_dir / f"{sid}.supplier.yaml").write_text(
+        f'id: {sid}\nname: "{sid.capitalize()}"\n'
+        "field_synonyms:\n"
+        "  supplier_pn:\n"
+        f'    display_name: "{display_name}"\n'
+        "    synonyms: []\n"
+        "search:\n"
+        "  providers:\n"
+        "    - type: null_api\n"
+        f"{fixtures_block}",
         encoding="utf-8",
     )
 
 
-@given("a supplier catalog that contains:")
-def given_a_supplier_catalog(context) -> None:
-    """Populate the generic supplier with table-driven fixture results.
-
-    Writes .jbom/generic_results.json from the Gherkin table and updates
-    .jbom/generic.supplier.yaml to point the null_api provider at it.
-    Expects 'Given a generic supplier' to have run first (or runs standalone).
-
-    Table columns: distributor_pn, manufacturer, mpn, stock_quantity, price,
-    description (all optional except distributor_pn).
-    """
-    import json as _json
-
-    jbom_dir = Path(context.sandbox_root) / ".jbom"
-    jbom_dir.mkdir(exist_ok=True)
-    results = [
+def _table_to_supplier_results(context) -> list[dict[str, Any]]:
+    """Convert a Gherkin table into null_api SearchResult fixtures."""
+    return [
         {
             "manufacturer": r.get("manufacturer", ""),
             "mpn": r.get("mpn", ""),
@@ -645,13 +659,42 @@ def given_a_supplier_catalog(context) -> None:
         }
         for r in [row.as_dict() for row in context.table]
     ]
-    fixture_file = jbom_dir / "generic_results.json"
-    fixture_file.write_text(_json.dumps(results), encoding="utf-8")
-    # Write (or overwrite) the supplier yaml with absolute fixtures path.
-    (jbom_dir / "generic.supplier.yaml").write_text(
-        "id: generic\nname: Generic\n"
-        "field_synonyms:\n  supplier_pn:\n    display_name: Supplier\n    synonyms: []\n"
-        "search:\n  providers:\n    - type: null_api\n"
-        f"      fixtures: {fixture_file}\n",
-        encoding="utf-8",
+
+
+@given("a generic supplier")
+def given_a_generic_supplier(context) -> None:
+    """Set up an empty generic supplier config (null_api, returns no results).
+
+    Writes .jbom/generic.supplier.yaml with null_api and no fixtures key.
+    The null_api provider always returns [] when no fixtures are configured.
+    Use 'And a supplier catalog that contains:' to add specific results.
+    """
+    _write_supplier_profile(context, supplier_id="generic", results=None)
+
+
+@given("a supplier catalog that contains:")
+def given_a_supplier_catalog(context) -> None:
+    """Populate the generic supplier with table-driven fixture results.
+
+    Writes .jbom/generic_results.json from the Gherkin table and updates
+    .jbom/generic.supplier.yaml to point the null_api provider at it.
+    Expects 'Given a generic supplier' to have run first (or runs standalone).
+
+    Table columns: distributor_pn, manufacturer, mpn, stock_quantity, price,
+    description (all optional except distributor_pn).
+    """
+    _write_supplier_profile(
+        context,
+        supplier_id="generic",
+        results=_table_to_supplier_results(context),
+    )
+
+
+@given('a supplier profile "{supplier_id}" with catalog that contains:')
+def given_supplier_profile_with_catalog(context, supplier_id: str) -> None:
+    """Create a named supplier profile backed by table-driven null_api fixtures."""
+    _write_supplier_profile(
+        context,
+        supplier_id=supplier_id,
+        results=_table_to_supplier_results(context),
     )
