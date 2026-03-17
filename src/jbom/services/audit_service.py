@@ -415,7 +415,6 @@ class AuditService:
                 if str(value or "").strip()
             ]
             source_summary = ", ".join(source_segments)
-            severity = Severity.ERROR if mismatch.severity == "error" else Severity.WARN
             description = (
                 f"{mismatch.reference}: merge mismatch for {mismatch.field_key}"
                 f" ({source_summary})"
@@ -423,7 +422,7 @@ class AuditService:
             rows.append(
                 AuditRow(
                     check_type=CheckType.MERGE_MISMATCH,
-                    severity=severity,
+                    severity=Severity.WARN,
                     project_path=project_path,
                     ref_des=mismatch.reference,
                     uuid=component_uuid,
