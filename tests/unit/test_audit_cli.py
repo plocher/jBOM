@@ -435,7 +435,7 @@ def test_project_summary_counts_only_visible_quality_fields(
         handle_audit(args)
 
     captured = capsys.readouterr()
-    assert "Audit complete: 1 info(s)." in captured.err
+    assert "Audit complete: 1 warning(s)." in captured.err
 
 
 def test_inventory_output_dash_writes_csv_to_stdout(
@@ -543,7 +543,7 @@ def test_project_mode_output_is_couplet_rows(tmp_path: Path) -> None:
     assert current["Action"] == ""
     assert suggested["Action"] == "SKIP/SET"
     assert suggested["Notes"] == ""
-    assert suggested["Tolerance"] == "MISSING\n(5%)"
+    assert suggested["Tolerance"] == "HEURISTIC\n(5%)"
     assert suggested["Power"] == "MISSING"
 
 
@@ -606,11 +606,11 @@ def test_project_mode_suggests_package_and_domain_defaults() -> None:
     suggested_rows = [row for row in written if row["RowType"] == "SUGGESTED"]
 
     r1_suggested = next(row for row in suggested_rows if row["RefDes"] == "R1")
-    assert r1_suggested["Tolerance"] == "MISSING\n(5%)"
-    assert r1_suggested["Power"] == "MISSING\n(100mW)"
+    assert r1_suggested["Tolerance"] == "HEURISTIC\n(5%)"
+    assert r1_suggested["Power"] == "HEURISTIC\n(100mW)"
 
     c1_suggested = next(row for row in suggested_rows if row["RefDes"] == "C1")
-    assert c1_suggested["Voltage"] == "MISSING\n(25V)"
+    assert c1_suggested["Voltage"] == "HEURISTIC\n(25V)"
 
 
 def test_project_mode_includes_merge_mismatch_diagnostics_in_notes() -> None:
@@ -699,7 +699,7 @@ def test_project_mode_matchability_exact_for_supplier_identifier_and_led_color()
     assert "D1: LCSC part number used" in current["Notes"]
     assert suggested["Action"] == "SKIP/SET"
     assert suggested["Notes"] == ""
-    assert suggested["Wavelength"] == "MISSING\n(620-750nm)"
+    assert suggested["Wavelength"] == "HEURISTIC\n(620-750nm)"
     assert "Debug" not in current
 
 
@@ -992,7 +992,7 @@ def test_project_mode_led_named_color_aliases_map_to_expected_ranges(
 
     _fieldnames, written = _build_project_couplet_rows(rows, component_context=context)
     suggested = next(row for row in written if row["RowType"] == "SUGGESTED")
-    assert suggested["Wavelength"] == f"MISSING\n({expected_wavelength})"
+    assert suggested["Wavelength"] == f"HEURISTIC\n({expected_wavelength})"
 
 
 # ---------------------------------------------------------------------------
