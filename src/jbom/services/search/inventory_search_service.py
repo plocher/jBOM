@@ -24,7 +24,11 @@ from jbom.config.defaults import DefaultsConfig, get_defaults
 from jbom.config.fabricators import FabricatorConfig
 from jbom.config.suppliers import resolve_supplier_by_id
 from jbom.services.search.cache import normalize_query
-from jbom.services.search.filtering import SearchSorter, apply_default_filters
+from jbom.services.search.filtering import (
+    SearchFilter,
+    SearchSorter,
+    apply_default_filters,
+)
 from jbom.services.search.models import SearchResult
 from jbom.services.search.provider import SearchProvider
 from jbom.services.sophisticated_inventory_matcher import (
@@ -443,7 +447,16 @@ class InventorySearchService:
                     limit=provider_limit,
                 )
                 filtered = apply_default_filters(raw_results)
-                ranked_by_query[key] = SearchSorter.rank(filtered)
+                filtered = SearchFilter.filter_by_query(
+                    filtered,
+                    provider_query,
+                    category=(representative_item.category or ""),
+                )
+                ranked_by_query[key] = SearchSorter.rank(
+                    filtered,
+                    category=(representative_item.category or ""),
+                    query=provider_query,
+                )
             except Exception as exc:
                 error_by_query[key] = str(exc)
 
