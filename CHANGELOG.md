@@ -1,6 +1,59 @@
 # CHANGELOG
 
 
+## v6.44.2 (2026-03-17)
+
+### Bug Fixes
+
+* fix(annotate): parse s/p merge notation with current-row fallback
+
+Handle s:/p: repairs values in any order, preserve unspecified side from CURRENT baseline, and map bare values to schematic updates.
+
+Add parameterized annotate tests for the five requested merge-notation scenarios and keep focused audit/formatting suites green.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`c56c158`](https://github.com/plocher/jBOM/commit/c56c158775be85b306a38f3c8a293dba461a849a))
+
+* fix: dedupe mismatch notes and parse s/p repair values
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`bf92e9f`](https://github.com/plocher/jBOM/commit/bf92e9fa03ee3b1472f00e4fbc29436a3376cb19))
+
+* fix: render merge mismatches inline and count them as warnings
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`2c37b2d`](https://github.com/plocher/jBOM/commit/2c37b2d77767d049725ddaf88ad5e288cb9c6c5f))
+
+* fix: mark hinted suggestions as heuristic and count severity per field
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`b4ebbbd`](https://github.com/plocher/jBOM/commit/b4ebbbddf3e3d9c15a9018e594e3f3862ea797dd))
+
+* fix: demote heuristic-sufficient audit gaps to info
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`24975ac`](https://github.com/plocher/jBOM/commit/24975ac557e36206a467c391a1b517d16db10117))
+
+* fix: shorten generic audit notes when heuristics are sufficient
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`067193b`](https://github.com/plocher/jBOM/commit/067193bb4288d987c4093b1e5faae460dc0a8303))
+
+* fix: remove hardcoded supplier fallback anchor fields
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`08ef534`](https://github.com/plocher/jBOM/commit/08ef534aed803d3ba566b79965987c31c2b6c34d))
+
+* fix: gate supplier-specific audit notes on supplier pass
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`1ebcb51`](https://github.com/plocher/jBOM/commit/1ebcb514bbd8a3566615b1fb66fbf60b84cacb44))
+
+* fix: include LCSC in project audit console columns
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`b2828e2`](https://github.com/plocher/jBOM/commit/b2828e276ac8c9cab1b21f6666520ea3c5d9f2ac))
+
+* fix: keep explicit newline values bounded in console cells
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`053d823`](https://github.com/plocher/jBOM/commit/053d82340cca5df9b7fc5c81999424c6058e04a5))
+
+* fix: complete post-191 audit console regressions
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`63105ff`](https://github.com/plocher/jBOM/commit/63105ffeab70c988943d771d9174e15b6e24f854))
+
+
 ## v6.44.1 (2026-03-16)
 
 ### Bug Fixes
