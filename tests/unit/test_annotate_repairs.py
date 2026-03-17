@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import csv
 from pathlib import Path
+import pytest
 
 from jbom.services.annotation_service import (
     annotate_from_repairs,
@@ -221,20 +222,41 @@ def test_repairs_wide_missing_placeholders_are_not_applied(tmp_path: Path) -> No
     assert '"Value" "10K"' in updated
 
 
-def test_repairs_wide_merge_notation_prefers_pcb_value(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    ("suggested_value", "expected_value"),
+    [
+        ("p:something\\ns:else", "else"),
+        ("s:else\\np:something", "else"),
+        ("p:something", "sss"),
+        ("s:else", "else"),
+        ("something", "something"),
+    ],
+)
+def test_repairs_wide_merge_notation_uses_current_row_fallbacks(
+    tmp_path: Path,
+    suggested_value: str,
+    expected_value: str,
+) -> None:
     sch = tmp_path / "proj.kicad_sch"
-    _write_schematic(sch, value="10K")
+    _write_schematic(sch, value="sss")
     repairs = tmp_path / "report.csv"
     _write_repairs(
         repairs,
         [
             {
+                "RowType": "CURRENT",
+                "UUID": "uuid-r1",
+                "RefDes": "R1",
+                "Value": "s:sss\\np:ppp",
+                "Action": "",
+            },
+            {
                 "RowType": "SUGGESTED",
                 "UUID": "uuid-r1",
                 "RefDes": "R1",
-                "Value": "s:10K\np:Railroad-Green",
+                "Value": suggested_value,
                 "Action": "SET",
-            }
+            },
         ],
     )
 
@@ -243,7 +265,7 @@ def test_repairs_wide_merge_notation_prefers_pcb_value(tmp_path: Path) -> None:
     assert result.failed == 0
     assert result.applied == 1
     updated = sch.read_text(encoding="utf-8")
-    assert '"Value" "Railroad-Green"' in updated
+    assert f'"Value" "{expected_value}"' in updated
 
 
 def test_repairs_non_set_actions_are_skipped(tmp_path: Path) -> None:
