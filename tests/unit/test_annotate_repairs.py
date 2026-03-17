@@ -221,6 +221,31 @@ def test_repairs_wide_missing_placeholders_are_not_applied(tmp_path: Path) -> No
     assert '"Value" "10K"' in updated
 
 
+def test_repairs_wide_merge_notation_prefers_pcb_value(tmp_path: Path) -> None:
+    sch = tmp_path / "proj.kicad_sch"
+    _write_schematic(sch, value="10K")
+    repairs = tmp_path / "report.csv"
+    _write_repairs(
+        repairs,
+        [
+            {
+                "RowType": "SUGGESTED",
+                "UUID": "uuid-r1",
+                "RefDes": "R1",
+                "Value": "s:10K\np:Railroad-Green",
+                "Action": "SET",
+            }
+        ],
+    )
+
+    result = annotate_from_repairs(repairs, [sch], dry_run=False)
+
+    assert result.failed == 0
+    assert result.applied == 1
+    updated = sch.read_text(encoding="utf-8")
+    assert '"Value" "Railroad-Green"' in updated
+
+
 def test_repairs_non_set_actions_are_skipped(tmp_path: Path) -> None:
     sch = tmp_path / "proj.kicad_sch"
     original = sch.read_text(encoding="utf-8") if sch.exists() else ""
