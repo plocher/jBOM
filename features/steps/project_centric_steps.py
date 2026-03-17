@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from behave import given, then
+import yaml
 
 
 def _write_schematic_local(
@@ -596,15 +597,22 @@ def then_inventory_file_contains_value(context, value: str) -> None:
 # -------------------------
 
 
-def _supplier_display_name(supplier_id: str) -> str:
+def _load_builtin_supplier_profile(supplier_id: str) -> dict[str, Any]:
+    """Load the built-in supplier profile YAML for a supplier id."""
     sid = (supplier_id or "").strip().lower()
-    if sid == "lcsc":
-        return "LCSC"
-    if sid == "mouser":
-        return "Mouser Part Number"
-    if sid == "generic":
-        return "Supplier"
-    return sid.upper() if sid else "Supplier"
+    repo_root = Path(__file__).resolve().parents[2]
+    profile_path = (
+        repo_root / "src" / "jbom" / "config" / "suppliers" / (f"{sid}.supplier.yaml")
+    )
+    if not profile_path.exists():
+        raise AssertionError(f"Unknown supplier profile fixture source: {sid}")
+
+    data = yaml.safe_load(profile_path.read_text(encoding="utf-8")) or {}
+    if not isinstance(data, dict):
+        raise AssertionError(
+            f"Built-in supplier profile is not a YAML mapping: {profile_path}"
+        )
+    return data
 
 
 def _write_supplier_profile(
@@ -613,41 +621,45 @@ def _write_supplier_profile(
     supplier_id: str,
     results: list[dict[str, Any]] | None = None,
 ) -> None:
-    """Write a null_api supplier profile (with optional fixture results)."""
+    """Write a supplier profile using built-in metadata + null_api fixtures."""
     import json as _json
 
     sid = (supplier_id or "").strip().lower()
-    display_name = _supplier_display_name(sid)
+    profile_data = _load_builtin_supplier_profile(sid)
     jbom_dir = Path(context.sandbox_root) / ".jbom"
     jbom_dir.mkdir(exist_ok=True)
-
-    fixtures_block = ""
+    provider_cfg: dict[str, Any] = {"type": "null_api"}
     if results is not None:
         fixture_file = jbom_dir / f"{sid}_results.json"
         fixture_file.write_text(_json.dumps(results), encoding="utf-8")
-        fixtures_block = f"      fixtures: {fixture_file}\n"
+        provider_cfg["fixtures"] = str(fixture_file)
+
+    search_cfg = profile_data.get("search")
+    if not isinstance(search_cfg, dict):
+        search_cfg = {}
+    search_cfg = dict(search_cfg)
+    search_cfg["providers"] = [provider_cfg]
+    profile_data["search"] = search_cfg
 
     (jbom_dir / f"{sid}.supplier.yaml").write_text(
-        f'id: {sid}\nname: "{sid.capitalize()}"\n'
-        "field_synonyms:\n"
-        "  supplier_pn:\n"
-        f'    display_name: "{display_name}"\n'
-        "    synonyms: []\n"
-        "search:\n"
-        "  providers:\n"
-        "    - type: null_api\n"
-        f"{fixtures_block}",
+        yaml.safe_dump(profile_data, sort_keys=False),
         encoding="utf-8",
     )
 
 
 def _table_to_supplier_results(context) -> list[dict[str, Any]]:
     """Convert a Gherkin table into null_api SearchResult fixtures."""
+    supplier_id = (
+        str(
+            getattr(context, "_active_supplier_profile_id_for_catalog", "generic")
+        ).strip()
+        or "generic"
+    )
     return [
         {
             "manufacturer": r.get("manufacturer", ""),
             "mpn": r.get("mpn", ""),
-            "distributor": "generic",
+            "distributor": supplier_id,
             "distributor_part_number": r.get("distributor_pn", ""),
             "description": r.get("description", ""),
             "datasheet": "",
@@ -683,6 +695,7 @@ def given_a_supplier_catalog(context) -> None:
     Table columns: distributor_pn, manufacturer, mpn, stock_quantity, price,
     description (all optional except distributor_pn).
     """
+    context._active_supplier_profile_id_for_catalog = "generic"
     _write_supplier_profile(
         context,
         supplier_id="generic",
@@ -693,6 +706,7 @@ def given_a_supplier_catalog(context) -> None:
 @given('a supplier profile "{supplier_id}" with catalog that contains:')
 def given_supplier_profile_with_catalog(context, supplier_id: str) -> None:
     """Create a named supplier profile backed by table-driven null_api fixtures."""
+    context._active_supplier_profile_id_for_catalog = supplier_id
     _write_supplier_profile(
         context,
         supplier_id=supplier_id,
