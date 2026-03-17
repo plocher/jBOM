@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v6.46.0 (2026-03-17)
+
+### Features
+
+* feat(inventory): add one-run multi-supplier enrichment workflow
+
+Implement issue #197 by allowing repeatable --supplier usage in jbom inventory with additive multi-supplier enrichment semantics, supplier-local --limit handling, and global per-IPN priority assignment for added rows.
+
+Also updates inventory Behave coverage and requirements/user-story docs, including gender-neutral wording refinements in docs/dev/requirements/*.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`901c2ab`](https://github.com/plocher/jBOM/commit/901c2ab6c82f5bc80837c0d8a9b9b7794ce0d589))
+
+
 ## v6.45.0 (2026-03-17)
 
 ### Features
