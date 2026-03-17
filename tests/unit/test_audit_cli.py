@@ -435,7 +435,7 @@ def test_project_summary_counts_only_visible_quality_fields(
         handle_audit(args)
 
     captured = capsys.readouterr()
-    assert "Audit complete: 1 warning(s)." in captured.err
+    assert "Audit complete: 1 info(s)." in captured.err
 
 
 def test_inventory_output_dash_writes_csv_to_stdout(
