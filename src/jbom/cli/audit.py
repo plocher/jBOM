@@ -349,7 +349,11 @@ def _write_project_report(
     supplier_id: str,
 ) -> tuple[int, int, int]:
     """Write project-mode report as wide CURRENT/SUGGESTED couplets."""
-    visible_counts = _count_visible_project_findings(report.rows)
+    visible_counts = _count_visible_project_findings(
+        report.rows,
+        component_context=component_context,
+        supplier_id=supplier_id,
+    )
     fieldnames, rows = _build_project_couplet_rows(
         report.rows,
         component_context=component_context,
@@ -1136,16 +1140,42 @@ def _write_csv_rows(
 
 def _count_visible_project_findings(
     report_rows: list[AuditRow],
+    *,
+    component_context: dict[tuple[str, str, str, str], dict[str, str]],
+    supplier_id: str,
 ) -> tuple[int, int, int]:
     """Count severities for findings that are rendered in project couplet output."""
+    defaults = get_defaults()
+    supplier_identifier_fields = _resolve_supplier_identifier_fields(supplier_id)
     error_count = 0
     warn_count = 0
     info_count = 0
+    grouped_best_practice: OrderedDict[
+        tuple[str, str, str, str], dict[str, Any]
+    ] = OrderedDict()
     for row in report_rows:
         if row.check_type == CheckType.QUALITY_ISSUE:
             field_name = (row.field or "").strip()
             if not field_name or field_name in _PROJECT_SUPPLY_CHAIN_FIELDS:
                 continue
+            if field_name in _PROJECT_REQUIRED_FIELDS:
+                if row.severity == Severity.ERROR:
+                    error_count += 1
+                elif row.severity == Severity.WARN:
+                    warn_count += 1
+                else:
+                    info_count += 1
+                continue
+            key = (row.project_path, row.ref_des, row.uuid, row.category)
+            group = grouped_best_practice.setdefault(
+                key,
+                {
+                    "missing_fields": [],
+                },
+            )
+            if field_name not in group["missing_fields"]:
+                group["missing_fields"].append(field_name)
+            continue
         elif row.check_type != CheckType.MERGE_MISMATCH:
             continue
 
@@ -1155,6 +1185,45 @@ def _count_visible_project_findings(
             warn_count += 1
         else:
             info_count += 1
+    for (project_path, ref_des, uuid, category), group in grouped_best_practice.items():
+        context = component_context.get((project_path, ref_des, uuid, category), {})
+        suggested_row: dict[str, str] = {}
+        for field_name in group["missing_fields"]:
+            suggested_row[field_name] = _resolve_project_default_suggestion(
+                category=category,
+                field_name=field_name,
+                context=context,
+                defaults=defaults,
+            )
+        em_matchability, _em_basis, _em_debug = _classify_em_matchability(
+            category=category,
+            context=context,
+            missing_fields=group["missing_fields"],
+            suggested_row=suggested_row,
+            include_debug=False,
+        )
+        (
+            supplier_matchability,
+            _supplier_basis,
+            _supplier_debug,
+        ) = _classify_supplier_matchability(
+            context=context,
+            supplier_id=supplier_id,
+            supplier_identifier_fields=supplier_identifier_fields,
+            include_debug=False,
+        )
+        heuristics_sufficient = em_matchability in {
+            _PROJECT_EM_MATCH_EXACT,
+            _PROJECT_EM_MATCH_HEURISTIC,
+        } or supplier_matchability in {
+            _PROJECT_SUPPLIER_EXACT_SPN,
+            _PROJECT_SUPPLIER_MPN_CANDIDATE,
+        }
+        if heuristics_sufficient:
+            info_count += len(group["missing_fields"])
+        else:
+            warn_count += len(group["missing_fields"])
+
     return error_count, warn_count, info_count
 
 
