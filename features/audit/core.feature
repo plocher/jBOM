@@ -32,7 +32,7 @@ Feature: Audit command core behavior
       | uuid-r1 | R1        | 10K   | Resistor_SMD:R_0603  | 0603    | Device:R |
     When I run jbom command "audit ."
     Then the command should succeed
-    And the output should contain "Missing attributes: Tolerance, Power"
+    And the output should contain "heuristics are sufficient"
     And the output should contain "5%"
     And the output should contain "100mW"
     And the output should not contain "Manufacturer"
