@@ -73,6 +73,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   only enforces strict core-attribute matching when that core attribute is
   present in the provider results, preserving strict package matching for sparse
   Mouser payloads.
+- `jbom inventory --supplier` enrichment now applies query-aware filtering and
+  ranking context (query + category) in its keyword search path, aligning
+  inventory supplier-assignment behavior with `jbom search` relevance logic for
+  issue #182 workflows.
 
 ### Migration note
 - **Stored ComponentIDs may change** for `led`, `cap`, `ind`, and `res` components

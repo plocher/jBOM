@@ -445,3 +445,58 @@ def test_inventory_search_service_uses_item_aware_lcsc_dispatch(monkeypatch) -> 
     assert [r.inventory_item.ipn for r in records] == ["R10K-1", "R10K-2"]
     assert all(r.candidates for r in records)
     assert search_for_inventory_item.call_count == 1
+
+
+def test_inventory_search_service_passes_query_and_category_to_filter_and_rank(
+    monkeypatch,
+) -> None:
+    calls: dict[str, tuple[str, str, int]] = {}
+
+    def _filter_by_query(
+        results: list[SearchResult], query: str, *, category: str = ""
+    ) -> list[SearchResult]:
+        calls["filter"] = (query, category, len(results))
+        return list(results)
+
+    def _rank(
+        results: list[SearchResult], *, category: str = "", query: str = ""
+    ) -> list[SearchResult]:
+        calls["rank"] = (query, category, len(results))
+        return list(results)
+
+    monkeypatch.setattr(
+        "jbom.services.search.inventory_search_service.SearchFilter.filter_by_query",
+        staticmethod(_filter_by_query),
+    )
+    monkeypatch.setattr(
+        "jbom.services.search.inventory_search_service.SearchSorter.rank",
+        staticmethod(_rank),
+    )
+
+    provider = Mock(spec=SearchProvider)
+    provider.search_for_item = Mock(
+        return_value=[
+            _sr(
+                description="10K 0603 resistor",
+                category="Thick Film Resistors - SMD",
+                attributes={"Package": "0603"},
+            )
+        ]
+    )
+
+    svc = InventorySearchService(provider, candidate_limit=1, request_delay_seconds=0.0)
+    item = _inv_item(
+        ipn="R10K-CTX",
+        category="RES",
+        value="10K",
+        package="0603",
+        tolerance="1%",
+    )
+
+    records = svc.search([item])
+    assert provider.search_for_item.call_count == 1
+    assert records and records[0].candidates
+
+    expected_query = svc.build_query(item)
+    assert calls["filter"] == (expected_query, "RES", 1)
+    assert calls["rank"] == (expected_query, "RES", 1)
