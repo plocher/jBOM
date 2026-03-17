@@ -655,7 +655,7 @@ def _build_project_couplet_rows(
             current_row["Debug"] = debug_details
             suggested_row["Debug"] = debug_details
         notes_segments = [audit_summary]
-        if group["mismatch_notes"]:
+        if group["mismatch_notes"] and not group["mismatch_values"]:
             notes_segments.append(
                 "Merge mismatch diagnostics: " + " | ".join(group["mismatch_notes"])
             )

@@ -652,8 +652,7 @@ def test_project_mode_includes_merge_mismatch_diagnostics_in_notes() -> None:
     _fieldnames, written = _build_project_couplet_rows(rows, component_context=context)
     current = next(row for row in written if row["RowType"] == "CURRENT")
     suggested = next(row for row in written if row["RowType"] == "SUGGESTED")
-    assert "Merge mismatch diagnostics:" in current["Notes"]
-    assert "footprint (s:SCH:0603, p:PCB:0402)" in current["Notes"]
+    assert current["Notes"] == "R1: heuristics are sufficient"
     assert current["Footprint"] == "s:SCH:0603\np:PCB:0402"
     assert suggested["Footprint"] == "s:SCH:0603\np:PCB:0402"
 

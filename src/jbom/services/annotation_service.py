@@ -434,19 +434,44 @@ def _extract_row_updates(row: _RepairsRowRaw) -> list[tuple[str, str]]:
     if has_legacy_columns:
         if not field_name:
             return []
-        if not approved_value or approved_value.upper() == "MISSING":
+        normalized_value = _normalize_repair_update_value(approved_value)
+        if not normalized_value or normalized_value.upper() == "MISSING":
             return []
-        return [(field_name, approved_value)]
+        return [(field_name, normalized_value)]
 
     updates: list[tuple[str, str]] = []
     for col, val in row.cells.items():
         if col in _WIDE_REPAIRS_METADATA_COLUMNS:
             continue
-        cell_value = (val or "").strip()
+        cell_value = _normalize_repair_update_value(val)
         if not cell_value or cell_value.upper() == "MISSING":
             continue
         updates.append((col, cell_value))
     return updates
+
+
+def _normalize_repair_update_value(raw_value: str) -> str:
+    """Normalize a repairs update value, preferring pcb value from s:/p: merge notation."""
+    text = str(raw_value or "").strip()
+    if not text:
+        return ""
+    if "\n" not in text:
+        return text
+
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    source_values: dict[str, str] = {}
+    for line in lines:
+        if ":" not in line:
+            continue
+        source, value = line.split(":", 1)
+        source_key = source.strip().lower()
+        if source_key in {"s", "p"}:
+            source_values[source_key] = value.strip()
+    if "p" in source_values:
+        return source_values["p"]
+    if "s" in source_values:
+        return source_values["s"]
+    return text
 
 
 def _get_symbol_uuid(symbol: list[Any]) -> str:
