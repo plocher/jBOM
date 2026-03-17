@@ -77,6 +77,7 @@ _PROJECT_SUPPLY_CHAIN_FIELDS: set[str] = {
 }
 _PROJECT_SUGGESTED_ACTION = "SKIP/SET"
 _PROJECT_MISSING_VALUE = "MISSING"
+_PROJECT_HEURISTIC_VALUE = "HEURISTIC"
 _PROJECT_MATCH_EXACT_THRESHOLD = _AUDIT_MATCH_EXACT_THRESHOLD
 _PROJECT_EM_MATCH_EXACT = "EM_EXACT"
 _PROJECT_EM_MATCH_HEURISTIC = "EM_HEURISTIC"
@@ -760,7 +761,7 @@ def _format_project_suggested_cell(suggestion: str) -> str:
     normalized = str(suggestion or "").strip()
     if not _is_meaningful_match_value(normalized):
         return _PROJECT_MISSING_VALUE
-    return f"{_PROJECT_MISSING_VALUE}\n({normalized})"
+    return f"{_PROJECT_HEURISTIC_VALUE}\n({normalized})"
 
 
 def _resolve_project_default_suggestion(
@@ -1146,7 +1147,6 @@ def _count_visible_project_findings(
 ) -> tuple[int, int, int]:
     """Count severities for findings that are rendered in project couplet output."""
     defaults = get_defaults()
-    supplier_identifier_fields = _resolve_supplier_identifier_fields(supplier_id)
     error_count = 0
     warn_count = 0
     info_count = 0
@@ -1195,34 +1195,12 @@ def _count_visible_project_findings(
                 context=context,
                 defaults=defaults,
             )
-        em_matchability, _em_basis, _em_debug = _classify_em_matchability(
-            category=category,
-            context=context,
-            missing_fields=group["missing_fields"],
-            suggested_row=suggested_row,
-            include_debug=False,
-        )
-        (
-            supplier_matchability,
-            _supplier_basis,
-            _supplier_debug,
-        ) = _classify_supplier_matchability(
-            context=context,
-            supplier_id=supplier_id,
-            supplier_identifier_fields=supplier_identifier_fields,
-            include_debug=False,
-        )
-        heuristics_sufficient = em_matchability in {
-            _PROJECT_EM_MATCH_EXACT,
-            _PROJECT_EM_MATCH_HEURISTIC,
-        } or supplier_matchability in {
-            _PROJECT_SUPPLIER_EXACT_SPN,
-            _PROJECT_SUPPLIER_MPN_CANDIDATE,
-        }
-        if heuristics_sufficient:
-            info_count += len(group["missing_fields"])
-        else:
-            warn_count += len(group["missing_fields"])
+        for field_name in group["missing_fields"]:
+            suggestion = str(suggested_row.get(field_name, "")).strip()
+            if _is_meaningful_match_value(suggestion):
+                info_count += 1
+            else:
+                warn_count += 1
 
     return error_count, warn_count, info_count
 
