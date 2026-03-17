@@ -1,5 +1,90 @@
 # Phase 1 Work Log: Extract Sophisticated Matcher
 
+## 2026-03-17
+
+### Session: #195 omnibus slicing + supervisor/delegate coordination refresh
+**Goal**: minimize slice count by grouping like-with-like, then delegate rote evidence work while preserving supervisor context.
+
+**Created child issues**:
+- `#199` Slice 1 — parity matrix + diagnostics baseline
+- `#200` Slice 2 — unified relevance contract + category weighting expansion
+- `#201` Slice 3 — shared normalization utilities + provider DRY pass
+
+**Execution order**: `#199 -> #200 -> #201`
+
+**Umbrella coordination comment**:
+- `https://github.com/plocher/jBOM/issues/195#issuecomment-4078650362`
+
+### Delegate bootstrap prompt A (Issue #199)
+```text
+You are implementing delegated activity A for jBOM issue #199 (parent #195).
+
+Goal:
+- Generate a cross-supplier parity matrix and diagnostics evidence artifacts, with deterministic/test-fixture-friendly execution.
+
+Constraints:
+- Do not change ranking policy semantics unless strictly required for diagnostics exposure.
+- Prefer deterministic fixture-based runs over live supplier APIs.
+- Keep changes scoped to evidence generation + diagnostics plumbing.
+
+Tasks:
+1) Identify existing search tests/fixtures and add matrix generation coverage for RES/CAP/IND/LED + representative query intents.
+2) Add/extend diagnostics output so ranking/filter decisions are inspectable in tests.
+3) Add at least one regression test asserting diagnostics contract shape.
+4) Document one command to regenerate matrix artifacts.
+
+Expected output back to supervisor:
+- PR URL
+- artifact locations/commands
+- concise findings summary (top parity gaps by impact)
+```
+
+### Delegate bootstrap prompt B (Issue #200)
+```text
+You are implementing delegated activity B for jBOM issue #200 (parent #195, depends on #199 evidence baseline).
+
+Goal:
+- Expand category/query-intent corpus and produce baseline-vs-candidate parity delta evidence for unified relevance contract work.
+
+Constraints:
+- Use #199 matrix/diagnostics artifacts as baseline.
+- Keep fixture-driven deterministic tests.
+- Avoid broad refactors unrelated to contract/corpus evidence.
+
+Tasks:
+1) Add/extend regression corpus for non-passive categories (LED + at least one more class) while retaining passive coverage.
+2) Run baseline-vs-candidate comparisons and capture deltas.
+3) Summarize regressions/improvements with evidence, highlighting contract mismatches.
+
+Expected output back to supervisor:
+- PR URL
+- corpus additions
+- delta report summary (improved, unchanged, regressed buckets)
+```
+
+### Delegate bootstrap prompt C (Issue #201)
+```text
+You are implementing delegated activity C for jBOM issue #201 (parent #195, depends on #200 contract alignment).
+
+Goal:
+- Perform mechanical migration to shared normalization utilities and gather category optimization rerun evidence.
+
+Constraints:
+- Respect relevance contract established in #200.
+- Keep semantic behavior stable; focus on mechanical DRY migration.
+- Use existing matrix corpus for regression checks.
+
+Tasks:
+1) Migrate provider-specific normalization/extraction callsites to shared utilities.
+2) Remove duplicated provider glue where behavior-equivalent.
+3) Re-run category matrix checks and report any behavioral drift.
+
+Expected output back to supervisor:
+- PR URL
+- list of migrated callsites/modules
+- regression/parity rerun summary with any drift flagged
+```
+
 ## 2026-02-16
 
 ### Session 1: Setup

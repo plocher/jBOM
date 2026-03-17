@@ -22,5 +22,16 @@ See open GitHub issues for the current backlog:
 gh issue list --state open
 ```
 
+## Active omnibus coordination: #195
+- Parent umbrella: `#195 meta(search): omnibus backlog for supplier parity, DRY refactor, and category expansion`
+- Grouped execution slices:
+  - `#199` Slice 1 — parity matrix + diagnostics baseline
+  - `#200` Slice 2 — unified relevance contract + category weighting expansion
+  - `#201` Slice 3 — shared normalization utilities + provider DRY pass
+- Sequencing: `#199 -> #200 -> #201`
+- Supervisor/delegate prompts and handoff contract are tracked in:
+  - `docs/dev/workflow/WORK_LOG.md` (session entry 2026-03-17)
+  - `https://github.com/plocher/jBOM/issues/195#issuecomment-4078650362`
+
 ## Development workflow
 See `GIT_WORKFLOW.md` and `HUMAN_WORKFLOW.md` in this directory.
