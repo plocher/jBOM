@@ -1,6 +1,22 @@
 # CHANGELOG
 
 
+## v6.45.0 (2026-03-17)
+
+### Features
+
+* feat(search): improve Mouser result relevance parity
+
+Address issue #182 by improving Mouser search parsing/filtering behavior when ProductAttributes are sparse.
+
+- normalize common Mouser attribute names to canonical keys
+- derive package/value/tolerance clues from description text as fallback
+- apply strict core-attribute filtering only when core attrs are observed
+- add regressions for sparse-core strict package behavior and Mouser fallback extraction
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`d545f04`](https://github.com/plocher/jBOM/commit/d545f04620de51f6013888576652f0186f8e31d5))
+
+
 ## v6.44.2 (2026-03-17)
 
 ### Bug Fixes
