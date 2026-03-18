@@ -268,17 +268,6 @@ def _summarize_parity_gaps(
             )
             continue
 
-        mouser_mpn = str(mouser_summary.get("top_mpn", "")).strip().upper()
-        lcsc_mpn = str(lcsc_summary.get("top_mpn", "")).strip().upper()
-        if mouser_mpn and lcsc_mpn and mouser_mpn != lcsc_mpn:
-            gaps.append(
-                {
-                    "intent_id": str(intent.get("intent_id", "")),
-                    "impact": "medium",
-                    "reason": "top_result_mpn_mismatch",
-                }
-            )
-
     impact_priority = {"high": 0, "medium": 1, "low": 2}
     return sorted(
         gaps,

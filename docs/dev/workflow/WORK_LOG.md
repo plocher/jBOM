@@ -83,6 +83,23 @@ Expected output back to supervisor:
 - PR URL
 - list of migrated callsites/modules
 - regression/parity rerun summary with any drift flagged
+
+## 2026-03-18
+
+### Session: #200 contract clarification (top-MPN parity criterion)
+**Goal**: determine whether cross-supplier top-MPN mismatch is a meaningful parity failure criterion for current search contract work.
+
+**Decision**:
+- Remove `top_result_mpn_mismatch` from parity-gap failure criteria for #200 scope.
+- Treat top-MPN movement as observability-only (pipeline churn canary), not pass/fail quality signal.
+- Keep actionable parity emphasis on `supplier_success_mismatch` and related hard-failure conditions.
+
+**Coordination updates**:
+- Posted alignment comment to #200: `https://github.com/plocher/jBOM/issues/200#issuecomment-4079405553`
+- Posted umbrella note to #195: `https://github.com/plocher/jBOM/issues/195#issuecomment-4079405606`
+
+**Next**:
+- Deep-dive remaining high-impact LED mismatch (`mouser` success vs `lcsc` no ranked result) and map options to #200 acceptance criteria.
 ```
 
 ## 2026-02-16
