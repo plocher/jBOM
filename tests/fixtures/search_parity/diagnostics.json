@@ -1,0 +1,3808 @@
+{
+  "contract_version": "1.0",
+  "intents": [
+    {
+      "category": "RES",
+      "intent_id": "RES_10K_0603",
+      "query": "10k resistor 0603",
+      "suppliers": {
+        "lcsc": {
+          "diagnostics": {
+            "category": "RES",
+            "contract_version": "1.0",
+            "default_filter_decisions": [
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "lcsc:C25804"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "lcsc:C55555"
+              }
+            ],
+            "default_filtered_count": 2,
+            "final_result_ids": [
+              "lcsc:C25804",
+              "lcsc:C55555"
+            ],
+            "query": "10k resistor 0603",
+            "query_filter_decisions": [
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "lcsc:C25804"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "lcsc:C55555"
+              }
+            ],
+            "query_filtered_count": 2,
+            "rank_decisions": [
+              {
+                "canonical_value": 10000.0,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.004,
+                "rank": 1,
+                "relevance_score": 17,
+                "result_id": "lcsc:C25804"
+              },
+              {
+                "canonical_value": 10000.0,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.0035,
+                "rank": 2,
+                "relevance_score": 0,
+                "result_id": "lcsc:C55555"
+              }
+            ],
+            "ranked_count": 2,
+            "raw_count": 2
+          },
+          "fixture": "lcsc/keyword_resistor_10k_0603.json",
+          "summary": {
+            "default_filtered_count": 2,
+            "query_filtered_count": 2,
+            "ranked_count": 2,
+            "raw_count": 2,
+            "success": true,
+            "top_distributor_part_number": "C25804",
+            "top_manufacturer": "Yageo",
+            "top_mpn": "RC0603FR-0710KL",
+            "top_price": "0.004",
+            "top_result_id": "lcsc:C25804",
+            "top_stock_quantity": 236000
+          }
+        },
+        "mouser": {
+          "diagnostics": {
+            "category": "RES",
+            "contract_version": "1.0",
+            "default_filter_decisions": [
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:594-MCT06030C1022FP5"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:594-MCT0603MD1052BP5"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:279-CRG0603F1M0/10"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:594-MCT0603HC1002FP1"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:594-MCT06030D1002BPW"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:71-PTN0603E1002BST0"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:71-CHPHT0603K1002FGT"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:652-CHP0603AFX1003EL"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:71-PAT0603E1002BST1"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:594-MCT0603HC1002FP5"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:594-MCT06030D1072BP1"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:71-PNM0603E1002BST1"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:72-P0603E1002BNT"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:71-PTN0603E1002BBTF"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:303-0603WAD1002T5E"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:303-0603WAJ0103TCE"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:303-0603SAF1002P5E"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:303-0603WGF1002T5E"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:594-MCT0603MG1002BP5"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:594-MCT06030F1002BP5"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:652-CRT0603ADY-1002E"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:594-NTCS0603E3103FLT"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:594-MCT06030C1002FPW"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:652-CR0603AFX1002EAS"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:594-MCT06030C1002FP5"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:279-CRG0603F22K/10"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:594-MCT06030E1002BP1"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:652-CRT0603FY1002ELF"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:71-PLT0603Z1002AST5"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:652-CRT0603FZ1002ELF"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:652-CRT0603BY1002ELF"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:652-CR0603FX-1002ELF"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:652-CRT0603FX1002ELF"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:594-NTCS0603E3103FMT"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:652-CRT0603BY1002EAS"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:71-PHP00603E1002BST1"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:652-CHP0603AFX1002EL"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:652-CMP0603-FX-1002L"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:594-2381-615-36103"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:71-PATT0603E1002BGT1"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:594-MCT06030D1022BP5"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:594-MCT06030D1002BP5"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:652-CR0603FX-1072ELF"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:652-CR0603FX-1052ELF"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:594-MCT0603MD1002BP1"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:871-B57321V2103H60"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:594-MCT0603PD1002DP5"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:71-RCG06034K99FKEA"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:652-CMP0603AFX-1002L"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:594-MCT0603MC1002FP5"
+              }
+            ],
+            "default_filtered_count": 50,
+            "final_result_ids": [
+              "mouser:652-CR0603AFX1002EAS",
+              "mouser:594-MCT06030C1002FP5",
+              "mouser:594-MCT06030C1002FPW",
+              "mouser:594-MCT0603MC1002FP5",
+              "mouser:652-CRT0603BY1002EAS",
+              "mouser:594-MCT0603PD1002DP5",
+              "mouser:594-MCT06030D1002BPW",
+              "mouser:594-MCT0603MD1002BP1",
+              "mouser:594-MCT06030E1002BP1",
+              "mouser:71-PAT0603E1002BST1",
+              "mouser:594-MCT06030F1002BP5",
+              "mouser:594-MCT0603MG1002BP5"
+            ],
+            "query": "10k resistor 0603",
+            "query_filter_decisions": [
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:594-MCT06030C1022FP5"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:594-MCT0603MD1052BP5"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:279-CRG0603F1M0/10"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:594-MCT0603HC1002FP1"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:594-MCT06030D1002BPW"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:71-PTN0603E1002BST0"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:71-CHPHT0603K1002FGT"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:652-CHP0603AFX1003EL"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:71-PAT0603E1002BST1"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:594-MCT0603HC1002FP5"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:594-MCT06030D1072BP1"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:71-PNM0603E1002BST1"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:72-P0603E1002BNT"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:71-PTN0603E1002BBTF"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:303-0603WAD1002T5E"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:303-0603WAJ0103TCE"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:303-0603SAF1002P5E"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:303-0603WGF1002T5E"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:594-MCT0603MG1002BP5"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:594-MCT06030F1002BP5"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:652-CRT0603ADY-1002E"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:594-NTCS0603E3103FLT"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:594-MCT06030C1002FPW"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:652-CR0603AFX1002EAS"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:594-MCT06030C1002FP5"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:279-CRG0603F22K/10"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:594-MCT06030E1002BP1"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:652-CRT0603FY1002ELF"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:71-PLT0603Z1002AST5"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:652-CRT0603FZ1002ELF"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:652-CRT0603BY1002ELF"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:652-CR0603FX-1002ELF"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:652-CRT0603FX1002ELF"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:594-NTCS0603E3103FMT"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:652-CRT0603BY1002EAS"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:71-PHP00603E1002BST1"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:652-CHP0603AFX1002EL"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:652-CMP0603-FX-1002L"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:594-2381-615-36103"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:71-PATT0603E1002BGT1"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:594-MCT06030D1022BP5"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:594-MCT06030D1002BP5"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:652-CR0603FX-1072ELF"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:652-CR0603FX-1052ELF"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:594-MCT0603MD1002BP1"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:871-B57321V2103H60"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:594-MCT0603PD1002DP5"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:71-RCG06034K99FKEA"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:652-CMP0603AFX-1002L"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:594-MCT0603MC1002FP5"
+              }
+            ],
+            "query_filtered_count": 16,
+            "rank_decisions": [
+              {
+                "canonical_value": 10000.0,
+                "component_library_tier": "",
+                "included": false,
+                "passive_stock_gate_kept": false,
+                "price_value": 0.81,
+                "rank": null,
+                "relevance_score": 17,
+                "result_id": "mouser:594-MCT0603HC1002FP1"
+              },
+              {
+                "canonical_value": 10000.0,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.39,
+                "rank": 7,
+                "relevance_score": 17,
+                "result_id": "mouser:594-MCT06030D1002BPW"
+              },
+              {
+                "canonical_value": 10000.0,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.65,
+                "rank": 10,
+                "relevance_score": 17,
+                "result_id": "mouser:71-PAT0603E1002BST1"
+              },
+              {
+                "canonical_value": 10000.0,
+                "component_library_tier": "",
+                "included": false,
+                "passive_stock_gate_kept": false,
+                "price_value": 0.46,
+                "rank": null,
+                "relevance_score": 17,
+                "result_id": "mouser:594-MCT0603HC1002FP5"
+              },
+              {
+                "canonical_value": 10000.0,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 1.48,
+                "rank": 12,
+                "relevance_score": 17,
+                "result_id": "mouser:594-MCT0603MG1002BP5"
+              },
+              {
+                "canonical_value": 10000.0,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 1.16,
+                "rank": 11,
+                "relevance_score": 17,
+                "result_id": "mouser:594-MCT06030F1002BP5"
+              },
+              {
+                "canonical_value": 10000.0,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.1,
+                "rank": 3,
+                "relevance_score": 17,
+                "result_id": "mouser:594-MCT06030C1002FPW"
+              },
+              {
+                "canonical_value": 10000.0,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.1,
+                "rank": 1,
+                "relevance_score": 17,
+                "result_id": "mouser:652-CR0603AFX1002EAS"
+              },
+              {
+                "canonical_value": 10000.0,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.1,
+                "rank": 2,
+                "relevance_score": 17,
+                "result_id": "mouser:594-MCT06030C1002FP5"
+              },
+              {
+                "canonical_value": 10000.0,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.6,
+                "rank": 9,
+                "relevance_score": 17,
+                "result_id": "mouser:594-MCT06030E1002BP1"
+              },
+              {
+                "canonical_value": 10000.0,
+                "component_library_tier": "",
+                "included": false,
+                "passive_stock_gate_kept": false,
+                "price_value": 3.79,
+                "rank": null,
+                "relevance_score": 17,
+                "result_id": "mouser:71-PLT0603Z1002AST5"
+              },
+              {
+                "canonical_value": 10000.0,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.16,
+                "rank": 5,
+                "relevance_score": 17,
+                "result_id": "mouser:652-CRT0603BY1002EAS"
+              },
+              {
+                "canonical_value": 10000.0,
+                "component_library_tier": "",
+                "included": false,
+                "passive_stock_gate_kept": false,
+                "price_value": 0.13,
+                "rank": null,
+                "relevance_score": 17,
+                "result_id": "mouser:594-MCT06030D1002BP5"
+              },
+              {
+                "canonical_value": 10000.0,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.47,
+                "rank": 8,
+                "relevance_score": 17,
+                "result_id": "mouser:594-MCT0603MD1002BP1"
+              },
+              {
+                "canonical_value": 10000.0,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.16,
+                "rank": 6,
+                "relevance_score": 17,
+                "result_id": "mouser:594-MCT0603PD1002DP5"
+              },
+              {
+                "canonical_value": 10000.0,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.1,
+                "rank": 4,
+                "relevance_score": 17,
+                "result_id": "mouser:594-MCT0603MC1002FP5"
+              }
+            ],
+            "ranked_count": 12,
+            "raw_count": 50
+          },
+          "fixture": "mouser/keyword_resistor_10k_0603.json",
+          "summary": {
+            "default_filtered_count": 50,
+            "query_filtered_count": 16,
+            "ranked_count": 12,
+            "raw_count": 50,
+            "success": true,
+            "top_distributor_part_number": "652-CR0603AFX1002EAS",
+            "top_manufacturer": "Bourns",
+            "top_mpn": "CR0603AFX-1002EAS",
+            "top_price": "$0.10",
+            "top_result_id": "mouser:652-CR0603AFX1002EAS",
+            "top_stock_quantity": 29024
+          }
+        }
+      }
+    },
+    {
+      "category": "CAP",
+      "intent_id": "CAP_1UF_0805",
+      "query": "1uF capacitor 0805",
+      "suppliers": {
+        "lcsc": {
+          "diagnostics": {
+            "category": "CAP",
+            "contract_version": "1.0",
+            "default_filter_decisions": [
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "lcsc:C15849"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "lcsc:C99990"
+              }
+            ],
+            "default_filtered_count": 2,
+            "final_result_ids": [
+              "lcsc:C15849"
+            ],
+            "query": "1uF capacitor 0805",
+            "query_filter_decisions": [
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "lcsc:C15849"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "lcsc:C99990"
+              }
+            ],
+            "query_filtered_count": 1,
+            "rank_decisions": [
+              {
+                "canonical_value": 1e-06,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.009,
+                "rank": 1,
+                "relevance_score": 17,
+                "result_id": "lcsc:C15849"
+              }
+            ],
+            "ranked_count": 1,
+            "raw_count": 2
+          },
+          "fixture": "lcsc/keyword_capacitor_1uf_0805.json",
+          "summary": {
+            "default_filtered_count": 2,
+            "query_filtered_count": 1,
+            "ranked_count": 1,
+            "raw_count": 2,
+            "success": true,
+            "top_distributor_part_number": "C15849",
+            "top_manufacturer": "Samsung Electro-Mechanics",
+            "top_mpn": "CL21A105KAFNNNE",
+            "top_price": "0.009",
+            "top_result_id": "lcsc:C15849",
+            "top_stock_quantity": 112000
+          }
+        },
+        "mouser": {
+          "diagnostics": {
+            "category": "CAP",
+            "contract_version": "1.0",
+            "default_filter_decisions": [
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:581-08055C105JAT2A"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:581-08056D105KAT2A"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:581-0805YC105KAT2A"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:581-08053G105MAT2A"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:77-VJ0805Y105KXQTBC"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:581-08056C105MAT2A"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:80-C0805T105K4RACTU"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:581-08056C105JAZ2A"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:80-C0805C105J4RACLR"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:80-C0805C105K3RACTM"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:581-08053C105JAZ2A"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:80-C0805C105K8NAUTO"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:581-0805ZC105K4Z2A"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:581-08053C105J4T2A"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:80-C0805C105M4RECLR"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:581-08053D105MAT2A"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:80-C0805X105K8NACTU"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:791-0805B105J160CT"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:791-0805B105M500CT"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:80-C0805X105J4RAUTO"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:581-KGM21AR51H105KU"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:80-C0805C105M4RAUTO"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:581-KGM21AR71E105JU"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:791-0805X105M160CT"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:791-0805X105K250CT"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:581-KGM21AR51E105MU"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:80-C0805C105J3REAULR"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:80-C0805X105K9R"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:791-0805B105J250CT"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:80-C0805X105K8R"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:581-08055C105K4Z4A"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:767-0805B104K250NT"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:581-KGM21AR71C105JU"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:581-KGM21AR51E105KU"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:581-KGF21KR71H105KU"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:80-C0805F105K4RAUTO"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:581-KAM21KR71C105KU"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:80-C0805J105K4RAUTO"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:581-KAM21KR71H105KL"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:581-KAF21KR71E105KL"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:581-KGM21AV51H105ZU"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:581-KGM21AR51C105KU"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:80-M325354E2X105KZMB"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:603-CC805KKX7R7BB105"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:603-CC805KKX7R9BB105"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:581-08053C105KAT2A"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:581-08055D105K"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:581-0805ZC105K"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:581-08055C105KAT2A"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:80-C0805C105K5R"
+              }
+            ],
+            "default_filtered_count": 50,
+            "final_result_ids": [
+              "mouser:603-CC805KKX7R7BB105",
+              "mouser:80-C0805C105K3RACTM",
+              "mouser:77-VJ0805Y105KXQTBC",
+              "mouser:581-08053G105MAT2A",
+              "mouser:581-KGM21AR51E105KU",
+              "mouser:80-C0805C105M4RAUTO",
+              "mouser:581-KGM21AR51C105KU",
+              "mouser:603-CC805KKX7R9BB105",
+              "mouser:581-08056D105KAT2A",
+              "mouser:80-C0805C105J4RACLR",
+              "mouser:80-C0805C105M4RECLR",
+              "mouser:581-KGM21AR71C105JU",
+              "mouser:80-C0805F105K4RAUTO",
+              "mouser:581-08056C105MAT2A",
+              "mouser:80-C0805X105K9R",
+              "mouser:80-C0805C105K5R",
+              "mouser:80-C0805J105K4RAUTO",
+              "mouser:581-KAF21KR71E105KL",
+              "mouser:80-C0805C105J3REAULR",
+              "mouser:581-KGM21AR71E105JU",
+              "mouser:581-KGM21AR51H105KU",
+              "mouser:581-KGM21AR51E105MU",
+              "mouser:80-C0805X105K8R",
+              "mouser:80-C0805T105K4RACTU",
+              "mouser:791-0805X105M160CT",
+              "mouser:791-0805B105J160CT",
+              "mouser:791-0805B105J250CT",
+              "mouser:791-0805B105M500CT"
+            ],
+            "query": "1uF capacitor 0805",
+            "query_filter_decisions": [
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:581-08055C105JAT2A"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:581-08056D105KAT2A"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:581-0805YC105KAT2A"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:581-08053G105MAT2A"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:77-VJ0805Y105KXQTBC"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:581-08056C105MAT2A"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:80-C0805T105K4RACTU"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:581-08056C105JAZ2A"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:80-C0805C105J4RACLR"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:80-C0805C105K3RACTM"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:581-08053C105JAZ2A"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:80-C0805C105K8NAUTO"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:581-0805ZC105K4Z2A"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:581-08053C105J4T2A"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:80-C0805C105M4RECLR"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:581-08053D105MAT2A"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:80-C0805X105K8NACTU"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:791-0805B105J160CT"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:791-0805B105M500CT"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:80-C0805X105J4RAUTO"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:581-KGM21AR51H105KU"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:80-C0805C105M4RAUTO"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:581-KGM21AR71E105JU"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:791-0805X105M160CT"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:791-0805X105K250CT"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:581-KGM21AR51E105MU"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:80-C0805C105J3REAULR"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:80-C0805X105K9R"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:791-0805B105J250CT"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:80-C0805X105K8R"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:581-08055C105K4Z4A"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:767-0805B104K250NT"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:581-KGM21AR71C105JU"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:581-KGM21AR51E105KU"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:581-KGF21KR71H105KU"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:80-C0805F105K4RAUTO"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:581-KAM21KR71C105KU"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:80-C0805J105K4RAUTO"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:581-KAM21KR71H105KL"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:581-KAF21KR71E105KL"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:581-KGM21AV51H105ZU"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:581-KGM21AR51C105KU"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:80-M325354E2X105KZMB"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:603-CC805KKX7R7BB105"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:603-CC805KKX7R9BB105"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:581-08053C105KAT2A"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:581-08055D105K"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:581-0805ZC105K"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:581-08055C105KAT2A"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:80-C0805C105K5R"
+              }
+            ],
+            "query_filtered_count": 37,
+            "rank_decisions": [
+              {
+                "canonical_value": 1e-06,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.24,
+                "rank": 9,
+                "relevance_score": 17,
+                "result_id": "mouser:581-08056D105KAT2A"
+              },
+              {
+                "canonical_value": 1e-06,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.21,
+                "rank": 4,
+                "relevance_score": 17,
+                "result_id": "mouser:581-08053G105MAT2A"
+              },
+              {
+                "canonical_value": 1e-06,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.17,
+                "rank": 3,
+                "relevance_score": 17,
+                "result_id": "mouser:77-VJ0805Y105KXQTBC"
+              },
+              {
+                "canonical_value": 1e-06,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.34,
+                "rank": 14,
+                "relevance_score": 17,
+                "result_id": "mouser:581-08056C105MAT2A"
+              },
+              {
+                "canonical_value": 1e-06,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 1.98,
+                "rank": 24,
+                "relevance_score": 17,
+                "result_id": "mouser:80-C0805T105K4RACTU"
+              },
+              {
+                "canonical_value": 1e-06,
+                "component_library_tier": "",
+                "included": false,
+                "passive_stock_gate_kept": false,
+                "price_value": 1.73,
+                "rank": null,
+                "relevance_score": 17,
+                "result_id": "mouser:581-08056C105JAZ2A"
+              },
+              {
+                "canonical_value": 1e-06,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.25,
+                "rank": 10,
+                "relevance_score": 17,
+                "result_id": "mouser:80-C0805C105J4RACLR"
+              },
+              {
+                "canonical_value": 1e-06,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.16,
+                "rank": 2,
+                "relevance_score": 17,
+                "result_id": "mouser:80-C0805C105K3RACTM"
+              },
+              {
+                "canonical_value": 1e-06,
+                "component_library_tier": "",
+                "included": false,
+                "passive_stock_gate_kept": false,
+                "price_value": 2.04,
+                "rank": null,
+                "relevance_score": 17,
+                "result_id": "mouser:581-08053C105JAZ2A"
+              },
+              {
+                "canonical_value": 1e-06,
+                "component_library_tier": "",
+                "included": false,
+                "passive_stock_gate_kept": false,
+                "price_value": 1.03,
+                "rank": null,
+                "relevance_score": 17,
+                "result_id": "mouser:80-C0805C105K8NAUTO"
+              },
+              {
+                "canonical_value": 1e-06,
+                "component_library_tier": "",
+                "included": false,
+                "passive_stock_gate_kept": false,
+                "price_value": 0.98,
+                "rank": null,
+                "relevance_score": 17,
+                "result_id": "mouser:581-0805ZC105K4Z2A"
+              },
+              {
+                "canonical_value": 1e-06,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.26,
+                "rank": 11,
+                "relevance_score": 17,
+                "result_id": "mouser:80-C0805C105M4RECLR"
+              },
+              {
+                "canonical_value": 1e-06,
+                "component_library_tier": "",
+                "included": false,
+                "passive_stock_gate_kept": false,
+                "price_value": 1.13,
+                "rank": null,
+                "relevance_score": 17,
+                "result_id": "mouser:80-C0805X105K8NACTU"
+              },
+              {
+                "canonical_value": 1e-06,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.11,
+                "rank": 26,
+                "relevance_score": 16,
+                "result_id": "mouser:791-0805B105J160CT"
+              },
+              {
+                "canonical_value": 1e-06,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.11,
+                "rank": 28,
+                "relevance_score": 16,
+                "result_id": "mouser:791-0805B105M500CT"
+              },
+              {
+                "canonical_value": 1e-06,
+                "component_library_tier": "",
+                "included": false,
+                "passive_stock_gate_kept": false,
+                "price_value": 1.24,
+                "rank": null,
+                "relevance_score": 17,
+                "result_id": "mouser:80-C0805X105J4RAUTO"
+              },
+              {
+                "canonical_value": 1e-06,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.56,
+                "rank": 21,
+                "relevance_score": 17,
+                "result_id": "mouser:581-KGM21AR51H105KU"
+              },
+              {
+                "canonical_value": 1e-06,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.22,
+                "rank": 6,
+                "relevance_score": 17,
+                "result_id": "mouser:80-C0805C105M4RAUTO"
+              },
+              {
+                "canonical_value": 1e-06,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.48,
+                "rank": 20,
+                "relevance_score": 17,
+                "result_id": "mouser:581-KGM21AR71E105JU"
+              },
+              {
+                "canonical_value": 1e-06,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.1,
+                "rank": 25,
+                "relevance_score": 16,
+                "result_id": "mouser:791-0805X105M160CT"
+              },
+              {
+                "canonical_value": 1e-06,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.6,
+                "rank": 22,
+                "relevance_score": 17,
+                "result_id": "mouser:581-KGM21AR51E105MU"
+              },
+              {
+                "canonical_value": 1e-06,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.39,
+                "rank": 19,
+                "relevance_score": 17,
+                "result_id": "mouser:80-C0805C105J3REAULR"
+              },
+              {
+                "canonical_value": 1e-06,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.35,
+                "rank": 15,
+                "relevance_score": 17,
+                "result_id": "mouser:80-C0805X105K9R"
+              },
+              {
+                "canonical_value": 1e-06,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.11,
+                "rank": 27,
+                "relevance_score": 16,
+                "result_id": "mouser:791-0805B105J250CT"
+              },
+              {
+                "canonical_value": 1e-06,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.71,
+                "rank": 23,
+                "relevance_score": 17,
+                "result_id": "mouser:80-C0805X105K8R"
+              },
+              {
+                "canonical_value": 1e-06,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.26,
+                "rank": 12,
+                "relevance_score": 17,
+                "result_id": "mouser:581-KGM21AR71C105JU"
+              },
+              {
+                "canonical_value": 1e-06,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.21,
+                "rank": 5,
+                "relevance_score": 17,
+                "result_id": "mouser:581-KGM21AR51E105KU"
+              },
+              {
+                "canonical_value": 1e-06,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.31,
+                "rank": 13,
+                "relevance_score": 17,
+                "result_id": "mouser:80-C0805F105K4RAUTO"
+              },
+              {
+                "canonical_value": 1e-06,
+                "component_library_tier": "",
+                "included": false,
+                "passive_stock_gate_kept": false,
+                "price_value": 0.77,
+                "rank": null,
+                "relevance_score": 17,
+                "result_id": "mouser:581-KAM21KR71C105KU"
+              },
+              {
+                "canonical_value": 1e-06,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.38,
+                "rank": 17,
+                "relevance_score": 17,
+                "result_id": "mouser:80-C0805J105K4RAUTO"
+              },
+              {
+                "canonical_value": 1e-06,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.38,
+                "rank": 18,
+                "relevance_score": 17,
+                "result_id": "mouser:581-KAF21KR71E105KL"
+              },
+              {
+                "canonical_value": 1e-06,
+                "component_library_tier": "",
+                "included": false,
+                "passive_stock_gate_kept": false,
+                "price_value": 0.21,
+                "rank": null,
+                "relevance_score": 17,
+                "result_id": "mouser:581-KGM21AV51H105ZU"
+              },
+              {
+                "canonical_value": 1e-06,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.23,
+                "rank": 7,
+                "relevance_score": 17,
+                "result_id": "mouser:581-KGM21AR51C105KU"
+              },
+              {
+                "canonical_value": 1e-06,
+                "component_library_tier": "",
+                "included": false,
+                "passive_stock_gate_kept": false,
+                "price_value": 13.89,
+                "rank": null,
+                "relevance_score": 16,
+                "result_id": "mouser:80-M325354E2X105KZMB"
+              },
+              {
+                "canonical_value": 1e-06,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.13,
+                "rank": 1,
+                "relevance_score": 17,
+                "result_id": "mouser:603-CC805KKX7R7BB105"
+              },
+              {
+                "canonical_value": 1e-06,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.23,
+                "rank": 8,
+                "relevance_score": 17,
+                "result_id": "mouser:603-CC805KKX7R9BB105"
+              },
+              {
+                "canonical_value": 1e-06,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.38,
+                "rank": 16,
+                "relevance_score": 17,
+                "result_id": "mouser:80-C0805C105K5R"
+              }
+            ],
+            "ranked_count": 28,
+            "raw_count": 50
+          },
+          "fixture": "mouser/keyword_capacitor_1uf_0805.json",
+          "summary": {
+            "default_filtered_count": 50,
+            "query_filtered_count": 37,
+            "ranked_count": 28,
+            "raw_count": 50,
+            "success": true,
+            "top_distributor_part_number": "603-CC805KKX7R7BB105",
+            "top_manufacturer": "YAGEO",
+            "top_mpn": "CC0805KKX7R7BB105",
+            "top_price": "$0.13",
+            "top_result_id": "mouser:603-CC805KKX7R7BB105",
+            "top_stock_quantity": 133254
+          }
+        }
+      }
+    },
+    {
+      "category": "IND",
+      "intent_id": "IND_100UH",
+      "query": "100uH inductor",
+      "suppliers": {
+        "lcsc": {
+          "diagnostics": {
+            "category": "IND",
+            "contract_version": "1.0",
+            "default_filter_decisions": [
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "lcsc:C40858"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "lcsc:C77654"
+              }
+            ],
+            "default_filtered_count": 2,
+            "final_result_ids": [
+              "lcsc:C77654",
+              "lcsc:C40858"
+            ],
+            "query": "100uH inductor",
+            "query_filter_decisions": [
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "lcsc:C40858"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "lcsc:C77654"
+              }
+            ],
+            "query_filtered_count": 2,
+            "rank_decisions": [
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.061,
+                "rank": 2,
+                "relevance_score": 8,
+                "result_id": "lcsc:C40858"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.044,
+                "rank": 1,
+                "relevance_score": 8,
+                "result_id": "lcsc:C77654"
+              }
+            ],
+            "ranked_count": 2,
+            "raw_count": 2
+          },
+          "fixture": "lcsc/keyword_inductor_100uh.json",
+          "summary": {
+            "default_filtered_count": 2,
+            "query_filtered_count": 2,
+            "ranked_count": 2,
+            "raw_count": 2,
+            "success": true,
+            "top_distributor_part_number": "C77654",
+            "top_manufacturer": "Murata",
+            "top_mpn": "LQH32CN101K53L",
+            "top_price": "0.044",
+            "top_result_id": "lcsc:C77654",
+            "top_stock_quantity": 24000
+          }
+        },
+        "mouser": {
+          "diagnostics": {
+            "category": "IND",
+            "contract_version": "1.0",
+            "default_filter_decisions": [
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:504-HPAL1V1260-101-R"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:504-HPAL1V1265-101-R"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:994-PCV-2-104-10L"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:994-MSS6132T-104MLC"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:815-ACMS-Q3222F-101T"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:994-MSS1583-104KED"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:871-B82442T1104K050"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:994-LPS4018-104MRC"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:994-DO1608C-104MLC"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:815-ACMS-Q3225-101-T"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:994-DO3316P-104MLD"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:710-7447706101"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:70-IHSM7832ER101L"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:70-ISC1210ER101K"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:81-LQH2HNH101J03L"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:710-74477420"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:815-ACMS-Q4526C-101T"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:810-NLFV32T-101K-EFT"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:994-PCV-2-104-03L"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:710-744877101"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:710-74477820"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:994-MSD1514-104KED"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:70-IHLE5050FHR101M51"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:871-B82472G4104M"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:994-MSD1048-104MED"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:994-XFL2010-104MEC"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:994-RFC0807B-104KE"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:994-DO3308P-104MLD"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:851-CDRH127LDNP101MC"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:70-IHTH1125KZEB101M5"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:994-LPS4012-104MRC"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:994-LPS4414-104MRC"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:994-LPS3314-104MRC"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:851-CDR6D23MNNP101NC"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:994-DR0608-104L"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:994-LPS8045B-104MRC"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:994-PCV-0-104-05L"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:994-RFB0807-101L"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:994-MSD1583-104KED"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:994-XFL2006-104MEC"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:994-MOS6020-104MLC"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:542-PM5022-101M-RC"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:70-IMC1210ER101J"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:994-MSD1278-104MLD"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:815-ACMS-Q3225C-101T"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:994-MSD1260-104MLD"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:994-RFS1113-104ME"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:580-24101C"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:710-74477720"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:815-ATCA-01-101M-V"
+              }
+            ],
+            "default_filtered_count": 50,
+            "final_result_ids": [
+              "mouser:810-NLFV32T-101K-EFT",
+              "mouser:504-HPAL1V1260-101-R",
+              "mouser:504-HPAL1V1265-101-R",
+              "mouser:580-24101C",
+              "mouser:542-PM5022-101M-RC",
+              "mouser:70-ISC1210ER101K",
+              "mouser:871-B82472G4104M",
+              "mouser:851-CDR6D23MNNP101NC",
+              "mouser:871-B82442T1104K050",
+              "mouser:994-DR0608-104L",
+              "mouser:994-RFC0807B-104KE",
+              "mouser:851-CDRH127LDNP101MC",
+              "mouser:710-7447706101",
+              "mouser:994-RFB0807-101L",
+              "mouser:994-LPS4414-104MRC",
+              "mouser:70-IMC1210ER101J",
+              "mouser:994-LPS4012-104MRC",
+              "mouser:994-LPS4018-104MRC",
+              "mouser:994-LPS3314-104MRC",
+              "mouser:994-DO1608C-104MLC",
+              "mouser:710-74477420",
+              "mouser:994-RFS1113-104ME",
+              "mouser:994-DO3308P-104MLD",
+              "mouser:994-MOS6020-104MLC",
+              "mouser:994-MSS6132T-104MLC",
+              "mouser:994-DO3316P-104MLD",
+              "mouser:994-XFL2006-104MEC",
+              "mouser:710-74477720",
+              "mouser:994-MSD1048-104MED",
+              "mouser:994-MSD1260-104MLD",
+              "mouser:710-74477820",
+              "mouser:710-744877101",
+              "mouser:994-MSD1278-104MLD",
+              "mouser:70-IHSM7832ER101L",
+              "mouser:994-XFL2010-104MEC",
+              "mouser:994-LPS8045B-104MRC",
+              "mouser:994-MSS1583-104KED",
+              "mouser:994-MSD1583-104KED",
+              "mouser:994-MSD1514-104KED",
+              "mouser:70-IHLE5050FHR101M51",
+              "mouser:994-PCV-0-104-05L",
+              "mouser:994-PCV-2-104-03L",
+              "mouser:994-PCV-2-104-10L",
+              "mouser:70-IHTH1125KZEB101M5",
+              "mouser:815-ATCA-01-101M-V"
+            ],
+            "query": "100uH inductor",
+            "query_filter_decisions": [
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:504-HPAL1V1260-101-R"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:504-HPAL1V1265-101-R"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:994-PCV-2-104-10L"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:994-MSS6132T-104MLC"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:815-ACMS-Q3222F-101T"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:994-MSS1583-104KED"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:871-B82442T1104K050"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:994-LPS4018-104MRC"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:994-DO1608C-104MLC"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:815-ACMS-Q3225-101-T"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:994-DO3316P-104MLD"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:710-7447706101"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:70-IHSM7832ER101L"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:70-ISC1210ER101K"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:81-LQH2HNH101J03L"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:710-74477420"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:815-ACMS-Q4526C-101T"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:810-NLFV32T-101K-EFT"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:994-PCV-2-104-03L"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:710-744877101"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:710-74477820"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:994-MSD1514-104KED"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:70-IHLE5050FHR101M51"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:871-B82472G4104M"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:994-MSD1048-104MED"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:994-XFL2010-104MEC"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:994-RFC0807B-104KE"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:994-DO3308P-104MLD"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:851-CDRH127LDNP101MC"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:70-IHTH1125KZEB101M5"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:994-LPS4012-104MRC"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:994-LPS4414-104MRC"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:994-LPS3314-104MRC"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:851-CDR6D23MNNP101NC"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:994-DR0608-104L"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:994-LPS8045B-104MRC"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:994-PCV-0-104-05L"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:994-RFB0807-101L"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:994-MSD1583-104KED"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:994-XFL2006-104MEC"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:994-MOS6020-104MLC"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:542-PM5022-101M-RC"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:70-IMC1210ER101J"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:994-MSD1278-104MLD"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "excluded_by_query_constraints"
+                ],
+                "result_id": "mouser:815-ACMS-Q3225C-101T"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:994-MSD1260-104MLD"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:994-RFS1113-104ME"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:580-24101C"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:710-74477720"
+              },
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:815-ATCA-01-101M-V"
+              }
+            ],
+            "query_filtered_count": 45,
+            "rank_decisions": [
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.52,
+                "rank": 2,
+                "relevance_score": 8,
+                "result_id": "mouser:504-HPAL1V1260-101-R"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.52,
+                "rank": 3,
+                "relevance_score": 8,
+                "result_id": "mouser:504-HPAL1V1265-101-R"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 8.34,
+                "rank": 43,
+                "relevance_score": 8,
+                "result_id": "mouser:994-PCV-2-104-10L"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 2.03,
+                "rank": 25,
+                "relevance_score": 8,
+                "result_id": "mouser:994-MSS6132T-104MLC"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 3.03,
+                "rank": 37,
+                "relevance_score": 8,
+                "result_id": "mouser:994-MSS1583-104KED"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.99,
+                "rank": 9,
+                "relevance_score": 8,
+                "result_id": "mouser:871-B82442T1104K050"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 1.46,
+                "rank": 18,
+                "relevance_score": 8,
+                "result_id": "mouser:994-LPS4018-104MRC"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 1.82,
+                "rank": 20,
+                "relevance_score": 8,
+                "result_id": "mouser:994-DO1608C-104MLC"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 2.15,
+                "rank": 26,
+                "relevance_score": 8,
+                "result_id": "mouser:994-DO3316P-104MLD"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 1.24,
+                "rank": 13,
+                "relevance_score": 8,
+                "result_id": "mouser:710-7447706101"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 2.55,
+                "rank": 34,
+                "relevance_score": 8,
+                "result_id": "mouser:70-IHSM7832ER101L"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.74,
+                "rank": 6,
+                "relevance_score": 8,
+                "result_id": "mouser:70-ISC1210ER101K"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 1.87,
+                "rank": 21,
+                "relevance_score": 8,
+                "result_id": "mouser:710-74477420"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.35,
+                "rank": 1,
+                "relevance_score": 8,
+                "result_id": "mouser:810-NLFV32T-101K-EFT"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 6.26,
+                "rank": 42,
+                "relevance_score": 8,
+                "result_id": "mouser:994-PCV-2-104-03L"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 2.53,
+                "rank": 32,
+                "relevance_score": 8,
+                "result_id": "mouser:710-744877101"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 2.51,
+                "rank": 31,
+                "relevance_score": 8,
+                "result_id": "mouser:710-74477820"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 3.78,
+                "rank": 39,
+                "relevance_score": 8,
+                "result_id": "mouser:994-MSD1514-104KED"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 4.09,
+                "rank": 40,
+                "relevance_score": 8,
+                "result_id": "mouser:70-IHLE5050FHR101M51"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.82,
+                "rank": 7,
+                "relevance_score": 8,
+                "result_id": "mouser:871-B82472G4104M"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 2.42,
+                "rank": 29,
+                "relevance_score": 8,
+                "result_id": "mouser:994-MSD1048-104MED"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 2.72,
+                "rank": 35,
+                "relevance_score": 8,
+                "result_id": "mouser:994-XFL2010-104MEC"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 1.02,
+                "rank": 11,
+                "relevance_score": 8,
+                "result_id": "mouser:994-RFC0807B-104KE"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 1.98,
+                "rank": 23,
+                "relevance_score": 8,
+                "result_id": "mouser:994-DO3308P-104MLD"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 1.21,
+                "rank": 12,
+                "relevance_score": 8,
+                "result_id": "mouser:851-CDRH127LDNP101MC"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 9.05,
+                "rank": 44,
+                "relevance_score": 8,
+                "result_id": "mouser:70-IHTH1125KZEB101M5"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 1.46,
+                "rank": 17,
+                "relevance_score": 8,
+                "result_id": "mouser:994-LPS4012-104MRC"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 1.41,
+                "rank": 15,
+                "relevance_score": 8,
+                "result_id": "mouser:994-LPS4414-104MRC"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 1.52,
+                "rank": 19,
+                "relevance_score": 8,
+                "result_id": "mouser:994-LPS3314-104MRC"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.97,
+                "rank": 8,
+                "relevance_score": 8,
+                "result_id": "mouser:851-CDR6D23MNNP101NC"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 1.02,
+                "rank": 10,
+                "relevance_score": 8,
+                "result_id": "mouser:994-DR0608-104L"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 2.92,
+                "rank": 36,
+                "relevance_score": 8,
+                "result_id": "mouser:994-LPS8045B-104MRC"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 4.34,
+                "rank": 41,
+                "relevance_score": 8,
+                "result_id": "mouser:994-PCV-0-104-05L"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 1.28,
+                "rank": 14,
+                "relevance_score": 8,
+                "result_id": "mouser:994-RFB0807-101L"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 3.37,
+                "rank": 38,
+                "relevance_score": 8,
+                "result_id": "mouser:994-MSD1583-104KED"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 2.33,
+                "rank": 27,
+                "relevance_score": 8,
+                "result_id": "mouser:994-XFL2006-104MEC"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 2.02,
+                "rank": 24,
+                "relevance_score": 8,
+                "result_id": "mouser:994-MOS6020-104MLC"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.6,
+                "rank": 5,
+                "relevance_score": 8,
+                "result_id": "mouser:542-PM5022-101M-RC"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 1.42,
+                "rank": 16,
+                "relevance_score": 8,
+                "result_id": "mouser:70-IMC1210ER101J"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 2.54,
+                "rank": 33,
+                "relevance_score": 8,
+                "result_id": "mouser:994-MSD1278-104MLD"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 2.45,
+                "rank": 30,
+                "relevance_score": 8,
+                "result_id": "mouser:994-MSD1260-104MLD"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 1.94,
+                "rank": 22,
+                "relevance_score": 8,
+                "result_id": "mouser:994-RFS1113-104ME"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.58,
+                "rank": 4,
+                "relevance_score": 8,
+                "result_id": "mouser:580-24101C"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 2.37,
+                "rank": 28,
+                "relevance_score": 8,
+                "result_id": "mouser:710-74477720"
+              },
+              {
+                "canonical_value": 9.999999999999999e-05,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 2.28,
+                "rank": 45,
+                "relevance_score": 7,
+                "result_id": "mouser:815-ATCA-01-101M-V"
+              }
+            ],
+            "ranked_count": 45,
+            "raw_count": 50
+          },
+          "fixture": "mouser/keyword_inductor_100uh.json",
+          "summary": {
+            "default_filtered_count": 50,
+            "query_filtered_count": 45,
+            "ranked_count": 45,
+            "raw_count": 50,
+            "success": true,
+            "top_distributor_part_number": "810-NLFV32T-101K-EFT",
+            "top_manufacturer": "TDK",
+            "top_mpn": "NLFV32T-101K-EFT",
+            "top_price": "$0.35",
+            "top_result_id": "mouser:810-NLFV32T-101K-EFT",
+            "top_stock_quantity": 3587
+          }
+        }
+      }
+    },
+    {
+      "category": "LED",
+      "intent_id": "LED_GREEN_0603",
+      "query": "green LED 0603",
+      "suppliers": {
+        "lcsc": {
+          "diagnostics": {
+            "category": "LED",
+            "contract_version": "1.0",
+            "default_filter_decisions": [
+              {
+                "kept": false,
+                "reasons": [
+                  "stock_quantity<=0"
+                ],
+                "result_id": "lcsc:C2286"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "stock_quantity<=0"
+                ],
+                "result_id": "lcsc:C21999"
+              }
+            ],
+            "default_filtered_count": 0,
+            "final_result_ids": [],
+            "query": "green LED 0603",
+            "query_filter_decisions": [],
+            "query_filtered_count": 0,
+            "rank_decisions": [],
+            "ranked_count": 0,
+            "raw_count": 2
+          },
+          "fixture": "lcsc/keyword_led_green_0603.json",
+          "summary": {
+            "default_filtered_count": 0,
+            "query_filtered_count": 0,
+            "ranked_count": 0,
+            "raw_count": 2,
+            "success": false,
+            "top_distributor_part_number": "",
+            "top_manufacturer": "",
+            "top_mpn": "",
+            "top_price": "",
+            "top_result_id": "",
+            "top_stock_quantity": 0
+          }
+        },
+        "mouser": {
+          "diagnostics": {
+            "category": "LED",
+            "contract_version": "1.0",
+            "default_filter_decisions": [
+              {
+                "kept": true,
+                "reasons": [
+                  "passed_default_filters"
+                ],
+                "result_id": "mouser:604-KP-1608SGC"
+              },
+              {
+                "kept": false,
+                "reasons": [
+                  "lifecycle=not_recommended"
+                ],
+                "result_id": "mouser:999-LEG-0603-GREEN"
+              }
+            ],
+            "default_filtered_count": 1,
+            "final_result_ids": [
+              "mouser:604-KP-1608SGC"
+            ],
+            "query": "green LED 0603",
+            "query_filter_decisions": [
+              {
+                "kept": true,
+                "reasons": [
+                  "matched_query_constraints"
+                ],
+                "result_id": "mouser:604-KP-1608SGC"
+              }
+            ],
+            "query_filtered_count": 1,
+            "rank_decisions": [
+              {
+                "canonical_value": Infinity,
+                "component_library_tier": "",
+                "included": true,
+                "passive_stock_gate_kept": true,
+                "price_value": 0.08,
+                "rank": 1,
+                "relevance_score": 11,
+                "result_id": "mouser:604-KP-1608SGC"
+              }
+            ],
+            "ranked_count": 1,
+            "raw_count": 2
+          },
+          "fixture": "mouser/keyword_led_green_0603.json",
+          "summary": {
+            "default_filtered_count": 1,
+            "query_filtered_count": 1,
+            "ranked_count": 1,
+            "raw_count": 2,
+            "success": true,
+            "top_distributor_part_number": "604-KP-1608SGC",
+            "top_manufacturer": "Kingbright",
+            "top_mpn": "KP-1608SGC",
+            "top_price": "$0.08",
+            "top_result_id": "mouser:604-KP-1608SGC",
+            "top_stock_quantity": 15432
+          }
+        }
+      }
+    }
+  ],
+  "matrix_rows": [
+    {
+      "category": "RES",
+      "default_filtered_count": 50,
+      "intent_id": "RES_10K_0603",
+      "query": "10k resistor 0603",
+      "query_filtered_count": 16,
+      "ranked_count": 12,
+      "raw_count": 50,
+      "success": true,
+      "supplier": "mouser",
+      "top_distributor_part_number": "652-CR0603AFX1002EAS",
+      "top_manufacturer": "Bourns",
+      "top_mpn": "CR0603AFX-1002EAS",
+      "top_price": "$0.10",
+      "top_result_id": "mouser:652-CR0603AFX1002EAS",
+      "top_stock_quantity": 29024
+    },
+    {
+      "category": "RES",
+      "default_filtered_count": 2,
+      "intent_id": "RES_10K_0603",
+      "query": "10k resistor 0603",
+      "query_filtered_count": 2,
+      "ranked_count": 2,
+      "raw_count": 2,
+      "success": true,
+      "supplier": "lcsc",
+      "top_distributor_part_number": "C25804",
+      "top_manufacturer": "Yageo",
+      "top_mpn": "RC0603FR-0710KL",
+      "top_price": "0.004",
+      "top_result_id": "lcsc:C25804",
+      "top_stock_quantity": 236000
+    },
+    {
+      "category": "CAP",
+      "default_filtered_count": 50,
+      "intent_id": "CAP_1UF_0805",
+      "query": "1uF capacitor 0805",
+      "query_filtered_count": 37,
+      "ranked_count": 28,
+      "raw_count": 50,
+      "success": true,
+      "supplier": "mouser",
+      "top_distributor_part_number": "603-CC805KKX7R7BB105",
+      "top_manufacturer": "YAGEO",
+      "top_mpn": "CC0805KKX7R7BB105",
+      "top_price": "$0.13",
+      "top_result_id": "mouser:603-CC805KKX7R7BB105",
+      "top_stock_quantity": 133254
+    },
+    {
+      "category": "CAP",
+      "default_filtered_count": 2,
+      "intent_id": "CAP_1UF_0805",
+      "query": "1uF capacitor 0805",
+      "query_filtered_count": 1,
+      "ranked_count": 1,
+      "raw_count": 2,
+      "success": true,
+      "supplier": "lcsc",
+      "top_distributor_part_number": "C15849",
+      "top_manufacturer": "Samsung Electro-Mechanics",
+      "top_mpn": "CL21A105KAFNNNE",
+      "top_price": "0.009",
+      "top_result_id": "lcsc:C15849",
+      "top_stock_quantity": 112000
+    },
+    {
+      "category": "IND",
+      "default_filtered_count": 50,
+      "intent_id": "IND_100UH",
+      "query": "100uH inductor",
+      "query_filtered_count": 45,
+      "ranked_count": 45,
+      "raw_count": 50,
+      "success": true,
+      "supplier": "mouser",
+      "top_distributor_part_number": "810-NLFV32T-101K-EFT",
+      "top_manufacturer": "TDK",
+      "top_mpn": "NLFV32T-101K-EFT",
+      "top_price": "$0.35",
+      "top_result_id": "mouser:810-NLFV32T-101K-EFT",
+      "top_stock_quantity": 3587
+    },
+    {
+      "category": "IND",
+      "default_filtered_count": 2,
+      "intent_id": "IND_100UH",
+      "query": "100uH inductor",
+      "query_filtered_count": 2,
+      "ranked_count": 2,
+      "raw_count": 2,
+      "success": true,
+      "supplier": "lcsc",
+      "top_distributor_part_number": "C77654",
+      "top_manufacturer": "Murata",
+      "top_mpn": "LQH32CN101K53L",
+      "top_price": "0.044",
+      "top_result_id": "lcsc:C77654",
+      "top_stock_quantity": 24000
+    },
+    {
+      "category": "LED",
+      "default_filtered_count": 1,
+      "intent_id": "LED_GREEN_0603",
+      "query": "green LED 0603",
+      "query_filtered_count": 1,
+      "ranked_count": 1,
+      "raw_count": 2,
+      "success": true,
+      "supplier": "mouser",
+      "top_distributor_part_number": "604-KP-1608SGC",
+      "top_manufacturer": "Kingbright",
+      "top_mpn": "KP-1608SGC",
+      "top_price": "$0.08",
+      "top_result_id": "mouser:604-KP-1608SGC",
+      "top_stock_quantity": 15432
+    },
+    {
+      "category": "LED",
+      "default_filtered_count": 0,
+      "intent_id": "LED_GREEN_0603",
+      "query": "green LED 0603",
+      "query_filtered_count": 0,
+      "ranked_count": 0,
+      "raw_count": 2,
+      "success": false,
+      "supplier": "lcsc",
+      "top_distributor_part_number": "",
+      "top_manufacturer": "",
+      "top_mpn": "",
+      "top_price": "",
+      "top_result_id": "",
+      "top_stock_quantity": 0
+    }
+  ],
+  "parity_gaps": [
+    {
+      "impact": "high",
+      "intent_id": "LED_GREEN_0603",
+      "reason": "supplier_success_mismatch"
+    },
+    {
+      "impact": "medium",
+      "intent_id": "CAP_1UF_0805",
+      "reason": "top_result_mpn_mismatch"
+    },
+    {
+      "impact": "medium",
+      "intent_id": "IND_100UH",
+      "reason": "top_result_mpn_mismatch"
+    },
+    {
+      "impact": "medium",
+      "intent_id": "RES_10K_0603",
+      "reason": "top_result_mpn_mismatch"
+    }
+  ],
+  "suppliers": [
+    "mouser",
+    "lcsc"
+  ]
+}

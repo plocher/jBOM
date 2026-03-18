@@ -1,0 +1,61 @@
+{
+  "code": 200,
+  "data": {
+    "componentPageInfo": {
+      "list": [
+        {
+          "componentCode": "C40858",
+          "componentModelEn": "NR6028T101M",
+          "componentBrandEn": "Taiyo Yuden",
+          "describe": "Power Inductor 100uH 2.1A 6x6mm",
+          "lcscGoodsUrl": "https://www.lcsc.com/product-detail/C40858.html",
+          "dataManualUrl": "https://example.com/nr6028t101m.pdf",
+          "stockCount": 56000,
+          "minBuyNumber": 1,
+          "componentPrices": [
+            {
+              "productPrice": "0.061",
+              "productNumber": 1
+            }
+          ],
+          "attributes": [
+            {
+              "attribute_name_en": "Inductance",
+              "attribute_value_name": "100uH"
+            },
+            {
+              "attribute_name_en": "Package",
+              "attribute_value_name": "6x6"
+            }
+          ]
+        },
+        {
+          "componentCode": "C77654",
+          "componentModelEn": "LQH32CN101K53L",
+          "componentBrandEn": "Murata",
+          "describe": "Signal Inductor 100uH 1210",
+          "lcscGoodsUrl": "https://www.lcsc.com/product-detail/C77654.html",
+          "dataManualUrl": "",
+          "stockCount": 24000,
+          "minBuyNumber": 1,
+          "componentPrices": [
+            {
+              "productPrice": "0.044",
+              "productNumber": 1
+            }
+          ],
+          "attributes": [
+            {
+              "attribute_name_en": "Inductance",
+              "attribute_value_name": "100uH"
+            },
+            {
+              "attribute_name_en": "Package",
+              "attribute_value_name": "1210"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

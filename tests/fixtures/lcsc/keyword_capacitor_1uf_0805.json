@@ -1,0 +1,69 @@
+{
+  "code": 200,
+  "data": {
+    "componentPageInfo": {
+      "list": [
+        {
+          "componentCode": "C15849",
+          "componentModelEn": "CL21A105KAFNNNE",
+          "componentBrandEn": "Samsung Electro-Mechanics",
+          "describe": "Multilayer Ceramic Capacitor 1uF 25V 0805 X7R",
+          "lcscGoodsUrl": "https://www.lcsc.com/product-detail/C15849.html",
+          "dataManualUrl": "https://example.com/cl21a105kafnnne.pdf",
+          "stockCount": 112000,
+          "minBuyNumber": 1,
+          "componentPrices": [
+            {
+              "productPrice": "0.009",
+              "productNumber": 1
+            }
+          ],
+          "attributes": [
+            {
+              "attribute_name_en": "Capacitance",
+              "attribute_value_name": "1uF"
+            },
+            {
+              "attribute_name_en": "Voltage Rating",
+              "attribute_value_name": "25V"
+            },
+            {
+              "attribute_name_en": "Package",
+              "attribute_value_name": "0805"
+            }
+          ]
+        },
+        {
+          "componentCode": "C99990",
+          "componentModelEn": "CL21A475KAFNNNE",
+          "componentBrandEn": "Samsung Electro-Mechanics",
+          "describe": "Multilayer Ceramic Capacitor 4.7uF 16V 0805 X5R",
+          "lcscGoodsUrl": "https://www.lcsc.com/product-detail/C99990.html",
+          "dataManualUrl": "",
+          "stockCount": 180000,
+          "minBuyNumber": 1,
+          "componentPrices": [
+            {
+              "productPrice": "0.011",
+              "productNumber": 1
+            }
+          ],
+          "attributes": [
+            {
+              "attribute_name_en": "Capacitance",
+              "attribute_value_name": "4.7uF"
+            },
+            {
+              "attribute_name_en": "Voltage Rating",
+              "attribute_value_name": "16V"
+            },
+            {
+              "attribute_name_en": "Package",
+              "attribute_value_name": "0805"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,9 @@
+intent_id,category,query,supplier,raw_count,default_filtered_count,query_filtered_count,ranked_count,success,top_result_id,top_distributor_part_number,top_mpn,top_manufacturer,top_price,top_stock_quantity
+RES_10K_0603,RES,10k resistor 0603,mouser,50,50,16,12,True,mouser:652-CR0603AFX1002EAS,652-CR0603AFX1002EAS,CR0603AFX-1002EAS,Bourns,$0.10,29024
+RES_10K_0603,RES,10k resistor 0603,lcsc,2,2,2,2,True,lcsc:C25804,C25804,RC0603FR-0710KL,Yageo,0.004,236000
+CAP_1UF_0805,CAP,1uF capacitor 0805,mouser,50,50,37,28,True,mouser:603-CC805KKX7R7BB105,603-CC805KKX7R7BB105,CC0805KKX7R7BB105,YAGEO,$0.13,133254
+CAP_1UF_0805,CAP,1uF capacitor 0805,lcsc,2,2,1,1,True,lcsc:C15849,C15849,CL21A105KAFNNNE,Samsung Electro-Mechanics,0.009,112000
+IND_100UH,IND,100uH inductor,mouser,50,50,45,45,True,mouser:810-NLFV32T-101K-EFT,810-NLFV32T-101K-EFT,NLFV32T-101K-EFT,TDK,$0.35,3587
+IND_100UH,IND,100uH inductor,lcsc,2,2,2,2,True,lcsc:C77654,C77654,LQH32CN101K53L,Murata,0.044,24000
+LED_GREEN_0603,LED,green LED 0603,mouser,2,1,1,1,True,mouser:604-KP-1608SGC,604-KP-1608SGC,KP-1608SGC,Kingbright,$0.08,15432
+LED_GREEN_0603,LED,green LED 0603,lcsc,2,0,0,0,False,,,,,,0

@@ -9,6 +9,7 @@ All functions are side-effect free.
 """
 
 from __future__ import annotations
+from dataclasses import asdict, dataclass
 
 import re
 from typing import Iterable
@@ -53,6 +54,54 @@ _BASIC_PART_RELEVANCE_BOOST = 2
 _PACKAGE_PATTERN = re.compile(
     r"\b(0201|0402|0603|0805|1206|1210|1812|2010|2512)\b", re.IGNORECASE
 )
+
+
+@dataclass(frozen=True)
+class SearchFilterDecision:
+    """Diagnostic decision for one filtering stage and one search result."""
+
+    result_id: str
+    kept: bool
+    reasons: tuple[str, ...]
+
+    def to_dict(self) -> dict[str, object]:
+        """Return a JSON-serializable mapping."""
+
+        payload = asdict(self)
+        payload["reasons"] = list(self.reasons)
+        return payload
+
+
+@dataclass(frozen=True)
+class SearchRankDecision:
+    """Diagnostic ranking decision for one search result."""
+
+    result_id: str
+    included: bool
+    rank: int | None
+    passive_stock_gate_kept: bool
+    relevance_score: int
+    price_value: float
+    canonical_value: float
+    component_library_tier: str
+
+    def to_dict(self) -> dict[str, object]:
+        """Return a JSON-serializable mapping."""
+
+        return asdict(self)
+
+
+def search_result_id(result: SearchResult) -> str:
+    """Return a stable, human-readable identifier for one search result."""
+
+    distributor = (result.distributor or "").strip().lower() or "unknown"
+    distributor_pn = (result.distributor_part_number or "").strip()
+    mpn = (result.mpn or "").strip()
+    if distributor_pn:
+        return f"{distributor}:{distributor_pn}"
+    if mpn:
+        return f"{distributor}:mpn:{mpn}"
+    return f"{distributor}:result:{id(result)}"
 
 
 def _close_enough(a: float, b: float, *, rel_tol: float = 0.001) -> bool:
@@ -259,6 +308,63 @@ def apply_default_filters(results: Iterable[SearchResult]) -> list[SearchResult]
     return filtered
 
 
+def describe_default_filter_decisions(
+    results: Iterable[SearchResult],
+) -> list[SearchFilterDecision]:
+    """Return keep/drop diagnostics for default availability/lifecycle filtering."""
+
+    decisions: list[SearchFilterDecision] = []
+    for result in results:
+        reasons: list[str] = []
+        if result.stock_quantity <= 0:
+            reasons.append("stock_quantity<=0")
+
+        status = (result.lifecycle_status or "").lower()
+        if "obsolete" in status:
+            reasons.append("lifecycle=obsolete")
+        elif "not recommended" in status:
+            reasons.append("lifecycle=not_recommended")
+
+        if "factory order" in (result.availability or "").lower():
+            reasons.append("availability=factory_order")
+
+        decisions.append(
+            SearchFilterDecision(
+                result_id=search_result_id(result),
+                kept=not reasons,
+                reasons=tuple(reasons) if reasons else ("passed_default_filters",),
+            )
+        )
+
+    return decisions
+
+
+def describe_query_filter_decisions(
+    results: list[SearchResult], query: str, *, category: str = ""
+) -> list[SearchFilterDecision]:
+    """Return keep/drop diagnostics for query-derived parametric filtering."""
+
+    filtered = SearchFilter.filter_by_query(results, query, category=category)
+    kept_ids = {id(result) for result in filtered}
+
+    decisions: list[SearchFilterDecision] = []
+    for result in results:
+        kept = id(result) in kept_ids
+        decisions.append(
+            SearchFilterDecision(
+                result_id=search_result_id(result),
+                kept=kept,
+                reasons=(
+                    ("matched_query_constraints",)
+                    if kept
+                    else ("excluded_by_query_constraints",)
+                ),
+            )
+        )
+
+    return decisions
+
+
 class SearchSorter:
     """Sorting utilities."""
 
@@ -277,25 +383,10 @@ class SearchSorter:
         )
 
         def sort_key(r: SearchResult) -> tuple[int, float, float, str, str, str]:
-            try:
-                price_clean = (
-                    (r.price or "")
-                    .replace("$", "")
-                    .replace("€", "")
-                    .replace("£", "")
-                    .strip()
-                )
-                price_value = float(price_clean)
-            except ValueError:
-                price_value = float("inf")
-
-            canonical = float("inf")
-            if attr_name and r.attributes:
-                raw = r.attributes.get(attr_name, "")
-                if raw:
-                    v = parse_value_to_normal(cat, raw)
-                    if v is not None:
-                        canonical = v
+            price_value = _price_value_for_ranking(r)
+            canonical = _canonical_value_for_ranking(
+                r, category=cat, attribute_name=attr_name
+            )
             relevance = _query_relevance_score(r, context=relevance_context)
             manufacturer = (r.manufacturer or "").upper()
             mpn = (r.mpn or "").upper()
@@ -303,6 +394,48 @@ class SearchSorter:
             return (-relevance, price_value, canonical, manufacturer, mpn, supplier_pn)
 
         return sorted(ranked_pool, key=sort_key)
+
+
+def describe_rank_decisions(
+    results: list[SearchResult], *, category: str = "", query: str = ""
+) -> list[SearchRankDecision]:
+    """Return ranking diagnostics, including passive-stock-gate inclusion."""
+
+    cat = normalize_component_type(category or "")
+    attr_name = _CATEGORY_ATTR_NAME.get(cat, "")
+    relevance_context = _build_relevance_context(query)
+    category_intent = relevance_context.get("category_intent", "") or cat
+    gated_pool = _apply_passive_stock_gate(results, category_intent=category_intent)
+    ranked = SearchSorter.rank(results, category=category, query=query)
+
+    gated_ids = {id(result) for result in gated_pool}
+    rank_by_id: dict[int, int] = {
+        id(result): index for index, result in enumerate(ranked, 1)
+    }
+
+    out: list[SearchRankDecision] = []
+    for result in results:
+        result_object_id = id(result)
+        out.append(
+            SearchRankDecision(
+                result_id=search_result_id(result),
+                included=result_object_id in rank_by_id,
+                rank=rank_by_id.get(result_object_id),
+                passive_stock_gate_kept=result_object_id in gated_ids,
+                relevance_score=_query_relevance_score(
+                    result, context=relevance_context
+                ),
+                price_value=_price_value_for_ranking(result),
+                canonical_value=_canonical_value_for_ranking(
+                    result,
+                    category=cat,
+                    attribute_name=attr_name,
+                ),
+                component_library_tier=_component_library_tier(result),
+            )
+        )
+
+    return out
 
 
 def _apply_passive_stock_gate(
@@ -321,6 +454,37 @@ def _apply_passive_stock_gate(
 
     # Fail-open: preserve context when all candidates are low stock.
     return results
+
+
+def _price_value_for_ranking(result: SearchResult) -> float:
+    """Parse a numeric unit price for ranking sort order."""
+
+    try:
+        price_clean = (
+            (result.price or "")
+            .replace("$", "")
+            .replace("€", "")
+            .replace("£", "")
+            .strip()
+        )
+        return float(price_clean)
+    except ValueError:
+        return float("inf")
+
+
+def _canonical_value_for_ranking(
+    result: SearchResult, *, category: str, attribute_name: str
+) -> float:
+    """Parse category-specific canonical value used as ranking tertiary key."""
+
+    canonical = float("inf")
+    if attribute_name and result.attributes:
+        raw = result.attributes.get(attribute_name, "")
+        if raw:
+            value = parse_value_to_normal(category, raw)
+            if value is not None:
+                canonical = value
+    return canonical
 
 
 def _build_relevance_context(query: str) -> dict[str, str]:
@@ -426,4 +590,14 @@ def _component_library_tier(result: SearchResult) -> str:
     return ""
 
 
-__all__ = ["SearchFilter", "SearchSorter", "apply_default_filters"]
+__all__ = [
+    "SearchFilter",
+    "SearchFilterDecision",
+    "SearchRankDecision",
+    "SearchSorter",
+    "apply_default_filters",
+    "describe_default_filter_decisions",
+    "describe_query_filter_decisions",
+    "describe_rank_decisions",
+    "search_result_id",
+]
