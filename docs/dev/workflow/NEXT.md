@@ -29,6 +29,10 @@ gh issue list --state open
   - `#200` Slice 2 — unified relevance contract + category weighting expansion
   - `#201` Slice 3 — shared normalization utilities + provider DRY pass
 - Sequencing: `#199 -> #200 -> #201`
+- Current #200 contract direction (2026-03-18):
+  - Drop `top_result_mpn_mismatch` as a parity-gap failure criterion (non-directional churn signal).
+  - Keep parity gates focused on actionable failures, especially `supplier_success_mismatch`.
+  - Continue deep-dive on remaining high-impact LED mismatch (`mouser` success vs `lcsc` no ranked result).
 - Supervisor/delegate prompts and handoff contract are tracked in:
   - `docs/dev/workflow/WORK_LOG.md` (session entry 2026-03-17)
   - `https://github.com/plocher/jBOM/issues/195#issuecomment-4078650362`
