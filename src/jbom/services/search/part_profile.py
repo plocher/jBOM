@@ -20,6 +20,7 @@ from typing import TYPE_CHECKING
 
 from jbom.common.constants import COMPONENT_TYPE_MAPPING
 from jbom.common.types import InventoryItem
+from jbom.services.search.normalization import footprint_entry_name, footprint_lib_name
 
 if TYPE_CHECKING:  # pragma: no cover
     from jbom.config.defaults import DefaultsConfig
@@ -119,24 +120,10 @@ def _canon_category(raw: str) -> str | None:
     return None
 
 
-def _fp_entry_name(footprint_full: str) -> str:
-    """Return the entry name (after ':') from a KiCad footprint ID."""
-    if not footprint_full or ":" not in footprint_full:
-        return ""
-    return footprint_full.split(":", 1)[1]
-
-
-def _fp_lib_name(footprint_full: str) -> str:
-    """Return the library nickname (before ':') from a KiCad footprint ID."""
-    if not footprint_full or ":" not in footprint_full:
-        return ""
-    return footprint_full.split(":", 1)[0]
-
-
 def _detect_cap_subtype(item: InventoryItem) -> str:
     """Detect CAP technology subtype from KiCad symbol/footprint signals and type field."""
-    fp_entry = _fp_entry_name(item.footprint_full)
-    fp_lib = _fp_lib_name(item.footprint_full)
+    fp_entry = footprint_entry_name(item.footprint_full)
+    fp_lib = footprint_lib_name(item.footprint_full)
     type_upper = (item.type or "").upper()
 
     # Tantalum is a distinct subtype — check library nickname before CP_ entry prefix

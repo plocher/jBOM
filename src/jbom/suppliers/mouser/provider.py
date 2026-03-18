@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Any, Optional
 from jbom.config.suppliers import resolve_supplier_by_id
 from jbom.services.search.cache import SearchCache, SearchCacheKey
 from jbom.services.search.models import SearchResult
+from jbom.services.search.normalization import extract_package_token
 from jbom.services.search.provider import SearchProvider
 
 if TYPE_CHECKING:
@@ -18,9 +19,6 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-_PACKAGE_TOKEN_PATTERN = re.compile(
-    r"\b(0201|0402|0603|0805|1206|1210|1812|2010|2512)\b", re.IGNORECASE
-)
 _RESISTANCE_TOKEN_PATTERN = re.compile(
     r"\b(?:\d+(?:\.\d+)?(?:R|K|M)\d*|\d+(?:\.\d+)?\s*(?:OHM|OHMS|KOHM|KOHMS|MOHM|MOHMS|Ω))\b",
     re.IGNORECASE,
@@ -317,13 +315,7 @@ class MouserProvider(SearchProvider):
 
     @staticmethod
     def _extract_package_token(*texts: str) -> str:
-        for text in texts:
-            if not text:
-                continue
-            match = _PACKAGE_TOKEN_PATTERN.search(text.upper())
-            if match:
-                return match.group(1).upper()
-        return ""
+        return extract_package_token(*texts)
 
     @staticmethod
     def _extract_first(pattern: re.Pattern[str], text: str) -> str:

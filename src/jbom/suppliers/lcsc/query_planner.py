@@ -18,6 +18,11 @@ from jbom.common.types import InventoryItem
 from jbom.common.value_parsing import farad_to_eia, henry_to_eia, ohms_to_eia
 from jbom.config.defaults import DefaultsConfig, get_defaults
 from jbom.services.search.cache import normalize_query
+from jbom.services.search.normalization import (
+    footprint_entry_name,
+    footprint_lib_name,
+    normalize_whitespace_token,
+)
 from jbom.services.search.part_profile import detect_subtype
 
 # Compiled regexes for connector footprint parsing
@@ -300,8 +305,8 @@ def _build_connector_plan(
         has_structured_data = True
 
     # 2. Parse footprint entry name (after ':') for additional signals
-    fp_entry = _fp_entry_name(item.footprint_full)
-    fp_lib = _fp_lib_name(item.footprint_full)
+    fp_entry = footprint_entry_name(item.footprint_full)
+    fp_lib = footprint_lib_name(item.footprint_full)
     if fp_entry:
         has_structured_data = True
 
@@ -351,7 +356,7 @@ def _normalize_category(text: str) -> str:
 
 
 def _normalize_token(text: str) -> str:
-    return " ".join((text or "").strip().split())
+    return normalize_whitespace_token(text)
 
 
 def _normalize_tolerance(text: str, *, default: str) -> str:
@@ -449,25 +454,6 @@ def _merge_keyword_tokens(base_query: str, extras: list[str]) -> str:
         if cleaned and cleaned not in tokens:
             tokens.append(cleaned)
     return " ".join(tokens).strip()
-
-
-# ---------------------------------------------------------------------------
-# KiCad footprint ID helpers
-# ---------------------------------------------------------------------------
-
-
-def _fp_entry_name(footprint_full: str) -> str:
-    """Return the entry name (after ':') from a KiCad footprint ID."""
-    if not footprint_full or ":" not in footprint_full:
-        return ""
-    return footprint_full.split(":", 1)[1]
-
-
-def _fp_lib_name(footprint_full: str) -> str:
-    """Return the library nickname (before ':') from a KiCad footprint ID."""
-    if not footprint_full or ":" not in footprint_full:
-        return ""
-    return footprint_full.split(":", 1)[0]
 
 
 def _inductance_attribute_value(item: InventoryItem) -> str:
