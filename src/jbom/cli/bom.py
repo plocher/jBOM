@@ -223,6 +223,7 @@ def register_command(subparsers) -> None:
     # Fabricator selection (for field presets / predictable output)
     parser.add_argument(
         "--fabricator",
+        type=lambda value: str(value).strip().lower(),
         choices=get_available_fabricators(),
         help="Specify PCB fabricator for field presets (default: generic)",
     )

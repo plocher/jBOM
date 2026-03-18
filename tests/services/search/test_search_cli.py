@@ -59,6 +59,66 @@ def test_search_default_supplier_is_generic() -> None:
     assert args.supplier == "generic"
 
 
+def test_search_supplier_argument_is_case_insensitive() -> None:
+    parser = create_parser()
+    args = parser.parse_args(["search", "10k resistor", "--supplier", "LCSC"])
+    assert args.supplier == "lcsc"
+
+
+def test_defaults_argument_is_case_insensitive() -> None:
+    parser = create_parser()
+    args = parser.parse_args(["search", "10k resistor", "--defaults", "GENERIC"])
+    assert args.defaults == "generic"
+
+
+def test_bom_fabricator_argument_is_case_insensitive() -> None:
+    parser = create_parser()
+    args = parser.parse_args(["bom", ".", "--fabricator", "JLC"])
+    assert args.fabricator == "jlc"
+
+
+def test_parts_fabricator_argument_is_case_insensitive() -> None:
+    parser = create_parser()
+    args = parser.parse_args(["parts", ".", "--fabricator", "PCBWAY"])
+    assert args.fabricator == "pcbway"
+
+
+def test_search_shapes_led_query_before_provider_call(monkeypatch, capsys) -> None:
+    import jbom.suppliers.mouser.provider as mouser_provider
+
+    seen_queries: list[str] = []
+
+    def _search(self, query, *, limit=10):
+        seen_queries.append(query)
+        return [_sr()]
+
+    monkeypatch.setattr(mouser_provider.MouserProvider, "search", _search)
+
+    args = argparse.Namespace(
+        query="led green 0603",
+        supplier="mouser",
+        limit=1,
+        api_key="dummy",
+        all=True,
+        no_parametric=True,
+        output="-",
+        fields="supplier_part_number",
+        list_fields=False,
+    )
+
+    rc = handle_search(args, _cache=InMemorySearchCache())
+    assert rc == 0
+    assert seen_queries
+    shaped = seen_queries[0].lower()
+    assert "led" in shaped
+    assert "green" in shaped
+    assert "0603" in shaped
+    assert "smd" in shaped
+    assert "indicator" in shaped
+
+    _ = capsys.readouterr()
+
+
 def test_search_console_output(monkeypatch, capsys):
     # Avoid any network calls.
     import jbom.suppliers.mouser.provider as mouser_provider

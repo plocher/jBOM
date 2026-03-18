@@ -46,10 +46,18 @@ _QUERY_CATEGORY_HINTS: dict[str, tuple[str, ...]] = {
     "RES": ("RESISTOR", "RESISTORS"),
     "CAP": ("CAPACITOR", "CAPACITORS"),
     "IND": ("INDUCTOR", "INDUCTORS"),
+    "LED": ("LED", "LEDS"),
 }
 _PASSIVE_STOCK_MIN_QTY = 2000
 _PASSIVE_STOCK_INTENTS = frozenset({"RES", "CAP"})
 _BASIC_PART_RELEVANCE_BOOST = 2
+_LED_NON_PART_HINTS: tuple[str, ...] = (
+    "CONNECTOR",
+    "TERMINAL",
+    "SWITCH ACCESSORIES",
+    "BARRIER TERMINAL",
+    "WIRE TO BOARD",
+)
 
 _PACKAGE_PATTERN = re.compile(
     r"\b(0201|0402|0603|0805|1206|1210|1812|2010|2512)\b", re.IGNORECASE
@@ -570,6 +578,13 @@ def _query_relevance_score(result: SearchResult, *, context: dict[str, str]) -> 
             score += 6
         else:
             score -= 4
+    elif category_intent == "LED":
+        if "LED" in haystack or "LIGHT EMITTING DIODE" in haystack:
+            score += 8
+        else:
+            score -= 6
+        if any(hint in haystack for hint in _LED_NON_PART_HINTS):
+            score -= 12
     if _component_library_tier(result) == "basic":
         score += _BASIC_PART_RELEVANCE_BOOST
 

@@ -23,6 +23,11 @@ Feature: Parts List Generation (Core Functionality)
     And the CSV output has rows where:
       | Refs      | Value | Footprint   |
       | R1,R2,R10 | 10K   | R_0805_2012 |
+
+  Scenario: Generate parts list with mixed-case fabricator ID
+    When I run jbom command "parts --fabricator PCBWAY"
+    Then the command should succeed
+    And the output should contain "R1,R2,R10"
       | C1,C20    | 100nF | C_0603_1608 |
 
   Scenario: Parts list aggregates electro-mechanically identical components

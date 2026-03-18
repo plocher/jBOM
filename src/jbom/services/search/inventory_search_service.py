@@ -27,6 +27,11 @@ from jbom.services.search.cache import normalize_query
 from jbom.services.search.filtering import SearchSorter, apply_default_filters
 from jbom.services.search.models import SearchResult
 from jbom.services.search.provider import SearchProvider
+from jbom.services.search.query_shaping import (
+    expand_led_color_token,
+    normalize_ascii_token,
+    shape_search_query,
+)
 from jbom.services.sophisticated_inventory_matcher import (
     MatchingOptions,
     SophisticatedInventoryMatcher,
@@ -53,16 +58,7 @@ class InventorySearchRecord:
 
 def _normalize_ascii_value(text: str) -> str:
     """Normalize value strings to ASCII-friendly equivalents."""
-
-    if not text:
-        return ""
-
-    t = str(text)
-    t = t.replace("Ω", "")
-    t = t.replace("ω", "")
-    t = t.replace("μ", "u")
-    t = t.replace("µ", "u")
-    return " ".join(t.split()).strip()
+    return normalize_ascii_token(text)
 
 
 def _category_token(category: str) -> str:
@@ -252,6 +248,7 @@ class InventorySearchService:
         - Passives (RES/CAP/IND): use the typed numeric field formatted back to an
           EIA string for consistent, normalised search terms.  Falls back to the
           raw Value string when the typed field is absent.
+        - LEDs: normalize color shorthand before query shaping.
         - Non-passives: prefer the Name field (e.g. 'LM358D', 'AMS1117-3.3');
           fall back to Value when Name is empty.
         """
@@ -270,6 +267,10 @@ class InventorySearchService:
         elif cat in ("RES", "CAP", "IND"):
             # Typed field absent — fall back to raw value string.
             value_token = _normalize_ascii_value(item.value)
+        elif cat == "LED":
+            value_token = expand_led_color_token(item.value)
+            if not value_token and item.name:
+                value_token = _normalize_ascii_value(item.name)
         elif item.name:
             # Non-passive with an explicit component name.
             value_token = item.name
@@ -292,7 +293,8 @@ class InventorySearchService:
         ):
             parts.append(_normalize_ascii_value(item.tolerance))
 
-        return " ".join(p for p in parts if p).strip()
+        raw_query = " ".join(p for p in parts if p).strip()
+        return shape_search_query(raw_query, category=cat, package=item.package)
 
     def search(self, items: list[InventoryItem]) -> list[InventorySearchRecord]:
         """Search for candidates for each inventory item.
