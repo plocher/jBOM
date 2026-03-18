@@ -1,0 +1,66 @@
+{
+  "Errors": [],
+  "SearchResults": {
+    "NumberOfResult": 2,
+    "Parts": [
+      {
+        "Manufacturer": "Amphenol FCI",
+        "ManufacturerPartNumber": "20021121-00010T4LF",
+        "Description": "Headers & Wire Housings BERGSTIK HDR 2X5P STR",
+        "DataSheetUrl": "https://example.com/20021121-00010t4lf.pdf",
+        "MouserPartNumber": "649-20021121-00010T4LF",
+        "Availability": "2750 In Stock",
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.36",
+            "Currency": "USD"
+          }
+        ],
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Amphenol-FCI/20021121-00010T4LF",
+        "LifecycleStatus": "Active",
+        "Min": "1",
+        "Category": "Headers & Wire Housings",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Number of Positions",
+            "AttributeValue": "10 Position"
+          },
+          {
+            "AttributeName": "Pitch",
+            "AttributeValue": "2.54 mm"
+          }
+        ]
+      },
+      {
+        "Manufacturer": "Legacy Connector Co",
+        "ManufacturerPartNumber": "LC-2X5-254",
+        "Description": "Headers & Wire Housings Header 2x5 2.54mm",
+        "DataSheetUrl": "https://example.com/lc-2x5-254.pdf",
+        "MouserPartNumber": "999-LC-2X5-254",
+        "Availability": "0 In Stock",
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.05",
+            "Currency": "USD"
+          }
+        ],
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Legacy-Connector-Co/LC-2X5-254",
+        "LifecycleStatus": "Obsolete",
+        "Min": "1",
+        "Category": "Headers & Wire Housings",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Number of Positions",
+            "AttributeValue": "10 Position"
+          },
+          {
+            "AttributeName": "Pitch",
+            "AttributeValue": "2.54 mm"
+          }
+        ]
+      }
+    ]
+  }
+}

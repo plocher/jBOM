@@ -17,7 +17,7 @@ def test_parity_artifact_generation_covers_required_categories_and_suppliers() -
 
     intents = payload["intents"]
     categories = {intent["category"] for intent in intents}
-    assert categories == {"RES", "CAP", "IND", "LED"}
+    assert categories == {"RES", "CAP", "IND", "LED", "CON"}
 
     matrix_rows = payload["matrix_rows"]
     assert len(matrix_rows) == len(intents) * len(PARITY_SUPPLIERS)
