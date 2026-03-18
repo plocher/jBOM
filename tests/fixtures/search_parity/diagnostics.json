@@ -3616,7 +3616,7 @@
                 "passive_stock_gate_kept": true,
                 "price_value": 0.08,
                 "rank": 1,
-                "relevance_score": 11,
+                "relevance_score": 19,
                 "result_id": "mouser:604-KP-1608SGC"
               }
             ],
@@ -3974,26 +3974,6 @@
       "impact": "high",
       "intent_id": "LED_GREEN_0603",
       "reason": "supplier_success_mismatch"
-    },
-    {
-      "impact": "medium",
-      "intent_id": "CAP_1UF_0805",
-      "reason": "top_result_mpn_mismatch"
-    },
-    {
-      "impact": "medium",
-      "intent_id": "CON_HEADER_2X5_254",
-      "reason": "top_result_mpn_mismatch"
-    },
-    {
-      "impact": "medium",
-      "intent_id": "IND_100UH",
-      "reason": "top_result_mpn_mismatch"
-    },
-    {
-      "impact": "medium",
-      "intent_id": "RES_10K_0603",
-      "reason": "top_result_mpn_mismatch"
     }
   ],
   "suppliers": [

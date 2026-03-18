@@ -1,6 +1,6 @@
 intent_id,category,status,reason,baseline_exists,candidate_exists,baseline_ranked_total,candidate_ranked_total,baseline_gap_reasons,candidate_gap_reasons,gap_reasons_changed
-CON_HEADER_2X5_254,CON,improved,new_intent_added,False,True,0,3,,top_result_mpn_mismatch,True
-CAP_1UF_0805,CAP,unchanged,equivalent_outcome,True,True,29,29,top_result_mpn_mismatch,top_result_mpn_mismatch,False
-IND_100UH,IND,unchanged,equivalent_outcome,True,True,47,47,top_result_mpn_mismatch,top_result_mpn_mismatch,False
+CAP_1UF_0805,CAP,improved,contract_mismatch_reduced,True,True,29,29,top_result_mpn_mismatch,,True
+CON_HEADER_2X5_254,CON,improved,new_intent_added,False,True,0,3,,,False
+IND_100UH,IND,improved,contract_mismatch_reduced,True,True,47,47,top_result_mpn_mismatch,,True
+RES_10K_0603,RES,improved,contract_mismatch_reduced,True,True,14,14,top_result_mpn_mismatch,,True
 LED_GREEN_0603,LED,unchanged,equivalent_outcome,True,True,1,1,supplier_success_mismatch,supplier_success_mismatch,False
-RES_10K_0603,RES,unchanged,equivalent_outcome,True,True,14,14,top_result_mpn_mismatch,top_result_mpn_mismatch,False
