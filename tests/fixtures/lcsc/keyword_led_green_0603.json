@@ -1,0 +1,53 @@
+{
+  "code": 200,
+  "data": {
+    "componentPageInfo": {
+      "list": [
+        {
+          "componentCode": "C2286",
+          "componentModelEn": "KT-0603G",
+          "componentBrandEn": "Everlight",
+          "describe": "Green LED 0603",
+          "lcscGoodsUrl": "https://www.lcsc.com/product-detail/C2286.html",
+          "dataManualUrl": "https://example.com/kt-0603g.pdf",
+          "stockCount": 0,
+          "minBuyNumber": 1,
+          "componentPrices": [
+            {
+              "productPrice": "0.013",
+              "productNumber": 1
+            }
+          ],
+          "attributes": [
+            {
+              "attribute_name_en": "Package",
+              "attribute_value_name": "0603"
+            }
+          ]
+        },
+        {
+          "componentCode": "C21999",
+          "componentModelEn": "KT-0805G",
+          "componentBrandEn": "Everlight",
+          "describe": "Green LED 0805",
+          "lcscGoodsUrl": "https://www.lcsc.com/product-detail/C21999.html",
+          "dataManualUrl": "",
+          "stockCount": 0,
+          "minBuyNumber": 1,
+          "componentPrices": [
+            {
+              "productPrice": "0.011",
+              "productNumber": 1
+            }
+          ],
+          "attributes": [
+            {
+              "attribute_name_en": "Package",
+              "attribute_value_name": "0805"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

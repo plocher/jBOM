@@ -120,6 +120,9 @@ To contribute:
 3. Run tests: `pytest && python -m behave --format progress`
 4. Submit a pull request
 
+Regenerate deterministic search parity artifacts (fixture-based):
+`python scripts/generate_search_parity_artifacts.py`
+
 See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for details.
 
 **License**: AGPLv3 — See LICENSE file for full terms.

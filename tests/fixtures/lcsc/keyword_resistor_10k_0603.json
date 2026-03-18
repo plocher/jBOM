@@ -1,0 +1,65 @@
+{
+  "code": 200,
+  "data": {
+    "componentPageInfo": {
+      "list": [
+        {
+          "componentCode": "C25804",
+          "componentModelEn": "RC0603FR-0710KL",
+          "componentBrandEn": "Yageo",
+          "describe": "Thick Film Resistor 10k 1% 0603",
+          "lcscGoodsUrl": "https://www.lcsc.com/product-detail/C25804.html",
+          "dataManualUrl": "https://example.com/rc0603fr0710kl.pdf",
+          "stockCount": 236000,
+          "minBuyNumber": 1,
+          "componentPrices": [
+            {
+              "productPrice": "0.004",
+              "productNumber": 1
+            }
+          ],
+          "attributes": [
+            {
+              "attribute_name_en": "Resistance",
+              "attribute_value_name": "10kΩ"
+            },
+            {
+              "attribute_name_en": "Tolerance",
+              "attribute_value_name": "1%"
+            },
+            {
+              "attribute_name_en": "Package",
+              "attribute_value_name": "0603"
+            }
+          ]
+        },
+        {
+          "componentCode": "C55555",
+          "componentModelEn": "NTC0603-10K",
+          "componentBrandEn": "Generic",
+          "describe": "NTC Thermistor 10k 0603",
+          "lcscGoodsUrl": "https://www.lcsc.com/product-detail/C55555.html",
+          "dataManualUrl": "",
+          "stockCount": 88000,
+          "minBuyNumber": 1,
+          "componentPrices": [
+            {
+              "productPrice": "0.0035",
+              "productNumber": 1
+            }
+          ],
+          "attributes": [
+            {
+              "attribute_name_en": "Resistance",
+              "attribute_value_name": "10kΩ"
+            },
+            {
+              "attribute_name_en": "Package",
+              "attribute_value_name": "0603"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

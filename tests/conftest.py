@@ -36,3 +36,20 @@ def load_mouser_fixture(name: str) -> dict[str, Any]:
         )
 
     return data
+
+
+def load_lcsc_fixture(name: str) -> dict[str, Any]:
+    """Load a named fixture from tests/fixtures/lcsc/."""
+
+    filename = name if name.endswith(".json") else f"{name}.json"
+    fixture_path = _FIXTURES_DIR / "lcsc" / filename
+    if not fixture_path.exists():
+        raise FileNotFoundError(f"Fixture not found: {fixture_path}")
+
+    data = json.loads(fixture_path.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise ValueError(
+            f"Fixture {fixture_path} must contain a JSON object, got {type(data).__name__}"
+        )
+
+    return data

@@ -1,0 +1,62 @@
+{
+  "Errors": [],
+  "SearchResults": {
+    "NumberOfResult": 2,
+    "Parts": [
+      {
+        "Manufacturer": "Kingbright",
+        "ManufacturerPartNumber": "KP-1608SGC",
+        "Description": "Standard LEDs - SMD Green LED 0603",
+        "DataSheetUrl": "https://example.com/kp-1608sgc.pdf",
+        "MouserPartNumber": "604-KP-1608SGC",
+        "Availability": "15432 In Stock",
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.08",
+            "Currency": "USD"
+          }
+        ],
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Kingbright/KP-1608SGC",
+        "LifecycleStatus": "Active",
+        "Min": "1",
+        "Category": "Standard LEDs - SMD",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Wavelength/Color Temperature",
+            "AttributeValue": "Green"
+          },
+          {
+            "AttributeName": "Package / Case",
+            "AttributeValue": "0603"
+          }
+        ]
+      },
+      {
+        "Manufacturer": "Legacy LED Co",
+        "ManufacturerPartNumber": "LEG-0603-GREEN",
+        "Description": "Standard LEDs - SMD Green LED 0805",
+        "DataSheetUrl": "https://example.com/legacy-led.pdf",
+        "MouserPartNumber": "999-LEG-0603-GREEN",
+        "Availability": "12 In Stock",
+        "PriceBreaks": [
+          {
+            "Quantity": 1,
+            "Price": "$0.02",
+            "Currency": "USD"
+          }
+        ],
+        "ProductDetailUrl": "https://www.mouser.com/ProductDetail/Legacy-LED-Co/LEG-0603-GREEN",
+        "LifecycleStatus": "Not Recommended for New Designs",
+        "Min": "1",
+        "Category": "Standard LEDs - SMD",
+        "ProductAttributes": [
+          {
+            "AttributeName": "Package / Case",
+            "AttributeValue": "0805"
+          }
+        ]
+      }
+    ]
+  }
+}
