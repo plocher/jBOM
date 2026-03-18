@@ -1,6 +1,23 @@
 # CHANGELOG
 
 
+## v6.48.0 (2026-03-18)
+
+### Features
+
+* feat(search): unify query shaping and normalize CLI ids
+
+Add shared query shaping across search paths with LED-specific intent/relevance tuning, normalize supplier/fabricator/defaults IDs case-insensitively, and add regression coverage including Gherkin canary scenarios.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`514e4f8`](https://github.com/plocher/jBOM/commit/514e4f80e35238538f387f03d8d89cb8321d71dc))
+
+* feat(search): expand parity corpus and add baseline delta evidence
+
+Extend deterministic parity corpus with connector non-passive intent while preserving passive coverage, snapshot issue #199 baseline artifacts, generate candidate artifacts, add baseline-vs-candidate delta report artifacts, and add regression tests for corpus/delta contracts.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`9f859d7`](https://github.com/plocher/jBOM/commit/9f859d7429c86d7bfdf5b5003bf9784dd2a5c01c))
+
+
 ## v6.47.0 (2026-03-18)
 
 ### Features
