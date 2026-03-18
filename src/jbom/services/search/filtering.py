@@ -21,6 +21,10 @@ from jbom.common.value_parsing import (
     parse_voltage_to_volts,
 )
 from jbom.services.search.models import SearchResult
+from jbom.services.search.normalization import (
+    STANDARD_SMD_PACKAGES,
+    extract_package_token,
+)
 
 
 _CATEGORY_ATTR_NAME: dict[str, str] = {
@@ -30,17 +34,6 @@ _CATEGORY_ATTR_NAME: dict[str, str] = {
     "REG": "Output Voltage",
 }
 
-_KNOWN_PACKAGE_TOKENS: tuple[str, ...] = (
-    "0201",
-    "0402",
-    "0603",
-    "0805",
-    "1206",
-    "1210",
-    "1812",
-    "2010",
-    "2512",
-)
 
 _QUERY_CATEGORY_HINTS: dict[str, tuple[str, ...]] = {
     "RES": ("RESISTOR", "RESISTORS"),
@@ -57,10 +50,6 @@ _LED_NON_PART_HINTS: tuple[str, ...] = (
     "SWITCH ACCESSORIES",
     "BARRIER TERMINAL",
     "WIRE TO BOARD",
-)
-
-_PACKAGE_PATTERN = re.compile(
-    r"\b(0201|0402|0603|0805|1206|1210|1812|2010|2512)\b", re.IGNORECASE
 )
 
 
@@ -133,14 +122,7 @@ def _extract_package_token(result: SearchResult) -> str:
     candidates.append(result.description or "")
     candidates.append(result.mpn or "")
 
-    for text in candidates:
-        if not text:
-            continue
-        match = _PACKAGE_PATTERN.search(text.upper())
-        if match:
-            return match.group(1).upper()
-
-    return ""
+    return extract_package_token(*candidates)
 
 
 class SearchFilter:
@@ -208,7 +190,7 @@ class SearchFilter:
         target_package = ""
         for token in re.split(r"[\s,/_-]+", query or ""):
             package_token = token.strip().upper()
-            if package_token in _KNOWN_PACKAGE_TOKENS:
+            if package_token in STANDARD_SMD_PACKAGES:
                 target_package = package_token
                 break
 
@@ -506,7 +488,7 @@ def _build_relevance_context(query: str) -> dict[str, str]:
 
     requested_package = ""
     for tok in query_tokens:
-        if tok in _KNOWN_PACKAGE_TOKENS:
+        if tok in STANDARD_SMD_PACKAGES:
             requested_package = tok
             break
 
@@ -554,7 +536,7 @@ def _query_relevance_score(result: SearchResult, *, context: dict[str, str]) -> 
         else:
             mismatched_package = any(
                 pkg in haystack
-                for pkg in _KNOWN_PACKAGE_TOKENS
+                for pkg in STANDARD_SMD_PACKAGES
                 if pkg != requested_package
             )
             if mismatched_package:

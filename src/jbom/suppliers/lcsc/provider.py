@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
@@ -13,6 +12,10 @@ from jbom.suppliers.lcsc.query_planner import (
     build_parametric_query_plan,
 )
 from jbom.services.search.models import SearchResult
+from jbom.services.search.normalization import (
+    normalize_manufacturer_token,
+    normalize_mpn_token,
+)
 from jbom.services.search.provider import SearchProvider
 
 if TYPE_CHECKING:
@@ -29,25 +32,6 @@ class JlcpcbProvider(SearchProvider):
     """LCSC search via JLCPCB's public parts API."""
 
     _DETERMINISTIC_MPN_MATCH_SCORE = 1000
-
-    @staticmethod
-    def _normalize_mpn(text: str) -> str:
-        """Normalize an MPN for exact-match comparisons.
-
-        Notes:
-        - JLCPCB API data is usually consistent, but LCSC can list multiple C-numbers
-          for a single MPN (batch/warehouse/sub-variant distinctions).
-        - For #106, we treat MPN lookup as "best available C-number right now" and
-          use highest stock as the selection criterion.
-        """
-
-        t = (text or "").strip().upper()
-        t = re.sub(r"\s+", "", t)
-        return t
-
-    @staticmethod
-    def _normalize_manufacturer(text: str) -> str:
-        return " ".join((text or "").strip().upper().split())
 
     def __init__(
         self, *, cache: SearchCache, rate_limit_seconds: float | None = None
@@ -222,14 +206,14 @@ class JlcpcbProvider(SearchProvider):
             results = self._parse_results(data)
             self._cache.set(cache_key, results)
 
-        want_mpn = self._normalize_mpn(mpn_norm)
-        want_mfg = self._normalize_manufacturer(mfg_norm) if mfg_norm else ""
+        want_mpn = normalize_mpn_token(mpn_norm)
+        want_mfg = normalize_manufacturer_token(mfg_norm) if mfg_norm else ""
 
         matches: list[SearchResult] = []
         for r in results:
-            if self._normalize_mpn(r.mpn) != want_mpn:
+            if normalize_mpn_token(r.mpn) != want_mpn:
                 continue
-            if want_mfg and self._normalize_manufacturer(r.manufacturer) != want_mfg:
+            if want_mfg and normalize_manufacturer_token(r.manufacturer) != want_mfg:
                 continue
             matches.append(r)
 
