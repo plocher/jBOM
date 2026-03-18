@@ -21,6 +21,11 @@ Feature: BOM Generation (Core Functionality)
     And the output should contain "U1"
     And the output should contain "LM358"
 
+  Scenario: Generate BOM with mixed-case fabricator ID
+    When I run jbom command "bom --fabricator JLC -o console"
+    Then the command should succeed
+    And the output should contain "R1"
+
   Scenario: Generate BOM to specific output file
     When I run jbom command "bom -o custom_bom.csv"
     Then the command should succeed

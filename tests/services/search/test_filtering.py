@@ -366,3 +366,32 @@ def test_sorter_prefers_basic_part_tier_when_relevance_is_otherwise_equal():
 
     ranked = SearchSorter.rank(results, query="10k 0603 resistor")
     assert [r.mpn for r in ranked] == ["BASE", "EXPAND"]
+
+
+def test_sorter_prefers_led_parts_for_led_query_over_noise():
+    results = [
+        _sr(
+            mpn="LED0603",
+            category="Standard LEDs - SMD",
+            description="Green LED 0603",
+            stock_quantity=5000,
+            price="$0.08",
+        ),
+        _sr(
+            mpn="NOISE-CON",
+            category="Connectors: Wire To Board Connector",
+            description="Green terminal connector 0603",
+            stock_quantity=20000,
+            price="$0.01",
+        ),
+        _sr(
+            mpn="NOISE-SW",
+            category="Switches: Switch Accessories / Caps",
+            description="Green switch cap 0603",
+            stock_quantity=20000,
+            price="$0.01",
+        ),
+    ]
+
+    ranked = SearchSorter.rank(results, query="green led 0603")
+    assert [r.mpn for r in ranked] == ["LED0603", "NOISE-CON", "NOISE-SW"]

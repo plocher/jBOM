@@ -41,7 +41,7 @@ def _normalize_field_synonym_canonical_key(canonical: str) -> str:
 
 def _normalize_defaults_profile_name(name: str) -> str:
     """Normalize a defaults profile name, falling back to 'generic'."""
-
+    normalized = str(name or "").strip().lower()
     normalized = str(name or "").strip()
     return normalized or "generic"
 

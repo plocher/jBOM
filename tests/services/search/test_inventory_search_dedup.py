@@ -271,6 +271,30 @@ def test_filter_searchable_items_allows_led_single_character_value() -> None:
     assert [i.ipn for i in filtered] == ["LED-R-1"]
 
 
+def test_build_query_shapes_led_queries_with_intent_tokens() -> None:
+    class _Provider:
+        provider_id = "lcsc"
+
+        def search(self, query: str, *, limit: int = 10) -> list[SearchResult]:
+            return []
+
+    svc = InventorySearchService(_Provider())
+    item = _inv_item(
+        ipn="LED-G-0603",
+        category="LED",
+        value="G",
+        package="0603",
+        tolerance="",
+    )
+
+    query = svc.build_query(item).lower()
+    assert "green" in query
+    assert "led" in query
+    assert "smd" in query
+    assert "indicator" in query
+    assert "0603" in query
+
+
 def test_build_query_uses_supplier_config_keywords(monkeypatch) -> None:
     supplier = SupplierConfig(
         id="mouser",

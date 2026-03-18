@@ -9,6 +9,18 @@ Feature: Search supplier flag
     Then the command should succeed
     And the output should contain "No results found."
 
+  Scenario: Search accepts mixed-case --supplier
+    Given a generic supplier
+    When I run "jbom search 10k --supplier GENERIC --limit 1"
+    Then the command should succeed
+    And the output should contain "No results found."
+
+  Scenario: Search accepts mixed-case --defaults profile
+    Given a generic supplier
+    When I run "jbom search 10k --supplier generic --defaults GENERIC --limit 1"
+    Then the command should succeed
+    And the output should contain "No results found."
+
   Scenario: Search rejects retired --provider flag
     Given a generic supplier
     When I run "jbom search 10k --provider generic --limit 1"

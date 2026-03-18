@@ -69,6 +69,7 @@ def _add_defaults_argument_to_subcommands(
         command_parser.add_argument(
             "--defaults",
             metavar="PROFILE",
+            type=lambda value: str(value).strip().lower(),
             default="generic",
             help=(
                 "Defaults profile name for configurable behavior " "(default: generic)"

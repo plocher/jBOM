@@ -28,6 +28,7 @@ from jbom.services.search.filtering import (
     apply_default_filters,
 )
 from jbom.services.search.models import SearchResult
+from jbom.services.search.query_shaping import shape_search_query
 from jbom.services.search.provider import SearchProvider
 
 _MAX_ADAPTIVE_FETCH_LIMIT = 1024
@@ -240,6 +241,7 @@ def register_command(subparsers) -> None:
 
     parser.add_argument(
         "--supplier",
+        type=lambda value: str(value).strip().lower(),
         choices=supplier_choices,
         default=default_supplier,
         help="Supplier ID to use for search (default: derived from supplier profiles)",
@@ -323,10 +325,12 @@ def handle_search(
     # Pull extra results to allow client-side filtering.
     display_limit = max(1, int(args.limit))
     initial_fetch_limit = min(100, max(50, display_limit * 3))
+    shaped_query = shape_search_query(args.query)
 
     results = _run_adaptive_search_pipeline(
         provider=provider,
         args=args,
+        query=shaped_query,
         display_limit=display_limit,
         initial_fetch_limit=initial_fetch_limit,
     )
@@ -347,6 +351,7 @@ def _run_adaptive_search_pipeline(
     *,
     provider: SearchProvider,
     args: argparse.Namespace,
+    query: str,
     display_limit: int,
     initial_fetch_limit: int,
     max_fetch_limit: int = _MAX_ADAPTIVE_FETCH_LIMIT,
@@ -360,14 +365,13 @@ def _run_adaptive_search_pipeline(
 
     while True:
         try:
-            raw_results = provider.search(args.query, limit=fetch_limit)
+            raw_results = provider.search(query, limit=fetch_limit)
         except Exception as exc:
             if not best_results:
                 print(f"Error: search failed: {exc}", file=sys.stderr)
                 return None
             break
-
-        candidate_results = _apply_result_pipeline(raw_results, args)
+        candidate_results = _apply_result_pipeline(raw_results, args, query=query)
         if len(candidate_results) > len(best_results):
             best_results = candidate_results
 
@@ -391,7 +395,7 @@ def _run_adaptive_search_pipeline(
 
 
 def _apply_result_pipeline(
-    results: list[SearchResult], args: argparse.Namespace
+    results: list[SearchResult], args: argparse.Namespace, *, query: str
 ) -> list[SearchResult]:
     """Apply default filters, parametric filtering, and ranking."""
 
@@ -400,9 +404,9 @@ def _apply_result_pipeline(
         filtered = apply_default_filters(filtered)
 
     if not args.no_parametric:
-        filtered = SearchFilter.filter_by_query(filtered, args.query)
+        filtered = SearchFilter.filter_by_query(filtered, query)
 
-    return SearchSorter.rank(filtered, query=args.query)
+    return SearchSorter.rank(filtered, query=query)
 
 
 def _print_list_fields() -> None:
@@ -510,12 +514,13 @@ def _row_for_result(r: SearchResult) -> dict[str, str]:
 
 
 def _build_cache(args: argparse.Namespace) -> SearchCache:
+    supplier_id = (getattr(args, "supplier", "") or "").strip().lower()
     if getattr(args, "clear_cache", False):
-        DiskSearchCache.clear_provider(args.supplier)
+        DiskSearchCache.clear_provider(supplier_id)
 
     if getattr(args, "no_cache", False):
         return InMemorySearchCache()
-
+    return DiskSearchCache(supplier_id)
     return DiskSearchCache(args.supplier)
 
 
