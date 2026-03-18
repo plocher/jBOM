@@ -1,6 +1,17 @@
 # CHANGELOG
 
 
+## v6.47.0 (2026-03-18)
+
+### Features
+
+* feat(search): add fixture-based parity matrix diagnostics evidence
+
+Generate deterministic cross-supplier parity artifacts (RES/CAP/IND/LED) from committed fixtures, add inspectable filtering/ranking diagnostics contracts, add regression coverage, and document the regeneration command.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`947de72`](https://github.com/plocher/jBOM/commit/947de728f901f88c5dee0281596d27c4bd18cf34))
+
+
 ## v6.46.0 (2026-03-17)
 
 ### Features
