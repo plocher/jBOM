@@ -123,6 +123,9 @@ To contribute:
 Regenerate deterministic search parity artifacts (fixture-based):
 `python scripts/generate_search_parity_artifacts.py`
 
+Regenerate baseline-vs-candidate parity delta evidence:
+`python scripts/generate_search_parity_delta_report.py`
+
 See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for details.
 
 **License**: AGPLv3 — See LICENSE file for full terms.

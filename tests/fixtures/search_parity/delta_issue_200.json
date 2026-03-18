@@ -1,0 +1,231 @@
+{
+  "contract_mismatches": [
+    {
+      "baseline_gap_reasons": [],
+      "candidate_gap_reasons": [
+        "top_result_mpn_mismatch"
+      ],
+      "category": "CON",
+      "gap_reasons_changed": true,
+      "intent_id": "CON_HEADER_2X5_254"
+    },
+    {
+      "baseline_gap_reasons": [
+        "top_result_mpn_mismatch"
+      ],
+      "candidate_gap_reasons": [
+        "top_result_mpn_mismatch"
+      ],
+      "category": "CAP",
+      "gap_reasons_changed": false,
+      "intent_id": "CAP_1UF_0805"
+    },
+    {
+      "baseline_gap_reasons": [
+        "top_result_mpn_mismatch"
+      ],
+      "candidate_gap_reasons": [
+        "top_result_mpn_mismatch"
+      ],
+      "category": "IND",
+      "gap_reasons_changed": false,
+      "intent_id": "IND_100UH"
+    },
+    {
+      "baseline_gap_reasons": [
+        "supplier_success_mismatch"
+      ],
+      "candidate_gap_reasons": [
+        "supplier_success_mismatch"
+      ],
+      "category": "LED",
+      "gap_reasons_changed": false,
+      "intent_id": "LED_GREEN_0603"
+    },
+    {
+      "baseline_gap_reasons": [
+        "top_result_mpn_mismatch"
+      ],
+      "candidate_gap_reasons": [
+        "top_result_mpn_mismatch"
+      ],
+      "category": "RES",
+      "gap_reasons_changed": false,
+      "intent_id": "RES_10K_0603"
+    }
+  ],
+  "contract_version": "1.0",
+  "improved": [
+    {
+      "baseline_exists": false,
+      "baseline_gap_reasons": [],
+      "baseline_ranked_total": 0,
+      "baseline_success_by_supplier": {},
+      "baseline_top_mpn_by_supplier": {},
+      "candidate_exists": true,
+      "candidate_gap_reasons": [
+        "top_result_mpn_mismatch"
+      ],
+      "candidate_ranked_total": 3,
+      "candidate_success_by_supplier": {
+        "lcsc": true,
+        "mouser": true
+      },
+      "candidate_top_mpn_by_supplier": {
+        "lcsc": "XH-2.54-2X5P-ALT",
+        "mouser": "20021121-00010T4LF"
+      },
+      "category": "CON",
+      "gap_reasons_changed": true,
+      "intent_id": "CON_HEADER_2X5_254",
+      "query": "2x5 2.54mm header connector",
+      "reason": "new_intent_added",
+      "status": "improved"
+    }
+  ],
+  "regressed": [],
+  "summary": {
+    "improved_count": 1,
+    "regressed_count": 0,
+    "total_intents": 5,
+    "unchanged_count": 4
+  },
+  "unchanged": [
+    {
+      "baseline_exists": true,
+      "baseline_gap_reasons": [
+        "top_result_mpn_mismatch"
+      ],
+      "baseline_ranked_total": 29,
+      "baseline_success_by_supplier": {
+        "lcsc": true,
+        "mouser": true
+      },
+      "baseline_top_mpn_by_supplier": {
+        "lcsc": "CL21A105KAFNNNE",
+        "mouser": "CC0805KKX7R7BB105"
+      },
+      "candidate_exists": true,
+      "candidate_gap_reasons": [
+        "top_result_mpn_mismatch"
+      ],
+      "candidate_ranked_total": 29,
+      "candidate_success_by_supplier": {
+        "lcsc": true,
+        "mouser": true
+      },
+      "candidate_top_mpn_by_supplier": {
+        "lcsc": "CL21A105KAFNNNE",
+        "mouser": "CC0805KKX7R7BB105"
+      },
+      "category": "CAP",
+      "gap_reasons_changed": false,
+      "intent_id": "CAP_1UF_0805",
+      "query": "1uF capacitor 0805",
+      "reason": "equivalent_outcome",
+      "status": "unchanged"
+    },
+    {
+      "baseline_exists": true,
+      "baseline_gap_reasons": [
+        "top_result_mpn_mismatch"
+      ],
+      "baseline_ranked_total": 47,
+      "baseline_success_by_supplier": {
+        "lcsc": true,
+        "mouser": true
+      },
+      "baseline_top_mpn_by_supplier": {
+        "lcsc": "LQH32CN101K53L",
+        "mouser": "NLFV32T-101K-EFT"
+      },
+      "candidate_exists": true,
+      "candidate_gap_reasons": [
+        "top_result_mpn_mismatch"
+      ],
+      "candidate_ranked_total": 47,
+      "candidate_success_by_supplier": {
+        "lcsc": true,
+        "mouser": true
+      },
+      "candidate_top_mpn_by_supplier": {
+        "lcsc": "LQH32CN101K53L",
+        "mouser": "NLFV32T-101K-EFT"
+      },
+      "category": "IND",
+      "gap_reasons_changed": false,
+      "intent_id": "IND_100UH",
+      "query": "100uH inductor",
+      "reason": "equivalent_outcome",
+      "status": "unchanged"
+    },
+    {
+      "baseline_exists": true,
+      "baseline_gap_reasons": [
+        "supplier_success_mismatch"
+      ],
+      "baseline_ranked_total": 1,
+      "baseline_success_by_supplier": {
+        "lcsc": false,
+        "mouser": true
+      },
+      "baseline_top_mpn_by_supplier": {
+        "lcsc": "",
+        "mouser": "KP-1608SGC"
+      },
+      "candidate_exists": true,
+      "candidate_gap_reasons": [
+        "supplier_success_mismatch"
+      ],
+      "candidate_ranked_total": 1,
+      "candidate_success_by_supplier": {
+        "lcsc": false,
+        "mouser": true
+      },
+      "candidate_top_mpn_by_supplier": {
+        "lcsc": "",
+        "mouser": "KP-1608SGC"
+      },
+      "category": "LED",
+      "gap_reasons_changed": false,
+      "intent_id": "LED_GREEN_0603",
+      "query": "green LED 0603",
+      "reason": "equivalent_outcome",
+      "status": "unchanged"
+    },
+    {
+      "baseline_exists": true,
+      "baseline_gap_reasons": [
+        "top_result_mpn_mismatch"
+      ],
+      "baseline_ranked_total": 14,
+      "baseline_success_by_supplier": {
+        "lcsc": true,
+        "mouser": true
+      },
+      "baseline_top_mpn_by_supplier": {
+        "lcsc": "RC0603FR-0710KL",
+        "mouser": "CR0603AFX-1002EAS"
+      },
+      "candidate_exists": true,
+      "candidate_gap_reasons": [
+        "top_result_mpn_mismatch"
+      ],
+      "candidate_ranked_total": 14,
+      "candidate_success_by_supplier": {
+        "lcsc": true,
+        "mouser": true
+      },
+      "candidate_top_mpn_by_supplier": {
+        "lcsc": "RC0603FR-0710KL",
+        "mouser": "CR0603AFX-1002EAS"
+      },
+      "category": "RES",
+      "gap_reasons_changed": false,
+      "intent_id": "RES_10K_0603",
+      "query": "10k resistor 0603",
+      "reason": "equivalent_outcome",
+      "status": "unchanged"
+    }
+  ]
+}

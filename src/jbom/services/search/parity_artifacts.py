@@ -71,6 +71,13 @@ PARITY_INTENTS: tuple[ParityIntentSpec, ...] = (
         mouser_fixture="keyword_led_green_0603.json",
         lcsc_fixture="keyword_led_green_0603.json",
     ),
+    ParityIntentSpec(
+        intent_id="CON_HEADER_2X5_254",
+        category="CON",
+        query="2x5 2.54mm header connector",
+        mouser_fixture="keyword_connector_header_2x5_254.json",
+        lcsc_fixture="keyword_connector_header_2x5_254.json",
+    ),
 )
 
 

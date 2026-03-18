@@ -1,0 +1,61 @@
+{
+  "code": 200,
+  "data": {
+    "componentPageInfo": {
+      "list": [
+        {
+          "componentCode": "C124391",
+          "componentModelEn": "XH-2.54-2X5P",
+          "componentBrandEn": "XKB Connectivity",
+          "describe": "Pin Header 2x5 2.54mm Through Hole",
+          "lcscGoodsUrl": "https://www.lcsc.com/product-detail/C124391.html",
+          "dataManualUrl": "https://example.com/xh-2-54-2x5p.pdf",
+          "stockCount": 19200,
+          "minBuyNumber": 1,
+          "componentPrices": [
+            {
+              "productPrice": "0.072",
+              "productNumber": 1
+            }
+          ],
+          "attributes": [
+            {
+              "attribute_name_en": "Number of Pins",
+              "attribute_value_name": "10"
+            },
+            {
+              "attribute_name_en": "Pitch",
+              "attribute_value_name": "2.54mm"
+            }
+          ]
+        },
+        {
+          "componentCode": "C124392",
+          "componentModelEn": "XH-2.54-2X5P-ALT",
+          "componentBrandEn": "XKB Connectivity",
+          "describe": "Pin Header 2x5 2.54mm Through Hole",
+          "lcscGoodsUrl": "https://www.lcsc.com/product-detail/C124392.html",
+          "dataManualUrl": "",
+          "stockCount": 5000,
+          "minBuyNumber": 1,
+          "componentPrices": [
+            {
+              "productPrice": "0.066",
+              "productNumber": 1
+            }
+          ],
+          "attributes": [
+            {
+              "attribute_name_en": "Number of Pins",
+              "attribute_value_name": "10"
+            },
+            {
+              "attribute_name_en": "Pitch",
+              "attribute_value_name": "2.54mm"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
