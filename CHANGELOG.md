@@ -1,6 +1,17 @@
 # CHANGELOG
 
 
+## v6.48.1 (2026-03-18)
+
+### Refactoring
+
+* refactor(search): centralize normalization helpers across providers
+
+Extract shared search normalization utilities and migrate provider/search callsites for package extraction, footprint parsing, and MPN/manufacturer normalization while preserving existing behavior.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`03110d8`](https://github.com/plocher/jBOM/commit/03110d845d45e244bd7455792d7ed943e998a59a))
+
+
 ## v6.48.0 (2026-03-18)
 
 ### Features
