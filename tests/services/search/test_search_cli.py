@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 from jbom.cli.main import create_parser
 
 from jbom.cli.search import _build_cache as _build_search_cache
@@ -63,6 +64,12 @@ def test_search_supplier_argument_is_case_insensitive() -> None:
     parser = create_parser()
     args = parser.parse_args(["search", "10k resistor", "--supplier", "LCSC"])
     assert args.supplier == "lcsc"
+
+
+def test_search_debug_argument_is_supported() -> None:
+    parser = create_parser()
+    args = parser.parse_args(["search", "10k resistor", "-d"])
+    assert args.debug is True
 
 
 def test_defaults_argument_is_case_insensitive() -> None:
@@ -148,6 +155,76 @@ def test_search_console_output(monkeypatch, capsys):
     assert "Supplier PN" in out
     assert "Description" in out
     assert "123-ABC" in out  # supplier_part_number
+
+
+def test_search_debug_emits_pipeline_diagnostics(monkeypatch, capsys) -> None:
+    import jbom.suppliers.mouser.provider as mouser_provider
+
+    monkeypatch.setattr(
+        mouser_provider.MouserProvider,
+        "search",
+        lambda self, query, *, limit=10: [_sr()],
+    )
+
+    args = argparse.Namespace(
+        query="10K resistor 0603",
+        supplier="mouser",
+        limit=1,
+        api_key="dummy",
+        all=False,
+        no_parametric=False,
+        debug=True,
+        output="-",
+        fields="supplier_part_number",
+        list_fields=False,
+    )
+
+    rc = handle_search(args, _cache=InMemorySearchCache())
+    assert rc == 0
+
+    captured = capsys.readouterr()
+    assert "SearchPipelineDiagnostics" in captured.err
+    json_start = captured.err.find("{")
+    assert json_start >= 0
+    parsed = json.loads(captured.err[json_start:])
+    assert isinstance(parsed, dict)
+    assert parsed
+
+
+def test_search_debug_emits_parseable_json_when_stages_are_bypassed(
+    monkeypatch, capsys
+) -> None:
+    import jbom.suppliers.mouser.provider as mouser_provider
+
+    monkeypatch.setattr(
+        mouser_provider.MouserProvider,
+        "search",
+        lambda self, query, *, limit=10: [_sr()],
+    )
+
+    args = argparse.Namespace(
+        query="10K resistor 0603",
+        supplier="mouser",
+        limit=1,
+        api_key="dummy",
+        all=True,
+        no_parametric=True,
+        debug=True,
+        output="-",
+        fields="supplier_part_number",
+        list_fields=False,
+    )
+
+    rc = handle_search(args, _cache=InMemorySearchCache())
+    assert rc == 0
+
+    captured = capsys.readouterr()
+    assert "SearchPipelineDiagnostics" in captured.err
+    json_start = captured.err.find("{")
+    assert json_start >= 0
+    parsed = json.loads(captured.err[json_start:])
+    assert isinstance(parsed, dict)
+    assert parsed
 
 
 def test_search_csv_stdout(monkeypatch, capsys):
@@ -247,13 +324,14 @@ def test_search_adaptive_fetch_can_expand_multiple_windows(monkeypatch, capsys):
             for i in range(1, int(limit) + 1)
         ]
 
-    def _sparse_filter(results, _query):
+    def _sparse_filter(results, _query, *, category=""):
         # Keep every 50th item to emulate strict filtering that needs deeper windows.
         return results[::50]
 
     monkeypatch.setattr(mouser_provider.MouserProvider, "search", _search)
     monkeypatch.setattr(
-        "jbom.cli.search.SearchFilter.filter_by_query", staticmethod(_sparse_filter)
+        "jbom.services.search.diagnostics.SearchFilter.filter_by_query",
+        staticmethod(_sparse_filter),
     )
 
     args = argparse.Namespace(

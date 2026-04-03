@@ -310,6 +310,10 @@ package_voltage:
   "0603": "25V"
   "0805": "50V"
 
+# Search-scoring package tokens (used for package intent matching)
+search:
+  package_tokens: ["0201", "0402", "0603", "0805", "1206", "1210", "1812", "2010", "2512"]
+
 # Attributes jBOM surfaces for Mode A interactive confirmation
 enrichment_attributes:
   resistor:

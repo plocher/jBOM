@@ -198,6 +198,7 @@ class DefaultsConfig:
         default_factory=InventorySchemaConfig.default
     )
     search_output_fields_default: tuple[str, ...] = field(default_factory=tuple)
+    search_package_tokens: tuple[str, ...] = field(default_factory=tuple)
     search_excluded_categories: frozenset[str] = field(default_factory=frozenset)
     component_id_fields: dict[str, frozenset[str]] = field(default_factory=dict)
     field_precedence_policy: dict[str, tuple[str, ...]] = field(default_factory=dict)
@@ -325,6 +326,7 @@ class DefaultsConfig:
 
         search_cfg = data.get("search") or {}
         search_output_fields_default: tuple[str, ...] = tuple()
+        search_package_tokens: tuple[str, ...] = tuple()
         if isinstance(search_cfg, dict):
             output_fields_cfg = search_cfg.get("output_fields") or {}
             if isinstance(output_fields_cfg, dict):
@@ -347,6 +349,22 @@ class DefaultsConfig:
                 log.warning(
                     "search.output_fields must be a mapping; found %r",
                     type(output_fields_cfg).__name__,
+                )
+
+            package_tokens_cfg = search_cfg.get("package_tokens") or []
+            if isinstance(package_tokens_cfg, list):
+                normalized_package_tokens: list[str] = []
+                for token in package_tokens_cfg:
+                    normalized = str(token).strip().upper()
+                    if normalized:
+                        normalized_package_tokens.append(normalized)
+                search_package_tokens = tuple(
+                    dict.fromkeys(normalized_package_tokens).keys()
+                )
+            else:
+                log.warning(
+                    "search.package_tokens must be a list; found %r",
+                    type(package_tokens_cfg).__name__,
                 )
         else:
             log.warning(
@@ -412,6 +430,7 @@ class DefaultsConfig:
             field_synonyms=field_synonyms,
             inventory_schema=inventory_schema,
             search_output_fields_default=search_output_fields_default,
+            search_package_tokens=search_package_tokens,
             search_excluded_categories=search_excluded_categories,
             component_id_fields=component_id_fields,
             field_precedence_policy=field_precedence_policy,
@@ -469,6 +488,11 @@ class DefaultsConfig:
         """Return default search output fields from the active defaults profile."""
 
         return list(self.search_output_fields_default)
+
+    def get_search_package_tokens(self) -> list[str]:
+        """Return configured package tokens used for search package intent signals."""
+
+        return list(self.search_package_tokens)
 
     def get_component_id_fields(self, category: str) -> frozenset[str] | None:
         """Return the optional-field allowlist for *category*, or ``None``.
