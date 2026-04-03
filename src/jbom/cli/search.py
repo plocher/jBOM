@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import json
 import re
 import sys
 from dataclasses import dataclass
@@ -22,10 +23,9 @@ from jbom.config.defaults import get_defaults
 from jbom.config.providers import get_provider, list_searchable_suppliers
 from jbom.config.suppliers import load_supplier, resolve_supplier_by_id
 from jbom.services.search.cache import DiskSearchCache, InMemorySearchCache, SearchCache
-from jbom.services.search.filtering import (
-    SearchFilter,
-    SearchSorter,
-    apply_default_filters,
+from jbom.services.search.diagnostics import (
+    SearchPipelineDiagnostics,
+    run_search_pipeline_with_diagnostics_options,
 )
 from jbom.services.search.models import SearchResult
 from jbom.services.search.query_shaping import shape_search_query
@@ -279,6 +279,12 @@ def register_command(subparsers) -> None:
         action="store_true",
         help="Disable parametric filtering derived from the query text",
     )
+    parser.add_argument(
+        "-d",
+        "--debug",
+        action="store_true",
+        help="Emit SearchPipelineDiagnostics JSON to stderr",
+    )
 
     parser.add_argument(
         "--fields",
@@ -327,16 +333,18 @@ def handle_search(
     initial_fetch_limit = min(100, max(50, display_limit * 3))
     shaped_query = shape_search_query(args.query)
 
-    results = _run_adaptive_search_pipeline(
+    results, diagnostics = _run_adaptive_search_pipeline(
         provider=provider,
         args=args,
         query=shaped_query,
         display_limit=display_limit,
         initial_fetch_limit=initial_fetch_limit,
     )
-    if results is None:
+    if results is None or diagnostics is None:
         return 1
     results = results[:display_limit]
+    if bool(getattr(args, "debug", False)):
+        _print_search_debug_diagnostics(diagnostics)
 
     force = bool(getattr(args, "force", False))
     return _output_results(
@@ -355,12 +363,13 @@ def _run_adaptive_search_pipeline(
     display_limit: int,
     initial_fetch_limit: int,
     max_fetch_limit: int = _MAX_ADAPTIVE_FETCH_LIMIT,
-) -> list[SearchResult] | None:
+) -> tuple[list[SearchResult] | None, SearchPipelineDiagnostics | None]:
     """Fetch, filter, and rank with progressive window expansion when needed."""
 
     fetch_limit = max(1, int(initial_fetch_limit))
     max_limit = max(fetch_limit, int(max_fetch_limit))
     best_results: list[SearchResult] = []
+    best_diagnostics: SearchPipelineDiagnostics | None = None
     last_raw_count = -1
 
     while True:
@@ -369,11 +378,14 @@ def _run_adaptive_search_pipeline(
         except Exception as exc:
             if not best_results:
                 print(f"Error: search failed: {exc}", file=sys.stderr)
-                return None
+                return None, None
             break
-        candidate_results = _apply_result_pipeline(raw_results, args, query=query)
+        candidate_results, candidate_diagnostics = _apply_result_pipeline(
+            raw_results, args, query=query
+        )
         if len(candidate_results) > len(best_results):
             best_results = candidate_results
+            best_diagnostics = candidate_diagnostics
 
         if len(best_results) >= display_limit:
             break
@@ -390,23 +402,30 @@ def _run_adaptive_search_pipeline(
         if next_fetch_limit == fetch_limit:
             break
         fetch_limit = next_fetch_limit
-
+    return best_results, best_diagnostics
     return best_results
 
 
 def _apply_result_pipeline(
     results: list[SearchResult], args: argparse.Namespace, *, query: str
-) -> list[SearchResult]:
+) -> tuple[list[SearchResult], SearchPipelineDiagnostics]:
     """Apply default filters, parametric filtering, and ranking."""
+    return run_search_pipeline_with_diagnostics_options(
+        list(results),
+        query=query,
+        apply_default_stage=not bool(getattr(args, "all", False)),
+        apply_query_stage=not bool(getattr(args, "no_parametric", False)),
+    )
 
-    filtered = list(results)
-    if not args.all:
-        filtered = apply_default_filters(filtered)
 
-    if not args.no_parametric:
-        filtered = SearchFilter.filter_by_query(filtered, query)
+def _print_search_debug_diagnostics(diagnostics: SearchPipelineDiagnostics) -> None:
+    """Emit SearchPipelineDiagnostics payload to stderr for debug workflows."""
 
-    return SearchSorter.rank(filtered, query=query)
+    print("SearchPipelineDiagnostics", file=sys.stderr)
+    print(
+        json.dumps(diagnostics.to_dict(), indent=2, sort_keys=True),
+        file=sys.stderr,
+    )
 
 
 def _print_list_fields() -> None:

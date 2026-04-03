@@ -11,7 +11,7 @@ from __future__ import annotations
 import re
 
 from jbom.common.component_classification import normalize_component_type
-from jbom.services.search.normalization import STANDARD_SMD_PACKAGES
+from jbom.services.search.normalization import get_standard_smd_packages
 
 _LED_COLOR_ALIASES: dict[str, str] = {
     "R": "red",
@@ -91,10 +91,11 @@ def shape_search_query(query: str, *, category: str = "", package: str = "") -> 
 
     if "led" not in seen and "leds" not in seen:
         _append("LED")
+    standard_packages = get_standard_smd_packages()
 
     package_token = normalize_ascii_token(package).upper()
-    has_standard_package = package_token in STANDARD_SMD_PACKAGES or any(
-        tok.upper() in STANDARD_SMD_PACKAGES for tok in shaped
+    has_standard_package = package_token in standard_packages or any(
+        tok.upper() in standard_packages for tok in shaped
     )
     if has_standard_package:
         _append("SMD")

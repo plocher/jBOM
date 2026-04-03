@@ -64,6 +64,7 @@ def test_search_diagnostics_contract_shape_regression() -> None:
         "rank",
         "passive_stock_gate_kept",
         "relevance_score",
+        "relevance_signals",
         "price_value",
         "canonical_value",
         "component_library_tier",

@@ -1,5 +1,5 @@
 {
-  "contract_version": "1.0",
+  "contract_version": "1.1",
   "intents": [
     {
       "category": "RES",
@@ -9,7 +9,7 @@
         "lcsc": {
           "diagnostics": {
             "category": "RES",
-            "contract_version": "1.0",
+            "contract_version": "1.1",
             "default_filter_decisions": [
               {
                 "kept": true,
@@ -58,6 +58,20 @@
                 "price_value": 0.004,
                 "rank": 1,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "lcsc:C25804"
               },
               {
@@ -68,6 +82,20 @@
                 "price_value": 0.0035,
                 "rank": 2,
                 "relevance_score": 0,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": -10,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "lcsc:C55555"
               }
             ],
@@ -92,7 +120,7 @@
         "mouser": {
           "diagnostics": {
             "category": "RES",
-            "contract_version": "1.0",
+            "contract_version": "1.1",
             "default_filter_decisions": [
               {
                 "kept": true,
@@ -823,6 +851,20 @@
                 "price_value": 0.81,
                 "rank": null,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:594-MCT0603HC1002FP1"
               },
               {
@@ -833,6 +875,20 @@
                 "price_value": 0.39,
                 "rank": 7,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:594-MCT06030D1002BPW"
               },
               {
@@ -843,6 +899,20 @@
                 "price_value": 0.65,
                 "rank": 10,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:71-PAT0603E1002BST1"
               },
               {
@@ -853,6 +923,20 @@
                 "price_value": 0.46,
                 "rank": null,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:594-MCT0603HC1002FP5"
               },
               {
@@ -863,6 +947,20 @@
                 "price_value": 1.48,
                 "rank": 12,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:594-MCT0603MG1002BP5"
               },
               {
@@ -873,6 +971,20 @@
                 "price_value": 1.16,
                 "rank": 11,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:594-MCT06030F1002BP5"
               },
               {
@@ -883,6 +995,20 @@
                 "price_value": 0.1,
                 "rank": 3,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:594-MCT06030C1002FPW"
               },
               {
@@ -893,6 +1019,20 @@
                 "price_value": 0.1,
                 "rank": 1,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:652-CR0603AFX1002EAS"
               },
               {
@@ -903,6 +1043,20 @@
                 "price_value": 0.1,
                 "rank": 2,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:594-MCT06030C1002FP5"
               },
               {
@@ -913,6 +1067,20 @@
                 "price_value": 0.6,
                 "rank": 9,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:594-MCT06030E1002BP1"
               },
               {
@@ -923,6 +1091,20 @@
                 "price_value": 3.79,
                 "rank": null,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:71-PLT0603Z1002AST5"
               },
               {
@@ -933,6 +1115,20 @@
                 "price_value": 0.16,
                 "rank": 5,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:652-CRT0603BY1002EAS"
               },
               {
@@ -943,6 +1139,20 @@
                 "price_value": 0.13,
                 "rank": null,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:594-MCT06030D1002BP5"
               },
               {
@@ -953,6 +1163,20 @@
                 "price_value": 0.47,
                 "rank": 8,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:594-MCT0603MD1002BP1"
               },
               {
@@ -963,6 +1187,20 @@
                 "price_value": 0.16,
                 "rank": 6,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:594-MCT0603PD1002DP5"
               },
               {
@@ -973,6 +1211,20 @@
                 "price_value": 0.1,
                 "rank": 4,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:594-MCT0603MC1002FP5"
               }
             ],
@@ -1004,7 +1256,7 @@
         "lcsc": {
           "diagnostics": {
             "category": "CAP",
-            "contract_version": "1.0",
+            "contract_version": "1.1",
             "default_filter_decisions": [
               {
                 "kept": true,
@@ -1052,6 +1304,20 @@
                 "price_value": 0.009,
                 "rank": 1,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "lcsc:C15849"
               }
             ],
@@ -1076,7 +1342,7 @@
         "mouser": {
           "diagnostics": {
             "category": "CAP",
-            "contract_version": "1.0",
+            "contract_version": "1.1",
             "default_filter_decisions": [
               {
                 "kept": true,
@@ -1823,6 +2089,20 @@
                 "price_value": 0.24,
                 "rank": 9,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:581-08056D105KAT2A"
               },
               {
@@ -1833,6 +2113,20 @@
                 "price_value": 0.21,
                 "rank": 4,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:581-08053G105MAT2A"
               },
               {
@@ -1843,6 +2137,20 @@
                 "price_value": 0.17,
                 "rank": 3,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:77-VJ0805Y105KXQTBC"
               },
               {
@@ -1853,6 +2161,20 @@
                 "price_value": 0.34,
                 "rank": 14,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:581-08056C105MAT2A"
               },
               {
@@ -1863,6 +2185,20 @@
                 "price_value": 1.98,
                 "rank": 24,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:80-C0805T105K4RACTU"
               },
               {
@@ -1873,6 +2209,20 @@
                 "price_value": 1.73,
                 "rank": null,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:581-08056C105JAZ2A"
               },
               {
@@ -1883,6 +2233,20 @@
                 "price_value": 0.25,
                 "rank": 10,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:80-C0805C105J4RACLR"
               },
               {
@@ -1893,6 +2257,20 @@
                 "price_value": 0.16,
                 "rank": 2,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:80-C0805C105K3RACTM"
               },
               {
@@ -1903,6 +2281,20 @@
                 "price_value": 2.04,
                 "rank": null,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:581-08053C105JAZ2A"
               },
               {
@@ -1913,6 +2305,20 @@
                 "price_value": 1.03,
                 "rank": null,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:80-C0805C105K8NAUTO"
               },
               {
@@ -1923,6 +2329,20 @@
                 "price_value": 0.98,
                 "rank": null,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:581-0805ZC105K4Z2A"
               },
               {
@@ -1933,6 +2353,20 @@
                 "price_value": 0.26,
                 "rank": 11,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:80-C0805C105M4RECLR"
               },
               {
@@ -1943,6 +2377,20 @@
                 "price_value": 1.13,
                 "rank": null,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:80-C0805X105K8NACTU"
               },
               {
@@ -1953,6 +2401,20 @@
                 "price_value": 0.11,
                 "rank": 26,
                 "relevance_score": 16,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:791-0805B105J160CT"
               },
               {
@@ -1963,6 +2425,20 @@
                 "price_value": 0.11,
                 "rank": 28,
                 "relevance_score": 16,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:791-0805B105M500CT"
               },
               {
@@ -1973,6 +2449,20 @@
                 "price_value": 1.24,
                 "rank": null,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:80-C0805X105J4RAUTO"
               },
               {
@@ -1983,6 +2473,20 @@
                 "price_value": 0.56,
                 "rank": 21,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:581-KGM21AR51H105KU"
               },
               {
@@ -1993,6 +2497,20 @@
                 "price_value": 0.22,
                 "rank": 6,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:80-C0805C105M4RAUTO"
               },
               {
@@ -2003,6 +2521,20 @@
                 "price_value": 0.48,
                 "rank": 20,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:581-KGM21AR71E105JU"
               },
               {
@@ -2013,6 +2545,20 @@
                 "price_value": 0.1,
                 "rank": 25,
                 "relevance_score": 16,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:791-0805X105M160CT"
               },
               {
@@ -2023,6 +2569,20 @@
                 "price_value": 0.6,
                 "rank": 22,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:581-KGM21AR51E105MU"
               },
               {
@@ -2033,6 +2593,20 @@
                 "price_value": 0.39,
                 "rank": 19,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:80-C0805C105J3REAULR"
               },
               {
@@ -2043,6 +2617,20 @@
                 "price_value": 0.35,
                 "rank": 15,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:80-C0805X105K9R"
               },
               {
@@ -2053,6 +2641,20 @@
                 "price_value": 0.11,
                 "rank": 27,
                 "relevance_score": 16,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:791-0805B105J250CT"
               },
               {
@@ -2063,6 +2665,20 @@
                 "price_value": 0.71,
                 "rank": 23,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:80-C0805X105K8R"
               },
               {
@@ -2073,6 +2689,20 @@
                 "price_value": 0.26,
                 "rank": 12,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:581-KGM21AR71C105JU"
               },
               {
@@ -2083,6 +2713,20 @@
                 "price_value": 0.21,
                 "rank": 5,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:581-KGM21AR51E105KU"
               },
               {
@@ -2093,6 +2737,20 @@
                 "price_value": 0.31,
                 "rank": 13,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:80-C0805F105K4RAUTO"
               },
               {
@@ -2103,6 +2761,20 @@
                 "price_value": 0.77,
                 "rank": null,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:581-KAM21KR71C105KU"
               },
               {
@@ -2113,6 +2785,20 @@
                 "price_value": 0.38,
                 "rank": 17,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:80-C0805J105K4RAUTO"
               },
               {
@@ -2123,6 +2809,20 @@
                 "price_value": 0.38,
                 "rank": 18,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:581-KAF21KR71E105KL"
               },
               {
@@ -2133,6 +2833,20 @@
                 "price_value": 0.21,
                 "rank": null,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:581-KGM21AV51H105ZU"
               },
               {
@@ -2143,6 +2857,20 @@
                 "price_value": 0.23,
                 "rank": 7,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:581-KGM21AR51C105KU"
               },
               {
@@ -2153,6 +2881,20 @@
                 "price_value": 13.89,
                 "rank": null,
                 "relevance_score": 16,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:80-M325354E2X105KZMB"
               },
               {
@@ -2163,6 +2905,20 @@
                 "price_value": 0.13,
                 "rank": 1,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:603-CC805KKX7R7BB105"
               },
               {
@@ -2173,6 +2929,20 @@
                 "price_value": 0.23,
                 "rank": 8,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:603-CC805KKX7R9BB105"
               },
               {
@@ -2183,6 +2953,20 @@
                 "price_value": 0.38,
                 "rank": 16,
                 "relevance_score": 17,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:80-C0805C105K5R"
               }
             ],
@@ -2214,7 +2998,7 @@
         "lcsc": {
           "diagnostics": {
             "category": "IND",
-            "contract_version": "1.0",
+            "contract_version": "1.1",
             "default_filter_decisions": [
               {
                 "kept": true,
@@ -2263,6 +3047,16 @@
                 "price_value": 0.061,
                 "rank": 2,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "lcsc:C40858"
               },
               {
@@ -2273,6 +3067,16 @@
                 "price_value": 0.044,
                 "rank": 1,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "lcsc:C77654"
               }
             ],
@@ -2297,7 +3101,7 @@
         "mouser": {
           "diagnostics": {
             "category": "IND",
-            "contract_version": "1.0",
+            "contract_version": "1.1",
             "default_filter_decisions": [
               {
                 "kept": true,
@@ -3061,6 +3865,16 @@
                 "price_value": 0.52,
                 "rank": 2,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:504-HPAL1V1260-101-R"
               },
               {
@@ -3071,6 +3885,16 @@
                 "price_value": 0.52,
                 "rank": 3,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:504-HPAL1V1265-101-R"
               },
               {
@@ -3081,6 +3905,16 @@
                 "price_value": 8.34,
                 "rank": 43,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:994-PCV-2-104-10L"
               },
               {
@@ -3091,6 +3925,16 @@
                 "price_value": 2.03,
                 "rank": 25,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:994-MSS6132T-104MLC"
               },
               {
@@ -3101,6 +3945,16 @@
                 "price_value": 3.03,
                 "rank": 37,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:994-MSS1583-104KED"
               },
               {
@@ -3111,6 +3965,16 @@
                 "price_value": 0.99,
                 "rank": 9,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:871-B82442T1104K050"
               },
               {
@@ -3121,6 +3985,16 @@
                 "price_value": 1.46,
                 "rank": 18,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:994-LPS4018-104MRC"
               },
               {
@@ -3131,6 +4005,16 @@
                 "price_value": 1.82,
                 "rank": 20,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:994-DO1608C-104MLC"
               },
               {
@@ -3141,6 +4025,16 @@
                 "price_value": 2.15,
                 "rank": 26,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:994-DO3316P-104MLD"
               },
               {
@@ -3151,6 +4045,16 @@
                 "price_value": 1.24,
                 "rank": 13,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:710-7447706101"
               },
               {
@@ -3161,6 +4065,16 @@
                 "price_value": 2.55,
                 "rank": 34,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:70-IHSM7832ER101L"
               },
               {
@@ -3171,6 +4085,16 @@
                 "price_value": 0.74,
                 "rank": 6,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:70-ISC1210ER101K"
               },
               {
@@ -3181,6 +4105,16 @@
                 "price_value": 1.87,
                 "rank": 21,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:710-74477420"
               },
               {
@@ -3191,6 +4125,16 @@
                 "price_value": 0.35,
                 "rank": 1,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:810-NLFV32T-101K-EFT"
               },
               {
@@ -3201,6 +4145,16 @@
                 "price_value": 6.26,
                 "rank": 42,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:994-PCV-2-104-03L"
               },
               {
@@ -3211,6 +4165,16 @@
                 "price_value": 2.53,
                 "rank": 32,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:710-744877101"
               },
               {
@@ -3221,6 +4185,16 @@
                 "price_value": 2.51,
                 "rank": 31,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:710-74477820"
               },
               {
@@ -3231,6 +4205,16 @@
                 "price_value": 3.78,
                 "rank": 39,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:994-MSD1514-104KED"
               },
               {
@@ -3241,6 +4225,16 @@
                 "price_value": 4.09,
                 "rank": 40,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:70-IHLE5050FHR101M51"
               },
               {
@@ -3251,6 +4245,16 @@
                 "price_value": 0.82,
                 "rank": 7,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:871-B82472G4104M"
               },
               {
@@ -3261,6 +4265,16 @@
                 "price_value": 2.42,
                 "rank": 29,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:994-MSD1048-104MED"
               },
               {
@@ -3271,6 +4285,16 @@
                 "price_value": 2.72,
                 "rank": 35,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:994-XFL2010-104MEC"
               },
               {
@@ -3281,6 +4305,16 @@
                 "price_value": 1.02,
                 "rank": 11,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:994-RFC0807B-104KE"
               },
               {
@@ -3291,6 +4325,16 @@
                 "price_value": 1.98,
                 "rank": 23,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:994-DO3308P-104MLD"
               },
               {
@@ -3301,6 +4345,16 @@
                 "price_value": 1.21,
                 "rank": 12,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:851-CDRH127LDNP101MC"
               },
               {
@@ -3311,6 +4365,16 @@
                 "price_value": 9.05,
                 "rank": 44,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:70-IHTH1125KZEB101M5"
               },
               {
@@ -3321,6 +4385,16 @@
                 "price_value": 1.46,
                 "rank": 17,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:994-LPS4012-104MRC"
               },
               {
@@ -3331,6 +4405,16 @@
                 "price_value": 1.41,
                 "rank": 15,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:994-LPS4414-104MRC"
               },
               {
@@ -3341,6 +4425,16 @@
                 "price_value": 1.52,
                 "rank": 19,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:994-LPS3314-104MRC"
               },
               {
@@ -3351,6 +4445,16 @@
                 "price_value": 0.97,
                 "rank": 8,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:851-CDR6D23MNNP101NC"
               },
               {
@@ -3361,6 +4465,16 @@
                 "price_value": 1.02,
                 "rank": 10,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:994-DR0608-104L"
               },
               {
@@ -3371,6 +4485,16 @@
                 "price_value": 2.92,
                 "rank": 36,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:994-LPS8045B-104MRC"
               },
               {
@@ -3381,6 +4505,16 @@
                 "price_value": 4.34,
                 "rank": 41,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:994-PCV-0-104-05L"
               },
               {
@@ -3391,6 +4525,16 @@
                 "price_value": 1.28,
                 "rank": 14,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:994-RFB0807-101L"
               },
               {
@@ -3401,6 +4545,16 @@
                 "price_value": 3.37,
                 "rank": 38,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:994-MSD1583-104KED"
               },
               {
@@ -3411,6 +4565,16 @@
                 "price_value": 2.33,
                 "rank": 27,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:994-XFL2006-104MEC"
               },
               {
@@ -3421,6 +4585,16 @@
                 "price_value": 2.02,
                 "rank": 24,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:994-MOS6020-104MLC"
               },
               {
@@ -3431,6 +4605,16 @@
                 "price_value": 0.6,
                 "rank": 5,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:542-PM5022-101M-RC"
               },
               {
@@ -3441,6 +4625,16 @@
                 "price_value": 1.42,
                 "rank": 16,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:70-IMC1210ER101J"
               },
               {
@@ -3451,6 +4645,16 @@
                 "price_value": 2.54,
                 "rank": 33,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:994-MSD1278-104MLD"
               },
               {
@@ -3461,6 +4665,16 @@
                 "price_value": 2.45,
                 "rank": 30,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:994-MSD1260-104MLD"
               },
               {
@@ -3471,6 +4685,16 @@
                 "price_value": 1.94,
                 "rank": 22,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:994-RFS1113-104ME"
               },
               {
@@ -3481,6 +4705,16 @@
                 "price_value": 0.58,
                 "rank": 4,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:580-24101C"
               },
               {
@@ -3491,6 +4725,16 @@
                 "price_value": 2.37,
                 "rank": 28,
                 "relevance_score": 8,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:710-74477720"
               },
               {
@@ -3501,6 +4745,16 @@
                 "price_value": 2.28,
                 "rank": 45,
                 "relevance_score": 7,
+                "relevance_signals": [
+                  {
+                    "contribution": 1,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 6,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:815-ATCA-01-101M-V"
               }
             ],
@@ -3532,7 +4786,7 @@
         "lcsc": {
           "diagnostics": {
             "category": "LED",
-            "contract_version": "1.0",
+            "contract_version": "1.1",
             "default_filter_decisions": [
               {
                 "kept": false,
@@ -3576,7 +4830,7 @@
         "mouser": {
           "diagnostics": {
             "category": "LED",
-            "contract_version": "1.0",
+            "contract_version": "1.1",
             "default_filter_decisions": [
               {
                 "kept": true,
@@ -3617,6 +4871,20 @@
                 "price_value": 0.08,
                 "rank": 1,
                 "relevance_score": 19,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "requested_package"
+                  },
+                  {
+                    "contribution": 8,
+                    "key": "category_intent"
+                  }
+                ],
                 "result_id": "mouser:604-KP-1608SGC"
               }
             ],
@@ -3648,7 +4916,7 @@
         "lcsc": {
           "diagnostics": {
             "category": "CON",
-            "contract_version": "1.0",
+            "contract_version": "1.1",
             "default_filter_decisions": [
               {
                 "kept": true,
@@ -3697,6 +4965,12 @@
                 "price_value": 0.072,
                 "rank": 2,
                 "relevance_score": 3,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  }
+                ],
                 "result_id": "lcsc:C124391"
               },
               {
@@ -3707,6 +4981,12 @@
                 "price_value": 0.066,
                 "rank": 1,
                 "relevance_score": 3,
+                "relevance_signals": [
+                  {
+                    "contribution": 3,
+                    "key": "query_token_overlap"
+                  }
+                ],
                 "result_id": "lcsc:C124392"
               }
             ],
@@ -3731,7 +5011,7 @@
         "mouser": {
           "diagnostics": {
             "category": "CON",
-            "contract_version": "1.0",
+            "contract_version": "1.1",
             "default_filter_decisions": [
               {
                 "kept": true,
@@ -3773,6 +5053,12 @@
                 "price_value": 0.36,
                 "rank": 1,
                 "relevance_score": 2,
+                "relevance_signals": [
+                  {
+                    "contribution": 2,
+                    "key": "query_token_overlap"
+                  }
+                ],
                 "result_id": "mouser:649-20021121-00010T4LF"
               }
             ],

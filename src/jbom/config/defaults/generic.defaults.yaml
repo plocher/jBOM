@@ -246,6 +246,16 @@ inventory_schema:
 # Default CLI search output fields (used when supplier profile has no override).
 # ---------------------------------------------------------------------------
 search:
+  package_tokens:
+    - "0201"
+    - "0402"
+    - "0603"
+    - "0805"
+    - "1206"
+    - "1210"
+    - "1812"
+    - "2010"
+    - "2512"
   output_fields:
     default:
       - supplier_part_number

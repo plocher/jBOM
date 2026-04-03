@@ -24,7 +24,7 @@ from jbom.services.search.filtering import (
 )
 from jbom.services.search.models import SearchResult
 
-SEARCH_DIAGNOSTICS_CONTRACT_VERSION = "1.0"
+SEARCH_DIAGNOSTICS_CONTRACT_VERSION = "1.1"
 
 
 @dataclass(frozen=True)
@@ -69,17 +69,57 @@ def run_search_pipeline_with_diagnostics(
     raw_results: Iterable[SearchResult], *, query: str, category: str = ""
 ) -> tuple[list[SearchResult], SearchPipelineDiagnostics]:
     """Run the search pipeline and return both ranked results and diagnostics."""
+    return run_search_pipeline_with_diagnostics_options(
+        raw_results,
+        query=query,
+        category=category,
+        apply_default_stage=True,
+        apply_query_stage=True,
+    )
+
+
+def run_search_pipeline_with_diagnostics_options(
+    raw_results: Iterable[SearchResult],
+    *,
+    query: str,
+    category: str = "",
+    apply_default_stage: bool,
+    apply_query_stage: bool,
+) -> tuple[list[SearchResult], SearchPipelineDiagnostics]:
+    """Run the search pipeline with optional stage bypasses and diagnostics."""
 
     raw = list(raw_results)
-    default_decisions = describe_default_filter_decisions(raw)
-    default_filtered = apply_default_filters(raw)
+    if apply_default_stage:
+        default_decisions = describe_default_filter_decisions(raw)
+        default_filtered = apply_default_filters(raw)
+    else:
+        default_decisions = [
+            SearchFilterDecision(
+                result_id=search_result_id(result),
+                kept=True,
+                reasons=("default_filters_bypassed",),
+            )
+            for result in raw
+        ]
+        default_filtered = list(raw)
 
-    query_decisions = describe_query_filter_decisions(
-        default_filtered, query, category=category
-    )
-    query_filtered = SearchFilter.filter_by_query(
-        default_filtered, query, category=category
-    )
+    if apply_query_stage:
+        query_decisions = describe_query_filter_decisions(
+            default_filtered, query, category=category
+        )
+        query_filtered = SearchFilter.filter_by_query(
+            default_filtered, query, category=category
+        )
+    else:
+        query_decisions = [
+            SearchFilterDecision(
+                result_id=search_result_id(result),
+                kept=True,
+                reasons=("query_filters_bypassed",),
+            )
+            for result in default_filtered
+        ]
+        query_filtered = list(default_filtered)
 
     ranked = SearchSorter.rank(query_filtered, category=category, query=query)
     rank_decisions = describe_rank_decisions(
@@ -118,4 +158,5 @@ __all__ = [
     "SearchPipelineDiagnostics",
     "build_search_pipeline_diagnostics",
     "run_search_pipeline_with_diagnostics",
+    "run_search_pipeline_with_diagnostics_options",
 ]

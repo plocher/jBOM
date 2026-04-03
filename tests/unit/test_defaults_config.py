@@ -127,6 +127,21 @@ def test_generic_profile_has_default_search_output_fields() -> None:
     ]
 
 
+def test_generic_profile_has_default_search_package_tokens() -> None:
+    cfg = load_defaults("generic")
+    assert cfg.get_search_package_tokens() == [
+        "0201",
+        "0402",
+        "0603",
+        "0805",
+        "1206",
+        "1210",
+        "1812",
+        "2010",
+        "2512",
+    ]
+
+
 def test_generic_profile_has_field_precedence_policy() -> None:
     cfg = load_defaults("generic")
     policy = cfg.get_field_precedence_policy()
@@ -343,6 +358,16 @@ def test_from_yaml_dict_parses_field_precedence_policy() -> None:
     policy = cfg.get_field_precedence_policy()
     assert policy["schematic_biased"] == ("value", "tolerance")
     assert policy["pcb_biased"] == ("footprint", "package")
+
+
+def test_from_yaml_dict_parses_search_package_tokens() -> None:
+    data = {
+        "search": {
+            "package_tokens": ["0603", " 0805 ", "0603", "1206"],
+        }
+    }
+    cfg = DefaultsConfig.from_yaml_dict(data, name="test")
+    assert cfg.get_search_package_tokens() == ["0603", "0805", "1206"]
 
 
 def test_from_yaml_dict_parses_inventory_schema() -> None:
