@@ -15,9 +15,14 @@ def _make_component(
     value: str = "",
     footprint: str = "",
     reference: str = "R1",
+    properties: dict[str, str] | None = None,
 ) -> Component:
     return Component(
-        reference=reference, lib_id=lib_id, value=value, footprint=footprint
+        reference=reference,
+        lib_id=lib_id,
+        value=value,
+        footprint=footprint,
+        properties=properties or {},
     )
 
 
@@ -26,6 +31,7 @@ def _make_inventory_item(
     category: str,
     value: str = "",
     package: str = "",
+    tolerance: str = "",
 ) -> InventoryItem:
     return InventoryItem(
         ipn="IPN-1",
@@ -35,7 +41,7 @@ def _make_inventory_item(
         smd="",
         value=value,
         type="",
-        tolerance="",
+        tolerance=tolerance,
         voltage="",
         amperage="",
         wattage="",
@@ -94,6 +100,43 @@ def test_resistor_value_filter_numeric_equality() -> None:
 
     assert matcher._passes_primary_filters(component, ok) is True
     assert matcher._passes_primary_filters(component, bad) is False
+
+
+def test_resistor_value_filter_uses_default_tolerance_for_nearby_values() -> None:
+    matcher = SophisticatedInventoryMatcher(MatchingOptions())
+
+    component = _make_component(
+        lib_id="Device:R", value="10K", footprint="R_0603_1608Metric"
+    )
+
+    near = _make_inventory_item(category="RES", value="10K1", package="0603")
+    far = _make_inventory_item(category="RES", value="12K", package="0603")
+
+    assert matcher._passes_primary_filters(component, near) is True
+    assert matcher._passes_primary_filters(component, far) is False
+
+
+def test_resistor_tolerance_requirement_rejects_looser_candidate_tolerance() -> None:
+    matcher = SophisticatedInventoryMatcher(MatchingOptions())
+
+    component = _make_component(
+        lib_id="Device:R",
+        value="10K",
+        footprint="R_0603_1608Metric",
+        properties={"Tolerance": "10%"},
+    )
+
+    tighter = _make_inventory_item(
+        category="RES", value="10K1", package="0603", tolerance="1%"
+    )
+    looser = _make_inventory_item(
+        category="RES", value="10K1", package="0603", tolerance="20%"
+    )
+    missing = _make_inventory_item(category="RES", value="10K1", package="0603")
+
+    assert matcher._passes_primary_filters(component, tighter) is True
+    assert matcher._passes_primary_filters(component, looser) is False
+    assert matcher._passes_primary_filters(component, missing) is True
 
 
 def test_tilde_component_value_is_treated_as_blank_constraint() -> None:

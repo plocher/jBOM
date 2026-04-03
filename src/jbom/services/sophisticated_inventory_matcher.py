@@ -24,10 +24,10 @@ from jbom.common.package_matching import (
     footprint_matches_package,
 )
 from jbom.common.types import Component, InventoryItem
-from jbom.common.value_parsing import (
-    parse_cap_to_farad,
-    parse_ind_to_henry,
-    parse_res_to_ohms,
+from jbom.services.value_matching import (
+    candidate_tolerance_meets_requirement,
+    numeric_value_match,
+    parse_tolerance_percent,
 )
 from jbom.services.fabricator_inventory_selector import EligibleInventoryItem
 
@@ -118,8 +118,11 @@ class SophisticatedInventoryMatcher:
         1) Type/category match (when component type can be determined)
         2) Package match (when a package can be extracted from footprint)
         3) Value match:
-           - Numeric equality for RES/CAP/IND
+           - Category-aware numeric tolerance matching for RES/CAP/IND
            - Otherwise normalized string equality
+        4) Optional tolerance requirement gate:
+           - If component specifies tolerance, candidate tolerance must be
+             as strict or stricter when explicitly present on inventory item.
         """
 
         comp_type = get_component_type(
@@ -146,52 +149,44 @@ class SophisticatedInventoryMatcher:
 
         # 3) Value match by type (numeric for RES/CAP/IND).
         if comp_val_norm:
+            component_tolerance_percent = parse_tolerance_percent(
+                (component.properties or {}).get("Tolerance")
+            )
             if comp_type == ComponentType.RESISTOR:
-                comp_num = parse_res_to_ohms(component.value)
-                inv_num = parse_res_to_ohms(item.value)
-                if (
-                    comp_num is None
-                    or inv_num is None
-                    or abs(comp_num - inv_num) > 1e-12
+                if not numeric_value_match(
+                    category=comp_type,
+                    expected_value=component.value,
+                    candidate_value=item.value,
+                    explicit_tolerance_percent=component_tolerance_percent,
                 ):
                     return False
             elif comp_type == ComponentType.CAPACITOR:
-                comp_num = parse_cap_to_farad(component.value)
-                inv_num = parse_cap_to_farad(item.value)
-                if (
-                    comp_num is None
-                    or inv_num is None
-                    or abs(comp_num - inv_num) > 1e-18
+                if not numeric_value_match(
+                    category=comp_type,
+                    expected_value=component.value,
+                    candidate_value=item.value,
+                    explicit_tolerance_percent=component_tolerance_percent,
                 ):
                     return False
             elif comp_type == ComponentType.INDUCTOR:
-                comp_num = parse_ind_to_henry(component.value)
-                inv_num = parse_ind_to_henry(item.value)
-                if (
-                    comp_num is None
-                    or inv_num is None
-                    or abs(comp_num - inv_num) > 1e-18
+                if not numeric_value_match(
+                    category=comp_type,
+                    expected_value=component.value,
+                    candidate_value=item.value,
+                    explicit_tolerance_percent=component_tolerance_percent,
                 ):
                     return False
             else:
                 inv_val_norm = self._normalize_value(item.value) if item.value else ""
                 if not inv_val_norm or inv_val_norm != comp_val_norm:
                     return False
+            if not candidate_tolerance_meets_requirement(
+                required_tolerance_percent=component_tolerance_percent,
+                candidate_tolerance_text=item.tolerance,
+            ):
+                return False
 
         return True
-
-    @staticmethod
-    def _parse_tolerance_percent(tolerance: str) -> Optional[float]:
-        """Parse tolerance strings like '±5%' or '5%' into a percent float."""
-
-        if not tolerance:
-            return None
-
-        t = tolerance.strip().replace("±", "").replace("%", "").strip()
-        try:
-            return float(t)
-        except ValueError:
-            return None
 
     def _values_match(self, component: Component, item: InventoryItem) -> bool:
         """Return True if component and item values match (legacy rules)."""
@@ -204,30 +199,33 @@ class SophisticatedInventoryMatcher:
         )
 
         if comp_type == ComponentType.RESISTOR:
-            comp_num = parse_res_to_ohms(component.value)
-            inv_num = parse_res_to_ohms(item.value)
-            return (
-                comp_num is not None
-                and inv_num is not None
-                and abs(comp_num - inv_num) <= 1e-12
+            return numeric_value_match(
+                category=comp_type,
+                expected_value=component.value,
+                candidate_value=item.value,
+                explicit_tolerance_percent=parse_tolerance_percent(
+                    (component.properties or {}).get("Tolerance")
+                ),
             )
 
         if comp_type == ComponentType.CAPACITOR:
-            comp_num = parse_cap_to_farad(component.value)
-            inv_num = parse_cap_to_farad(item.value)
-            return (
-                comp_num is not None
-                and inv_num is not None
-                and abs(comp_num - inv_num) <= 1e-18
+            return numeric_value_match(
+                category=comp_type,
+                expected_value=component.value,
+                candidate_value=item.value,
+                explicit_tolerance_percent=parse_tolerance_percent(
+                    (component.properties or {}).get("Tolerance")
+                ),
             )
 
         if comp_type == ComponentType.INDUCTOR:
-            comp_num = parse_ind_to_henry(component.value)
-            inv_num = parse_ind_to_henry(item.value)
-            return (
-                comp_num is not None
-                and inv_num is not None
-                and abs(comp_num - inv_num) <= 1e-18
+            return numeric_value_match(
+                category=comp_type,
+                expected_value=component.value,
+                candidate_value=item.value,
+                explicit_tolerance_percent=parse_tolerance_percent(
+                    (component.properties or {}).get("Tolerance")
+                ),
             )
 
         return self._normalize_value(component.value) == self._normalize_value(
@@ -247,8 +245,8 @@ class SophisticatedInventoryMatcher:
         # Tolerance matching.
         tol = properties.get("Tolerance")
         if not self._is_blank_constraint(tol) and item.tolerance:
-            comp_tol = self._parse_tolerance_percent(tol)
-            item_tol = self._parse_tolerance_percent(item.tolerance)
+            comp_tol = parse_tolerance_percent(tol)
+            item_tol = parse_tolerance_percent(item.tolerance)
             if comp_tol is not None and item_tol is not None:
                 if comp_tol == item_tol:
                     score += 15

@@ -207,7 +207,7 @@ def test_within_same_priority_prefers_better_electro_mechanical_fit() -> None:
         lib_id="Device:R",
         value="10k",
         footprint="R_0603_1608Metric",
-        properties={"Tolerance": "1%"},
+        properties={"Tolerance": "10%"},
     )
 
     best_fit = _make_item(
