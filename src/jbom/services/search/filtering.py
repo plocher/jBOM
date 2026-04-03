@@ -20,10 +20,21 @@ from jbom.common.value_parsing import (
     parse_value_to_normal,
     parse_voltage_to_volts,
 )
+from jbom.services.search.heuristic_signals import (
+    SearchRelevanceEvaluation,
+    SearchRelevanceSignal,
+    evaluate_relevance_signals,
+)
 from jbom.services.search.models import SearchResult
 from jbom.services.search.normalization import (
-    STANDARD_SMD_PACKAGES,
     extract_package_token,
+    get_standard_smd_packages,
+)
+from jbom.services.value_matching import (
+    candidate_tolerance_meets_requirement,
+    close_enough_numeric,
+    effective_relative_tolerance,
+    parse_tolerance_percent,
 )
 
 
@@ -78,14 +89,18 @@ class SearchRankDecision:
     rank: int | None
     passive_stock_gate_kept: bool
     relevance_score: int
+    relevance_signals: tuple[SearchRelevanceSignal, ...]
     price_value: float
     canonical_value: float
     component_library_tier: str
 
     def to_dict(self) -> dict[str, object]:
         """Return a JSON-serializable mapping."""
-
-        return asdict(self)
+        payload = asdict(self)
+        payload["relevance_signals"] = [
+            signal.to_dict() for signal in self.relevance_signals
+        ]
+        return payload
 
 
 def search_result_id(result: SearchResult) -> str:
@@ -99,14 +114,6 @@ def search_result_id(result: SearchResult) -> str:
     if mpn:
         return f"{distributor}:mpn:{mpn}"
     return f"{distributor}:result:{id(result)}"
-
-
-def _close_enough(a: float, b: float, *, rel_tol: float = 0.001) -> bool:
-    if a == b:
-        return True
-    if b == 0:
-        return abs(a) < rel_tol
-    return abs(a - b) <= abs(b) * rel_tol
 
 
 def _extract_package_token(result: SearchResult) -> str:
@@ -134,11 +141,12 @@ class SearchFilter:
     ) -> list[SearchResult]:
         """Filter results based on query terms matching parametric attributes.
         Category-aware behavior:
-        Current behavior mirrors legacy jBOM's implementation for resistors:
-        - If the query contains a parseable resistance, keep only results whose
-          "Resistance" attribute matches.
-        - If the query contains a tolerance percentage, keep only exact matches
-          when the result includes "Tolerance".
+        - Numeric value matching uses relative tolerance when available.
+          Relative tolerance comes from an explicit query tolerance (e.g. ``10%``)
+          or falls back to category defaults profile hints when present.
+        - If the query contains a tolerance percentage, candidates with explicit
+          tolerance are accepted when they are as strict or stricter than the
+          requirement (e.g. candidate ``1%`` satisfies query ``10%``).
         - When a strict core-attribute pass (Resistance/Capacitance/Inductance)
           yields at least one match, candidates missing that core attribute are
           excluded.
@@ -181,16 +189,18 @@ class SearchFilter:
         target_tol: float | None = None
         tol_match = re.search(r"(\d+(?:\.\d+)?)%", query)
         if tol_match:
-            try:
-                target_tol = float(tol_match.group(1))
-            except ValueError:
-                target_tol = None
+            target_tol = parse_tolerance_percent(tol_match.group(0))
+        numeric_rel_tol = effective_relative_tolerance(
+            cat,
+            explicit_tolerance_percent=target_tol,
+        )
 
         # Package token target (e.g. 0603, 0805).
         target_package = ""
+        package_tokens = get_standard_smd_packages()
         for token in re.split(r"[\s,/_-]+", query or ""):
             package_token = token.strip().upper()
-            if package_token in STANDARD_SMD_PACKAGES:
+            if package_token in package_tokens:
                 target_package = package_token
                 break
 
@@ -223,8 +233,8 @@ class SearchFilter:
                             keep = False
                     else:
                         attr_value = parse_value_to_normal(cat, raw_attr)
-                        if attr_value is None or not _close_enough(
-                            attr_value, target_value
+                        if attr_value is None or not close_enough_numeric(
+                            attr_value, target_value, rel_tol=numeric_rel_tol
                         ):
                             keep = False
 
@@ -238,15 +248,11 @@ class SearchFilter:
 
                 if keep and target_tol is not None:
                     tol_attr = (r.attributes or {}).get("Tolerance", "")
-                    if tol_attr:
-                        clean_tol = tol_attr.replace("%", "").replace("+/-", "").strip()
-                        try:
-                            attr_tol = float(clean_tol)
-                            if attr_tol != target_tol:
-                                keep = False
-                        except ValueError:
-                            # If the result tolerance is unparsable, fail open.
-                            pass
+                    if not candidate_tolerance_meets_requirement(
+                        required_tolerance_percent=target_tol,
+                        candidate_tolerance_text=tol_attr,
+                    ):
+                        keep = False
 
                 if keep and target_package:
                     observed_package = _extract_package_token(r)
@@ -406,15 +412,15 @@ def describe_rank_decisions(
     out: list[SearchRankDecision] = []
     for result in results:
         result_object_id = id(result)
+        relevance_eval = _query_relevance_evaluation(result, context=relevance_context)
         out.append(
             SearchRankDecision(
                 result_id=search_result_id(result),
                 included=result_object_id in rank_by_id,
                 rank=rank_by_id.get(result_object_id),
                 passive_stock_gate_kept=result_object_id in gated_ids,
-                relevance_score=_query_relevance_score(
-                    result, context=relevance_context
-                ),
+                relevance_score=relevance_eval.score,
+                relevance_signals=relevance_eval.signals,
                 price_value=_price_value_for_ranking(result),
                 canonical_value=_canonical_value_for_ranking(
                     result,
@@ -477,7 +483,7 @@ def _canonical_value_for_ranking(
     return canonical
 
 
-def _build_relevance_context(query: str) -> dict[str, str]:
+def _build_relevance_context(query: str) -> dict[str, object]:
     """Parse query once for ranking relevance calculations."""
 
     query_tokens = [
@@ -485,10 +491,11 @@ def _build_relevance_context(query: str) -> dict[str, str]:
         for tok in re.split(r"[\s,/_-]+", query or "")
         if tok.strip()
     ]
+    package_tokens = get_standard_smd_packages()
 
     requested_package = ""
     for tok in query_tokens:
-        if tok in STANDARD_SMD_PACKAGES:
+        if tok in package_tokens:
             requested_package = tok
             break
 
@@ -501,16 +508,24 @@ def _build_relevance_context(query: str) -> dict[str, str]:
     return {
         "requested_package": requested_package,
         "category_intent": category_intent,
-        "query_tokens": " ".join(query_tokens),
+        "query_tokens": tuple(query_tokens),
+        "package_tokens": package_tokens,
     }
 
 
-def _query_relevance_score(result: SearchResult, *, context: dict[str, str]) -> int:
+def _query_relevance_score(result: SearchResult, *, context: dict[str, object]) -> int:
     """Score a result against query terms, package intent, and category intent."""
+    return _query_relevance_evaluation(result, context=context).score
 
-    query_tokens = [tok for tok in context.get("query_tokens", "").split(" ") if tok]
+
+def _query_relevance_evaluation(
+    result: SearchResult, *, context: dict[str, object]
+) -> SearchRelevanceEvaluation:
+    """Return aggregated relevance score and signal-level contributions."""
+
+    query_tokens = tuple(context.get("query_tokens", ()))
     if not query_tokens:
-        return 0
+        return SearchRelevanceEvaluation(score=0, signals=tuple())
 
     haystack = " ".join(
         [
@@ -521,56 +536,63 @@ def _query_relevance_score(result: SearchResult, *, context: dict[str, str]) -> 
             " ".join(f"{k} {v}" for k, v in (result.attributes or {}).items()),
         ]
     ).upper()
+    requested_package = str(context.get("requested_package", ""))
+    category_intent = str(context.get("category_intent", ""))
+    package_tokens = set(context.get("package_tokens", set()))
 
-    score = 0
-    for tok in query_tokens:
-        if len(tok) < 2:
-            continue
-        if tok in haystack:
-            score += 1
+    def _signal_query_token_overlap(_result: SearchResult) -> int:
+        out = 0
+        for tok in query_tokens:
+            if len(tok) < 2:
+                continue
+            if tok in haystack:
+                out += 1
+        return out
 
-    requested_package = context.get("requested_package", "")
-    if requested_package:
+    def _signal_requested_package(_result: SearchResult) -> int:
+        if not requested_package:
+            return 0
         if requested_package in haystack:
-            score += 8
-        else:
-            mismatched_package = any(
-                pkg in haystack
-                for pkg in STANDARD_SMD_PACKAGES
-                if pkg != requested_package
+            return 8
+        mismatched_package = any(
+            pkg in haystack for pkg in package_tokens if pkg != requested_package
+        )
+        return -8 if mismatched_package else 0
+
+    def _signal_category_intent(_result: SearchResult) -> int:
+        if category_intent == "RES":
+            if "RESISTOR" in haystack:
+                return 6
+            if "THERMISTOR" in haystack:
+                return -10
+            return -4
+        if category_intent == "CAP":
+            return 6 if "CAPACITOR" in haystack else -4
+        if category_intent == "IND":
+            return 6 if "INDUCTOR" in haystack else -4
+        if category_intent == "LED":
+            score = (
+                8 if ("LED" in haystack or "LIGHT EMITTING DIODE" in haystack) else -6
             )
-            if mismatched_package:
-                score -= 8
+            if any(hint in haystack for hint in _LED_NON_PART_HINTS):
+                score -= 12
+            return score
+        return 0
 
-    category_intent = context.get("category_intent", "")
-    if category_intent == "RES":
-        if "RESISTOR" in haystack:
-            score += 6
-        elif "THERMISTOR" in haystack:
-            score -= 10
-        else:
-            score -= 4
-    elif category_intent == "CAP":
-        if "CAPACITOR" in haystack:
-            score += 6
-        else:
-            score -= 4
-    elif category_intent == "IND":
-        if "INDUCTOR" in haystack:
-            score += 6
-        else:
-            score -= 4
-    elif category_intent == "LED":
-        if "LED" in haystack or "LIGHT EMITTING DIODE" in haystack:
-            score += 8
-        else:
-            score -= 6
-        if any(hint in haystack for hint in _LED_NON_PART_HINTS):
-            score -= 12
-    if _component_library_tier(result) == "basic":
-        score += _BASIC_PART_RELEVANCE_BOOST
+    def _signal_component_library_tier(_result: SearchResult) -> int:
+        if _component_library_tier(result) == "basic":
+            return _BASIC_PART_RELEVANCE_BOOST
+        return 0
 
-    return score
+    return evaluate_relevance_signals(
+        result,
+        evaluators=(
+            ("query_token_overlap", _signal_query_token_overlap),
+            ("requested_package", _signal_requested_package),
+            ("category_intent", _signal_category_intent),
+            ("component_library_tier", _signal_component_library_tier),
+        ),
+    )
 
 
 def _component_library_tier(result: SearchResult) -> str:

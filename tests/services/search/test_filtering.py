@@ -2,6 +2,7 @@ from jbom.services.search.filtering import (
     SearchFilter,
     SearchSorter,
     apply_default_filters,
+    describe_rank_decisions,
 )
 from jbom.services.search.models import SearchResult
 
@@ -52,6 +53,18 @@ def test_filter_by_query_resistance_strict_matches_when_attribute_present():
     assert "A" in mpns
     assert "B" not in mpns
     assert "C" not in mpns
+
+
+def test_filter_by_query_resistance_uses_default_tolerance_for_value_overlap():
+    results = [
+        _sr(attributes={"Resistance": "10.1 kOhms"}, mpn="A"),
+        _sr(attributes={"Resistance": "12 kOhms"}, mpn="B"),
+    ]
+
+    filtered = SearchFilter.filter_by_query(results, "10K 0603 resistor")
+    mpns = {r.mpn for r in filtered}
+    assert "A" in mpns
+    assert "B" not in mpns
 
 
 def test_filter_by_query_backward_compat_empty_category_filters_resistance():
@@ -122,6 +135,21 @@ def test_filter_by_query_falls_back_to_fail_open_when_strict_pass_is_empty():
     assert "A" not in mpns
     assert "C" in mpns
     assert "D" in mpns
+
+
+def test_filter_by_query_tolerance_accepts_as_good_or_better_candidates():
+    results = [
+        _sr(attributes={"Resistance": "10.1 kOhms", "Tolerance": "1%"}, mpn="A"),
+        _sr(attributes={"Resistance": "10 kOhms", "Tolerance": "20%"}, mpn="B"),
+        _sr(attributes={"Resistance": "10 kOhms"}, mpn="C"),
+    ]
+
+    filtered = SearchFilter.filter_by_query(results, "10K 10% 0603 resistor")
+    mpns = {r.mpn for r in filtered}
+    assert "A" in mpns
+    assert "B" not in mpns
+    # Missing tolerance remains fail-open for search filtering.
+    assert "C" in mpns
 
 
 def test_filter_by_query_strict_package_match_when_query_includes_package():
@@ -395,3 +423,21 @@ def test_sorter_prefers_led_parts_for_led_query_over_noise():
 
     ranked = SearchSorter.rank(results, query="green led 0603")
     assert [r.mpn for r in ranked] == ["LED0603", "NOISE-CON", "NOISE-SW"]
+
+
+def test_rank_decisions_include_signal_breakdown():
+    results = [
+        _sr(
+            mpn="A",
+            category="Thick Film Resistors - SMD",
+            description="10K 0603 Chip Resistor",
+            stock_quantity=2500,
+            price="$0.20",
+        ),
+    ]
+
+    decisions = describe_rank_decisions(results, query="10k 0603 resistor")
+    assert len(decisions) == 1
+    signal_keys = {signal.key for signal in decisions[0].relevance_signals}
+    assert "query_token_overlap" in signal_keys
+    assert "category_intent" in signal_keys
