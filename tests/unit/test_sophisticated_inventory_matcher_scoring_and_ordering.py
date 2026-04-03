@@ -37,12 +37,15 @@ def _make_inventory_item(
     tolerance: str = "",
     voltage: str = "",
     wattage: str = "",
+    description: str = "",
+    mfgpn: str = "",
+    name: str = "",
 ) -> InventoryItem:
     return InventoryItem(
         ipn=ipn,
         keywords=keywords,
         category=category,
-        description="",
+        description=description,
         smd="",
         value=value,
         type="",
@@ -52,10 +55,11 @@ def _make_inventory_item(
         wattage=wattage,
         lcsc="",
         manufacturer="",
-        mfgpn="",
+        mfgpn=mfgpn,
         datasheet="",
         package=package,
         priority=priority,
+        name=name,
     )
 
 
@@ -164,6 +168,38 @@ def test_find_matches_orders_by_preference_tier_then_priority_then_score() -> No
     )
 
     assert [r.inventory_item.ipn for r in results] == ["TIER0", "TIER1"]
+
+
+def test_non_passive_ordering_prefers_score_before_priority() -> None:
+    matcher = SophisticatedInventoryMatcher(MatchingOptions())
+
+    component = _make_component(
+        lib_id="cpNode-ProMini-eagle-import:SparkFun_NE555P",
+        value="NE555D",
+        footprint="Package_SO:SOIC-8_3.9x4.9mm_P1.27mm",
+    )
+
+    best_score_worse_priority = _make_inventory_item(
+        ipn="EXACT",
+        category="IC",
+        value="NE555D",
+        package="SOP-8",
+        priority=9,
+    )
+    weaker_score_better_priority = _make_inventory_item(
+        ipn="CLOSE",
+        category="IC",
+        value="NE555",
+        package="SOP-8",
+        priority=1,
+        name="NE555D timer",
+    )
+
+    results = matcher.find_matches(
+        component, [best_score_worse_priority, weaker_score_better_priority]
+    )
+
+    assert [r.inventory_item.ipn for r in results] == ["EXACT", "CLOSE"]
 
 
 def test_debug_info_optional() -> None:

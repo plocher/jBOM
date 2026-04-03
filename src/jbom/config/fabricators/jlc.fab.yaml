@@ -22,6 +22,10 @@ part_number:
 
 field_synonyms:
   fab_pn:
+    synonyms:
+      - "LCSC"
+      - "LCSC Part"
+      - "LCSC Part #"
     display_name: "LCSC Part Number"
   supplier_pn:
     display_name: "Supplier Part Number"

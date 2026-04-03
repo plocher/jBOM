@@ -82,6 +82,28 @@ def test_get_component_type_detects_lm_prefix_as_ic() -> None:
     )
 
 
+def test_get_component_type_detects_lm78_prefix_as_regulator() -> None:
+    assert (
+        get_component_type(
+            lib_id="Regulator_Linear:LM78M05_TO252",
+            footprint="Package_TO_SOT_SMD:TO-252-2",
+            reference="VR1",
+        )
+        == "REG"
+    )
+
+
+def test_get_component_type_detects_78m_prefix_as_regulator() -> None:
+    assert (
+        get_component_type(
+            lib_id="Custom:78M05",
+            footprint="Package_TO_SOT_SMD:TO-252-2",
+            reference="VR5.0",
+        )
+        == "REG"
+    )
+
+
 def test_get_component_type_connector_name_not_misclassified_as_cap() -> None:
     assert (
         get_component_type(

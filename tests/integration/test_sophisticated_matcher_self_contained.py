@@ -197,6 +197,91 @@ def test_led_value_normalization_case_and_whitespace() -> None:
     assert results[0].inventory_item.ipn == "LED-RED-0603"
 
 
+def test_issue_patterns_match_via_multi_signal_voting() -> None:
+    matcher = SophisticatedInventoryMatcher(MatchingOptions())
+
+    connector_component = _make_component(
+        reference="J10",
+        lib_id="SPCoast:Conn_01x02_Socket",
+        value="Conn_01x02_Socket",
+        footprint="SPCoast:PinSocket_1x02_P2.54mm_Vertical",
+    )
+    connector_item = _make_item(
+        ipn="CON_1x02-0.100-socket",
+        category="CON",
+        value="1x02-0.100-socket",
+        package="",
+        priority=1,
+    )
+    connector_item.raw_data = {"Footprint": "SPCoast:PinSocket_1x02_P2.54mm_Vertical"}
+    connector_matches = matcher.find_matches(connector_component, [connector_item])
+    assert connector_matches
+    assert connector_matches[0].inventory_item.ipn == "CON_1x02-0.100-socket"
+
+    ic_component = _make_component(
+        reference="U2",
+        lib_id="cpNode-ProMini-eagle-import:SparkFun_NE555P",
+        value="NE555D",
+        footprint="Package_SO:SOIC-8_3.9x4.9mm_P1.27mm",
+    )
+    ic_item = _make_item(
+        ipn="IC_NE555D_SOP-8",
+        category="IC",
+        value="NE555D",
+        package="SOP-8",
+        priority=1,
+    )
+    ic_matches = matcher.find_matches(ic_component, [ic_item])
+    assert ic_matches
+    assert ic_matches[0].inventory_item.ipn == "IC_NE555D_SOP-8"
+
+    regulator_component = _make_component(
+        reference="VR5.0",
+        lib_id="Regulator_Linear:LM78M05_TO252",
+        value="78M05",
+        footprint="Package_TO_SOT_SMD:TO-252-2",
+    )
+    regulator_item = _make_item(
+        ipn="REG_78M05_TO-252-2",
+        category="REG",
+        value="78M05",
+        package="TO-252-2",
+        priority=1,
+    )
+    regulator_item.raw_data = {"Footprint": "Package_TO_SOT_SMD:TO-252-2"}
+    regulator_matches = matcher.find_matches(regulator_component, [regulator_item])
+    assert regulator_matches
+    assert regulator_matches[0].inventory_item.ipn == "REG_78M05_TO-252-2"
+
+
+def test_lcsc_hard_accept_policy_can_validate_known_project_annotations() -> None:
+    matcher = SophisticatedInventoryMatcher(
+        MatchingOptions(
+            lcsc_match_policy="hard_accept", non_passive_min_signal_score=999
+        )
+    )
+
+    component = _make_component(
+        reference="J1",
+        lib_id="SPCoast:Conn_01x04",
+        value="CON_1x04-0.100-screw",
+        footprint="SPCoast:Connector_01x04_screw_V",
+        properties={"LCSC": "C3816889"},
+    )
+    item = _make_item(
+        ipn="CON_1x04-0.100-screw",
+        category="CON",
+        value="unrelated",
+        package="",
+        priority=1,
+    )
+    item.lcsc = "C3816889"
+
+    matches = matcher.find_matches(component, [item])
+    assert matches
+    assert matches[0].inventory_item.ipn == "CON_1x04-0.100-screw"
+
+
 def test_within_same_priority_prefers_better_electro_mechanical_fit() -> None:
     """Ranking goal: within the same priority bucket, better-fit items should rank first."""
 

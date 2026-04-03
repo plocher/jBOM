@@ -156,6 +156,11 @@ _SIGNALS: list[ClassificationSignal] = [
     ClassificationSignal("OSC", 5.0, lambda n, f, r: "CRYSTAL" in n),
     ClassificationSignal("OSC", 5.0, lambda n, f, r: "XTAL" in n),
     ClassificationSignal("FUS", 5.0, lambda n, f, r: "FUSE" in n),
+    # Regulator-specific name patterns should outweigh broad IC prefixes.
+    ClassificationSignal("REG", 4.0, lambda n, f, r: n.startswith("LM78")),
+    ClassificationSignal("REG", 4.0, lambda n, f, r: n.startswith("78M")),
+    ClassificationSignal("REG", 4.0, lambda n, f, r: "AMS1117" in n),
+    ClassificationSignal("REG", 4.0, lambda n, f, r: "LM317" in n),
     # ------------------------------------------------------------------
     # IC indicator name patterns (override single-char prefix classification).
     # These must outweigh the single-char prefix signals (1.0–2.0).

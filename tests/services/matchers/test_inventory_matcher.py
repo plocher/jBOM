@@ -6,6 +6,7 @@ from unittest.mock import patch
 from jbom.services.inventory_matcher import InventoryMatcher
 from jbom.services.bom_generator import BOMEntry, BOMData
 from jbom.common.types import Component, InventoryItem, DEFAULT_PRIORITY
+from jbom.config.fabricators import load_fabricator
 from jbom.config.defaults import FieldSynonymConfig, InventorySchemaConfig
 
 
@@ -305,6 +306,25 @@ class TestInventoryMatcher:
         assert enriched.attributes["inventory_ipn"] == "R_10K"
         assert enriched.attributes["manufacturer_part"] == "RC0603FR-0710KL"
         assert enriched.attributes["fabricator_part_number"] == "C25804"
+
+    def test_resolve_fabricator_part_number_jlc_accepts_lcsc_header_alias(self) -> None:
+        """JLC fab_pn resolution should honor common LCSC column names."""
+        item = _make_inventory_item(
+            ipn="CON_1x02-0.100-socket",
+            category="CON",
+            value="1x02-0.100-socket",
+            lcsc="C429966",
+            raw_data={"LCSC": "C429966"},
+        )
+        jlc = load_fabricator("jlc")
+
+        resolved = InventoryMatcher._resolve_fabricator_part_number(
+            item=item,
+            fabricator_id="jlc",
+            fabricator_config=jlc,
+        )
+
+        assert resolved == "C429966"
 
 
 class TestInventoryMatcherIntegration:

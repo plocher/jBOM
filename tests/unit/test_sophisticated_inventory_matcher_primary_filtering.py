@@ -28,13 +28,19 @@ def _make_component(
 
 def _make_inventory_item(
     *,
+    ipn: str = "IPN-1",
     category: str,
     value: str = "",
     package: str = "",
     tolerance: str = "",
+    lcsc: str = "",
+    name: str = "",
+    mfgpn: str = "",
+    raw_data: dict[str, str] | None = None,
 ) -> InventoryItem:
+    row = raw_data or {}
     return InventoryItem(
-        ipn="IPN-1",
+        ipn=ipn,
         keywords="",
         category=category,
         description="",
@@ -45,11 +51,13 @@ def _make_inventory_item(
         voltage="",
         amperage="",
         wattage="",
-        lcsc="",
+        lcsc=lcsc,
         manufacturer="",
-        mfgpn="",
+        mfgpn=mfgpn,
         datasheet="",
         package=package,
+        name=name,
+        raw_data=row,
     )
 
 
@@ -100,6 +108,103 @@ def test_resistor_value_filter_numeric_equality() -> None:
 
     assert matcher._passes_primary_filters(component, ok) is True
     assert matcher._passes_primary_filters(component, bad) is False
+
+
+def test_non_passive_connector_value_token_overlap_matches_ipn() -> None:
+    matcher = SophisticatedInventoryMatcher(MatchingOptions())
+
+    component = _make_component(
+        reference="J10",
+        lib_id="SPCoast:Conn_01x02_Socket",
+        value="Conn_01x02_Socket",
+        footprint="SPCoast:PinSocket_1x02_P2.54mm_Vertical",
+    )
+    item = _make_inventory_item(
+        ipn="CON_1x02-0.100-socket",
+        category="CON",
+        value="1x02-0.100-socket",
+        raw_data={"Footprint": "SPCoast:PinSocket_1x02_P2.54mm_Vertical"},
+    )
+
+    assert matcher._passes_primary_filters(component, item) is True
+
+
+def test_non_passive_soic_and_sop_package_aliases_are_compatible() -> None:
+    matcher = SophisticatedInventoryMatcher(MatchingOptions())
+
+    component = _make_component(
+        reference="U2",
+        lib_id="cpNode-ProMini-eagle-import:SparkFun_NE555P",
+        value="NE555D",
+        footprint="Package_SO:SOIC-8_3.9x4.9mm_P1.27mm",
+    )
+    item = _make_inventory_item(
+        ipn="IC_NE555D_SOP-8",
+        category="IC",
+        value="NE555D",
+        package="SOP-8",
+    )
+
+    assert matcher._passes_primary_filters(component, item) is True
+
+
+def test_non_passive_footprint_signal_recovers_free_form_value_mismatch() -> None:
+    matcher = SophisticatedInventoryMatcher(MatchingOptions())
+
+    component = _make_component(
+        reference="J3",
+        lib_id="cpNode-ProMini-eagle-import:SPCoast_CONNECTOR-DC-POWER-RA",
+        value="2.1mm",
+        footprint="SPCoast:DCJ0202",
+    )
+    item = _make_inventory_item(
+        ipn="CON_DCJ0202",
+        category="CON",
+        value="DCJ0202",
+        raw_data={"Footprint": "SPCoast:DCJ0202"},
+    )
+
+    assert matcher._passes_primary_filters(component, item) is True
+
+
+def test_lcsc_validation_rejects_conflicting_candidate_when_component_has_lcsc() -> (
+    None
+):
+    matcher = SophisticatedInventoryMatcher(MatchingOptions())
+
+    component = _make_component(
+        reference="R1",
+        lib_id="Device:R",
+        value="10K",
+        footprint="R_0603_1608Metric",
+        properties={"LCSC": "C12345"},
+    )
+    wrong = _make_inventory_item(
+        category="RES",
+        value="10K",
+        package="0603",
+        lcsc="C99999",
+    )
+
+    assert matcher._passes_primary_filters(component, wrong) is False
+
+
+def test_cross_category_numeric_value_signal_rejects_capacitor_value_for_ic() -> None:
+    matcher = SophisticatedInventoryMatcher(MatchingOptions())
+
+    component = _make_component(
+        reference="U1",
+        lib_id="Device:U",
+        value="0.1uF",
+        footprint="Package_SO:SOIC-8_3.9x4.9mm_P1.27mm",
+    )
+    item = _make_inventory_item(
+        category="IC",
+        value="0.1uF",
+        package="SOIC-8",
+    )
+
+    assert matcher._passes_primary_filters(component, item) is False
 
 
 def test_resistor_value_filter_uses_default_tolerance_for_nearby_values() -> None:
