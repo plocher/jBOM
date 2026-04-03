@@ -157,6 +157,34 @@ def test_search_console_output(monkeypatch, capsys):
     assert "123-ABC" in out  # supplier_part_number
 
 
+def test_search_console_output_with_no_results_succeeds(monkeypatch, capsys) -> None:
+    import jbom.suppliers.mouser.provider as mouser_provider
+
+    monkeypatch.setattr(
+        mouser_provider.MouserProvider,
+        "search",
+        lambda self, query, *, limit=10: [],
+    )
+
+    args = argparse.Namespace(
+        query="10K resistor 0603",
+        supplier="mouser",
+        limit=1,
+        api_key="dummy",
+        all=True,
+        no_parametric=True,
+        output="console",
+        fields="supplier_part_number",
+        list_fields=False,
+    )
+
+    rc = handle_search(args, _cache=InMemorySearchCache())
+    assert rc == 0
+
+    out = capsys.readouterr().out
+    assert "No results found." in out
+
+
 def test_search_debug_emits_pipeline_diagnostics(monkeypatch, capsys) -> None:
     import jbom.suppliers.mouser.provider as mouser_provider
 
