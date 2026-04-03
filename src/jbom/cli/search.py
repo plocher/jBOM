@@ -383,7 +383,7 @@ def _run_adaptive_search_pipeline(
         candidate_results, candidate_diagnostics = _apply_result_pipeline(
             raw_results, args, query=query
         )
-        if len(candidate_results) > len(best_results):
+        if best_diagnostics is None or len(candidate_results) > len(best_results):
             best_results = candidate_results
             best_diagnostics = candidate_diagnostics
 
@@ -403,7 +403,6 @@ def _run_adaptive_search_pipeline(
             break
         fetch_limit = next_fetch_limit
     return best_results, best_diagnostics
-    return best_results
 
 
 def _apply_result_pipeline(
