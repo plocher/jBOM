@@ -1,6 +1,33 @@
 # CHANGELOG
 
 
+## v6.49.0 (2026-04-03)
+
+### Bug Fixes
+
+* fix(search): treat empty search results as successful pipeline outcome
+
+Preserve diagnostics for empty provider result windows so  exits successfully with "No results found." instead of returning a silent failure, and add regression coverage.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`3fe91a8`](https://github.com/plocher/jBOM/commit/3fe91a8dec99f7ed75aaf6e56360d97411084bfd))
+
+### Features
+
+* feat(search): add heuristic signal contracts and debug diagnostics
+
+Introduce typed heuristic signal artifacts, defaults-governed package token baseline, and debug diagnostics output for search flows with updated parity fixtures and tests.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`800aab6`](https://github.com/plocher/jBOM/commit/800aab6fab99d8eb1ef4f68cbe6dc67340cb7029))
+
+### Refactoring
+
+* refactor(matching): unify value and tolerance matching semantics
+
+Extract shared value matching helpers and apply them across search filtering and sophisticated inventory matching to keep tolerance behavior consistent.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`466d39c`](https://github.com/plocher/jBOM/commit/466d39c6bc4a266d5758f11d1401219621b69b7c))
+
+
 ## v6.48.1 (2026-03-18)
 
 ### Refactoring
