@@ -40,6 +40,21 @@ _CATEGORY_COMPATIBILITY = {
     (ComponentType.INTEGRATED_CIRCUIT, ComponentType.MICROCONTROLLER),
     (ComponentType.MICROCONTROLLER, ComponentType.INTEGRATED_CIRCUIT),
 }
+_SOCKET_CATEGORY_COMPATIBILITY = {
+    (ComponentType.INTEGRATED_CIRCUIT, ComponentType.CONNECTOR),
+    (ComponentType.CONNECTOR, ComponentType.INTEGRATED_CIRCUIT),
+    (ComponentType.MICROCONTROLLER, ComponentType.CONNECTOR),
+    (ComponentType.CONNECTOR, ComponentType.MICROCONTROLLER),
+    (ComponentType.REGULATOR, ComponentType.CONNECTOR),
+    (ComponentType.CONNECTOR, ComponentType.REGULATOR),
+}
+_SOCKET_PACKAGE_PATTERNS: tuple[tuple[str, str], ...] = (
+    ("dip", r"dip[-_ ]?\d*"),
+    ("plcc", r"plcc[-_ ]?\d*"),
+    ("qfn", r"qfn[-_ ]?\d*"),
+    ("qfp", r"qfp[-_ ]?\d*"),
+    ("small_outline", r"(?:soic|sop|ssop|tssop|msop)[-_ ]?\d*"),
+)
 _IDENTITY_ANCHOR_REQUIRED_TYPES = {
     ComponentType.INTEGRATED_CIRCUIT,
     ComponentType.REGULATOR,
@@ -231,6 +246,8 @@ class SophisticatedInventoryMatcher:
 
         if hint in {"soic", "sop", "ssop", "tssop", "msop"}:
             return {"small_outline"}
+        if re.fullmatch(r"so[-_ ]?\d+", hint):
+            return {"small_outline"}
         if hint in {"dpak", "d-pak", "to252", "to-252"}:
             return {"to252"}
         if hint in {"sot23", "sot-23"}:
@@ -260,6 +277,8 @@ class SophisticatedInventoryMatcher:
 
             if re.search(r"\b(soic|sop|ssop|tssop|msop)\b", text):
                 families.add("small_outline")
+            if re.search(r"\bso[-_ ]?\d+\b", text):
+                families.add("small_outline")
             if re.search(r"\bto[-_ ]?252\b", text) or "dpak" in text or "d-pak" in text:
                 families.add("to252")
             if re.search(r"\bto[-_ ]?220\b", text):
@@ -288,12 +307,22 @@ class SophisticatedInventoryMatcher:
         return normalize_component_type(item.category or "")
 
     @staticmethod
-    def _categories_compatible(component_category: str, item_category: str) -> bool:
+    def _categories_compatible(
+        component_category: str,
+        item_category: str,
+        *,
+        socket_pair: bool = False,
+    ) -> bool:
         """Return True when component and inventory categories are compatible."""
 
         if not component_category or not item_category:
             return True
         if component_category == item_category:
+            return True
+        if (
+            socket_pair
+            and (component_category, item_category) in _SOCKET_CATEGORY_COMPATIBILITY
+        ):
             return True
         return (component_category, item_category) in _CATEGORY_COMPATIBILITY
 
@@ -363,28 +392,180 @@ class SophisticatedInventoryMatcher:
         )
 
     @staticmethod
-    def _candidate_identity_fields(item: InventoryItem) -> dict[str, str]:
-        """Return normalized candidate identity strings for cross-field matching."""
+    def _candidate_aliases(item: InventoryItem) -> tuple[str, ...]:
+        """Return normalized alias tokens from inventory candidate fields."""
 
         raw = item.raw_data or {}
-        return {
-            "value": str(item.value or "").strip()
+        alias_blob = str(item.aliases or "").strip()
+        if not alias_blob:
+            alias_blob = SophisticatedInventoryMatcher._first_non_empty(
+                raw,
+                ("Aliases", "Alias", "aliases", "alias"),
+            )
+        if not alias_blob:
+            return tuple()
+
+        split_pattern = r"[,\n\r\t;|]+|\s+"
+        seen: set[str] = set()
+        aliases: list[str] = []
+        for token in re.split(split_pattern, alias_blob):
+            alias = str(token or "").strip()
+            if not alias:
+                continue
+            normalized = alias.lower()
+            if normalized in seen:
+                continue
+            seen.add(normalized)
+            aliases.append(alias)
+        return tuple(aliases)
+
+    @staticmethod
+    def _candidate_identity_fields(item: InventoryItem) -> tuple[tuple[str, str], ...]:
+        """Return candidate identity labels and strings for cross-field matching."""
+
+        raw = item.raw_data or {}
+        identity_candidates: list[tuple[str, str]] = []
+
+        def _append_candidate(label: str, value: str) -> None:
+            text = str(value or "").strip()
+            if text:
+                identity_candidates.append((label, text))
+
+        _append_candidate(
+            "value",
+            str(item.value or "").strip()
             or SophisticatedInventoryMatcher._first_non_empty(raw, ("Value", "value")),
-            "ipn": str(item.ipn or "").strip()
+        )
+        _append_candidate(
+            "ipn",
+            str(item.ipn or "").strip()
             or SophisticatedInventoryMatcher._first_non_empty(raw, ("IPN", "ipn")),
-            "name": str(item.name or "").strip()
+        )
+        _append_candidate(
+            "name",
+            str(item.name or "").strip()
             or SophisticatedInventoryMatcher._first_non_empty(
                 raw, ("Name", "name", "ComponentName", "componentname")
             ),
-            "mfgpn": str(item.mfgpn or "").strip()
+        )
+        _append_candidate(
+            "mfgpn",
+            str(item.mfgpn or "").strip()
             or SophisticatedInventoryMatcher._first_non_empty(
                 raw, ("MPN", "MFGPN", "Manufacturer Part Number")
             ),
-            "description": str(item.description or "").strip()
+        )
+        _append_candidate(
+            "description",
+            str(item.description or "").strip()
             or SophisticatedInventoryMatcher._first_non_empty(
                 raw, ("Description", "description")
             ),
-        }
+        )
+        for alias in SophisticatedInventoryMatcher._candidate_aliases(item):
+            _append_candidate("aliases", alias)
+
+        return tuple(identity_candidates)
+
+    @staticmethod
+    def _contains_socket_token(value: str) -> bool:
+        """Return True when free-form text strongly suggests a socket artifact."""
+
+        text = str(value or "").strip().upper()
+        if not text:
+            return False
+        if "SOCKET" in text:
+            return True
+        return bool(re.search(r"\bSKT\b", text))
+
+    @classmethod
+    def _component_has_socket_intent(cls, component: Component) -> bool:
+        """Return True when component metadata indicates socket-like intent."""
+
+        reference = str(component.reference or "").strip().upper()
+        if re.fullmatch(r"X(?:U|S|IC)?\d+", reference):
+            return True
+        if re.fullmatch(r"SKT\d+", reference):
+            return True
+
+        candidate_text = [component.lib_id, component.value, component.footprint]
+        candidate_text.extend(
+            str(value) for value in (component.properties or {}).values()
+        )
+        return any(cls._contains_socket_token(value) for value in candidate_text)
+
+    @classmethod
+    def _item_has_socket_intent(cls, item: InventoryItem) -> bool:
+        """Return True when inventory metadata indicates a socket candidate."""
+
+        raw = item.raw_data or {}
+        candidate_text = [
+            item.type,
+            item.name,
+            item.description,
+            item.package,
+            item.value,
+            item.ipn,
+            item.footprint_full,
+            str(raw.get("Type", "")),
+            str(raw.get("Form", "")),
+            str(raw.get("Description", "")),
+            str(raw.get("Footprint", "")),
+        ]
+        return any(cls._contains_socket_token(value) for value in candidate_text)
+
+    @classmethod
+    def _extract_socket_package_families(cls, *values: str) -> set[str]:
+        """Extract coarse socket-relevant package families from free-form text."""
+
+        families: set[str] = set()
+        for value in values:
+            text = str(value or "").strip().lower()
+            if not text:
+                continue
+            for family, pattern in _SOCKET_PACKAGE_PATTERNS:
+                if re.search(pattern, text):
+                    families.add(family)
+        return families
+
+    @staticmethod
+    def _extract_pin_count_candidates(*values: str) -> set[int]:
+        """Extract pin-count candidates from package and connector text."""
+
+        counts: set[int] = set()
+        package_pattern = r"(?:dip|plcc|qfn|qfp|soic|sop|ssop|tssop|msop)[-_ ]?(\d+)"
+        for value in values:
+            text = str(value or "").strip().lower()
+            if not text:
+                continue
+            for left, right in re.findall(r"(\d+)\s*[xX]\s*(\d+)", text):
+                pin_count = int(left) * int(right)
+                if 0 < pin_count <= 512:
+                    counts.add(pin_count)
+            for pin_count_text in re.findall(package_pattern, text):
+                pin_count = int(pin_count_text)
+                if 0 < pin_count <= 512:
+                    counts.add(pin_count)
+            for pin_count_text in re.findall(r"(\d+)\s*pin\b", text):
+                pin_count = int(pin_count_text)
+                if 0 < pin_count <= 512:
+                    counts.add(pin_count)
+        return counts
+
+    @staticmethod
+    def _extract_pitch_candidates_mm(*values: str) -> set[float]:
+        """Extract normalized millimeter pitch values from free-form text."""
+
+        pitches: set[float] = set()
+        for value in values:
+            text = str(value or "").strip().lower()
+            if not text:
+                continue
+            for pitch_text in re.findall(r"(\d+(?:[.,]\d+)?)\s*mm", text):
+                pitch_mm = round(float(pitch_text.replace(",", ".")), 3)
+                if pitch_mm > 0:
+                    pitches.add(pitch_mm)
+        return pitches
 
     def _evaluate_non_passive_signals(
         self,
@@ -409,12 +590,89 @@ class SophisticatedInventoryMatcher:
             if value > 0 and family:
                 positive_families.add(family)
 
+        raw = item.raw_data or {}
+        socket_pair = self._component_has_socket_intent(
+            component
+        ) and self._item_has_socket_intent(item)
+
         item_category = self._normalized_item_category(item)
         if component_type and item_category:
-            if self._categories_compatible(component_type, item_category):
+            if self._categories_compatible(
+                component_type,
+                item_category,
+                socket_pair=socket_pair,
+            ):
                 contribute("category_compatible", 20, "category")
             else:
                 contribute("category_conflict", -45)
+        if socket_pair:
+            contribute("socket_intent_pair", 15, "identity")
+
+            component_socket_families = self._extract_socket_package_families(
+                component.lib_id,
+                component.value,
+                component.footprint,
+            )
+            item_socket_families = self._extract_socket_package_families(
+                item.package,
+                item.value,
+                item.type,
+                item.name,
+                item.description,
+                item.footprint_full,
+                str(raw.get("Footprint", "")),
+            )
+            if component_socket_families and item_socket_families:
+                if component_socket_families & item_socket_families:
+                    contribute("socket_package_family_match", 18, "footprint")
+                else:
+                    contribute("socket_package_family_conflict", -35)
+                    hard_reject = True
+
+            component_pin_counts = self._extract_pin_count_candidates(
+                component.lib_id,
+                component.value,
+                component.footprint,
+                component.reference,
+            )
+            item_pin_counts = self._extract_pin_count_candidates(
+                item.pins,
+                item.package,
+                item.value,
+                item.name,
+                item.description,
+                str(raw.get("Pins", "")),
+                str(raw.get("Pin", "")),
+                str(raw.get("Pin Count", "")),
+                item.footprint_full,
+                str(raw.get("Footprint", "")),
+            )
+            if component_pin_counts and item_pin_counts:
+                if component_pin_counts & item_pin_counts:
+                    contribute("socket_pin_count_match", 24, "identity")
+                else:
+                    contribute("socket_pin_count_conflict", -60)
+                    hard_reject = True
+
+            component_pitch_values = self._extract_pitch_candidates_mm(
+                component.lib_id,
+                component.value,
+                component.footprint,
+                component.reference,
+            )
+            item_pitch_values = self._extract_pitch_candidates_mm(
+                item.pitch,
+                item.description,
+                item.footprint_full,
+                str(raw.get("Pitch", "")),
+                str(raw.get("Footprint", "")),
+            )
+            if component_pitch_values and item_pitch_values:
+                if component_pitch_values & item_pitch_values:
+                    contribute("socket_pitch_match", 16, "footprint")
+                else:
+                    contribute("socket_pitch_conflict", -45)
+                    hard_reject = True
 
         inferred_value_category = self._infer_value_category(component.value)
         if inferred_value_category and item_category:
@@ -446,7 +704,7 @@ class SophisticatedInventoryMatcher:
         exact_identity_match = ""
         best_overlap = 0.0
         best_overlap_field = ""
-        for field_name, field_value in candidate_fields.items():
+        for field_name, field_value in candidate_fields:
             if not field_value:
                 continue
             candidate_normalized = self._normalize_identifier(field_value)
@@ -474,7 +732,6 @@ class SophisticatedInventoryMatcher:
         elif best_overlap >= 0.40:
             contribute(f"value_overlap_weak:{best_overlap_field}", 12, "identity")
 
-        raw = item.raw_data or {}
         component_footprint = str(component.footprint or "")
         component_footprint_stub = self._footprint_stub(component_footprint)
         component_footprint_tokens = self._tokenize_identifier(component_footprint)

@@ -66,6 +66,8 @@ class InventoryItem:
     capacitance: Optional[float] = None  # in farads (CAP)
     inductance: Optional[float] = None  # in henries (IND)
     name: str = ""  # component name for non-passives (e.g. "LM358D", "AMS1117-3.3")
+    aliases: str = ""  # alternate identity tokens for matching (space/comma delimited)
+    dnp: bool = False  # global do-not-populate marker from inventory
     # Source tracking for federated inventory
     source: str = "Unknown"  # e.g. "CSV", "JLC-Private", "Project"
     source_file: Optional[Path] = None  # Path to the file where this item was found

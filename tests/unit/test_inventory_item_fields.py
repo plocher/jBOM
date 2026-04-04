@@ -91,6 +91,14 @@ class TestInventoryItemHarvestFidelityDefaults:
         item = _make_item()
         assert item.pitch == ""
 
+    def test_aliases_defaults_to_empty_string(self):
+        item = _make_item()
+        assert item.aliases == ""
+
+    def test_dnp_defaults_to_false(self):
+        item = _make_item()
+        assert item.dnp is False
+
     def test_explicit_fields_accepted(self):
         item = _make_item(
             footprint_full="Capacitor_SMD:CP_Elec_4x5.4mm",
@@ -98,12 +106,16 @@ class TestInventoryItemHarvestFidelityDefaults:
             symbol_name="C_Polarized",
             pins="4",
             pitch="2.54mm",
+            aliases="ALT1 ALT2",
+            dnp=True,
         )
         assert item.footprint_full == "Capacitor_SMD:CP_Elec_4x5.4mm"
         assert item.symbol_lib == "Device"
         assert item.symbol_name == "C_Polarized"
         assert item.pins == "4"
         assert item.pitch == "2.54mm"
+        assert item.aliases == "ALT1 ALT2"
+        assert item.dnp is True
 
 
 # ---------------------------------------------------------------------------
@@ -176,3 +188,18 @@ class TestInventoryReaderHarvestFidelityRoundtrip:
         items = _csv_reader(csv)
         assert items[0].manufacturer == "LITTELFUSE"
         assert items[0].mfgpn == "CPC1709J"
+
+    def test_aliases_column_populates_inventory_item_aliases(self):
+        csv = "IPN,Category,Value,Package,Aliases\nIC-001,IC,LM358D,SOP-8,LM6132A TLV272CS-13\n"
+        items = _csv_reader(csv)
+        assert items[0].aliases == "LM6132A TLV272CS-13"
+
+    def test_dnp_column_parses_truthy_markers(self):
+        csv = "IPN,Category,Value,Package,DNP\nJ-001,CON,CONN,TH,DNP\n"
+        items = _csv_reader(csv)
+        assert items[0].dnp is True
+
+    def test_dnp_column_parses_empty_as_false(self):
+        csv = "IPN,Category,Value,Package,DNP\nJ-002,CON,CONN,TH,\n"
+        items = _csv_reader(csv)
+        assert items[0].dnp is False
