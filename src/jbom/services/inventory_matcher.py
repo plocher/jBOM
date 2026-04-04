@@ -19,6 +19,7 @@ from jbom.services.bom_generator import BOMEntry, BOMData
 from jbom.services.fabricator_inventory_selector import FabricatorInventorySelector
 from jbom.services.inventory_reader import InventoryReader
 from jbom.services.sophisticated_inventory_matcher import (
+    MatchResult,
     MatchingOptions,
     SophisticatedInventoryMatcher,
 )
@@ -38,6 +39,7 @@ class InventoryMatcher:
         inventory_file: Path,
         fabricator_id: str = "generic",
         project_name: Optional[str] = None,
+        include_inventory_dnp: bool = False,
     ) -> BOMData:
         """Enhance BOM data with inventory information.
 
@@ -53,6 +55,9 @@ class InventoryMatcher:
             inventory_file: Path to inventory file
             fabricator_id: Fabricator profile ID (default: "generic")
             project_name: Optional project name for project-restricted items
+            include_inventory_dnp: Keep inventory rows marked DNP when selecting
+                among matched candidates. When False (default), non-DNP matches
+                are preferred when available.
 
         Returns:
             Enhanced BOM data with inventory information
@@ -71,6 +76,7 @@ class InventoryMatcher:
         matcher = SophisticatedInventoryMatcher(MatchingOptions())
         enhanced_entries = []
         matched_count = 0
+        inventory_dnp_matches = 0
         orphan_refs: List[str] = []
 
         for entry in bom_data.entries:
@@ -78,7 +84,10 @@ class InventoryMatcher:
             matches = matcher.find_matches(component, eligible_items)
 
             if matches:
-                best = matches[0]
+                best = self._select_preferred_match(
+                    matches,
+                    include_inventory_dnp=include_inventory_dnp,
+                )
                 enhanced_entry = self._enrich_entry(
                     entry,
                     best.inventory_item,
@@ -87,6 +96,8 @@ class InventoryMatcher:
                 )
                 enhanced_entries.append(enhanced_entry)
                 matched_count += 1
+                if best.inventory_item.dnp:
+                    inventory_dnp_matches += 1
             else:
                 enhanced_entries.append(entry)
                 orphan_refs.append(entry.references_string)
@@ -101,6 +112,7 @@ class InventoryMatcher:
                 "eligible_items": len(eligible_items),
                 "matched_entries": matched_count,
                 "orphan_entries": len(orphan_refs),
+                "inventory_dnp_matches": inventory_dnp_matches,
             }
         )
         if orphan_refs:
@@ -160,6 +172,18 @@ class InventoryMatcher:
             return inventory_items, None
 
     @staticmethod
+    def _select_preferred_match(
+        matches: List[MatchResult], *, include_inventory_dnp: bool
+    ) -> MatchResult:
+        """Select the best match, preferring non-DNP inventory when allowed."""
+        if include_inventory_dnp:
+            return matches[0]
+        for match in matches:
+            if not match.inventory_item.dnp:
+                return match
+        return matches[0]
+
+    @staticmethod
     def _bom_entry_to_component(entry: BOMEntry) -> Component:
         """Construct a representative Component from a BOM entry.
 
@@ -168,11 +192,19 @@ class InventoryMatcher:
         The BOMEntry carries lib_id, value, footprint, and merged attributes
         from the group — exactly what the sophisticated matcher needs.
         """
+        attributes = entry.attributes or {}
+        resolved_footprint = str(
+            attributes.get("p:footprint")
+            or attributes.get("s:footprint")
+            or entry.footprint
+            or ""
+        ).strip()
+
         return Component(
             reference=entry.references[0] if entry.references else "",
             lib_id=entry.lib_id,
             value=entry.value,
-            footprint=entry.footprint,
+            footprint=resolved_footprint,
             properties=entry.attributes,
         )
 
@@ -244,6 +276,7 @@ class InventoryMatcher:
     ) -> BOMEntry:
         """Enrich a BOM entry with data from the best-matching inventory item."""
         enhanced_attributes = entry.attributes.copy()
+        enhanced_attributes["inventory_dnp"] = bool(item.dnp)
 
         fabricator_part_number = InventoryMatcher._resolve_fabricator_part_number(
             item=item,

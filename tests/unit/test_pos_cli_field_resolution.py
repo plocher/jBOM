@@ -1,6 +1,7 @@
 """Unit tests for POS CLI projection and field resolution helpers."""
 
 from jbom.cli.pos import (
+    _apply_pos_dnp_filter,
     _enrich_pos_with_merge_namespaces,
     _get_pos_field_value,
     _resolve_pos_output_projection,
@@ -130,3 +131,18 @@ def test_unqualified_pos_value_uses_inventory_when_pcb_missing() -> None:
     }
 
     assert _get_pos_field_value(entry, "value") == "10K-INV"
+
+
+def test_pos_dnp_filter_excludes_schematic_dnp_rows_by_default() -> None:
+    rows = [
+        {"reference": "U1", "s:dnp": "Yes"},
+        {"reference": "U2", "s:dnp": "No"},
+    ]
+    filtered = _apply_pos_dnp_filter(rows, component_filters={"exclude_dnp": True})
+    assert [row["reference"] for row in filtered] == ["U2"]
+
+
+def test_pos_dnp_filter_respects_include_dnp_flag() -> None:
+    rows = [{"reference": "U1", "s:dnp": "Yes"}]
+    filtered = _apply_pos_dnp_filter(rows, component_filters={"exclude_dnp": False})
+    assert [row["reference"] for row in filtered] == ["U1"]

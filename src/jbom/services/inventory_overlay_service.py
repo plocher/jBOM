@@ -57,6 +57,7 @@ class InventoryOverlayService:
         inventory_file: Path | None,
         fabricator_id: str,
         project_name: str | None,
+        include_inventory_dnp: bool = False,
     ) -> InventoryOverlayResult:
         """Apply inventory overlay and project inventory namespace fields."""
 
@@ -67,6 +68,7 @@ class InventoryOverlayService:
                 inventory_file,
                 fabricator_id=fabricator_id,
                 project_name=project_name,
+                include_inventory_dnp=include_inventory_dnp,
             )
 
         namespaced_entries = [

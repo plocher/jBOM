@@ -391,6 +391,8 @@ class ComponentMergeService:
             "lcsc",
             self._get_component_property(component, ("LCSC", "lcsc")),
         )
+        if bool(getattr(component, "dnp", False)):
+            schematic_fields["dnp"] = "Yes"
 
         return schematic_fields
 

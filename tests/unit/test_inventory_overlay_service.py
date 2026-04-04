@@ -25,8 +25,11 @@ class _StubInventoryMatcher:
         *,
         fabricator_id: str = "generic",
         project_name: str | None = None,
+        include_inventory_dnp: bool = False,
     ) -> BOMData:
-        self.calls.append((inventory_file, fabricator_id, project_name))
+        self.calls.append(
+            (inventory_file, fabricator_id, project_name, include_inventory_dnp)
+        )
         return self.result
 
 
@@ -81,7 +84,7 @@ def test_overlay_with_inventory_projects_i_namespace_fields() -> None:
         project_name="Demo",
     )
 
-    assert matcher.calls == [(Path("/tmp/inventory.csv"), "jlc", "Demo")]
+    assert matcher.calls == [(Path("/tmp/inventory.csv"), "jlc", "Demo", False)]
     attributes = result.bom_data.entries[0].attributes
     assert attributes["i:manufacturer"] == "Yageo"
     assert attributes["i:manufacturer_part"] == "RC0603"

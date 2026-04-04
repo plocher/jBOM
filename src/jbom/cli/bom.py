@@ -440,6 +440,7 @@ def handle_bom(args: argparse.Namespace) -> int:
         filters = create_filter_config(args)
         bom_data = generator.generate_bom_data(components, project_name, filters)
         bom_data = _enrich_bom_with_merge_namespaces(bom_data, merge_result)
+        bom_data = _enforce_bom_device_footprints(bom_data)
 
         inventory_file: Path | None = None
         if args.inventory_files:
@@ -467,8 +468,13 @@ def handle_bom(args: argparse.Namespace) -> int:
             inventory_file=inventory_file,
             fabricator_id=fabricator,
             project_name=project_name,
+            include_inventory_dnp=not filters.get("exclude_dnp", True),
         )
         bom_data = overlay_result.bom_data
+        bom_data = _filter_inventory_dnp_entries(
+            bom_data,
+            include_inventory_dnp=not filters.get("exclude_dnp", True),
+        )
 
         bom_data = _enrich_bom_smd_from_project_pcb(
             bom_data,
@@ -575,6 +581,64 @@ def _get_available_bom_fields(
         fields.setdefault(field_name, "Discovered field")
 
     return fields
+
+
+def _is_truthy_inventory_dnp(value: object) -> bool:
+    """Return True when an inventory DNP marker should exclude an output row."""
+
+    if isinstance(value, bool):
+        return value
+    normalized = str(value or "").strip().lower()
+    if not normalized:
+        return False
+    return normalized in {
+        "1",
+        "true",
+        "t",
+        "yes",
+        "y",
+        "x",
+        "dnp",
+        "do not populate",
+    }
+
+
+def _entry_has_inventory_dnp(entry: BOMEntry) -> bool:
+    """Return True when a BOM entry is tagged DNP from inventory overlay data."""
+
+    inventory_dnp = entry.attributes.get("inventory_dnp")
+    if _is_truthy_inventory_dnp(inventory_dnp):
+        return True
+    namespaced_dnp = entry.attributes.get("i:dnp")
+    if _is_truthy_inventory_dnp(namespaced_dnp):
+        return True
+    return False
+
+
+def _filter_inventory_dnp_entries(
+    bom_data: BOMData,
+    *,
+    include_inventory_dnp: bool,
+) -> BOMData:
+    """Filter out inventory-DNP BOM rows unless explicitly included by CLI flags."""
+
+    if include_inventory_dnp:
+        return bom_data
+
+    filtered_entries = [
+        entry for entry in bom_data.entries if not _entry_has_inventory_dnp(entry)
+    ]
+    removed_count = len(bom_data.entries) - len(filtered_entries)
+    if removed_count <= 0:
+        return bom_data
+
+    metadata = dict(bom_data.metadata)
+    metadata["inventory_dnp_filtered_entries"] = removed_count
+    return BOMData(
+        project_name=bom_data.project_name,
+        entries=filtered_entries,
+        metadata=metadata,
+    )
 
 
 def _load_pcb_smd_lookup(
@@ -1019,6 +1083,121 @@ def _build_bom_row_sources(
             row_sources["s"].setdefault("package", package_value)
 
     return row_sources
+
+
+def _entry_has_namespaced_field(entry: BOMEntry, namespaced_field: str) -> bool:
+    """Return True when an entry explicitly carries a given namespaced field."""
+
+    normalized_target = normalize_field_name(namespaced_field)
+    for attribute_key in entry.attributes.keys():
+        normalized_key = normalize_field_name(str(attribute_key or ""))
+        if normalized_key == normalized_target:
+            return True
+    return False
+
+
+def _resolve_entry_device_footprint(entry: BOMEntry) -> str:
+    """Resolve the concrete device footprint for BOM/device workflows.
+
+    Precedence is intentionally physical-first:
+    1) Explicit PCB-resolved footprint (`p:footprint`) is authoritative
+    2) If PCB footprint is absent, fall back to schematic footprint (`s:footprint`)
+       then entry footprint
+    """
+
+    row_sources = _build_bom_row_sources(entry, include_unqualified_fallback=True)
+    has_pcb_footprint = _entry_has_namespaced_field(entry, "p:footprint")
+
+    pcb_footprint = resolve_field(
+        "p:footprint",
+        row_sources,
+        priority=_BOM_SOURCE_PRIORITY,
+    )
+    if has_pcb_footprint:
+        return str(pcb_footprint or "").strip()
+
+    schematic_footprint = resolve_field(
+        "s:footprint",
+        row_sources,
+        priority=_BOM_SOURCE_PRIORITY,
+    )
+
+    fallback_footprint = str(entry.footprint or "").strip()
+    for candidate in (schematic_footprint, fallback_footprint):
+        if _is_concrete_footprint(candidate):
+            return str(candidate).strip()
+    for candidate in (schematic_footprint, fallback_footprint):
+        normalized_candidate = str(candidate or "").strip()
+        if normalized_candidate:
+            return normalized_candidate
+
+    return ""
+
+
+def _is_concrete_footprint(value: str) -> bool:
+    """Return True when a footprint token is concrete enough for BOM devices."""
+
+    token = str(value or "").strip()
+    if not token or token == "~":
+        return False
+    if "*" in token or "?" in token:
+        return False
+    return True
+
+
+def _enforce_bom_device_footprints(bom_data: BOMData) -> BOMData:
+    """Enforce concrete footprint availability for BOM/device generation.
+
+    For BOM workflows, a tangible device footprint is mandatory.
+    - resolves entry footprint with PCB precedence (`p:footprint` over schematic)
+    - raises ValueError when a concrete footprint cannot be resolved
+    """
+
+    missing_references: list[str] = []
+    updated_entries: list[BOMEntry] = []
+    changed = False
+
+    for entry in bom_data.entries:
+        resolved_footprint = _resolve_entry_device_footprint(entry)
+        if not _is_concrete_footprint(resolved_footprint):
+            missing_references.append(entry.references_string)
+            updated_entries.append(entry)
+            continue
+
+        if resolved_footprint == entry.footprint:
+            updated_entries.append(entry)
+            continue
+
+        changed = True
+        updated_entries.append(
+            BOMEntry(
+                references=entry.references,
+                value=entry.value,
+                footprint=resolved_footprint,
+                quantity=entry.quantity,
+                lib_id=entry.lib_id,
+                attributes=dict(entry.attributes),
+            )
+        )
+
+    if missing_references:
+        refs = "; ".join(missing_references)
+        raise ValueError(
+            "BOM generation requires concrete component footprints; "
+            f"missing/unresolved footprint for: {refs}"
+        )
+
+    if not changed:
+        return bom_data
+
+    metadata = dict(bom_data.metadata)
+    metadata["device_footprint_contract"] = "enforced"
+    metadata["device_footprint_precedence"] = "p>s"
+    return BOMData(
+        project_name=bom_data.project_name,
+        entries=updated_entries,
+        metadata=metadata,
+    )
 
 
 def _resolve_annotation_field_value(
