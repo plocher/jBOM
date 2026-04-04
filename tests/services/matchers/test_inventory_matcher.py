@@ -25,6 +25,7 @@ def _make_inventory_item(
     lcsc: str = "",
     datasheet: str = "",
     fabricator: str = "",
+    dnp: bool = False,
     priority: int = DEFAULT_PRIORITY,
     raw_data: dict | None = None,
 ) -> InventoryItem:
@@ -68,6 +69,7 @@ def _make_inventory_item(
         distributor_part_number="",
         uuid="",
         fabricator=fabricator,
+        dnp=dnp,
         priority=priority,
         source="CSV",
         source_file=None,
@@ -209,6 +211,26 @@ class TestInventoryMatcher:
         assert component.footprint == "R_0603_1608Metric"
         assert component.properties["Tolerance"] == "5%"
 
+    def test_bom_entry_to_component_prefers_pcb_footprint_namespace(self) -> None:
+        """PCB namespace footprint should override entry footprint when present."""
+        entry = BOMEntry(
+            ["J1"],
+            "Conn_01x04",
+            "Connector:Conn_01x04",
+            1,
+            "Connector:Conn_01x04",
+            {
+                "p:footprint": "Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical"
+            },
+        )
+
+        component = InventoryMatcher._bom_entry_to_component(entry)
+
+        assert (
+            component.footprint
+            == "Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical"
+        )
+
     def test_fabricator_filtering_fallback(self) -> None:
         """When fabricator config is unavailable, uses unfiltered inventory."""
         matcher = InventoryMatcher()
@@ -252,6 +274,93 @@ class TestInventoryMatcher:
         assert "fabricator_id" in result.metadata
         assert "eligible_items" in result.metadata
         assert result.metadata["fabricator_id"] == "generic"
+
+    def test_prefers_non_dnp_match_when_available(self) -> None:
+        matcher = InventoryMatcher()
+
+        bom_data = BOMData(
+            project_name="TestProject",
+            entries=[
+                BOMEntry(["Q1"], "DMN4468", "Package_SO:SOIC-8", 1, "Device:Q", {})
+            ],
+        )
+
+        inventory_items = [
+            _make_inventory_item(
+                ipn="Q_DNP",
+                category="Q",
+                value="DMN4468",
+                package="SO-8",
+                priority=1,
+                dnp=True,
+                manufacturer="DNP-Row",
+                lcsc="C878901",
+            ),
+            _make_inventory_item(
+                ipn="Q_POP",
+                category="Q",
+                value="DMN4468",
+                package="SO-8",
+                priority=2,
+                dnp=False,
+                manufacturer="Populated-Row",
+                lcsc="C878902",
+            ),
+        ]
+
+        with patch.object(matcher, "_load_inventory", return_value=inventory_items):
+            result = matcher.enhance_bom_with_inventory(
+                bom_data,
+                Path("/tmp/inv.csv"),
+            )
+
+        assert result.entries[0].attributes["manufacturer"] == "Populated-Row"
+        assert result.entries[0].attributes["inventory_dnp"] is False
+        assert result.metadata["inventory_dnp_matches"] == 0
+
+    def test_include_inventory_dnp_allows_dnp_candidate_selection(self) -> None:
+        matcher = InventoryMatcher()
+
+        bom_data = BOMData(
+            project_name="TestProject",
+            entries=[
+                BOMEntry(["Q1"], "DMN4468", "Package_SO:SOIC-8", 1, "Device:Q", {})
+            ],
+        )
+
+        inventory_items = [
+            _make_inventory_item(
+                ipn="Q_DNP",
+                category="Q",
+                value="DMN4468",
+                package="SO-8",
+                priority=1,
+                dnp=True,
+                manufacturer="DNP-Row",
+                lcsc="C878901",
+            ),
+            _make_inventory_item(
+                ipn="Q_POP",
+                category="Q",
+                value="DMN4468",
+                package="SO-8",
+                priority=2,
+                dnp=False,
+                manufacturer="Populated-Row",
+                lcsc="C878902",
+            ),
+        ]
+
+        with patch.object(matcher, "_load_inventory", return_value=inventory_items):
+            result = matcher.enhance_bom_with_inventory(
+                bom_data,
+                Path("/tmp/inv.csv"),
+                include_inventory_dnp=True,
+            )
+
+        assert result.entries[0].attributes["manufacturer"] == "DNP-Row"
+        assert result.entries[0].attributes["inventory_dnp"] is True
+        assert result.metadata["inventory_dnp_matches"] == 1
 
     def test_enrich_entry_uses_defaults_inventory_schema_bindings(self) -> None:
         """Enrichment keys and source bindings come from defaults inventory schema."""

@@ -340,10 +340,7 @@ def handle_pos(args: argparse.Namespace) -> int:
         # Create component filter configuration (for future DNP filtering support)
         component_filters = create_filter_config(args, command_type="pos")
         if args.verbose and not component_filters.get("exclude_dnp", True):
-            print(
-                "Note: --include-dnp specified but DNP filtering not yet implemented for POS",
-                file=sys.stderr,
-            )
+            print("Including DNP components in POS output", file=sys.stderr)
 
         # Use services to generate POS data
         reader = DefaultKiCadReaderService()
@@ -391,6 +388,7 @@ def handle_pos(args: argparse.Namespace) -> int:
             verbose=args.verbose,
         )
         pos_data = _enrich_pos_with_merge_namespaces(pos_data, merge_result)
+        pos_data = _apply_pos_dnp_filter(pos_data, component_filters=component_filters)
 
         # Parse field selection with fabricator awareness
         available_pos_fields = _get_available_pos_fields(
@@ -830,3 +828,44 @@ def _build_pos_row_sources(entry: dict[str, Any]) -> dict[str, dict[str, object]
         row_sources["p"].setdefault("rotation", f"{entry['rotation']:.1f}")
 
     return row_sources
+
+
+def _is_truthy_dnp_marker(value: object) -> bool:
+    """Return True when a DNP marker should exclude a POS row."""
+
+    if isinstance(value, bool):
+        return value
+    normalized = str(value or "").strip().lower()
+    if not normalized:
+        return False
+    return normalized in {
+        "1",
+        "true",
+        "t",
+        "yes",
+        "y",
+        "x",
+        "dnp",
+        "do not populate",
+    }
+
+
+def _entry_has_dnp_marker(entry: dict[str, Any]) -> bool:
+    """Return True when a POS row contains schematic/inventory DNP flags."""
+
+    for key in ("dnp", "s:dnp", "i:dnp"):
+        if _is_truthy_dnp_marker(entry.get(key)):
+            return True
+    return False
+
+
+def _apply_pos_dnp_filter(
+    pos_data: list[dict[str, Any]],
+    *,
+    component_filters: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """Filter DNP rows from POS data unless `--include-dnp` is active."""
+
+    if not component_filters.get("exclude_dnp", True):
+        return pos_data
+    return [entry for entry in pos_data if not _entry_has_dnp_marker(entry)]

@@ -1,8 +1,10 @@
 """Unit tests for BOM CLI field resolution helpers."""
 
 from jbom.cli.bom import (
+    _enforce_bom_device_footprints,
     _enrich_bom_with_merge_namespaces,
     _entry_smd_from_reference_lookup,
+    _filter_inventory_dnp_entries,
     _get_field_value,
 )
 from jbom.services.bom_generator import BOMData, BOMEntry
@@ -290,3 +292,188 @@ def test_merge_namespace_enrichment_skips_conflicting_grouped_values() -> None:
     attrs = enriched.entries[0].attributes
     assert attrs["s:value"] == "10k"
     assert "p:rotation" not in attrs
+
+
+def test_inventory_dnp_filter_excludes_rows_by_default() -> None:
+    bom_data = BOMData(
+        project_name="Project",
+        entries=[
+            BOMEntry(
+                references=["U1"],
+                value="MAX3485",
+                footprint="Package_DIP:DIP-8",
+                quantity=1,
+                attributes={"inventory_dnp": True},
+            ),
+            BOMEntry(
+                references=["U2"],
+                value="NE555",
+                footprint="Package_SO:SOIC-8_3.9x4.9mm_P1.27mm",
+                quantity=1,
+                attributes={"inventory_dnp": False},
+            ),
+        ],
+        metadata={},
+    )
+
+    filtered = _filter_inventory_dnp_entries(
+        bom_data,
+        include_inventory_dnp=False,
+    )
+
+    assert len(filtered.entries) == 1
+    assert filtered.entries[0].references == ["U2"]
+    assert filtered.metadata["inventory_dnp_filtered_entries"] == 1
+
+
+def test_inventory_dnp_filter_respects_include_flag() -> None:
+    bom_data = BOMData(
+        project_name="Project",
+        entries=[
+            BOMEntry(
+                references=["U1"],
+                value="MAX3485",
+                footprint="Package_DIP:DIP-8",
+                quantity=1,
+                attributes={"inventory_dnp": True},
+            )
+        ],
+        metadata={},
+    )
+
+    filtered = _filter_inventory_dnp_entries(
+        bom_data,
+        include_inventory_dnp=True,
+    )
+
+    assert len(filtered.entries) == 1
+    assert filtered.metadata == bom_data.metadata
+
+
+def test_bom_device_footprint_contract_prefers_pcb_footprint() -> None:
+    bom_data = BOMData(
+        project_name="Project",
+        entries=[
+            BOMEntry(
+                references=["J1"],
+                value="Conn_01x04",
+                footprint="Connector:Conn_01x04",
+                quantity=1,
+                attributes={
+                    "p:footprint": (
+                        "Connector_PinHeader_2.54mm:" "PinHeader_1x04_P2.54mm_Vertical"
+                    )
+                },
+            )
+        ],
+        metadata={},
+    )
+
+    enforced = _enforce_bom_device_footprints(bom_data)
+    assert (
+        enforced.entries[0].footprint
+        == "Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical"
+    )
+    assert enforced.metadata["device_footprint_contract"] == "enforced"
+
+
+def test_bom_device_footprint_contract_falls_back_to_concrete_schematic_footprint() -> (
+    None
+):
+    bom_data = BOMData(
+        project_name="Project",
+        entries=[
+            BOMEntry(
+                references=["J2"],
+                value="Conn_01x03",
+                footprint="",
+                quantity=1,
+                attributes={
+                    "s:footprint": (
+                        "Connector_Phoenix_MC:PhoenixContact_MC_1,5_3-G-3.5_1x03_P3.50mm_Horizontal"
+                    ),
+                },
+            )
+        ],
+        metadata={},
+    )
+
+    enforced = _enforce_bom_device_footprints(bom_data)
+    assert (
+        enforced.entries[0].footprint
+        == "Connector_Phoenix_MC:PhoenixContact_MC_1,5_3-G-3.5_1x03_P3.50mm_Horizontal"
+    )
+
+
+def test_bom_device_footprint_contract_rejects_non_concrete_pcb_footprint() -> None:
+    bom_data = BOMData(
+        project_name="Project",
+        entries=[
+            BOMEntry(
+                references=["J2"],
+                value="Conn_01x03",
+                footprint="",
+                quantity=1,
+                attributes={
+                    "p:footprint": "~",
+                    "s:footprint": (
+                        "Connector_Phoenix_MC:PhoenixContact_MC_1,5_3-G-3.5_1x03_P3.50mm_Horizontal"
+                    ),
+                },
+            )
+        ],
+        metadata={},
+    )
+
+    try:
+        _enforce_bom_device_footprints(bom_data)
+        assert False, "Expected ValueError for non-concrete explicit p:footprint"
+    except ValueError as exc:
+        assert "missing/unresolved footprint" in str(exc)
+        assert "J2" in str(exc)
+
+
+def test_bom_device_footprint_contract_raises_when_missing_footprint() -> None:
+    bom_data = BOMData(
+        project_name="Project",
+        entries=[
+            BOMEntry(
+                references=["U1"],
+                value="LM358",
+                footprint="",
+                quantity=1,
+                attributes={},
+            )
+        ],
+        metadata={},
+    )
+
+    try:
+        _enforce_bom_device_footprints(bom_data)
+        assert False, "Expected ValueError for missing footprint"
+    except ValueError as exc:
+        assert "requires concrete component footprints" in str(exc)
+        assert "U1" in str(exc)
+
+
+def test_bom_device_footprint_contract_rejects_wildcard_footprint() -> None:
+    bom_data = BOMData(
+        project_name="Project",
+        entries=[
+            BOMEntry(
+                references=["J6"],
+                value="Conn_6P6C",
+                footprint="RJ12*",
+                quantity=1,
+                attributes={},
+            )
+        ],
+        metadata={},
+    )
+
+    try:
+        _enforce_bom_device_footprints(bom_data)
+        assert False, "Expected ValueError for wildcard footprint"
+    except ValueError as exc:
+        assert "missing/unresolved footprint" in str(exc)
+        assert "J6" in str(exc)
