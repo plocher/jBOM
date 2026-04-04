@@ -1,6 +1,35 @@
 # CHANGELOG
 
 
+## v6.50.0 (2026-04-04)
+
+### Bug Fixes
+
+* fix(matching): improve non-passive heuristic matching
+
+Add generalized positive/negative signal voting for non-passive components, including identity/footprint/package/category evidence and configurable acceptance thresholds.
+
+Add LCSC validation/hard-accept policy handling and reject mismatched LCSC candidates when configured.
+
+Prefer score-first ordering for non-passive matches, expand regulator classification patterns, add JLC LCSC alias headers, and extend regression coverage for issue #207 scenarios.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`b256799`](https://github.com/plocher/jBOM/commit/b2567990ceb7525a798e734a11fe0b517a2bd179))
+
+### Features
+
+* feat(matcher): add socket-aware inventory matching
+
+Add socket-intent scoring and guarded IC↔CON compatibility for package/socket candidates, expand inventory field normalization used in matching, and refresh example inventory artifacts to reflect improved real-project resolution.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`69d885b`](https://github.com/plocher/jBOM/commit/69d885bacd8aa35f0d8b0a6303d266333984192f))
+
+* feat(cli): enforce BOM device footprint contract
+
+Enforce concrete BOM footprints with PCB-first precedence, add inventory DNP filtering controls for BOM/POS outputs, and align overlay/matcher metadata plus tests for namespaced field behavior.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`3270f30`](https://github.com/plocher/jBOM/commit/3270f3010e52ea2fd375675f3bad2aeff2514c4c))
+
+
 ## v6.49.0 (2026-04-03)
 
 ### Bug Fixes
