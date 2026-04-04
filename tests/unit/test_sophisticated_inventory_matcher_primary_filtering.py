@@ -32,10 +32,16 @@ def _make_inventory_item(
     category: str,
     value: str = "",
     package: str = "",
+    item_type: str = "",
+    description: str = "",
     tolerance: str = "",
     lcsc: str = "",
     name: str = "",
+    aliases: str = "",
     mfgpn: str = "",
+    footprint_full: str = "",
+    pins: str = "",
+    pitch: str = "",
     raw_data: dict[str, str] | None = None,
 ) -> InventoryItem:
     row = raw_data or {}
@@ -43,10 +49,10 @@ def _make_inventory_item(
         ipn=ipn,
         keywords="",
         category=category,
-        description="",
+        description=description,
         smd="",
         value=value,
-        type="",
+        type=item_type,
         tolerance=tolerance,
         voltage="",
         amperage="",
@@ -56,7 +62,11 @@ def _make_inventory_item(
         mfgpn=mfgpn,
         datasheet="",
         package=package,
+        footprint_full=footprint_full,
+        pins=pins,
+        pitch=pitch,
         name=name,
+        aliases=aliases,
         raw_data=row,
     )
 
@@ -79,6 +89,46 @@ def test_type_filter_skipped_when_component_type_unknown() -> None:
 
     component = _make_component(lib_id="Foo:ABC", reference="M1")
     item = _make_inventory_item(category="CAP")
+
+    assert matcher._passes_primary_filters(component, item) is True
+
+
+def test_non_passive_soic_and_so8_package_aliases_are_compatible() -> None:
+    matcher = SophisticatedInventoryMatcher(MatchingOptions())
+
+    component = _make_component(
+        reference="Q4",
+        lib_id="Device:Q_NMOS_GSD",
+        value="DMN4468LSS-13",
+        footprint="Package_SO:SOIC-8_3.9x4.9mm_P1.27mm",
+    )
+    item = _make_inventory_item(
+        ipn="Q_N-FET_10A_SOT-23_DMN4468",
+        category="Q",
+        value="DMN4468",
+        package="SO-8",
+        aliases="DMN4468LSS-13",
+    )
+
+    assert matcher._passes_primary_filters(component, item) is True
+
+
+def test_non_passive_aliases_provide_identity_signal() -> None:
+    matcher = SophisticatedInventoryMatcher(MatchingOptions())
+
+    component = _make_component(
+        reference="U9",
+        lib_id="Device:U",
+        value="TLV272CS-13",
+        footprint="Package_SO:SOIC-8_3.9x4.9mm_P1.27mm",
+    )
+    item = _make_inventory_item(
+        ipn="IC_LM358D_SOP-8",
+        category="IC",
+        value="LM358D",
+        package="SOP-8",
+        aliases="LM6132A TLV272CS-13",
+    )
 
     assert matcher._passes_primary_filters(component, item) is True
 
@@ -165,6 +215,64 @@ def test_non_passive_footprint_signal_recovers_free_form_value_mismatch() -> Non
     )
 
     assert matcher._passes_primary_filters(component, item) is True
+
+
+def test_socket_candidate_with_xu_ref_and_dip_structure_passes_non_passive_gate() -> (
+    None
+):
+    matcher = SophisticatedInventoryMatcher(MatchingOptions())
+
+    component = _make_component(
+        reference="XU1",
+        lib_id="SPCoast:Socket",
+        value="DIP14",
+        footprint="SPCoast:XS-DIP14",
+    )
+    item = _make_inventory_item(
+        ipn="CON_DIP-14",
+        category="CON",
+        value="DIP-14",
+        package="DIP-14",
+        item_type="Socket",
+        description="14P DIP IC Socket",
+        footprint_full="Package_DIP:DIP-14_W7.62mm_Socket",
+        pins="2x7",
+        pitch="2.54mm",
+        raw_data={
+            "Footprint": "Package_DIP:DIP-14_W7.62mm_Socket",
+            "Pins": "2x7",
+            "Pitch": "2.54mm",
+            "Type": "Socket",
+            "Description": "14P DIP IC Socket",
+        },
+    )
+
+    assert matcher._passes_primary_filters(component, item) is True
+
+
+def test_socket_category_compatibility_requires_socket_intent_on_component() -> None:
+    matcher = SophisticatedInventoryMatcher(MatchingOptions())
+
+    component = _make_component(
+        reference="U2",
+        lib_id="cpNode-ProMini-eagle-import:SparkFun_NE555P",
+        value="NE555D",
+        footprint="Package_SO:SOIC-8_3.9x4.9mm_P1.27mm",
+    )
+    item = _make_inventory_item(
+        ipn="CON_DIP-14",
+        category="CON",
+        value="DIP-14",
+        package="DIP-14",
+        item_type="Socket",
+        description="14P DIP IC Socket",
+        footprint_full="Package_DIP:DIP-14_W7.62mm_Socket",
+        pins="2x7",
+        pitch="2.54mm",
+        raw_data={"Footprint": "Package_DIP:DIP-14_W7.62mm_Socket", "Pins": "2x7"},
+    )
+
+    assert matcher._passes_primary_filters(component, item) is False
 
 
 def test_lcsc_validation_rejects_conflicting_candidate_when_component_has_lcsc() -> (

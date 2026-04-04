@@ -441,6 +441,13 @@ class InventoryReader:
                     else None
                 ),
                 name=(row.get("Name") or "").strip(),
+                aliases=first_non_empty_alias_value(row, ["Aliases", "Alias"]),
+                dnp=self._is_truthy_inventory_flag(
+                    first_non_empty_alias_value(
+                        row,
+                        ["DNP", "Do Not Populate", "DoNotPopulate"],
+                    )
+                ),
                 # KiCad harvest fidelity fields: populated when columns are present;
                 # absent columns leave fields as empty string (no compat shims).
                 footprint_full=row.get("footprint_full", ""),
@@ -528,7 +535,6 @@ class InventoryReader:
             seen.add(normalized.lower())
             deduped_keys.append(normalized)
         return first_non_empty_alias_value(row, deduped_keys)
-        return self._get_first_value(row, deduped_keys)
 
     def _get_first_value(self, row: Dict[str, str], keys: List[str]) -> str:
         """Get the first non-empty value from row matching any of the keys"""
@@ -545,3 +551,20 @@ class InventoryReader:
             )
         except (ValueError, AttributeError):
             return DEFAULT_PRIORITY
+
+    @staticmethod
+    def _is_truthy_inventory_flag(value: str) -> bool:
+        """Return True when a spreadsheet flag value should be interpreted as enabled."""
+        normalized = str(value or "").strip().lower()
+        if not normalized:
+            return False
+        return normalized in {
+            "1",
+            "true",
+            "t",
+            "yes",
+            "y",
+            "x",
+            "dnp",
+            "do not populate",
+        }

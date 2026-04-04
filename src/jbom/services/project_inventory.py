@@ -492,7 +492,6 @@ class ProjectInventoryGenerator:
             seen.add(normalized.lower())
             deduped_keys.append(normalized)
         return first_non_empty_alias_value(row, deduped_keys)
-        return ""
 
     def _resolve_category_for_typed_decode(
         self,
