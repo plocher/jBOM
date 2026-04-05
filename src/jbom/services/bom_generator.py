@@ -6,6 +6,10 @@ from dataclasses import dataclass, field
 from jbom.common.types import Component
 from jbom.common.component_filters import apply_component_filters
 from jbom.common.fields import normalize_field_name
+from jbom.common.reference_sort import (
+    natural_reference_sort_key,
+    natural_sort_references,
+)
 
 
 @dataclass
@@ -22,7 +26,7 @@ class BOMEntry:
     @property
     def references_string(self) -> str:
         """Comma-separated string of references for display."""
-        return ", ".join(BOMGenerator._natural_sort_references(self.references))
+        return ", ".join(natural_sort_references(self.references))
 
 
 @dataclass
@@ -78,7 +82,11 @@ class BOMGenerator:
         entries = self._aggregate_components(filtered_components)
 
         # Sort entries by first reference for consistent output
-        entries.sort(key=lambda e: e.references[0])
+        entries.sort(
+            key=lambda entry: natural_reference_sort_key(
+                entry.references[0] if entry.references else ""
+            )
+        )
 
         return BOMData(
             project_name=project_name,
@@ -128,7 +136,9 @@ class BOMGenerator:
 
         # Collect unique references (multi-unit components like dual op-amps
         # produce multiple symbol instances with the same reference)
-        references = list(dict.fromkeys(comp.reference for comp in components))
+        references = natural_sort_references(
+            dict.fromkeys(comp.reference for comp in components)
+        )
 
         # Merge properties from all components, normalizing keys to snake_case
         # so that _get_field_value() lookups (e.g. 'description', 'package') always match.
@@ -152,22 +162,3 @@ class BOMGenerator:
             quantity=len(references),
             attributes=merged_attributes,
         )
-
-    @staticmethod
-    def _natural_sort_references(references: List[str]) -> List[str]:
-        """Sort component references in natural order (R1, R2, R10 not R1, R10, R2)."""
-        import re
-
-        def natural_key(ref: str):
-            # Split reference into prefix and numeric parts
-            # E.g., "R10" -> [("R", 0), ("", 10)]
-            parts = re.split(r"(\d+)", ref)
-            result = []
-            for part in parts:
-                if part.isdigit():
-                    result.append(int(part))
-                else:
-                    result.append(part)
-            return result
-
-        return sorted(references, key=natural_key)

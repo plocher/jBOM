@@ -5,6 +5,10 @@ from dataclasses import dataclass, field
 
 from jbom.common.types import Component
 from jbom.common.component_filters import apply_component_filters
+from jbom.common.reference_sort import (
+    natural_reference_sort_key,
+    natural_sort_references,
+)
 
 
 @dataclass
@@ -76,7 +80,11 @@ class PartsListGenerator:
         entries = self._create_grouped_entries(filtered_components)
 
         # Sort groups by first reference in natural order
-        entries.sort(key=lambda e: self._natural_sort_key(e.refs[0] if e.refs else ""))
+        entries.sort(
+            key=lambda entry: natural_reference_sort_key(
+                entry.refs[0] if entry.refs else ""
+            )
+        )
 
         return PartsListData(
             project_name=project_name,
@@ -111,10 +119,7 @@ class PartsListGenerator:
         entries: List[PartsListEntry] = []
         for group in grouped_components.values():
             representative = group[0]
-            refs = sorted(
-                [component.reference for component in group],
-                key=self._natural_sort_key,
-            )
+            refs = natural_sort_references([component.reference for component in group])
             entry = PartsListEntry(
                 refs=refs,
                 value=representative.value,
@@ -167,18 +172,3 @@ class PartsListGenerator:
             if value:
                 return value
         return fallback
-
-    def _natural_sort_key(self, reference: str) -> List[Any]:
-        """Generate natural sort key for references (R1, R2, R10 not R1, R10, R2)."""
-        import re
-
-        # Split reference into prefix and numeric parts
-        # E.g., "R10" -> ["R", "10"] -> ["R", 10]
-        parts = re.split(r"(\d+)", reference)
-        result = []
-        for part in parts:
-            if part.isdigit():
-                result.append(int(part))
-            else:
-                result.append(part)
-        return result

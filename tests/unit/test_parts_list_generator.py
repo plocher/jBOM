@@ -113,3 +113,17 @@ def test_refs_are_sorted_naturally_within_aggregated_row() -> None:
 
     assert len(data.entries) == 1
     assert data.entries[0].refs == ["R1", "R2", "R10"]
+
+
+def test_groups_are_sorted_by_natural_first_reference() -> None:
+    components = [
+        _component("J10", "Connector-A", "Connector_A"),
+        _component("J1", "Connector-B", "Connector_B"),
+        _component("GND0", "Connector-C", "Connector_C"),
+    ]
+
+    data = PartsListGenerator().generate_parts_list_data(
+        components, project_name="Test"
+    )
+
+    assert [entry.refs[0] for entry in data.entries] == ["GND0", "J1", "J10"]

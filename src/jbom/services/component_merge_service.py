@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Literal
+from jbom.common.reference_sort import natural_reference_sort_key
 
 from jbom.services.project_component_collector import (
     ProjectComponentGraph,
@@ -152,7 +153,7 @@ def _resolve_grouped_annotation_field_value(
     for summary, references in sorted_groups:
         ordered_references = sorted(
             {str(reference or "").strip() for reference in references if reference},
-            key=_natural_reference_sort_key,
+            key=natural_reference_sort_key,
         )
         if not ordered_references:
             continue
@@ -214,26 +215,11 @@ def _group_reference_sort_key(references: list[str]) -> list[object]:
         return []
     ordered_references = sorted(
         {str(reference or "").strip() for reference in references if reference},
-        key=_natural_reference_sort_key,
+        key=natural_reference_sort_key,
     )
     if not ordered_references:
         return []
-    return _natural_reference_sort_key(ordered_references[0])
-
-
-def _natural_reference_sort_key(reference: str) -> list[object]:
-    """Generate natural sort keys for reference designators."""
-
-    import re
-
-    parts = re.split(r"(\d+)", str(reference or ""))
-    key: list[object] = []
-    for part in parts:
-        if part.isdigit():
-            key.append(int(part))
-        else:
-            key.append(part)
-    return key
+    return natural_reference_sort_key(ordered_references[0])
 
 
 class ComponentMergeService:
