@@ -76,3 +76,23 @@ def test_generate_pos_data_sorts_references_in_natural_order() -> None:
     )
 
     assert [row["reference"] for row in pos_data] == ["R1", "R2", "R10"]
+
+
+def test_generate_pos_data_sorts_by_prefix_and_numeric_suffix() -> None:
+    """POS output should sort by prefix first, then by natural numeric suffix."""
+
+    board = BoardModel(
+        path=Path("project.kicad_pcb"),
+        footprints=[
+            _pcb_component("J10", attributes={"mount_type": "smd"}),
+            _pcb_component("IO1", attributes={"mount_type": "smd"}),
+            _pcb_component("GND0", attributes={"mount_type": "smd"}),
+            _pcb_component("J1", attributes={"mount_type": "smd"}),
+        ],
+    )
+
+    pos_data = POSGenerator(options=PlacementOptions(smd_only=False)).generate_pos_data(
+        board
+    )
+
+    assert [row["reference"] for row in pos_data] == ["GND0", "IO1", "J1", "J10"]

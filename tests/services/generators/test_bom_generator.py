@@ -141,6 +141,65 @@ class TestBOMGenerator:
         assert entries[1].references == ["R1"]
         assert entries[1].value == "10K"
 
+    def test_generate_bom_data_sorts_entries_by_natural_reference(self):
+        """Test aggregated BOM rows are sorted by natural first reference."""
+        generator = BOMGenerator()
+        components = [
+            Component(
+                reference="J10",
+                lib_id="Connector_Generic:Conn_01x02",
+                value="ConnA",
+                footprint="Connector:Test",
+                uuid="uuid-j10",
+                properties={},
+                in_bom=True,
+                exclude_from_sim=False,
+                dnp=False,
+            ),
+            Component(
+                reference="J1",
+                lib_id="Connector_Generic:Conn_01x02",
+                value="ConnB",
+                footprint="Connector:Test",
+                uuid="uuid-j1",
+                properties={},
+                in_bom=True,
+                exclude_from_sim=False,
+                dnp=False,
+            ),
+            Component(
+                reference="LEDCOM0",
+                lib_id="Connector_Generic:Conn_01x02",
+                value="ConnC",
+                footprint="Connector:Grouped",
+                uuid="uuid-ledcom0",
+                properties={},
+                in_bom=True,
+                exclude_from_sim=False,
+                dnp=False,
+            ),
+            Component(
+                reference="GND0",
+                lib_id="Connector_Generic:Conn_01x02",
+                value="ConnC",
+                footprint="Connector:Grouped",
+                uuid="uuid-gnd0",
+                properties={},
+                in_bom=True,
+                exclude_from_sim=False,
+                dnp=False,
+            ),
+        ]
+
+        bom_data = generator.generate_bom_data(components)
+
+        assert [entry.references[0] for entry in bom_data.entries] == [
+            "GND0",
+            "J1",
+            "J10",
+        ]
+        assert bom_data.entries[0].references == ["GND0", "LEDCOM0"]
+
     def test_apply_filters_exclude_dnp(self):
         """Test filtering excludes DNP components."""
         generator = BOMGenerator()

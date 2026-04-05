@@ -2,12 +2,12 @@
 
 This service generates component placement files from PCB data.
 """
-import re
 from typing import List
 
 from jbom.common.fields import normalize_field_name
 from jbom.common.pcb_types import BoardModel, PcbComponent
 from jbom.common.options import PlacementOptions
+from jbom.common.reference_sort import natural_reference_sort_key
 
 
 class POSGenerator:
@@ -70,7 +70,9 @@ class POSGenerator:
 
                 pos_entries.append(entry)
         pos_entries.sort(
-            key=lambda entry: self._natural_sort_key(str(entry.get("reference", "")))
+            key=lambda entry: natural_reference_sort_key(
+                str(entry.get("reference", ""))
+            )
         )
 
         return pos_entries
@@ -113,19 +115,6 @@ class POSGenerator:
         if not normalized:
             return False
         return normalized in {"1", "true", "t", "yes", "y", "x"}
-
-    @staticmethod
-    def _natural_sort_key(reference: str) -> list[object]:
-        """Return natural sort key for component references (R1, R2, R10)."""
-
-        parts = re.split(r"(\d+)", reference)
-        result: list[object] = []
-        for part in parts:
-            if part.isdigit():
-                result.append(int(part))
-            else:
-                result.append(part)
-        return result
 
     @staticmethod
     def _normalize_component_attributes(attributes: dict[str, str]) -> dict[str, str]:
