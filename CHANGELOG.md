@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v6.50.2 (2026-04-05)
+
+### Bug Fixes
+
+* fix: unify natural reference sorting across outputs
+
+Consolidate duplicate natural reference sorting logic into a shared utility and reuse it in BOM, POS, PARTS, and grouped merge annotation ordering.
+
+Add regression tests for prefix+numeric ordering (e.g. J1/J10) and grouped-prefix ordering (e.g. GND0/LEDCOM0), plus utility unit tests.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`6d0cfab`](https://github.com/plocher/jBOM/commit/6d0cfab36875bf6b2cadc72ae4793eeb67c32ea4))
+
+
 ## v6.50.1 (2026-04-05)
 
 ### Bug Fixes
