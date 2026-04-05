@@ -1,9 +1,14 @@
 """Unit tests for POS CLI projection and field resolution helpers."""
+import io
+from contextlib import redirect_stdout
+from unittest.mock import patch
 
 from jbom.cli.pos import (
     _apply_pos_dnp_filter,
+    _build_pos_console_columns,
     _enrich_pos_with_merge_namespaces,
     _get_pos_field_value,
+    _print_console_table,
     _resolve_pos_output_projection,
 )
 from jbom.services.component_merge_service import (
@@ -146,3 +151,52 @@ def test_pos_dnp_filter_respects_include_dnp_flag() -> None:
     rows = [{"reference": "U1", "s:dnp": "Yes"}]
     filtered = _apply_pos_dnp_filter(rows, component_filters={"exclude_dnp": False})
     assert [row["reference"] for row in filtered] == ["U1"]
+
+
+def test_build_pos_console_columns_uses_data_aware_widths() -> None:
+    rows = [
+        {
+            "Designator": "J1",
+            "Package": "Connector_Generic:Conn_01x03",
+        }
+    ]
+    columns = _build_pos_console_columns(
+        selected_fields=["reference", "package"],
+        headers=["Designator", "Package"],
+        rows=rows,
+    )
+
+    package_column = next(column for column in columns if column.key == "Package")
+    assert package_column.preferred_width == len("Connector_Generic:Conn_01x03")
+
+
+def test_pos_console_table_respects_terminal_width_shrinking() -> None:
+    pos_data = [
+        {
+            "reference": "J1",
+            "x_mm": 123.4567,
+            "y_mm": 89.0123,
+            "rotation": 90.0,
+            "side": "TOP",
+            "package": "Connector_Generic:Conn_01x03",
+        }
+    ]
+    selected_fields = ["reference", "x", "y", "side", "rotation", "package"]
+    headers = ["Designator", "Mid X", "Mid Y", "Layer", "Rotation", "Package"]
+
+    output = io.StringIO()
+    with patch("jbom.cli.pos.get_terminal_width", return_value=70):
+        with redirect_stdout(output):
+            _print_console_table(
+                pos_data,
+                selected_fields,
+                headers,
+                fabricator_id="generic",
+                fabricator_config=None,
+            )
+
+    lines_with_columns = [
+        line for line in output.getvalue().splitlines() if " | " in line
+    ]
+    assert lines_with_columns
+    assert all(len(line) <= 70 for line in lines_with_columns)

@@ -49,6 +49,7 @@ from jbom.services.fabricator_projection_service import FabricatorProjectionServ
 
 _NUMERIC_POS_FIELDS: frozenset[str] = frozenset({"x", "y", "rotation"})
 _POS_SOURCE_PRIORITY = "pis"
+_MAX_POS_CONSOLE_COLUMN_WIDTH = 50
 _POS_COMPUTED_FIELDS: tuple[str, ...] = (
     "reference",
     "x",
@@ -671,19 +672,43 @@ def _print_console_table(
         }
         for entry in pos_data
     ]
-    columns = [
-        Column(
-            header=h,
-            key=h,
-            preferred_width=max(10, len(h)),
-            wrap=False,
-            align="right" if f in _NUMERIC_POS_FIELDS else "left",
-        )
-        for f, h in zip(selected_fields, headers)
-    ]
+    columns = _build_pos_console_columns(
+        selected_fields=selected_fields,
+        headers=headers,
+        rows=rows,
+    )
     print_table(rows, columns, terminal_width=get_terminal_width())
 
     print(f"\nTotal: {len(pos_data)} components")
+
+
+def _build_pos_console_columns(
+    *,
+    selected_fields: list[str],
+    headers: list[str],
+    rows: list[dict[str, str]],
+) -> list[Column]:
+    """Build POS console columns with data-aware preferred widths."""
+
+    columns: list[Column] = []
+    for field_name, header in zip(selected_fields, headers):
+        max_value_width = max(
+            (len(str(row.get(header, ""))) for row in rows), default=0
+        )
+        preferred_width = max(
+            len(header),
+            min(max_value_width, _MAX_POS_CONSOLE_COLUMN_WIDTH),
+        )
+        columns.append(
+            Column(
+                header=header,
+                key=header,
+                preferred_width=preferred_width,
+                wrap=False,
+                align="right" if field_name in _NUMERIC_POS_FIELDS else "left",
+            )
+        )
+    return columns
 
 
 def _print_csv(

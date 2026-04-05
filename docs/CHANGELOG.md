@@ -24,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - `jbom pos` now honors KiCad PCB `exclude_from_pos_files` markers (issue #210), so footprints explicitly excluded from placement files are no longer emitted in POS/CPL output by default.
 - PCB footprint parsing now preserves all `(attr ...)` tokens plus `layer` and `locked` metadata for downstream consumers, instead of only recording a single mount attribute.
 - POS output rows are now sorted in natural reference order (`R1`, `R2`, `R10`) for consistency with BOM/PARTS output ordering.
+- POS console tables now use data-aware preferred column widths, so wide terminals avoid unnecessary truncation while narrow terminals still shrink/truncate to fit.
 - `jbom audit PROJECT` now emits review-first CURRENT/SUGGESTED couplet rows with
   richer component context (`Value`, `Footprint`, `Package`, `Description`), concise
   per-reference missing-attribute notes, and safe default `Action=SKIP` guidance.
