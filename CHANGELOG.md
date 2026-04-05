@@ -1,6 +1,23 @@
 # CHANGELOG
 
 
+## v6.50.1 (2026-04-05)
+
+### Bug Fixes
+
+* fix(pos): pad final console column
+
+Reserve one extra character for the final POS console table column so it keeps right-side visual padding consistent with the rest of the row layout.\n\nCo-Authored-By: Oz <oz-agent@warp.dev> ([`3b60829`](https://github.com/plocher/jBOM/commit/3b6082973b1792247aaf2f50b8279d740572bb8f))
+
+* fix(pos): make console columns terminal-aware
+
+Use data-aware preferred POS console column widths so wide terminals avoid unnecessary truncation while narrow terminals still shrink and truncate safely. Adds regression coverage for column sizing behavior.\n\nCo-Authored-By: Oz <oz-agent@warp.dev> ([`d4a330e`](https://github.com/plocher/jBOM/commit/d4a330ec5b068b0d6e9e0e73f7dab242760944fe))
+
+* fix(pos): honor position-file exclusions and natural sort
+
+Parse and preserve full PCB attr metadata (including exclude/locked flags), exclude footprints marked for POS omission, and naturally sort POS references for deterministic output.\n\nAdds unit and Behave regression coverage for issue #210 behavior.\n\nCo-Authored-By: Oz <oz-agent@warp.dev> ([`68ffc41`](https://github.com/plocher/jBOM/commit/68ffc415cefb2bb3b74019abe04be77a8ace8869))
+
+
 ## v6.50.0 (2026-04-04)
 
 ### Bug Fixes
