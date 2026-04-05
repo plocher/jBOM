@@ -691,7 +691,8 @@ def _build_pos_console_columns(
     """Build POS console columns with data-aware preferred widths."""
 
     columns: list[Column] = []
-    for field_name, header in zip(selected_fields, headers):
+    last_column_index = len(headers) - 1
+    for column_index, (field_name, header) in enumerate(zip(selected_fields, headers)):
         max_value_width = max(
             (len(str(row.get(header, ""))) for row in rows), default=0
         )
@@ -699,6 +700,8 @@ def _build_pos_console_columns(
             len(header),
             min(max_value_width, _MAX_POS_CONSOLE_COLUMN_WIDTH),
         )
+        if column_index == last_column_index:
+            preferred_width += 1
         columns.append(
             Column(
                 header=header,

@@ -167,6 +167,23 @@ def test_build_pos_console_columns_uses_data_aware_widths() -> None:
     )
 
     package_column = next(column for column in columns if column.key == "Package")
+    assert package_column.preferred_width == len("Connector_Generic:Conn_01x03") + 1
+
+
+def test_build_pos_console_columns_does_not_pad_non_final_columns() -> None:
+    rows = [
+        {
+            "Designator": "J1",
+            "Package": "Connector_Generic:Conn_01x03",
+        }
+    ]
+    columns = _build_pos_console_columns(
+        selected_fields=["package", "reference"],
+        headers=["Package", "Designator"],
+        rows=rows,
+    )
+
+    package_column = next(column for column in columns if column.key == "Package")
     assert package_column.preferred_width == len("Connector_Generic:Conn_01x03")
 
 
@@ -200,3 +217,32 @@ def test_pos_console_table_respects_terminal_width_shrinking() -> None:
     ]
     assert lines_with_columns
     assert all(len(line) <= 70 for line in lines_with_columns)
+
+
+def test_pos_console_table_adds_trailing_padding_to_last_column() -> None:
+    pos_data = [
+        {
+            "reference": "J1",
+            "package": "Connector_Generic:Conn_01x03",
+        }
+    ]
+    selected_fields = ["reference", "package"]
+    headers = ["Designator", "Package"]
+
+    output = io.StringIO()
+    with patch("jbom.cli.pos.get_terminal_width", return_value=200):
+        with redirect_stdout(output):
+            _print_console_table(
+                pos_data,
+                selected_fields,
+                headers,
+                fabricator_id="generic",
+                fabricator_config=None,
+            )
+
+    data_line = next(
+        line
+        for line in output.getvalue().splitlines()
+        if "Connector_Generic:Conn_01x03" in line
+    )
+    assert data_line.endswith(" ")
