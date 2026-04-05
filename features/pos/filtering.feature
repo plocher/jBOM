@@ -55,6 +55,22 @@ Feature: POS Filtering
     And the output should contain "C1"
     And the output should not contain "R2"
     And the output should not contain "R3"
+  Scenario: Preserve PCB attr metadata and respect exclude_from_pos_files
+    Given a PCB that contains:
+      | Reference | X  | Y  | Rotation | Side | Footprint   | Attrs                            | Locked |
+      | R10       | 30 | 10 | 0        | TOP  | R_0805_2012 | smd exclude_from_bom             | Yes    |
+      | R2        | 20 | 10 | 0        | TOP  | R_0805_2012 | smd                              | No     |
+      | R1        | 10 | 10 | 0        | TOP  | R_0805_2012 | smd exclude_from_pos_files       | No     |
+      | V1        | 40 | 10 | 0        | TOP  | R_0805_2012 | virtual                          | No     |
+    When I run jbom command "pos -f reference,mount_type,exclude_from_bom,locked -o -"
+    Then the command should succeed
+    And the line count is 3
+    And R2 appears before R10 in the output
+    And the CSV output has rows where:
+      | Reference | Mount Type | Exclude From BOM | Locked |
+      | R2        | smd        |                  |        |
+      | R10       | smd        | yes              | yes    |
+      | V1        | virtual    |                  |        |
 
   # TODO: Should use --generic flag when Issue #26 (POS field selection) is implemented
 

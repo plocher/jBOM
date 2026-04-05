@@ -174,6 +174,7 @@ class DefaultKiCadReaderService(KiCadReaderService):
             ):
                 layer_name = child[1]
                 side = "TOP" if layer_name.startswith("F.") else "BOTTOM"
+                attributes["layer"] = layer_name
 
             elif head == Symbol("at") and len(child) >= 3:
                 # (at x y [rot])
@@ -216,10 +217,34 @@ class DefaultKiCadReaderService(KiCadReaderService):
                     pass
 
             elif head == Symbol("attr"):
-                # (attr smd) or (attr through_hole)
-                if len(child) >= 2:
-                    attr_type = str(child[1])
-                    attributes["mount_type"] = attr_type
+                # (attr smd), (attr through_hole), and optional flags like
+                # exclude_from_pos_files / exclude_from_bom.
+                attr_tokens: list[str] = []
+                for raw_token in child[1:]:
+                    token = str(raw_token or "").strip()
+                    if not token:
+                        continue
+                    attr_tokens.append(token)
+                    attributes[token] = "yes"
+
+                mount_type = ""
+                for token in attr_tokens:
+                    if token in {
+                        "smd",
+                        "through_hole",
+                        "through-hole",
+                        "tht",
+                        "virtual",
+                    }:
+                        mount_type = token
+                        break
+                if not mount_type and attr_tokens:
+                    mount_type = attr_tokens[0]
+                if mount_type:
+                    attributes["mount_type"] = mount_type
+
+            elif head == Symbol("locked"):
+                attributes["locked"] = "yes"
 
         if not ref:
             return None

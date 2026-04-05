@@ -2,6 +2,7 @@
 
 This service generates component placement files from PCB data.
 """
+import re
 from typing import List
 
 from jbom.common.fields import normalize_field_name
@@ -68,6 +69,9 @@ class POSGenerator:
                     entry.setdefault(attribute_key, attribute_value)
 
                 pos_entries.append(entry)
+        pos_entries.sort(
+            key=lambda entry: self._natural_sort_key(str(entry.get("reference", "")))
+        )
 
         return pos_entries
 
@@ -83,8 +87,45 @@ class POSGenerator:
         if self.options.layer_filter:
             if component.side.upper() != self.options.layer_filter:
                 return False
+        if self._is_excluded_from_position_files(component):
+            return False
 
         return True
+
+    def _is_excluded_from_position_files(self, component: PcbComponent) -> bool:
+        """Return True if PCB metadata marks the component as position-file excluded."""
+
+        normalized_attributes = self._normalize_component_attributes(
+            component.attributes
+        )
+        return any(
+            self._is_truthy_marker(normalized_attributes.get(flag_name))
+            for flag_name in ("exclude_from_pos_files", "exclude_from_position_files")
+        )
+
+    @staticmethod
+    def _is_truthy_marker(value: object) -> bool:
+        """Return True when a marker value should be interpreted as enabled."""
+
+        if isinstance(value, bool):
+            return value
+        normalized = str(value or "").strip().lower()
+        if not normalized:
+            return False
+        return normalized in {"1", "true", "t", "yes", "y", "x"}
+
+    @staticmethod
+    def _natural_sort_key(reference: str) -> list[object]:
+        """Return natural sort key for component references (R1, R2, R10)."""
+
+        parts = re.split(r"(\d+)", reference)
+        result: list[object] = []
+        for part in parts:
+            if part.isdigit():
+                result.append(int(part))
+            else:
+                result.append(part)
+        return result
 
     @staticmethod
     def _normalize_component_attributes(attributes: dict[str, str]) -> dict[str, str]:
