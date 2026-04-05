@@ -343,6 +343,8 @@ def given_simple_pcb(context) -> None:
                 "Value": r.get("value", r.get("Value", "")),
                 "Package": r.get("package", r.get("Package", "")),
                 "SMD": r.get("smd", r.get("SMD", "")),
+                "Attrs": r.get("attrs", r.get("Attrs", "")),
+                "Locked": r.get("locked", r.get("Locked", "")),
             }
         )
     # Write PCB file in correct location
@@ -360,35 +362,46 @@ def given_simple_pcb(context) -> None:
         # Map TOP/BOTTOM to KiCad layer names
         layer = "F.Cu" if side == "TOP" else "B.Cu"
 
-        # Use explicit SMD data from table if provided, otherwise apply useful heuristics
-        smd_value = comp.get("SMD", "").upper()
-        if smd_value in ["SMD", "TRUE", "1"]:
-            attr = "(attr smd)"
-        elif smd_value in ["PTH", "THROUGH_HOLE", "FALSE", "0"]:
-            attr = "(attr through_hole)"
-        else:
-            # Apply heuristics for real-world footprint patterns (useful for actual usage)
-            smd_patterns = [
-                "_0603_",
-                "_0805_",
-                "_1206_",
-                "_SOT",
-                "_SOIC",
-                "_QFN",
-                "_BGA",
-                "_LGA",
+        attrs_value = str(comp.get("Attrs", "") or "").strip()
+        if attrs_value:
+            attr_tokens = [
+                token
+                for token in attrs_value.replace(",", " ").split()
+                if token.strip()
             ]
-            through_hole_patterns = ["_Axial_", "_Radial_", "_DIP", "_TO-"]
+            attr = f"(attr {' '.join(attr_tokens)})" if attr_tokens else ""
+        else:
+            # Use explicit SMD data from table if provided, otherwise apply useful heuristics
+            smd_value = comp.get("SMD", "").upper()
+            if smd_value in ["SMD", "TRUE", "1"]:
+                attr = "(attr smd)"
+            elif smd_value in ["PTH", "THROUGH_HOLE", "FALSE", "0"]:
+                attr = "(attr through_hole)"
+            else:
+                # Apply heuristics for real-world footprint patterns (useful for actual usage)
+                smd_patterns = [
+                    "_0603_",
+                    "_0805_",
+                    "_1206_",
+                    "_SOT",
+                    "_SOIC",
+                    "_QFN",
+                    "_BGA",
+                    "_LGA",
+                ]
+                through_hole_patterns = ["_Axial_", "_Radial_", "_DIP", "_TO-"]
 
-            attr = "(attr smd)"  # Default assumption
-            for pattern in smd_patterns:
-                if pattern in footprint:
-                    attr = "(attr smd)"
-                    break
-            for pattern in through_hole_patterns:
-                if pattern in footprint:
-                    attr = "(attr through_hole)"
-                    break
+                attr = "(attr smd)"  # Default assumption
+                for pattern in smd_patterns:
+                    if pattern in footprint:
+                        attr = "(attr smd)"
+                        break
+                for pattern in through_hole_patterns:
+                    if pattern in footprint:
+                        attr = "(attr through_hole)"
+                        break
+        locked_value = str(comp.get("Locked", "") or "").strip().lower()
+        is_locked = locked_value in {"yes", "true", "1", "locked"}
 
         # Build properties list
         properties = [f'(property "Reference" "{ref}")']
@@ -399,10 +412,16 @@ def given_simple_pcb(context) -> None:
 
         properties_str = "\n    ".join(properties)
 
-        # Always include attr since we always determine one (explicit or heuristic)
-        footprints.append(
-            f'  (footprint "{footprint}" (at {x} {y} {rotation}) (layer "{layer}")\n    {properties_str}\n    {attr}\n  )'
-        )
+        footprint_lines = [
+            f'  (footprint "{footprint}" (at {x} {y} {rotation}) (layer "{layer}")',
+            f"    {properties_str}",
+        ]
+        if attr:
+            footprint_lines.append(f"    {attr}")
+        if is_locked:
+            footprint_lines.append("    (locked)")
+        footprint_lines.append("  )")
+        footprints.append("\n".join(footprint_lines))
 
     pcb_content = f"""(kicad_pcb (version 20211014) (generator pcbnew)
   (paper "A4")
