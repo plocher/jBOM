@@ -110,7 +110,9 @@ This architecture documentation is organized as the authoritative source of desi
 - **[Design Patterns](design-patterns.md)** - Established patterns used throughout jBOM
 - **[Integration Patterns](integration-patterns.md)** - Service composition and layer interaction
 - **[Component Attribute Enrichment](component-attribute-enrichment.md)** - 3-camp attribute model, lifecycle phases, domain defaults, and write-back rules
+- **[EagleLib2KiCad Adapter Requirements](eaglelib2kicad-adapter-requirements.md)** - Service-surface-first integration requirements for Eagle/KiCad library contexts
 - **[ADR 0003: Search Heuristic Signal Framework](adr/0003-search-heuristic-signal-framework.md)** - typed relevance signal contract, diagnostics explainability, and defaults-governed package token baseline
+- **[ADR 0004: EagleLib2KiCad Integration Boundary](adr/0004-eaglelib2kicad-adapter-boundary.md)** - service-surface-first contract policy and no-parallel-adapter-layer decision
 
 ## Architectural Evolution
 
