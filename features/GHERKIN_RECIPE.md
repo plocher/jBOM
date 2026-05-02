@@ -206,6 +206,13 @@ def step_run_jbom_command(context, command):
 9. **Eliminate Magic Strings**: Replace ambiguous "basic content" with explicit table data
 10. **Table-Based Field Validation**: Replace repetitive individual field assertions with reusable table patterns
 
+## Cross-Repo Contract Convention
+
+`features/steps/common*` files are contract modules intended for reuse and alignment across repositories that mirror jBOM’s Behave harness structure.
+
+- Canonical shared modules currently include `common_steps.py`, `common_diagnostic_utils.py`, and `common_workspace.py`.
+- Any behavioral change in `common*` modules should be mirrored in dependent repos to avoid silent harness drift.
+
 ## Legacy Step Cleanup Methodology
 
 ### Phase-Based Approach

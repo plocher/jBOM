@@ -8,7 +8,7 @@ from __future__ import annotations
 import csv
 
 from behave import then
-from diagnostic_utils import assert_with_diagnostics
+from common_diagnostic_utils import assert_with_diagnostics
 
 try:
     from jbom.config.fabricators import (

@@ -4,7 +4,7 @@ import csv
 import subprocess
 from pathlib import Path
 from behave import when, then, given
-from diagnostic_utils import assert_with_diagnostics, csv_contains_fields
+from common_diagnostic_utils import assert_with_diagnostics, csv_contains_fields
 
 # Module-level alias for backward compatibility within this file
 _csv_contains_fields = csv_contains_fields
@@ -267,7 +267,7 @@ def step_cd_project_directory(context, name):
     Use 'Given a project "name" in directory "path"' instead.
     """
     from pathlib import Path
-    from ._workspace import ensure_project
+    from common_workspace import ensure_project
 
     # Create project directory but DO NOT change working directory
     base = Path(str(context.sandbox_root))

@@ -19,7 +19,11 @@ def ensure_project(base: Path, name: str) -> Path:
     Creates name.kicad_pro, name.kicad_sch, name.kicad_pcb if missing.
     Uses existing BOM/POS render helpers to avoid duplicating KiCad syntax.
     """
-    from . import bom_steps, pos_steps  # lazy import of helpers
+    try:
+        from . import bom_steps, pos_steps  # lazy import of helpers
+    except ImportError:
+        import bom_steps  # type: ignore
+        import pos_steps  # type: ignore
 
     proj_dir = ensure_dir(base, name)
 

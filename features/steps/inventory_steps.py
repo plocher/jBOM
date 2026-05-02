@@ -206,7 +206,7 @@ def given_inventory_file_with_fields(context, field_list: str) -> None:
 
 @then('the file "{filename}" contains "{text}"')
 def then_file_contains_text(context, filename: str, text: str) -> None:
-    from diagnostic_utils import csv_contains_fields
+    from common_diagnostic_utils import csv_contains_fields
 
     p = context.project_root / filename
     content = p.read_text(encoding="utf-8")
