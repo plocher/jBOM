@@ -5,7 +5,7 @@ diagnostic information for debugging.
 """
 
 from behave import when, then
-from features.steps.diagnostic_utils import assert_with_diagnostics
+from common_diagnostic_utils import assert_with_diagnostics
 
 
 @when("a test fails looking for missing content")
@@ -19,7 +19,7 @@ def step_test_fails_missing_content(context):
     4. Stores the diagnostic output for validation
     """
     # First run a command (reuse existing step)
-    from features.steps.common_steps import step_run_command
+    from common_steps import step_run_command
 
     step_run_command(context, "jbom --version")
 
@@ -52,7 +52,7 @@ def step_test_fails_invalid_command(context):
     3. Captures the diagnostic output that would be provided to the developer
     """
     # First run an invalid command (reuse existing step)
-    from features.steps.common_steps import step_run_command
+    from common_steps import step_run_command
 
     step_run_command(context, "jbom invalid-command")
 

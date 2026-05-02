@@ -306,6 +306,19 @@ behave --dry-run
 
 See [`steps/common_steps.py`](steps/common_steps.py) for complete implementation.
 
+## Cross-Repo Behave Contract: `common*` Modules
+
+The following `features/steps/common*` modules are treated as cross-repo test-harness contracts:
+- `steps/common_steps.py`
+- `steps/common_diagnostic_utils.py`
+- `steps/common_workspace.py`
+
+When changing behavior, signatures, or semantics in these files:
+1. Keep cross-module contracts explicit and stable.
+2. Coordinate matching updates in dependent repositories (for example, EagleLib2KiCad) that mirror this harness pattern.
+
+Domain-specific step files may evolve independently, but shared conventions and helper behavior belong in `common*` modules.
+
 ## 🎯 Test Categories
 
 ### **Core Functionality** (Ultra-Simplified Pattern)
