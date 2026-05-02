@@ -1,6 +1,15 @@
 # CHANGELOG
 
 
+## v6.50.3 (2026-05-02)
+
+### Refactoring
+
+* refactor(test): standardize Behave common* contract modules
+
+Refs #216\n\n- Promote shared helper contracts to common_diagnostic_utils/common_workspace\n- Remove legacy shim modules and update step imports\n- Document common* cross-repo contract convention in features docs\n\nCo-Authored-By: Oz <oz-agent@warp.dev> ([`796f53d`](https://github.com/plocher/jBOM/commit/796f53d5b9f8ce011f5e1c7d053cdd07d1cca79a))
+
+
 ## v6.50.2 (2026-04-05)
 
 ### Bug Fixes
