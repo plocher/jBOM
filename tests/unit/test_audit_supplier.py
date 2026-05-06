@@ -69,7 +69,7 @@ def _make_inventory_item(
         voltage="",
         amperage="",
         wattage="",
-        lcsc="",
+        spn="",
         manufacturer="",
         mfgpn=mfgpn,
         datasheet="",

@@ -1,4 +1,4 @@
-"""Data classes for jBOM components, inventory, and BOM entries."""
+"""Data classes for jBOM components and inventory items."""
 from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Dict, Optional
@@ -41,15 +41,16 @@ class InventoryItem:
     voltage: str
     amperage: str
     wattage: str
-    lcsc: str
-    manufacturer: str
-    mfgpn: str
-    datasheet: str
+    supplier: str = (
+        ""  # Supplier name matching the Supplier CSV column (e.g. "LCSC", "Mouser")
+    )
+    spn: str = ""  # Supplier Part Number from the SPN CSV column
+    manufacturer: str = ""
+    mfgpn: str = ""
+    datasheet: str = ""
     row_type: str = "ITEM"  # COMPONENT or ITEM
     component_id: str = ""  # Requirement identity for COMPONENT rows
     package: str = ""
-    distributor: str = ""
-    distributor_part_number: str = ""
     uuid: str = ""  # KiCad UUID for back-annotation
     fabricator: str = ""  # Specific fabricator for this item (e.g. "JLC", "Seeed")
     priority: int = (
@@ -74,34 +75,8 @@ class InventoryItem:
     raw_data: Dict[str, str] = field(default_factory=dict)
 
 
-@dataclass
-class BOMEntry:
-    """Represents a bill of materials entry"""
-
-    reference: str
-    quantity: int
-    value: str
-    footprint: str
-    lcsc: str
-    manufacturer: str
-    mfgpn: str
-    description: str
-    datasheet: str
-    smd: str = ""
-    distributor: str = ""
-    distributor_part_number: str = ""
-    match_quality: str = ""
-    notes: str = ""
-    # Fabricator specific fields
-    fabricator: str = ""
-    fabricator_part_number: str = ""
-    # Debug fields (emitted when --verbose)
-    priority: int = 0
-
-
 __all__ = [
     "DEFAULT_PRIORITY",
     "Component",
     "InventoryItem",
-    "BOMEntry",
 ]

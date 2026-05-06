@@ -798,7 +798,7 @@ def _resolve_supplier_identifier_label(
         supplier = None
     if supplier is None:
         return "Supplier part number"
-    display_name = str(supplier.inventory_column or "").strip()
+    display_name = str(supplier.supplier_label or "").strip()
     if not display_name:
         return "Supplier part number"
     return f"{display_name} part number"
@@ -1032,8 +1032,9 @@ def _resolve_supplier_identifier_fields(supplier_id: str) -> list[str]:
         supplier = None
     if supplier is None:
         return []
-    fields: list[str] = [supplier.inventory_column]
-    fields.extend(supplier.inventory_column_synonyms)
+    # supplier_label is the value that appears in the Supplier CSV column,
+    # which is also the schematic property name used for this supplier's PN.
+    fields: list[str] = [supplier.supplier_label]
     seen: set[str] = set()
     deduped: list[str] = []
     for field_name in fields:

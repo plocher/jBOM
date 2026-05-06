@@ -39,7 +39,7 @@ def _inv_item(
         voltage="",
         amperage="",
         wattage="",
-        lcsc="",
+        spn="",
         manufacturer=manufacturer,
         mfgpn=mfgpn,
         datasheet="",

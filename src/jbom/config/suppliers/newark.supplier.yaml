@@ -3,16 +3,4 @@ name: "Newark"
 field_synonyms:
   supplier_pn:
     display_name: "Newark"
-    synonyms:
-      - "Newark Part Number"
-      - "Stock Code"
-      - "Distributor Part Number"
-      - "Distributor Part #"
-      - "Distributor SKU"
-      - "SKU"
-      - "Supplier Part Number"
-      - "Supplier P/N"
-      - "Supplier PN"
-      - "Part Number"
-      - "Part #"
-      - "P/N"
+    synonyms: []

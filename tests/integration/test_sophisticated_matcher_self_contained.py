@@ -56,7 +56,7 @@ def _make_item(
         voltage=voltage,
         amperage="",
         wattage=wattage,
-        lcsc="",
+        spn="",
         manufacturer="",
         mfgpn="",
         datasheet="",
@@ -257,7 +257,7 @@ def test_issue_patterns_match_via_multi_signal_voting() -> None:
 def test_lcsc_hard_accept_policy_can_validate_known_project_annotations() -> None:
     matcher = SophisticatedInventoryMatcher(
         MatchingOptions(
-            lcsc_match_policy="hard_accept", non_passive_min_signal_score=999
+            spn_match_policy="hard_accept", non_passive_min_signal_score=999
         )
     )
 
@@ -275,7 +275,7 @@ def test_lcsc_hard_accept_policy_can_validate_known_project_annotations() -> Non
         package="",
         priority=1,
     )
-    item.lcsc = "C3816889"
+    item.spn = "C3816889"
 
     matches = matcher.find_matches(component, [item])
     assert matches

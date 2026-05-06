@@ -85,17 +85,15 @@ _NO_AGGREGATE_CONDITIONAL_FIELDS: list[str] = [
     "Angle",
     "Manufacturer",
     "MFGPN",
-    "LCSC",
+    "Supplier",
+    "SPN",
     "Datasheet",
     "Keywords",
     "Height",
     "Manufacturer_Name",
     "Manufacturer_Part_Number",
-    "Mouser Part Number",
-    "Mouser Price/Stock",
     "Sim.Device",
     "Sim.Pins",
-    "Supplier",
     "Name",
 ]
 
@@ -455,7 +453,8 @@ def _merge_field_names(all_field_names: set[str]) -> list[str]:
         "Keywords",
         "Manufacturer",
         "MFGPN",
-        "LCSC",
+        "Supplier",
+        "SPN",
         "Datasheet",
         "Resistance",
         "Capacitance",
@@ -546,43 +545,58 @@ def _build_inventory_supplier_services(
 
 
 def _supplier_part_number(
-    item: "InventoryItem", *, supplier_column: str, is_lcsc: bool
+    item: "InventoryItem",
+    *,
+    supplier_label: str,
+    supplier_id: str = "",
 ) -> str:
-    """Return the normalized PN value for this supplier from one inventory row."""
+    """Return the SPN when this item's Supplier matches supplier_label or supplier_id.
 
-    if is_lcsc:
-        return (item.lcsc or "").strip()
-    return str((item.raw_data or {}).get(supplier_column, "")).strip()
+    Matches case-insensitively against:
+    - ``supplier_label``: the display label written by enrichment (e.g. "LCSC")
+    - ``supplier_id``: the normalized supplier ID (e.g. "lcsc", "generic")
+    """
+    item_supplier = (item.supplier or "").strip().lower()
+    if not item_supplier:
+        return ""
+    targets: set[str] = {supplier_label.lower()}
+    if supplier_id:
+        targets.add(supplier_id.lower())
+    if item_supplier in targets:
+        return (item.spn or "").strip()
+    return ""
 
 
 def _has_any_target_supplier_pn(
     item: "InventoryItem",
     supplier_services: "list[tuple[InventorySearchService, SupplierConfig, str]]",
 ) -> bool:
-    """Return True if row already has a PN for any target supplier."""
+    """Return True if row already has a SPN for any target supplier."""
 
     for _service, supplier_config, supplier_id in supplier_services:
         if _supplier_part_number(
             item,
-            supplier_column=supplier_config.inventory_column,
-            is_lcsc=(supplier_id == "lcsc"),
+            supplier_label=supplier_config.supplier_label,
+            supplier_id=supplier_id,
         ):
             return True
     return False
 
 
 def _supplier_item_key(
-    item: "InventoryItem", *, supplier_column: str, is_lcsc: bool
+    item: "InventoryItem", *, supplier_label: str, supplier_id: str = ""
 ) -> tuple[str, str, str]:
     """Return a stable de-duplication key for one supplier-assigned row."""
 
-    pn = _supplier_part_number(item, supplier_column=supplier_column, is_lcsc=is_lcsc)
+    pn = _supplier_part_number(
+        item, supplier_label=supplier_label, supplier_id=supplier_id
+    )
     identity = (
         (item.ipn or "").strip()
         or (item.component_id or "").strip()
         or f"{(item.category or '').strip()}|{(item.value or '').strip()}|{(item.package or '').strip()}"
     )
-    return identity, supplier_column, pn
+    return identity, supplier_label, pn
 
 
 def _extract_explicit_priority(item: "InventoryItem") -> int | None:
@@ -690,8 +704,8 @@ def _enrich_items_with_suppliers(
         for _service, supplier_config, supplier_id in supplier_services:
             key = _supplier_item_key(
                 base_item,
-                supplier_column=supplier_config.inventory_column,
-                is_lcsc=(supplier_id == "lcsc"),
+                supplier_label=supplier_config.supplier_label,
+                supplier_id=supplier_id,
             )
             if key[-1]:
                 seen_keys.add(key)
@@ -708,22 +722,21 @@ def _enrich_items_with_suppliers(
             limit=candidate_limit,
             verbose=verbose,
         )
-        supplier_column = supplier_config.inventory_column
-        is_lcsc = supplier_id == "lcsc"
+        supplier_label = supplier_config.supplier_label
 
         for enriched_item in enriched_items:
             supplier_pn = _supplier_part_number(
                 enriched_item,
-                supplier_column=supplier_column,
-                is_lcsc=is_lcsc,
+                supplier_label=supplier_label,
+                supplier_id=supplier_id,
             )
             if not supplier_pn:
                 continue
 
             key = _supplier_item_key(
                 enriched_item,
-                supplier_column=supplier_column,
-                is_lcsc=is_lcsc,
+                supplier_label=supplier_label,
+                supplier_id=supplier_id,
             )
             if key in seen_keys:
                 continue
@@ -755,21 +768,15 @@ def _enrich_items_with_supplier(
     limit: int = 1,
     verbose: bool = False,
 ) -> "tuple[list[InventoryItem], list[str]]":
-    """Auto-populate supplier PN column for items that lack one.
-
-    Skips items that already carry a PN for the target supplier.  After search,
-    backfills ``manufacturer`` and ``mfgpn`` when blank.
+    """Auto-populate Supplier/SPN columns for items that lack an SPN for this supplier.
 
     Args:
         items: All inventory items (ITEM rows only are enriched).
-        field_names: Current ordered field list — extended with the supplier
-            column when not already present.
+        field_names: Current ordered field list.
         service: Instantiated :class:`InventorySearchService`.
         supplier_config: Resolved :class:`SupplierConfig` for the supplier.
         supplier_id: Normalized supplier ID string.
         limit: Number of ranked candidates to emit per row when available.
-            ``1`` applies only the top result (default behavior).
-            ``>1`` emits up to ``limit`` ranked alternatives.
         verbose: When True, progress is printed to stderr.
 
     Returns:
@@ -777,13 +784,13 @@ def _enrich_items_with_supplier(
     """
     from jbom.services.search.inventory_search_service import InventorySearchService
 
-    col = supplier_config.inventory_column
-    is_lcsc = supplier_id == "lcsc"
+    supplier_label = supplier_config.supplier_label
     candidate_limit = max(1, int(limit))
 
-    # Ensure supplier column is present in field list.
-    if col not in field_names:
-        field_names = list(field_names) + [col]
+    # Ensure Supplier/SPN columns are present in field list.
+    for col in ("Supplier", "SPN"):
+        if col not in field_names:
+            field_names = list(field_names) + [col]
     if candidate_limit > 1 and "Priority" not in field_names:
         field_names = list(field_names) + ["Priority"]
 
@@ -795,10 +802,9 @@ def _enrich_items_with_supplier(
     ]
     needs_pn: list[InventoryItem] = []
     for item in item_rows:
-        if is_lcsc:
-            existing = (item.lcsc or "").strip()
-        else:
-            existing = str((item.raw_data or {}).get(col, "")).strip()
+        existing = _supplier_part_number(
+            item, supplier_label=supplier_label, supplier_id=supplier_id
+        )
         if not existing:
             needs_pn.append(item)
 
@@ -841,19 +847,22 @@ def _enrich_items_with_supplier(
 
         candidates = record.candidates[:candidate_limit]
         if candidate_limit == 1:
+            candidate_pn = candidates[0].result.distributor_part_number or ""
+            if not candidate_pn:
+                # Empty PN from provider — leave item unchanged.
+                enriched_items.append(item)
+                continue
             _apply_supplier_candidate_to_item(
                 item=item,
-                supplier_column=col,
-                is_lcsc=is_lcsc,
+                supplier_label=supplier_label,
                 candidate=candidates[0].result,
             )
             if verbose:
-                applied_pn = (
-                    item.lcsc
-                    if is_lcsc
-                    else str((item.raw_data or {}).get(col, "")).strip()
+                applied_pn = (item.spn or "").strip()
+                print(
+                    f"  {item.ipn}: set SPN={applied_pn!r} (Supplier={supplier_label!r})",
+                    file=sys.stderr,
                 )
-                print(f"  {item.ipn}: set {col}={applied_pn!r}", file=sys.stderr)
             enriched_items.append(item)
             continue
 
@@ -865,8 +874,7 @@ def _enrich_items_with_supplier(
             ranked_item = copy.deepcopy(item)
             _apply_supplier_candidate_to_item(
                 item=ranked_item,
-                supplier_column=col,
-                is_lcsc=is_lcsc,
+                supplier_label=supplier_label,
                 candidate=candidate.result,
             )
             if ranked_item.raw_data is None:
@@ -877,7 +885,7 @@ def _enrich_items_with_supplier(
             emitted_any = True
             if verbose:
                 print(
-                    f"  {ranked_item.ipn}: candidate {rank} {col}={distributor_pn!r}",
+                    f"  {ranked_item.ipn}: candidate {rank} SPN={distributor_pn!r} (Supplier={supplier_label!r})",
                     file=sys.stderr,
                 )
 
@@ -896,18 +904,17 @@ def _enrich_items_with_supplier(
 def _apply_supplier_candidate_to_item(
     *,
     item: InventoryItem,
-    supplier_column: str,
-    is_lcsc: bool,
+    supplier_label: str,
     candidate: Any,
 ) -> None:
-    """Apply one supplier candidate result onto an inventory item."""
+    """Apply one supplier candidate result onto an inventory item (Supplier/SPN schema)."""
     pn = candidate.distributor_part_number or ""
-    if is_lcsc:
-        item.lcsc = pn
-    else:
-        if item.raw_data is None:
-            item.raw_data = {}
-        item.raw_data[supplier_column] = pn
+    item.supplier = supplier_label
+    item.spn = pn
+    if item.raw_data is None:
+        item.raw_data = {}
+    item.raw_data["Supplier"] = supplier_label
+    item.raw_data["SPN"] = pn
     if not (item.manufacturer or "").strip() and candidate.manufacturer:
         item.manufacturer = candidate.manufacturer
     if not (item.mfgpn or "").strip() and candidate.mpn:
@@ -1382,7 +1389,8 @@ def _print_console_table(inventory_items, field_names) -> None:
             "Package": item.package,
             "Manufacturer": item.manufacturer,
             "MFGPN": item.mfgpn,
-            "LCSC": item.lcsc,
+            "Supplier": item.supplier,
+            "SPN": item.spn,
             "Datasheet": item.datasheet,
             "UUID": item.uuid,
         }
@@ -1428,7 +1436,8 @@ def _inventory_item_to_row(
         "Package": item.package,
         "Manufacturer": item.manufacturer,
         "MFGPN": item.mfgpn,
-        "LCSC": item.lcsc,
+        "Supplier": item.supplier,
+        "SPN": item.spn,
         "Datasheet": item.datasheet,
         "UUID": item.uuid,
         "Priority": str((item.raw_data or {}).get("Priority", "")),

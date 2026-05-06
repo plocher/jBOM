@@ -107,7 +107,8 @@ field_precedence_policy:
     - manufacturer
     - manufacturer_part
     - fabricator_part_number
-    - lcsc
+    - spn
+    - supplier
 
 # ---------------------------------------------------------------------------
 # Parametric spec fields to include in JLCPCB/LCSC search queries per category.
@@ -201,7 +202,8 @@ inventory_schema:
     - manufacturer_part
     - description
     - datasheet
-    - lcsc
+    - supplier
+    - spn
     - tolerance
     - voltage
     - wattage
@@ -234,7 +236,8 @@ inventory_schema:
     manufacturer_part: mfgpn
     description: description
     datasheet: datasheet
-    lcsc: lcsc
+    supplier: supplier
+    spn: spn
     tolerance: tolerance
     voltage: voltage
     wattage: wattage

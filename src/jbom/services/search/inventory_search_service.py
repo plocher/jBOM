@@ -85,35 +85,32 @@ class InventorySearchService:
     def is_sparse_for_fabricator(
         item: InventoryItem, fabricator: FabricatorConfig
     ) -> bool:
-        """Return True if item has no PN for any supplier in fabricator.suppliers.
+        """Return True if item has no SPN for any supplier in fabricator.suppliers.
 
-        This is Phase 1 "fab-relative sparseness": sparseness is defined relative to
-        the fabricator's ordered supplier list.
+        Sparseness is defined relative to the fabricator's ordered supplier list.
+        An item is considered non-sparse when its ``supplier`` field matches any
+        fabricator supplier AND its ``spn`` is non-empty.
         """
 
-        # If a fabricator has no suppliers list, treat sparseness as "not applicable".
         if not fabricator.suppliers:
             return False
+
+        item_supplier = (item.supplier or "").strip().lower()
+        item_spn = (item.spn or "").strip()
+
+        if not item_spn:
+            # No SPN at all — definitely sparse regardless of supplier list.
+            return True
 
         for supplier_id in fabricator.suppliers:
             supplier = resolve_supplier_by_id(supplier_id)
             if supplier is None:
-                # Unknown supplier IDs are warned at config load time.
                 continue
-
-            pn = ""
-            if supplier.id == "lcsc":
-                # InventoryReader populates InventoryItem.lcsc from several header variants.
-                # TODO(#107): Once Phase 2 normalizes supplier lookups through inventory_column
-                # synonyms everywhere, this special-case should be removable.
-                pn = (item.lcsc or "").strip()
-            else:
-                pn = str(
-                    (item.raw_data or {}).get(supplier.inventory_column, "")
-                ).strip()
-
-            if pn:
-                return False
+            if (
+                item_supplier == supplier.id
+                or item_supplier == supplier.supplier_label.lower()
+            ):
+                return False  # Has SPN for a known fabricator supplier
 
         return True
 
@@ -568,13 +565,10 @@ class InventorySearchService:
             voltage=result.attributes.get("Voltage", "") or base_item.voltage,
             amperage="",
             wattage=result.attributes.get("Power", "") or base_item.wattage,
-            lcsc="",
             manufacturer=result.manufacturer,
             mfgpn=result.mpn,
             datasheet=result.datasheet,
             package=_package_from_search_result(result, base_item),
-            distributor=result.distributor,
-            distributor_part_number=result.distributor_part_number,
             raw_data={},
         )
 

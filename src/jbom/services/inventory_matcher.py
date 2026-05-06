@@ -241,13 +241,12 @@ class InventoryMatcher:
         fabricator_id: str,
         fabricator_config: Optional[FabricatorConfig],
     ) -> str:
-        """Resolve fabricator_part_number using fabricator field_synonyms.
+        """Resolve fabricator_part_number using supplier/SPN schema.
 
-        Phase 4 inventory schema uses explicit supplier columns (LCSC/Mouser/etc)
-        and fabricator configs supply tolerant synonym lists.
+        Items with a SPN are preferred; MPN is the fallback.
         """
         if fabricator_config is None:
-            return item.lcsc or item.distributor_part_number or item.mfgpn
+            return item.spn or item.mfgpn
 
         normalized = InventoryMatcher._normalized_raw_data(
             fabricator_config, item.raw_data

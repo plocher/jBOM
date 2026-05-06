@@ -150,7 +150,7 @@ def test_generic_profile_has_field_precedence_policy() -> None:
     assert "inventory_biased" in policy
     assert "value" in policy["schematic_biased"]
     assert "footprint" in policy["pcb_biased"]
-    assert "lcsc" in policy["inventory_biased"]
+    assert "spn" in policy["inventory_biased"]
 
 
 def test_generic_profile_has_inventory_schema_contract() -> None:

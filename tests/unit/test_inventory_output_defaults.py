@@ -22,7 +22,7 @@ def _make_inventory_item() -> InventoryItem:
         voltage="",
         amperage="",
         wattage="",
-        lcsc="",
+        spn="",
         manufacturer="",
         mfgpn="",
         datasheet="",

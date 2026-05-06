@@ -22,7 +22,7 @@ def _inv_item(
     tolerance: str,
     row_type: str = "ITEM",
     component_id: str = "",
-    lcsc: str = "",
+    spn: str = "",
     raw_data: dict[str, str] | None = None,
 ) -> InventoryItem:
     return InventoryItem(
@@ -39,7 +39,7 @@ def _inv_item(
         voltage="",
         amperage="",
         wattage="",
-        lcsc=lcsc,
+        spn=spn,
         manufacturer="",
         mfgpn="",
         datasheet="",
@@ -299,7 +299,7 @@ def test_build_query_uses_supplier_config_keywords(monkeypatch) -> None:
     supplier = SupplierConfig(
         id="mouser",
         name="Mouser",
-        inventory_column="Mouser",
+        supplier_label="Mouser",
         search_type_query_keywords={"RES": "thick film resistor"},
     )
 
@@ -329,6 +329,8 @@ def test_build_query_uses_supplier_config_keywords(monkeypatch) -> None:
 def test_filter_sparse_items_for_fabricator_scopes_by_supplier_columns() -> None:
     fab = load_fabricator("jlc")
 
+    # In the Supplier/SPN schema, sparseness is determined by item.supplier + item.spn.
+    # Items must have supplier matching a JLC supplier AND a non-empty SPN to be non-sparse.
     items = [
         _inv_item(
             ipn="HAS-LCSC",
@@ -336,7 +338,8 @@ def test_filter_sparse_items_for_fabricator_scopes_by_supplier_columns() -> None
             value="10K",
             package="0603",
             tolerance="1%",
-            lcsc="C123",
+            spn="C123",
+            raw_data={"Supplier": "LCSC", "SPN": "C123"},
         ),
         _inv_item(
             ipn="HAS-MOUSER",
@@ -344,7 +347,8 @@ def test_filter_sparse_items_for_fabricator_scopes_by_supplier_columns() -> None
             value="10K",
             package="0603",
             tolerance="1%",
-            raw_data={"Mouser": "123"},
+            spn="123",
+            raw_data={"Supplier": "Mouser", "SPN": "123"},
         ),
         _inv_item(
             ipn="HAS-FARNELL",
@@ -352,7 +356,8 @@ def test_filter_sparse_items_for_fabricator_scopes_by_supplier_columns() -> None
             value="10K",
             package="0603",
             tolerance="1%",
-            raw_data={"Farnell": "F-123"},
+            spn="F-123",
+            raw_data={"Supplier": "Farnell", "SPN": "F-123"},
         ),
         _inv_item(
             ipn="SPARSE",
@@ -362,6 +367,10 @@ def test_filter_sparse_items_for_fabricator_scopes_by_supplier_columns() -> None
             tolerance="1%",
         ),
     ]
+    # Set supplier field to match supplier_label for non-sparse items.
+    items[0].supplier = "LCSC"
+    items[1].supplier = "Mouser"
+    items[2].supplier = "Farnell"
 
     sparse = InventorySearchService.filter_sparse_items_for_fabricator(
         items, fabricator=fab

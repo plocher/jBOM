@@ -31,8 +31,8 @@ Feature: Inventory supplier PN auto-populate
       | distributor_pn | manufacturer | mpn             | stock_quantity | price |
       | S25804         | Yageo        | RC0603FR-0710KL | 500            | 0.01  |
     And a schematic that contains:
-      | Reference | Value | Footprint   | LibID    | Supplier |
-      | R1        | 10K   | R_0603_1608 | Device:R | S99001   |
+      | Reference | Value | Footprint   | LibID    | Supplier | SPN    |
+      | R1        | 10K   | R_0603_1608 | Device:R | generic  | S99001 |
     When I run jbom command "inventory --supplier generic -o result.csv"
     Then the command should succeed
     And the file "result.csv" should contain "S99001"

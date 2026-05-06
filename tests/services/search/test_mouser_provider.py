@@ -205,7 +205,7 @@ def test_mouser_provider_defaults_retry_settings_when_profile_missing(
     supplier = SupplierConfig(
         id="mouser",
         name="Mouser",
-        inventory_column="Mouser",
+        supplier_label="Mouser",
         search_cache_ttl_hours=24,
     )
     monkeypatch.setattr(mp, "resolve_supplier_by_id", lambda _sid: supplier)

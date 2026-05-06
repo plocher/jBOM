@@ -80,7 +80,7 @@ def test_disk_cache_missing_profile_ttl_falls_back_to_24h(
     supplier = SupplierConfig(
         id="mouser",
         name="Mouser",
-        inventory_column="Mouser",
+        supplier_label="Mouser",
         # Missing TTL entries on purpose.
         search_cache_ttl_hours=None,
     )

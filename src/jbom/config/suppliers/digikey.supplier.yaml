@@ -5,20 +5,7 @@ website: "https://www.digikey.com"
 field_synonyms:
   supplier_pn:
     display_name: "DigiKey"
-    synonyms:
-      - "DigiKey Part Number"
-      - "Digi-Key"
-      - "Digi-Key Part Number"
-      - "Distributor Part Number"
-      - "Distributor Part #"
-      - "Distributor SKU"
-      - "SKU"
-      - "Supplier Part Number"
-      - "Supplier P/N"
-      - "Supplier PN"
-      - "Part Number"
-      - "Part #"
-      - "P/N"
+    synonyms: []
 # DigiKey direct product URLs are not reliably derivable from a bare PN without additional identifiers.
 # Use search_url_template for browser address-bar searches.
 url_template: null

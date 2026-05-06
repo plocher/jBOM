@@ -5,9 +5,9 @@ Feature: BOM Field System and Output Customization
 
   Background:
     Given a schematic that contains:
-      | Reference | Value | Footprint   | LCSC    | Manufacturer | MPN      | Package |
-      | R1        | 10K   | R_0805_2012 | C17414  | Yageo        | RC0805   | 0805    |
-      | C1        | 100nF | C_0603_1608 | C14663  | Murata       | GRM188   | 0603    |
+      | Reference | Value | Footprint   | SPN    | Manufacturer | MPN      | Package |
+      | R1        | 10K   | R_0805_2012 | C17414 | Yageo        | RC0805   | 0805    |
+      | C1        | 100nF | C_0603_1608 | C14663 | Murata       | GRM188   | 0603    |
 
   @regression @current-broken
   Scenario: Different fabricators produce different output headers
@@ -16,7 +16,7 @@ Feature: BOM Field System and Output Customization
     And the output should contain CSV headers "Reference,Quantity,Description,Value,Package,Footprint,Manufacturer,Part Number"
     When I run jbom command "bom --fabricator jlc -o -"
     Then the command should succeed
-    And the output should contain CSV headers "Designator,Quantity,Value,Comment,Footprint,LCSC,Surface Mount"
+    And the output should contain CSV headers "Designator,Quantity,Value,Comment,Footprint,SPN,Surface Mount"
     When I run jbom command "bom --fabricator pcbway -o -"
     Then the command should succeed
     And the output should not contain CSV headers "Reference,Quantity,Description,Value,Package,Footprint,Manufacturer,Part Number"
@@ -26,9 +26,9 @@ Feature: BOM Field System and Output Customization
 
   @regression @current-broken
   Scenario: Field customization with -f argument
-    When I run jbom command "bom -f Reference,Value,LCSC -o -"
+    When I run jbom command "bom -f Reference,Value,SPN -o -"
     Then the command should succeed
-    And the output should contain CSV headers "Reference,Value,LCSC"
+    And the output should contain CSV headers "Reference,Value,SPN"
     And the output should not contain "Quantity"
     And the output should not contain "Footprint"
 
@@ -36,7 +36,7 @@ Feature: BOM Field System and Output Customization
   Scenario: Preset expansion with + syntax
     When I run jbom command "bom -f +minimal -o -"
     Then the command should succeed
-    And the output should contain CSV headers "Reference,Quantity,Value,LCSC"
+    And the output should contain CSV headers "Reference,Quantity,Value,SPN"
     When I run jbom command "bom -f +standard -o -"
     Then the command should succeed
     And the output should contain "Manufacturer"
@@ -46,7 +46,7 @@ Feature: BOM Field System and Output Customization
   Scenario: Fabricator-specific presets
     When I run jbom command "bom --fabricator jlc -f +jlc -o -"
     Then the command should succeed
-    And the output should contain CSV headers "Designator,Quantity,Value,Comment,LCSC"
+    And the output should contain CSV headers "Designator,Quantity,Value,Comment,SPN"
     When I run jbom command "bom --fabricator generic -f +generic -o -"
     Then the command should succeed
     And the output should contain CSV headers "Reference,Quantity,Description,Value,Manufacturer,Part Number"
@@ -57,7 +57,7 @@ Feature: BOM Field System and Output Customization
     Then the command should succeed
     And the output should contain "Reference"
     And the output should contain "Value"
-    And the output should contain "LCSC"
+    And the output should contain "SPN"
     And the output should contain "Manufacturer"
     And the output should contain "I:Voltage"
 
@@ -88,13 +88,13 @@ Feature: BOM Field System and Output Customization
     And the output should contain "Known fields"
     And the output should contain "reference"
     And the output should contain "value"
-    And the output should contain "lcsc"
+    And the output should contain "spn"
 
   @regression @current-broken
   Scenario: Console table respects field selection
-    When I run jbom command "bom -f Reference,Value,LCSC -o console"
+    When I run jbom command "bom -f Reference,Value,SPN -o console"
     Then the command should succeed
-    And the console table headers should be "Reference Value LCSC"
+    And the console table headers should be "Reference Value SPN"
     And the console table should not contain "Footprint"
 
   @regression @current-broken
@@ -107,7 +107,7 @@ Feature: BOM Field System and Output Customization
     Then the command should succeed
     # Should use JLC default format
     And the output should contain "Designator"
-    And the output should contain "LCSC"
+    And the output should contain "SPN"
 
   @regression @current-broken
   Scenario: CLI argument validation - missing field list
