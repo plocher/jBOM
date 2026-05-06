@@ -38,9 +38,8 @@ class InventoryValidator:
     SUPPLIER_FIELDS = [
         "manufacturer",
         "mfgpn",
-        "distributor",
-        "distributor_part_number",
-        "lcsc",
+        "supplier",
+        "spn",
         "priority",
         "source",
         "source_file",

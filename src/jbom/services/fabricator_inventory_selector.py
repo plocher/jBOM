@@ -118,27 +118,45 @@ class FabricatorInventorySelector:
         return Path(project_name).stem
 
     def _normalized_raw_data(self, item: InventoryItem) -> Dict[str, str]:
-        """Return a normalized raw_data mapping with canonical keys added.
+        """Return a normalized raw_data mapping with canonical tier keys injected.
+
+        Derives ``fab_pn`` and ``supplier_pn`` from ``item.supplier`` +
+        ``item.spn`` using the Q+ tier logic:
+
+        - Primary supplier match (``item.supplier`` == fabricator's first
+          supplier) → ``fab_pn``
+        - Any other supplier with an SPN → ``supplier_pn``
+        - MPN present → ``mpn`` (already in raw_data; no injection needed)
 
         This does not mutate the InventoryItem.
-
-        Canonical keys are populated from synonyms only when the canonical key is
-        missing or empty.
         """
 
         raw = item.raw_data or {}
         normalized: Dict[str, str] = dict(raw)
 
+        # Inject MPN from field_synonyms resolution over raw_data headers,
+        # then fall back to InventoryItem.mfgpn directly.
         for header, value in raw.items():
             canonical = self._config.resolve_field_synonym(header)
-            if canonical is None:
+            if canonical != "mpn" or not str(value).strip():
                 continue
+            normalized.setdefault("mpn", str(value))
+        if item.mfgpn and not normalized.get("mpn"):
+            normalized["mpn"] = item.mfgpn
 
-            existing = str(normalized.get(canonical, ""))
-            if existing.strip():
-                continue
+        # Derive fab_pn / supplier_pn from normalized Supplier/SPN schema.
+        item_supplier = (item.supplier or "").strip().lower()
+        item_spn = (item.spn or "").strip()
 
-            normalized[canonical] = str(value)
+        if item_spn:
+            suppliers = self._config.suppliers
+            primary = suppliers[0].lower() if suppliers else ""
+            if item_supplier == primary:
+                normalized.setdefault("fab_pn", item_spn)
+            else:
+                # Any SPN from a non-primary (or unknown) supplier still counts
+                # as supplier_pn — having any SPN is better than having none.
+                normalized.setdefault("supplier_pn", item_spn)
 
         return normalized
 

@@ -5,19 +5,7 @@ website: "https://www.mouser.com"
 field_synonyms:
   supplier_pn:
     display_name: "Mouser"
-    synonyms:
-      - "Mouser Part Number"
-      - "Mouser PN"
-      - "Distributor Part Number"
-      - "Distributor Part #"
-      - "Distributor SKU"
-      - "SKU"
-      - "Supplier Part Number"
-      - "Supplier P/N"
-      - "Supplier PN"
-      - "Part Number"
-      - "Part #"
-      - "P/N"
+    synonyms: []
 part_number:
   pattern: "^\\d{3}-.*$"
   example: "595-TPS62133DQCR"

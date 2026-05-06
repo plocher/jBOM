@@ -5,8 +5,7 @@ Covers:
 - _check_item_freshness: BETTER_AVAILABLE when best PN differs from existing
 - _check_item_freshness: silent when best PN matches existing
 - _check_item_freshness: skips items with no supplier PN (empty → [])
-- _get_supplier_pn_for_item: returns item.lcsc for 'lcsc' supplier
-- _get_supplier_pn_for_item: reads raw_data[inventory_column] for others
+- _get_supplier_pn_for_item: returns item.spn when item.supplier matches requested supplier
 - audit_inventory: freshness runs even without --requirements
 - audit_inventory: early-return guard fixed (requirements_path=None + supplier_service given)
 """
@@ -41,10 +40,21 @@ def _make_item(
     category: str = "RES",
     value: str = "10K",
     package: str = "0603",
-    supplier_pn: str = "",
-    lcsc: str = "",
+    supplier_pn: str = "",  # generic supplier PN (stored as Supplier=generic, SPN=<value>)
+    spn_val: str = "",  # LCSC PN (stored as Supplier=LCSC, SPN=<value>)
 ) -> InventoryItem:
-    item = InventoryItem(
+    # Determine supplier/spn from whichever arg is provided.
+    if spn_val:
+        _supplier = "LCSC"
+        _spn = spn_val
+    elif supplier_pn:
+        _supplier = "generic"
+        _spn = supplier_pn
+    else:
+        _supplier = ""
+        _spn = ""
+
+    return InventoryItem(
         ipn=ipn,
         keywords="",
         category=category,
@@ -56,15 +66,15 @@ def _make_item(
         voltage="",
         amperage="",
         wattage="",
-        lcsc=lcsc,
+        supplier=_supplier,
+        spn=_spn,
         manufacturer="",
         mfgpn="",
         datasheet="",
         package=package,
         row_type="ITEM",
-        raw_data={"Supplier": supplier_pn} if supplier_pn else {},
+        raw_data={"Supplier": _supplier, "SPN": _spn} if _spn else {},
     )
-    return item
 
 
 def _make_search_result(pn: str = "S25804") -> SearchResult:
@@ -113,18 +123,18 @@ def _mock_service_returning(pn: str | None) -> InventorySearchService:
 
 class TestGetSupplierPnForItem:
     def test_returns_lcsc_for_lcsc_supplier(self) -> None:
-        item = _make_item(lcsc="C25804")
+        item = _make_item(spn_val="C25804")
         result = _get_supplier_pn_for_item(item, "lcsc")
         assert result == "C25804"
 
     def test_empty_lcsc_returns_empty_string(self) -> None:
-        item = _make_item()  # lcsc=""
+        item = _make_item()  # spn=""
         result = _get_supplier_pn_for_item(item, "lcsc")
         assert result == ""
 
     def test_returns_raw_data_column_for_generic(self) -> None:
         item = _make_item(supplier_pn="S99999")
-        # generic supplier has inventory_column = "Supplier"
+        # generic supplier_label = "Supplier"; item.supplier must match
         result = _get_supplier_pn_for_item(item, "generic")
         assert result == "S99999"
 

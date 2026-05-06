@@ -307,48 +307,23 @@ def _derive_part_number_field_synonyms(
     field_synonyms: Dict[str, FieldSynonym],
     suppliers: list[str],
 ) -> Dict[str, FieldSynonym]:
-    """Return field_synonyms with derived fab_pn/supplier_pn synonyms injected.
+    """Return field_synonyms with validated fab_pn/supplier_pn entries.
 
-    Derivation rules:
-    - fab_pn synonyms: suppliers[0] inventory_column + inventory_column_synonyms
-    - supplier_pn synonyms: suppliers[1..] inventory_column + inventory_column_synonyms
-
-    display_name is sourced from the YAML field_synonyms entries.
+    With the normalized Supplier/SPN schema, part-number resolution happens
+    via InventoryItem.supplier + InventoryItem.spn at runtime, not via
+    CSV column-name synonyms.  This function now only validates that the
+    required canonical keys are present and the supplier IDs are known.
     """
 
     if not suppliers:
         raise ValueError("Cannot derive part-number field synonyms without suppliers")
 
-    def _synonyms_for_supplier_ids(sids: list[str]) -> list[str]:
-        raw: list[str] = []
-        for sid in sids:
-            supplier = resolve_supplier_by_id(sid)
-            if supplier is None:
-                raise ValueError(f"Unknown supplier profile id: {sid!r}")
-            raw.append(supplier.inventory_column)
-            raw.extend(supplier.inventory_column_synonyms)
-        return _dedupe_preserve_order([s.strip() for s in raw if s and s.strip()])
+    # Validate that all referenced supplier IDs are known.
+    for sid in suppliers:
+        if resolve_supplier_by_id(sid) is None:
+            raise ValueError(f"Unknown supplier profile id: {sid!r}")
 
-    fab_pn_synonyms = _synonyms_for_supplier_ids([suppliers[0]])
-    supplier_pn_synonyms = (
-        _synonyms_for_supplier_ids(list(suppliers[1:])) if len(suppliers) > 1 else []
-    )
-
-    out = dict(field_synonyms)
-
-    if "fab_pn" in out:
-        out["fab_pn"] = FieldSynonym(
-            synonyms=fab_pn_synonyms,
-            display_name=out["fab_pn"].display_name,
-        )
-
-    if "supplier_pn" in out:
-        out["supplier_pn"] = FieldSynonym(
-            synonyms=supplier_pn_synonyms,
-            display_name=out["supplier_pn"].display_name,
-        )
-
-    return out
+    return dict(field_synonyms)
 
 
 def _derive_tier_rules(*, tier_overrides: list[TierRule]) -> list[TierRule]:

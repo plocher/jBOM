@@ -323,7 +323,8 @@ _INVENTORY_FIELD_WIDTHS: dict[str, tuple[int, bool]] = {
     "Footprint": (25, False),
     "Manufacturer": (16, True),
     "MFGPN": (16, False),
-    "LCSC": (10, False),
+    "Supplier": (10, False),
+    "SPN": (14, False),
     "Datasheet": (20, False),
 }
 

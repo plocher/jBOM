@@ -23,7 +23,7 @@ def _inv_item(*, ipn: str, manufacturer: str, mfgpn: str) -> InventoryItem:
         voltage="",
         amperage="",
         wattage="",
-        lcsc="",
+        spn="",
         manufacturer=manufacturer,
         mfgpn=mfgpn,
         datasheet="",

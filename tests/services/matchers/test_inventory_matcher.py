@@ -22,7 +22,7 @@ def _make_inventory_item(
     tolerance: str = "",
     voltage: str = "",
     wattage: str = "",
-    lcsc: str = "",
+    spn: str = "",
     datasheet: str = "",
     fabricator: str = "",
     dnp: bool = False,
@@ -43,7 +43,7 @@ def _make_inventory_item(
         "Tolerance": tolerance,
         "Voltage": voltage,
         "Wattage": wattage,
-        "LCSC": lcsc,
+        "SPN": spn,
         "Datasheet": datasheet,
     }.items():
         rd.setdefault(key, val)
@@ -60,13 +60,11 @@ def _make_inventory_item(
         voltage=voltage,
         amperage="",
         wattage=wattage,
-        lcsc=lcsc,
+        spn=spn,
         manufacturer=manufacturer,
         mfgpn=mfgpn,
         datasheet=datasheet,
         package=package,
-        distributor="",
-        distributor_part_number="",
         uuid="",
         fabricator=fabricator,
         dnp=dnp,
@@ -124,7 +122,7 @@ class TestInventoryMatcher:
                 mfgpn="RC0603FR-0710KL",
                 description="10K 0603 1% resistor",
                 tolerance="1%",
-                lcsc="C25804",
+                spn="C25804",
             ),
             _make_inventory_item(
                 ipn="CAP_100nF",
@@ -135,7 +133,7 @@ class TestInventoryMatcher:
                 mfgpn="GRM188R71C104KA01D",
                 description="100nF 0603 10% capacitor",
                 voltage="16V",
-                lcsc="C14663",
+                spn="C14663",
             ),
         ]
 
@@ -177,7 +175,7 @@ class TestInventoryMatcher:
                 category="RESISTOR",
                 value="10K",
                 package="0603",
-                lcsc="C25804",
+                spn="C25804",
             ),
         ]
 
@@ -264,7 +262,7 @@ class TestInventoryMatcher:
                 category="RESISTOR",
                 value="10K",
                 package="0603",
-                lcsc="C25804",
+                spn="C25804",
             ),
         ]
 
@@ -294,7 +292,7 @@ class TestInventoryMatcher:
                 priority=1,
                 dnp=True,
                 manufacturer="DNP-Row",
-                lcsc="C878901",
+                spn="C878901",
             ),
             _make_inventory_item(
                 ipn="Q_POP",
@@ -304,7 +302,7 @@ class TestInventoryMatcher:
                 priority=2,
                 dnp=False,
                 manufacturer="Populated-Row",
-                lcsc="C878902",
+                spn="C878902",
             ),
         ]
 
@@ -337,7 +335,7 @@ class TestInventoryMatcher:
                 priority=1,
                 dnp=True,
                 manufacturer="DNP-Row",
-                lcsc="C878901",
+                spn="C878901",
             ),
             _make_inventory_item(
                 ipn="Q_POP",
@@ -347,7 +345,7 @@ class TestInventoryMatcher:
                 priority=2,
                 dnp=False,
                 manufacturer="Populated-Row",
-                lcsc="C878902",
+                spn="C878902",
             ),
         ]
 
@@ -368,7 +366,7 @@ class TestInventoryMatcher:
             ipn="R_10K",
             manufacturer="Yageo",
             mfgpn="RC0603FR-0710KL",
-            lcsc="C25804",
+            spn="C25804",
         )
         entry = BOMEntry(
             references=["R1"],
@@ -422,8 +420,8 @@ class TestInventoryMatcher:
             ipn="CON_1x02-0.100-socket",
             category="CON",
             value="1x02-0.100-socket",
-            lcsc="C429966",
-            raw_data={"LCSC": "C429966"},
+            spn="C429966",
+            raw_data={"SPN": "C429966"},
         )
         jlc = load_fabricator("jlc")
 
@@ -468,7 +466,7 @@ class TestInventoryMatcherIntegration:
                 mfgpn="RC0603FR-0710KL",
                 description="10K 0603 1% resistor",
                 tolerance="1%",
-                lcsc="C25804",
+                spn="C25804",
             ),
             _make_inventory_item(
                 ipn="CAP_100nF",
@@ -479,7 +477,7 @@ class TestInventoryMatcherIntegration:
                 mfgpn="GRM188R71C104KA01D",
                 description="100nF 0603 10% capacitor",
                 voltage="16V",
-                lcsc="C14663",
+                spn="C14663",
             ),
         ]
 
@@ -523,7 +521,7 @@ class TestInventoryMatcherIntegration:
                 category="RESISTOR",
                 value="10K",
                 package="0603",
-                lcsc="C25804",
+                spn="C25804",
                 mfgpn="RC0603FR-0710KL",
             ),
         ]

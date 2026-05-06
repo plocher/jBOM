@@ -1,12 +1,10 @@
 """Unit tests for _enrich_items_with_supplier (Issue #117 Path B).
 
 Covers:
-- Items that already carry a PN are skipped
-- Items without a PN are enriched with the best candidate's distributor_pn
-- LCSC supplier writes pn to item.lcsc
-- Generic supplier writes pn to item.raw_data[inventory_column]
-- Supplier column is added to field_names when absent
-- Supplier column unchanged when already present in field_names
+- Items that already carry a SPN are skipped
+- Items without a SPN are enriched with the best candidate's distributor_pn
+- All suppliers write Supplier label + SPN to item.supplier + item.spn
+- Supplier and SPN columns are added to field_names when absent
 - manufacturer and mfgpn are backfilled when blank
 - Items without candidates remain un-enriched
 - Both ITEM and COMPONENT row types are enriched
@@ -43,11 +41,15 @@ def _make_item(
     value: str = "10K",
     package: str = "0603",
     row_type: str = "ITEM",
-    supplier_pn: str = "",
-    lcsc: str = "",
+    supplier_pn: str = "",  # generic PN (sets supplier='generic', spn=value)
+    spn: str = "",  # direct SPN with no specific supplier
+    supplier: str = "",  # explicit supplier label
     manufacturer: str = "",
     mfgpn: str = "",
 ) -> InventoryItem:
+    # Resolve effective supplier/spn
+    _supplier = supplier or ("generic" if supplier_pn else "")
+    _spn = spn or supplier_pn
     return InventoryItem(
         ipn=ipn,
         keywords="",
@@ -60,13 +62,14 @@ def _make_item(
         voltage="",
         amperage="",
         wattage="",
-        lcsc=lcsc,
+        supplier=_supplier,
+        spn=_spn,
         manufacturer=manufacturer,
         mfgpn=mfgpn,
         datasheet="",
         package=package,
         row_type=row_type,
-        raw_data={"Supplier": supplier_pn} if supplier_pn else {},
+        raw_data={"Supplier": _supplier, "SPN": _spn} if _spn else {},
     )
 
 
@@ -115,10 +118,10 @@ def _record_no_candidates(item: InventoryItem) -> InventorySearchRecord:
 
 
 def _supplier_config(
-    inventory_column: str = "Supplier", supplier_id: str = "generic"
+    supplier_label: str = "Supplier", supplier_id: str = "generic"
 ) -> MagicMock:
     cfg = MagicMock()
-    cfg.inventory_column = inventory_column
+    cfg.supplier_label = supplier_label
     cfg.id = supplier_id
     return cfg
 
@@ -192,7 +195,8 @@ class TestEnrichFieldNames:
         _, names = _enrich([item], ["IPN", "Value"], service, filter_returns=[item])
         assert names[0] == "IPN"
         assert names[1] == "Value"
-        assert names[-1] == "Supplier"
+        assert "Supplier" in names
+        assert "SPN" in names
 
 
 # ---------------------------------------------------------------------------
@@ -208,11 +212,12 @@ class TestEnrichSkipsExistingPn:
         items_out, _ = _enrich([item], ["IPN"], service, filter_returns=[])
 
         service.search.assert_not_called()
-        # Raw data should be unchanged
-        assert items_out[0].raw_data.get("Supplier") == "S_EXISTING"
+        # SPN should be unchanged
+        assert items_out[0].spn == "S_EXISTING"
 
-    def test_lcsc_item_with_existing_lcsc_is_not_overwritten(self) -> None:
-        item = _make_item(lcsc="C_EXISTING", row_type="ITEM")
+    def test_item_with_existing_spn_is_not_overwritten(self) -> None:
+        """Item with Supplier=LCSC and SPN=C_EXISTING should not be re-enriched."""
+        item = _make_item(supplier="LCSC", spn="C_EXISTING", row_type="ITEM")
         cfg = _supplier_config("LCSC")
         service = _mock_service([])
 
@@ -224,7 +229,7 @@ class TestEnrichSkipsExistingPn:
             )
 
         service.search.assert_not_called()
-        assert items_out[0].lcsc == "C_EXISTING"
+        assert items_out[0].spn == "C_EXISTING"
 
 
 # ---------------------------------------------------------------------------
@@ -233,16 +238,17 @@ class TestEnrichSkipsExistingPn:
 
 
 class TestEnrichSuccessful:
-    def test_generic_supplier_writes_to_raw_data(self) -> None:
+    def test_supplier_writes_to_supplier_and_spn_fields(self) -> None:
         item = _make_item()
         service = _mock_service([_record_with_candidate(item, "S25804")])
 
         items_out, _ = _enrich([item], ["IPN"], service, filter_returns=[item])
 
-        assert items_out[0].raw_data.get("Supplier") == "S25804"
+        assert items_out[0].spn == "S25804"
+        assert items_out[0].raw_data.get("SPN") == "S25804"
 
-    def test_lcsc_supplier_writes_to_lcsc_field(self) -> None:
-        item = _make_item(lcsc="")
+    def test_lcsc_supplier_writes_supplier_and_spn_fields(self) -> None:
+        item = _make_item()
         cfg = _supplier_config("LCSC")
         record = InventorySearchRecord(
             inventory_item=item,
@@ -258,7 +264,8 @@ class TestEnrichSuccessful:
                 [item], ["IPN"], service, cfg, "lcsc"
             )
 
-        assert items_out[0].lcsc == "C25804"
+        assert items_out[0].supplier == "LCSC"
+        assert items_out[0].spn == "C25804"
 
     def test_manufacturer_backfilled_when_blank(self) -> None:
         item = _make_item(manufacturer="")
@@ -326,7 +333,7 @@ class TestEnrichSuccessful:
         )
 
         assert len(items_out) == 2
-        assert [i.raw_data.get("Supplier") for i in items_out] == ["S0001", "S0002"]
+        assert [i.spn for i in items_out] == ["S0001", "S0002"]
         assert [i.raw_data.get("Priority") for i in items_out] == ["1", "2"]
         assert "Priority" in names
 
@@ -343,7 +350,7 @@ class TestEnrichNoCandidates:
 
         items_out, _ = _enrich([item], ["IPN"], service, filter_returns=[item])
 
-        assert items_out[0].raw_data.get("Supplier", "") == ""
+        assert items_out[0].spn == ""
 
     def test_empty_pn_in_candidate_leaves_item_unchanged(self) -> None:
         item = _make_item()
@@ -384,7 +391,7 @@ class TestEnrichRowTypes:
 
         items_out, _ = _enrich([item], ["IPN"], service, filter_returns=[item])
 
-        assert items_out[0].raw_data.get("Supplier") == "S25804"
+        assert items_out[0].spn == "S25804"
 
     def test_item_row_is_enriched(self) -> None:
         item = _make_item(row_type="ITEM")
@@ -392,7 +399,7 @@ class TestEnrichRowTypes:
 
         items_out, _ = _enrich([item], ["IPN"], service, filter_returns=[item])
 
-        assert items_out[0].raw_data.get("Supplier") == "S25804"
+        assert items_out[0].spn == "S25804"
 
     def test_header_row_is_ignored(self) -> None:
         header = _make_item(row_type="HEADER")
@@ -407,8 +414,8 @@ class TestEnrichRowTypes:
         )
 
         # header row untouched; normal item enriched
-        assert items_out[0].raw_data.get("Supplier", "") == ""
-        assert items_out[1].raw_data.get("Supplier") == "S99001"
+        assert items_out[0].spn == ""
+        assert items_out[1].spn == "S99001"
 
 
 # ---------------------------------------------------------------------------
@@ -505,18 +512,20 @@ class TestEnrichMultipleSuppliers:
 
         assert len(items_out) == 3
         # Base requirement row preserved (add-only semantics).
-        assert items_out[0].raw_data.get("Mouser Part Number", "") == ""
-        assert items_out[0].lcsc == ""
+        assert items_out[0].spn == ""
 
-        assert items_out[1].raw_data.get("Mouser Part Number") == "M-1001"
-        assert items_out[1].lcsc == ""
-        assert items_out[2].lcsc == "C-2001"
-        assert items_out[2].raw_data.get("Mouser Part Number", "") == ""
+        # Mouser-enriched row: supplier=Mouser Part Number, spn=M-1001
+        assert items_out[1].supplier == "Mouser Part Number"
+        assert items_out[1].spn == "M-1001"
+        # LCSC-enriched row: supplier=LCSC, spn=C-2001
+        assert items_out[2].supplier == "LCSC"
+        assert items_out[2].spn == "C-2001"
 
         assert items_out[1].raw_data.get("Priority") == "1"
         assert items_out[2].raw_data.get("Priority") == "2"
-        assert "Mouser Part Number" in names
-        assert "LCSC" in names
+        # Both suppliers share the same Supplier/SPN columns in the new schema.
+        assert "Supplier" in names
+        assert "SPN" in names
         assert "Priority" in names
 
     def test_limit_applies_per_supplier_and_global_priority_is_monotonic(self) -> None:
@@ -564,4 +573,4 @@ class TestEnrichMultipleSuppliers:
 
         # Single supplier path keeps existing behavior (mutate in-place, no append).
         assert len(items_out) == 1
-        assert items_out[0].raw_data.get("Supplier") == "M-1001"
+        assert items_out[0].spn == "M-1001"

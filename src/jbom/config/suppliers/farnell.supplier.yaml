@@ -3,16 +3,4 @@ name: "Farnell"
 field_synonyms:
   supplier_pn:
     display_name: "Farnell"
-    synonyms:
-      - "Farnell Part Number"
-      - "Stock Code"
-      - "Distributor Part Number"
-      - "Distributor Part #"
-      - "Distributor SKU"
-      - "SKU"
-      - "Supplier Part Number"
-      - "Supplier P/N"
-      - "Supplier PN"
-      - "Part Number"
-      - "Part #"
-      - "P/N"
+    synonyms: []

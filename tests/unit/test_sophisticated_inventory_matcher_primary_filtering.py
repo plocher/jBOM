@@ -35,7 +35,7 @@ def _make_inventory_item(
     item_type: str = "",
     description: str = "",
     tolerance: str = "",
-    lcsc: str = "",
+    spn: str = "",
     name: str = "",
     aliases: str = "",
     mfgpn: str = "",
@@ -57,7 +57,7 @@ def _make_inventory_item(
         voltage="",
         amperage="",
         wattage="",
-        lcsc=lcsc,
+        spn=spn,
         manufacturer="",
         mfgpn=mfgpn,
         datasheet="",
@@ -291,7 +291,7 @@ def test_lcsc_validation_rejects_conflicting_candidate_when_component_has_lcsc()
         category="RES",
         value="10K",
         package="0603",
-        lcsc="C99999",
+        spn="C99999",
     )
 
     assert matcher._passes_primary_filters(component, wrong) is False

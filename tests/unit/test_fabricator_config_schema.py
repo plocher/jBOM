@@ -24,10 +24,13 @@ def test_load_generic_derives_field_synonyms_and_tier_rules_from_suppliers() -> 
 
     assert "supplier_pn" in fab.field_synonyms
     assert isinstance(fab.field_synonyms["supplier_pn"], FieldSynonym)
+    # supplier_pn display_name comes from generic supplier's supplier_pn.display_name
     assert fab.field_synonyms["supplier_pn"].display_name == "Part Number"
 
-    # Contract: derived supplier_pn synonyms include common header variants.
-    assert "Part Number" in fab.field_synonyms["supplier_pn"].synonyms
+    # With the normalized Supplier/SPN schema, part-number resolution uses
+    # item.supplier + item.spn at runtime, not column-name synonym lists.
+    # Synonyms are intentionally empty in the new schema.
+    assert isinstance(fab.field_synonyms["supplier_pn"].synonyms, list)
 
     assert "mpn" in fab.field_synonyms
     assert isinstance(fab.field_synonyms["mpn"], FieldSynonym)
@@ -45,7 +48,9 @@ def test_load_generic_derives_field_synonyms_and_tier_rules_from_suppliers() -> 
 def test_resolve_field_synonym_is_forgiving() -> None:
     fab = load_fabricator("jlc")
 
-    assert fab.resolve_field_synonym(" Lcsc Part # ") == "fab_pn"
+    # In the Supplier/SPN schema, "SPN" is the canonical fab_pn column for JLC.
+    assert fab.resolve_field_synonym(" SPN ") == "fab_pn"
+    assert fab.resolve_field_synonym("spn") == "fab_pn"
     assert fab.resolve_field_synonym("fab_pn") == "fab_pn"
     assert fab.resolve_field_synonym("Manufacturer_Part_Number") == "mpn"
     assert fab.resolve_field_synonym("unknown_field") is None

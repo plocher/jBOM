@@ -975,25 +975,27 @@ def _is_blank(value: str) -> bool:
 def _get_supplier_pn_for_item(item: InventoryItem, supplier_id: str) -> str:
     """Return the existing supplier PN stored on an ITEM row.
 
-    Handles LCSC as a special case (``item.lcsc``).  For all other suppliers
-    the value is read from ``item.raw_data[supplier.inventory_column]``.
+    Reads ``item.spn`` when ``item.supplier`` matches the requested supplier;
+    returns empty string otherwise.
 
     Args:
         item: An ITEM row from the inventory catalog.
-        supplier_id: Normalized supplier ID string (e.g. ``'generic'``).
+        supplier_id: Normalized supplier ID string (e.g. ``'lcsc'``).
 
     Returns:
-        Stripped PN string, or empty string when absent.
+        Stripped SPN string, or empty string when supplier doesn't match.
     """
     from jbom.config.suppliers import resolve_supplier_by_id
 
     sid = (supplier_id or "").strip().lower()
-    if sid == "lcsc":
-        return (item.lcsc or "").strip()
     supplier = resolve_supplier_by_id(sid)
     if supplier is None:
         return ""
-    return str((item.raw_data or {}).get(supplier.inventory_column, "")).strip()
+
+    item_supplier = (item.supplier or "").strip().lower()
+    if item_supplier == sid or item_supplier == supplier.supplier_label.lower():
+        return (item.spn or "").strip()
+    return ""
 
 
 def _prop(comp: Component, name: str) -> str:
@@ -1123,7 +1125,6 @@ def _component_to_inventory_item(comp: Component, category: str) -> InventoryIte
         voltage=voltage,
         amperage="",
         wattage=wattage,
-        lcsc="",
         manufacturer=manufacturer,
         mfgpn=mfgpn,
         datasheet="",

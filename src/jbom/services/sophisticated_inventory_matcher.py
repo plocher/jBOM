@@ -33,7 +33,7 @@ _PASSIVE_TYPES = {
     ComponentType.CAPACITOR,
     ComponentType.INDUCTOR,
 }
-_LCSC_MATCH_POLICIES = {"validate", "hard_accept", "ignore"}
+_SPN_MATCH_POLICIES = {"validate", "hard_accept", "ignore"}
 _CATEGORY_COMPATIBILITY = {
     (ComponentType.INTEGRATED_CIRCUIT, ComponentType.REGULATOR),
     (ComponentType.REGULATOR, ComponentType.INTEGRATED_CIRCUIT),
@@ -96,8 +96,8 @@ class MatchingOptions:
     non_passive_min_signal_score: int = 35
     non_passive_min_positive_families: int = 1
     non_passive_top_margin: int = 0
-    lcsc_match_policy: str = "validate"
-    lcsc_mismatch_reject: bool = True
+    spn_match_policy: str = "validate"
+    spn_mismatch_reject: bool = True
 
     def __post_init__(self) -> None:
         """Validate configuration at data intake."""
@@ -107,9 +107,9 @@ class MatchingOptions:
             raise ValueError("non_passive_min_positive_families must be >= 0")
         if self.non_passive_top_margin < 0:
             raise ValueError("non_passive_top_margin must be >= 0")
-        if self.lcsc_match_policy not in _LCSC_MATCH_POLICIES:
+        if self.spn_match_policy not in _SPN_MATCH_POLICIES:
             raise ValueError(
-                "lcsc_match_policy must be one of: validate, hard_accept, ignore"
+                "spn_match_policy must be one of: validate, hard_accept, ignore"
             )
 
 
@@ -363,33 +363,33 @@ class SophisticatedInventoryMatcher:
         return ""
 
     @staticmethod
-    def _extract_component_lcsc(component: Component) -> str:
-        """Extract component LCSC value from schematic attributes when present."""
+    def _extract_component_spn(component: Component) -> str:
+        """Extract supplier part number anchor from schematic attributes.
+
+        Checks generic ``spn``/``SPN`` properties first, then falls back to
+        ``lcsc``/``LCSC`` (schematic property conventions are out of scope for
+        the inventory schema cutover).
+        """
 
         properties = component.properties or {}
-        for key in ("lcsc", "LCSC", "i:lcsc"):
+        for key in ("spn", "SPN", "i:spn", "lcsc", "LCSC", "i:lcsc"):
             value = str(properties.get(key, "")).strip()
             if value:
                 return value
 
         for key, value in properties.items():
-            if str(key or "").strip().lower().endswith("lcsc"):
+            lower_key = str(key or "").strip().lower()
+            if lower_key in ("spn", "lcsc") or lower_key.endswith("lcsc"):
                 text = str(value).strip()
                 if text:
                     return text
         return ""
 
     @staticmethod
-    def _extract_item_lcsc(item: InventoryItem) -> str:
-        """Extract candidate LCSC value from canonical or raw fields."""
+    def _extract_item_spn(item: InventoryItem) -> str:
+        """Extract supplier part number from canonical InventoryItem.spn field."""
 
-        canonical = str(item.lcsc or "").strip()
-        if canonical:
-            return canonical
-        raw = item.raw_data or {}
-        return SophisticatedInventoryMatcher._first_non_empty(
-            raw, ("LCSC", "lcsc", "LCSC Part", "LCSC Part #")
-        )
+        return str(item.spn or "").strip()
 
     @staticmethod
     def _candidate_aliases(item: InventoryItem) -> tuple[str, ...]:
@@ -682,20 +682,20 @@ class SophisticatedInventoryMatcher:
                     -90,
                 )
 
-        component_lcsc = self._extract_component_lcsc(component)
-        item_lcsc = self._extract_item_lcsc(item)
-        if component_lcsc and self._options.lcsc_match_policy != "ignore":
-            left = self._normalize_identifier(component_lcsc)
-            right = self._normalize_identifier(item_lcsc)
+        component_spn = self._extract_component_spn(component)
+        item_spn_val = self._extract_item_spn(item)
+        if component_spn and self._options.spn_match_policy != "ignore":
+            left = self._normalize_identifier(component_spn)
+            right = self._normalize_identifier(item_spn_val)
             if left and right and left == right:
-                if self._options.lcsc_match_policy == "hard_accept":
-                    contribute("lcsc_hard_accept", 180, "lcsc")
+                if self._options.spn_match_policy == "hard_accept":
+                    contribute("spn_hard_accept", 180, "spn")
                     hard_accept = True
                 else:
-                    contribute("lcsc_match", 70, "lcsc")
+                    contribute("spn_match", 70, "spn")
             elif right:
-                contribute("lcsc_mismatch", -150)
-                if self._options.lcsc_mismatch_reject:
+                contribute("spn_mismatch", -150)
+                if self._options.spn_mismatch_reject:
                     hard_reject = True
 
         component_value_normalized = self._normalize_identifier(component.value)
@@ -827,15 +827,15 @@ class SophisticatedInventoryMatcher:
         if not comp_type and not comp_pkg and not comp_val_norm:
             return True
 
-        component_lcsc = self._extract_component_lcsc(component)
-        item_lcsc = self._extract_item_lcsc(item)
-        if component_lcsc and self._options.lcsc_match_policy != "ignore":
-            left = self._normalize_identifier(component_lcsc)
-            right = self._normalize_identifier(item_lcsc)
+        component_spn = self._extract_component_spn(component)
+        item_spn = self._extract_item_spn(item)
+        if component_spn and self._options.spn_match_policy != "ignore":
+            left = self._normalize_identifier(component_spn)
+            right = self._normalize_identifier(item_spn)
             if left and right and left == right:
-                if self._options.lcsc_match_policy == "hard_accept":
+                if self._options.spn_match_policy == "hard_accept":
                     return True
-            elif right and self._options.lcsc_mismatch_reject:
+            elif right and self._options.spn_mismatch_reject:
                 return False
 
         if comp_type not in _PASSIVE_TYPES:
@@ -857,9 +857,9 @@ class SophisticatedInventoryMatcher:
             ):
                 return False
             if self._requires_identity_anchor(comp_type or ""):
-                if not (assessment.positive_families & {"identity", "lcsc"}):
+                if not (assessment.positive_families & {"identity", "spn"}):
                     return False
-            elif not (assessment.positive_families & {"identity", "footprint", "lcsc"}):
+            elif not (assessment.positive_families & {"identity", "footprint", "spn"}):
                 return False
             return True
 

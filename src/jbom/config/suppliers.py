@@ -31,12 +31,16 @@ class SupplierFieldSynonym:
 
 @dataclass(frozen=True)
 class SupplierConfig:
-    """Configuration for a parts supplier/distributor."""
+    """Configuration for a parts supplier/distributor.
+
+    ``supplier_label`` is the value that appears in the ``Supplier`` column of
+    the normalized inventory CSV (e.g. ``"LCSC"`` for LCSC Electronics).  It
+    is NOT a CSV column name.
+    """
 
     id: str
     name: str
-    inventory_column: str
-    inventory_column_synonyms: list[str] = field(default_factory=list)
+    supplier_label: str  # value matched against the Supplier CSV column
     field_synonyms: dict[str, SupplierFieldSynonym] = field(default_factory=dict)
 
     description: Optional[str] = None
@@ -130,8 +134,7 @@ class SupplierConfig:
             raise ValueError(
                 f"Supplier '{sid}' field_synonyms must define canonical 'supplier_pn'"
             )
-        inventory_column = supplier_pn_synonym.display_name
-        inventory_column_synonyms = list(supplier_pn_synonym.synonyms)
+        supplier_label = supplier_pn_synonym.display_name
 
         part_number_cfg = data.get("part_number") or {}
 
@@ -276,8 +279,7 @@ class SupplierConfig:
         return SupplierConfig(
             id=sid,
             name=name,
-            inventory_column=inventory_column,
-            inventory_column_synonyms=inventory_column_synonyms,
+            supplier_label=supplier_label,
             field_synonyms=parsed_field_synonyms,
             description=description,
             website=website,
@@ -391,9 +393,13 @@ def resolve_supplier_by_id(supplier_id: str) -> Optional[SupplierConfig]:
         return None
 
 
-def normalize_inventory_column(
-    raw_data: Mapping[str, str], supplier: SupplierConfig
-) -> str:
-    """Return the value from raw_data for this supplier's canonical column."""
+def get_spn_for_item(raw_data: Mapping[str, str], supplier: SupplierConfig) -> str:
+    """Return the SPN from raw_data when the Supplier column matches this supplier.
 
-    return str(raw_data.get(supplier.inventory_column, ""))
+    Returns the SPN value when ``raw_data['Supplier']`` matches the supplier's
+    ``supplier_label`` (case-insensitive), empty string otherwise.
+    """
+    item_supplier = str(raw_data.get("Supplier", "")).strip().lower()
+    if item_supplier == supplier.id or item_supplier == supplier.supplier_label.lower():
+        return str(raw_data.get("SPN", "")).strip()
+    return ""

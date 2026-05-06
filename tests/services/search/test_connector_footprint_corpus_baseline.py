@@ -42,7 +42,7 @@ def _inv_item_for_connector_footprint(footprint_full: str) -> InventoryItem:
         voltage="",
         amperage="",
         wattage="",
-        lcsc="",
+        spn="",
         manufacturer="",
         mfgpn="",
         datasheet="",

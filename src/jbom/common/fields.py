@@ -8,7 +8,7 @@ from typing import List, Dict
 
 # Known acronyms in PCB/electronics domain (lowercase for matching)
 KNOWN_ACRONYMS = {
-    "lcsc",
+    "spn",
     "smd",
     "pcb",
     "bom",
@@ -199,8 +199,8 @@ FIELD_PRESETS = {
         "description": "Generic fabricator format with manufacturer information",
     },
     "minimal": {
-        "fields": ["reference", "quantity", "value", "lcsc"],
-        "description": "Bare minimum: reference, qty, value, and LCSC part number",
+        "fields": ["reference", "quantity", "value", "spn"],
+        "description": "Bare minimum: reference, qty, value, and supplier part number",
     },
     "all": {
         "fields": None,  # Special case: means "include all available fields"

@@ -396,8 +396,8 @@ class InventoryReader:
                 component_id=_resolve_component_id(
                     row_type, str(row.get("ComponentID", "")).strip(), row
                 ),
-                # Phase 4 inventory schema: LCSC is an explicit column (no DPN fallback).
-                lcsc=self._get_first_value(row, ["LCSC", "LCSC Part", "LCSC Part #"]),
+                supplier=str(row.get("Supplier", "")).strip(),
+                spn=str(row.get("SPN", "")).strip(),
                 manufacturer=self._get_canonical_profile_value(
                     row,
                     canonical="manufacturer",
@@ -414,10 +414,6 @@ class InventoryReader:
                 ),
                 datasheet=row.get("Datasheet", ""),
                 package=row.get("Package", ""),
-                # Phase 4 inventory schema: distributor-specific part numbers should remain
-                # in raw_data for field_synonyms resolution (e.g. Mouser/DigiKey columns).
-                distributor="",
-                distributor_part_number="",
                 uuid=row.get("UUID", ""),
                 priority=self._parse_priority(
                     row.get("Priority", str(DEFAULT_PRIORITY))

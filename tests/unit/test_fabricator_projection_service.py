@@ -28,7 +28,7 @@ def test_build_projection_maps_jlc_bom_headers() -> None:
         "Value",
         "Comment",
         "Footprint",
-        "LCSC",
+        "SPN",
         "Surface Mount",
     )
 
@@ -71,8 +71,7 @@ def test_resolve_fabricator_part_number_prefers_explicit_attribute() -> None:
     result = FabricatorProjectionService.resolve_fabricator_part_number(
         {
             "fabricator_part_number": "JLC-OVERRIDE-001",
-            "lcsc": "C1234",
-            "jlcpcb_part_#": "C9999",
+            "spn": "C1234",
         },
         fabricator_id="jlc",
         fabricator_config=config,
@@ -85,8 +84,9 @@ def test_resolve_fabricator_part_number_uses_synonyms() -> None:
     config = FabricatorProjectionService().load_config("jlc")
     assert config is not None
 
+    # In the Supplier/SPN schema, "SPN" is the canonical column for JLC fab_pn.
     result = FabricatorProjectionService.resolve_fabricator_part_number(
-        {"jlcpcb_part_#": "C965799"},
+        {"spn": "C965799"},
         fabricator_id="jlc",
         fabricator_config=config,
     )

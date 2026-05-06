@@ -22,13 +22,15 @@ part_number:
 
 field_synonyms:
   fab_pn:
+    display_name: "SPN"
     synonyms:
-      - "LCSC"
-      - "LCSC Part"
-      - "LCSC Part #"
-    display_name: "LCSC Part Number"
+      - "SPN"
+      - "spn"
   supplier_pn:
-    display_name: "Supplier Part Number"
+    display_name: "SPN"
+    synonyms:
+      - "SPN"
+      - "spn"
   mpn:
     synonyms:
       - "MPN"
@@ -51,7 +53,7 @@ bom_columns:
   "Value": "value"
   "Comment": "description"
   "Footprint": "i:package"
-  "LCSC": "fabricator_part_number"
+  "SPN": "fabricator_part_number"
   "Surface Mount": "smd"
 
 pos_columns:
