@@ -15,7 +15,7 @@ def test_build_projection_maps_jlc_bom_headers() -> None:
             "quantity",
             "value",
             "description",
-            "i:package",
+            "k:footprint",
             "fabricator_part_number",
             "smd",
         ],
@@ -28,7 +28,7 @@ def test_build_projection_maps_jlc_bom_headers() -> None:
         "Value",
         "Comment",
         "Footprint",
-        "LCSC",
+        "LCSC Part #",
         "Surface Mount",
     )
 

@@ -250,6 +250,26 @@ class FabricatorConfig:
 
         return None
 
+    def normalize_header_to_display_name(self, raw_header: str) -> str:
+        """Rewrite a raw bom_columns key through field_synonyms to its display_name.
+
+        This is the output-side counterpart of :meth:`resolve_field_synonym`.
+        If ``raw_header`` is a recognised synonym (e.g. ``"LCSC"``), it is
+        replaced by the canonical display_name (e.g. ``"LCSC Part #"``).
+        Otherwise the raw header is returned unchanged.
+
+        Example::
+
+            # fab_pn.synonyms includes "LCSC", display_name = "LCSC Part #"
+            fab.normalize_header_to_display_name("LCSC")  # -> "LCSC Part #"
+            fab.normalize_header_to_display_name("SPN")   # -> "LCSC Part #"
+            fab.normalize_header_to_display_name("Value") # -> "Value" (no match)
+        """
+        canonical = self.resolve_field_synonym(raw_header)
+        if canonical and canonical in self.field_synonyms:
+            return self.field_synonyms[canonical].display_name
+        return raw_header
+
 
 def _parse_field_synonyms(raw: Any) -> Dict[str, FieldSynonym]:
     if raw is None:
@@ -524,35 +544,53 @@ def apply_fabricator_column_mapping(
 ) -> List[str]:
     """Apply fabricator-specific column mapping to field list.
 
+    bom_columns keys are treated as synonym aliases: after reversing the
+    bom_columns map to obtain the raw header string, the header is passed
+    through :meth:`FabricatorConfig.normalize_header_to_display_name` so that
+    any synonym resolves to its canonical ``display_name``.  For example,
+    the key ``"LCSC"`` normalises to ``"LCSC Part #"`` when ``fab_pn`` has
+    ``display_name: "LCSC Part #"``.
+
     Args:
         fabricator_id: ID of fabricator
         output_type: Either 'bom' or 'pos'
-        mode: 'standard' for normal defaults, 'additive' for POS +field baseline
         fields: List of internal field names
 
     Returns:
-        List of headers using fabricator-specific mapping
+        List of headers using fabricator-specific mapping with display_name
+        normalization applied.
     """
-    column_mapping = get_fabricator_column_mapping(fabricator_id, output_type)
+    from ..common.fields import field_to_header
+
+    try:
+        config = load_fabricator(fabricator_id)
+    except ValueError:
+        config = None
+
+    column_mapping: Optional[Dict[str, str]] = None
+    if config is not None:
+        column_mapping = (
+            config.bom_columns if output_type == "bom" else config.pos_columns
+        )
 
     if not column_mapping:
-        # No fabricator mapping available, convert field names to proper headers
-        from ..common.fields import field_to_header
-
         return [field_to_header(internal_field) for internal_field in fields]
 
-    # Create reverse mapping: internal field -> header
+    # Reverse map: internal field -> raw bom_columns key (e.g., "LCSC")
     reverse_mapping = {v: k for k, v in column_mapping.items()}
 
-    # Apply mapping, falling back to formatted field name if no mapping exists
     headers = []
     for internal_field in fields:
         if internal_field in reverse_mapping:
-            header = reverse_mapping[internal_field]
+            raw_header = reverse_mapping[internal_field]
+            # Rewrite through field_synonyms display_name when the bom_columns
+            # key is a recognised synonym (e.g. "LCSC" -> "LCSC Part #").
+            header = (
+                config.normalize_header_to_display_name(raw_header)
+                if config is not None
+                else raw_header
+            )
         else:
-            # No specific mapping - format the field name nicely
-            from ..common.fields import field_to_header
-
             header = field_to_header(internal_field)
         headers.append(header)
 

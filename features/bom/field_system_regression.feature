@@ -16,7 +16,7 @@ Feature: BOM Field System and Output Customization
     And the output should contain CSV headers "Reference,Quantity,Description,Value,Package,Footprint,Manufacturer,Part Number"
     When I run jbom command "bom --fabricator jlc -o -"
     Then the command should succeed
-    And the output should contain CSV headers "Designator,Quantity,Value,Comment,Footprint,LCSC,Surface Mount"
+    And the output should contain CSV headers "Designator,Quantity,Value,Comment,Footprint,LCSC Part #,Surface Mount"
     When I run jbom command "bom --fabricator pcbway -o -"
     Then the command should succeed
     And the output should not contain CSV headers "Reference,Quantity,Description,Value,Package,Footprint,Manufacturer,Part Number"
@@ -46,7 +46,7 @@ Feature: BOM Field System and Output Customization
   Scenario: Fabricator-specific presets
     When I run jbom command "bom --fabricator jlc -f +jlc -o -"
     Then the command should succeed
-    And the output should contain CSV headers "Designator,Quantity,Value,Comment,LCSC"
+    And the output should contain CSV headers "Designator,Quantity,Value,Comment,LCSC Part #"
     When I run jbom command "bom --fabricator generic -f +generic -o -"
     Then the command should succeed
     And the output should contain CSV headers "Reference,Quantity,Description,Value,Manufacturer,Part Number"
@@ -54,7 +54,7 @@ Feature: BOM Field System and Output Customization
   @regression @current-broken
   Scenario: Mixed syntax - preset plus custom fields
     # +minimal uses the 'spn' field; without --jlc the column header is 'SPN'.
-    # JLC fabricator maps fabricator_part_number → 'LCSC' header via bom_columns.
+    # JLC fabricator maps fabricator_part_number → 'LCSC Part #' header via bom_columns.
     When I run jbom command "bom -f +minimal,Manufacturer,I:Voltage -o -"
     Then the command should succeed
     And the output should contain "Reference"
