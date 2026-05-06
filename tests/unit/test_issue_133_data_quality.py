@@ -277,7 +277,7 @@ class TestBug5PermissiveFields:
             "value": "Value",
             "description": "Description",
             "footprint": "Footprint",
-            "k:footprint": "KiCad footprint (library prefix stripped)",
+            "s:k:footprint": "KiCad footprint (library prefix stripped)",
             "fabricator_part_number": "Fabricator part number",
             "smd": "Surface mount indicator",
         }
@@ -294,7 +294,7 @@ class TestBug5PermissiveFields:
             "quantity",
             "value",
             "description",
-            "k:footprint",
+            "s:k:footprint",
             "fabricator_part_number",
             "smd",
         ]
