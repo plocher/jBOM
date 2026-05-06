@@ -63,7 +63,7 @@ bom_columns:
   "Quantity": "quantity"
   "Value": "value"
   "Comment": "description"
-  "Footprint": "s:k:footprint"
+  "Footprint": "p:k:footprint"
   "LCSC": "fabricator_part_number"  # JLCPCB requires this column name in BOM
   "Surface Mount": "smd"
 
@@ -83,7 +83,7 @@ presets:
       - "quantity"
       - "value"
       - "description"
-      - "s:k:footprint"
+      - "p:k:footprint"
       - "fabricator_part_number"
       - "smd"
   jlc:

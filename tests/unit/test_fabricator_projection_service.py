@@ -15,7 +15,7 @@ def test_build_projection_maps_jlc_bom_headers() -> None:
             "quantity",
             "value",
             "description",
-            "s:k:footprint",
+            "p:k:footprint",
             "fabricator_part_number",
             "smd",
         ],
