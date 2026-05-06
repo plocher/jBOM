@@ -1,6 +1,102 @@
 # CHANGELOG
 
 
+## v6.51.0 (2026-05-06)
+
+### Bug Fixes
+
+* fix: use p:k:footprint in jlc bom_columns — PCB footprint is authoritative
+
+Schematic footprints may be generic/wildcard; the PCB footprint is the
+specific, authoritative value that matches inventory. Use p:k:footprint
+(PCB source, library prefix stripped) so the Footprint column in the
+JLCPCB BOM reflects the actual placed footprint.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`19a2e36`](https://github.com/plocher/jBOM/commit/19a2e36013aeca19b68838f7cc7877db7f745d14))
+
+* fix: use s:k:footprint in jlc bom_columns to populate Footprint from schematic
+
+Bare k:footprint defaults to i: (inventory) source per design, but inventory
+files do not carry a footprint column. The JLCPCB footprint comes from the
+KiCad schematic (s:), so s:k:footprint is the correct specifier — it resolves
+the schematic footprint and strips the LIBRARY: prefix via derive_package_from_footprint.
+
+Update jlc.fab.yaml bom_columns and default preset fields accordingly.
+Update unit tests to expect s:k:footprint as the internal field name.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`765977e`](https://github.com/plocher/jBOM/commit/765977e029a68fd24d3d47f9df4742274957a569))
+
+* fix: restore LCSC as JLC BOM output column header (bom_columns)
+
+The bom_columns key "LCSC" is the output column name required by
+JLCPCB assembly service. It is orthogonal to the fab_pn.synonyms
+which control input recognition (now includes both "SPN" for new
+inventory schema and "LCSC"/"LCSC Part #" for existing schematic
+components that still carry LCSC: properties).
+
+Distinction:
+- bom_columns["LCSC"] -> output header that JLCPCB reads
+- fab_pn.synonyms["SPN", "lcsc", "LCSC Part"] -> fields jBOM reads
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`14fd401`](https://github.com/plocher/jBOM/commit/14fd401b5776cd494e395573f1e589edd3bf1705))
+
+### Features
+
+* feat: add k: field modifier and LCSC Part # display_name rewrite (Issues 1 & 2)
+
+Issue 1 - k: modifier for KiCad library:name strip:
+- Add split_kicad_strip_field() to common/fields.py
+  Parses k:field, i:k:field, s:k:field, p:k:field forms
+  Bare k: defaults silently to i: source (debug log when verbose)
+- Wire k: handling into _get_field_value (cli/bom.py)
+  before the existing i:/s:/p: namespace dispatch
+  Applies derive_package_from_footprint() on resolved value
+- Wire k: handling into _get_pos_field_value (cli/pos.py)
+  Same semantics via resolve_field + derive_package_from_footprint
+- Update jlc.fab.yaml: bom_columns Footprint: k:footprint (was i:package)
+  and default preset fields use k:footprint
+
+Issue 2 - LCSC Part # output header rewrite:
+- Add normalize_header_to_display_name() to FabricatorConfig
+  Rewrites any bom_columns key that is a known synonym to display_name
+- Update apply_fabricator_column_mapping() to run header through
+  normalize_header_to_display_name; LCSC bom_columns key rewrites to
+  LCSC Part # (fab_pn.display_name)
+- Update jlc.fab.yaml fab_pn.display_name=LCSC Part #, full synonym list
+  including SPN/spn and all JLC/LCSC alias variants
+
+Tests updated:
+- test_fabricator_projection_service: expect k:footprint, LCSC Part # header
+- test_issue_133_data_quality: expect k:footprint in reverse bom_columns map
+- field_system_regression.feature: update expected JLC headers to LCSC Part #
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`a053031`](https://github.com/plocher/jBOM/commit/a053031fd6fc69258a7250bea279c1b2c99574c3))
+
+* feat: cut over inventory schema to normalized Supplier/SPN model
+
+Replace per-supplier CSV columns (LCSC, Mouser, etc.) with a unified
+two-column model: Supplier (supplier name) + SPN (supplier part number).
+
+Changes:
+- InventoryItem: remove lcsc/distributor/distributor_part_number;
+  add supplier and spn fields
+- SupplierConfig: rename inventory_column → supplier_label (reflects
+  its new meaning as a value to match in the Supplier column)
+- All supplier YAML files: remove legacy column-name synonyms
+- FabricatorInventorySelector: derive fab_pn/supplier_pn from
+  item.supplier + item.spn (Q+ tier logic)
+- SophisticatedInventoryMatcher: rename lcsc_match_policy → spn_match_policy,
+  generalize LCSC identity-anchor to generic SPN anchor
+- inventory_reader: map Supplier/SPN columns directly
+- All CLI and service layers updated to use new fields
+- BDD features and unit tests updated for new schema
+- No backward-compatibility aliases or legacy shims
+
+Co-Authored-By: Oz <oz-agent@warp.dev>
+
+Closes #218 ([`e191894`](https://github.com/plocher/jBOM/commit/e191894f5d09ca323bcbb1129323248f8943b95a))
+
+
 ## v6.50.3 (2026-05-02)
 
 ### Refactoring
