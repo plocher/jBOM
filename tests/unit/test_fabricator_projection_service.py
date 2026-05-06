@@ -28,7 +28,7 @@ def test_build_projection_maps_jlc_bom_headers() -> None:
         "Value",
         "Comment",
         "Footprint",
-        "SPN",
+        "LCSC",
         "Surface Mount",
     )
 
@@ -86,7 +86,7 @@ def test_resolve_fabricator_part_number_uses_synonyms() -> None:
 
     # In the Supplier/SPN schema, "SPN" is the canonical column for JLC fab_pn.
     result = FabricatorProjectionService.resolve_fabricator_part_number(
-        {"spn": "C965799"},
+        {"lcsc": "C965799"},
         fabricator_id="jlc",
         fabricator_config=config,
     )

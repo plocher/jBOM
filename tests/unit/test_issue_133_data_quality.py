@@ -283,7 +283,7 @@ class TestBug5PermissiveFields:
         }
         presets = get_fabricator_presets("jlc")
         selected = parse_fields_argument(
-            "Designator,Quantity,Value,Comment,Footprint,SPN,Surface_Mount",
+            "Designator,Quantity,Value,Comment,Footprint,LCSC,Surface_Mount",
             available,
             fabricator_id="jlc",
             fabricator_presets=presets,
