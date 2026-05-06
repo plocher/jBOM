@@ -48,9 +48,10 @@ def test_load_generic_derives_field_synonyms_and_tier_rules_from_suppliers() -> 
 def test_resolve_field_synonym_is_forgiving() -> None:
     fab = load_fabricator("jlc")
 
-    # In the Supplier/SPN schema, "SPN" is the canonical fab_pn column for JLC.
+    # JLC recognizes both the new SPN column and legacy LCSC schematic properties.
     assert fab.resolve_field_synonym(" SPN ") == "fab_pn"
     assert fab.resolve_field_synonym("spn") == "fab_pn"
+    assert fab.resolve_field_synonym(" Lcsc Part # ") == "fab_pn"
     assert fab.resolve_field_synonym("fab_pn") == "fab_pn"
     assert fab.resolve_field_synonym("Manufacturer_Part_Number") == "mpn"
     assert fab.resolve_field_synonym("unknown_field") is None

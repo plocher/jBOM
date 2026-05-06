@@ -26,6 +26,10 @@ field_synonyms:
     synonyms:
       - "SPN"
       - "spn"
+      - "lcsc"        # schematic components may still carry LCSC: property
+      - "LCSC"
+      - "LCSC Part"
+      - "LCSC Part #"
   supplier_pn:
     display_name: "SPN"
     synonyms:
@@ -53,7 +57,7 @@ bom_columns:
   "Value": "value"
   "Comment": "description"
   "Footprint": "i:package"
-  "SPN": "fabricator_part_number"
+  "LCSC": "fabricator_part_number"  # JLCPCB requires this column name in BOM
   "Surface Mount": "smd"
 
 pos_columns:

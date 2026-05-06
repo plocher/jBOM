@@ -41,9 +41,9 @@ def test_resolve_pos_output_projection_keeps_generic_user_headers() -> None:
     assert headers == ["Reference", "X", "Y", "Side"]
 
 
-def test_fabricator_part_number_resolves_from_jlc_spn_attribute() -> None:
+def test_fabricator_part_number_resolves_from_jlc_lcsc_attribute() -> None:
     """In the Supplier/SPN schema, 'SPN' is the canonical JLC fab_pn column."""
-    entry = {"spn": "C965799"}
+    entry = {"lcsc": "C965799"}
     assert (
         _get_pos_field_value(
             entry,
@@ -57,7 +57,7 @@ def test_fabricator_part_number_resolves_from_jlc_spn_attribute() -> None:
 def test_fabricator_part_number_prefers_explicit_value() -> None:
     entry = {
         "fabricator_part_number": "JLC-OVERRIDE-777",
-        "spn": "C965799",
+        "lcsc": "C965799",
     }
     assert (
         _get_pos_field_value(

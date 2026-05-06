@@ -16,7 +16,7 @@ Feature: BOM Field System and Output Customization
     And the output should contain CSV headers "Reference,Quantity,Description,Value,Package,Footprint,Manufacturer,Part Number"
     When I run jbom command "bom --fabricator jlc -o -"
     Then the command should succeed
-    And the output should contain CSV headers "Designator,Quantity,Value,Comment,Footprint,SPN,Surface Mount"
+    And the output should contain CSV headers "Designator,Quantity,Value,Comment,Footprint,LCSC,Surface Mount"
     When I run jbom command "bom --fabricator pcbway -o -"
     Then the command should succeed
     And the output should not contain CSV headers "Reference,Quantity,Description,Value,Package,Footprint,Manufacturer,Part Number"
@@ -46,13 +46,15 @@ Feature: BOM Field System and Output Customization
   Scenario: Fabricator-specific presets
     When I run jbom command "bom --fabricator jlc -f +jlc -o -"
     Then the command should succeed
-    And the output should contain CSV headers "Designator,Quantity,Value,Comment,SPN"
+    And the output should contain CSV headers "Designator,Quantity,Value,Comment,LCSC"
     When I run jbom command "bom --fabricator generic -f +generic -o -"
     Then the command should succeed
     And the output should contain CSV headers "Reference,Quantity,Description,Value,Manufacturer,Part Number"
 
   @regression @current-broken
   Scenario: Mixed syntax - preset plus custom fields
+    # +minimal uses the 'spn' field; without --jlc the column header is 'SPN'.
+    # JLC fabricator maps fabricator_part_number → 'LCSC' header via bom_columns.
     When I run jbom command "bom -f +minimal,Manufacturer,I:Voltage -o -"
     Then the command should succeed
     And the output should contain "Reference"
@@ -107,7 +109,7 @@ Feature: BOM Field System and Output Customization
     Then the command should succeed
     # Should use JLC default format
     And the output should contain "Designator"
-    And the output should contain "SPN"
+    And the output should contain "LCSC"
 
   @regression @current-broken
   Scenario: CLI argument validation - missing field list
