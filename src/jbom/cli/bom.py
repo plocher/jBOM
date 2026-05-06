@@ -45,7 +45,11 @@ from jbom.common.field_parser import (
     parse_fields_argument,
     check_fabricator_field_completeness,
 )
-from jbom.common.fields import get_available_presets, normalize_field_name
+from jbom.common.fields import (
+    get_available_presets,
+    normalize_field_name,
+    split_kicad_strip_field,
+)
 from jbom.common.component_filters import (
     add_component_filter_arguments,
     create_filter_config,
@@ -1266,6 +1270,28 @@ def _get_field_value(
     Returns:
         String value for the field
     """
+    import logging
+
+    # Handle k: modifier — KiCad LIBRARY:NAME → NAME (strip library nickname).
+    # "k:footprint" defaults to inventory source; use "i:k:", "s:k:", "p:k:" explicitly.
+    kicad_parts = split_kicad_strip_field(field)
+    if kicad_parts is not None:
+        source, inner = kicad_parts
+        if field.startswith("k:"):
+            logging.getLogger(__name__).debug(
+                "k:%s: no source prefix specified, defaulting to i: (inventory). "
+                "Use i:k:, s:k:, or p:k: to be explicit.",
+                inner,
+            )
+        raw = _resolve_namespaced_field_value(
+            entry,
+            source,
+            inner,
+            fabricator_id=fabricator_id,
+            fabricator_config=fabricator_config,
+        )
+        return derive_package_from_footprint(raw)
+
     # Handle namespaced fields
     if field.startswith("i:"):
         return _resolve_namespaced_field_value(

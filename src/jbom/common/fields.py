@@ -261,3 +261,42 @@ def get_available_presets() -> Dict[str, str]:
         Dict mapping preset names to their descriptions
     """
     return {name: info["description"] for name, info in FIELD_PRESETS.items()}
+
+
+# Valid source prefixes for k: stacking
+_K_MODIFIER_SOURCES: frozenset[str] = frozenset({"s", "p", "i"})
+
+
+def split_kicad_strip_field(field: str) -> "tuple[str, str] | None":
+    """Parse a ``k:`` (KiCad nickname-strip) field specifier.
+
+    The ``k:`` modifier strips the ``LIBRARY:NAME`` prefix from a KiCad field
+    value, returning only the ``NAME`` part (e.g. ``SPCoast:0603-RES`` →
+    ``0603-RES``).  It must be combined with a source prefix to be
+    unambiguous.  Bare ``k:`` silently defaults to ``i:`` (inventory source);
+    callers should log a note when verbose/debug mode is active.
+
+    Supported forms::
+
+        "k:footprint"       → ("i", "footprint")  # defaults to inventory
+        "i:k:footprint"     → ("i", "footprint")
+        "s:k:footprint"     → ("s", "footprint")
+        "p:k:footprint"     → ("p", "footprint")
+        "k:lib_id"          → ("i", "lib_id")
+
+    Returns ``None`` when ``field`` does not use the ``k:`` modifier.
+    """
+    if field.startswith("k:"):
+        inner = field[2:]
+        if inner:
+            return "i", inner
+        return None
+
+    for src in _K_MODIFIER_SOURCES:
+        compound = f"{src}:k:"
+        if field.startswith(compound):
+            inner = field[len(compound) :]
+            if inner:
+                return src, inner
+
+    return None

@@ -22,14 +22,21 @@ part_number:
 
 field_synonyms:
   fab_pn:
-    display_name: "SPN"
+    # display_name is the canonical output header JLCPCB expects.
+    # All synonyms are recognised as equivalent on input (--fields, bom_columns keys,
+    # schematic properties, inventory columns).  The output header is always display_name.
+    display_name: "LCSC Part #"
     synonyms:
-      - "SPN"
-      - "spn"
-      - "lcsc"        # schematic components may still carry LCSC: property
-      - "LCSC"
+      - "LCSC Part #"      # canonical JLCPCB column name (matches KiCad BOM plugin)
+      - "LCSC Part Number"
       - "LCSC Part"
-      - "LCSC Part #"
+      - "LCSC"
+      - "JLC Part #"
+      - "JLC Part"
+      - "JLC"
+      - "JLCPCB Part #"
+      - "SPN"              # normalized Supplier/SPN inventory schema
+      - "spn"
   supplier_pn:
     display_name: "SPN"
     synonyms:
@@ -56,7 +63,7 @@ bom_columns:
   "Quantity": "quantity"
   "Value": "value"
   "Comment": "description"
-  "Footprint": "i:package"
+  "Footprint": "k:footprint"
   "LCSC": "fabricator_part_number"  # JLCPCB requires this column name in BOM
   "Surface Mount": "smd"
 
@@ -76,7 +83,7 @@ presets:
       - "quantity"
       - "value"
       - "description"
-      - "i:package"
+      - "k:footprint"
       - "fabricator_part_number"
       - "smd"
   jlc:

@@ -35,7 +35,12 @@ from jbom.common.cli_fabricator import (
     resolve_fabricator_from_args,
 )
 from jbom.common.field_parser import parse_fields_argument
-from jbom.common.fields import field_to_header, normalize_field_name
+from jbom.common.fields import (
+    field_to_header,
+    normalize_field_name,
+    split_kicad_strip_field,
+)
+from jbom.common.component_utils import derive_package_from_footprint
 from jbom.common.component_filters import (
     add_component_filter_arguments,
     create_filter_config,
@@ -777,7 +782,26 @@ def _get_pos_field_value(
     Returns:
         String value for the field
     """
+    import logging
+
     row_sources = _build_pos_row_sources(entry)
+
+    # Handle k: modifier — KiCad LIBRARY:NAME → NAME (strip library nickname).
+    # "k:footprint" defaults to inventory source; use "i:k:", "s:k:", "p:k:" explicitly.
+    kicad_parts = split_kicad_strip_field(field)
+    if kicad_parts is not None:
+        source, inner = kicad_parts
+        if field.startswith("k:"):
+            logging.getLogger(__name__).debug(
+                "k:%s: no source prefix specified, defaulting to i: (inventory). "
+                "Use i:k:, s:k:, or p:k: to be explicit.",
+                inner,
+            )
+        raw = resolve_field(
+            f"{source}:{inner}", row_sources, priority=_POS_SOURCE_PRIORITY
+        )
+        return derive_package_from_footprint(raw)
+
     namespace_prefix, separator, _ = field.partition(":")
     if separator and namespace_prefix in {"s", "p", "i"}:
         return resolve_field(field, row_sources, priority=_POS_SOURCE_PRIORITY)
