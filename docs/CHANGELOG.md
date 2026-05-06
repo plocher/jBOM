@@ -6,8 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Breaking Changes
+- **Inventory CSV schema cutover** (issue #218): per-supplier columns (`LCSC`,
+  `Mouser`, etc.) are replaced by a normalized two-column model:
+  `Supplier` (supplier name, e.g. `LCSC`) and `SPN` (supplier part number).
+  Existing inventory files using the old schema must be migrated.
+  - `InventoryItem` fields `lcsc`, `distributor`, `distributor_part_number`
+    removed; new fields `supplier: str` and `spn: str` added.
+  - `SupplierConfig.inventory_column` renamed to `supplier_label`.
+  - `MatchingOptions.lcsc_match_policy` renamed to `spn_match_policy`.
+  - Per-supplier column-name synonyms removed from all supplier YAML files.
+  - Fabricator tier assignment now derived from `item.supplier` + `item.spn`
+    instead of CSV column-name lookups.
+
 ### Added
-- **Configurable ComponentID fields per category** (issue #171): optional fields in
+- **Configurable ComponentID fields per category**
   a ComponentID (tolerance, voltage, current, wattage, type) are now controlled by a
   per-category allowlist in `generic.defaults.yaml` under `component_id_fields`.  For
   example, LED ComponentIDs no longer include `V=`/`A=`/`W=` — so two WS2812B
