@@ -14,36 +14,19 @@ from jbom.cli.output import (
     open_output_text_file,
     resolve_output_destination,
 )
-from jbom.services.schematic_reader import SchematicReader
-from jbom.services.bom_generator import BOMGenerator, BOMData, BOMEntry
+from jbom.services.bom_generator import BOMData, BOMEntry
 from jbom.services.fabricator_projection_service import (
     FabricatorProjectionService,
 )
-from jbom.services.inventory_overlay_service import InventoryOverlayService
-from jbom.services.pcb_reader import DefaultKiCadReaderService
 from jbom.services.field_listing_service import (
     FieldListingService,
-    get_field_names,
-    get_namespaced_field_tokens,
     resolve_field,
 )
-from jbom.services.component_merge_service import (
-    ComponentMergeResult,
-    ComponentMergeService,
-    MergedReferenceRecord,
-    resolve_grouped_merge_namespace_values,
-)
-from jbom.services.project_component_collector import ProjectComponentCollector
-from jbom.services.project_file_resolver import ProjectFileResolver
-from jbom.common.options import GeneratorOptions
+from jbom.services.component_merge_service import ComponentMergeResult
 from jbom.config.fabricators import (
     FabricatorConfig,
     get_available_fabricators,
     get_fabricator_presets,
-)
-from jbom.common.field_parser import (
-    parse_fields_argument,
-    check_fabricator_field_completeness,
 )
 from jbom.common.fields import (
     get_available_presets,
@@ -57,6 +40,16 @@ from jbom.common.component_filters import (
 from jbom.common.component_utils import derive_package_from_footprint
 from jbom.common.package_matching import PackageType
 from jbom.cli.formatting import Column, print_table, get_terminal_width
+from jbom.application.bom_service import (
+    BOMApplicationService,
+    BOMOrchestrationMode,
+    BOMOrchestrationRequest,
+    enforce_bom_device_footprints as _service_enforce_bom_device_footprints,
+    enrich_bom_smd_from_project_pcb as _service_enrich_bom_smd_from_project_pcb,
+    enrich_bom_with_merge_namespaces as _service_enrich_bom_with_merge_namespaces,
+    entry_smd_from_reference_lookup as _service_entry_smd_from_reference_lookup,
+    filter_inventory_dnp_entries as _service_filter_inventory_dnp_entries,
+)
 from jbom.application.jobs.contracts import (
     JobArtifact,
     JobContext,
@@ -67,69 +60,6 @@ from jbom.application.jobs.contracts import (
 from jbom.application.jobs.runner import JobEventStream, JobRunPayload, JobRunner
 
 _BOM_SOURCE_PRIORITY = "pis"
-_BOM_COMPUTED_FIELDS: tuple[str, ...] = (
-    "reference",
-    "quantity",
-    "value",
-    "description",
-    "footprint",
-    "manufacturer",
-    "mfgpn",
-    "fabricator_part_number",
-    "smd",
-    "lcsc",
-    "package",
-)
-
-
-def _run_component_merge(
-    *,
-    components: list,
-    schematic_files: list[Path],
-    pcb_file: Optional[Path],
-    verbose: bool,
-) -> ComponentMergeResult | None:
-    """Best-effort collector/merge execution for canonical namespace enrichment."""
-
-    try:
-        pcb_components = []
-        if pcb_file is not None and pcb_file.exists():
-            board = DefaultKiCadReaderService().read_pcb_file(pcb_file)
-            pcb_components = list(board.footprints)
-
-        collector = ProjectComponentCollector()
-        project_graph = collector.collect(
-            schematic_components=components,
-            pcb_components=pcb_components,
-            schematic_files=schematic_files,
-            pcb_file=pcb_file,
-        )
-        merge_service = ComponentMergeService()
-        merge_result = merge_service.merge(project_graph)
-
-        if verbose:
-            print(
-                "Merge model active: "
-                f"{project_graph.reference_count} references, "
-                f"{len(merge_result.mismatches)} mismatch record(s)",
-                file=sys.stderr,
-            )
-        return merge_result
-    except Exception as exc:
-        if verbose:
-            print(
-                f"Warning: merge model execution skipped due to error: {exc}",
-                file=sys.stderr,
-            )
-        return None
-
-
-def _resolve_entry_merge_namespace_values(
-    reference_records: list[MergedReferenceRecord],
-) -> dict[str, str]:
-    """Resolve grouped merge namespace fields for one aggregated BOM entry."""
-
-    return resolve_grouped_merge_namespace_values(reference_records)
 
 
 def _enrich_bom_with_merge_namespaces(
@@ -137,66 +67,7 @@ def _enrich_bom_with_merge_namespaces(
     merge_result: ComponentMergeResult | None,
 ) -> BOMData:
     """Attach stable merge-model namespaces (`s:/p:/a:`) onto BOM entries."""
-
-    if merge_result is None or not merge_result.records:
-        return bom_data
-
-    updated_entries: list[BOMEntry] = []
-    any_entry_updated = False
-    for entry in bom_data.entries:
-        entry_merge_records = [
-            merge_result.records[reference]
-            for reference in entry.references
-            if reference in merge_result.records
-        ]
-        if not entry_merge_records:
-            updated_entries.append(entry)
-            continue
-
-        merge_namespace_fields = _resolve_entry_merge_namespace_values(
-            entry_merge_records
-        )
-        if not merge_namespace_fields:
-            updated_entries.append(entry)
-            continue
-
-        attributes = dict(entry.attributes)
-        entry_updated = False
-        for field_key, field_value in merge_namespace_fields.items():
-            if attributes.get(field_key) == field_value:
-                continue
-            attributes[field_key] = field_value
-            entry_updated = True
-
-        if not entry_updated:
-            updated_entries.append(entry)
-            continue
-
-        any_entry_updated = True
-        updated_entries.append(
-            BOMEntry(
-                references=entry.references,
-                value=entry.value,
-                footprint=entry.footprint,
-                quantity=entry.quantity,
-                lib_id=entry.lib_id,
-                attributes=attributes,
-            )
-        )
-
-    metadata = dict(bom_data.metadata)
-    metadata.update(
-        {
-            "merge_model_enabled": True,
-            "merge_model_reference_count": merge_result.reference_count,
-            "merge_model_mismatch_count": len(merge_result.mismatches),
-        }
-    )
-    return BOMData(
-        project_name=bom_data.project_name,
-        entries=updated_entries if any_entry_updated else bom_data.entries,
-        metadata=metadata,
-    )
+    return _service_enrich_bom_with_merge_namespaces(bom_data, merge_result)
 
 
 def register_command(subparsers) -> None:
@@ -396,221 +267,37 @@ def handle_bom(args: argparse.Namespace) -> int:
 def _execute_bom_command(args: argparse.Namespace) -> int:
     """Execute BOM command body with project-centric input resolution."""
     try:
-        # Determine effective fabricator early (needed for --list-fields)
         fabricator = _resolve_requested_fabricator(args)
+        request = BOMOrchestrationRequest(
+            input_path=str(args.input or "."),
+            fabricator=fabricator,
+            fields_argument=args.fields,
+            inventory_files=tuple(str(path) for path in (args.inventory_files or [])),
+            filter_config=create_filter_config(args),
+            verbose=bool(args.verbose),
+            list_fields=bool(args.list_fields),
+        )
+        result = BOMApplicationService().orchestrate(request)
+        for diagnostic in result.diagnostics:
+            print(diagnostic, file=sys.stderr)
 
-        # Handle --list-fields - best-effort: try to load runtime data for richer output
-        if args.list_fields:
-            list_components: list = []
-            list_pcb_components: list = []
-            list_inv_columns: list[str] = []
-            try:
-                list_resolver = ProjectFileResolver(
-                    prefer_pcb=False, target_file_type="schematic"
-                )
-                list_resolved = list_resolver.resolve_input(args.input)
-                list_reader = SchematicReader()
-                for sch_f in list_resolved.get_hierarchical_files():
-                    list_components.extend(list_reader.load_components(sch_f))
-
-                list_project_context = list_resolved.project_context
-                if (
-                    list_project_context is not None
-                    and list_project_context.pcb_file is not None
-                    and list_project_context.pcb_file.exists()
-                ):
-                    list_board = DefaultKiCadReaderService().read_pcb_file(
-                        list_project_context.pcb_file
-                    )
-                    list_pcb_components.extend(list_board.footprints)
-            except Exception:
-                pass
-
-            # Try to load inventory columns if --inventory was given
-            if args.inventory_files:
-                from jbom.services.inventory_reader import InventoryReader as _InvReader
-
-                for inv_str in args.inventory_files:
-                    inv_p = Path(inv_str)
-                    if inv_p.exists():
-                        try:
-                            _, cols = _InvReader(inv_p).load()
-                            list_inv_columns.extend(cols)
-                        except Exception:
-                            pass
-
+        if result.mode == BOMOrchestrationMode.LIST_FIELDS:
+            if result.field_listing is None:
+                raise ValueError("Missing field listing payload for list-fields output")
             _list_available_fields(
                 fabricator,
-                components=list_components or None,
-                pcb_components=list_pcb_components or None,
-                inventory_column_names=list_inv_columns or None,
+                known_fields=dict(result.field_listing.known_fields),
             )
             return 0
 
-        # Create options
-        options = GeneratorOptions(verbose=args.verbose) if args.verbose else None
-
-        # Use ProjectFileResolver for intelligent input resolution
-        resolver = ProjectFileResolver(
-            prefer_pcb=False, target_file_type="schematic", options=options
-        )
-        resolved_input = resolver.resolve_input(args.input)
-
-        # Handle cross-command intelligence - if user provided wrong file type, try to resolve it
-        if not resolved_input.is_schematic:
-            # Provide guidance about cross-resolution unless quiet
-            import os as _os
-
-            if not _os.environ.get("JBOM_QUIET"):
-                print(
-                    f"Note: BOM generation requires a schematic file. "
-                    f"Found {resolved_input.resolved_path.suffix} file, trying to find matching schematic.",
-                    file=sys.stderr,
-                )
-
-            try:
-                resolved_input = resolver.resolve_for_wrong_file_type(
-                    resolved_input, "schematic"
-                )
-                # Emit phrasing expected by Gherkin tests unless quiet
-                import os as _os
-
-                if not _os.environ.get("JBOM_QUIET"):
-                    print(
-                        f"found matching schematic {resolved_input.resolved_path.name}",
-                        file=sys.stderr,
-                    )
-                    print(
-                        f"Using schematic: {resolved_input.resolved_path.name}",
-                        file=sys.stderr,
-                    )
-            except ValueError as e:
-                print(f"Error: {e}", file=sys.stderr)
-                return 1
-
-        schematic_file = resolved_input.resolved_path
-
-        if not resolved_input.project_context:
-            raise ValueError("No project context available")
-
-        project_context = resolved_input.project_context
-        project_name = project_context.project_base_name
-        default_output_path = (
-            project_context.project_directory / f"{project_name}.bom.csv"
-        )
-
-        # Use services directly - no workflow abstraction needed
-        reader = SchematicReader(options)
-        generator = BOMGenerator(
-            "value_footprint"
-        )  # BOM always aggregates by value+package
-
-        # Load components from schematic (including hierarchical sheets if available)
-        if resolved_input.project_context:
-            # Get all hierarchical schematic files for complete BOM
-            hierarchical_files = resolved_input.get_hierarchical_files()
-            schematic_files = list(hierarchical_files)
-            if args.verbose and len(hierarchical_files) > 1:
-                print(
-                    f"Processing hierarchical design with {len(hierarchical_files)} schematic files",
-                    file=sys.stderr,
-                )
-
-            # Load components from all hierarchical files
-            components = []
-            for sch_file in hierarchical_files:
-                if args.verbose:
-                    print(f"Loading components from {sch_file.name}", file=sys.stderr)
-                file_components = reader.load_components(sch_file)
-                components.extend(file_components)
-        else:
-            # Load components from single schematic
-            schematic_files = [schematic_file]
-            components = reader.load_components(schematic_file)
-
-        merge_result = _run_component_merge(
-            components=components,
-            schematic_files=schematic_files,
-            pcb_file=project_context.pcb_file if project_context else None,
-            verbose=args.verbose,
-        )
-
-        # Parse field selection
-        fabricator_presets = get_fabricator_presets(fabricator)
-        available_fields = _get_available_bom_fields(components)
-
-        try:
-            selected_fields = parse_fields_argument(
-                args.fields, available_fields, fabricator, fabricator_presets
-            )
-        except ValueError as e:
-            print(f"Error: {e}", file=sys.stderr)
-            return 1
-
-        if args.verbose:
-            print(f"Selected fields: {', '.join(selected_fields)}", file=sys.stderr)
-
-        # Check for missing fabricator-specific fields and warn if appropriate
-        if args.fields:  # Only warn if user explicitly provided fields
-            warning = check_fabricator_field_completeness(
-                selected_fields, fabricator, fabricator_presets
-            )
-            if warning:
-                print(warning, file=sys.stderr)
-
-        # Generate basic BOM with common filtering logic
-        filters = create_filter_config(args)
-        bom_data = generator.generate_bom_data(components, project_name, filters)
-        bom_data = _enrich_bom_with_merge_namespaces(bom_data, merge_result)
-        bom_data = _enforce_bom_device_footprints(bom_data)
-
-        inventory_file: Path | None = None
-        if args.inventory_files:
-            if args.verbose:
-                print(
-                    f"Enhancing BOM with {len(args.inventory_files)} inventory file(s)",
-                    file=sys.stderr,
-                )
-            inventory_file = Path(args.inventory_files[0])
-            if not inventory_file.exists():
-                print(
-                    f"Error: Inventory file not found: {inventory_file}",
-                    file=sys.stderr,
-                )
-                return 1
-            if len(args.inventory_files) > 1 and args.verbose:
-                print(
-                    f"Note: Using primary inventory file {inventory_file}, multi-file enhancement coming soon",
-                    file=sys.stderr,
-                )
-
-        overlay_service = InventoryOverlayService()
-        overlay_result = overlay_service.overlay_bom_data(
-            bom_data,
-            inventory_file=inventory_file,
-            fabricator_id=fabricator,
-            project_name=project_name,
-            include_inventory_dnp=not filters.get("exclude_dnp", True),
-        )
-        bom_data = overlay_result.bom_data
-        bom_data = _filter_inventory_dnp_entries(
-            bom_data,
-            include_inventory_dnp=not filters.get("exclude_dnp", True),
-        )
-
-        bom_data = _enrich_bom_smd_from_project_pcb(
-            bom_data,
-            project_context.pcb_file if project_context else None,
-            verbose=args.verbose,
-        )
-
-        # Handle output
+        if result.generation is None:
+            raise ValueError("Missing BOM generation payload")
         return _output_bom(
-            bom_data,
+            result.generation.bom_data,
             args.output,
-            selected_fields,
+            list(result.generation.selected_fields),
             fabricator,
-            default_output_path=default_output_path,
+            default_output_path=result.generation.default_output_path,
             force=args.force,
         )
 
@@ -621,27 +308,15 @@ def _execute_bom_command(args: argparse.Namespace) -> int:
 
 def _list_available_fields(
     fabricator: str,
-    components: list | None = None,
-    pcb_components: list | None = None,
-    inventory_column_names: list[str] | None = None,
+    *,
+    known_fields: dict[str, str],
 ) -> None:
     """List known BOM fields and presets for the given fabricator.
 
-    Fields are dynamically derived from the union of component-schema fields and any
-    loaded inventory columns. Any field name is accepted at runtime; unknown fields
-    produce blank cells.
-
     Args:
         fabricator: Current fabricator ID (for fabricator-specific presets)
-        components: Optional loaded components for runtime field discovery
-        pcb_components: Optional loaded PCB footprints for runtime field discovery
-        inventory_column_names: Optional list of inventory CSV column headers
+        known_fields: Precomputed field dictionary from application service
     """
-    known_fields = _get_available_bom_fields(
-        components or [],
-        pcb_components=pcb_components or [],
-        inventory_column_names=inventory_column_names or [],
-    )
 
     print(
         "\nKnown fields (any field name is accepted \u2014 unknown fields produce blank cells):"
@@ -677,138 +352,23 @@ def _list_available_fields(
             print(f"  +{name}: {desc}")
 
 
-def _get_available_bom_fields(
-    components: list,
-    *,
-    pcb_components: list | None = None,
-    inventory_column_names: list[str] | None = None,
-) -> dict[str, str]:
-    """Return known BOM fields from computed contract plus discovered source fields."""
-
-    fields = {field_name: "Computed BOM field" for field_name in _BOM_COMPUTED_FIELDS}
-    for source_token in get_namespaced_field_tokens(
-        schematic_components=components,
-        pcb_components=pcb_components or [],
-        inventory_column_names=inventory_column_names or [],
-    ):
-        fields[source_token] = "Discovered source field"
-
-    # Include unqualified field names discovered from source data.
-    for field_name in get_field_names(
-        schematic_components=components,
-        pcb_components=pcb_components or [],
-        inventory_column_names=inventory_column_names or [],
-        source="all",
-    ):
-        fields.setdefault(field_name, "Discovered field")
-
-    return fields
-
-
-def _is_truthy_inventory_dnp(value: object) -> bool:
-    """Return True when an inventory DNP marker should exclude an output row."""
-
-    if isinstance(value, bool):
-        return value
-    normalized = str(value or "").strip().lower()
-    if not normalized:
-        return False
-    return normalized in {
-        "1",
-        "true",
-        "t",
-        "yes",
-        "y",
-        "x",
-        "dnp",
-        "do not populate",
-    }
-
-
-def _entry_has_inventory_dnp(entry: BOMEntry) -> bool:
-    """Return True when a BOM entry is tagged DNP from inventory overlay data."""
-
-    inventory_dnp = entry.attributes.get("inventory_dnp")
-    if _is_truthy_inventory_dnp(inventory_dnp):
-        return True
-    namespaced_dnp = entry.attributes.get("i:dnp")
-    if _is_truthy_inventory_dnp(namespaced_dnp):
-        return True
-    return False
-
-
 def _filter_inventory_dnp_entries(
     bom_data: BOMData,
     *,
     include_inventory_dnp: bool,
 ) -> BOMData:
     """Filter out inventory-DNP BOM rows unless explicitly included by CLI flags."""
-
-    if include_inventory_dnp:
-        return bom_data
-
-    filtered_entries = [
-        entry for entry in bom_data.entries if not _entry_has_inventory_dnp(entry)
-    ]
-    removed_count = len(bom_data.entries) - len(filtered_entries)
-    if removed_count <= 0:
-        return bom_data
-
-    metadata = dict(bom_data.metadata)
-    metadata["inventory_dnp_filtered_entries"] = removed_count
-    return BOMData(
-        project_name=bom_data.project_name,
-        entries=filtered_entries,
-        metadata=metadata,
+    return _service_filter_inventory_dnp_entries(
+        bom_data,
+        include_inventory_dnp=include_inventory_dnp,
     )
-
-
-def _load_pcb_smd_lookup(
-    pcb_file: Optional[Path], *, verbose: bool = False
-) -> dict[str, bool]:
-    """Return reference -> is_smd lookup from a KiCad PCB file."""
-
-    if pcb_file is None or not pcb_file.exists():
-        return {}
-
-    try:
-        board = DefaultKiCadReaderService().read_pcb_file(pcb_file)
-    except Exception as exc:
-        if verbose:
-            print(
-                f"Warning: Could not read PCB mount metadata from {pcb_file}: {exc}",
-                file=sys.stderr,
-            )
-        return {}
-
-    smd_by_reference: dict[str, bool] = {}
-    for footprint in board.footprints:
-        reference = (footprint.reference or "").strip()
-        if not reference:
-            continue
-
-        mount_type = str(footprint.attributes.get("mount_type", "")).strip().lower()
-        if mount_type == "smd":
-            smd_by_reference[reference] = True
-        elif mount_type in {"through_hole", "through-hole", "tht"}:
-            smd_by_reference[reference] = False
-
-    return smd_by_reference
 
 
 def _entry_smd_from_reference_lookup(
     entry: BOMEntry, smd_by_reference: dict[str, bool]
 ) -> Optional[bool]:
     """Resolve an entry-level SMD boolean from per-reference PCB mount metadata."""
-
-    known_values = [
-        smd_by_reference[ref] for ref in entry.references if ref in smd_by_reference
-    ]
-    if not known_values:
-        return None
-
-    # Aggregated BOM groups should be homogeneous by footprint.
-    return all(known_values)
+    return _service_entry_smd_from_reference_lookup(entry, smd_by_reference)
 
 
 def _enrich_bom_smd_from_project_pcb(
@@ -818,49 +378,14 @@ def _enrich_bom_smd_from_project_pcb(
     verbose: bool = False,
 ) -> BOMData:
     """Populate missing BOM `smd` attributes from PCB mount metadata."""
-
-    smd_by_reference = _load_pcb_smd_lookup(pcb_file, verbose=verbose)
-    if not smd_by_reference:
-        return bom_data
-
-    updated = False
-    enriched_entries: list[BOMEntry] = []
-
-    for entry in bom_data.entries:
-        current_smd = str(entry.attributes.get("smd", "")).strip()
-        if current_smd:
-            enriched_entries.append(entry)
-            continue
-
-        resolved = _entry_smd_from_reference_lookup(entry, smd_by_reference)
-        if resolved is None:
-            enriched_entries.append(entry)
-            continue
-
-        attrs = dict(entry.attributes)
-        attrs["smd"] = resolved
-        enriched_entries.append(
-            BOMEntry(
-                references=entry.references,
-                value=entry.value,
-                footprint=entry.footprint,
-                quantity=entry.quantity,
-                lib_id=entry.lib_id,
-                attributes=attrs,
-            )
-        )
-        updated = True
-
-    if not updated:
-        return bom_data
-
-    metadata = dict(bom_data.metadata)
-    metadata["pcb_mount_metadata_used"] = True
-    return BOMData(
-        project_name=bom_data.project_name,
-        entries=enriched_entries,
-        metadata=metadata,
+    enriched_bom_data, diagnostics = _service_enrich_bom_smd_from_project_pcb(
+        bom_data,
+        pcb_file,
+        verbose=verbose,
     )
+    for diagnostic in diagnostics:
+        print(diagnostic, file=sys.stderr)
+    return enriched_bom_data
 
 
 def _output_bom(
@@ -1274,52 +799,7 @@ def _enforce_bom_device_footprints(bom_data: BOMData) -> BOMData:
     - resolves entry footprint with PCB precedence (`p:footprint` over schematic)
     - raises ValueError when a concrete footprint cannot be resolved
     """
-
-    missing_references: list[str] = []
-    updated_entries: list[BOMEntry] = []
-    changed = False
-
-    for entry in bom_data.entries:
-        resolved_footprint = _resolve_entry_device_footprint(entry)
-        if not _is_concrete_footprint(resolved_footprint):
-            missing_references.append(entry.references_string)
-            updated_entries.append(entry)
-            continue
-
-        if resolved_footprint == entry.footprint:
-            updated_entries.append(entry)
-            continue
-
-        changed = True
-        updated_entries.append(
-            BOMEntry(
-                references=entry.references,
-                value=entry.value,
-                footprint=resolved_footprint,
-                quantity=entry.quantity,
-                lib_id=entry.lib_id,
-                attributes=dict(entry.attributes),
-            )
-        )
-
-    if missing_references:
-        refs = "; ".join(missing_references)
-        raise ValueError(
-            "BOM generation requires concrete component footprints; "
-            f"missing/unresolved footprint for: {refs}"
-        )
-
-    if not changed:
-        return bom_data
-
-    metadata = dict(bom_data.metadata)
-    metadata["device_footprint_contract"] = "enforced"
-    metadata["device_footprint_precedence"] = "p>s"
-    return BOMData(
-        project_name=bom_data.project_name,
-        entries=updated_entries,
-        metadata=metadata,
-    )
+    return _service_enforce_bom_device_footprints(bom_data)
 
 
 def _resolve_annotation_field_value(
