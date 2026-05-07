@@ -38,11 +38,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   (e.g. wavelength) requires one entry here plus a new `make_component_id` parameter.
 
 ### Changed
-- **BOM orchestration moved to application service** (issue #220): extracted
-  orchestration and policy sequencing from `src/jbom/cli/bom.py` into
-  adapter-neutral `src/jbom/application/bom_service.py`, keeping CLI command
-  handlers focused on argument mapping, rendering, and exit semantics with no
-  user-visible behavior regressions.
 - `jbom pos` now honors KiCad PCB `exclude_from_pos_files` markers (issue #210), so footprints explicitly excluded from placement files are no longer emitted in POS/CPL output by default.
 - **Workflow architecture cleanup** (issue #232): moved shared job contracts and
   runner into `src/jbom/application/jobs/`, and retired the deprecated

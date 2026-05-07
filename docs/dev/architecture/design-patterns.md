@@ -64,6 +64,20 @@ Application layer commands orchestrate domain services without containing busine
 5. Error Handling
 ```
 
+### CLI-to-Orchestration Extraction Pattern
+Each command family (`bom`, `pos`, and future `search`/`inventory`) follows the same adapter-thin extraction contract.
+
+**Purpose**: Make command refactors repeatable with one stable application-layer template
+**Implementation**: Move orchestration into `src/jbom/application/<command>_orchestration.py` and keep CLI files as adapters
+**Benefits**: Consistent contracts, easier cross-command reviews, predictable test shape
+
+**Extraction Contract**:
+1. Define a request dataclass (`<Command>OrchestrationRequest`) that normalizes adapter input.
+2. Define explicit mode enum + result dataclass (`<Command>OrchestrationMode`, `<Command>OrchestrationResult`) with mode-gated payload invariants.
+3. Carry diagnostics as immutable result data (`tuple[str, ...]`) rather than callback side effects.
+4. Keep CLI responsibilities limited to argument mapping, diagnostics rendering, output rendering, and exit code mapping.
+5. Keep compatibility wrappers in CLI modules only when needed for legacy tests during migration.
+
 ### Input Translation Pattern
 Convert interface-specific arguments to type-safe domain configuration objects.
 

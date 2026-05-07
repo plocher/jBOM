@@ -1,5 +1,9 @@
 # CHANGELOG
+## Unreleased
 
+### Refactoring
+
+* architecture(core): extract BOM orchestration sequencing into `jbom.application.bom_orchestration` and keep `jbom.cli.bom` adapter-thin for mapping/rendering/exit handling
 
 ## v6.51.2 (2026-05-07)
 
