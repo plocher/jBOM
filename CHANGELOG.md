@@ -1,9 +1,22 @@
 # CHANGELOG
-## Unreleased
+
+
+## v6.51.3 (2026-05-07)
 
 ### Refactoring
 
-* architecture(core): extract BOM orchestration sequencing into `jbom.application.bom_orchestration` and keep `jbom.cli.bom` adapter-thin for mapping/rendering/exit handling
+* refactor(architecture): standardize BOM orchestration contract surface
+
+Align BOM extraction naming to <command>_orchestration + <Command>OrchestrationService, move release note to root CHANGELOG, and codify the adapter-thin orchestration extraction template in architecture docs for repeatable command refactors.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`426a5c6`](https://github.com/plocher/jBOM/commit/426a5c691df8dbde5821032ea4b07348ad037317))
+
+* refactor(core): extract BOM orchestration into application service
+
+Move BOM orchestration and policy sequencing from the BOM CLI adapter into an adapter-neutral application service, add service-level orchestration tests, and keep CLI behavior stable while preserving helper compatibility.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`6db2783`](https://github.com/plocher/jBOM/commit/6db27830e00843863ea852672756c41f9e83f9b2))
+
 
 ## v6.51.2 (2026-05-07)
 
