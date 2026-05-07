@@ -282,20 +282,19 @@ def _execute_pos_command(args: argparse.Namespace) -> int:
     orchestration_service = POSOrchestrationService()
     orchestration_request = _build_pos_orchestration_request(args)
     try:
-        result = orchestration_service.orchestrate(
-            orchestration_request,
-            emit_diagnostic=_emit_cli_diagnostic,
-        )
+        result = orchestration_service.orchestrate(orchestration_request)
+        for diagnostic in result.diagnostics:
+            _emit_cli_diagnostic(diagnostic)
         if result.field_listing is not None:
             _list_available_pos_fields(
                 orchestration_request.fabricator,
                 field_listing=result.field_listing,
             )
             return 0
-        if result.output_payload is None:
-            raise ValueError("POS orchestration produced no output payload")
+        if result.generation is None:
+            raise ValueError("POS orchestration produced no generation payload")
 
-        output_payload = result.output_payload
+        output_payload = result.generation
         return _output_pos(
             list(output_payload.pos_data),
             args.output,

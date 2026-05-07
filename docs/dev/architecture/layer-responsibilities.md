@@ -160,6 +160,23 @@ bom_data = generator.generate_bom_data(components)
 enhanced_bom = matcher.enhance_bom_with_inventory(bom_data, inventory)
 ```
 
+#### Adapter-Thin CLI Contract Pattern
+```
+Application module: src/jbom/application/<command>_orchestration.py
+Service class: <Command>OrchestrationService
+Contracts:
+  - <Command>OrchestrationRequest
+  - <Command>OrchestrationMode
+  - <Command>OrchestrationResult (mode-gated payloads + diagnostics tuple)
+```
+
+CLI adapters should remain narrowly focused on:
+- Parsing CLI arguments
+- Mapping arguments to orchestration request contracts
+- Invoking orchestration services
+- Rendering payloads to console/CSV/file outputs
+- Mapping exceptions/results to process exit codes
+
 ## Interface Layer
 
 ### Purpose

@@ -85,6 +85,22 @@ Convert interface-specific arguments to type-safe domain configuration objects.
 **Implementation**: Translation functions create domain objects from interface data
 **Benefits**: Type safety, domain validation, interface independence
 
+### CLI-to-Orchestration Extraction Pattern
+Move command sequencing from CLI modules into application orchestration services while keeping adapters thin.
+
+**Purpose**: Keep business sequencing reusable and adapter-neutral while preserving existing CLI UX behavior
+**Implementation**: Add `src/jbom/application/<command>_orchestration.py` with request/result contracts and migrate sequencing logic out of `src/jbom/cli/<command>.py`
+**Benefits**: Shared orchestration core for future adapters, reduced CLI complexity, clearer contract boundaries
+
+**Extraction Contract**:
+```
+1. Define a request value object (<Command>OrchestrationRequest) for adapter input.
+2. Define an explicit mode enum (<Command>OrchestrationMode) for result variants.
+3. Define mode-gated result payloads (<Command>OrchestrationResult with typed payloads).
+4. Keep diagnostics on result contracts (immutable tuple), not adapter callbacks.
+5. Restrict CLI adapters to argument parsing, request mapping, rendering, and exit-code mapping.
+```
+
 ### Output Adaptation Pattern
 Transform domain results for interface-appropriate presentation formats.
 
