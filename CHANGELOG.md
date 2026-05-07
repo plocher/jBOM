@@ -1,6 +1,25 @@
 # CHANGELOG
 
 
+## v6.51.1 (2026-05-07)
+
+### Refactoring
+
+* refactor(scope): move CLI rewiring out of issue #222
+
+Limit PR #230 to shared job-contract infrastructure only; CLI adapter rewiring is moved to #223 lane.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`8c64691`](https://github.com/plocher/jBOM/commit/8c646914853cbb6f740992c83112f5147855cf75))
+
+### Unknown
+
+* architecture(core): define shared JobRequest/JobContext/JobEvent/JobResult contracts
+
+Closes #222
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`9aaafc9`](https://github.com/plocher/jBOM/commit/9aaafc980201aea13d6bd61d8146e9b8d830f904))
+
+
 ## v6.51.0 (2026-05-06)
 
 ### Bug Fixes
