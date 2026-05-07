@@ -1,7 +1,22 @@
 # CHANGELOG
-## Unreleased
+
+
+## v6.51.4 (2026-05-07)
+
 ### Refactoring
-* architecture(core): extract POS orchestration sequencing into `jbom.application.pos_orchestration` and keep `jbom.cli.pos` adapter-thin for mapping/rendering/exit handling
+
+* refactor(architecture): align POS orchestration contract surface
+
+Standardize POS orchestration to explicit mode-gated request/result contracts, move diagnostics onto immutable result payloads, and keep CLI adapter behavior thin and output-focused.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`03d4185`](https://github.com/plocher/jBOM/commit/03d4185ed9457ca4dca9de49755041a54c84e3aa))
+
+* refactor(architecture): extract POS orchestration into application service
+
+Closes #221
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`293fd29`](https://github.com/plocher/jBOM/commit/293fd29ea8f23e6f95535a39af173fe3ca9458b7))
+
 
 ## v6.51.3 (2026-05-07)
 
@@ -18,6 +33,8 @@ Co-Authored-By: Oz <oz-agent@warp.dev> ([`426a5c6`](https://github.com/plocher/j
 Move BOM orchestration and policy sequencing from the BOM CLI adapter into an adapter-neutral application service, add service-level orchestration tests, and keep CLI behavior stable while preserving helper compatibility.
 
 Co-Authored-By: Oz <oz-agent@warp.dev> ([`6db2783`](https://github.com/plocher/jBOM/commit/6db27830e00843863ea852672756c41f9e83f9b2))
+
+
 ## v6.51.2 (2026-05-07)
 
 ### Refactoring
