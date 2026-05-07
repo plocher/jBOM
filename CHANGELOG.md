@@ -1,5 +1,7 @@
 # CHANGELOG
-
+## Unreleased
+### Refactoring
+* architecture(core): extract POS orchestration sequencing into `jbom.application.pos_orchestration` and keep `jbom.cli.pos` adapter-thin for mapping/rendering/exit handling
 
 ## v6.51.3 (2026-05-07)
 
@@ -16,8 +18,6 @@ Co-Authored-By: Oz <oz-agent@warp.dev> ([`426a5c6`](https://github.com/plocher/j
 Move BOM orchestration and policy sequencing from the BOM CLI adapter into an adapter-neutral application service, add service-level orchestration tests, and keep CLI behavior stable while preserving helper compatibility.
 
 Co-Authored-By: Oz <oz-agent@warp.dev> ([`6db2783`](https://github.com/plocher/jBOM/commit/6db27830e00843863ea852672756c41f9e83f9b2))
-
-
 ## v6.51.2 (2026-05-07)
 
 ### Refactoring
