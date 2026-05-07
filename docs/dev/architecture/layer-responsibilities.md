@@ -12,7 +12,7 @@ This document defines the clear responsibilities, constraints, and interaction p
 │  └─────────────────┘  └─────────────────┘  └──────────────┘ │
 ├─────────────────────────────────────────────────────────────┤
 │                   Application Layer                         │
-│                 (Workflow Orchestration)                    │
+│          (Contract-Oriented Orchestration Services)         │
 │  • Input Translation    • Service Orchestration            │
 │  • Output Formatting    • Error Translation                │
 ├─────────────────────────────────────────────────────────────┤
@@ -132,6 +132,20 @@ Orchestrates domain services and manages interface workflows without containing 
 5. Format results for interface presentation
 6. Handle errors with appropriate user feedback
 ```
+
+#### Adapter-Thin CLI Contract Pattern
+```
+Application module: src/jbom/application/<command>_orchestration.py
+Service class: <Command>OrchestrationService
+Contracts: <Command>OrchestrationRequest, <Command>OrchestrationMode, <Command>OrchestrationResult
+Diagnostics: immutable tuple on result contract (not callback side effects)
+```
+
+CLI adapter responsibilities are intentionally narrow:
+1. Parse CLI flags/arguments.
+2. Build request contract and call orchestration service.
+3. Render diagnostics and output payloads.
+4. Map orchestration exceptions/outcomes to process exit semantics.
 
 #### Service Composition Pattern
 ```python

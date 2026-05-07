@@ -159,7 +159,7 @@ class BOMOrchestrationResult:
                 )
 
 
-class BOMApplicationService:
+class BOMOrchestrationService:
     """Application-layer BOM orchestration service."""
 
     def orchestrate(self, request: BOMOrchestrationRequest) -> BOMOrchestrationResult:
@@ -757,7 +757,7 @@ def build_known_bom_fields(
 
 
 __all__ = [
-    "BOMApplicationService",
+    "BOMOrchestrationService",
     "BOMFieldListingPayload",
     "BOMGenerationPayload",
     "BOMOrchestrationMode",

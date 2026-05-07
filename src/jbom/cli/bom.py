@@ -40,8 +40,8 @@ from jbom.common.component_filters import (
 from jbom.common.component_utils import derive_package_from_footprint
 from jbom.common.package_matching import PackageType
 from jbom.cli.formatting import Column, print_table, get_terminal_width
-from jbom.application.bom_service import (
-    BOMApplicationService,
+from jbom.application.bom_orchestration import (
+    BOMOrchestrationService,
     BOMOrchestrationMode,
     BOMOrchestrationRequest,
     enforce_bom_device_footprints as _service_enforce_bom_device_footprints,
@@ -277,7 +277,7 @@ def _execute_bom_command(args: argparse.Namespace) -> int:
             verbose=bool(args.verbose),
             list_fields=bool(args.list_fields),
         )
-        result = BOMApplicationService().orchestrate(request)
+        result = BOMOrchestrationService().orchestrate(request)
         for diagnostic in result.diagnostics:
             print(diagnostic, file=sys.stderr)
 
