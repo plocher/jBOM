@@ -1,3 +1,3 @@
 """jBOM - KiCad Bill of Materials and Placement File Generator."""
 
-__version__ = "6.51.4"
+__version__ = "6.51.5"
