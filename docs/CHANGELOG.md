@@ -20,6 +20,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
     instead of CSV column-name lookups.
 
 ### Added
+- **Shared adapter-neutral job execution contracts** (issue #222): added typed
+  `JobRequest`, `JobContext`, `JobEvent`, and `JobResult` contracts plus a
+  minimal shared `JobRunner` entry API in `src/jbom/workflows/` with
+  deterministic event ordering and cancellation semantics.
 - **Configurable ComponentID fields per category**
   a ComponentID (tolerance, voltage, current, wattage, type) are now controlled by a
   per-category allowlist in `generic.defaults.yaml` under `component_id_fields`.  For

@@ -51,6 +51,14 @@ from jbom.config.fabricators import (
 )
 from jbom.cli.formatting import Column, print_table, get_terminal_width
 from jbom.services.fabricator_projection_service import FabricatorProjectionService
+from jbom.workflows.job_contracts import (
+    JobArtifact,
+    JobContext,
+    JobDiagnosticSeverity,
+    JobOutcome,
+    JobRequest,
+)
+from jbom.workflows.job_runner import JobEventStream, JobRunPayload, JobRunner
 
 _NUMERIC_POS_FIELDS: frozenset[str] = frozenset({"x", "y", "rotation"})
 _POS_SOURCE_PRIORITY = "pis"
@@ -230,9 +238,111 @@ def register_command(subparsers) -> None:
 
     parser.set_defaults(handler=handle_pos)
 
+def _predict_pos_artifacts(args: argparse.Namespace) -> tuple[JobArtifact, ...]:
+    """Predict adapter-level POS artifact descriptors from CLI output arguments."""
+
+    output = str(args.output or "").strip()
+    if output.lower() == "console":
+        return ()
+    if output == "-":
+        return (
+            JobArtifact(
+                name="pos.csv",
+                location="stdout://pos.csv",
+                media_type="text/csv",
+            ),
+        )
+    if output:
+        output_path = Path(output)
+        return (
+            JobArtifact(
+                name=output_path.name or "pos.csv",
+                location=str(output_path),
+                media_type="text/csv",
+            ),
+        )
+    return (
+        JobArtifact(
+            name="pos.csv",
+            location="project-default://pos.csv",
+            media_type="text/csv",
+        ),
+    )
+
+
+def _build_pos_job_request(args: argparse.Namespace) -> JobRequest:
+    """Build adapter-neutral `JobRequest` contract for POS execution."""
+
+    options: dict[str, object] = {
+        "input": str(args.input or "."),
+        "output": str(args.output or ""),
+        "fabricator": resolve_fabricator_from_args(args),
+        "smd_only": bool(args.smd_only),
+        "layer": str(args.layer or ""),
+        "origin": str(args.origin or "board"),
+        "verbose": bool(args.verbose),
+        "list_fields": bool(args.list_fields),
+    }
+    return JobRequest(
+        job_type="pos",
+        intent="generate_pos",
+        project_ref=str(args.input or "."),
+        options=options,
+        metadata={"adapter": "cli"},
+    )
+
 
 def handle_pos(args: argparse.Namespace) -> int:
-    """Handle POS command with project-centric input resolution."""
+    """Handle POS command through the shared adapter-neutral job runner."""
+
+    request = _build_pos_job_request(args)
+    context = JobContext(
+        adapter_id="cli",
+        session_id="local-process",
+        capabilities={
+            "event_stream": True,
+            "diagnostics": True,
+            "cancellation": False,
+        },
+    )
+    runner = JobRunner()
+
+    def _execute(events: JobEventStream) -> JobRunPayload:
+        events.progress(
+            phase="resolve",
+            message="Resolving project input and POS orchestration plan",
+        )
+        exit_code = _execute_pos_command(args)
+        if exit_code == 0:
+            events.progress(
+                phase="emit",
+                message="POS output emitted",
+            )
+        else:
+            events.diagnostic(
+                severity=JobDiagnosticSeverity.ERROR,
+                message="POS command execution failed",
+                code="pos_execution_failed",
+                details={"exit_code": exit_code},
+            )
+        return JobRunPayload(
+            outcome=JobOutcome.SUCCEEDED if exit_code == 0 else JobOutcome.FAILED,
+            artifacts=_predict_pos_artifacts(args) if exit_code == 0 else (),
+            metadata={
+                "exit_code": exit_code,
+                "command": "pos",
+                "fabricator": request.options.get("fabricator", "generic"),
+            },
+        )
+
+    result = runner.run(request=request, context=context, execute=_execute)
+    if result.outcome == JobOutcome.CANCELLED:
+        return 130
+    return int(result.metadata.get("exit_code", 1))
+
+
+def _execute_pos_command(args: argparse.Namespace) -> int:
+    """Execute POS command body with project-centric input resolution."""
     try:
         # Create options
         gen_options = GeneratorOptions(verbose=args.verbose) if args.verbose else None
