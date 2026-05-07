@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from jbom.workflows.job_contracts import (
+from jbom.application.jobs.contracts import (
     JobArtifact,
     JobContext,
     JobDiagnostic,
@@ -18,7 +18,7 @@ from jbom.workflows.job_contracts import (
     JobRequest,
     JobResult,
 )
-from jbom.workflows.job_runner import JobRunPayload, JobRunner
+from jbom.application.jobs.runner import JobRunPayload, JobRunner
 
 
 class _TickingClock:
@@ -48,7 +48,11 @@ def _make_context(*, cancellation_requested=None) -> JobContext:
     """Create a valid context fixture used across tests."""
 
     if cancellation_requested is None:
-        cancellation_requested = lambda: False
+
+        def _not_cancelled() -> bool:
+            return False
+
+        cancellation_requested = _not_cancelled
 
     return JobContext(
         adapter_id="cli",

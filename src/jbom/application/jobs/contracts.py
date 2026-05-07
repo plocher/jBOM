@@ -123,7 +123,9 @@ class JobProgress:
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "phase", _validate_non_empty(self.phase, field_name="phase"))
+        object.__setattr__(
+            self, "phase", _validate_non_empty(self.phase, field_name="phase")
+        )
         object.__setattr__(
             self, "message", _validate_non_empty(self.message, field_name="message")
         )
@@ -199,12 +201,16 @@ class JobArtifact:
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "name", _validate_non_empty(self.name, field_name="name"))
+        object.__setattr__(
+            self, "name", _validate_non_empty(self.name, field_name="name")
+        )
         object.__setattr__(
             self, "location", _validate_non_empty(self.location, field_name="location")
         )
         object.__setattr__(
-            self, "media_type", _validate_non_empty(self.media_type, field_name="media_type")
+            self,
+            "media_type",
+            _validate_non_empty(self.media_type, field_name="media_type"),
         )
         object.__setattr__(self, "metadata", _freeze_mapping(self.metadata))
 

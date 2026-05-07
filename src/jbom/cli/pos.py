@@ -51,14 +51,14 @@ from jbom.config.fabricators import (
 )
 from jbom.cli.formatting import Column, print_table, get_terminal_width
 from jbom.services.fabricator_projection_service import FabricatorProjectionService
-from jbom.workflows.job_contracts import (
+from jbom.application.jobs.contracts import (
     JobArtifact,
     JobContext,
     JobDiagnosticSeverity,
     JobOutcome,
     JobRequest,
 )
-from jbom.workflows.job_runner import JobEventStream, JobRunPayload, JobRunner
+from jbom.application.jobs.runner import JobEventStream, JobRunPayload, JobRunner
 
 _NUMERIC_POS_FIELDS: frozenset[str] = frozenset({"x", "y", "rotation"})
 _POS_SOURCE_PRIORITY = "pis"
@@ -237,6 +237,7 @@ def register_command(subparsers) -> None:
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
 
     parser.set_defaults(handler=handle_pos)
+
 
 def _predict_pos_artifacts(args: argparse.Namespace) -> tuple[JobArtifact, ...]:
     """Predict adapter-level POS artifact descriptors from CLI output arguments."""

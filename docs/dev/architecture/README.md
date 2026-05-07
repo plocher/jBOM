@@ -13,7 +13,7 @@ jBOM implements a **domain-centric architecture** that prioritizes business logi
 │                    Interface Layer                          │
 ├─────────────────────────────────────────────────────────────┤
 │                   Application Layer                         │
-│              (Workflow Orchestration)                       │
+│         (Contract-Oriented Job Orchestration)               │
 ├─────────────────────────────────────────────────────────────┤
 │                 Domain Services Layer                       │
 │               (Business Logic Core)                         │
@@ -109,7 +109,7 @@ This architecture documentation is organized as the authoritative source of desi
 - **[Layer Responsibilities](layer-responsibilities.md)** - Detailed layer definitions and constraints
 - **[Design Patterns](design-patterns.md)** - Established patterns used throughout jBOM
 - **[Integration Patterns](integration-patterns.md)** - Service composition and layer interaction
-- **[Shared Job Execution Contracts](job-contracts.md)** - adapter-neutral `JobRequest` / `JobContext` / `JobEvent` / `JobResult` contracts and shared runner semantics
+- **[Shared Job Execution Contracts](job-contracts.md)** - adapter-neutral `JobRequest` / `JobContext` / `JobEvent` / `JobResult` contracts and shared application-layer runner semantics; legacy workflow registry patterns are retired
 - **[Component Attribute Enrichment](component-attribute-enrichment.md)** - 3-camp attribute model, lifecycle phases, domain defaults, and write-back rules
 - **[EagleLib2KiCad Adapter Requirements](eaglelib2kicad-adapter-requirements.md)** - Service-surface-first integration requirements for Eagle/KiCad library contexts
 - **[ADR 0003: Search Heuristic Signal Framework](adr/0003-search-heuristic-signal-framework.md)** - typed relevance signal contract, diagnostics explainability, and defaults-governed package token baseline
