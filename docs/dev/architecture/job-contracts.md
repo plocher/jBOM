@@ -2,9 +2,10 @@
 This document defines the adapter-neutral execution contracts introduced for ADR 0005 Phase 2.
 ## Purpose
 The job contract layer provides one shared execution shape for CLI and future KiCad plugin adapters so orchestration behavior, progress streaming, diagnostics, cancellation semantics, and completion payloads stay consistent across interfaces.
-Contract implementation lives in:
-- `src/jbom/workflows/job_contracts.py`
-- `src/jbom/workflows/job_runner.py`
+Contract implementation lives in the application layer:
+- `src/jbom/application/jobs/contracts.py`
+- `src/jbom/application/jobs/runner.py`
+The legacy workflow/plugin registry approach (`src/jbom/workflows/registry.py`) is retired and is no longer part of jBOM's runtime architecture.
 ## Contract types
 ### `JobRequest`
 Represents adapter input translated into orchestration intent:

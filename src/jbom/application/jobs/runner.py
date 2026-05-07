@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Callable, Mapping
 
-from jbom.workflows.job_contracts import (
+from jbom.application.jobs.contracts import (
     JobArtifact,
     JobContext,
     JobDiagnostic,

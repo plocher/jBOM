@@ -57,14 +57,14 @@ from jbom.common.component_filters import (
 from jbom.common.component_utils import derive_package_from_footprint
 from jbom.common.package_matching import PackageType
 from jbom.cli.formatting import Column, print_table, get_terminal_width
-from jbom.workflows.job_contracts import (
+from jbom.application.jobs.contracts import (
     JobArtifact,
     JobContext,
     JobDiagnosticSeverity,
     JobOutcome,
     JobRequest,
 )
-from jbom.workflows.job_runner import JobEventStream, JobRunPayload, JobRunner
+from jbom.application.jobs.runner import JobEventStream, JobRunPayload, JobRunner
 
 _BOM_SOURCE_PRIORITY = "pis"
 _BOM_COMPUTED_FIELDS: tuple[str, ...] = (
@@ -270,6 +270,7 @@ def register_command(subparsers) -> None:
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
 
     parser.set_defaults(handler=handle_bom)
+
 
 def _resolve_requested_fabricator(args: argparse.Namespace) -> str:
     """Resolve effective fabricator selector from command arguments."""

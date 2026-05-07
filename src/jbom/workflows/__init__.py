@@ -1,11 +1,9 @@
-"""Workflow layer package.
+"""Legacy workflow namespace.
 
-This package provides lightweight workflow orchestration primitives:
-- in-process workflow registry for small extension hooks
-- shared adapter-neutral job contracts for request/context/event/result payloads
-- a minimal shared job runner used by adapter entry points
+Legacy plugin-style workflow registry patterns are retired in favor of
+application-layer orchestration contracts under ``jbom.application.jobs``.
 """
 
 from __future__ import annotations
 
-__all__ = ["job_contracts", "job_runner", "registry"]
+__all__: list[str] = []

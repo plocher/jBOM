@@ -22,7 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 - **Shared adapter-neutral job execution contracts** (issue #222): added typed
   `JobRequest`, `JobContext`, `JobEvent`, and `JobResult` contracts plus a
-  minimal shared `JobRunner` entry API in `src/jbom/workflows/` with
+  minimal shared `JobRunner` entry API in `src/jbom/application/jobs/` with
   deterministic event ordering and cancellation semantics.
 - **Configurable ComponentID fields per category**
   a ComponentID (tolerance, voltage, current, wattage, type) are now controlled by a
@@ -39,6 +39,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 - `jbom pos` now honors KiCad PCB `exclude_from_pos_files` markers (issue #210), so footprints explicitly excluded from placement files are no longer emitted in POS/CPL output by default.
+- **Workflow architecture cleanup** (issue #232): moved shared job contracts and
+  runner into `src/jbom/application/jobs/`, and retired the deprecated
+  `src/jbom/workflows/registry.py` plugin registry framework.
 - PCB footprint parsing now preserves all `(attr ...)` tokens plus `layer` and `locked` metadata for downstream consumers, instead of only recording a single mount attribute.
 - POS output rows are now sorted in natural reference order (`R1`, `R2`, `R10`) for consistency with BOM/PARTS output ordering.
 - POS console tables now use data-aware preferred column widths, so wide terminals avoid unnecessary truncation while narrow terminals still shrink/truncate to fit.
