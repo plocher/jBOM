@@ -72,15 +72,19 @@ def test_pos_orchestration_service_runs_without_cli_import(
                 },
             ]
 
-    monkeypatch.setattr("jbom.application.pos_orchestration.ProjectFileResolver", _FakeResolver)
+    monkeypatch.setattr(
+        "jbom.application.pos_orchestration.ProjectFileResolver", _FakeResolver
+    )
     monkeypatch.setattr(
         "jbom.application.pos_orchestration.DefaultKiCadReaderService",
         _FakeReader,
     )
-    monkeypatch.setattr("jbom.application.pos_orchestration.POSGenerator", _FakeGenerator)
+    monkeypatch.setattr(
+        "jbom.application.pos_orchestration.POSGenerator", _FakeGenerator
+    )
     monkeypatch.setattr(
         "jbom.application.pos_orchestration.run_pos_component_merge",
-        lambda **_kwargs: None,
+        lambda **_kwargs: (None, ()),
     )
 
     service = POSOrchestrationService()
@@ -93,10 +97,10 @@ def test_pos_orchestration_service_runs_without_cli_import(
         )
     )
 
-    assert result.output_payload is not None
-    references = [row["reference"] for row in result.output_payload.pos_data]
+    assert result.generation is not None
+    references = [row["reference"] for row in result.generation.pos_data]
     assert references == ["U2"]
-    assert result.output_payload.default_output_path == tmp_path / "demo.pos.csv"
+    assert result.generation.default_output_path == tmp_path / "demo.pos.csv"
 
 
 def test_pos_orchestration_list_fields_falls_back_when_discovery_errors(
@@ -130,7 +134,7 @@ def test_pos_orchestration_list_fields_falls_back_when_discovery_errors(
     assert "reference" in result.field_listing.known_fields
     assert "x" in result.field_listing.known_fields
     assert result.field_listing.default_fields
-    assert result.output_payload is None
+    assert result.generation is None
 
 
 def test_pos_projection_service_preserves_user_headers() -> None:

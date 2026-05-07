@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Mapping
+from types import MappingProxyType
+from typing import Any, Mapping
 
 from jbom.common.field_parser import parse_fields_argument
 from jbom.common.fields import field_to_header
@@ -37,7 +39,27 @@ _POS_COMPUTED_FIELDS: tuple[str, ...] = (
     "fabricator_part_number",
 )
 
-DiagnosticEmitter = Callable[[str], None]
+
+def _freeze_mapping(values: Mapping[str, Any] | None) -> Mapping[str, Any]:
+    """Return an immutable copy of a metadata/options mapping."""
+
+    return MappingProxyType(dict(values or {}))
+
+
+def _normalize_text(value: str, *, field_name: str) -> str:
+    """Normalize and validate a required text field."""
+
+    normalized = str(value or "").strip()
+    if not normalized:
+        raise ValueError(f"{field_name} must be non-empty")
+    return normalized
+
+
+class POSOrchestrationMode(str, Enum):
+    """Result modes supported by POS orchestration."""
+
+    LIST_FIELDS = "list_fields"
+    GENERATE = "generate"
 
 
 @dataclass(frozen=True)
@@ -56,6 +78,35 @@ class POSOrchestrationRequest:
     verbose: bool = False
     quiet: bool = False
 
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "input_path",
+            _normalize_text(self.input_path, field_name="input_path"),
+        )
+        object.__setattr__(self, "output", str(self.output or "").strip())
+        object.__setattr__(
+            self,
+            "fabricator",
+            _normalize_text(self.fabricator or "generic", field_name="fabricator"),
+        )
+        object.__setattr__(self, "smd_only", bool(self.smd_only))
+        object.__setattr__(self, "layer", str(self.layer or "").strip())
+        object.__setattr__(
+            self,
+            "origin",
+            _normalize_text(self.origin or "board", field_name="origin"),
+        )
+        object.__setattr__(
+            self,
+            "fields",
+            str(self.fields).strip() if self.fields is not None else None,
+        )
+        object.__setattr__(self, "list_fields", bool(self.list_fields))
+        object.__setattr__(self, "include_dnp", bool(self.include_dnp))
+        object.__setattr__(self, "verbose", bool(self.verbose))
+        object.__setattr__(self, "quiet", bool(self.quiet))
+
 
 @dataclass(frozen=True)
 class POSFieldListingPayload:
@@ -64,9 +115,13 @@ class POSFieldListingPayload:
     known_fields: Mapping[str, str]
     default_fields: tuple[str, ...]
 
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "known_fields", _freeze_mapping(self.known_fields))
+        object.__setattr__(self, "default_fields", tuple(self.default_fields))
+
 
 @dataclass(frozen=True)
-class POSOutputPayload:
+class POSGenerationPayload:
     """Resolved POS output payload produced by orchestration."""
 
     pos_data: tuple[dict[str, Any], ...]
@@ -76,19 +131,39 @@ class POSOutputPayload:
     fabricator_config: FabricatorConfig | None
     default_output_path: Path
 
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "pos_data", tuple(self.pos_data))
+        object.__setattr__(self, "selected_fields", tuple(self.selected_fields))
+        object.__setattr__(self, "headers", tuple(self.headers))
+
 
 @dataclass(frozen=True)
 class POSOrchestrationResult:
-    """Orchestration outcome containing either listing or output payload data."""
+    """Result contract emitted by POS application orchestration."""
 
+    mode: POSOrchestrationMode
+    diagnostics: tuple[str, ...] = ()
     field_listing: POSFieldListingPayload | None = None
-    output_payload: POSOutputPayload | None = None
+    generation: POSGenerationPayload | None = None
 
-
-def _noop_diagnostic(_message: str) -> None:
-    """Default no-op diagnostic sink."""
-
-    return
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "diagnostics", tuple(self.diagnostics))
+        if self.mode == POSOrchestrationMode.LIST_FIELDS:
+            if self.field_listing is None:
+                raise ValueError(
+                    "field_listing payload is required for list_fields mode"
+                )
+            if self.generation is not None:
+                raise ValueError(
+                    "generation payload must be empty for list_fields mode"
+                )
+        if self.mode == POSOrchestrationMode.GENERATE:
+            if self.generation is None:
+                raise ValueError("generation payload is required for generate mode")
+            if self.field_listing is not None:
+                raise ValueError(
+                    "field_listing payload must be empty for generate mode"
+                )
 
 
 def run_pos_component_merge(
@@ -98,9 +173,9 @@ def run_pos_component_merge(
     schematic_files: list[Path],
     pcb_file: Path | None,
     verbose: bool,
-    emit_diagnostic: DiagnosticEmitter,
-) -> ComponentMergeResult | None:
+) -> tuple[ComponentMergeResult | None, tuple[str, ...]]:
     """Best-effort collector/merge execution for POS namespace enrichment."""
+    diagnostics: list[str] = []
 
     try:
         collector = ProjectComponentCollector()
@@ -113,18 +188,18 @@ def run_pos_component_merge(
         merge_service = ComponentMergeService()
         merge_result = merge_service.merge(project_graph)
         if verbose:
-            emit_diagnostic(
+            diagnostics.append(
                 "Merge model active: "
                 f"{project_graph.reference_count} references, "
                 f"{len(merge_result.mismatches)} mismatch record(s)"
             )
-        return merge_result
+        return merge_result, tuple(diagnostics)
     except Exception as exc:
         if verbose:
-            emit_diagnostic(
+            diagnostics.append(
                 f"Warning: merge model execution skipped due to error: {exc}"
             )
-        return None
+        return None, tuple(diagnostics)
 
 
 def enrich_pos_with_merge_namespaces(
@@ -303,34 +378,22 @@ def _parse_requested_field_tokens(raw_fields: str) -> list[str]:
 class POSOrchestrationService:
     """Application-layer POS orchestration service."""
 
-    def orchestrate(
-        self,
-        request: POSOrchestrationRequest,
-        *,
-        emit_diagnostic: DiagnosticEmitter | None = None,
-    ) -> POSOrchestrationResult:
+    def orchestrate(self, request: POSOrchestrationRequest) -> POSOrchestrationResult:
         """Execute POS orchestration for listing or generation flows."""
 
-        diagnostic_sink = emit_diagnostic or _noop_diagnostic
-
         if request.list_fields:
-            return POSOrchestrationResult(
-                field_listing=self._orchestrate_field_listing(request)
-            )
-        return POSOrchestrationResult(
-            output_payload=self._orchestrate_output(
-                request,
-                emit_diagnostic=diagnostic_sink,
-            )
-        )
+            return self._orchestrate_field_listing(request)
+        return self._orchestrate_generation(request)
 
     def _orchestrate_field_listing(
         self,
         request: POSOrchestrationRequest,
-    ) -> POSFieldListingPayload:
+    ) -> POSOrchestrationResult:
         """Build POS field-listing data from best-effort project discovery."""
 
-        gen_options = GeneratorOptions(verbose=request.verbose) if request.verbose else None
+        gen_options = (
+            GeneratorOptions(verbose=request.verbose) if request.verbose else None
+        )
         list_pcb_components: list[Any] = []
         list_schematic_components: list[Any] = []
         try:
@@ -368,21 +431,27 @@ class POSOrchestrationService:
             schematic_components=list_schematic_components or None,
             pcb_components=list_pcb_components or None,
         )
-        default_fields = tuple(get_fabricator_default_fields(request.fabricator, "pos") or ())
-        return POSFieldListingPayload(
-            known_fields=known_fields,
-            default_fields=default_fields,
+        default_fields = tuple(
+            get_fabricator_default_fields(request.fabricator, "pos") or ()
+        )
+        return POSOrchestrationResult(
+            mode=POSOrchestrationMode.LIST_FIELDS,
+            field_listing=POSFieldListingPayload(
+                known_fields=known_fields,
+                default_fields=default_fields,
+            ),
         )
 
-    def _orchestrate_output(
+    def _orchestrate_generation(
         self,
         request: POSOrchestrationRequest,
-        *,
-        emit_diagnostic: DiagnosticEmitter,
-    ) -> POSOutputPayload:
+    ) -> POSOrchestrationResult:
         """Execute POS orchestration and return adapter-ready output payloads."""
+        diagnostics: list[str] = []
 
-        gen_options = GeneratorOptions(verbose=request.verbose) if request.verbose else None
+        gen_options = (
+            GeneratorOptions(verbose=request.verbose) if request.verbose else None
+        )
         resolver = ProjectFileResolver(
             prefer_pcb=True,
             target_file_type="pcb",
@@ -392,14 +461,16 @@ class POSOrchestrationService:
 
         if not resolved_input.is_pcb:
             if not request.quiet:
-                emit_diagnostic(
+                diagnostics.append(
                     "Note: POS generation requires a PCB file. "
                     f"Found {resolved_input.resolved_path.suffix} file, trying to find matching PCB."
                 )
             resolved_input = resolver.resolve_for_wrong_file_type(resolved_input, "pcb")
             if not request.quiet:
-                emit_diagnostic(f"found matching PCB {resolved_input.resolved_path.name}")
-                emit_diagnostic(f"Using PCB: {resolved_input.resolved_path.name}")
+                diagnostics.append(
+                    f"found matching PCB {resolved_input.resolved_path.name}"
+                )
+                diagnostics.append(f"Using PCB: {resolved_input.resolved_path.name}")
 
         pcb_file = resolved_input.resolved_path
         if not resolved_input.project_context:
@@ -407,12 +478,14 @@ class POSOrchestrationService:
 
         project_context = resolved_input.project_context
         project_name = project_context.project_base_name
-        default_output_path = project_context.project_directory / f"{project_name}.pos.csv"
+        default_output_path = (
+            project_context.project_directory / f"{project_name}.pos.csv"
+        )
 
         try:
             hier_files = list(project_context.get_hierarchical_schematic_files())
             if hier_files and len(hier_files) > 1:
-                emit_diagnostic("Processing hierarchical design")
+                diagnostics.append("Processing hierarchical design")
         except Exception:
             pass
 
@@ -422,7 +495,7 @@ class POSOrchestrationService:
             layer_filter=request.layer or None,
         )
         if request.verbose and request.include_dnp:
-            emit_diagnostic("Including DNP components in POS output")
+            diagnostics.append("Including DNP components in POS output")
 
         board = DefaultKiCadReaderService().read_pcb_file(pcb_file)
         pos_data = POSGenerator(placement_options).generate_pos_data(board)
@@ -437,7 +510,7 @@ class POSOrchestrationService:
             ]
         except Exception as exc:
             if request.verbose:
-                emit_diagnostic(
+                diagnostics.append(
                     "Warning: could not load schematic files for merge enrichment: "
                     f"{exc}"
                 )
@@ -452,19 +525,18 @@ class POSOrchestrationService:
                     )
                 except Exception as exc:
                     if request.verbose:
-                        emit_diagnostic(
+                        diagnostics.append(
                             "Warning: skipping schematic source for merge enrichment "
                             f"({schematic_file}): {exc}"
                         )
-
-        merge_result = run_pos_component_merge(
+        merge_result, merge_diagnostics = run_pos_component_merge(
             schematic_components=schematic_components,
             pcb_components=list(board.footprints),
             schematic_files=schematic_files,
             pcb_file=pcb_file,
             verbose=request.verbose,
-            emit_diagnostic=emit_diagnostic,
         )
+        diagnostics.extend(merge_diagnostics)
         pos_data = enrich_pos_with_merge_namespaces(pos_data, merge_result)
         pos_data = apply_pos_dnp_filter(pos_data, include_dnp=request.include_dnp)
 
@@ -473,10 +545,14 @@ class POSOrchestrationService:
             pcb_components=list(board.footprints),
         )
 
-        if request.fields is not None and not _parse_requested_field_tokens(request.fields):
+        if request.fields is not None and not _parse_requested_field_tokens(
+            request.fields
+        ):
             raise ValueError("--fields parameter cannot be empty")
 
-        user_specified_fields = request.fields is not None and request.fabricator == "generic"
+        user_specified_fields = (
+            request.fields is not None and request.fabricator == "generic"
+        )
         selected_fields = parse_fields_argument(
             request.fields,
             available_pos_fields,
@@ -489,22 +565,27 @@ class POSOrchestrationService:
             fabricator=request.fabricator,
             user_specified_fields=user_specified_fields,
         )
-        return POSOutputPayload(
-            pos_data=tuple(pos_data),
-            selected_fields=tuple(effective_fields),
-            headers=tuple(headers),
-            fabricator=request.fabricator,
-            fabricator_config=fabricator_config,
-            default_output_path=default_output_path,
+        return POSOrchestrationResult(
+            mode=POSOrchestrationMode.GENERATE,
+            diagnostics=tuple(diagnostics),
+            generation=POSGenerationPayload(
+                pos_data=tuple(pos_data),
+                selected_fields=tuple(effective_fields),
+                headers=tuple(headers),
+                fabricator=request.fabricator,
+                fabricator_config=fabricator_config,
+                default_output_path=default_output_path,
+            ),
         )
 
 
 __all__ = [
     "POSFieldListingPayload",
+    "POSGenerationPayload",
+    "POSOrchestrationMode",
     "POSOrchestrationRequest",
     "POSOrchestrationResult",
     "POSOrchestrationService",
-    "POSOutputPayload",
     "apply_pos_dnp_filter",
     "enrich_pos_with_merge_namespaces",
     "get_available_pos_fields",
