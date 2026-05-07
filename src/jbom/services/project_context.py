@@ -75,6 +75,27 @@ class ProjectContext:
         else:
             return self.project_directory.name
 
+    @property
+    def lock_file(self) -> Path:
+        """Path to the KiCad lock file for this project.
+
+        KiCad creates ``<project_name>.lck`` while the project is open.
+        The file's presence indicates that KiCad may hold in-memory edits
+        not yet flushed to disk, and that jBOM writes could be overwritten
+        when KiCad saves.
+        """
+        return self.project_directory / f"{self.project_base_name}.lck"
+
+    @property
+    def is_locked(self) -> bool:
+        """Return ``True`` if a KiCad lock file exists for this project.
+
+        Does **not** imply that writes are forbidden — use
+        :func:`~jbom.common.kicad_runtime.check_write_permitted` for
+        context-aware write guarding (plugin-mode bypass, dry-run handling).
+        """
+        return self.lock_file.exists()
+
     def get_expected_schematic_path(self) -> Path:
         """Get expected path for schematic file based on project base name."""
         return self.project_directory / f"{self.project_base_name}.kicad_sch"
