@@ -24,6 +24,7 @@ from jbom.services.annotation_service import (
     annotate_from_repairs,
     normalize_schematic_properties,
 )
+from jbom.common.kicad_runtime import check_write_permitted
 from jbom.services.project_file_resolver import ProjectFileResolver
 
 
@@ -92,6 +93,10 @@ def handle_annotate(args: argparse.Namespace) -> int:
         resolved = resolver.resolve_input(args.input)
         schematic_files = resolved.get_hierarchical_files()
 
+        # Refuse (or warn on --dry-run) if KiCad has the project open.
+        if resolved.project_context:
+            check_write_permitted(resolved.project_context, dry_run=args.dry_run)
+
         exit_code = 0
 
         # --normalize runs first (field renaming is a prerequisite for repairs).
@@ -117,6 +122,9 @@ def handle_annotate(args: argparse.Namespace) -> int:
         return exit_code
 
     except FileNotFoundError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+    except PermissionError as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
     except Exception as exc:

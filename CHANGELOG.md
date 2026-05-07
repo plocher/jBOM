@@ -1,7 +1,16 @@
 # CHANGELOG
+## Unreleased
+### Bug Fixes
+* fix(safety): guard `jbom annotate` writes against KiCad lock files (closes #213)
+
+Add `ProjectContext.lock_file` / `is_locked` properties and
+`jbom.common.kicad_runtime.check_write_permitted()`.  The annotate
+command now refuses to write schematics while a KiCad lock file is
+present, warns instead when `--dry-run` is active, and bypasses the
+guard entirely when running inside KiCad's plugin context.
 
 
-## v6.51.4 (2026-05-07)
+## v6.51.4
 
 ### Refactoring
 
