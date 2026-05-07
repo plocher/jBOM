@@ -57,6 +57,14 @@ from jbom.common.component_filters import (
 from jbom.common.component_utils import derive_package_from_footprint
 from jbom.common.package_matching import PackageType
 from jbom.cli.formatting import Column, print_table, get_terminal_width
+from jbom.workflows.job_contracts import (
+    JobArtifact,
+    JobContext,
+    JobDiagnosticSeverity,
+    JobOutcome,
+    JobRequest,
+)
+from jbom.workflows.job_runner import JobEventStream, JobRunPayload, JobRunner
 
 _BOM_SOURCE_PRIORITY = "pis"
 _BOM_COMPUTED_FIELDS: tuple[str, ...] = (
@@ -263,23 +271,132 @@ def register_command(subparsers) -> None:
 
     parser.set_defaults(handler=handle_bom)
 
+def _resolve_requested_fabricator(args: argparse.Namespace) -> str:
+    """Resolve effective fabricator selector from command arguments."""
+
+    fabricator = args.fabricator
+    if not fabricator:
+        if args.jlc:
+            fabricator = "jlc"
+        elif args.pcbway:
+            fabricator = "pcbway"
+        elif args.seeed:
+            fabricator = "seeed"
+        elif args.generic:
+            fabricator = "generic"
+    if not fabricator:
+        fabricator = "generic"
+    return str(fabricator)
+
+
+def _predict_bom_artifacts(args: argparse.Namespace) -> tuple[JobArtifact, ...]:
+    """Predict adapter-level BOM artifact descriptors from CLI output arguments."""
+
+    output = str(args.output or "").strip()
+    if output.lower() == "console":
+        return ()
+    if output == "-":
+        return (
+            JobArtifact(
+                name="bom.csv",
+                location="stdout://bom.csv",
+                media_type="text/csv",
+            ),
+        )
+    if output:
+        output_path = Path(output)
+        return (
+            JobArtifact(
+                name=output_path.name or "bom.csv",
+                location=str(output_path),
+                media_type="text/csv",
+            ),
+        )
+    return (
+        JobArtifact(
+            name="bom.csv",
+            location="project-default://bom.csv",
+            media_type="text/csv",
+        ),
+    )
+
+
+def _build_bom_job_request(args: argparse.Namespace) -> JobRequest:
+    """Build adapter-neutral `JobRequest` contract for BOM execution."""
+
+    inventory_files = tuple(str(path) for path in (args.inventory_files or []))
+    options: dict[str, object] = {
+        "input": str(args.input or "."),
+        "output": str(args.output or ""),
+        "fabricator": _resolve_requested_fabricator(args),
+        "inventory_files": inventory_files,
+        "verbose": bool(args.verbose),
+        "list_fields": bool(args.list_fields),
+    }
+    return JobRequest(
+        job_type="bom",
+        intent="generate_bom",
+        project_ref=str(args.input or "."),
+        options=options,
+        metadata={"adapter": "cli"},
+    )
+
 
 def handle_bom(args: argparse.Namespace) -> int:
-    """Handle BOM command with project-centric input resolution."""
+    """Handle BOM command through the shared adapter-neutral job runner."""
+
+    request = _build_bom_job_request(args)
+    context = JobContext(
+        adapter_id="cli",
+        session_id="local-process",
+        capabilities={
+            "event_stream": True,
+            "diagnostics": True,
+            "cancellation": False,
+        },
+    )
+    runner = JobRunner()
+
+    def _execute(events: JobEventStream) -> JobRunPayload:
+        events.progress(
+            phase="resolve",
+            message="Resolving project input and BOM orchestration plan",
+        )
+        exit_code = _execute_bom_command(args)
+        if exit_code == 0:
+            events.progress(
+                phase="emit",
+                message="BOM output emitted",
+            )
+        else:
+            events.diagnostic(
+                severity=JobDiagnosticSeverity.ERROR,
+                message="BOM command execution failed",
+                code="bom_execution_failed",
+                details={"exit_code": exit_code},
+            )
+
+        return JobRunPayload(
+            outcome=JobOutcome.SUCCEEDED if exit_code == 0 else JobOutcome.FAILED,
+            artifacts=_predict_bom_artifacts(args) if exit_code == 0 else (),
+            metadata={
+                "exit_code": exit_code,
+                "command": "bom",
+                "fabricator": request.options.get("fabricator", "generic"),
+            },
+        )
+
+    result = runner.run(request=request, context=context, execute=_execute)
+    if result.outcome == JobOutcome.CANCELLED:
+        return 130
+    return int(result.metadata.get("exit_code", 1))
+
+
+def _execute_bom_command(args: argparse.Namespace) -> int:
+    """Execute BOM command body with project-centric input resolution."""
     try:
         # Determine effective fabricator early (needed for --list-fields)
-        fabricator = args.fabricator
-        if not fabricator:
-            if args.jlc:
-                fabricator = "jlc"
-            elif args.pcbway:
-                fabricator = "pcbway"
-            elif args.seeed:
-                fabricator = "seeed"
-            elif args.generic:
-                fabricator = "generic"
-        if not fabricator:
-            fabricator = "generic"
+        fabricator = _resolve_requested_fabricator(args)
 
         # Handle --list-fields - best-effort: try to load runtime data for richer output
         if args.list_fields:
