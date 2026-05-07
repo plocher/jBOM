@@ -1,6 +1,25 @@
 # CHANGELOG
 
 
+## v6.51.2 (2026-05-07)
+
+### Refactoring
+
+* refactor(architecture): retire workflow registry and move job contracts
+
+Closes #232
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`551a8d8`](https://github.com/plocher/jBOM/commit/551a8d87f174369843871c67df8463fcf41f24c1))
+
+### Unknown
+
+* architecture(cli): rewire bom/pos adapters through shared job runner
+
+Closes #223
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`32c82ca`](https://github.com/plocher/jBOM/commit/32c82cae4aacd6f936d69bb151b415f3312a279d))
+
+
 ## v6.51.1 (2026-05-07)
 
 ### Refactoring
