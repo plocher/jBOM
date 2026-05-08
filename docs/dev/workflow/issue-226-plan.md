@@ -45,7 +45,7 @@ Add `src/jbom/services/bom_writer.py` as a friend serializer that writes a `BOMG
 Add `src/jbom/services/pos_writer.py` as the placement/CPL counterpart to `BOMWriter`. It writes the `POSGenerationPayload` to a target path using the existing POS CSV shape. Unit tests should mirror the BOM writer tests.
 ### C3: Remove CLI-layer dependency from `fab`
 Refactor `src/jbom/cli/fabrication.py` to stop importing `_output_bom` and `_output_pos` from sibling CLI modules. The fabrication path should use `BOMWriter` and `POSWriter` for file output. Existing CLI commands `bom` and `pos` keep their console/stdout rendering behavior unchanged.
-## Phase D — Diagnostic Collection Fix
+## Phase D — Diagnostic Collection Fix ✅ COMPLETE
 Entry: can be implemented independently.
 Exit: service modules do not gate diagnostic collection on environment or `quiet` flags.
 ### D1: Fix `BOMWorkflow`
