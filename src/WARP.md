@@ -22,6 +22,12 @@
 - Agent behavior expectations
     - When uncertain about alternate paths or solutions, ask for guidance
 
+## Design Documentation Expectations
+- Significant architectural decisions must be recorded in `docs/dev/architecture/adr/` as numbered ADRs.
+- Cross-cutting design patterns (e.g., service composition, diagnostic handling) belong in `docs/dev/architecture/design-patterns.md` or `layer-responsibilities.md`.
+- After implementing a feature that introduces or changes an architectural pattern, update the relevant `docs/dev/` files — not just code comments or the GitHub issue.
+- The `src/WARP.md` file records agent-behavior directions; `docs/dev/` is for human-readable design rationale.
+
 ## Naming Convention (established in issues #224/#237)
 - Class names reflect the **promise** (what the class produces/delivers), not the mechanism.
 - The `Service` suffix is omitted when the module path already provides context (`jbom.application.*`, `jbom.services.*`).
