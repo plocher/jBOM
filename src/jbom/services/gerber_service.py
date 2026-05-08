@@ -1,8 +1,9 @@
 """Gerber/drill/netlist export service for fabrication artifact generation.
 
 Tiered dispatch:
-1. ``kicad-cli pcb export`` subprocess — available whenever KiCad is installed
-   and ``kicad-cli`` is on the PATH.
+1. ``kicad-cli pcb export`` subprocess — located via PATH, then platform-specific
+   well-known installation directories (macOS app bundle, Windows Program Files,
+   common Linux paths).
 2. ``pcbnew`` Python API (plugin mode) — stub only; raises a diagnostic because
    the implementation is deferred to the plugin adapter issue (#227).
 3. Graceful degradation — when neither path is available the service returns a
@@ -28,6 +29,8 @@ Usage::
 
 from __future__ import annotations
 
+import os
+import platform
 import shutil
 import subprocess
 from dataclasses import dataclass
@@ -40,6 +43,72 @@ __all__ = [
     "GerberRequest",
     "GerberResult",
 ]
+
+
+def _find_kicad_cli() -> str | None:
+    """Return the path to the kicad-cli executable, or ``None`` if not found.
+
+    Search order:
+    1. ``PATH`` — covers Linux system installs and any user-configured PATH.
+    2. Platform-specific well-known installation directories:
+       - **macOS**: ``/Applications/KiCad/KiCad.app/Contents/MacOS/``
+       - **Windows**: ``%PROGRAMFILES%\\KiCad\\<version>\\bin\\`` (versions 7–9)
+       - **Linux**: ``/usr/bin/``, ``/usr/local/bin/``, ``/snap/bin/``
+    """
+    # Try both spellings; KiCad uses a hyphen but some older builds used underscore.
+    for name in ("kicad-cli", "kicad_cli"):
+        found = shutil.which(name)
+        if found:
+            return found
+
+    system = platform.system()
+    candidates: list[Path] = []
+
+    if system == "Darwin":
+        bundle = Path("/Applications/KiCad/KiCad.app/Contents/MacOS")
+        candidates = [bundle / "kicad-cli", bundle / "kicad_cli"]
+
+    elif system == "Windows":
+        prog = Path(os.environ.get("PROGRAMFILES", r"C:\Program Files"))
+        for version in ("9.0", "8.0", "7.0"):
+            candidates.append(prog / "KiCad" / version / "bin" / "kicad-cli.exe")
+
+    else:  # Linux / BSD / other
+        candidates = [
+            Path("/usr/bin/kicad-cli"),
+            Path("/usr/local/bin/kicad-cli"),
+            Path("/snap/bin/kicad-cli"),
+        ]
+
+    for candidate in candidates:
+        if candidate.is_file():
+            return str(candidate)
+
+    return None
+
+
+def _kicad_cli_not_found_message() -> str:
+    """Return a platform-appropriate diagnostic when kicad-cli cannot be located."""
+    system = platform.system()
+    if system == "Darwin":
+        install_hint = (
+            "On macOS, install KiCad from https://www.kicad.org/download/ — "
+            "jBOM checks /Applications/KiCad/KiCad.app/Contents/MacOS/ automatically."
+        )
+    elif system == "Windows":
+        install_hint = (
+            r"On Windows, install KiCad from https://www.kicad.org/download/ — "
+            r"jBOM checks C:\Program Files\KiCad\<version>\bin\ automatically."
+        )
+    else:
+        install_hint = (
+            "On Linux, install KiCad via your package manager (e.g. "
+            "`sudo apt install kicad` or `sudo dnf install kicad`). "
+            "kicad-cli is usually placed on PATH automatically."
+        )
+    return (
+        f"kicad-cli not found. {install_hint} " "BOM and POS generation are unaffected."
+    )
 
 
 def _normalize_text(value: str, *, field_name: str) -> str:
@@ -163,15 +232,11 @@ class GerberExporter:
 
     def _generate_via_kicad_cli(self, request: GerberRequest) -> GerberResult:
         """Generate Gerbers by invoking kicad-cli as a subprocess."""
-        kicad_cli = shutil.which("kicad-cli")
+        kicad_cli = _find_kicad_cli()
         if kicad_cli is None:
             return GerberResult(
                 artifacts=(),
-                diagnostics=(
-                    "kicad-cli not found on PATH. "
-                    "Install KiCad and ensure kicad-cli is accessible to generate "
-                    "Gerber/drill files. BOM and POS files are unaffected.",
-                ),
+                diagnostics=(_kicad_cli_not_found_message(),),
                 skipped=True,
                 skip_reason="kicad_cli_not_found",
             )
