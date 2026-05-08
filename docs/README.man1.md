@@ -12,6 +12,8 @@ jbom audit PATH [PATH ...] [--inventory CATALOG_CSV] [--supplier NAME] [--api-ke
 jbom annotate INPUT [--repairs REPORT_CSV] [--normalize] [--dry-run]
 jbom bom [PROJECT] [--inventory FILE ...] [-o OUTPUT] [BOM OPTIONS]
 jbom pos [PROJECT] [-o OUTPUT] [POS OPTIONS]
+jbom gerbers [PROJECT] [-o OUTPUT_DIR] [--fabricator NAME] [--no-drill] [--netlist] [--dry-run]
+jbom fab [PROJECT] [-o OUTPUT_ROOT] [--fabricator NAME] [--skip-bom] [--skip-pos] [--skip-gerbers] [--debug] [--dry-run]
 jbom inventory [PROJECT] [-o OUTPUT] [INVENTORY OPTIONS]
 jbom parts [PROJECT] [-o OUTPUT] [PARTS OPTIONS]
 jbom search QUERY [SEARCH OPTIONS]
@@ -19,12 +21,14 @@ jbom search QUERY [SEARCH OPTIONS]
 
 ## DESCRIPTION
 
-jBOM provides eight subcommands:
+jBOM provides nine subcommands:
 
 - `audit` — diagnose field-quality issues and inventory coverage gaps in KiCad projects or catalog files
 - `annotate` — back-annotate KiCad schematics with approved field values from an audit report
 - `bom` — generate a procurement BOM from KiCad schematics matched against an inventory file
 - `pos` — generate component placement files (CPL/POS) from KiCad PCB files
+- `gerbers` — generate Gerber/drill files from a KiCad PCB file via kicad-cli
+- `fab` — one-shot fabrication: BOM + placement + Gerbers, written to a `production/` folder
 - `inventory` — generate an initial inventory template from schematic components
 - `parts` — generate an unaggregated parts list (one row per component) from schematics
 - `search` — search external distributor catalogs (e.g. Mouser) by keyword or part number
@@ -34,7 +38,9 @@ The BOM workflow keeps designs supplier-neutral: components carry generic values
 ## GLOBAL OPTIONS
 
 **-q, --quiet**
-: Suppress informational guidance messages (diagnostics). Errors are still emitted.
+: Suppress informational diagnostics printed to stderr. Errors are still emitted.
+  Note: this flag operates at the CLI adapter level. Service-layer diagnostics are always
+  collected and available regardless of this flag.
 
 **--version**
 : Print jBOM version and exit.
@@ -411,6 +417,134 @@ Searches distributor catalogs for parts matching a keyword or part number.
 
 **-F, --force, --Force**
 : Overwrite an existing output file.
+
+## GERBERS COMMAND
+
+```
+jbom gerbers [PROJECT] [-o OUTPUT_DIR] [OPTIONS]
+```
+
+Generates Gerber, drill, and optionally IPC-D-356 netlist files from a KiCad PCB file using
+`kicad-cli`.  When `kicad-cli` is not installed, generation is skipped and a diagnostic is
+emitted — BOM and POS generation are unaffected.
+
+Layer selection, drill splitting, and drill map format are read from the fabricator's
+`gerbers:` config stanza when a fabricator is specified.
+
+**PROJECT** (optional, default: current directory)
+: Path to a KiCad project directory, `.kicad_pcb`, `.kicad_pro`, or `.kicad_sch` file.
+
+**-o, --output-dir OUTPUT_DIR**
+: Directory where Gerber and drill files are written. Default: `<project_dir>/gerbers/`.
+
+**--fabricator NAME**
+: Fabricator profile for layer selection and Gerber options. Default: `generic`.
+
+**--jlc / --pcbway / --seeed / --generic**
+: Shorthand fabricator flags.
+
+**--no-drill**
+: Skip drill file generation.
+
+**--netlist**
+: Also generate an IPC-D-356 netlist file (`netlist.ipc`).
+
+**--dry-run**
+: Validate inputs without generating any files.
+
+**-v, --verbose**
+: Verbose output.
+
+### Exit codes
+
+- `0` — success (or graceful skip with diagnostic when kicad-cli absent)
+- `1` — error
+
+## FAB COMMAND
+
+```
+jbom fab [PROJECT] [-o OUTPUT_ROOT] [OPTIONS]
+```
+
+One-shot fabrication: generates BOM, placement, and Gerber files for a KiCad project and
+organizes them into a `production/` folder ready for upload to a PCB fabricator.
+
+Equivalent to running `jbom bom`, `jbom pos`, and `jbom gerbers` in sequence with the same
+fabricator profile, then packaging results and creating a dated backup archive.
+
+**Output structure**:
+```
+production/
+  jbom.csv                           ← BOM (fabricator-ready)
+  cpl.csv                            ← CPL/placement
+  {title}_{revision}.zip             ← Gerber archive for fab upload
+  backups/
+    {title}_{revision}_{timestamp}.zip   ← dated snapshot of all artifacts
+```
+`{title}` and `{revision}` are read from the KiCad title block; absent title falls back
+to the `.kicad_pro` basename.
+
+**PROJECT** (optional, default: current directory)
+: Path to a KiCad project directory, `.kicad_pro`, `.kicad_pcb`, or `.kicad_sch` file.
+
+**-o, --output-dir OUTPUT_ROOT**
+: Parent directory for the `production/` folder. Default: project directory.
+
+**--fabricator NAME** / **--jlc** / **--pcbway** / **--seeed** / **--generic**
+: Fabricator profile. Controls field presets for BOM and POS, and Gerber layer configuration.
+  Default: `generic`.
+
+**--skip-bom**
+: Skip BOM generation.
+
+**--skip-pos**
+: Skip placement (CPL) generation.
+
+**--skip-gerbers**
+: Skip Gerber generation and packaging.
+
+**--inventory FILE**
+: Inventory CSV for BOM enhancement (repeatable).
+
+**--smd-only**
+: Include only SMD components in placement output.
+
+**--layer {TOP,BOTTOM}**
+: Filter placement to the specified board side.
+
+**--origin {board,aux}**
+: Coordinate origin for placement output. Default: `board`.
+
+**--netlist**
+: Also generate an IPC-D-356 netlist during the Gerber step.
+
+**--debug**
+: Preserve the intermediate gerber directory after packaging (useful for inspection).
+
+**--dry-run**
+: Generate BOM/POS data but skip all file writes and Gerber generation.
+
+**-v, --verbose**
+: Verbose output.
+
+### Exit codes
+
+- `0` — success
+- `1` — error
+
+### Example
+
+```bash
+# Full fabrication run for JLCPCB
+jbom fab MyProject/ --jlc --inventory inventory.csv
+# Output: MyProject/production/jbom.csv, cpl.csv, MyProject_1.0.zip, backups/...
+
+# Skip Gerbers (BOM and CPL only)
+jbom fab MyProject/ --jlc --inventory inventory.csv --skip-gerbers
+
+# Dry run — check what would be generated
+jbom fab MyProject/ --jlc --dry-run
+```
 
 ## INVENTORY-SEARCH COMMAND (RETIRED)
 

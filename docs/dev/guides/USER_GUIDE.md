@@ -4,11 +4,14 @@ A comprehensive guide to using jBOM for Bill of Materials generation, inventory 
 
 ## Command Overview
 
-jBOM provides three main commands for different PCB development workflows:
+jBOM provides commands for different PCB development workflows:
 
 - **`jbom bom`** - Generate Bills of Materials from KiCad schematics
+- **`jbom pos`** - Generate component placement files (CPL) for PCB manufacturing
+- **`jbom gerbers`** - Generate Gerber/drill files from a KiCad PCB via kicad-cli
+- **`jbom fab`** - One-shot fabrication: BOM + CPL + Gerbers in a `production/` folder
 - **`jbom inventory`** - Create and manage component inventory from projects
-- **`jbom pos`** - Generate component placement files for PCB manufacturing
+- **`jbom audit`** / **`jbom annotate`** / **`jbom search`** / **`jbom parts`** — additional utilities
 
 ## Basic Usage
 
@@ -196,19 +199,28 @@ jbom inventory projectB.kicad_sch \
 ```
 
 ### 4. Manufacturing Handoff
-Create all manufacturing files with inventory enhancement:
+Create all manufacturing files with inventory enhancement.
 
+**One-shot (recommended)**: `jbom fab` generates BOM, CPL, and Gerbers in a single `production/` folder:
+```bash
+jbom fab board/ --jlc --inventory inventory.csv
+# Produces:
+#   production/jbom.csv
+#   production/cpl.csv
+#   production/{title}_{revision}.zip  (Gerber archive)
+#   production/backups/{title}_{revision}_{timestamp}.zip
+```
+
+**Individual commands** (for fine-grained control):
 ```bash
 # Enhanced BOM for procurement
-jbom bom board.kicad_sch \
-  --inventory suppliers.csv \
-  -o manufacturing_bom.csv
+jbom bom board/ --inventory suppliers.csv --jlc
 
 # SMD placement for pick-and-place
-jbom pos board.kicad_pcb --smd-only -o smd_placement.csv
+jbom pos board/ --smd-only --jlc
 
-# Through-hole placement for manual assembly
-jbom pos board.kicad_pcb --through-hole-only -o th_placement.csv
+# Gerbers only (requires kicad-cli)
+jbom gerbers board/ --jlc -o gerbers/
 ```
 
 ## CSV File Formats
