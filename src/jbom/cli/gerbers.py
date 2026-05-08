@@ -18,7 +18,12 @@ from jbom.common.cli_fabricator import (
     add_fabricator_arguments,
     resolve_fabricator_from_args,
 )
-from jbom.services.gerber_service import GerberExporter, GerberRequest, GerberResult
+from jbom.services.gerber_service import (
+    GerberExporter,
+    GerberRequest,
+    GerberResult,
+    gerber_request_from_config,
+)
 from jbom.services.project_file_resolver import ProjectFileResolver
 
 
@@ -144,10 +149,29 @@ def _execute_gerbers_command(args) -> int:  # type: ignore[type-arg]
         print("Dry run: Prerequisites OK.")
         return 0
 
-    request = GerberRequest(
+    # Load fabricator gerber policy and overlay CLI opts
+    gerbers_cfg: dict | None = None
+    try:
+        from jbom.config.fabricators import load_fabricator
+
+        gerbers_cfg = load_fabricator(fabricator).gerbers
+    except Exception:
+        pass
+
+    base = gerber_request_from_config(
         pcb_file=pcb_file,
         output_directory=output_dir,
-        fabricator=fabricator,
+        fabricator_id=fabricator,
+        gerbers_cfg=gerbers_cfg,
+    )
+    request = GerberRequest(
+        pcb_file=base.pcb_file,
+        output_directory=base.output_directory,
+        fabricator=base.fabricator,
+        layers=base.layers,
+        protel_extensions=base.protel_extensions,
+        drill_split_plated_holes=base.drill_split_plated_holes,
+        drill_map_format=base.drill_map_format,
         include_drill=include_drill,
         include_netlist=include_netlist,
     )
