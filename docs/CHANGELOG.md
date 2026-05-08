@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+- **Fabrication artifact services and orchestration** (issue #224 — ADR 0005 Phase 3):
+  - `GerberExporter` service (`services/gerber_service.py`) with tiered dispatch:
+    1. `kicad-cli pcb export` subprocess when KiCad is installed.
+    2. `pcbnew` API stub (plugin mode — deferred to issue #227).
+    3. Graceful degradation: `GerberResult(skipped=True)` with actionable diagnostic when neither path is available; BOM and POS generation are unaffected.
+  - `FabricationWorkflow` application service (`application/fabrication_orchestration.py`): adapter-neutral orchestrator that sequences BOM → POS → Gerbers in one coordinated run.  Each step is independently skip-able.  Failures in one step are captured as diagnostics without aborting subsequent steps.
+  - `jbom gerbers` CLI command: standalone Gerber/drill/IPC-D-356 generation for validating `GerberExporter` in isolation.  Options: `--fabricator`, `-o/--output-dir`, `--no-drill`, `--netlist`, `--dry-run`.
+  - `jbom fab` CLI command: one-shot BOM + POS + Gerber generation.  Equivalent to running `jbom bom`, `jbom pos`, `jbom gerbers` in sequence with the same fabricator profile.  Supports `--skip-bom`, `--skip-pos`, `--skip-gerbers`, `--dry-run`, `--inventory`, `--smd-only`, `--layer`, `--origin`.
+  - **Naming convention** for new code (#224 establishes; cleanup of existing `BOMOrchestrationService`/`POSOrchestrationService` names tracked in issue #237): class names reflect the promise (what is produced), not the mechanism; `Service`/`Orchestration` suffixes omitted where the module path provides context.
+
 ### Breaking Changes
 - **Inventory CSV schema cutover** (issue #218): per-supplier columns (`LCSC`,
   `Mouser`, etc.) are replaced by a normalized two-column model:
