@@ -120,6 +120,7 @@ class FabricatorConfig:
     pcb_manufacturing: Optional[Dict[str, Any]] = None  # Manufacturing info
     pcb_assembly: Optional[Dict[str, Any]] = None  # Assembly info
     website: Optional[str] = None  # Fabricator website
+    gerbers: Optional[Dict[str, Any]] = None  # Gerber/drill export policy
 
     @staticmethod
     def from_yaml_dict(data: Dict[str, Any], *, default_id: str) -> "FabricatorConfig":
@@ -163,6 +164,7 @@ class FabricatorConfig:
         pcb_manufacturing = data.get("pcb_manufacturing")
         pcb_assembly = data.get("pcb_assembly")
         website = data.get("website")
+        gerbers = data.get("gerbers")
 
         # Phase 1: ordered supplier profile IDs.
         suppliers_cfg = data.get("suppliers") or []
@@ -230,6 +232,7 @@ class FabricatorConfig:
             pcb_manufacturing=pcb_manufacturing,
             pcb_assembly=pcb_assembly,
             website=website,
+            gerbers=gerbers,
         )
 
     def resolve_field_synonym(self, field_name: str) -> Optional[str]:

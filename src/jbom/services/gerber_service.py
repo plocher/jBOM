@@ -42,6 +42,7 @@ __all__ = [
     "GerberExporter",
     "GerberRequest",
     "GerberResult",
+    "gerber_request_from_config",
 ]
 
 
@@ -128,13 +129,23 @@ class GerberRequest:
         output_directory: Directory where fabrication artifacts are written.
             Created automatically if it does not exist.
         fabricator: Fabricator profile identifier (e.g. ``"jlc"``).  Reserved
-            for future plot-option customisation per fabricator; currently
-            used only for diagnostics.
-        include_drill: When ``True`` (default) also run ``kicad-cli pcb export
-            drill`` to produce PTH/NPTH drill files.
+            for diagnostics and future plot-option customisation.
+        include_drill: When ``True`` (default) run ``kicad-cli pcb export drill``.
         include_netlist: When ``True`` also run ``kicad-cli pcb export ipc356``
-            to produce an IPC-D-356 netlist.  Defaults to ``False`` as most
-            fabricators do not require it.
+            to produce an IPC-D-356 netlist.  Defaults to ``False``.
+        layers: Explicit allowlist of KiCad layer names to export (e.g.
+            ``("F.Cu", "B.Cu", "Edge.Cuts")``).  ``None`` exports all layers
+            (kicad-cli default — equivalent to no ``--layers`` flag).
+        protel_extensions: When ``True`` (default) kicad-cli uses Protel-style
+            extensions (``.gtl``, ``.gbl``, etc.).  ``False`` passes
+            ``--no-protel-ext`` and all files get the generic ``.gbr`` extension.
+        drill_split_plated_holes: When ``True`` produce separate ``*-PTH.drl``
+            and ``*-NPTH.drl`` files via ``--excellon-separate-th``.  ``False``
+            (default) produces a single merged ``*.drl``.
+        drill_map_format: When non-``None``, generate a drill-map file via
+            ``--generate-map --map-format <value>``.  Accepted values match
+            kicad-cli: ``"gerber"``, ``"pdf"``, ``"svg"``, ``"ps"``, ``"dxf"``.
+            ``None`` (default) generates no map.
     """
 
     pcb_file: Path
@@ -142,6 +153,10 @@ class GerberRequest:
     fabricator: str = "generic"
     include_drill: bool = True
     include_netlist: bool = False
+    layers: tuple[str, ...] | None = None
+    protel_extensions: bool = True
+    drill_split_plated_holes: bool = False
+    drill_map_format: str | None = None
 
     def __post_init__(self) -> None:
         # Validate raw input *before* Path coercion: Path("") → Path(".") in Python,
@@ -159,6 +174,25 @@ class GerberRequest:
         )
         object.__setattr__(self, "include_drill", bool(self.include_drill))
         object.__setattr__(self, "include_netlist", bool(self.include_netlist))
+        if self.layers is not None:
+            object.__setattr__(
+                self,
+                "layers",
+                tuple(
+                    str(layer).strip() for layer in self.layers if str(layer).strip()
+                ),
+            )
+        object.__setattr__(self, "protel_extensions", bool(self.protel_extensions))
+        object.__setattr__(
+            self, "drill_split_plated_holes", bool(self.drill_split_plated_holes)
+        )
+        object.__setattr__(
+            self,
+            "drill_map_format",
+            str(self.drill_map_format).strip().lower()
+            if self.drill_map_format
+            else None,
+        )
 
 
 @dataclass(frozen=True)
@@ -259,18 +293,19 @@ class GerberExporter:
 
         # --- Gerbers ---
         before = set(request.output_directory.iterdir())
-        err = self._run_kicad_cli(
-            kicad_cli,
-            args=[
-                "pcb",
-                "export",
-                "gerbers",
-                "--output",
-                str(request.output_directory),
-                str(request.pcb_file),
-            ],
-            step="gerbers",
-        )
+        gerber_args = [
+            "pcb",
+            "export",
+            "gerbers",
+            "--output",
+            str(request.output_directory),
+        ]
+        if request.layers:
+            gerber_args.extend(["--layers", ",".join(request.layers)])
+        if not request.protel_extensions:
+            gerber_args.append("--no-protel-ext")
+        gerber_args.append(str(request.pcb_file))
+        err = self._run_kicad_cli(kicad_cli, args=gerber_args, step="gerbers")
         if err:
             diagnostics.append(err)
             return GerberResult(
@@ -285,18 +320,21 @@ class GerberExporter:
         # --- Drill files ---
         if request.include_drill:
             before = set(request.output_directory.iterdir())
-            err = self._run_kicad_cli(
-                kicad_cli,
-                args=[
-                    "pcb",
-                    "export",
-                    "drill",
-                    "--output",
-                    str(request.output_directory),
-                    str(request.pcb_file),
-                ],
-                step="drill",
-            )
+            drill_args = [
+                "pcb",
+                "export",
+                "drill",
+                "--output",
+                str(request.output_directory),
+            ]
+            if request.drill_split_plated_holes:
+                drill_args.append("--excellon-separate-th")
+            if request.drill_map_format:
+                drill_args.extend(
+                    ["--generate-map", "--map-format", request.drill_map_format]
+                )
+            drill_args.append(str(request.pcb_file))
+            err = self._run_kicad_cli(kicad_cli, args=drill_args, step="drill")
             if err:
                 diagnostics.append(err)
             else:
@@ -360,3 +398,53 @@ class GerberExporter:
             return f"kicad-cli {step} timed out after 120 seconds"
         except OSError as exc:
             return f"kicad-cli {step} invocation failed: {exc}"
+
+
+def gerber_request_from_config(
+    pcb_file: Path,
+    output_directory: Path,
+    fabricator_id: str = "generic",
+    gerbers_cfg: dict | None = None,
+) -> GerberRequest:
+    """Build a :class:`GerberRequest` from a fabricator ``gerbers`` config dict.
+
+    Pass the ``FabricatorConfig.gerbers`` mapping (or ``None`` to use defaults).
+    When ``gerbers_cfg`` is ``None`` the request uses kicad-cli defaults: all
+    layers, Protel extensions enabled, merged drill file, no drill maps.
+
+    Args:
+        pcb_file: Path to the ``.kicad_pcb`` source file.
+        output_directory: Directory where Gerber artifacts will be written.
+        fabricator_id: Fabricator identifier for diagnostics.
+        gerbers_cfg: The ``gerbers`` sub-dict from a fabricator YAML, or ``None``.
+
+    Returns:
+        A fully populated :class:`GerberRequest`.
+    """
+    cfg = gerbers_cfg or {}
+
+    # --- layers ---
+    layers_raw = cfg.get("layers")
+    layers: tuple[str, ...] | None = None
+    if layers_raw and isinstance(layers_raw, list):
+        layers = tuple(str(layer).strip() for layer in layers_raw if str(layer).strip())
+
+    # --- naming ---
+    naming = cfg.get("naming") or {}
+    protel_extensions = bool(naming.get("protel_extensions", True))
+
+    # --- drill ---
+    drill = cfg.get("drill") or {}
+    split = bool(drill.get("split_plated_holes", False))
+    map_fmt_raw = drill.get("map_format")
+    map_fmt: str | None = str(map_fmt_raw).strip().lower() if map_fmt_raw else None
+
+    return GerberRequest(
+        pcb_file=pcb_file,
+        output_directory=output_directory,
+        fabricator=fabricator_id,
+        layers=layers,
+        protel_extensions=protel_extensions,
+        drill_split_plated_holes=split,
+        drill_map_format=map_fmt,
+    )

@@ -7,7 +7,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 
 ### Added
-- **Fabrication artifact services and orchestration** (issue #224 — ADR 0005 Phase 3):
+- **Fabricator-configured Gerber export policy** (issue #225 partial — layers, naming, drill):
+  - All fabricator configs (`generic`, `jlc`, `pcbway`, `seeed`) now include a `gerbers:` stanza
+    specifying the standard 9-layer fabrication set, Protel extensions, split PTH/NPTH drill
+    files, and Gerber-format drill maps.  This eliminates the extra non-fabrication layers
+    (`Courtyard`, `Fab`, `Adhesive`, `User_*`) that kicad-cli exports by default.
+  - `GerberRequest` gains four new fields: `layers`, `protel_extensions`,
+    `drill_split_plated_holes`, `drill_map_format`.  Defaults preserve the previous
+    (no-config) behavior; non-`None` values map directly to kicad-cli flags
+    (`--layers`, `--no-protel-ext`, `--excellon-separate-th`, `--generate-map`).
+  - `gerber_request_from_config()` helper builds a `GerberRequest` from a fabricator
+    `gerbers` dict; used by both `jbom gerbers` and `jbom fab`.
+  - Multi-layer boards (4+ copper layers) can be supported by overriding the
+    fabricator config in a project-local `.jbom/<fab>.fab.yaml` to add inner copper layers.
+- **Fabrication artifact services and orchestration** (issue #224
   - `GerberExporter` service (`services/gerber_service.py`) with tiered dispatch:
     1. `kicad-cli pcb export` subprocess when KiCad is installed.
     2. `pcbnew` API stub (plugin mode — deferred to issue #227).

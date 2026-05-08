@@ -82,3 +82,22 @@ presets:
 cli_aliases:
   flags: ["--generic"]
   presets: ["+generic"]
+
+gerbers:
+  # Standard 2-layer fabrication layer set. Add In1.Cu, In2.Cu, etc. for
+  # multi-layer boards via a project-local .jbom/generic.fab.yaml override.
+  layers:
+    - "F.Cu"
+    - "B.Cu"
+    - "F.Mask"
+    - "B.Mask"
+    - "F.Paste"
+    - "B.Paste"
+    - "F.Silkscreen"
+    - "B.Silkscreen"
+    - "Edge.Cuts"
+  naming:
+    protel_extensions: true
+  drill:
+    split_plated_holes: true
+    map_format: "gerber"
