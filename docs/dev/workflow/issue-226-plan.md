@@ -31,7 +31,7 @@ Exit: gerber packaging and dated backup packaging both work in isolation.
 Add `src/jbom/services/gerber_packager.py` that accepts explicit gerber artifact paths plus an archive path, delegates to `ZipArchiver`, and removes the intermediate gerber directory unless debug mode requests it be kept. Tests cover archive creation and cleanup behavior.
 ### B2: Add `BackupService`
 Add `src/jbom/services/backup_service.py` that archives explicit production artifact paths into `production/backups/{stem}_{timestamp}.zip`. Timestamp format should be `%Y-%m-%d_%H-%M-%S`. Tests cover naming, archive creation, and backup directory auto-creation.
-## Phase C — Friend Serializers
+## Phase C — Friend Serializers ✅ COMPLETE
 Entry: design closed and workflow/file-I/O boundary agreed.
 Exit: BOM/POS file writing no longer depends on CLI adapter internals.
 ### C0: Extract field resolvers from CLI adapters ✅ COMPLETE
