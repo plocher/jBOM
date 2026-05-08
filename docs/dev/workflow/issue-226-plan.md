@@ -34,6 +34,11 @@ Add `src/jbom/services/backup_service.py` that archives explicit production arti
 ## Phase C — Friend Serializers
 Entry: design closed and workflow/file-I/O boundary agreed.
 Exit: BOM/POS file writing no longer depends on CLI adapter internals.
+### C0: Extract field resolvers from CLI adapters ✅ COMPLETE
+Moved ~300 LOC of BOM/POS field resolution logic from `cli/bom.py` and `cli/pos.py` into dedicated service modules:
+- `src/jbom/services/bom_field_resolver.py` — `resolve_bom_field_value(entry, field, *, fabricator_id, fabricator_config) -> str`
+- `src/jbom/services/pos_field_resolver.py` — `resolve_pos_field_value(entry, field, *, fabricator_id, fabricator_config) -> str`
+CLI wrappers now delegate to these functions. No behavior change; 1145 tests pass. (commit 46c81f3)
 ### C1: Add `BOMWriter`
 Add `src/jbom/services/bom_writer.py` as a friend serializer that writes a `BOMGenerationPayload` to a target path using the same CSV structure currently emitted by the BOM CLI. It should enforce overwrite policy via `force`. Unit tests should cover headers, row content, and overwrite refusal.
 ### C2: Add `POSWriter`
