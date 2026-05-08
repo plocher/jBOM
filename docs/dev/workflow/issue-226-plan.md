@@ -15,7 +15,7 @@ production/
     {title}_{revision}_{timestamp}.zip
 ```
 `{title}` and `{revision}` come from KiCad title block metadata; fallback to `.kicad_pro` basename when title is absent.
-## Phase A — Foundation
+## Phase A — Foundation ✅ COMPLETE
 Entry: branch exists and design is closed.
 Exit: title block metadata is available from PCB/schematic readers; `ProjectMetadata` and `ZipArchiver` are independently tested.
 ### A1: Add title block metadata to readers
