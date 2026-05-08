@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
@@ -14,7 +13,7 @@ from jbom.common.field_parser import (
     parse_fields_argument,
 )
 from jbom.common.options import GeneratorOptions
-from jbom.config.fabricators import get_fabricator_presets
+from jbom.config.fabricators import FabricatorConfig, get_fabricator_presets
 from jbom.services.bom_generator import BOMData, BOMEntry, BOMGenerator
 from jbom.services.component_merge_service import (
     ComponentMergeResult,
@@ -32,6 +31,7 @@ from jbom.services.pcb_reader import DefaultKiCadReaderService
 from jbom.services.project_component_collector import ProjectComponentCollector
 from jbom.services.project_file_resolver import ProjectFileResolver
 from jbom.services.schematic_reader import SchematicReader
+from jbom.services.fabricator_projection_service import FabricatorProjectionService
 
 _BOM_COMPUTED_FIELDS: tuple[str, ...] = (
     "reference",
@@ -125,6 +125,8 @@ class BOMGenerationPayload:
     bom_data: BOMData
     selected_fields: tuple[str, ...]
     default_output_path: Path
+    fabricator: str = "generic"
+    fabricator_config: Optional[FabricatorConfig] = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "selected_fields", tuple(self.selected_fields))
@@ -231,22 +233,18 @@ class BOMWorkflow:
         resolved_input = resolver.resolve_input(request.input_path)
 
         if not resolved_input.is_schematic:
-            if not os.environ.get("JBOM_QUIET"):
-                diagnostics.append(
-                    "Note: BOM generation requires a schematic file. "
-                    f"Found {resolved_input.resolved_path.suffix} file, trying to find matching schematic."
-                )
+            diagnostics.append(
+                "Note: BOM generation requires a schematic file. "
+                f"Found {resolved_input.resolved_path.suffix} file, trying to find matching schematic."
+            )
             resolved_input = resolver.resolve_for_wrong_file_type(
                 resolved_input,
                 "schematic",
             )
-            if not os.environ.get("JBOM_QUIET"):
-                diagnostics.append(
-                    f"found matching schematic {resolved_input.resolved_path.name}"
-                )
-                diagnostics.append(
-                    f"Using schematic: {resolved_input.resolved_path.name}"
-                )
+            diagnostics.append(
+                f"found matching schematic {resolved_input.resolved_path.name}"
+            )
+            diagnostics.append(f"Using schematic: {resolved_input.resolved_path.name}")
 
         if not resolved_input.project_context:
             raise ValueError("No project context available")
@@ -343,6 +341,14 @@ class BOMWorkflow:
         )
         diagnostics.extend(smd_diagnostics)
 
+        projection_service = FabricatorProjectionService()
+        projection = projection_service.build_projection(
+            fabricator_id=request.fabricator,
+            output_type="bom",
+            selected_fields=selected_fields,
+        )
+        fabricator_config = projection.fabricator_config
+
         return BOMResult(
             mode=BOMMode.GENERATE,
             diagnostics=tuple(diagnostics),
@@ -350,6 +356,8 @@ class BOMWorkflow:
                 bom_data=bom_data,
                 selected_fields=tuple(selected_fields),
                 default_output_path=default_output_path,
+                fabricator=request.fabricator,
+                fabricator_config=fabricator_config,
             ),
         )
 
