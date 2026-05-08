@@ -40,10 +40,10 @@ from jbom.common.component_filters import (
 from jbom.common.component_utils import derive_package_from_footprint
 from jbom.common.package_matching import PackageType
 from jbom.cli.formatting import Column, print_table, get_terminal_width
-from jbom.application.bom_orchestration import (
-    BOMOrchestrationService,
-    BOMOrchestrationMode,
-    BOMOrchestrationRequest,
+from jbom.application.bom_workflow import (
+    BOMWorkflow,
+    BOMMode,
+    BOMRequest,
     enforce_bom_device_footprints as _service_enforce_bom_device_footprints,
     enrich_bom_smd_from_project_pcb as _service_enrich_bom_smd_from_project_pcb,
     enrich_bom_with_merge_namespaces as _service_enrich_bom_with_merge_namespaces,
@@ -268,7 +268,7 @@ def _execute_bom_command(args: argparse.Namespace) -> int:
     """Execute BOM command body with project-centric input resolution."""
     try:
         fabricator = _resolve_requested_fabricator(args)
-        request = BOMOrchestrationRequest(
+        request = BOMRequest(
             input_path=str(args.input or "."),
             fabricator=fabricator,
             fields_argument=args.fields,
@@ -277,11 +277,11 @@ def _execute_bom_command(args: argparse.Namespace) -> int:
             verbose=bool(args.verbose),
             list_fields=bool(args.list_fields),
         )
-        result = BOMOrchestrationService().orchestrate(request)
+        result = BOMWorkflow().run(request)
         for diagnostic in result.diagnostics:
             print(diagnostic, file=sys.stderr)
 
-        if result.mode == BOMOrchestrationMode.LIST_FIELDS:
+        if result.mode == BOMMode.LIST_FIELDS:
             if result.field_listing is None:
                 raise ValueError("Missing field listing payload for list-fields output")
             _list_available_fields(

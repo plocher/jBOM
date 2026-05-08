@@ -110,7 +110,7 @@ class TestHandleFabAllSkip:
 
         args = self._make_all_skip_args()
         with patch(
-            "jbom.application.fabrication_orchestration.BOMOrchestrationService"
+            "jbom.application.fabrication_orchestration.BOMWorkflow"
         ) as mock_bom:
             handle_fab(args)
             mock_bom.assert_not_called()

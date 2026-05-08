@@ -104,7 +104,7 @@ class TestFabricationWorkflowSkipFlags:
             skip_gerbers=True,
         )
         with patch(
-            "jbom.application.fabrication_orchestration.BOMOrchestrationService"
+            "jbom.application.fabrication_orchestration.BOMWorkflow"
         ) as mock_bom:
             FabricationWorkflow().run(request)
             mock_bom.assert_not_called()
@@ -117,7 +117,7 @@ class TestFabricationWorkflowSkipFlags:
             skip_gerbers=True,
         )
         with patch(
-            "jbom.application.fabrication_orchestration.POSOrchestrationService"
+            "jbom.application.fabrication_orchestration.POSWorkflow"
         ) as mock_pos:
             FabricationWorkflow().run(request)
             mock_pos.assert_not_called()
@@ -176,16 +176,16 @@ class TestFabricationWorkflowDryRun:
         )
         with (
             patch(
-                "jbom.application.fabrication_orchestration.BOMOrchestrationService"
+                "jbom.application.fabrication_orchestration.BOMWorkflow"
             ) as mock_bom_cls,
             patch(
                 "jbom.application.fabrication_orchestration.GerberExporter"
             ) as mock_gerber,
         ):
-            mock_bom_cls.return_value.orchestrate.return_value = bom_mock_result
+            mock_bom_cls.return_value.run.return_value = bom_mock_result
             result = FabricationWorkflow().run(request)
 
-        mock_bom_cls.return_value.orchestrate.assert_called_once()
+        mock_bom_cls.return_value.run.assert_called_once()
         mock_gerber.assert_not_called()
         assert result.bom_result is bom_mock_result
 
@@ -218,14 +218,14 @@ class TestFabricationWorkflowFabricatorPropagation:
 
         with (
             patch(
-                "jbom.application.fabrication_orchestration.BOMOrchestrationService"
+                "jbom.application.fabrication_orchestration.BOMWorkflow"
             ) as mock_bom_cls,
             patch(
-                "jbom.application.fabrication_orchestration.POSOrchestrationService"
+                "jbom.application.fabrication_orchestration.POSWorkflow"
             ) as mock_pos_cls,
         ):
-            mock_bom_cls.return_value.orchestrate.side_effect = _capture_bom
-            mock_pos_cls.return_value.orchestrate.side_effect = _capture_pos
+            mock_bom_cls.return_value.run.side_effect = _capture_bom
+            mock_pos_cls.return_value.run.side_effect = _capture_pos
             FabricationWorkflow().run(request)
 
         assert len(captured_bom_requests) == 1
@@ -247,9 +247,9 @@ class TestFabricationWorkflowSubServiceFailure:
             skip_gerbers=True,
         )
         with patch(
-            "jbom.application.fabrication_orchestration.BOMOrchestrationService"
+            "jbom.application.fabrication_orchestration.BOMWorkflow"
         ) as mock_bom_cls:
-            mock_bom_cls.return_value.orchestrate.side_effect = RuntimeError(
+            mock_bom_cls.return_value.run.side_effect = RuntimeError(
                 "schematic not found"
             )
             result = FabricationWorkflow().run(request)
@@ -264,11 +264,9 @@ class TestFabricationWorkflowSubServiceFailure:
             skip_gerbers=True,
         )
         with patch(
-            "jbom.application.fabrication_orchestration.POSOrchestrationService"
+            "jbom.application.fabrication_orchestration.POSWorkflow"
         ) as mock_pos_cls:
-            mock_pos_cls.return_value.orchestrate.side_effect = RuntimeError(
-                "pcb not found"
-            )
+            mock_pos_cls.return_value.run.side_effect = RuntimeError("pcb not found")
             result = FabricationWorkflow().run(request)
 
         assert result.pos_result is None

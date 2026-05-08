@@ -55,7 +55,7 @@ def _normalize_text(value: str, *, field_name: str) -> str:
     return normalized
 
 
-class POSOrchestrationMode(str, Enum):
+class POSMode(str, Enum):
     """Result modes supported by POS orchestration."""
 
     LIST_FIELDS = "list_fields"
@@ -63,7 +63,7 @@ class POSOrchestrationMode(str, Enum):
 
 
 @dataclass(frozen=True)
-class POSOrchestrationRequest:
+class POSRequest:
     """Adapter-neutral POS orchestration request data."""
 
     input_path: str
@@ -138,17 +138,17 @@ class POSGenerationPayload:
 
 
 @dataclass(frozen=True)
-class POSOrchestrationResult:
+class POSResult:
     """Result contract emitted by POS application orchestration."""
 
-    mode: POSOrchestrationMode
+    mode: POSMode
     diagnostics: tuple[str, ...] = ()
     field_listing: POSFieldListingPayload | None = None
     generation: POSGenerationPayload | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "diagnostics", tuple(self.diagnostics))
-        if self.mode == POSOrchestrationMode.LIST_FIELDS:
+        if self.mode == POSMode.LIST_FIELDS:
             if self.field_listing is None:
                 raise ValueError(
                     "field_listing payload is required for list_fields mode"
@@ -157,7 +157,7 @@ class POSOrchestrationResult:
                 raise ValueError(
                     "generation payload must be empty for list_fields mode"
                 )
-        if self.mode == POSOrchestrationMode.GENERATE:
+        if self.mode == POSMode.GENERATE:
             if self.generation is None:
                 raise ValueError("generation payload is required for generate mode")
             if self.field_listing is not None:
@@ -375,20 +375,20 @@ def _parse_requested_field_tokens(raw_fields: str) -> list[str]:
     return parsed_tokens
 
 
-class POSOrchestrationService:
+class POSWorkflow:
     """Application-layer POS orchestration service."""
 
-    def orchestrate(self, request: POSOrchestrationRequest) -> POSOrchestrationResult:
+    def run(self, request: POSRequest) -> POSResult:
         """Execute POS orchestration for listing or generation flows."""
 
         if request.list_fields:
-            return self._orchestrate_field_listing(request)
-        return self._orchestrate_generation(request)
+            return self._list_fields(request)
+        return self._generate(request)
 
-    def _orchestrate_field_listing(
+    def _list_fields(
         self,
-        request: POSOrchestrationRequest,
-    ) -> POSOrchestrationResult:
+        request: POSRequest,
+    ) -> POSResult:
         """Build POS field-listing data from best-effort project discovery."""
 
         gen_options = (
@@ -434,18 +434,18 @@ class POSOrchestrationService:
         default_fields = tuple(
             get_fabricator_default_fields(request.fabricator, "pos") or ()
         )
-        return POSOrchestrationResult(
-            mode=POSOrchestrationMode.LIST_FIELDS,
+        return POSResult(
+            mode=POSMode.LIST_FIELDS,
             field_listing=POSFieldListingPayload(
                 known_fields=known_fields,
                 default_fields=default_fields,
             ),
         )
 
-    def _orchestrate_generation(
+    def _generate(
         self,
-        request: POSOrchestrationRequest,
-    ) -> POSOrchestrationResult:
+        request: POSRequest,
+    ) -> POSResult:
         """Execute POS orchestration and return adapter-ready output payloads."""
         diagnostics: list[str] = []
 
@@ -565,8 +565,8 @@ class POSOrchestrationService:
             fabricator=request.fabricator,
             user_specified_fields=user_specified_fields,
         )
-        return POSOrchestrationResult(
-            mode=POSOrchestrationMode.GENERATE,
+        return POSResult(
+            mode=POSMode.GENERATE,
             diagnostics=tuple(diagnostics),
             generation=POSGenerationPayload(
                 pos_data=tuple(pos_data),
@@ -582,10 +582,10 @@ class POSOrchestrationService:
 __all__ = [
     "POSFieldListingPayload",
     "POSGenerationPayload",
-    "POSOrchestrationMode",
-    "POSOrchestrationRequest",
-    "POSOrchestrationResult",
-    "POSOrchestrationService",
+    "POSMode",
+    "POSRequest",
+    "POSResult",
+    "POSWorkflow",
     "apply_pos_dnp_filter",
     "enrich_pos_with_merge_namespaces",
     "get_available_pos_fields",

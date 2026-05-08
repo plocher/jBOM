@@ -22,6 +22,14 @@
 - Agent behavior expectations
     - When uncertain about alternate paths or solutions, ask for guidance
 
+## Naming Convention (established in issues #224/#237)
+- Class names reflect the **promise** (what the class produces/delivers), not the mechanism.
+- The `Service` suffix is omitted when the module path already provides context (`jbom.application.*`, `jbom.services.*`).
+- `Orchestration` is omitted from names — it describes *how*, not *what*.
+- Examples: `BOMWorkflow`, `POSWorkflow`, `FabricationWorkflow`, `GerberExporter`.
+- Application workflow classes expose a single public method named `.run(request)` — functional, not mechanistic.
+- Private helpers use descriptive functional names: `_list_fields`, `_generate`, not `_orchestrate_*`.
+
 
 ## Component Matching Logic
 **Tolerance Substitution:** Tighter tolerances can substitute looser (1% can replace 5%)
