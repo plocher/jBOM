@@ -1,6 +1,32 @@
 # CHANGELOG
 
 
+## v6.52.1 (2026-05-08)
+
+### Refactoring
+
+* refactor(naming): rename BOM/POS orchestration classes to new naming convention (#237)
+
+Rename map (no backward-compat shims):
+  BOMOrchestrationService  → BOMWorkflow       (bom_orchestration.py → bom_workflow.py)
+  BOMOrchestrationRequest  → BOMRequest
+  BOMOrchestrationResult   → BOMResult
+  BOMOrchestrationMode     → BOMMode
+  POSOrchestrationService  → POSWorkflow       (pos_orchestration.py → pos_workflow.py)
+  POSOrchestrationRequest  → POSRequest
+  POSOrchestrationResult   → POSResult
+  POSOrchestrationMode     → POSMode
+  .orchestrate()           → .run()
+  _orchestrate_field_listing → _list_fields
+  _orchestrate_generation    → _generate
+
+Class names now reflect the promise (what is produced), not the mechanism.
+src/WARP.md documents the naming convention for future reference.
+All 1057 tests pass.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`d0dc5ba`](https://github.com/plocher/jBOM/commit/d0dc5ba04a1bb37c3442538d364edd3c79d1dbc0))
+
+
 ## v6.52.0 (2026-05-08)
 
 ### Features
