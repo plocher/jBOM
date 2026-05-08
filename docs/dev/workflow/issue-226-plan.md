@@ -54,7 +54,7 @@ In `src/jbom/application/bom_workflow.py`, remove `import os` and replace `JBOM_
 In `src/jbom/application/pos_workflow.py`, remove the `quiet` field from `POSRequest` and remove `request.quiet` gates so resolution notes are always appended to `diagnostics`.
 ### D3: Adjust adapters
 Update `cli/bom.py` and `cli/pos.py` so adapters decide what to display. CLI should be able to gate informational notes on `--verbose` without suppressing collection inside the service. Tests should be updated to assert full diagnostic collection at the service layer.
-## Phase E — Fabrication Workflow Integration
+## Phase E — Fabrication Workflow Integration ✅ COMPLETE
 Entry: Phases A, B, and C complete.
 Exit: `jbom fab` produces the full `production/` structure and backup artifact through service-layer composition.
 ### E1: Extend fabrication request/result contracts
