@@ -64,19 +64,19 @@ Application layer commands orchestrate domain services without containing busine
 5. Error Handling
 ```
 
-### CLI-to-Orchestration Extraction Pattern
-Each command family (`bom`, `pos`, and future `search`/`inventory`) follows the same adapter-thin extraction contract.
+### CLI-to-Workflow Extraction Pattern
+Each command family (`bom`, `pos`, `gerbers`, `fab`) follows the same adapter-thin extraction contract.
 
 **Purpose**: Make command refactors repeatable with one stable application-layer template
-**Implementation**: Move orchestration into `src/jbom/application/<command>_orchestration.py` and keep CLI files as adapters
-**Benefits**: Consistent contracts, easier cross-command reviews, predictable test shape
+**Implementation**: Workflow logic lives in `src/jbom/application/<command>_workflow.py`; CLI files are adapters only
+**Benefits**: Consistent contracts, easier cross-command reviews, predictable test shape, reusable across CLI and plugin adapters
 
 **Extraction Contract**:
-1. Define a request dataclass (`<Command>OrchestrationRequest`) that normalizes adapter input.
-2. Define explicit mode enum + result dataclass (`<Command>OrchestrationMode`, `<Command>OrchestrationResult`) with mode-gated payload invariants.
+1. Define a request dataclass (`<Command>Request`) that normalizes adapter input.
+2. Define explicit mode enum + result dataclass (`<Command>Mode`, `<Command>Result`) with mode-gated payload invariants.
 3. Carry diagnostics as immutable result data (`tuple[str, ...]`) rather than callback side effects.
 4. Keep CLI responsibilities limited to argument mapping, diagnostics rendering, output rendering, and exit code mapping.
-5. Keep compatibility wrappers in CLI modules only when needed for legacy tests during migration.
+5. Expose a single public method `.run(request)` — name reflects *what you do with the object*, not the internal mechanism.
 
 ### Input Translation Pattern
 Convert interface-specific arguments to type-safe domain configuration objects.
@@ -84,22 +84,6 @@ Convert interface-specific arguments to type-safe domain configuration objects.
 **Purpose**: Bridge between interface representations and domain concepts
 **Implementation**: Translation functions create domain objects from interface data
 **Benefits**: Type safety, domain validation, interface independence
-
-### CLI-to-Orchestration Extraction Pattern
-Move command sequencing from CLI modules into application orchestration services while keeping adapters thin.
-
-**Purpose**: Keep business sequencing reusable and adapter-neutral while preserving existing CLI UX behavior
-**Implementation**: Add `src/jbom/application/<command>_orchestration.py` with request/result contracts and migrate sequencing logic out of `src/jbom/cli/<command>.py`
-**Benefits**: Shared orchestration core for future adapters, reduced CLI complexity, clearer contract boundaries
-
-**Extraction Contract**:
-```
-1. Define a request value object (<Command>OrchestrationRequest) for adapter input.
-2. Define an explicit mode enum (<Command>OrchestrationMode) for result variants.
-3. Define mode-gated result payloads (<Command>OrchestrationResult with typed payloads).
-4. Keep diagnostics on result contracts (immutable tuple), not adapter callbacks.
-5. Restrict CLI adapters to argument parsing, request mapping, rendering, and exit-code mapping.
-```
 
 ### Output Adaptation Pattern
 Transform domain results for interface-appropriate presentation formats.
@@ -243,5 +227,20 @@ New behavior added through configuration objects rather than code modification.
 **Purpose**: Add capabilities through configuration rather than code changes
 **Implementation**: Configuration objects that enable new processing options
 **Benefits**: Runtime flexibility, backward compatibility, minimal code impact
+
+## Naming Convention
+
+Established in issues #224 and #237; documented in `src/WARP.md`.
+
+**Rule**: Names reflect the *promise* (what is produced/delivered), not the mechanism.
+
+| Principle | Correct | Avoid |
+|---|---|---|
+| Class names | `BOMWorkflow`, `GerberExporter` | `BOMOrchestrationService`, `GerberService` |
+| `Service` suffix | Omit when module path provides context | `jbom.application.BOMWorkflowService` |
+| `Orchestration` in names | Never — describes *how*, not *what* | `BOMOrchestrationRequest` |
+| Public workflow method | `.run(request)` | `.orchestrate(request)`, `.execute(request)` |
+| Private helpers | `_list_fields`, `_generate` | `_orchestrate_field_listing`, `_do_generation` |
+| Module file names | `bom_workflow.py`, `pos_workflow.py` | `bom_orchestration.py`, `pos_orchestration.py` |
 
 These design patterns provide the foundation for consistent, maintainable, and extensible software architecture throughout the jBOM system.

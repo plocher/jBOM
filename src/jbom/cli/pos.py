@@ -15,10 +15,10 @@ from jbom.application.jobs.contracts import (
     JobRequest,
 )
 from jbom.application.jobs.runner import JobEventStream, JobRunPayload, JobRunner
-from jbom.application.pos_orchestration import (
+from jbom.application.pos_workflow import (
     POSFieldListingPayload,
-    POSOrchestrationRequest,
-    POSOrchestrationService,
+    POSRequest,
+    POSWorkflow,
     apply_pos_dnp_filter as _service_apply_pos_dnp_filter,
     enrich_pos_with_merge_namespaces as _service_enrich_pos_with_merge_namespaces,
     resolve_pos_output_projection as _service_resolve_pos_output_projection,
@@ -201,12 +201,12 @@ def _build_pos_job_request(args: argparse.Namespace) -> JobRequest:
     )
 
 
-def _build_pos_orchestration_request(
+def _build_pos_request(
     args: argparse.Namespace,
-) -> POSOrchestrationRequest:
+) -> POSRequest:
     """Map CLI args to an adapter-neutral POS orchestration request."""
 
-    return POSOrchestrationRequest(
+    return POSRequest(
         input_path=str(args.input or "."),
         output=str(args.output or ""),
         fabricator=resolve_fabricator_from_args(args),
@@ -279,15 +279,15 @@ def handle_pos(args: argparse.Namespace) -> int:
 def _execute_pos_command(args: argparse.Namespace) -> int:
     """Execute POS command via application-layer orchestration service."""
 
-    orchestration_service = POSOrchestrationService()
-    orchestration_request = _build_pos_orchestration_request(args)
+    orchestration_service = POSWorkflow()
+    pos_request = _build_pos_request(args)
     try:
-        result = orchestration_service.orchestrate(orchestration_request)
+        result = orchestration_service.run(pos_request)
         for diagnostic in result.diagnostics:
             _emit_cli_diagnostic(diagnostic)
         if result.field_listing is not None:
             _list_available_pos_fields(
-                orchestration_request.fabricator,
+                pos_request.fabricator,
                 field_listing=result.field_listing,
             )
             return 0

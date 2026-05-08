@@ -63,7 +63,7 @@ def _normalize_text(value: str, *, field_name: str) -> str:
     return normalized
 
 
-class BOMOrchestrationMode(str, Enum):
+class BOMMode(str, Enum):
     """Result modes supported by BOM orchestration."""
 
     LIST_FIELDS = "list_fields"
@@ -71,7 +71,7 @@ class BOMOrchestrationMode(str, Enum):
 
 
 @dataclass(frozen=True)
-class BOMOrchestrationRequest:
+class BOMRequest:
     """Adapter-neutral request payload for BOM orchestration."""
 
     input_path: str
@@ -131,17 +131,17 @@ class BOMGenerationPayload:
 
 
 @dataclass(frozen=True)
-class BOMOrchestrationResult:
+class BOMResult:
     """Result contract emitted by BOM application orchestration."""
 
-    mode: BOMOrchestrationMode
+    mode: BOMMode
     diagnostics: tuple[str, ...] = ()
     field_listing: BOMFieldListingPayload | None = None
     generation: BOMGenerationPayload | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "diagnostics", tuple(self.diagnostics))
-        if self.mode == BOMOrchestrationMode.LIST_FIELDS:
+        if self.mode == BOMMode.LIST_FIELDS:
             if self.field_listing is None:
                 raise ValueError(
                     "field_listing payload is required for list_fields mode"
@@ -150,7 +150,7 @@ class BOMOrchestrationResult:
                 raise ValueError(
                     "generation payload must be empty for list_fields mode"
                 )
-        if self.mode == BOMOrchestrationMode.GENERATE:
+        if self.mode == BOMMode.GENERATE:
             if self.generation is None:
                 raise ValueError("generation payload is required for generate mode")
             if self.field_listing is not None:
@@ -159,19 +159,17 @@ class BOMOrchestrationResult:
                 )
 
 
-class BOMOrchestrationService:
+class BOMWorkflow:
     """Application-layer BOM orchestration service."""
 
-    def orchestrate(self, request: BOMOrchestrationRequest) -> BOMOrchestrationResult:
+    def run(self, request: BOMRequest) -> BOMResult:
         """Run BOM orchestration and return adapter-neutral result payloads."""
 
         if request.list_fields:
-            return self._orchestrate_field_listing(request)
-        return self._orchestrate_generation(request)
+            return self._list_fields(request)
+        return self._generate(request)
 
-    def _orchestrate_field_listing(
-        self, request: BOMOrchestrationRequest
-    ) -> BOMOrchestrationResult:
+    def _list_fields(self, request: BOMRequest) -> BOMResult:
         """Resolve dynamic field inventory for `--list-fields` behavior."""
 
         list_components: list = []
@@ -215,14 +213,12 @@ class BOMOrchestrationService:
             pcb_components=list_pcb_components,
             inventory_column_names=list_inventory_columns,
         )
-        return BOMOrchestrationResult(
-            mode=BOMOrchestrationMode.LIST_FIELDS,
+        return BOMResult(
+            mode=BOMMode.LIST_FIELDS,
             field_listing=BOMFieldListingPayload(known_fields=known_fields),
         )
 
-    def _orchestrate_generation(
-        self, request: BOMOrchestrationRequest
-    ) -> BOMOrchestrationResult:
+    def _generate(self, request: BOMRequest) -> BOMResult:
         """Run BOM generation sequencing independent from CLI adapter concerns."""
 
         diagnostics: list[str] = []
@@ -347,8 +343,8 @@ class BOMOrchestrationService:
         )
         diagnostics.extend(smd_diagnostics)
 
-        return BOMOrchestrationResult(
-            mode=BOMOrchestrationMode.GENERATE,
+        return BOMResult(
+            mode=BOMMode.GENERATE,
             diagnostics=tuple(diagnostics),
             generation=BOMGenerationPayload(
                 bom_data=bom_data,
@@ -757,12 +753,12 @@ def build_known_bom_fields(
 
 
 __all__ = [
-    "BOMOrchestrationService",
+    "BOMWorkflow",
     "BOMFieldListingPayload",
     "BOMGenerationPayload",
-    "BOMOrchestrationMode",
-    "BOMOrchestrationRequest",
-    "BOMOrchestrationResult",
+    "BOMMode",
+    "BOMRequest",
+    "BOMResult",
     "build_known_bom_fields",
     "enforce_bom_device_footprints",
     "enrich_bom_smd_from_project_pcb",

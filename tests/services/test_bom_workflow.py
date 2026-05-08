@@ -7,10 +7,10 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
-from jbom.application.bom_orchestration import (
-    BOMOrchestrationService,
-    BOMOrchestrationMode,
-    BOMOrchestrationRequest,
+from jbom.application.bom_workflow import (
+    BOMWorkflow,
+    BOMMode,
+    BOMRequest,
 )
 from jbom.services.bom_generator import BOMData, BOMEntry
 
@@ -49,33 +49,31 @@ class _FakeResolvedInput:
 def test_list_fields_orchestration_returns_known_contract_fields() -> None:
     """List-fields mode should still return stable known fields if runtime discovery fails."""
 
-    service = BOMOrchestrationService()
-    request = BOMOrchestrationRequest(
+    service = BOMWorkflow()
+    request = BOMRequest(
         input_path=".",
         fabricator="generic",
         list_fields=True,
     )
 
-    with patch(
-        "jbom.application.bom_orchestration.ProjectFileResolver"
-    ) as resolver_cls:
+    with patch("jbom.application.bom_workflow.ProjectFileResolver") as resolver_cls:
         resolver_cls.return_value.resolve_input.side_effect = ValueError("boom")
-        result = service.orchestrate(request)
+        result = service.run(request)
 
-    assert result.mode == BOMOrchestrationMode.LIST_FIELDS
+    assert result.mode == BOMMode.LIST_FIELDS
     assert result.field_listing is not None
     assert "reference" in result.field_listing.known_fields
     assert "fabricator_part_number" in result.field_listing.known_fields
 
 
-@patch("jbom.application.bom_orchestration.enrich_bom_smd_from_project_pcb")
-@patch("jbom.application.bom_orchestration.InventoryOverlayService")
-@patch("jbom.application.bom_orchestration.parse_fields_argument")
-@patch("jbom.application.bom_orchestration.get_fabricator_presets")
-@patch("jbom.application.bom_orchestration.run_component_merge")
-@patch("jbom.application.bom_orchestration.BOMGenerator")
-@patch("jbom.application.bom_orchestration.SchematicReader")
-@patch("jbom.application.bom_orchestration.ProjectFileResolver")
+@patch("jbom.application.bom_workflow.enrich_bom_smd_from_project_pcb")
+@patch("jbom.application.bom_workflow.InventoryOverlayService")
+@patch("jbom.application.bom_workflow.parse_fields_argument")
+@patch("jbom.application.bom_workflow.get_fabricator_presets")
+@patch("jbom.application.bom_workflow.run_component_merge")
+@patch("jbom.application.bom_workflow.BOMGenerator")
+@patch("jbom.application.bom_workflow.SchematicReader")
+@patch("jbom.application.bom_workflow.ProjectFileResolver")
 def test_generation_orchestration_handles_cross_resolution_and_returns_payload(
     mock_resolver_cls: MagicMock,
     mock_reader_cls: MagicMock,
@@ -137,7 +135,7 @@ def test_generation_orchestration_handles_cross_resolution_and_returns_payload(
     overlay_service.overlay_bom_data.return_value = SimpleNamespace(bom_data=bom_data)
     mock_enrich_smd.return_value = (bom_data, ())
 
-    request = BOMOrchestrationRequest(
+    request = BOMRequest(
         input_path=".",
         fabricator="generic",
         fields_argument="reference,quantity",
@@ -145,9 +143,9 @@ def test_generation_orchestration_handles_cross_resolution_and_returns_payload(
         verbose=True,
         list_fields=False,
     )
-    result = BOMOrchestrationService().orchestrate(request)
+    result = BOMWorkflow().run(request)
 
-    assert result.mode == BOMOrchestrationMode.GENERATE
+    assert result.mode == BOMMode.GENERATE
     assert result.generation is not None
     assert result.generation.default_output_path == Path(
         "/tmp/project-dir/project.bom.csv"

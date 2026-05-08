@@ -5,14 +5,14 @@ from __future__ import annotations
 from pathlib import Path
 from types import SimpleNamespace
 
-from jbom.application.pos_orchestration import (
-    POSOrchestrationRequest,
-    POSOrchestrationService,
+from jbom.application.pos_workflow import (
+    POSRequest,
+    POSWorkflow,
     resolve_pos_output_projection,
 )
 
 
-def test_pos_orchestration_service_runs_without_cli_import(
+def test_pos_workflow_runs_without_cli_import(
     monkeypatch,
     tmp_path: Path,
 ) -> None:
@@ -73,23 +73,21 @@ def test_pos_orchestration_service_runs_without_cli_import(
             ]
 
     monkeypatch.setattr(
-        "jbom.application.pos_orchestration.ProjectFileResolver", _FakeResolver
+        "jbom.application.pos_workflow.ProjectFileResolver", _FakeResolver
     )
     monkeypatch.setattr(
-        "jbom.application.pos_orchestration.DefaultKiCadReaderService",
+        "jbom.application.pos_workflow.DefaultKiCadReaderService",
         _FakeReader,
     )
+    monkeypatch.setattr("jbom.application.pos_workflow.POSGenerator", _FakeGenerator)
     monkeypatch.setattr(
-        "jbom.application.pos_orchestration.POSGenerator", _FakeGenerator
-    )
-    monkeypatch.setattr(
-        "jbom.application.pos_orchestration.run_pos_component_merge",
+        "jbom.application.pos_workflow.run_pos_component_merge",
         lambda **_kwargs: (None, ()),
     )
 
-    service = POSOrchestrationService()
-    result = service.orchestrate(
-        POSOrchestrationRequest(
+    service = POSWorkflow()
+    result = service.run(
+        POSRequest(
             input_path=str(tmp_path),
             fields="reference,x,y",
             include_dnp=False,
@@ -103,7 +101,7 @@ def test_pos_orchestration_service_runs_without_cli_import(
     assert result.generation.default_output_path == tmp_path / "demo.pos.csv"
 
 
-def test_pos_orchestration_list_fields_falls_back_when_discovery_errors(
+def test_pos_workflow_list_fields_falls_back_when_discovery_errors(
     monkeypatch,
 ) -> None:
     """Field listing should still succeed when runtime discovery fails."""
@@ -117,13 +115,13 @@ def test_pos_orchestration_list_fields_falls_back_when_discovery_errors(
             raise RuntimeError("resolver failed")
 
     monkeypatch.setattr(
-        "jbom.application.pos_orchestration.ProjectFileResolver",
+        "jbom.application.pos_workflow.ProjectFileResolver",
         _FailingResolver,
     )
 
-    service = POSOrchestrationService()
-    result = service.orchestrate(
-        POSOrchestrationRequest(
+    service = POSWorkflow()
+    result = service.run(
+        POSRequest(
             input_path=".",
             list_fields=True,
             fabricator="jlc",

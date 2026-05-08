@@ -135,17 +135,22 @@ Orchestrates domain services and manages interface workflows without containing 
 
 #### Adapter-Thin CLI Contract Pattern
 ```
-Application module: src/jbom/application/<command>_orchestration.py
-Service class: <Command>OrchestrationService
-Contracts: <Command>OrchestrationRequest, <Command>OrchestrationMode, <Command>OrchestrationResult
-Diagnostics: immutable tuple on result contract (not callback side effects)
+Application module: src/jbom/application/<command>_workflow.py
+Workflow class:    <Command>Workflow          (e.g. BOMWorkflow, POSWorkflow, FabricationWorkflow)
+Request:           <Command>Request           (e.g. BOMRequest, POSRequest)
+Result:            <Command>Result            (e.g. BOMResult, POSResult)
+Mode enum:         <Command>Mode              (e.g. BOMMode — for multi-mode workflows)
+Public method:     .run(request) -> result
+Diagnostics:       immutable tuple on result contract (not callback side effects)
 ```
 
 CLI adapter responsibilities are intentionally narrow:
 1. Parse CLI flags/arguments.
-2. Build request contract and call orchestration service.
+2. Build request contract and call `.run()` on the workflow.
 3. Render diagnostics and output payloads.
-4. Map orchestration exceptions/outcomes to process exit semantics.
+4. Map exceptions/outcomes to process exit semantics.
+
+See also: **Naming Convention** in `design-patterns.md` and `src/WARP.md`.
 
 #### Service Composition Pattern
 ```python
@@ -159,23 +164,6 @@ components = reader.read_schematic(file_path)
 bom_data = generator.generate_bom_data(components)
 enhanced_bom = matcher.enhance_bom_with_inventory(bom_data, inventory)
 ```
-
-#### Adapter-Thin CLI Contract Pattern
-```
-Application module: src/jbom/application/<command>_orchestration.py
-Service class: <Command>OrchestrationService
-Contracts:
-  - <Command>OrchestrationRequest
-  - <Command>OrchestrationMode
-  - <Command>OrchestrationResult (mode-gated payloads + diagnostics tuple)
-```
-
-CLI adapters should remain narrowly focused on:
-- Parsing CLI arguments
-- Mapping arguments to orchestration request contracts
-- Invoking orchestration services
-- Rendering payloads to console/CSV/file outputs
-- Mapping exceptions/results to process exit codes
 
 ## Interface Layer
 

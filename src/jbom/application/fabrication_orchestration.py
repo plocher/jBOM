@@ -2,8 +2,8 @@
 
 Sequences three fabrication steps in order:
 
-1. BOM generation — delegates to :class:`~jbom.application.bom_orchestration.BOMOrchestrationService`.
-2. POS (placement) generation — delegates to :class:`~jbom.application.pos_orchestration.POSOrchestrationService`.
+1. BOM generation — delegates to :class:`~jbom.application.bom_workflow.BOMWorkflow`.
+2. POS (placement) generation — delegates to :class:`~jbom.application.pos_workflow.POSWorkflow`.
 3. Gerber/drill/netlist export — delegates to :class:`~jbom.services.gerber_service.GerberExporter`.
 
 Each step is independently skip-able.  If Gerbers cannot be generated
@@ -19,7 +19,7 @@ files from the BOM/POS payloads.
 Naming convention:
   New code in this module follows the naming convention established in #224:
   class names reflect the *promise* (what is produced), not the mechanism.
-  The existing ``BOMOrchestrationService`` / ``POSOrchestrationService`` names
+  The existing ``BOMWorkflow`` / ``POSWorkflow`` names
   are unchanged here — renaming them is tracked in issue #237.
 """
 
@@ -30,15 +30,15 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Mapping
 
-from jbom.application.bom_orchestration import (
-    BOMOrchestrationRequest,
-    BOMOrchestrationResult,
-    BOMOrchestrationService,
+from jbom.application.bom_workflow import (
+    BOMRequest,
+    BOMResult,
+    BOMWorkflow,
 )
-from jbom.application.pos_orchestration import (
-    POSOrchestrationRequest,
-    POSOrchestrationResult,
-    POSOrchestrationService,
+from jbom.application.pos_workflow import (
+    POSRequest,
+    POSResult,
+    POSWorkflow,
 )
 from jbom.services.gerber_service import GerberExporter, GerberRequest, GerberResult
 
@@ -183,8 +183,8 @@ class FabricationResult:
 
     artifacts: tuple[FabricationArtifact, ...]
     diagnostics: tuple[str, ...]
-    bom_result: BOMOrchestrationResult | None = None
-    pos_result: POSOrchestrationResult | None = None
+    bom_result: BOMResult | None = None
+    pos_result: POSResult | None = None
     gerber_result: GerberResult | None = None
 
     def __post_init__(self) -> None:
@@ -214,8 +214,8 @@ class FabricationWorkflow:
         """
         diagnostics: list[str] = []
         artifacts: list[FabricationArtifact] = []
-        bom_result: BOMOrchestrationResult | None = None
-        pos_result: POSOrchestrationResult | None = None
+        bom_result: BOMResult | None = None
+        pos_result: POSResult | None = None
         gerber_result: GerberResult | None = None
 
         # ------------------------------------------------------------------
@@ -292,17 +292,17 @@ class FabricationWorkflow:
 
     def _run_bom(
         self, request: FabricationRequest
-    ) -> tuple[BOMOrchestrationResult | None, list[str]]:
+    ) -> tuple[BOMResult | None, list[str]]:
         """Run BOM orchestration and return result + diagnostics."""
         diagnostics: list[str] = []
         try:
-            bom_request = BOMOrchestrationRequest(
+            bom_request = BOMRequest(
                 input_path=request.input_path,
                 fabricator=request.fabricator,
                 inventory_files=request.inventory_files,
                 verbose=request.verbose,
             )
-            result = BOMOrchestrationService().orchestrate(bom_request)
+            result = BOMWorkflow().run(bom_request)
             diagnostics.extend(result.diagnostics)
             return result, diagnostics
         except Exception as exc:
@@ -311,11 +311,11 @@ class FabricationWorkflow:
 
     def _run_pos(
         self, request: FabricationRequest
-    ) -> tuple[POSOrchestrationResult | None, list[str]]:
+    ) -> tuple[POSResult | None, list[str]]:
         """Run POS orchestration and return result + diagnostics."""
         diagnostics: list[str] = []
         try:
-            pos_request = POSOrchestrationRequest(
+            pos_request = POSRequest(
                 input_path=request.input_path,
                 fabricator=request.fabricator,
                 smd_only=request.smd_only,
@@ -323,7 +323,7 @@ class FabricationWorkflow:
                 origin=request.pos_origin,
                 verbose=request.verbose,
             )
-            result = POSOrchestrationService().orchestrate(pos_request)
+            result = POSWorkflow().run(pos_request)
             diagnostics.extend(result.diagnostics)
             return result, diagnostics
         except Exception as exc:
