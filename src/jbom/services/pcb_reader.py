@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Optional
 
 from jbom.common.pcb_types import BoardModel, PcbComponent
+from jbom.common.types import TitleBlockMetadata
 
 
 class KiCadReaderService(ABC):
@@ -43,6 +44,22 @@ class KiCadReaderService(ABC):
 
         Returns:
             True if file exists and appears to be a valid KiCad PCB file
+        """
+        pass
+
+    @abstractmethod
+    def read_metadata(self, pcb_path: Path) -> TitleBlockMetadata:
+        """Extract title block metadata from a KiCad PCB file.
+
+        Args:
+            pcb_path: Path to the .kicad_pcb file
+
+        Returns:
+            TitleBlockMetadata with title and revision extracted from the file
+
+        Raises:
+            FileNotFoundError: If PCB file doesn't exist
+            KiCadParseError: If PCB file cannot be parsed
         """
         pass
 
@@ -118,6 +135,19 @@ class DefaultKiCadReaderService(KiCadReaderService):
         except (OSError, UnicodeDecodeError):
             return False
 
+    def read_metadata(self, pcb_path: Path) -> TitleBlockMetadata:
+        """Extract title block metadata from a KiCad PCB file."""
+        if not self.validate_pcb_file(pcb_path):
+            raise KiCadParseError(f"Invalid or missing PCB file: {pcb_path}", pcb_path)
+
+        try:
+            from jbom.common.sexp_parser import load_kicad_file
+
+            sexp = load_kicad_file(pcb_path)
+            return self._extract_title_block_metadata(sexp)
+        except Exception as e:
+            raise KiCadParseError(f"Failed to parse PCB metadata: {e}", pcb_path)
+
     def _extract_board_metadata(self, sexp, board: BoardModel) -> None:
         """Extract board-level metadata from S-expression."""
         from sexpdata import Symbol
@@ -144,6 +174,37 @@ class DefaultKiCadReaderService(KiCadReaderService):
                 and isinstance(item[1], str)
             ):
                 board.kicad_version = item[1]
+
+    def _extract_title_block_metadata(self, sexp) -> TitleBlockMetadata:
+        """Extract title block metadata from a KiCad PCB S-expression tree."""
+        from sexpdata import Symbol
+
+        if not isinstance(sexp, list) or len(sexp) < 2:
+            return TitleBlockMetadata()
+
+        title = ""
+        revision = ""
+        for item in sexp[1:]:
+            if not (
+                isinstance(item, list) and item and item[0] == Symbol("title_block")
+            ):
+                continue
+
+            for title_block_item in item[1:]:
+                if not (
+                    isinstance(title_block_item, list)
+                    and len(title_block_item) >= 2
+                    and isinstance(title_block_item[1], str)
+                ):
+                    continue
+
+                if title_block_item[0] == Symbol("title"):
+                    title = title_block_item[1]
+                elif title_block_item[0] == Symbol("rev"):
+                    revision = title_block_item[1]
+            break
+
+        return TitleBlockMetadata(title=title, revision=revision)
 
     def _parse_footprint_node(self, node) -> Optional[PcbComponent]:
         """Parse a footprint node and extract all component information."""

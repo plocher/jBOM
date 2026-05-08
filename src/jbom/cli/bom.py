@@ -22,6 +22,7 @@ from jbom.services.field_listing_service import (
     FieldListingService,
     resolve_field,
 )
+from jbom.services.bom_field_resolver import resolve_bom_field_value
 from jbom.services.component_merge_service import ComponentMergeResult
 from jbom.config.fabricators import (
     FabricatorConfig,
@@ -31,7 +32,6 @@ from jbom.config.fabricators import (
 from jbom.common.fields import (
     get_available_presets,
     normalize_field_name,
-    split_kicad_strip_field,
 )
 from jbom.common.component_filters import (
     add_component_filter_arguments,
@@ -859,75 +859,8 @@ def _get_field_value(
     fabricator_id: str = "generic",
     fabricator_config: Optional[FabricatorConfig] = None,
 ) -> str:
-    """Extract field value from BOM entry.
-
-    Args:
-        entry: BOM entry object
-        field: Field name to extract
-
-    Returns:
-        String value for the field
-    """
-    import logging
-
-    # Handle k: modifier — KiCad LIBRARY:NAME → NAME (strip library nickname).
-    # "k:footprint" defaults to inventory source; use "i:k:", "s:k:", "p:k:" explicitly.
-    kicad_parts = split_kicad_strip_field(field)
-    if kicad_parts is not None:
-        source, inner = kicad_parts
-        if field.startswith("k:"):
-            logging.getLogger(__name__).debug(
-                "k:%s: no source prefix specified, defaulting to i: (inventory). "
-                "Use i:k:, s:k:, or p:k: to be explicit.",
-                inner,
-            )
-        raw = _resolve_namespaced_field_value(
-            entry,
-            source,
-            inner,
-            fabricator_id=fabricator_id,
-            fabricator_config=fabricator_config,
-        )
-        return derive_package_from_footprint(raw)
-
-    # Handle namespaced fields
-    if field.startswith("i:"):
-        return _resolve_namespaced_field_value(
-            entry,
-            "i",
-            field[2:],
-            fabricator_id=fabricator_id,
-            fabricator_config=fabricator_config,
-        )
-
-    if field.startswith("s:"):
-        return _resolve_namespaced_field_value(
-            entry,
-            "s",
-            field[2:],
-            fabricator_id=fabricator_id,
-            fabricator_config=fabricator_config,
-        )
-
-    if field.startswith("p:"):
-        return _resolve_namespaced_field_value(
-            entry,
-            "p",
-            field[2:],
-            fabricator_id=fabricator_id,
-            fabricator_config=fabricator_config,
-        )
-
-    if field.startswith("a:"):
-        return _resolve_annotation_field_value(
-            entry,
-            field[2:],
-            fabricator_id=fabricator_id,
-            fabricator_config=fabricator_config,
-        )
-
-    # Handle standard BOM fields
-    return _resolve_standard_field_value(
+    """Extract field value from BOM entry (thin wrapper over service layer)."""
+    return resolve_bom_field_value(
         entry,
         field,
         fabricator_id=fabricator_id,

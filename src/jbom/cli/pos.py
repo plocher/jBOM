@@ -37,11 +37,11 @@ from jbom.common.cli_fabricator import (
     resolve_fabricator_from_args,
 )
 from jbom.common.component_filters import add_component_filter_arguments
-from jbom.common.component_utils import derive_package_from_footprint
-from jbom.common.fields import normalize_field_name, split_kicad_strip_field
+from jbom.common.fields import normalize_field_name
 from jbom.config.fabricators import FabricatorConfig
 from jbom.services.fabricator_projection_service import FabricatorProjectionService
-from jbom.services.field_listing_service import FieldListingService, resolve_field
+from jbom.services.field_listing_service import FieldListingService
+from jbom.services.pos_field_resolver import resolve_pos_field_value
 
 _NUMERIC_POS_FIELDS: frozenset[str] = frozenset({"x", "y", "rotation"})
 _POS_SOURCE_PRIORITY = "pis"
@@ -527,68 +527,13 @@ def _get_pos_field_value(
     fabricator_id: str = "generic",
     fabricator_config: Optional[FabricatorConfig] = None,
 ) -> str:
-    """Extract field value from POS entry."""
-    import logging
-
-    row_sources = _build_pos_row_sources(entry)
-
-    kicad_parts = split_kicad_strip_field(field)
-    if kicad_parts is not None:
-        source, inner = kicad_parts
-        if field.startswith("k:"):
-            logging.getLogger(__name__).debug(
-                "k:%s: no source prefix specified, defaulting to i: (inventory). "
-                "Use i:k:, s:k:, or p:k: to be explicit.",
-                inner,
-            )
-        raw = resolve_field(
-            f"{source}:{inner}", row_sources, priority=_POS_SOURCE_PRIORITY
-        )
-        return derive_package_from_footprint(raw)
-
-    namespace_prefix, separator, _ = field.partition(":")
-    if separator and namespace_prefix in {"s", "p", "i"}:
-        return resolve_field(field, row_sources, priority=_POS_SOURCE_PRIORITY)
-    if separator and namespace_prefix == "a":
-        return str(entry.get(field, "") or "")
-
-    if field == "x":
-        if entry.get("x_raw"):
-            return str(entry["x_raw"])
-        return f"{entry['x_mm']:.4f}"
-    if field == "y":
-        if entry.get("y_raw"):
-            return str(entry["y_raw"])
-        return f"{entry['y_mm']:.4f}"
-    if field == "rotation":
-        if entry.get("rotation_raw") is not None:
-            return str(entry["rotation_raw"])
-        return f"{entry['rotation']:.1f}"
-
-    if field == "fabricator_part_number":
-        return _resolve_fabricator_part_number(
-            entry,
-            fabricator_id=fabricator_id,
-            fabricator_config=fabricator_config,
-        )
-
-    field_mapping = {
-        "reference": "reference",
-        "side": "side",
-    }
-    if field in field_mapping:
-        return str(entry.get(field_mapping[field], ""))
-    if field in {"value", "footprint", "package"}:
-        return resolve_field(
-            field,
-            row_sources,
-            priority=_POS_SOURCE_PRIORITY,
-        )
-    return resolve_field(
+    """Extract field value from POS entry (thin wrapper over service layer)."""
+    return resolve_pos_field_value(
+        entry,
         field,
-        row_sources,
-        priority=_POS_SOURCE_PRIORITY,
-    ) or str(entry.get(field, ""))
+        fabricator_id=fabricator_id,
+        fabricator_config=fabricator_config,
+    )
 
 
 def _build_pos_row_sources(entry: dict[str, Any]) -> dict[str, dict[str, object]]:
