@@ -21,7 +21,13 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from jbom.services.gerber_service import GerberExporter, GerberRequest, GerberResult
+from jbom.services.gerber_service import (
+    GerberExporter,
+    GerberRequest,
+    GerberResult,
+    _find_kicad_cli,
+    _kicad_cli_not_found_message,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -93,12 +99,94 @@ class TestGerberResult:
 # ---------------------------------------------------------------------------
 
 
+class TestFindKicadCli:
+    """Tests for the _find_kicad_cli discovery helper."""
+
+    def test_returns_path_from_which_first(self) -> None:
+        with patch(
+            "jbom.services.gerber_service.shutil.which",
+            return_value="/usr/bin/kicad-cli",
+        ):
+            assert _find_kicad_cli() == "/usr/bin/kicad-cli"
+
+    def test_returns_none_when_not_on_path_and_no_known_locations(
+        self, tmp_path: Path
+    ) -> None:
+        # Redirect platform.system to a value with no real install paths on this machine.
+        with (
+            patch("jbom.services.gerber_service.shutil.which", return_value=None),
+            patch("jbom.services.gerber_service.platform.system", return_value="Linux"),
+            patch(
+                "jbom.services.gerber_service.Path.is_file",
+                return_value=False,
+            ),
+        ):
+            assert _find_kicad_cli() is None
+
+    def test_macos_bundle_path_returned_when_binary_exists(
+        self, tmp_path: Path
+    ) -> None:
+        # Create a fake kicad-cli binary so is_file() returns True for it.
+        fake_cli = tmp_path / "kicad-cli"
+        fake_cli.write_text("", encoding="utf-8")
+
+        import jbom.services.gerber_service as svc
+
+        original_path = svc.Path
+
+        class _FakePath(type(Path())):
+            """Intercept the macOS bundle path to redirect to tmp_path."""
+
+            def __new__(cls, *args, **kwargs):
+                p = original_path(*args, **kwargs)
+                # Redirect the macOS bundle directory to our tmp_path fixture
+                if str(p) == "/Applications/KiCad/KiCad.app/Contents/MacOS":
+                    return original_path(tmp_path)
+                return p
+
+        with (
+            patch("jbom.services.gerber_service.shutil.which", return_value=None),
+            patch(
+                "jbom.services.gerber_service.platform.system", return_value="Darwin"
+            ),
+            patch("jbom.services.gerber_service.Path", _FakePath),
+        ):
+            result = _find_kicad_cli()
+
+        assert result is not None
+        assert "kicad-cli" in result
+
+    def test_not_found_message_contains_kicad_cli(self) -> None:
+        msg = _kicad_cli_not_found_message()
+        assert "kicad-cli" in msg
+        assert "BOM and POS" in msg
+
+    def test_not_found_message_is_platform_specific(self) -> None:
+        with patch(
+            "jbom.services.gerber_service.platform.system", return_value="Darwin"
+        ):
+            msg = _kicad_cli_not_found_message()
+            assert "macOS" in msg or "/Applications/KiCad" in msg
+
+        with patch(
+            "jbom.services.gerber_service.platform.system", return_value="Windows"
+        ):
+            msg = _kicad_cli_not_found_message()
+            assert "Windows" in msg
+
+        with patch(
+            "jbom.services.gerber_service.platform.system", return_value="Linux"
+        ):
+            msg = _kicad_cli_not_found_message()
+            assert "Linux" in msg
+
+
 class TestGerberExporterNoKicadCli:
     def test_returns_skipped_when_kicad_cli_absent(self, tmp_path: Path) -> None:
         pcb = tmp_path / "board.kicad_pcb"
         pcb.write_text("", encoding="utf-8")
 
-        with patch("jbom.services.gerber_service.shutil.which", return_value=None):
+        with patch("jbom.services.gerber_service._find_kicad_cli", return_value=None):
             result = GerberExporter().generate(
                 GerberRequest(
                     pcb_file=pcb,
@@ -120,7 +208,7 @@ class TestGerberExporterNoKicadCli:
 class TestGerberExporterMissingPcb:
     def test_returns_skipped_when_pcb_missing(self, tmp_path: Path) -> None:
         with patch(
-            "jbom.services.gerber_service.shutil.which",
+            "jbom.services.gerber_service._find_kicad_cli",
             return_value="/usr/bin/kicad-cli",
         ):
             result = GerberExporter().generate(
@@ -177,7 +265,7 @@ class TestGerberExporterCliFailure:
 
         with (
             patch(
-                "jbom.services.gerber_service.shutil.which",
+                "jbom.services.gerber_service._find_kicad_cli",
                 return_value="/usr/bin/kicad-cli",
             ),
             patch(
@@ -228,7 +316,7 @@ class TestGerberExporterSuccess:
 
         with (
             patch(
-                "jbom.services.gerber_service.shutil.which",
+                "jbom.services.gerber_service._find_kicad_cli",
                 return_value="/usr/bin/kicad-cli",
             ),
             patch("jbom.services.gerber_service.subprocess.run", side_effect=fake_run),
@@ -259,7 +347,7 @@ class TestGerberExporterSuccess:
 
         with (
             patch(
-                "jbom.services.gerber_service.shutil.which",
+                "jbom.services.gerber_service._find_kicad_cli",
                 return_value="/usr/bin/kicad-cli",
             ),
             patch(
