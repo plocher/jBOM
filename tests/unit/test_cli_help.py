@@ -93,9 +93,39 @@ def test_root_help_does_not_include_retired_inventory_search():
 
 
 def test_all_subcommands_show_defaults_option_in_help():
-    for command in ["annotate", "audit", "bom", "inventory", "parts", "pos", "search"]:
+    for command in [
+        "annotate",
+        "audit",
+        "bom",
+        "fab",
+        "gerbers",
+        "inventory",
+        "parts",
+        "pos",
+        "search",
+    ]:
         out = run_help([command]).lower()
-        assert "--defaults" in out
+        assert "--defaults" in out, f"jbom {command} --help missing --defaults"
+
+
+def test_gerbers_help_shows_key_options():
+    out = run_help(["gerbers"]).lower()
+    # -o is --output-dir (a directory, not a file — semantically different from bom/pos)
+    for token in ["--output-dir", "--fabricator", "--dry-run", "--no-drill"]:
+        assert token in out, f"jbom gerbers --help missing {token!r}"
+
+
+def test_fab_help_shows_key_options():
+    out = run_help(["fab"]).lower()
+    for token in [
+        "--output-dir",
+        "--fabricator",
+        "--dry-run",
+        "--skip-bom",
+        "--skip-pos",
+        "--skip-gerbers",
+    ]:
+        assert token in out, f"jbom fab --help missing {token!r}"
 
 
 def test_search_help_lists_only_configured_supplier_providers():

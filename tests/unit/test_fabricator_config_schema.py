@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from jbom.config.fabricators import (
@@ -9,8 +11,28 @@ from jbom.config.fabricators import (
     FieldSynonym,
     TierCondition,
     TierRule,
+    get_available_fabricators,
     load_fabricator,
 )
+from jbom.services.gerber_service import gerber_request_from_config
+
+# ---------------------------------------------------------------------------
+# Standard fabrication layer set — the "obvious thing" contract.
+# All built-in fabricators must include at minimum these layers so that
+# gherkin scenarios using default flags produce fabrication-ready output
+# without any special configuration.
+# ---------------------------------------------------------------------------
+_REQUIRED_LAYERS = {
+    "F.Cu",
+    "B.Cu",
+    "F.Mask",
+    "B.Mask",
+    "F.Paste",
+    "B.Paste",
+    "F.Silkscreen",
+    "B.Silkscreen",
+    "Edge.Cuts",
+}
 
 
 def test_load_generic_derives_field_synonyms_and_tier_rules_from_suppliers() -> None:
@@ -83,6 +105,87 @@ def test_from_yaml_dict_rejects_deprecated_priority_fields() -> None:
 
     with pytest.raises(ValueError, match=r"priority_fields"):
         FabricatorConfig.from_yaml_dict(data, default_id="example")
+
+
+# ---------------------------------------------------------------------------
+# Gerbers stanza contract: every built-in fabricator must produce the
+# "obvious" fabrication-ready GerberRequest when used with defaults.
+# This is the foundation the gherkin scenarios rely on — they don't assert
+# output details because generic does the right thing.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("fab_id", get_available_fabricators())
+def test_all_fabricators_have_gerbers_stanza(fab_id: str) -> None:
+    """Every built-in fabricator config must declare a gerbers: stanza."""
+    fab = load_fabricator(fab_id)
+    assert fab.gerbers is not None, (
+        f"Fabricator '{fab_id}' is missing a gerbers: stanza. "
+        "All built-in fabricators must define gerber export policy so that "
+        "jbom gerbers / jbom fab with default flags produce fabrication-ready output."
+    )
+
+
+@pytest.mark.parametrize("fab_id", get_available_fabricators())
+def test_all_fabricators_gerbers_stanza_includes_required_layers(
+    fab_id: str, tmp_path: Path
+) -> None:
+    """Every fabricator's gerbers stanza must include the 9 standard fabrication layers."""
+    fab = load_fabricator(fab_id)
+    assert fab.gerbers is not None
+    req = gerber_request_from_config(
+        tmp_path / "board.kicad_pcb",
+        tmp_path / "gerbers",
+        fabricator_id=fab_id,
+        gerbers_cfg=fab.gerbers,
+    )
+    assert req.layers is not None, f"'{fab_id}' gerbers.layers must be set"
+    layer_set = set(req.layers)
+    missing = _REQUIRED_LAYERS - layer_set
+    assert (
+        not missing
+    ), f"Fabricator '{fab_id}' gerbers.layers is missing required layers: {sorted(missing)}"
+
+
+@pytest.mark.parametrize("fab_id", get_available_fabricators())
+def test_all_fabricators_gerbers_stanza_split_drill_and_maps(
+    fab_id: str, tmp_path: Path
+) -> None:
+    """Every fabricator must produce split PTH/NPTH drill files and drill maps by default."""
+    fab = load_fabricator(fab_id)
+    assert fab.gerbers is not None
+    req = gerber_request_from_config(
+        tmp_path / "board.kicad_pcb",
+        tmp_path / "gerbers",
+        fabricator_id=fab_id,
+        gerbers_cfg=fab.gerbers,
+    )
+    assert req.drill_split_plated_holes is True, (
+        f"Fabricator '{fab_id}': drill.split_plated_holes must be true "
+        "so jbom gerbers produces separate PTH.drl + NPTH.drl files"
+    )
+    assert (
+        req.drill_map_format is not None
+    ), f"Fabricator '{fab_id}': drill.map_format must be set so drill maps are produced"
+
+
+@pytest.mark.parametrize("fab_id", get_available_fabricators())
+def test_all_fabricators_gerbers_stanza_protel_extensions(
+    fab_id: str, tmp_path: Path
+) -> None:
+    """Every fabricator must use Protel-style file extensions by default."""
+    fab = load_fabricator(fab_id)
+    assert fab.gerbers is not None
+    req = gerber_request_from_config(
+        tmp_path / "board.kicad_pcb",
+        tmp_path / "gerbers",
+        fabricator_id=fab_id,
+        gerbers_cfg=fab.gerbers,
+    )
+    assert req.protel_extensions is True, (
+        f"Fabricator '{fab_id}': naming.protel_extensions must be true "
+        "so output files use .gtl/.gbl/etc extensions"
+    )
 
 
 def test_from_yaml_dict_rejects_unknown_tier_operator() -> None:
