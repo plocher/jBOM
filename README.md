@@ -2,7 +2,7 @@
 
 ## Why jBOM?
 
-Designing a PCB in KiCad is only part of the journey that results in a fabricated and assembled electronic product.  The PCB fabrication just needs the KiCad-produced Gerber files, but the assembly process requires a **Bill of Materials (BOM)** and a **Placement file (CPL/POS)**.
+Designing a PCB in KiCad is only part of the journey that results in a fabricated and assembled electronic product.  PCB fabrication requires Gerber files; assembly requires a **Bill of Materials (BOM)** and a **Placement file (CPL/POS)**.  jBOM generates all three.
 
 The common KiCad workflow has you annotate your KiCad symbols with supply chain details such as "IPN:RES-331-0603", "MFG:Yageo", "MPN:CC0603KRX7R9BB104", "LCSC:C123456", and then use KiCad's fabrication plugins to generate BOM and CPL files.  This mechanism is easy to understand, and, through KiCad's web/database library integration, plugins such as Part-DB, InvenTree, PartsBox and GitPLM connect to extensive parts databases.  While these this workflow has proven sufficient for many developers, it inadvertently makes it difficult to decouple supply chain evolution from a project's electronic and mechanical specifications.
 
@@ -78,15 +78,30 @@ To find LCSC part numbers:
 
 > **Coming soon**: `jbom inventory MyProject/ --supplier lcsc --limit 3 -o inventory.csv` will search and populate part numbers automatically.
 
-### 4. Generate BOM and placement files
+### 4. Generate fabrication files
+
+Use `jbom fab` for a one-shot run that writes everything to a `production/` folder:
 
 ```bash
-jbom bom MyProject/ --jlc --inventory inventory.csv
-jbom pos MyProject/ --jlc
+jbom fab MyProject/ --jlc --inventory inventory.csv
 ```
 
-This produces `MyProject.bom.csv` and `MyProject.pos.csv`, ready to upload to JLCPCB.
-Preview first without writing files: `jbom bom MyProject/ --jlc --inventory inventory.csv -o console`
+This produces:
+```
+production/
+  jbom.csv                    ← BOM for JLCPCB
+  cpl.csv                     ← component placement
+  MyProject_1.0.zip           ← Gerber archive for upload (requires kicad-cli)
+  backups/MyProject_1.0_....zip
+```
+
+Or generate files individually:
+```bash
+jbom bom MyProject/ --jlc --inventory inventory.csv   # writes MyProject.bom.csv
+jbom pos MyProject/ --jlc                             # writes MyProject.pos.csv
+jbom gerbers MyProject/ --jlc                         # writes gerbers/ (requires kicad-cli)
+```
+Preview without writing: `jbom bom MyProject/ --jlc --inventory inventory.csv -o console`
 
 ---
 
