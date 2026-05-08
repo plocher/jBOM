@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from jbom.common.options import GeneratorOptions
-from jbom.common.types import Component
+from jbom.common.types import Component, TitleBlockMetadata
 from jbom.services.readers import schematic_reader
 
 
@@ -48,6 +48,33 @@ class SchematicReader:
             return self._parse_schematic(schematic_file)
         except Exception as e:
             raise ValueError(f"Failed to parse schematic {schematic_file}: {e}")
+
+    def read_metadata(self, schematic_file: Path) -> TitleBlockMetadata:
+        """Extract title block metadata from a KiCad schematic file.
+
+        Args:
+            schematic_file: Path to .kicad_sch file
+
+        Returns:
+            TitleBlockMetadata with title and revision extracted from the file
+
+        Raises:
+            FileNotFoundError: If schematic file doesn't exist
+            ValueError: If schematic file cannot be parsed
+        """
+        if not schematic_file.exists():
+            raise FileNotFoundError(f"Schematic file not found: {schematic_file}")
+
+        if not schematic_file.suffix.lower() == ".kicad_sch":
+            raise ValueError(f"Expected .kicad_sch file, got: {schematic_file.suffix}")
+
+        try:
+            sexp = schematic_reader.load_kicad_file(schematic_file)
+            return self._extract_title_block_metadata(sexp)
+        except Exception as e:
+            raise ValueError(
+                f"Failed to parse schematic metadata {schematic_file}: {e}"
+            )
 
     def _parse_schematic(self, schematic_file: Path) -> List[Component]:
         """Parse schematic file using S-expression parser."""
@@ -141,3 +168,34 @@ class SchematicReader:
         """
 
         return True
+
+    def _extract_title_block_metadata(self, sexp) -> TitleBlockMetadata:
+        """Extract title block metadata from a KiCad schematic S-expression tree."""
+        from sexpdata import Symbol
+
+        if not isinstance(sexp, list) or len(sexp) < 2:
+            return TitleBlockMetadata()
+
+        title = ""
+        revision = ""
+        for item in sexp[1:]:
+            if not (
+                isinstance(item, list) and item and item[0] == Symbol("title_block")
+            ):
+                continue
+
+            for title_block_item in item[1:]:
+                if not (
+                    isinstance(title_block_item, list)
+                    and len(title_block_item) >= 2
+                    and isinstance(title_block_item[1], str)
+                ):
+                    continue
+
+                if title_block_item[0] == Symbol("title"):
+                    title = title_block_item[1]
+                elif title_block_item[0] == Symbol("rev"):
+                    revision = title_block_item[1]
+            break
+
+        return TitleBlockMetadata(title=title, revision=revision)

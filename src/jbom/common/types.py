@@ -8,6 +8,19 @@ from pathlib import Path
 DEFAULT_PRIORITY = 99
 
 
+@dataclass(frozen=True)
+class TitleBlockMetadata:
+    """KiCad title block metadata extracted from schematic or PCB.
+
+    Both schematic (.kicad_sch) and PCB (.kicad_pcb) files contain a title block
+    section with project metadata including title, revision, date, company, etc.
+    This dataclass represents the common extracted metadata from either source.
+    """
+
+    title: str = ""
+    revision: str = ""
+
+
 @dataclass
 class Component:
     """Represents a component from KiCad schematic"""
@@ -79,4 +92,5 @@ __all__ = [
     "DEFAULT_PRIORITY",
     "Component",
     "InventoryItem",
+    "TitleBlockMetadata",
 ]
