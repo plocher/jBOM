@@ -1,6 +1,70 @@
 # CHANGELOG
 
 
+## v6.53.0 (2026-05-08)
+
+### Features
+
+* feat(fabrication): Phases C3/D/E - production folder, diagnostic fix, thin CLI
+
+Phase C3: cli/fabrication.py no longer imports _output_bom/_output_pos from
+sibling CLI modules; file writing delegated to BOMWriter/POSWriter.
+
+Phase D:
+- BOMWorkflow: remove os.environ.get('JBOM_QUIET') gates; resolution notes
+  always appended to diagnostics (ADR 0006 diagnostic collection principle)
+- POSWorkflow: remove request.quiet gates; remove quiet field from POSRequest
+  and cli/pos.py _build_pos_request; remove unused os import from cli/pos.py
+
+Phase E:
+- FabricationRequest gains debug: bool and production_root: str
+- FabricationResult gains production_dir: Path|None and backup_archive: Path|None
+- FabricationWorkflow.run() creates production/ folder, writes jbom.csv and
+  cpl.csv via BOMWriter/POSWriter, packages gerbers via GerberPackager into
+  {title}_{revision}.zip, creates dated backup via BackupService
+- Fixed double-gerber-run bug: _run_gerbers_with_packaging() now returns
+  (artifacts, gerber_result, diagnostics), eliminating the redundant
+  _run_gerbers() call in run()
+- _execute_fab_command() simplified from 80 to 22 lines; reports production_dir
+  and backup_archive on success
+- jbom fab gains --debug flag; --output-dir now specifies production/ parent
+
+CHANGELOG updated with issue #226 entry.
+1171 tests passing.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`ce12da1`](https://github.com/plocher/jBOM/commit/ce12da18d9eb7efc67bc22e290f017806a1994e8))
+
+* feat(services): Phase C1/C2 - BOMWriter and POSWriter friend serializers
+
+Add BOMWriter and POSWriter as adapter-neutral file-serialization services:
+- BOMWriter.write(payload, output_path, *, force=False) -> None
+- POSWriter.write(payload, output_path, *, force=False) -> None
+Both use csv.QUOTE_ALL, raise FileExistsError on overwrite, and call
+the extracted bom/pos_field_resolver services for field resolution.
+26 unit tests (13 per writer).
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`4603f95`](https://github.com/plocher/jBOM/commit/4603f953db9626e6d3ab320eebbbdd1d440b8d05))
+
+* feat(refactor): C0 - extract BOM/POS field resolution to service layer
+
+Extract field resolution logic from cli/bom.py and cli/pos.py into dedicated
+service modules:
+- src/jbom/services/bom_field_resolver.py: resolve_bom_field_value()
+- src/jbom/services/pos_field_resolver.py: resolve_pos_field_value()
+
+Refactoring is surgical and DRY-compliant:
+- Public entry points: resolve_bom_field_value() and resolve_pos_field_value()
+- Extracted helper functions organized by concern
+- CLI wrapper functions (_get_field_value, _get_pos_field_value) remain thin
+  and delegate to service layer
+- All 1145 tests pass with no behavior change
+
+This C0 refactoring is the prerequisite for C1/C2 (Friend Serializers),
+establishing clean, reusable service APIs for BOM/POS writers.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`10f19fc`](https://github.com/plocher/jBOM/commit/10f19fcd952afb123b73fa996bb0b642d89c891d))
+
+
 ## v6.52.2 (2026-05-08)
 
 ### Bug Fixes
