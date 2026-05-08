@@ -243,4 +243,48 @@ Established in issues #224 and #237; documented in `src/WARP.md`.
 | Private helpers | `_list_fields`, `_generate` | `_orchestrate_field_listing`, `_do_generation` |
 | Module file names | `bom_workflow.py`, `pos_workflow.py` | `bom_orchestration.py`, `pos_orchestration.py` |
 
+## Diagnostic Collection Pattern
+Established in ADR 0006 (issue #226).
+
+Services **always collect and return all diagnostics** in the result contract (`tuple[str, ...]`).
+Adapters decide what to display and when.
+
+**Rule**: No service module may read `os.environ` to gate diagnostic generation.
+`os.environ.get("JBOM_QUIET")` and equivalents are adapter concerns only.
+
+**Rule**: Request dataclasses must not carry a `quiet` field. Suppression of output
+is a presentation decision belonging to the adapter, not the service.
+
+**CLI adapter pattern**:
+```
+result = SomeWorkflow().run(request)
+for diag in result.diagnostics:
+    if args.verbose or is_warning_or_error(diag):
+        print(diag, file=sys.stderr)
+```
+
+**Plugin adapter pattern**: Store `result.diagnostics` and surface via a "details" panel
+or popup — the full set is always available regardless of verbose state.
+
+**Future enhancement**: Replace `tuple[str, ...]` with `tuple[Diagnostic, ...]` where
+`Diagnostic(severity: Literal["info", "warning", "error"], message: str)` enables
+adapter-side filtering without parsing message text.
+
+## Friend Serializer Pattern
+Established in ADR 0006 (issue #226).
+
+When a workflow (e.g., `FabricationWorkflow`) needs to write BOM or POS artifacts to disk,
+it must not call CLI adapter code to do so. Instead, it uses a *friend serializer*:
+a service-layer module that accepts the data structure produced by the workflow service
+and writes it to the requested path.
+
+```
+BOMWorkflow.run()   → BOMResult (data structure, no file I/O)
+BOMWriter.write(result, output_path)   → writes jbom.csv
+```
+
+This keeps workflows as pure orchestrators and serialization as a separately testable concern.
+CLI adapters continue to call `_output_bom` / `_output_pos` for console and stdout rendering;
+those remain adapter concerns. File-writing for the `fab` workflow uses the friend serializer.
+
 These design patterns provide the foundation for consistent, maintainable, and extensible software architecture throughout the jBOM system.
