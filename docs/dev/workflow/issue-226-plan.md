@@ -24,7 +24,7 @@ Update `src/jbom/services/pcb_reader.py` and `src/jbom/services/schematic_reader
 Add `src/jbom/services/project_metadata.py` with a frozen `ProjectMetadata(name, version, release_timestamp)` dataclass and helper logic that derives metadata from resolved project input using title block values with `.kicad_pro` basename fallback. Include archive-stem normalization helpers and tests for fallback and normalization behavior.
 ### A3: Introduce `ZipArchiver`
 Add `src/jbom/services/zip_archiver.py` with `ZipArchiver.archive(source_paths: list[Path], archive_path: Path) -> None`. The service creates parent directories, archives explicit path lists, and raises on empty input. Unit tests validate archive membership and directory creation.
-## Phase B — Packaging Services
+## Phase B — Packaging Services ✅ COMPLETE
 Entry: Phase A complete.
 Exit: gerber packaging and dated backup packaging both work in isolation.
 ### B1: Add `GerberPackager`
