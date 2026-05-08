@@ -1,6 +1,27 @@
 # CHANGELOG
 
 
+## v6.52.2 (2026-05-08)
+
+### Bug Fixes
+
+* fix(gerber): discover kicad-cli via PATH then platform-specific install paths
+
+On macOS KiCad installs as an app bundle; kicad-cli is not on PATH by default.
+Similarly on Windows it lives under Program Files.
+
+Add _find_kicad_cli() which:
+1. Tries PATH first (shutil.which) with both 'kicad-cli' and 'kicad_cli' spellings.
+2. Falls back to well-known platform paths:
+   - macOS: /Applications/KiCad/KiCad.app/Contents/MacOS/
+   - Windows: %PROGRAMFILES%\KiCad\{9,8,7}.0\bin   - Linux:   /usr/bin/, /usr/local/bin/, /snap/bin/
+Add _kicad_cli_not_found_message() with platform-aware install instructions.
+Update tests to patch _find_kicad_cli rather than shutil.which.
+Add 5 new tests for discovery and message logic. 1062 total pass.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`2ad0739`](https://github.com/plocher/jBOM/commit/2ad073930a4be9b48638ed0c14e7570027809c22))
+
+
 ## v6.52.1 (2026-05-08)
 
 ### Refactoring
