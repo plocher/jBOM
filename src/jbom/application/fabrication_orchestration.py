@@ -12,9 +12,10 @@ still succeeds and returns BOM/POS results — the ``gerber_result`` payload
 carries a diagnostic and ``skipped=True``.
 
 The :class:`FabricationWorkflow` is an adapter-neutral application service:
-it contains no CLI concerns (no argparse, no stdout, no exit codes).  Adapter
-layers (CLI, plugin) are responsible for rendering results and writing CSV
-files from the BOM/POS payloads.
+it contains no CLI concerns (no argparse, no stdout, no exit codes).  File I/O
+for BOM and POS artifacts is handled inside the workflow via friend serializers
+(``BOMWriter``, ``POSWriter``).  Adapter layers (CLI, plugin) receive the result
+and render paths and diagnostics.
 
 Naming convention:
   New code in this module follows the naming convention established in #224:
@@ -25,6 +26,7 @@ Naming convention:
 
 from __future__ import annotations
 
+import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 from types import MappingProxyType
@@ -75,25 +77,28 @@ class FabricationRequest:
             Controls default field sets for both BOM and POS outputs.
             Field customisation beyond fabricator defaults requires using
             ``jbom bom`` and ``jbom pos`` individually.
-        output_directory: If non-empty, Gerbers are written to
-            ``<output_directory>/gerbers/``.  BOM/POS default output paths
-            come from their respective orchestration results; adapter layers
-            may override them.
+        output_directory: Legacy option; kept for backward compatibility.
+            Deprecated in favor of ``production_root``.
+        production_root: Parent directory for the ``production/`` folder.
+            When set, takes precedence over ``output_directory``.  If empty,
+            defaults to the project directory.
         skip_bom: When ``True`` skip BOM generation entirely.
         skip_pos: When ``True`` skip POS generation entirely.
         skip_gerbers: When ``True`` skip Gerber/drill/netlist generation.
         verbose: Forward verbose flag to sub-services.
-        dry_run: When ``True`` generate BOM/POS data but skip Gerber file
-            generation (no filesystem writes for Gerbers).
+        dry_run: When ``True`` generate BOM/POS data but skip all file writes.
         inventory_files: Inventory CSV paths forwarded to BOM generation.
         smd_only: Forward SMD-only filter to POS generation.
         pos_layer: Forward layer filter (``"TOP"`` / ``"BOTTOM"``) to POS.
         pos_origin: Forward origin reference (``"board"`` / ``"aux"``) to POS.
+        debug: When ``True`` preserve intermediate gerber directory after
+            packaging for inspection.
     """
 
     input_path: str
     fabricator: str = "generic"
     output_directory: str = ""
+    production_root: str = ""
     skip_bom: bool = False
     skip_pos: bool = False
     skip_gerbers: bool = False
@@ -103,6 +108,7 @@ class FabricationRequest:
     smd_only: bool = False
     pos_layer: str = ""
     pos_origin: str = "board"
+    debug: bool = False
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -117,6 +123,9 @@ class FabricationRequest:
         )
         object.__setattr__(
             self, "output_directory", str(self.output_directory or "").strip()
+        )
+        object.__setattr__(
+            self, "production_root", str(self.production_root or "").strip()
         )
         object.__setattr__(self, "skip_bom", bool(self.skip_bom))
         object.__setattr__(self, "skip_pos", bool(self.skip_pos))
@@ -135,6 +144,7 @@ class FabricationRequest:
             "pos_origin",
             _normalize_text(self.pos_origin or "board", field_name="pos_origin"),
         )
+        object.__setattr__(self, "debug", bool(self.debug))
 
 
 @dataclass(frozen=True)
@@ -173,12 +183,16 @@ class FabricationResult:
 
     Attributes:
         artifacts: All artifact descriptors produced during the workflow.
-            BOM/POS entries carry default output paths; Gerber entries carry
-            actual written paths.
+            Includes BOM, POS, packaged Gerbers, and backups written to
+            the production folder.
         diagnostics: Ordered human-readable messages from all sub-services.
         bom_result: Full BOM orchestration result (``None`` when skipped).
         pos_result: Full POS orchestration result (``None`` when skipped).
         gerber_result: Gerber generation result (``None`` when skipped).
+        production_dir: Path to the ``production/`` directory that was
+            created and populated, or ``None`` if skipped/failed.
+        backup_archive: Path to the dated backup archive created under
+            ``production/backups/``, or ``None`` if none was created.
     """
 
     artifacts: tuple[FabricationArtifact, ...]
@@ -186,6 +200,8 @@ class FabricationResult:
     bom_result: BOMResult | None = None
     pos_result: POSResult | None = None
     gerber_result: GerberResult | None = None
+    production_dir: Path | None = None
+    backup_archive: Path | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "artifacts", tuple(self.artifacts))
@@ -210,13 +226,38 @@ class FabricationWorkflow:
             request: Options governing which steps to run and with what inputs.
 
         Returns:
-            :class:`FabricationResult` aggregating BOM, POS, and Gerber outputs.
+            :class:`FabricationResult` aggregating BOM, POS, and Gerber outputs,
+            with all files written to the production/ directory when appropriate.
         """
         diagnostics: list[str] = []
         artifacts: list[FabricationArtifact] = []
         bom_result: BOMResult | None = None
         pos_result: POSResult | None = None
         gerber_result: GerberResult | None = None
+        production_dir: Path | None = None
+        backup_archive: Path | None = None
+
+        # Resolve project directory for production folder location
+        _, project_dir, resolve_diags = self._resolve_pcb_and_project_dir(request)
+        diagnostics.extend(resolve_diags)
+
+        # Determine production root and create production directory
+        production_root = self._resolve_production_root(request, project_dir)
+        if not request.dry_run:
+            production_dir = production_root / "production"
+            try:
+                production_dir.mkdir(parents=True, exist_ok=True)
+            except OSError as exc:
+                diagnostics.append(f"Failed to create production directory: {exc}")
+                return FabricationResult(
+                    artifacts=tuple(artifacts),
+                    diagnostics=tuple(diagnostics),
+                    bom_result=bom_result,
+                    pos_result=pos_result,
+                    gerber_result=gerber_result,
+                    production_dir=None,
+                    backup_archive=None,
+                )
 
         # ------------------------------------------------------------------
         # Step 1: BOM
@@ -225,13 +266,28 @@ class FabricationWorkflow:
             bom_result, bom_diagnostics = self._run_bom(request)
             diagnostics.extend(bom_diagnostics)
             if bom_result is not None and bom_result.generation is not None:
-                artifacts.append(
-                    FabricationArtifact(
-                        artifact_type="bom",
-                        path=bom_result.generation.default_output_path,
-                        media_type="text/csv",
+                bom_path = None
+                if not request.dry_run and production_dir is not None:
+                    # Write BOM to production/jbom.csv
+                    bom_path = production_dir / "jbom.csv"
+                    try:
+                        from jbom.services.bom_writer import BOMWriter
+
+                        BOMWriter.write(bom_result.generation, bom_path, force=True)
+                    except Exception as exc:
+                        diagnostics.append(f"BOM write failed: {exc}")
+                        bom_path = None
+                else:
+                    bom_path = bom_result.generation.default_output_path
+
+                if bom_path is not None:
+                    artifacts.append(
+                        FabricationArtifact(
+                            artifact_type="bom",
+                            path=bom_path,
+                            media_type="text/csv",
+                        )
                     )
-                )
 
         # ------------------------------------------------------------------
         # Step 2: POS
@@ -240,13 +296,28 @@ class FabricationWorkflow:
             pos_result, pos_diagnostics = self._run_pos(request)
             diagnostics.extend(pos_diagnostics)
             if pos_result is not None and pos_result.generation is not None:
-                artifacts.append(
-                    FabricationArtifact(
-                        artifact_type="pos",
-                        path=pos_result.generation.default_output_path,
-                        media_type="text/csv",
+                pos_path = None
+                if not request.dry_run and production_dir is not None:
+                    # Write POS to production/cpl.csv
+                    pos_path = production_dir / "cpl.csv"
+                    try:
+                        from jbom.services.pos_writer import POSWriter
+
+                        POSWriter.write(pos_result.generation, pos_path, force=True)
+                    except Exception as exc:
+                        diagnostics.append(f"POS write failed: {exc}")
+                        pos_path = None
+                else:
+                    pos_path = pos_result.generation.default_output_path
+
+                if pos_path is not None:
+                    artifacts.append(
+                        FabricationArtifact(
+                            artifact_type="pos",
+                            path=pos_path,
+                            media_type="text/csv",
+                        )
                     )
-                )
 
         # ------------------------------------------------------------------
         # Step 3: Gerbers (skipped in dry_run mode)
@@ -257,26 +328,32 @@ class FabricationWorkflow:
                     "Dry run: Gerber generation skipped (no files written)."
                 )
             else:
-                gerber_result, gerber_diagnostics = self._run_gerbers(request)
-                diagnostics.extend(gerber_diagnostics)
-                if gerber_result is not None and not gerber_result.skipped:
-                    for artifact_path in gerber_result.artifacts:
-                        # Infer type from extension; default to "gerber"
-                        ext = artifact_path.suffix.lower()
-                        artifact_type = (
-                            "drill"
-                            if ext == ".drl"
-                            else "netlist"
-                            if ext == ".ipc"
-                            else "gerber"
+                (
+                    gerber_artifacts,
+                    gerber_result,
+                    gerber_packaging_diags,
+                ) = self._run_gerbers_with_packaging(request, production_dir)
+                diagnostics.extend(gerber_packaging_diags)
+                artifacts.extend(gerber_artifacts)
+
+        # ------------------------------------------------------------------
+        # Step 4: Backup (if any files were written)
+        # ------------------------------------------------------------------
+        if not request.dry_run and production_dir is not None and artifacts:
+            artifact_paths = [a.path for a in artifacts if a.path is not None]
+            if artifact_paths:
+                backup_archive, backup_diags = self._create_backup(
+                    request, artifact_paths, production_dir
+                )
+                diagnostics.extend(backup_diags)
+                if backup_archive is not None:
+                    artifacts.append(
+                        FabricationArtifact(
+                            artifact_type="backup",
+                            path=backup_archive,
+                            media_type="application/zip",
                         )
-                        artifacts.append(
-                            FabricationArtifact(
-                                artifact_type=artifact_type,
-                                path=artifact_path,
-                                media_type=_media_type_for(artifact_type),
-                            )
-                        )
+                    )
 
         return FabricationResult(
             artifacts=tuple(artifacts),
@@ -284,6 +361,8 @@ class FabricationWorkflow:
             bom_result=bom_result,
             pos_result=pos_result,
             gerber_result=gerber_result,
+            production_dir=production_dir,
+            backup_archive=backup_archive,
         )
 
     # ------------------------------------------------------------------
@@ -388,6 +467,154 @@ class FabricationWorkflow:
             if request.verbose:
                 diagnostics.append(f"Note: could not resolve PCB file: {exc}")
             return None, None, diagnostics
+
+    def _resolve_production_root(
+        self, request: FabricationRequest, project_dir: Path | None
+    ) -> Path:
+        """Determine the parent directory for the production/ folder.
+
+        production_root takes precedence over output_directory; both default
+        to the project directory.
+        """
+        if request.production_root:
+            return Path(request.production_root)
+        if request.output_directory:
+            return Path(request.output_directory)
+        if project_dir is not None:
+            return project_dir
+        return Path(".")
+
+    def _run_gerbers_with_packaging(
+        self,
+        request: FabricationRequest,
+        production_dir: Path | None,
+    ) -> tuple[list[FabricationArtifact], GerberResult | None, list[str]]:
+        """Generate Gerbers to temp dir, package to production/, return artifacts.
+
+        Returns:
+            ``(artifacts, gerber_result, diagnostics)`` where artifacts are
+            FabricationArtifacts for the packaged gerber archive and
+            gerber_result carries the raw GerberExporter result for diagnostics.
+        """
+        artifacts: list[FabricationArtifact] = []
+        diagnostics: list[str] = []
+        gerber_result: GerberResult | None = None
+
+        if production_dir is None:
+            diagnostics.append("Production dir not available for gerber packaging.")
+            return artifacts, gerber_result, diagnostics
+
+        # Generate gerbers to a temporary directory
+        pcb_file, project_dir, resolve_diags = self._resolve_pcb_and_project_dir(
+            request
+        )
+        diagnostics.extend(resolve_diags)
+
+        if pcb_file is None:
+            return artifacts, gerber_result, diagnostics
+
+        try:
+            with tempfile.TemporaryDirectory() as temp_dir:
+                temp_gerber_dir = Path(temp_dir) / "gerbers"
+                gerber_request = GerberRequest(
+                    pcb_file=pcb_file,
+                    output_directory=temp_gerber_dir,
+                    fabricator=request.fabricator,
+                )
+                gerber_result = GerberExporter().generate(gerber_request)
+
+                if gerber_result is None or gerber_result.skipped:
+                    diagnostics.append(
+                        "Gerber generation skipped or failed; no artifacts to package."
+                    )
+                    return artifacts, gerber_result, diagnostics
+
+                # Resolve archive stem from project metadata
+                from jbom.services.project_metadata import (
+                    create_metadata,
+                    normalize_archive_stem,
+                )
+
+                project_file = project_dir / f"{project_dir.name}.kicad_pro"
+                if not project_file.exists():
+                    # Fallback to stem of PCB file
+                    project_file = project_dir / f"{project_dir.name}.kicad_pro"
+
+                metadata = create_metadata(project_file, pcb_file=pcb_file)
+                archive_stem = normalize_archive_stem(metadata.project_name)
+
+                # Package gerbers with GerberPackager
+                from jbom.services.gerber_packager import GerberPackager
+
+                packager = GerberPackager()
+                gerber_zip = production_dir / f"{archive_stem}.zip"
+                try:
+                    packager.package(
+                        gerber_result.artifacts,
+                        gerber_zip,
+                        debug=request.debug,
+                    )
+                    artifacts.append(
+                        FabricationArtifact(
+                            artifact_type="gerber",
+                            path=gerber_zip,
+                            media_type="application/zip",
+                        )
+                    )
+                except Exception as exc:
+                    diagnostics.append(f"Gerber packaging failed: {exc}")
+
+        except Exception as exc:
+            diagnostics.append(f"Gerber generation or packaging failed: {exc}")
+
+        return artifacts, gerber_result, diagnostics
+
+    def _create_backup(
+        self,
+        request: FabricationRequest,
+        artifact_paths: list[Path],
+        production_dir: Path,
+    ) -> tuple[Path | None, list[str]]:
+        """Create a dated backup archive of all production artifacts.
+
+        Returns:
+            ``(backup_archive_path, diagnostics)`` where backup_archive_path
+            is None if backup creation failed.
+        """
+        diagnostics: list[str] = []
+
+        try:
+            from jbom.services.backup_service import BackupService
+            from jbom.services.project_metadata import (
+                create_metadata,
+                normalize_archive_stem,
+            )
+
+            # Resolve project metadata for archive naming
+            pcb_file, project_dir, resolve_diags = self._resolve_pcb_and_project_dir(
+                request
+            )
+            diagnostics.extend(resolve_diags)
+
+            if project_dir is None:
+                project_dir = production_dir.parent
+
+            project_file = project_dir / f"{project_dir.name}.kicad_pro"
+            metadata = create_metadata(project_file, pcb_file=pcb_file)
+            archive_stem = normalize_archive_stem(metadata.project_name)
+
+            backup_service = BackupService()
+            backup_dir = production_dir / "backups"
+            backup_archive = backup_service.backup(
+                artifact_paths,
+                backup_dir,
+                archive_stem,
+            )
+            return backup_archive, diagnostics
+
+        except Exception as exc:
+            diagnostics.append(f"Backup creation failed: {exc}")
+            return None, diagnostics
 
     def _resolve_gerber_output_dir(
         self, request: FabricationRequest, project_dir: Path | None

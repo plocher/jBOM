@@ -6,29 +6,21 @@
     jbom pos   <project> --fabricator <fab>
     jbom gerbers <project> --fabricator <fab>
 
-in sequence.  It delegates all generation logic to
+in sequence. It delegates generation, file writing, gerber packaging, and
+backup archive creation to
 :class:`~jbom.application.fabrication_orchestration.FabricationWorkflow`.
 
 Field customisation is intentionally not supported here: ``--fabricator``
 selects the profile and its configured default fields are used for both BOM
-and POS.  Users who need per-field control should run ``jbom bom`` and
-``jbom pos`` individually, or define a custom fabricator config.
-
-This module imports ``_output_bom`` and ``_output_pos`` from the sibling CLI
-modules to reuse their field-resolution and CSV-writing logic.  This coupling
-is within the CLI adapter layer and is acceptable; the layering cleanup is
-tracked in issue #237.
-"""
+and POS. Users who need per-field control should run ``jbom bom`` and
+``jbom pos`` individually, or define a custom fabricator config."""
 
 from __future__ import annotations
 
 import sys
-from pathlib import Path
-from typing import Optional
 
 from jbom.application.fabrication_orchestration import (
     FabricationRequest,
-    FabricationResult,
     FabricationWorkflow,
 )
 from jbom.application.jobs.contracts import (
@@ -38,9 +30,6 @@ from jbom.application.jobs.contracts import (
     JobRequest,
 )
 from jbom.application.jobs.runner import JobEventStream, JobRunPayload, JobRunner
-from jbom.cli.bom import _output_bom
-from jbom.cli.output import add_force_argument
-from jbom.cli.pos import _output_pos
 from jbom.common.cli_fabricator import (
     add_fabricator_arguments,
     resolve_fabricator_from_args,
@@ -78,12 +67,10 @@ def register_command(subparsers) -> None:  # type: ignore[type-arg]
         metavar="DIR",
         default=None,
         help=(
-            "Override output directory for all generated files.  "
-            "BOM and POS CSVs are written here; Gerbers go to <DIR>/gerbers/.  "
-            "Default: project directory for BOM/POS, <project_dir>/gerbers/ for Gerbers."
+            "Parent directory for the generated production/ folder. "
+            "Default: project directory."
         ),
     )
-    add_force_argument(parser)
 
     # Step-skipping flags
     parser.add_argument(
@@ -144,6 +131,11 @@ def register_command(subparsers) -> None:  # type: ignore[type-arg]
             "Generate BOM/POS data but do not write files; "
             "skip Gerber generation entirely"
         ),
+    )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Keep the intermediate gerber directory after packaging",
     )
     parser.add_argument(
         "-v",
@@ -216,148 +208,33 @@ def _build_fab_job_request(args) -> JobRequest:  # type: ignore[type-arg]
 
 
 def _execute_fab_command(args) -> int:  # type: ignore[type-arg]
-    """Build FabricationRequest, run FabricationWorkflow, write outputs."""
+    """Build FabricationRequest, run FabricationWorkflow, and report outputs."""
     try:
-        fabricator = resolve_fabricator_from_args(args)
-        output_dir: Optional[Path] = Path(args.output_dir) if args.output_dir else None
-        dry_run = bool(args.dry_run)
-        force = bool(args.force)
-
         request = FabricationRequest(
             input_path=str(args.input or "."),
-            fabricator=fabricator,
-            output_directory=str(output_dir) if output_dir else "",
+            fabricator=resolve_fabricator_from_args(args),
+            production_root=str(args.output_dir or ""),
             skip_bom=bool(args.skip_bom),
             skip_pos=bool(args.skip_pos),
             skip_gerbers=bool(args.skip_gerbers),
             verbose=bool(args.verbose),
-            dry_run=dry_run,
+            dry_run=bool(args.dry_run),
             inventory_files=tuple(str(p) for p in (args.inventory_files or [])),
             smd_only=bool(args.smd_only),
             pos_layer=str(args.layer or ""),
             pos_origin=str(args.origin or "board"),
+            debug=bool(args.debug),
         )
 
-        # Create output directory if explicitly specified
-        if output_dir is not None:
-            output_dir.mkdir(parents=True, exist_ok=True)
-
         result = FabricationWorkflow().run(request)
-
-        # Emit diagnostics
         for diag in result.diagnostics:
             print(diag, file=sys.stderr)
-
-        exit_code = 0
-
-        # --- Write BOM ---
-        if not request.skip_bom:
-            exit_code = max(
-                exit_code,
-                _write_bom_output(result, fabricator, output_dir, dry_run, force),
-            )
-
-        # --- Write POS ---
-        if not request.skip_pos:
-            exit_code = max(
-                exit_code,
-                _write_pos_output(result, output_dir, dry_run, force),
-            )
-
-        # --- Report Gerbers ---
-        if not request.skip_gerbers and not dry_run:
-            _report_gerber_output(result)
-
-        return exit_code
+        if result.production_dir is not None:
+            print(f"Production directory: {result.production_dir}")
+        if result.backup_archive is not None:
+            print(f"Backup archive: {result.backup_archive}")
+        return 0
 
     except Exception as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
-
-
-def _write_bom_output(
-    result: FabricationResult,
-    fabricator: str,
-    output_dir: Optional[Path],
-    dry_run: bool,
-    force: bool,
-) -> int:
-    """Write the BOM CSV from a FabricationResult payload."""
-    if result.bom_result is None or result.bom_result.generation is None:
-        print("Note: BOM generation produced no output.", file=sys.stderr)
-        return 0
-
-    gen = result.bom_result.generation
-    bom_output: Optional[str] = None
-    if output_dir is not None:
-        bom_output = str(output_dir / gen.default_output_path.name)
-
-    if dry_run:
-        dest = bom_output or str(gen.default_output_path)
-        print(f"Dry run: BOM would be written to {dest}")
-        return 0
-
-    return _output_bom(
-        gen.bom_data,
-        bom_output,
-        list(gen.selected_fields),
-        fabricator,
-        default_output_path=gen.default_output_path,
-        force=force,
-    )
-
-
-def _write_pos_output(
-    result: FabricationResult,
-    output_dir: Optional[Path],
-    dry_run: bool,
-    force: bool,
-) -> int:
-    """Write the POS CSV from a FabricationResult payload."""
-    if result.pos_result is None or result.pos_result.generation is None:
-        print("Note: POS generation produced no output.", file=sys.stderr)
-        return 0
-
-    gen = result.pos_result.generation
-    pos_output: Optional[str] = None
-    if output_dir is not None:
-        pos_output = str(output_dir / gen.default_output_path.name)
-
-    if dry_run:
-        dest = pos_output or str(gen.default_output_path)
-        print(f"Dry run: POS would be written to {dest}")
-        return 0
-
-    return _output_pos(
-        list(gen.pos_data),
-        pos_output,
-        selected_fields=list(gen.selected_fields),
-        headers=list(gen.headers),
-        fabricator=gen.fabricator,
-        fabricator_config=gen.fabricator_config,
-        default_output_path=gen.default_output_path,
-        force=force,
-    )
-
-
-def _report_gerber_output(result: FabricationResult) -> None:
-    """Print Gerber artifact paths or skip reason to stdout/stderr."""
-    if result.gerber_result is None:
-        print(
-            "Note: Gerber generation produced no result. " "Check diagnostics above.",
-            file=sys.stderr,
-        )
-        return
-
-    if result.gerber_result.skipped:
-        print(
-            f"Note: Gerber generation skipped "
-            f"({result.gerber_result.skip_reason}). "
-            "Check diagnostics above.",
-            file=sys.stderr,
-        )
-        return
-
-    for artifact in result.artifacts:
-        if artifact.artifact_type in ("gerber", "drill", "netlist"):
-            print(f"Gerber: {artifact.path}")

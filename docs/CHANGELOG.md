@@ -7,7 +7,40 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 
 ### Added
-- **Fabricator-configured Gerber export policy** (issue #225 partial — layers, naming, drill):
+- **Production folder, packaging services, and diagnostic collection** (issue #226, ADR 0006):
+  - `jbom fab` now writes all fabrication artifacts to a `production/` folder in the project
+    directory (or a custom root via `-o/--output-dir`), following the Fabrication Toolkit
+    convention for user familiarity.  Output files: `jbom.csv` (BOM), `cpl.csv` (CPL/placement),
+    `{title}_{revision}.zip` (Gerber archive), `production/backups/{title}_{revision}_{timestamp}.zip`
+    (dated snapshot of all production artifacts).  `{title}` and `{revision}` are read from the
+    KiCad title block; absent title falls back to the `.kicad_pro` basename.
+  - New services in `jbom.services`: `ProjectMetadata`, `ZipArchiver`, `GerberPackager`,
+    `BackupService`, `BOMWriter`, `POSWriter`, `BOMFieldResolver`, `POSFieldResolver`.
+  - `KiCad title block metadata` (`title`, `revision`) is now exposed by both
+    `DefaultKiCadReaderService.read_metadata()` and `SchematicReader.read_metadata()` via
+    a shared `TitleBlockMetadata` frozen dataclass (symmetric API).
+  - `jbom fab --debug` preserves the intermediate gerber temp directory after packaging.
+  - New `--debug` flag on `jbom fab`; `-o/--output-dir` now specifies the parent of
+    the `production/` folder rather than a raw output path.
+- **BOM and POS field resolution extracted to service layer** (issue #226 phase C0):
+  - `BOMFieldResolver.resolve_bom_field_value()` and `POSFieldResolver.resolve_pos_field_value()`
+    provide the canonical field-resolution entry points for both CLI rendering and file serialization.
+    CLI adapters now delegate to these instead of owning the logic directly.
+
+### Changed
+- **Diagnostic collection principle enforced** (issue #226, ADR 0006): `BOMWorkflow` and
+  `POSWorkflow` now always append resolution notes to `diagnostics` unconditionally.  The
+  `JBOM_QUIET` environment variable is no longer read inside any service module — it was an
+  adapter concern that leaked into the application layer.  `POSRequest.quiet` field removed.
+- **`jbom fab` is now a thin adapter**: all file I/O (BOM/POS serialization, Gerber packaging,
+  backup archiving) is handled by application/service layer components.  The CLI adapter reports
+  paths and diagnostics only.
+- `BOMGenerationPayload` now carries `fabricator` and `fabricator_config` fields (previously
+  only present on `POSGenerationPayload`), making both payloads symmetric and self-contained for
+  downstream serialization.
+
+### Added
+- **Fabricator-configured Gerber export policy**
   - All fabricator configs (`generic`, `jlc`, `pcbway`, `seeed`) now include a `gerbers:` stanza
     specifying the standard 9-layer fabrication set, Protel extensions, split PTH/NPTH drill
     files, and Gerber-format drill maps.  This eliminates the extra non-fabrication layers

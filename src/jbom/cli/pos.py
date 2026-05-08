@@ -2,7 +2,6 @@
 
 import argparse
 import csv
-import os
 import sys
 from pathlib import Path
 from typing import Any, Optional, TextIO
@@ -217,7 +216,6 @@ def _build_pos_request(
         list_fields=bool(args.list_fields),
         include_dnp=bool(getattr(args, "include_dnp", False)),
         verbose=bool(args.verbose),
-        quiet=bool(os.environ.get("JBOM_QUIET")),
     )
 
 

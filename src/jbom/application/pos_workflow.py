@@ -76,7 +76,6 @@ class POSRequest:
     list_fields: bool = False
     include_dnp: bool = False
     verbose: bool = False
-    quiet: bool = False
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -105,7 +104,6 @@ class POSRequest:
         object.__setattr__(self, "list_fields", bool(self.list_fields))
         object.__setattr__(self, "include_dnp", bool(self.include_dnp))
         object.__setattr__(self, "verbose", bool(self.verbose))
-        object.__setattr__(self, "quiet", bool(self.quiet))
 
 
 @dataclass(frozen=True)
@@ -460,17 +458,15 @@ class POSWorkflow:
         resolved_input = resolver.resolve_input(request.input_path)
 
         if not resolved_input.is_pcb:
-            if not request.quiet:
-                diagnostics.append(
-                    "Note: POS generation requires a PCB file. "
-                    f"Found {resolved_input.resolved_path.suffix} file, trying to find matching PCB."
-                )
+            diagnostics.append(
+                "Note: POS generation requires a PCB file. "
+                f"Found {resolved_input.resolved_path.suffix} file, trying to find matching PCB."
+            )
             resolved_input = resolver.resolve_for_wrong_file_type(resolved_input, "pcb")
-            if not request.quiet:
-                diagnostics.append(
-                    f"found matching PCB {resolved_input.resolved_path.name}"
-                )
-                diagnostics.append(f"Using PCB: {resolved_input.resolved_path.name}")
+            diagnostics.append(
+                f"found matching PCB {resolved_input.resolved_path.name}"
+            )
+            diagnostics.append(f"Using PCB: {resolved_input.resolved_path.name}")
 
         pcb_file = resolved_input.resolved_path
         if not resolved_input.project_context:
