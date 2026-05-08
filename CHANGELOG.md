@@ -1,6 +1,34 @@
 # CHANGELOG
 
 
+## v6.52.0 (2026-05-08)
+
+### Features
+
+* feat(fabrication): add GerberExporter, FabricationWorkflow, jbom gerbers, jbom fab (#224)
+
+- GerberExporter service with tiered dispatch: kicad-cli subprocess →
+  pcbnew API stub (deferred to #227) → graceful degradation.
+  Skips with actionable diagnostic when kicad-cli unavailable; BOM/POS unaffected.
+- FabricationWorkflow application service: adapter-neutral orchestrator
+  sequencing BOM → POS → Gerbers. Each step independently skip-able;
+  sub-service failures captured as diagnostics without aborting other steps.
+- jbom gerbers CLI: standalone Gerber/drill/netlist generation.
+  Correctness-validation path for GerberExporter before jbom fab uses it.
+  Options: --fabricator, -o/--output-dir, --no-drill, --netlist, --dry-run.
+- jbom fab CLI: one-shot BOM + POS + Gerber generation. Equivalent to
+  running jbom bom, jbom pos, jbom gerbers in sequence with the same
+  fabricator profile. No --fields flag (use individual commands or custom
+  fabricator config for field control). Supports --skip-*, --dry-run,
+  --inventory, --smd-only, --layer, --origin.
+- Naming convention established: new class names reflect the promise
+  (what is produced), not the mechanism. Cleanup of existing
+  BOMOrchestrationService/POSOrchestrationService names tracked in #237.
+- 49 new tests; 1057 total pass.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`676bcc5`](https://github.com/plocher/jBOM/commit/676bcc5eb91dafe9e4a5ed723442d77ab2db46c5))
+
+
 ## v6.51.5 (2026-05-07)
 
 ### Bug Fixes
