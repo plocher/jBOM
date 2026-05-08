@@ -9,6 +9,8 @@ from jbom.cli import (
     annotate,
     audit,
     bom,
+    fabrication,
+    gerbers,
     inventory,
     pos,
     parts,
@@ -51,6 +53,8 @@ def create_parser() -> argparse.ArgumentParser:
     audit.register_command(subparsers)
     bom.register_command(subparsers)
     annotate.register_command(subparsers)
+    fabrication.register_command(subparsers)
+    gerbers.register_command(subparsers)
     inventory.register_command(subparsers)
     pos.register_command(subparsers)
     parts.register_command(subparsers)
