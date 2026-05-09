@@ -40,12 +40,45 @@ class JBOMFabricationPlugin(pcbnew.ActionPlugin):
         board = pcbnew.GetBoard()
         pcb_path: str = board.GetFileName() if board else ""
 
+        # Resolve the archive name from project title block.
+        archive_name = self._resolve_archive_name(pcb_path)
+
         import wx  # noqa: PLC0415
 
-        from .dialog import JBOMStubDialog
+        from .dialog import JBOMFabricationDialog
 
         # Attach to the KiCad main window if discoverable; otherwise free.
         parent = wx.FindWindowByName("PcbFrame") or None
-        dlg = JBOMStubDialog(parent, pcb_path=pcb_path)
+        dlg = JBOMFabricationDialog(
+            parent, pcb_path=pcb_path, archive_name=archive_name
+        )
         dlg.ShowModal()
         dlg.Destroy()
+
+    @staticmethod
+    def _resolve_archive_name(pcb_path: str) -> str:
+        """Derive a display archive name from the project title block.
+
+        Returns a string like ``"MyProject_1.0"`` if metadata is available,
+        or ``"(unknown)"`` when the PCB path is empty or project files are absent.
+        """
+        if not pcb_path:
+            return "(unknown)"
+        try:
+            from pathlib import Path
+
+            from jbom.services.project_metadata import (
+                create_metadata,
+                normalize_archive_stem,
+            )
+
+            pcb_file = Path(pcb_path)
+            project_dir = pcb_file.parent
+            project_file = project_dir / f"{project_dir.name}.kicad_pro"
+            metadata = create_metadata(project_file, pcb_file=pcb_file)
+            stem = normalize_archive_stem(metadata.project_name)
+            if metadata.revision:
+                return f"{stem}_{metadata.revision}"
+            return stem
+        except Exception:
+            return "(unknown)"

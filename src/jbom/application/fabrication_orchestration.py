@@ -30,7 +30,7 @@ import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 from types import MappingProxyType
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping
 
 from jbom.application.bom_workflow import (
     BOMRequest,
@@ -219,11 +219,37 @@ class FabricationWorkflow:
     This class contains no CLI or UI concerns.
     """
 
-    def run(self, request: FabricationRequest) -> FabricationResult:
+    def run(
+        self,
+        request: FabricationRequest,
+        *,
+        step_callback: Callable[[str, str], None] | None = None,
+    ) -> FabricationResult:
         """Execute the fabrication workflow and return all results.
 
         Args:
             request: Options governing which steps to run and with what inputs.
+            step_callback: Optional notification sink invoked at each step
+                boundary.  Signature: ``callback(step: str, status: str)``
+                where *step* is one of ``"bom"``, ``"pos"``, ``"gerbers"``,
+                ``"backup"`` and *status* is ``"start"`` or ``"done"``.
+
+                This is a naked ``Callable`` — the workflow has no knowledge of
+                wx, asyncio, or any specific event loop.  Each adapter is
+                responsible for its own dispatch:
+
+                - **Plugin adapter** passes a lambda that calls
+                  ``wx.CallAfter(dialog.on_step, step, status)`` so that UI
+                  updates are safely dispatched to the main thread.
+                - **CLI adapter** currently passes ``None``.  A future
+                  ``--verbose`` / ``--progress`` flag would pass
+                  ``lambda step, status: print(f"{step}: {status}")``
+                  instead — the contract already supports this without any
+                  changes to this method.
+
+                The callback is invoked from the **same thread** that calls
+                :meth:`run`; callers in a background thread must dispatch
+                UI updates themselves (e.g. via ``wx.CallAfter``).
 
         Returns:
             :class:`FabricationResult` aggregating BOM, POS, and Gerber outputs,
@@ -263,8 +289,12 @@ class FabricationWorkflow:
         # Step 1: BOM
         # ------------------------------------------------------------------
         if not request.skip_bom:
+            if step_callback:
+                step_callback("bom", "start")
             bom_result, bom_diagnostics = self._run_bom(request)
             diagnostics.extend(bom_diagnostics)
+            if step_callback:
+                step_callback("bom", "done")
             if bom_result is not None and bom_result.generation is not None:
                 bom_path = None
                 if not request.dry_run and production_dir is not None:
@@ -293,8 +323,12 @@ class FabricationWorkflow:
         # Step 2: POS
         # ------------------------------------------------------------------
         if not request.skip_pos:
+            if step_callback:
+                step_callback("pos", "start")
             pos_result, pos_diagnostics = self._run_pos(request)
             diagnostics.extend(pos_diagnostics)
+            if step_callback:
+                step_callback("pos", "done")
             if pos_result is not None and pos_result.generation is not None:
                 pos_path = None
                 if not request.dry_run and production_dir is not None:
@@ -323,6 +357,8 @@ class FabricationWorkflow:
         # Step 3: Gerbers (skipped in dry_run mode)
         # ------------------------------------------------------------------
         if not request.skip_gerbers:
+            if step_callback:
+                step_callback("gerbers", "start")
             if request.dry_run:
                 diagnostics.append(
                     "Dry run: Gerber generation skipped (no files written)."
@@ -335,6 +371,8 @@ class FabricationWorkflow:
                 ) = self._run_gerbers_with_packaging(request, production_dir)
                 diagnostics.extend(gerber_packaging_diags)
                 artifacts.extend(gerber_artifacts)
+            if step_callback:
+                step_callback("gerbers", "done")
 
         # ------------------------------------------------------------------
         # Step 4: Backup (if any files were written)
@@ -342,10 +380,14 @@ class FabricationWorkflow:
         if not request.dry_run and production_dir is not None and artifacts:
             artifact_paths = [a.path for a in artifacts if a.path is not None]
             if artifact_paths:
+                if step_callback:
+                    step_callback("backup", "start")
                 backup_archive, backup_diags = self._create_backup(
                     request, artifact_paths, production_dir
                 )
                 diagnostics.extend(backup_diags)
+                if step_callback:
+                    step_callback("backup", "done")
                 if backup_archive is not None:
                     artifacts.append(
                         FabricationArtifact(

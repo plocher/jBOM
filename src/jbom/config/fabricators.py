@@ -443,6 +443,32 @@ def get_available_fabricators() -> list[str]:
     return fabricators if fabricators else ["generic"]
 
 
+def get_fabricators_with_names() -> list[tuple[str, str]]:
+    """Return (id, display_name) pairs for all available fabricators.
+
+    Loads each fabricator config to read its human-readable ``name`` field
+    (e.g. ``"jlc"`` → ``"JLC"``).  Fabricators whose config cannot be loaded
+    are included with the ID title-cased as a fallback display name.
+
+    Returns:
+        List of ``(fabricator_id, display_name)`` tuples sorted by ID.
+
+    Example::
+
+        get_fabricators_with_names()
+        # → [("generic", "Generic"), ("jlc", "JLC"),
+        #    ("pcbway", "PCBWay"), ("seeed", "Seeed Studio")]
+    """
+    result: list[tuple[str, str]] = []
+    for fid in get_available_fabricators():
+        try:
+            display_name = load_fabricator(fid).name
+        except (ValueError, Exception):
+            display_name = fid.upper() if len(fid) <= 4 else fid.title()
+        result.append((fid, display_name))
+    return result
+
+
 def load_fabricator(fid: str) -> FabricatorConfig:
     """Load fabricator configuration from YAML file.
 
