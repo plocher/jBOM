@@ -22,25 +22,32 @@ the full packaging rationale (Option H hybrid model).
 
 ## Dev loop setup
 
-### macOS (KiCad 9)
+### macOS
+
+KiCad on macOS stores user data under `~/Library/Preferences/kicad/<ver>/`
+(not `Application Support`). The `scripting/plugins/` subdirectory does not
+exist by default and must be created on first use.
 
 ```bash
 # IMPORTANT: the symlink target name MUST match the PCM identifier
 # (com.spcoast.jbom → com_spcoast_jbom).
 # Using "jbom" as the name would shadow the importable jbom package
 # on sys.path and cause a circular import. See ADR 0007 F2.
+
+# KiCad 10
+mkdir -p ~/Library/Preferences/kicad/10.0/scripting/plugins
 ln -s "$PWD/src/jbom/plugin" \
-  ~/Library/Application\ Support/kicad/9.0/scripting/plugins/com_spcoast_jbom
-```
+  ~/Library/Preferences/kicad/10.0/scripting/plugins/com_spcoast_jbom
 
-To apply for a different KiCad version, replace `9.0` with the appropriate
-version directory (e.g. `8.0`, `7.0`).
-
-### macOS (KiCad 8 / 7)
-
-```bash
+# KiCad 9
+mkdir -p ~/Library/Preferences/kicad/9.0/scripting/plugins
 ln -s "$PWD/src/jbom/plugin" \
-  ~/Library/Application\ Support/kicad/8.0/scripting/plugins/com_spcoast_jbom
+  ~/Library/Preferences/kicad/9.0/scripting/plugins/com_spcoast_jbom
+
+# KiCad 8 / 7 (substitute version number)
+mkdir -p ~/Library/Preferences/kicad/8.0/scripting/plugins
+ln -s "$PWD/src/jbom/plugin" \
+  ~/Library/Preferences/kicad/8.0/scripting/plugins/com_spcoast_jbom
 ```
 
 ### Linux
@@ -116,16 +123,16 @@ appropriate method for these.
 Check that the symlink name is `com_spcoast_jbom` (not `jbom`):
 
 ```bash
-ls -la ~/Library/Application\ Support/kicad/9.0/scripting/plugins/
+ls -la ~/Library/Preferences/kicad/10.0/scripting/plugins/
 ```
 
 If you see `jbom -> ...` instead of `com_spcoast_jbom -> ...`, remove the
 old symlink and re-create it with the correct name:
 
 ```bash
-rm ~/Library/Application\ Support/kicad/9.0/scripting/plugins/jbom
+rm ~/Library/Preferences/kicad/10.0/scripting/plugins/jbom
 ln -s "$PWD/src/jbom/plugin" \
-  ~/Library/Application\ Support/kicad/9.0/scripting/plugins/com_spcoast_jbom
+  ~/Library/Preferences/kicad/10.0/scripting/plugins/com_spcoast_jbom
 ```
 
 ### Plugin does not appear in the toolbar
@@ -139,12 +146,13 @@ ln -s "$PWD/src/jbom/plugin" \
 
 ### KiCad major version upgrade
 
-KiCad major version upgrades (e.g. 9 → 10) use a new plugin root directory
-(`KICAD10_3RD_PARTY`). Re-create the symlink pointing at the new version path:
+KiCad major version upgrades (e.g. 9 → 10) use a new version directory.
+Re-create the symlink pointing at the new version path:
 
 ```bash
+mkdir -p ~/Library/Preferences/kicad/10.0/scripting/plugins
 ln -s "$PWD/src/jbom/plugin" \
-  ~/Library/Application\ Support/kicad/10.0/scripting/plugins/com_spcoast_jbom
+  ~/Library/Preferences/kicad/10.0/scripting/plugins/com_spcoast_jbom
 ```
 
 ## SEE ALSO
