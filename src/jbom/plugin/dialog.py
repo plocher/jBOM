@@ -63,12 +63,6 @@ from pathlib import Path
 
 import wx
 
-
-def _log(msg: str) -> None:
-    """Diagnostic trace — visible in KiCad scripting console (Tools → Scripting Console)."""
-    print(f"[jBOM dialog] {msg}", file=sys.stderr, flush=True)
-
-
 try:
     from jbom import __version__ as _jbom_version
 except ImportError:  # pragma: no cover
@@ -106,13 +100,11 @@ class JBOMFabricationDialog(wx.Dialog):
         pcb_path: str = "",
         archive_name: str = "",
     ) -> None:
-        _log(f"__init__ start (pcb={pcb_path!r})")
         super().__init__(
             None,  # parent=None — required for correct KiCad toolbar re-enable
             title="jBOM Fabrication",
             style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
         )
-        _log("wx.Dialog.__init__ complete")
 
         self._pcb_path = pcb_path
         self._archive_name = archive_name or "(unknown)"
@@ -146,7 +138,6 @@ class JBOMFabricationDialog(wx.Dialog):
         # EVT_CLOSE fires when the user clicks the X button.  The default
         # wx.Dialog behaviour is Show(False) (hide); we override it to Destroy.
         self.Bind(wx.EVT_CLOSE, self._on_close)
-        _log("__init__ complete — dialog ready")
 
     # ------------------------------------------------------------------
     # Input panel
@@ -726,17 +717,13 @@ class JBOMFabricationDialog(wx.Dialog):
         Mirrors Fabrication-Toolkit's ``updateDisplay`` which always calls
         ``pcbnew.Refresh()`` before ``self.Destroy()``.
         """
-        _log("_refresh_and_destroy() called")
         try:
             import pcbnew  # noqa: PLC0415
 
             pcbnew.Refresh()
-            _log("pcbnew.Refresh() returned")
-        except Exception as exc:  # pragma: no cover
-            _log(f"pcbnew.Refresh() raised: {exc}")
-        _log("calling self.Destroy()")
+        except Exception:  # pragma: no cover
+            pass  # Non-fatal: Destroy() still runs
         self.Destroy()
-        _log("self.Destroy() returned")
 
     @staticmethod
     def _open_folder(path: Path) -> None:
