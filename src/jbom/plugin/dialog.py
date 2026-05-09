@@ -258,7 +258,7 @@ class JBOMFabricationDialog(wx.Dialog):
         self._generate_btn.SetDefault()
         cancel_btn = wx.Button(panel, wx.ID_CANCEL, "Cancel")
         # wx.Dialog.Show() (modeless) does not auto-handle wx.ID_CANCEL — bind explicitly.
-        cancel_btn.Bind(wx.EVT_BUTTON, lambda _e: self.Destroy())
+        cancel_btn.Bind(wx.EVT_BUTTON, lambda _e: self._refresh_and_destroy())
         self._generate_btn.Bind(wx.EVT_BUTTON, self._on_generate)
         btn_row.AddStretchSpacer(1)
         btn_row.Add(self._generate_btn, flag=wx.RIGHT, border=8)
@@ -673,7 +673,7 @@ class JBOMFabricationDialog(wx.Dialog):
             def _close_and_open(_e: wx.CommandEvent) -> None:
                 if open_folder and production_dir is not None:
                     self._open_folder(Path(production_dir))
-                self.Destroy()
+                self._refresh_and_destroy()
 
             self._progress_cancel_btn.Bind(wx.EVT_BUTTON, _close_and_open)
             self._progress_cancel_btn.Enable()
@@ -681,7 +681,7 @@ class JBOMFabricationDialog(wx.Dialog):
             # Auto-close + open folder
             if open_folder and production_dir is not None:
                 self._open_folder(Path(production_dir))
-            self.Destroy()
+            self._refresh_and_destroy()
 
     def _on_error(self, message: str) -> None:
         """Handle unexpected thread exception; called via ``wx.CallAfter``."""
@@ -689,7 +689,9 @@ class JBOMFabricationDialog(wx.Dialog):
         self._diag_text.Show()
         self._progress_cancel_btn.SetLabel("Close")
         self._progress_cancel_btn.Unbind(wx.EVT_BUTTON)
-        self._progress_cancel_btn.Bind(wx.EVT_BUTTON, lambda _e: self.Destroy())
+        self._progress_cancel_btn.Bind(
+            wx.EVT_BUTTON, lambda _e: self._refresh_and_destroy()
+        )
         self._progress_cancel_btn.Enable()
         self.GetSizer().Layout()
         self.GetSizer().Fit(self)
@@ -702,6 +704,25 @@ class JBOMFabricationDialog(wx.Dialog):
         triggers KiCad's toolbar button re-enable via the wxDialog destructor.
         """
         self._cancel_requested.set()
+        self._refresh_and_destroy()
+
+    def _refresh_and_destroy(self) -> None:
+        """Call ``pcbnew.Refresh()`` then ``Destroy()`` at every final teardown.
+
+        ``pcbnew.Refresh()`` posts an update event to KiCad's main wx event
+        loop.  KiCad's toolbar ``UpdateUI`` handler re-evaluates button state
+        as part of that cycle — without it, the ActionPlugin toolbar button
+        may not be re-enabled after the dialog closes.
+
+        Mirrors Fabrication-Toolkit's ``updateDisplay`` which always calls
+        ``pcbnew.Refresh()`` before ``self.Destroy()``.
+        """
+        try:
+            import pcbnew  # noqa: PLC0415
+
+            pcbnew.Refresh()
+        except Exception:  # pragma: no cover
+            pass  # Non-fatal: Destroy() still runs
         self.Destroy()
 
     @staticmethod
