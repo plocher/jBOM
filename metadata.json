@@ -1,0 +1,38 @@
+{
+  "$schema": "https://go.kicad.org/pcm/schemas/v1",
+  "name": "jBOM Fabrication",
+  "description": "BOM, pick-and-place, and Gerber fabrication package for KiCad PCB projects",
+  "description_full": "jBOM Fabrication provides one-click BOM, pick-and-place (CPL), and Gerber generation directly from the KiCad PCB editor toolbar. Supports multiple fabricators: JLC PCBA, PCBWay, Seeed Studio, and a generic profile. Per-project fabricator selection and inventory file path are persisted in .jbom/jbom-options.json. Requires KiCad 6.0 or later on macOS, Linux, or Windows. The jBOM CLI and Python library are available separately via pip install jbom.",
+  "identifier": "com.spcoast.jbom",
+  "type": "plugin",
+  "author": {
+    "name": "John Plocher",
+    "contact": {
+      "github": "https://github.com/plocher",
+      "web": "https://github.com/plocher/jBOM"
+    }
+  },
+  "maintainer": {
+    "name": "John Plocher",
+    "contact": {
+      "github": "https://github.com/plocher"
+    }
+  },
+  "license": "MIT",
+  "resources": {
+    "homepage": "https://github.com/plocher/jBOM",
+    "bugtracker": "https://github.com/plocher/jBOM/issues"
+  },
+  "versions": [
+    {
+      "version": "6.53.0",
+      "status": "development",
+      "kicad_version": "6.0",
+      "kicad_version_max": "",
+      "download_url": "https://github.com/plocher/jBOM/releases/download/pcm-v6.53.0/jbom-pcm-6.53.0.zip",
+      "download_sha256": "",
+      "install_size": 0,
+      "download_size": 0
+    }
+  ]
+}
