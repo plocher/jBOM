@@ -1,6 +1,6 @@
 # ADR 0007: jBOM Plugin Packaging and Distribution Model
 Date: 2026-05-09
-Status: Proposed
+Status: Accepted
 Related: #227, ADR 0005 Phase 4, ADR 0006
 ## Context
 Issue #227 begins implementation of the KiCad ActionPlugin adapter described in
