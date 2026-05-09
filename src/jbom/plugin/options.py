@@ -47,6 +47,7 @@ class PluginOptions:
 
     fabricator: str = "jlc"
     inventory_path: str = ""
+    archive_name_template: str = "${TITLE}_${REVISION}"
 
     def to_dict(self) -> dict[str, str]:
         """Serialize options to a JSON-compatible mapping."""
@@ -66,7 +67,14 @@ class PluginOptions:
         """
         fabricator = str(data.get("fabricator", "jlc")).strip() or "jlc"
         inventory_path = str(data.get("inventory_path", ""))
-        return cls(fabricator=fabricator, inventory_path=inventory_path)
+        archive_name_template = str(
+            data.get("archive_name_template", "${TITLE}_${REVISION}")
+        )
+        return cls(
+            fabricator=fabricator,
+            inventory_path=inventory_path,
+            archive_name_template=archive_name_template,
+        )
 
 
 # ---------------------------------------------------------------------------

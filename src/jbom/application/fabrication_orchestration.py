@@ -93,6 +93,13 @@ class FabricationRequest:
         pos_origin: Forward origin reference (``"board"`` / ``"aux"``) to POS.
         debug: When ``True`` preserve intermediate gerber directory after
             packaging for inspection.
+        archive_stem: Pre-expanded archive base name (e.g. ``"MyBoard_1.0"``)
+            used as the stem for the gerber zip and backup archives.  When
+            non-empty, the workflow uses this value directly without reading
+            the project metadata from disk.  Adapters that have access to the
+            live board (e.g. the KiCad plugin) should pre-expand text variables
+            and pass the result here; CLI adapters may leave this empty to let
+            the workflow derive it from ``ProjectMetadata``.
     """
 
     input_path: str
@@ -109,6 +116,7 @@ class FabricationRequest:
     pos_layer: str = ""
     pos_origin: str = "board"
     debug: bool = False
+    archive_stem: str = ""
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -145,6 +153,7 @@ class FabricationRequest:
             _normalize_text(self.pos_origin or "board", field_name="pos_origin"),
         )
         object.__setattr__(self, "debug", bool(self.debug))
+        object.__setattr__(self, "archive_stem", str(self.archive_stem or "").strip())
 
 
 @dataclass(frozen=True)
@@ -510,6 +519,40 @@ class FabricationWorkflow:
                 diagnostics.append(f"Note: could not resolve PCB file: {exc}")
             return None, None, diagnostics
 
+    def _resolve_archive_stem(
+        self,
+        request: FabricationRequest,
+        project_dir: Path | None,
+        pcb_file: Path | None,
+    ) -> str:
+        """Return the archive base name for gerber zip and backup archives.
+
+        When ``request.archive_stem`` is non-empty it is used directly (caller
+        has pre-expanded any text variables).  Otherwise the stem is derived
+        from :func:`~jbom.services.project_metadata.create_metadata` using the
+        project directory and PCB file.
+        """
+        if request.archive_stem:
+            return request.archive_stem
+        try:
+            from jbom.services.project_metadata import (
+                create_metadata,
+                normalize_archive_stem,
+            )
+
+            effective_project_dir = project_dir or (
+                pcb_file.parent if pcb_file else None
+            )
+            if effective_project_dir is None:
+                return "jbom-production"
+            project_file = (
+                effective_project_dir / f"{effective_project_dir.name}.kicad_pro"
+            )
+            metadata = create_metadata(project_file, pcb_file=pcb_file)
+            return normalize_archive_stem(metadata.project_name) or "jbom-production"
+        except Exception:
+            return "jbom-production"
+
     def _resolve_production_root(
         self, request: FabricationRequest, project_dir: Path | None
     ) -> Path:
@@ -571,19 +614,10 @@ class FabricationWorkflow:
                     )
                     return artifacts, gerber_result, diagnostics
 
-                # Resolve archive stem from project metadata
-                from jbom.services.project_metadata import (
-                    create_metadata,
-                    normalize_archive_stem,
+                # Resolve archive stem (honours request.archive_stem override)
+                archive_stem = self._resolve_archive_stem(
+                    request, project_dir, pcb_file
                 )
-
-                project_file = project_dir / f"{project_dir.name}.kicad_pro"
-                if not project_file.exists():
-                    # Fallback to stem of PCB file
-                    project_file = project_dir / f"{project_dir.name}.kicad_pro"
-
-                metadata = create_metadata(project_file, pcb_file=pcb_file)
-                archive_stem = normalize_archive_stem(metadata.project_name)
 
                 # Package gerbers with GerberPackager
                 from jbom.services.gerber_packager import GerberPackager
@@ -627,12 +661,8 @@ class FabricationWorkflow:
 
         try:
             from jbom.services.backup_service import BackupService
-            from jbom.services.project_metadata import (
-                create_metadata,
-                normalize_archive_stem,
-            )
 
-            # Resolve project metadata for archive naming
+            # Resolve project files for archive naming
             pcb_file, project_dir, resolve_diags = self._resolve_pcb_and_project_dir(
                 request
             )
@@ -641,9 +671,7 @@ class FabricationWorkflow:
             if project_dir is None:
                 project_dir = production_dir.parent
 
-            project_file = project_dir / f"{project_dir.name}.kicad_pro"
-            metadata = create_metadata(project_file, pcb_file=pcb_file)
-            archive_stem = normalize_archive_stem(metadata.project_name)
+            archive_stem = self._resolve_archive_stem(request, project_dir, pcb_file)
 
             backup_service = BackupService()
             backup_dir = production_dir / "backups"

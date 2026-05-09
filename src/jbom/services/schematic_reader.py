@@ -178,6 +178,8 @@ class SchematicReader:
 
         title = ""
         revision = ""
+        date = ""
+        company = ""
         for item in sexp[1:]:
             if not (
                 isinstance(item, list) and item and item[0] == Symbol("title_block")
@@ -196,6 +198,12 @@ class SchematicReader:
                     title = title_block_item[1]
                 elif title_block_item[0] == Symbol("rev"):
                     revision = title_block_item[1]
+                elif title_block_item[0] == Symbol("date"):
+                    date = title_block_item[1]
+                elif title_block_item[0] == Symbol("company"):
+                    company = title_block_item[1]
             break
 
-        return TitleBlockMetadata(title=title, revision=revision)
+        return TitleBlockMetadata(
+            title=title, revision=revision, date=date, company=company
+        )

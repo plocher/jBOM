@@ -40,11 +40,18 @@ class JBOMFabricationPlugin(pcbnew.ActionPlugin):
         board = pcbnew.GetBoard()
         pcb_path: str = board.GetFileName() if board else ""
 
-        # Read title block directly from the in-memory board object — faster
-        # and more reliable than reading from disk (avoids file-path guessing).
-        archive_name = self._resolve_archive_name_from_board(
-            board
-        ) or self._resolve_archive_name(pcb_path)
+        # Load persisted options to get the archive name template.
+        from pathlib import Path
+
+        from jbom.plugin.options import load_options
+
+        options = load_options(Path(pcb_path)) if pcb_path else None
+        template = options.archive_name_template if options else "${TITLE}_${REVISION}"
+
+        # Expand the template using pcbnew's own variable expander so that
+        # custom project-level variables (defined in .kicad_pro) are honoured
+        # in addition to the standard title block variables.
+        archive_name = self._expand_archive_template(board, template)
 
         import wx  # noqa: PLC0415
 
@@ -59,64 +66,59 @@ class JBOMFabricationPlugin(pcbnew.ActionPlugin):
         dlg.Destroy()
 
     @staticmethod
-    def _resolve_archive_name_from_board(board: object) -> str:
-        """Read archive stem from pcbnew board title block or PCB filename.
+    def _expand_archive_template(board: object, template: str) -> str:
+        """Expand the archive name template for the given board.
 
         Priority:
-        1. ``TitleBlock.GetTitle()`` + optional ``GetRevision()``
-        2. PCB filename stem (no extension) when title block is empty
-        3. ``""`` on any exception (caller falls back to disk-based lookup)
+        1. ``pcbnew.ExpandTextVars(template, project)`` — resolves all KiCad
+           text variables including custom project-level variables.
+        2. jBOM :func:`~jbom.services.text_variable_expander.expand_text_variables`
+           — fallback resolving the standard title block subset.
+        3. PCB filename stem — used when both produce an empty result.
+        4. ``"(unknown)"`` — last resort.
         """
-        try:
-            import re
-            from pathlib import Path
+        import re
+        from pathlib import Path
 
-            def _clean(s: str) -> str:
-                return re.sub(r"[^\w.-]", "_", s).strip("_")
+        def _normalise(s: str) -> str:
+            """Strip characters unsuitable for a filename."""
+            return re.sub(r"[^\w.-]", "_", s).strip("_")
+
+        try:
+            # Attempt pcbnew.ExpandTextVars first for full variable support.
+            project = board.GetProject()  # type: ignore[union-attr]
+            expanded = pcbnew.ExpandTextVars(template, project)
+        except Exception:
+            expanded = template
+
+        # Fallback: apply jBOM's own expander for the title block subset.
+        try:
+            from jbom.common.types import TitleBlockMetadata
+            from jbom.services.text_variable_expander import expand_text_variables
 
             tb = board.GetTitleBlock()  # type: ignore[union-attr]
-            title: str = (tb.GetTitle() or "").strip()
-            revision: str = (tb.GetRevision() or "").strip()
-
-            if title:
-                stem = _clean(title)
-                return f"{stem}_{_clean(revision)}" if revision else stem
-
-            # No title — fall back to the PCB filename stem so the archive
-            # name is at least meaningful (e.g. "MyBoard" from "MyBoard.kicad_pcb").
-            pcb_path: str = board.GetFileName()  # type: ignore[union-attr]
-            if pcb_path:
-                stem = _clean(Path(pcb_path).stem)
-                if stem:
-                    return f"{stem}_{_clean(revision)}" if revision else stem
+            meta = TitleBlockMetadata(
+                title=(tb.GetTitle() or "").strip(),
+                revision=(tb.GetRevision() or "").strip(),
+                date=(tb.GetDate() or "").strip(),
+                company=(tb.GetCompany() or "").strip(),
+            )
+            expanded = expand_text_variables(expanded, meta)
         except Exception:
             pass
-        return ""
 
-    @staticmethod
-    def _resolve_archive_name(pcb_path: str) -> str:
-        """Derive a display archive name from the project title block.
+        cleaned = _normalise(expanded)
+        if cleaned:
+            return cleaned
 
-        Returns a string like ``"MyProject_1.0"`` if metadata is available,
-        or ``"(unknown)"`` when the PCB path is empty or project files are absent.
-        """
-        if not pcb_path:
-            return "(unknown)"
+        # Final fallback: PCB filename stem.
         try:
-            from pathlib import Path
-
-            from jbom.services.project_metadata import (
-                create_metadata,
-                normalize_archive_stem,
-            )
-
-            pcb_file = Path(pcb_path)
-            project_dir = pcb_file.parent
-            project_file = project_dir / f"{project_dir.name}.kicad_pro"
-            metadata = create_metadata(project_file, pcb_file=pcb_file)
-            stem = normalize_archive_stem(metadata.project_name)
-            if metadata.revision:
-                return f"{stem}_{metadata.revision}"
-            return stem
+            pcb_path: str = board.GetFileName()  # type: ignore[union-attr]
+            if pcb_path:
+                stem = _normalise(Path(pcb_path).stem)
+                if stem:
+                    return stem
         except Exception:
-            return "(unknown)"
+            pass
+
+        return "(unknown)"
