@@ -323,6 +323,9 @@ class JBOMFabricationDialog(wx.Dialog):
 
         Called on every keystroke in the Archive text field.  Updates
         ``self._archive_name`` so that Generate uses the new expansion.
+        Uses the same two-step expansion as plugin.py._expand_archive_template:
+        1. pcbnew.ExpandTextVars for project-level variables
+        2. jBOM TextVariableExpander for standard title block variables
         """
         if self._archive_preview is None:
             return
@@ -333,13 +336,34 @@ class JBOMFabricationDialog(wx.Dialog):
             import pcbnew  # noqa: PLC0415 — safe inside KiCad
 
             board = pcbnew.GetBoard()
-            project = board.GetProject()
-            expanded = pcbnew.ExpandTextVars(new_template, project)
-            # Apply the same normalisation as plugin.py._expand_archive_template
+
+            # Step 1: pcbnew.ExpandTextVars handles custom project vars.
+            try:
+                project = board.GetProject()
+                expanded = pcbnew.ExpandTextVars(new_template, project)
+            except Exception:
+                expanded = new_template
+
+            # Step 2: jBOM expander handles standard title block vars
+            # (${TITLE}, ${REVISION}, ${DATE}, ${COMPANY}, ${CURRENT_DATE}).
+            try:
+                from jbom.common.types import TitleBlockMetadata
+                from jbom.services.text_variable_expander import expand_text_variables
+
+                tb = board.GetTitleBlock()
+                meta = TitleBlockMetadata(
+                    title=(tb.GetTitle() or "").strip(),
+                    revision=(tb.GetRevision() or "").strip(),
+                    date=(tb.GetDate() or "").strip(),
+                    company=(tb.GetCompany() or "").strip(),
+                )
+                expanded = expand_text_variables(expanded, meta)
+            except Exception:
+                pass
+
             cleaned = re.sub(r"[^\w.-]", "_", expanded).strip("_")
             self._archive_name = cleaned or new_template
         except Exception:
-            # Fallback: show the literal template as the preview
             self._archive_name = new_template
         self._archive_preview.SetLabel(self._archive_name)
 
@@ -432,7 +456,14 @@ class JBOMFabricationDialog(wx.Dialog):
         thread.start()
 
     def _fill_zones(self) -> None:
-        """Fill board zones using the pcbnew API (in-memory only)."""
+        """Fill board zones using the pcbnew API (in-memory only).
+
+        Note: pcbnew.Refresh() is intentionally omitted here.  Calling it
+        marks the board as modified in KiCad's undo history, which would
+        prompt the user to save even if they only invoked the plugin and
+        cancelled.  The zone fill is reflected in the exported Gerbers;
+        the live editor view updates automatically when the board reloads.
+        """
         try:
             import pcbnew  # noqa: PLC0415
 
@@ -440,7 +471,8 @@ class JBOMFabricationDialog(wx.Dialog):
             if board:
                 filler = pcbnew.ZONE_FILLER(board)
                 filler.Fill(board.Zones())
-                pcbnew.Refresh()
+                # Do NOT call pcbnew.Refresh() — it sets the board's
+                # modified flag and causes an unsaved-changes prompt.
         except Exception:  # pragma: no cover
             pass  # Non-fatal; proceed with generation
 
