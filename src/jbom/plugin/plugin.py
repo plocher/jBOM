@@ -12,7 +12,16 @@ progress view) is implemented in Session B.
 
 from __future__ import annotations
 
+import sys
+
 import pcbnew  # noqa: F401 — only imported inside KiCad, safe here
+
+_run_count = 0  # diagnostic invocation counter
+
+
+def _log(msg: str) -> None:
+    """Write a timestamped diagnostic line to stderr (KiCad scripting console)."""
+    print(f"[jBOM plugin] {msg}", file=sys.stderr, flush=True)
 
 
 class JBOMFabricationPlugin(pcbnew.ActionPlugin):
@@ -37,12 +46,16 @@ class JBOMFabricationPlugin(pcbnew.ActionPlugin):
 
     def Run(self) -> None:  # noqa: N802 — KiCad API name
         """Open the jBOM Fabrication dialog."""
+        global _run_count
+        _run_count += 1
+        _log(f"Run() invoked #{_run_count}")
         try:
             self._run_impl()
-        except Exception:  # pragma: no cover
-            import sys
+            _log(f"Run() #{_run_count} — _run_impl() returned normally")
+        except Exception as exc:  # pragma: no cover
             import traceback
 
+            _log(f"Run() #{_run_count} — _run_impl() raised: {exc}")
             traceback.print_exc(file=sys.stderr)
 
     def _run_impl(self) -> None:
@@ -65,11 +78,11 @@ class JBOMFabricationPlugin(pcbnew.ActionPlugin):
 
         from .dialog import JBOMFabricationDialog
 
-        # parent=None is enforced inside JBOMFabricationDialog.__init__.
-        # Show() (modeless) returns immediately so Run() exits and KiCad
-        # re-enables the toolbar button; the dialog calls self.Destroy() when done.
+        _log(f"creating JBOMFabricationDialog (pcb={pcb_path!r})")
         dlg = JBOMFabricationDialog(pcb_path=pcb_path, archive_name=archive_name)
+        _log("dialog created — calling Show()")
         dlg.Show()
+        _log("Show() returned")
 
     @staticmethod
     def _expand_archive_template(board: object, template: str) -> str:
