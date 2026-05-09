@@ -277,7 +277,9 @@ class JBOMFabricationDialog(wx.Dialog):
             from jbom.config.fabricators import get_fabricators_with_names
 
             pairs = get_fabricators_with_names()
-        except Exception:  # pragma: no cover
+        except Exception as _exc:  # pragma: no cover
+            # Surface the error in the archive label so it is visible in KiCad.
+            self._archive_name = f"(config error: {_exc})"
             pairs = [("generic", "Generic")]
         ids = [fid for fid, _ in pairs]
         labels = [name for _, name in pairs]
@@ -355,6 +357,11 @@ class JBOMFabricationDialog(wx.Dialog):
             inventory_files=(inventory_path,) if inventory_path else (),
             smd_only=self._cb_smd_only.GetValue(),
             debug=self._cb_debug.GetValue(),
+            # Gerbers via kicad-cli subprocess can hang when called from inside
+            # a KiCad plugin (two KiCad instances conflict on macOS/Windows).
+            # Disable until the pcbnew PLOT_CONTROLLER path is implemented.
+            # TODO: remove when native pcbnew Gerber generation lands.
+            skip_gerbers=True,
         )
         open_folder = self._cb_open_folder.GetValue()
         debug_mode = self._cb_debug.GetValue()

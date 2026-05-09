@@ -40,8 +40,11 @@ class JBOMFabricationPlugin(pcbnew.ActionPlugin):
         board = pcbnew.GetBoard()
         pcb_path: str = board.GetFileName() if board else ""
 
-        # Resolve the archive name from project title block.
-        archive_name = self._resolve_archive_name(pcb_path)
+        # Read title block directly from the in-memory board object — faster
+        # and more reliable than reading from disk (avoids file-path guessing).
+        archive_name = self._resolve_archive_name_from_board(
+            board
+        ) or self._resolve_archive_name(pcb_path)
 
         import wx  # noqa: PLC0415
 
@@ -54,6 +57,30 @@ class JBOMFabricationPlugin(pcbnew.ActionPlugin):
         )
         dlg.ShowModal()
         dlg.Destroy()
+
+    @staticmethod
+    def _resolve_archive_name_from_board(board: object) -> str:
+        """Read archive stem directly from pcbnew board's title block.
+
+        Returns ``"Title_Revision"`` when both are present, ``"Title"`` when
+        only a title is set, or ``""`` when neither is available.
+        """
+        try:
+            tb = board.GetTitleBlock()  # type: ignore[union-attr]
+            title: str = (tb.GetTitle() or "").strip()
+            revision: str = (tb.GetRevision() or "").strip()
+            # Normalise spaces/special chars the same way as normalize_archive_stem
+            import re
+
+            def _clean(s: str) -> str:
+                return re.sub(r"[^\w.-]", "_", s).strip("_")
+
+            if title:
+                stem = _clean(title)
+                return f"{stem}_{_clean(revision)}" if revision else stem
+        except Exception:
+            pass
+        return ""
 
     @staticmethod
     def _resolve_archive_name(pcb_path: str) -> str:
