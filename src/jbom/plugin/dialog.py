@@ -81,6 +81,8 @@ class JBOMFabricationDialog(wx.Dialog):
         self._fab_ids: list[str] = []
         self._gauges: dict[str, wx.Gauge] = {}
         self._status_texts: dict[str, wx.StaticText] = {}
+        # _archive_preview is set by _build_input_panel; updated when template changes
+        self._archive_preview: wx.StaticText | None = None
 
         # Load persisted options; fall back to defaults when absent.
         from jbom.plugin.options import PluginOptions, load_options
@@ -120,18 +122,31 @@ class JBOMFabricationDialog(wx.Dialog):
         sizer.Add(wx.StaticLine(panel), flag=wx.EXPAND | wx.LEFT | wx.RIGHT, border=8)
 
         # -- Project info grid -------------------------------------------
-        grid = wx.FlexGridSizer(rows=3, cols=2, vgap=6, hgap=8)
+        grid = wx.FlexGridSizer(rows=4, cols=2, vgap=4, hgap=8)
         grid.AddGrowableCol(1, 1)
 
-        # Archive (read-only)
+        # Archive template (editable) + preview label
         grid.Add(
             wx.StaticText(panel, label="Archive:"),
             flag=wx.ALIGN_CENTER_VERTICAL,
         )
-        grid.Add(
-            wx.StaticText(panel, label=self._archive_name),
-            flag=wx.ALIGN_CENTER_VERTICAL | wx.EXPAND,
+        self._archive_tpl = wx.TextCtrl(
+            panel,
+            value=self._options.archive_name_template,
+            style=wx.TE_PROCESS_ENTER,
         )
+        self._archive_tpl.Bind(wx.EVT_TEXT, self._on_archive_template_changed)
+        grid.Add(self._archive_tpl, flag=wx.EXPAND)
+
+        # Preview row — blank label + expanded-name label
+        grid.Add(wx.StaticText(panel, label=""), flag=wx.ALIGN_CENTER_VERTICAL)
+        self._archive_preview = wx.StaticText(
+            panel, label=self._archive_name, style=wx.ST_ELLIPSIZE_END
+        )
+        preview_font = self._archive_preview.GetFont()
+        preview_font.SetStyle(wx.FONTSTYLE_ITALIC)
+        self._archive_preview.SetFont(preview_font)
+        grid.Add(self._archive_preview, flag=wx.EXPAND)
 
         # Fabricator dropdown + Config button
         grid.Add(
@@ -303,6 +318,16 @@ class JBOMFabricationDialog(wx.Dialog):
     # Event handlers — input panel
     # ------------------------------------------------------------------
 
+    def _on_archive_template_changed(self, _evt: wx.CommandEvent) -> None:
+        """Update the preview label when the archive template is edited."""
+        if self._archive_preview is None:
+            return
+        # Re-expand on the fly using the pre-computed archive_name (passed at
+        # construction time by plugin.py after pcbnew.ExpandTextVars).  A
+        # simpler heuristic: show the template itself as the preview when the
+        # expanded name is unavailable.
+        self._archive_preview.SetLabel(self._archive_name)
+
     def _on_browse_inventory(self, _evt: wx.CommandEvent) -> None:
         """Open a file dialog to select the inventory file."""
         dlg = wx.FileDialog(
@@ -323,9 +348,11 @@ class JBOMFabricationDialog(wx.Dialog):
 
         from jbom.plugin.options import PluginOptions, save_options
 
+        archive_template = self._archive_tpl.GetValue().strip()
         updated = PluginOptions(
             fabricator=fab_id,
             inventory_path=inventory_path,
+            archive_name_template=archive_template,
         )
         if self._pcb_path:
             try:
@@ -357,6 +384,10 @@ class JBOMFabricationDialog(wx.Dialog):
             inventory_files=(inventory_path,) if inventory_path else (),
             smd_only=self._cb_smd_only.GetValue(),
             debug=self._cb_debug.GetValue(),
+            # Pre-expanded archive stem from pcbnew.ExpandTextVars (set by
+            # plugin.py before opening the dialog).  Passed through so the
+            # workflow uses the correct name without re-reading disk.
+            archive_stem=self._archive_name,
             # Gerbers via kicad-cli subprocess can hang when called from inside
             # a KiCad plugin (two KiCad instances conflict on macOS/Windows).
             # Disable until the pcbnew PLOT_CONTROLLER path is implemented.

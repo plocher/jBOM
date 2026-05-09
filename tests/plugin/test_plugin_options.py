@@ -50,7 +50,11 @@ class TestPluginOptionsSerialization:
     def test_to_dict_contains_expected_keys(self) -> None:
         opts = PluginOptions(fabricator="seeed", inventory_path="/a/b.csv")
         d = opts.to_dict()
-        assert d == {"fabricator": "seeed", "inventory_path": "/a/b.csv"}
+        assert d == {
+            "fabricator": "seeed",
+            "inventory_path": "/a/b.csv",
+            "archive_name_template": "${TITLE}_${REVISION}",
+        }
 
     def test_round_trip_via_dict(self) -> None:
         original = PluginOptions(fabricator="jlc", inventory_path="/inv/parts.csv")

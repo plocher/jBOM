@@ -184,6 +184,8 @@ class DefaultKiCadReaderService(KiCadReaderService):
 
         title = ""
         revision = ""
+        date = ""
+        company = ""
         for item in sexp[1:]:
             if not (
                 isinstance(item, list) and item and item[0] == Symbol("title_block")
@@ -202,9 +204,15 @@ class DefaultKiCadReaderService(KiCadReaderService):
                     title = title_block_item[1]
                 elif title_block_item[0] == Symbol("rev"):
                     revision = title_block_item[1]
+                elif title_block_item[0] == Symbol("date"):
+                    date = title_block_item[1]
+                elif title_block_item[0] == Symbol("company"):
+                    company = title_block_item[1]
             break
 
-        return TitleBlockMetadata(title=title, revision=revision)
+        return TitleBlockMetadata(
+            title=title, revision=revision, date=date, company=company
+        )
 
     def _parse_footprint_node(self, node) -> Optional[PcbComponent]:
         """Parse a footprint node and extract all component information."""

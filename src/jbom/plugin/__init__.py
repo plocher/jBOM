@@ -50,7 +50,12 @@ import sys
 # sys.path bootstrapping
 # ---------------------------------------------------------------------------
 
-_this_dir = os.path.dirname(os.path.abspath(__file__))
+# os.path.realpath (not abspath) is required here: abspath makes a path
+# absolute but does NOT follow symlinks.  In the dev loop the plugin directory
+# is a symlink, so abspath would resolve relative to the symlink location
+# (e.g. .../scripting/plugins/com_spcoast_jbom/) instead of the actual source
+# tree (src/jbom/plugin/).  realpath follows the symlink first.
+_this_dir = os.path.dirname(os.path.realpath(__file__))
 
 # Two levels up from ``src/jbom/plugin/`` lands at ``src/`` in the dev tree.
 # In PCM mode (``${KICADX_3RD_PARTY}/plugins/com_spcoast_jbom/``) this

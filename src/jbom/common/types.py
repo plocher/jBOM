@@ -15,10 +15,14 @@ class TitleBlockMetadata:
     Both schematic (.kicad_sch) and PCB (.kicad_pcb) files contain a title block
     section with project metadata including title, revision, date, company, etc.
     This dataclass represents the common extracted metadata from either source.
+
+    All fields default to empty string; callers must handle absent data gracefully.
     """
 
     title: str = ""
     revision: str = ""
+    date: str = ""  # issue_date from title block (YYYY-MM-DD or designer-formatted)
+    company: str = ""  # company / organisation field from title block
 
 
 @dataclass
