@@ -1,4 +1,5 @@
 """BOM command - thin CLI wrapper over BOM workflows."""
+from __future__ import annotations
 
 import argparse
 import csv
