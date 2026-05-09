@@ -42,21 +42,29 @@ class TestProjectDiscovery(unittest.TestCase):
 
         self.assertEqual(found, project_file)
 
-    def test_multiple_projects_raises_exception(self):
-        """Test that multiple project files raise an exception."""
-        (self.tmpdir / "project1.kicad_pro").write_text(
-            "(kicad_pro (version 20211014))"
-        )
-        (self.tmpdir / "project2.kicad_pro").write_text(
-            "(kicad_pro (version 20211014))"
-        )
+    def test_multiple_projects_prefers_directory_name_match(self):
+        """When multiple .kicad_pro files exist, prefer the one matching the dir name."""
+        dir_name = self.tmpdir.name
+        # One file matches the directory name; the other does not.
+        canonical = self.tmpdir / f"{dir_name}.kicad_pro"
+        canonical.write_text("(kicad_pro (version 20211014))")
+        other = self.tmpdir / "other_project.kicad_pro"
+        other.write_text("(kicad_pro (version 20211014))")
 
         discovery = ProjectDiscovery()
+        found = discovery.find_project_file(self.tmpdir)
 
-        with self.assertRaises(ValueError) as cm:
-            discovery.find_project_file(self.tmpdir)
+        self.assertEqual(found, canonical)
 
-        self.assertIn("Multiple project files found", str(cm.exception))
+    def test_multiple_projects_no_name_match_returns_first_alphabetically(self):
+        """When multiple .kicad_pro files exist and none matches the dir, return first."""
+        (self.tmpdir / "alpha.kicad_pro").write_text("(kicad_pro (version 20211014))")
+        (self.tmpdir / "beta.kicad_pro").write_text("(kicad_pro (version 20211014))")
+
+        discovery = ProjectDiscovery()
+        found = discovery.find_project_file(self.tmpdir)
+
+        self.assertEqual(found.name, "alpha.kicad_pro")
 
     def test_discover_project_files_returns_all(self):
         """Test discovering all project files at once."""

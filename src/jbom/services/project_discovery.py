@@ -52,10 +52,14 @@ class ProjectDiscovery:
             )
 
         if len(kicad_pro_files) > 1:
-            raise ValueError(
-                f"Multiple project files found in {search_dir} "
-                f"({len(kicad_pro_files)} *.kicad_pro files)"
-            )
+            # Prefer the file whose stem matches the directory name — this is the
+            # canonical KiCad convention and handles directories that contain
+            # multiple sub-project .kicad_pro files alongside the main project.
+            matching = [f for f in kicad_pro_files if f.stem == search_dir.name]
+            if len(matching) == 1:
+                return matching[0]
+            # Secondary preference: alphabetically first (deterministic fallback).
+            return kicad_pro_files[0]
 
         return kicad_pro_files[0]
 
