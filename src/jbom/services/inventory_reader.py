@@ -7,6 +7,8 @@ Handles loading inventory data from multiple file formats:
 - Apple Numbers (.numbers)
 """
 
+from __future__ import annotations
+
 import csv
 import logging
 import warnings

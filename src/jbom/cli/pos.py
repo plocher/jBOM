@@ -1,4 +1,5 @@
 """POS (Position) command - generate component placement files."""
+from __future__ import annotations
 
 import argparse
 import csv

@@ -1,4 +1,5 @@
 """Parts command - thin CLI wrapper over Parts List workflows."""
+from __future__ import annotations
 
 import argparse
 import csv

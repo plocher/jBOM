@@ -7,6 +7,8 @@ This service discovers the project file (`*.kicad_pro`), schematic file
 (`*.kicad_sch`), and PCB file (`*.kicad_pcb`) in directories.
 """
 
+from __future__ import annotations
+
 import sys
 from dataclasses import dataclass
 from pathlib import Path
