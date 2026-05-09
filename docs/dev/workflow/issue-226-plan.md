@@ -76,3 +76,24 @@ Create follow-up issues for designators-as-service, netlist-as-first-class-servi
 Commit with a conventional commit message referencing #226, push the feature branch, open the PR, and reference ADR 0006 in the PR description.
 ## Handoff Contract
 Any successor session should begin by reading this plan and `docs/dev/architecture/adr/0006-production-folder-packaging-projectmetadata-diagnostic-collection.md`. Then read the `Diagnostic Collection Pattern` and `Friend Serializer Pattern` sections in `docs/dev/architecture/design-patterns.md`. Resume at the first incomplete phase and do not revisit the architecture unless new evidence contradicts ADR 0006.
+
+---
+## Plugin blockers — work item for #227 continuation
+
+Three blockers identified in smoke test (2026-05-09). Details in #227 issue body.
+
+### Blocker 1 + 3: Gerbers / gerber zip
+- Add `src/jbom/plugin/gerber_generator.py` — `PcbnewGerberGenerator` using
+  `pcbnew.PLOT_CONTROLLER` + `EXCELLON_WRITER` (port FT's `plugins/process.py`)
+- Dialog orchestrates: BOM → CPL → gerbers (pcbnew) → GerberPackager → BackupService
+- Do NOT call `FabricationWorkflow` for the gerber step — kicad-cli subprocess hangs
+
+### Blocker 2: Plugin single-use
+- Change `dialog.py` from `wx.Dialog`+`ShowModal()` to `wx.Frame`+`Show()`
+- FT's exact pattern: `Run()` returns immediately; dialog calls `self.Destroy()` when done
+- `EndModal()` → `self.Destroy()` throughout dialog
+
+### Files to change
+- `src/jbom/plugin/gerber_generator.py` (NEW)
+- `src/jbom/plugin/dialog.py` (major rewrite)
+- `src/jbom/plugin/plugin.py` (ShowModal→Show, remove Destroy)
