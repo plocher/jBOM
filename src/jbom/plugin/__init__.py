@@ -13,7 +13,8 @@ Mirrors Fabrication Toolkit's ``plugins/__init__.py``:
     _is_standalone = "pcbnew" not in sys.modules or __name__ == "__main__"
     if not _is_standalone:
         from .plugin import JBOMFabricationPlugin
-        JBOMFabricationPlugin().register()
+        _plugin_instance = JBOMFabricationPlugin()
+        _plugin_instance.register()
 
 ``sys.path`` bootstrapping
 --------------------------
@@ -79,7 +80,15 @@ if not _is_standalone:  # pragma: no cover — only executes inside KiCad
     try:
         from .plugin import JBOMFabricationPlugin
 
-        JBOMFabricationPlugin().register()
+        # Store the instance at module level — mirrors FT's `plugin = Plugin(); plugin.register()`.
+        # Without this, the temporary JBOMFabricationPlugin() object may be GC'd immediately
+        # after register() returns (CPython reference counting).  If KiCad's ActionPlugin
+        # registry holds only a C++ pointer without a Python refcount, a GC'd wrapper causes
+        # KiCad to silently suppress subsequent Run() calls — the toolbar button appears to
+        # work once and then becomes inert.  Retaining a module-level Python reference
+        # prevents GC for the lifetime of the KiCad session.
+        _plugin_instance = JBOMFabricationPlugin()
+        _plugin_instance.register()
     except Exception:
         import traceback
 
