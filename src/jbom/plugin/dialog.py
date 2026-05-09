@@ -467,15 +467,25 @@ class JBOMFabricationDialog(wx.Dialog):
         diagnostics = getattr(result, "diagnostics", ())
         production_dir = getattr(result, "production_dir", None)
 
-        if debug_mode or diagnostics:
-            # Stay open — show diagnostics
+        # Distinguish errors (production_dir is None — nothing was written) from
+        # info-level diagnostics (resolution notes that are always present).  Only
+        # stay open when there was an actual failure or debug mode is requested.
+        has_error = production_dir is None and not getattr(result, "skip_bom", False)
+        stay_open = debug_mode or has_error
+
+        if stay_open:
+            # Show diagnostics and switch Cancel → Close.
             if diagnostics:
                 self._diag_text.SetValue("\n".join(str(d) for d in diagnostics))
                 self._diag_text.Show()
                 self.GetSizer().Layout()
                 self.GetSizer().Fit(self)
-            # Re-enable cancel button as a "Close" button
+            # Rebind the button so it actually closes the dialog.
             self._progress_cancel_btn.SetLabel("Close")
+            self._progress_cancel_btn.Unbind(wx.EVT_BUTTON)
+            self._progress_cancel_btn.Bind(
+                wx.EVT_BUTTON, lambda _e: self.EndModal(wx.ID_OK)
+            )
             self._progress_cancel_btn.Enable()
         else:
             # Auto-close + open folder
@@ -488,6 +498,10 @@ class JBOMFabricationDialog(wx.Dialog):
         self._diag_text.SetValue(f"Error: {message}")
         self._diag_text.Show()
         self._progress_cancel_btn.SetLabel("Close")
+        self._progress_cancel_btn.Unbind(wx.EVT_BUTTON)
+        self._progress_cancel_btn.Bind(
+            wx.EVT_BUTTON, lambda _e: self.EndModal(wx.ID_CANCEL)
+        )
         self._progress_cancel_btn.Enable()
         self.GetSizer().Layout()
         self.GetSizer().Fit(self)
