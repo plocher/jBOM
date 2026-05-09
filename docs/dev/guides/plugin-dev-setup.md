@@ -116,6 +116,28 @@ The dialog (`dialog.py`) and the ActionPlugin class (`plugin.py`) import
 KiCad instance. Manual smoke-testing via the dev-loop symlink is the
 appropriate method for these.
 
+## KiCad SWIG / CPython GC gotcha
+
+KiCad's ActionPlugin registration stores a **C++ pointer** to the plugin object
+via SWIG.  If the Python wrapper is created as a temporary (e.g.
+``JBOMFabricationPlugin().register()``) and no Python-level reference is kept,
+CPython's garbage collector will collect the Python wrapper between toolbar
+clicks — leaving KiCad with a dangling C++ pointer and a toolbar button that
+appears to do nothing on the second click.
+
+Always keep a module-level reference:
+
+```python
+# correct — module-level reference keeps GC from collecting the wrapper
+_plugin_instance = JBOMFabricationPlugin()
+_plugin_instance.register()
+
+# WRONG — temporary object collected between clicks
+JBOMFabricationPlugin().register()
+```
+
+This applies to any KiCad ActionPlugin, not just jBOM.
+
 ## Troubleshooting
 
 ### "import jbom fails" inside KiCad scripting console
