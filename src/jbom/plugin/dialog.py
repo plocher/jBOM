@@ -319,13 +319,28 @@ class JBOMFabricationDialog(wx.Dialog):
     # ------------------------------------------------------------------
 
     def _on_archive_template_changed(self, _evt: wx.CommandEvent) -> None:
-        """Update the preview label when the archive template is edited."""
+        """Re-expand the template and update the preview + archive_name.
+
+        Called on every keystroke in the Archive text field.  Updates
+        ``self._archive_name`` so that Generate uses the new expansion.
+        """
         if self._archive_preview is None:
             return
-        # Re-expand on the fly using the pre-computed archive_name (passed at
-        # construction time by plugin.py after pcbnew.ExpandTextVars).  A
-        # simpler heuristic: show the template itself as the preview when the
-        # expanded name is unavailable.
+        new_template = self._archive_tpl.GetValue()
+        try:
+            import re
+
+            import pcbnew  # noqa: PLC0415 — safe inside KiCad
+
+            board = pcbnew.GetBoard()
+            project = board.GetProject()
+            expanded = pcbnew.ExpandTextVars(new_template, project)
+            # Apply the same normalisation as plugin.py._expand_archive_template
+            cleaned = re.sub(r"[^\w.-]", "_", expanded).strip("_")
+            self._archive_name = cleaned or new_template
+        except Exception:
+            # Fallback: show the literal template as the preview
+            self._archive_name = new_template
         self._archive_preview.SetLabel(self._archive_name)
 
     def _on_browse_inventory(self, _evt: wx.CommandEvent) -> None:

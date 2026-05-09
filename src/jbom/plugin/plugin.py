@@ -37,6 +37,16 @@ class JBOMFabricationPlugin(pcbnew.ActionPlugin):
 
     def Run(self) -> None:  # noqa: N802 — KiCad API name
         """Open the jBOM Fabrication dialog."""
+        try:
+            self._run_impl()
+        except Exception:  # pragma: no cover
+            import sys
+            import traceback
+
+            traceback.print_exc(file=sys.stderr)
+
+    def _run_impl(self) -> None:
+        """Implementation body of Run(); separated for exception tracing."""
         board = pcbnew.GetBoard()
         pcb_path: str = board.GetFileName() if board else ""
 
