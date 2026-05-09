@@ -60,24 +60,35 @@ class JBOMFabricationPlugin(pcbnew.ActionPlugin):
 
     @staticmethod
     def _resolve_archive_name_from_board(board: object) -> str:
-        """Read archive stem directly from pcbnew board's title block.
+        """Read archive stem from pcbnew board title block or PCB filename.
 
-        Returns ``"Title_Revision"`` when both are present, ``"Title"`` when
-        only a title is set, or ``""`` when neither is available.
+        Priority:
+        1. ``TitleBlock.GetTitle()`` + optional ``GetRevision()``
+        2. PCB filename stem (no extension) when title block is empty
+        3. ``""`` on any exception (caller falls back to disk-based lookup)
         """
         try:
-            tb = board.GetTitleBlock()  # type: ignore[union-attr]
-            title: str = (tb.GetTitle() or "").strip()
-            revision: str = (tb.GetRevision() or "").strip()
-            # Normalise spaces/special chars the same way as normalize_archive_stem
             import re
+            from pathlib import Path
 
             def _clean(s: str) -> str:
                 return re.sub(r"[^\w.-]", "_", s).strip("_")
 
+            tb = board.GetTitleBlock()  # type: ignore[union-attr]
+            title: str = (tb.GetTitle() or "").strip()
+            revision: str = (tb.GetRevision() or "").strip()
+
             if title:
                 stem = _clean(title)
                 return f"{stem}_{_clean(revision)}" if revision else stem
+
+            # No title — fall back to the PCB filename stem so the archive
+            # name is at least meaningful (e.g. "MyBoard" from "MyBoard.kicad_pcb").
+            pcb_path: str = board.GetFileName()  # type: ignore[union-attr]
+            if pcb_path:
+                stem = _clean(Path(pcb_path).stem)
+                if stem:
+                    return f"{stem}_{_clean(revision)}" if revision else stem
         except Exception:
             pass
         return ""
