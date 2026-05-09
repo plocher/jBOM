@@ -41,11 +41,13 @@ runs before plugin-generated Gerbers are available.  Plugin knowledge stays
 in the plugin layer.  The CLI path (``GerberExporter`` / ``kicad-cli``)
 is unchanged.
 
-wx.Frame vs wx.Dialog (Blocker 2 from issue #227):
-``ShowModal()`` blocks ``Run()`` and prevents the toolbar button from being
-re-activated.  Using ``wx.Frame`` + ``Show()`` returns immediately so KiCad
-can re-invoke the plugin.  The frame owns its lifecycle and calls
-``self.Destroy()`` when done.
+wx.Dialog + Show() (Blocker 2 from issue #227):
+``ShowModal()`` blocks ``Run()`` and KiCad does not re-enable the toolbar
+button after it returns.  Using ``wx.Dialog.Show()`` (modeless) returns
+immediately: ``Run()`` returns, KiCad re-enables the button, and the dialog
+owns its lifecycle until ``self.Destroy()`` is called.  Parent is explicitly
+``None`` — KiCad's C++ dialog tracking triggers the toolbar re-enable when
+the ``wxDialog`` C++ object is destroyed, regardless of Python parent.
 
 Reference: ``docs/dev/development_notes/active/plugin_ux_storyboard.md``
 """
@@ -76,15 +78,17 @@ _STEP_LABELS: dict[str, str] = {
 }
 
 
-class JBOMFabricationDialog(wx.Frame):
-    """Full storyboard fabrication frame (Session B).
+class JBOMFabricationDialog(wx.Dialog):
+    """Full storyboard fabrication dialog (Session B).
 
-    Uses ``wx.Frame`` (not ``wx.Dialog``) so that ``plugin.Run()`` can return
-    immediately after calling ``Show()`` — this lets the KiCad toolbar button
-    be re-activated while the frame is still open (Blocker 2, issue #227).
+    Uses ``wx.Dialog`` with ``Show()`` (modeless) so that ``plugin.Run()``
+    returns immediately and the KiCad toolbar button can be re-activated
+    (Blocker 2, issue #227).  Parent is always ``None``: KiCad's dialog
+    tracking re-enables the toolbar button when the underlying ``wxDialog``
+    C++ object is destroyed, and a ``None`` parent avoids any window-hierarchy
+    interference from the KiCad main frame.
 
     Args:
-        parent: Parent window (the KiCad main frame, or ``None``).
         pcb_path: Filesystem path of the active PCB file, or empty string.
         archive_name: Human-readable archive stem from the project title block
             (e.g. ``"MyProject_1.0"``).  Shown as a read-only label.
@@ -92,15 +96,14 @@ class JBOMFabricationDialog(wx.Frame):
 
     def __init__(
         self,
-        parent: wx.Window | None,
         *,
         pcb_path: str = "",
         archive_name: str = "",
     ) -> None:
         super().__init__(
-            parent,
+            None,  # parent=None — required for correct KiCad toolbar re-enable
             title="jBOM Fabrication",
-            style=wx.DEFAULT_FRAME_STYLE | wx.FRAME_FLOAT_ON_PARENT,
+            style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
         )
 
         self._pcb_path = pcb_path
@@ -132,8 +135,9 @@ class JBOMFabricationDialog(wx.Frame):
         outer.Fit(self)
         self.Centre()
 
-        # With wx.Frame, the X button does not automatically call Destroy.
-        self.Bind(wx.EVT_CLOSE, self._on_frame_close)
+        # EVT_CLOSE fires when the user clicks the X button.  The default
+        # wx.Dialog behaviour is Show(False) (hide); we override it to Destroy.
+        self.Bind(wx.EVT_CLOSE, self._on_close)
 
     # ------------------------------------------------------------------
     # Input panel
@@ -253,7 +257,7 @@ class JBOMFabricationDialog(wx.Frame):
         self._generate_btn = wx.Button(panel, label="Generate")
         self._generate_btn.SetDefault()
         cancel_btn = wx.Button(panel, wx.ID_CANCEL, "Cancel")
-        # wx.Frame does not auto-handle wx.ID_CANCEL — bind explicitly.
+        # wx.Dialog.Show() (modeless) does not auto-handle wx.ID_CANCEL — bind explicitly.
         cancel_btn.Bind(wx.EVT_BUTTON, lambda _e: self.Destroy())
         self._generate_btn.Bind(wx.EVT_BUTTON, self._on_generate)
         btn_row.AddStretchSpacer(1)
@@ -661,10 +665,17 @@ class JBOMFabricationDialog(wx.Frame):
                 self._diag_text.Show()
                 self.GetSizer().Layout()
                 self.GetSizer().Fit(self)
-            # Rebind the button so it actually closes the frame.
+            # Rebind the button so it closes + optionally opens the folder
+            # (open_folder applies in debug mode too — user wants to inspect).
             self._progress_cancel_btn.SetLabel("Close")
             self._progress_cancel_btn.Unbind(wx.EVT_BUTTON)
-            self._progress_cancel_btn.Bind(wx.EVT_BUTTON, lambda _e: self.Destroy())
+
+            def _close_and_open(_e: wx.CommandEvent) -> None:
+                if open_folder and production_dir is not None:
+                    self._open_folder(Path(production_dir))
+                self.Destroy()
+
+            self._progress_cancel_btn.Bind(wx.EVT_BUTTON, _close_and_open)
             self._progress_cancel_btn.Enable()
         else:
             # Auto-close + open folder
@@ -683,9 +694,13 @@ class JBOMFabricationDialog(wx.Frame):
         self.GetSizer().Layout()
         self.GetSizer().Fit(self)
 
-    def _on_frame_close(self, evt: wx.CloseEvent) -> None:
-        """Handle frame close (X button) — signal cancel and destroy."""
-        # If the worker thread is active, signal it to stop gracefully.
+    def _on_close(self, evt: wx.CloseEvent) -> None:
+        """Handle dialog close (X button) — signal cancel and destroy.
+
+        Overrides wx.Dialog's default EVT_CLOSE behaviour (which hides rather
+        than destroys) so that Destroy() is called unconditionally.  This
+        triggers KiCad's toolbar button re-enable via the wxDialog destructor.
+        """
         self._cancel_requested.set()
         self.Destroy()
 

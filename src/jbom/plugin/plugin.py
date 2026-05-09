@@ -63,18 +63,12 @@ class JBOMFabricationPlugin(pcbnew.ActionPlugin):
         # in addition to the standard title block variables.
         archive_name = self._expand_archive_template(board, template)
 
-        import wx  # noqa: PLC0415
-
         from .dialog import JBOMFabricationDialog
 
-        # Attach to the KiCad main window if discoverable; otherwise free.
-        parent = wx.FindWindowByName("PcbFrame") or None
-        dlg = JBOMFabricationDialog(
-            parent, pcb_path=pcb_path, archive_name=archive_name
-        )
-        # Use Show() (non-modal) so Run() returns immediately and the KiCad
-        # toolbar button can be re-activated while the frame is still open.
-        # The frame owns its lifecycle and calls self.Destroy() when done.
+        # parent=None is enforced inside JBOMFabricationDialog.__init__.
+        # Show() (modeless) returns immediately so Run() exits and KiCad
+        # re-enables the toolbar button; the dialog calls self.Destroy() when done.
+        dlg = JBOMFabricationDialog(pcb_path=pcb_path, archive_name=archive_name)
         dlg.Show()
 
     @staticmethod
