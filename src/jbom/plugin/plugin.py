@@ -72,8 +72,10 @@ class JBOMFabricationPlugin(pcbnew.ActionPlugin):
         dlg = JBOMFabricationDialog(
             parent, pcb_path=pcb_path, archive_name=archive_name
         )
-        dlg.ShowModal()
-        dlg.Destroy()
+        # Use Show() (non-modal) so Run() returns immediately and the KiCad
+        # toolbar button can be re-activated while the frame is still open.
+        # The frame owns its lifecycle and calls self.Destroy() when done.
+        dlg.Show()
 
     @staticmethod
     def _expand_archive_template(board: object, template: str) -> str:

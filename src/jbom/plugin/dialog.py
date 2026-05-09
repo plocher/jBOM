@@ -11,8 +11,8 @@ Dialog has two panels that swap on Generate:
    and a Cancel button sit at the bottom.
 
 2. **Progress panel** — four :class:`wx.Gauge` widgets for BOM, CPL, Gerbers,
-   and Backup, driven by :attr:`FabricationWorkflow.step_callback` via
-   :func:`wx.CallAfter` from the background thread.
+   and Backup, driven by step callbacks via :func:`wx.CallAfter` from the
+   background thread.
 
 Completion behaviour:
 
@@ -25,6 +25,28 @@ Options are loaded from :func:`~jbom.plugin.options.load_options` when the
 dialog opens and persisted by :func:`~jbom.plugin.options.save_options` when
 Generate is pressed.
 
+Orchestration (Blocker 1 + 3 from issue #227):
+The background ``_worker`` directly sequences:
+
+1. ``BOMWorkflow().run()`` → ``BOMWriter`` → ``production/jbom.csv``
+2. ``POSWorkflow().run()`` → ``POSWriter`` → ``production/cpl.csv``
+3. ``PcbnewGerberGenerator(board).generate()`` → ``GerberPackager``
+   → ``production/{stem}.zip``
+4. ``BackupService().backup()``
+   → ``production/backups/{stem}_{timestamp}.zip``
+
+``FabricationWorkflow`` is intentionally **not** used from the plugin: its
+internal ``kicad-cli`` subprocess path hangs inside KiCad, and its backup
+runs before plugin-generated Gerbers are available.  Plugin knowledge stays
+in the plugin layer.  The CLI path (``GerberExporter`` / ``kicad-cli``)
+is unchanged.
+
+wx.Frame vs wx.Dialog (Blocker 2 from issue #227):
+``ShowModal()`` blocks ``Run()`` and prevents the toolbar button from being
+re-activated.  Using ``wx.Frame`` + ``Show()`` returns immediately so KiCad
+can re-invoke the plugin.  The frame owns its lifecycle and calls
+``self.Destroy()`` when done.
+
 Reference: ``docs/dev/development_notes/active/plugin_ux_storyboard.md``
 """
 
@@ -32,7 +54,9 @@ from __future__ import annotations
 
 import subprocess
 import sys
+import tempfile
 import threading
+import types
 from pathlib import Path
 
 import wx
@@ -52,8 +76,12 @@ _STEP_LABELS: dict[str, str] = {
 }
 
 
-class JBOMFabricationDialog(wx.Dialog):
-    """Full storyboard fabrication dialog (Session B).
+class JBOMFabricationDialog(wx.Frame):
+    """Full storyboard fabrication frame (Session B).
+
+    Uses ``wx.Frame`` (not ``wx.Dialog``) so that ``plugin.Run()`` can return
+    immediately after calling ``Show()`` — this lets the KiCad toolbar button
+    be re-activated while the frame is still open (Blocker 2, issue #227).
 
     Args:
         parent: Parent window (the KiCad main frame, or ``None``).
@@ -72,7 +100,7 @@ class JBOMFabricationDialog(wx.Dialog):
         super().__init__(
             parent,
             title="jBOM Fabrication",
-            style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
+            style=wx.DEFAULT_FRAME_STYLE | wx.FRAME_FLOAT_ON_PARENT,
         )
 
         self._pcb_path = pcb_path
@@ -103,6 +131,9 @@ class JBOMFabricationDialog(wx.Dialog):
         self.SetSizer(outer)
         outer.Fit(self)
         self.Centre()
+
+        # With wx.Frame, the X button does not automatically call Destroy.
+        self.Bind(wx.EVT_CLOSE, self._on_frame_close)
 
     # ------------------------------------------------------------------
     # Input panel
@@ -222,6 +253,8 @@ class JBOMFabricationDialog(wx.Dialog):
         self._generate_btn = wx.Button(panel, label="Generate")
         self._generate_btn.SetDefault()
         cancel_btn = wx.Button(panel, wx.ID_CANCEL, "Cancel")
+        # wx.Frame does not auto-handle wx.ID_CANCEL — bind explicitly.
+        cancel_btn.Bind(wx.EVT_BUTTON, lambda _e: self.Destroy())
         self._generate_btn.Bind(wx.EVT_BUTTON, self._on_generate)
         btn_row.AddStretchSpacer(1)
         btn_row.Add(self._generate_btn, flag=wx.RIGHT, border=8)
@@ -381,10 +414,16 @@ class JBOMFabricationDialog(wx.Dialog):
 
     def _on_generate(self, _evt: wx.CommandEvent) -> None:
         """Validate, save options, fill zones if requested, then start the thread."""
-        # Persist selections
+        # Capture all UI values on the main thread before the worker starts.
         fab_id = self._selected_fabricator_id()
         inventory_path = self._inv_text.GetValue().strip()
+        smd_only = self._cb_smd_only.GetValue()
+        open_folder = self._cb_open_folder.GetValue()
+        debug_mode = self._cb_debug.GetValue()
+        archive_stem = self._archive_name
+        pcb_path = self._pcb_path
 
+        # Persist selections
         from jbom.plugin.options import PluginOptions, save_options
 
         archive_template = self._archive_tpl.GetValue().strip()
@@ -393,9 +432,9 @@ class JBOMFabricationDialog(wx.Dialog):
             inventory_path=inventory_path,
             archive_name_template=archive_template,
         )
-        if self._pcb_path:
+        if pcb_path:
             try:
-                save_options(updated, Path(self._pcb_path))
+                save_options(updated, Path(pcb_path))
             except OSError:
                 pass  # Non-fatal; proceed with generation
 
@@ -411,44 +450,139 @@ class JBOMFabricationDialog(wx.Dialog):
         self.GetSizer().Fit(self)
         self.Centre()
 
-        # Build request
-        from jbom.application.fabrication_orchestration import (
-            FabricationRequest,
-            FabricationWorkflow,
-        )
+        def _step(step: str, status: str) -> None:
+            wx.CallAfter(self._on_step, step, status)
 
-        request = FabricationRequest(
-            input_path=self._pcb_path or ".",
-            fabricator=fab_id,
-            inventory_files=(inventory_path,) if inventory_path else (),
-            smd_only=self._cb_smd_only.GetValue(),
-            debug=self._cb_debug.GetValue(),
-            # Pre-expanded archive stem from pcbnew.ExpandTextVars (set by
-            # plugin.py before opening the dialog).  Passed through so the
-            # workflow uses the correct name without re-reading disk.
-            archive_stem=self._archive_name,
-            # Gerbers via kicad-cli subprocess can hang when called from inside
-            # a KiCad plugin (two KiCad instances conflict on macOS/Windows).
-            # Disable until the pcbnew PLOT_CONTROLLER path is implemented.
-            # TODO: remove when native pcbnew Gerber generation lands.
-            skip_gerbers=True,
-        )
-        open_folder = self._cb_open_folder.GetValue()
-        debug_mode = self._cb_debug.GetValue()
-        # Note: backup is always created by FabricationWorkflow when artifacts
-        # are present. A skip_backup flag on FabricationRequest would be needed
-        # to honour self._cb_backup; tracked as a future enhancement.
-
-        # Launch background thread
         def _worker() -> None:
+            """Background thread: BOM → POS → Gerbers → Backup (A2 orchestration)."""
             try:
-                result = FabricationWorkflow().run(
-                    request,
-                    step_callback=lambda step, status: wx.CallAfter(
-                        self._on_step, step, status
-                    ),
+                import pcbnew  # noqa: PLC0415
+
+                board = pcbnew.GetBoard()
+
+                project_dir = Path(pcb_path).parent if pcb_path else Path(".")
+                production_dir = project_dir / "production"
+                production_dir.mkdir(parents=True, exist_ok=True)
+
+                diagnostics: list[str] = []
+                artifact_paths: list[Path] = []
+
+                def cancelled() -> bool:
+                    return self._cancel_requested.is_set()
+
+                # ----------------------------------------------------------
+                # Step 1: BOM
+                # ----------------------------------------------------------
+                _step("bom", "start")
+                if not cancelled():
+                    try:
+                        from jbom.application.bom_workflow import (
+                            BOMRequest,
+                            BOMWorkflow,
+                        )
+                        from jbom.services.bom_writer import BOMWriter
+
+                        bom_request = BOMRequest(
+                            input_path=pcb_path or ".",
+                            fabricator=fab_id,
+                            inventory_files=(
+                                (inventory_path,) if inventory_path else ()
+                            ),
+                        )
+                        bom_result = BOMWorkflow().run(bom_request)
+                        diagnostics.extend(bom_result.diagnostics)
+                        if bom_result.generation is not None:
+                            bom_path = production_dir / "jbom.csv"
+                            BOMWriter.write(bom_result.generation, bom_path, force=True)
+                            artifact_paths.append(bom_path)
+                    except Exception as exc:
+                        diagnostics.append(f"BOM generation failed: {exc}")
+                _step("bom", "done")
+
+                # ----------------------------------------------------------
+                # Step 2: POS
+                # ----------------------------------------------------------
+                _step("pos", "start")
+                if not cancelled():
+                    try:
+                        from jbom.application.pos_workflow import (
+                            POSRequest,
+                            POSWorkflow,
+                        )
+                        from jbom.services.pos_writer import POSWriter
+
+                        pos_request = POSRequest(
+                            input_path=pcb_path or ".",
+                            fabricator=fab_id,
+                            smd_only=smd_only,
+                        )
+                        pos_result = POSWorkflow().run(pos_request)
+                        diagnostics.extend(pos_result.diagnostics)
+                        if pos_result.generation is not None:
+                            pos_path = production_dir / "cpl.csv"
+                            POSWriter.write(pos_result.generation, pos_path, force=True)
+                            artifact_paths.append(pos_path)
+                    except Exception as exc:
+                        diagnostics.append(f"POS generation failed: {exc}")
+                _step("pos", "done")
+
+                # ----------------------------------------------------------
+                # Step 3: Gerbers (pcbnew PLOT_CONTROLLER — no kicad-cli)
+                # ----------------------------------------------------------
+                _step("gerbers", "start")
+                if not cancelled():
+                    try:
+                        from jbom.plugin.gerber_generator import (
+                            PcbnewGerberGenerator,
+                        )
+                        from jbom.services.gerber_packager import GerberPackager
+
+                        with tempfile.TemporaryDirectory() as tmp:
+                            temp_gerber_dir = Path(tmp) / "gerbers"
+                            temp_gerber_dir.mkdir()
+                            gerber_result = PcbnewGerberGenerator(board).generate(
+                                temp_gerber_dir,
+                                fabricator=fab_id,
+                                debug=debug_mode,
+                            )
+                            diagnostics.extend(gerber_result.diagnostics)
+                            if not gerber_result.skipped:
+                                gerber_zip = production_dir / f"{archive_stem}.zip"
+                                GerberPackager().package(
+                                    gerber_result.artifacts,
+                                    gerber_zip,
+                                    debug=debug_mode,
+                                )
+                                artifact_paths.append(gerber_zip)
+                    except Exception as exc:
+                        diagnostics.append(f"Gerber generation failed: {exc}")
+                _step("gerbers", "done")
+
+                # ----------------------------------------------------------
+                # Step 4: Backup (all three artifacts in one archive)
+                # ----------------------------------------------------------
+                _step("backup", "start")
+                if not cancelled() and artifact_paths:
+                    try:
+                        from jbom.services.backup_service import BackupService
+
+                        backup_dir = production_dir / "backups"
+                        BackupService().backup(
+                            artifact_paths,
+                            backup_dir,
+                            archive_stem,
+                        )
+                    except Exception as exc:
+                        diagnostics.append(f"Backup creation failed: {exc}")
+                _step("backup", "done")
+
+                # Build a lightweight result carrier for _on_complete.
+                result = types.SimpleNamespace(
+                    production_dir=(production_dir if artifact_paths else None),
+                    diagnostics=tuple(diagnostics),
                 )
                 wx.CallAfter(self._on_complete, result, open_folder, debug_mode)
+
             except Exception as exc:
                 wx.CallAfter(self._on_error, str(exc))
 
@@ -514,10 +648,10 @@ class JBOMFabricationDialog(wx.Dialog):
         diagnostics = getattr(result, "diagnostics", ())
         production_dir = getattr(result, "production_dir", None)
 
-        # Distinguish errors (production_dir is None — nothing was written) from
-        # info-level diagnostics (resolution notes that are always present).  Only
-        # stay open when there was an actual failure or debug mode is requested.
-        has_error = production_dir is None and not getattr(result, "skip_bom", False)
+        # Distinguish errors (no artifacts produced — production_dir is None)
+        # from info-level diagnostics.  Stay open when there was an actual
+        # failure or when the user requested debug mode.
+        has_error = production_dir is None
         stay_open = debug_mode or has_error
 
         if stay_open:
@@ -527,18 +661,16 @@ class JBOMFabricationDialog(wx.Dialog):
                 self._diag_text.Show()
                 self.GetSizer().Layout()
                 self.GetSizer().Fit(self)
-            # Rebind the button so it actually closes the dialog.
+            # Rebind the button so it actually closes the frame.
             self._progress_cancel_btn.SetLabel("Close")
             self._progress_cancel_btn.Unbind(wx.EVT_BUTTON)
-            self._progress_cancel_btn.Bind(
-                wx.EVT_BUTTON, lambda _e: self.EndModal(wx.ID_OK)
-            )
+            self._progress_cancel_btn.Bind(wx.EVT_BUTTON, lambda _e: self.Destroy())
             self._progress_cancel_btn.Enable()
         else:
             # Auto-close + open folder
             if open_folder and production_dir is not None:
                 self._open_folder(Path(production_dir))
-            self.EndModal(wx.ID_OK)
+            self.Destroy()
 
     def _on_error(self, message: str) -> None:
         """Handle unexpected thread exception; called via ``wx.CallAfter``."""
@@ -546,12 +678,16 @@ class JBOMFabricationDialog(wx.Dialog):
         self._diag_text.Show()
         self._progress_cancel_btn.SetLabel("Close")
         self._progress_cancel_btn.Unbind(wx.EVT_BUTTON)
-        self._progress_cancel_btn.Bind(
-            wx.EVT_BUTTON, lambda _e: self.EndModal(wx.ID_CANCEL)
-        )
+        self._progress_cancel_btn.Bind(wx.EVT_BUTTON, lambda _e: self.Destroy())
         self._progress_cancel_btn.Enable()
         self.GetSizer().Layout()
         self.GetSizer().Fit(self)
+
+    def _on_frame_close(self, evt: wx.CloseEvent) -> None:
+        """Handle frame close (X button) — signal cancel and destroy."""
+        # If the worker thread is active, signal it to stop gracefully.
+        self._cancel_requested.set()
+        self.Destroy()
 
     @staticmethod
     def _open_folder(path: Path) -> None:
