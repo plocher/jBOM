@@ -61,6 +61,7 @@ package-dir = {"" = "src"}
 # Include configuration files in the package
 jbom = [
     "config/*.yaml",
+    "config/*.csv",
     "config/fabricators/*.yaml",
     "config/presets/*.yaml",
     "config/suppliers/*.yaml",

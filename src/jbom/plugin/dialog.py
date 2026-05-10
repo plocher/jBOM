@@ -7,7 +7,7 @@ Dialog has two panels that swap on Generate:
 
 1. **Input panel** — fabricator dropdown, inventory file picker, option
    checkboxes (SMD only, Exclude DNP, Fill zones, Create backup, Open folder,
-   Apply corrections [grayed/pending #249], Debug mode).  A Generate button
+   Apply placement corrections, Debug mode).  A Generate button
    and a Cancel button sit at the bottom.
 
 2. **Progress panel** — four :class:`wx.Gauge` widgets for BOM, CPL, Gerbers,
@@ -256,9 +256,14 @@ class JBOMFabricationDialog(wx.Dialog):
         )
         self._cb_open_folder = _cb("Open production folder when done")
 
-        # Grayed placeholder — pending issue #249
-        cb_corrections = _cb("Apply placement corrections  (pending #249)", False)
-        cb_corrections.Disable()
+        self._cb_corrections = _cb("Apply placement corrections (transformations.csv)")
+        self._cb_corrections.SetValue(False)  # default OFF
+        self._cb_corrections.SetToolTip(
+            "Apply footprint rotation/offset corrections from transformations.csv "
+            "(harvested from Fabrication-Toolkit). Corrects KiCad-vs-JLCPCB "
+            "orientation mismatches. User overrides: place custom transformations.csv "
+            "in ~/.jbom/ or <project>/.jbom/."
+        )
 
         self._cb_debug = _cb("Keep intermediate files (debug)", False)
 
@@ -268,7 +273,7 @@ class JBOMFabricationDialog(wx.Dialog):
             self._cb_fill_zones,
             self._cb_backup,
             self._cb_open_folder,
-            cb_corrections,
+            self._cb_corrections,
             self._cb_debug,
         ):
             check_sizer.Add(cb, flag=wx.LEFT | wx.BOTTOM, border=4)
@@ -532,6 +537,7 @@ class JBOMFabricationDialog(wx.Dialog):
                             input_path=pcb_path or ".",
                             fabricator=fab_id,
                             smd_only=smd_only,
+                            apply_corrections=self._cb_corrections.GetValue(),
                         )
                         pos_result = POSWorkflow().run(pos_request)
                         diagnostics.extend(pos_result.diagnostics)

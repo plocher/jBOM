@@ -77,6 +77,7 @@ class POSRequest:
     list_fields: bool = False
     include_dnp: bool = False
     verbose: bool = False
+    apply_corrections: bool = False
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -105,6 +106,7 @@ class POSRequest:
         object.__setattr__(self, "list_fields", bool(self.list_fields))
         object.__setattr__(self, "include_dnp", bool(self.include_dnp))
         object.__setattr__(self, "verbose", bool(self.verbose))
+        object.__setattr__(self, "apply_corrections", bool(self.apply_corrections))
 
 
 @dataclass(frozen=True)
@@ -353,6 +355,94 @@ def _entry_has_dnp_marker(entry: dict[str, Any]) -> bool:
     return False
 
 
+def apply_rotation_corrections(
+    pos_data: list[dict[str, Any]],
+    *,
+    verbose: bool = False,
+    convention: str | None = None,
+) -> tuple[list[dict[str, Any]], list[Diagnostic]]:
+    """Apply footprint rotation/offset corrections to POS data rows.
+
+    Loads the :class:`~jbom.services.rotation_correction_service.RotationCorrectionService`
+    from the configured search path and applies first-match corrections to
+    each component's ``rotation``, ``x_mm``, and ``y_mm`` fields.
+    Raw coordinate tokens (``rotation_raw``, ``x_raw``, ``y_raw``) are cleared
+    so the field resolver uses the corrected float values.
+
+    Args:
+        pos_data: List of POS row dictionaries from :class:`POSGenerator`.
+        verbose: When True, emit a per-component info diagnostic for each
+            corrected row.
+        convention: Named angle convention from the fabricator's
+            ``rotation_convention`` config key (e.g. ``"jlcpcb"``).  ``None``
+            preserves raw KiCad angles.
+
+    Returns:
+        Tuple of (corrected_pos_data, diagnostics).
+    """
+    from jbom.services.rotation_correction_service import RotationCorrectionService
+
+    diagnostics: list[Diagnostic] = []
+    try:
+        service = RotationCorrectionService.load()
+    except FileNotFoundError as exc:
+        diagnostics.append(
+            Diagnostic("warning", f"Rotation corrections skipped: {exc}")
+        )
+        return pos_data, diagnostics
+
+    corrected: list[dict[str, Any]] = []
+    db_hit_count = 0
+    for row in pos_data:
+        footprint = str(row.get("footprint", ""))
+        rotation = float(row.get("rotation", 0.0) or 0.0)
+        new_rotation = service.apply_rotation(
+            footprint, rotation, convention=convention
+        )
+        delta_x, delta_y = service.apply_offset(footprint)
+        has_db_rule = service.has_correction(footprint)
+
+        new_row = dict(row)
+        new_row["rotation"] = new_rotation
+        # Clear rotation_raw so the field resolver uses the corrected float.
+        # We do this for all rows because normalization also changes the value
+        # (e.g. KiCad -90° becomes 270° for fabricators).
+        new_row.pop("rotation_raw", None)
+        if delta_x != 0.0 or delta_y != 0.0:
+            new_row["x_mm"] = float(row.get("x_mm", 0.0) or 0.0) + delta_x
+            new_row["y_mm"] = float(row.get("y_mm", 0.0) or 0.0) + delta_y
+            new_row.pop("x_raw", None)
+            new_row.pop("y_raw", None)
+        corrected.append(new_row)
+        if has_db_rule:
+            db_hit_count += 1
+            if verbose:
+                diagnostics.append(
+                    Diagnostic(
+                        "info",
+                        f"Corrected {row.get('reference', '?')}: "
+                        f"rotation {rotation:.1f}° → {new_rotation:.1f}°"
+                        + (
+                            f", offset ({delta_x:+.3f}, {delta_y:+.3f}) mm"
+                            if delta_x != 0.0 or delta_y != 0.0
+                            else ""
+                        ),
+                    )
+                )
+
+    total = len(corrected)
+    diagnostics.append(
+        Diagnostic(
+            "info",
+            f"Rotation corrections applied: {db_hit_count} DB rule"
+            f"{'s' if db_hit_count != 1 else ''} matched, "
+            f"{total} component{'s' if total != 1 else ''} normalised to [0°, 360°) "
+            f"({service.rule_count} rules loaded)",
+        )
+    )
+    return corrected, diagnostics
+
+
 def apply_pos_dnp_filter(
     pos_data: list[dict[str, Any]],
     *,
@@ -512,6 +602,20 @@ class POSWorkflow:
         board = DefaultKiCadReaderService().read_pcb_file(pcb_file)
         pos_data = POSGenerator(placement_options).generate_pos_data(board)
 
+        if request.apply_corrections:
+            _convention: str | None = None
+            try:
+                from jbom.config.fabricators import load_fabricator
+
+                _fab_cfg = load_fabricator(request.fabricator)
+                _convention = _fab_cfg.rotation_convention
+            except Exception:
+                pass
+            pos_data, correction_diagnostics = apply_rotation_corrections(
+                pos_data, verbose=request.verbose, convention=_convention
+            )
+            diagnostics.extend(correction_diagnostics)
+
         schematic_files: list[Path] = []
         try:
             discovered_files = list(project_context.get_hierarchical_schematic_files())
@@ -603,6 +707,7 @@ __all__ = [
     "POSResult",
     "POSWorkflow",
     "apply_pos_dnp_filter",
+    "apply_rotation_corrections",
     "enrich_pos_with_merge_namespaces",
     "get_available_pos_fields",
     "resolve_default_pos_fields",

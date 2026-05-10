@@ -103,6 +103,8 @@ class FabricationRequest:
             live board (e.g. the KiCad plugin) should pre-expand text variables
             and pass the result here; CLI adapters may leave this empty to let
             the workflow derive it from ``ProjectMetadata``.
+        apply_corrections: When ``True`` apply footprint rotation/offset
+            corrections (from ``transformations.csv``) to the CPL output.
     """
 
     input_path: str
@@ -121,6 +123,7 @@ class FabricationRequest:
     skip_backup: bool = False
     debug: bool = False
     archive_stem: str = ""
+    apply_corrections: bool = False
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -159,6 +162,7 @@ class FabricationRequest:
         object.__setattr__(self, "skip_backup", bool(self.skip_backup))
         object.__setattr__(self, "debug", bool(self.debug))
         object.__setattr__(self, "archive_stem", str(self.archive_stem or "").strip())
+        object.__setattr__(self, "apply_corrections", bool(self.apply_corrections))
 
 
 @dataclass(frozen=True)
@@ -470,6 +474,7 @@ class FabricationWorkflow:
                 layer=request.pos_layer,
                 origin=request.pos_origin,
                 verbose=request.verbose,
+                apply_corrections=request.apply_corrections,
             )
             result = POSWorkflow().run(pos_request)
             diagnostics.extend(result.diagnostics)
