@@ -1,6 +1,81 @@
 # CHANGELOG
 
 
+## v6.55.1 (2026-05-10)
+
+### Bug Fixes
+
+* fix(plugin): eliminate SWIG reads + restore plot dir + auto-save after Gerbers (#255) (#258)
+
+* refactor(plugin): eliminate SWIG reads from archive template expansion (#255)
+
+Replace board.GetProject() / board.GetTitleBlock() SWIG calls with
+file-based reads in both plugin.py and dialog.py.
+
+Background: The dirty flag (*) appearing on ActionPlugin toolbar invocation
+is a KiCad 10 framework behavior — the C++ ActionPlugin dispatch marks the
+board modified before Run() is called, regardless of plugin code.
+Confirmed: Fabrication Toolkit exhibits identical behavior.
+This cannot be fixed from the plugin side.
+
+What we CAN do: avoid adding unnecessary SWIG reads on top of the
+framework-set dirty flag, which improves correctness and removes coupling
+to the live board object for read-only metadata.
+
+Changes:
+- plugin._expand_archive_template() → _expand_archive_template_from_file()
+  Reads title block metadata from .kicad_pcb via jBOM S-expression parser.
+  No pcbnew SWIG calls.  Fallback to PCB filename stem.
+
+- dialog.__init__: cache TitleBlockMetadata from disk at init time
+  (self._pcb_title_meta) via create_metadata(), zero SWIG calls.
+
+- dialog._on_archive_template_changed(): use self._pcb_title_meta
+  instead of board.GetProject() / board.GetTitleBlock().  Standard
+  title block tokens (${TITLE}, ${REVISION}, ${DATE}, ${COMPANY},
+  ${CURRENT_DATE}) are supported; custom .kicad_pro project variables
+  are not (acceptable trade-off documented in docstring).
+
+No behavior change for users: archive name expansion works identically
+for all standard templates.
+
+Co-Authored-By: Oz <oz-agent@warp.dev>
+
+* fix(plugin): restore plot output directory after Gerber generation (#255)
+
+Root cause of dirty flag after Generate: PLOT_CONTROLLER.SetOutputDirectory()
+writes into the board's persisted plot settings, marking it modified.  After
+generation completes the stored path points at a deleted temp directory, which
+also confuses KiCad's built-in plot dialog.
+
+Fix: snapshot GetOutputDirectory() before plotting and restore it in a
+finally block after ClosePlot().  The board settings are left in their
+pre-generation state; KiCad's dirty tracking sees no net change to the
+output directory and should not mark the board modified.
+
+Note: Interactive HTML BOM plugin does not cause dirty because it never
+calls SetOutputDirectory().  FT causes dirty because it does not restore
+the setting.
+
+Co-Authored-By: Oz <oz-agent@warp.dev>
+
+* fix(plugin): auto-save board after Gerber generation (#255)
+
+PLOT_CONTROLLER setters (SetOutputDirectory etc.) modify the board's
+persisted plot settings, dirtying it.  Saving after Gerbers keeps the
+board file in sync with what was generated, consistent with the zone-fill
+auto-save rationale.  Whether this clears the UI title-bar asterisk
+depends on KiCad's frame notification path from a background thread;
+if it does not, the dirty flag on Generate is accepted as a known
+limitation per #255 investigation.
+
+Co-Authored-By: Oz <oz-agent@warp.dev>
+
+---------
+
+Co-authored-by: Oz <oz-agent@warp.dev> ([`6d34a3f`](https://github.com/plocher/jBOM/commit/6d34a3f985d41fd6d6b2d1b2dc1648e0ec692da0))
+
+
 ## v6.55.0 (2026-05-10)
 
 ### Features
