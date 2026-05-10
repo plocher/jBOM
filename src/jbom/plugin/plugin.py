@@ -11,8 +11,20 @@ progress view) is implemented in Session B.
 """
 
 from __future__ import annotations
+import sys
 
 import pcbnew  # noqa: F401 — only imported inside KiCad, safe here
+
+
+def _trace(label: str, board: object | None = None) -> None:  # pragma: no cover
+    """Diagnostic trace — REMOVE before production."""
+    modified = ""
+    if board is not None:
+        try:
+            modified = f"  IsModified={board.IsModified()}"
+        except Exception as exc:
+            modified = f"  IsModified=ERR({exc})"
+    print(f"[jBOM-TRACE] {label}{modified}", flush=True)
 
 
 class JBOMFabricationPlugin(pcbnew.ActionPlugin):
@@ -38,9 +50,11 @@ class JBOMFabricationPlugin(pcbnew.ActionPlugin):
     def Run(self) -> None:  # noqa: N802 — KiCad API name
         """Open the jBOM Fabrication dialog."""
         try:
+            _board = pcbnew.GetBoard()
+            _trace("Run() entry", _board)
             self._run_impl()
+            _trace("Run() exit (dialog shown)", _board)
         except Exception:  # pragma: no cover
-            import sys
             import traceback
 
             traceback.print_exc(file=sys.stderr)
@@ -49,6 +63,7 @@ class JBOMFabricationPlugin(pcbnew.ActionPlugin):
         """Implementation body of Run(); separated for exception tracing."""
         board = pcbnew.GetBoard()
         pcb_path: str = board.GetFileName() if board else ""
+        _trace("_run_impl() after GetBoard/GetFileName", board)
 
         # Load persisted options to get the archive name template.
         from pathlib import Path
@@ -57,16 +72,21 @@ class JBOMFabricationPlugin(pcbnew.ActionPlugin):
 
         options = load_options(Path(pcb_path)) if pcb_path else None
         template = options.archive_name_template if options else "${TITLE}_${REVISION}"
+        _trace("_run_impl() after load_options", board)
 
         # Expand the template using pcbnew's own variable expander so that
         # custom project-level variables (defined in .kicad_pro) are honoured
         # in addition to the standard title block variables.
+        _trace("_run_impl() before _expand_archive_template", board)
         archive_name = self._expand_archive_template(board, template)
+        _trace(f"_run_impl() after _expand_archive_template → '{archive_name}'", board)
 
         from .dialog import JBOMFabricationDialog
 
         dlg = JBOMFabricationDialog(pcb_path=pcb_path, archive_name=archive_name)
+        _trace("_run_impl() before dlg.Show()", board)
         dlg.Show()
+        _trace("_run_impl() after dlg.Show() (returns immediately — modeless)", board)
 
     @staticmethod
     def _expand_archive_template(board: object, template: str) -> str:
@@ -89,8 +109,11 @@ class JBOMFabricationPlugin(pcbnew.ActionPlugin):
 
         try:
             # Attempt pcbnew.ExpandTextVars first for full variable support.
+            _trace("  _expand: before GetProject", board)
             project = board.GetProject()  # type: ignore[union-attr]
+            _trace("  _expand: after GetProject", board)
             expanded = pcbnew.ExpandTextVars(template, project)
+            _trace("  _expand: after ExpandTextVars", board)
         except Exception:
             expanded = template
 
@@ -99,7 +122,9 @@ class JBOMFabricationPlugin(pcbnew.ActionPlugin):
             from jbom.common.types import TitleBlockMetadata
             from jbom.services.text_variable_expander import expand_text_variables
 
+            _trace("  _expand: before GetTitleBlock", board)
             tb = board.GetTitleBlock()  # type: ignore[union-attr]
+            _trace("  _expand: after GetTitleBlock", board)
             meta = TitleBlockMetadata(
                 title=(tb.GetTitle() or "").strip(),
                 revision=(tb.GetRevision() or "").strip(),

@@ -13,6 +13,17 @@ from __future__ import annotations
 __all__ = ["fill_zones_if_needed"]
 
 
+def _trace(label: str, board: object | None = None) -> None:  # pragma: no cover
+    """Diagnostic trace — REMOVE before production."""
+    modified = ""
+    if board is not None:
+        try:
+            modified = f"  IsModified={board.IsModified()}"
+        except Exception as exc:
+            modified = f"  IsModified=ERR({exc})"
+    print(f"[jBOM-TRACE] {label}{modified}", flush=True)
+
+
 def fill_zones_if_needed(pcb_path: str) -> bool:
     """Fill board zones only if actually needed; auto-save when fill runs.
 
@@ -42,9 +53,21 @@ def fill_zones_if_needed(pcb_path: str) -> bool:
 
         board = pcbnew.GetBoard()
         if not board:
+            _trace("fill_zones_if_needed: no board")
             return False
 
+        _trace("fill_zones_if_needed: entry", board)
         zones = list(board.Zones())
+        _trace(f"fill_zones_if_needed: {len(zones)} zone(s) found", board)
+
+        # Check each zone for stale/unfilled status
+        for i, z in enumerate(zones):
+            try:
+                is_f = z.IsFilled()
+                need_r = z.GetNeedRefill() if hasattr(z, "GetNeedRefill") else "N/A"
+                _trace(f"  zone[{i}]: IsFilled={is_f}  GetNeedRefill={need_r}", board)
+            except Exception as exc:
+                _trace(f"  zone[{i}]: ERR({exc})", board)
 
         # Skip fill if all zones are already filled and not stale.
         # GetNeedRefill() was added in KiCad 7; guard for older builds.
@@ -53,24 +76,40 @@ def fill_zones_if_needed(pcb_path: str) -> bool:
             for z in zones
         )
         if already_current:
+            _trace("fill_zones_if_needed: all zones current — skipping Fill()", board)
             return False  # No-op: board state untouched
 
         # Zones need filling — fill then immediately save.
+        _trace("fill_zones_if_needed: calling ZONE_FILLER.Fill()", board)
         pcbnew.ZONE_FILLER(board).Fill(board.Zones())
+        _trace("fill_zones_if_needed: after ZONE_FILLER.Fill()", board)
 
         # Auto-save: keep source file in sync with filled state used for
         # Gerbers and backup.  Try pcbnew.SaveBoard() first (standard
         # KiCad 7+ API), fall back to board.Save() for older builds.
         if pcb_path:
             try:
+                _trace(f"fill_zones_if_needed: calling SaveBoard('{pcb_path}')", board)
                 pcbnew.SaveBoard(pcb_path, board)
-            except Exception:  # pragma: no cover
+                _trace("fill_zones_if_needed: after SaveBoard()", board)
+            except Exception as exc:  # pragma: no cover
+                _trace(
+                    f"fill_zones_if_needed: SaveBoard failed ({exc}), trying board.Save()",
+                    board,
+                )
                 try:
                     board.Save(pcb_path)
-                except Exception:  # pragma: no cover
-                    pass  # Non-fatal: Gerbers still use filled in-memory board
+                    _trace("fill_zones_if_needed: after board.Save()", board)
+                except Exception as exc2:  # pragma: no cover
+                    _trace(
+                        f"fill_zones_if_needed: board.Save() also failed ({exc2})",
+                        board,
+                    )
+        else:
+            _trace("fill_zones_if_needed: no pcb_path — skipping save", board)
 
         return True
 
-    except Exception:  # pragma: no cover
+    except Exception as exc:  # pragma: no cover
+        _trace(f"fill_zones_if_needed: EXCEPTION {exc}")
         return False  # Non-fatal; caller proceeds with generation

@@ -68,6 +68,18 @@ try:
 except ImportError:  # pragma: no cover
     _jbom_version = "unknown"
 
+
+def _trace(label: str, board: object | None = None) -> None:  # pragma: no cover
+    """Diagnostic trace — REMOVE before production."""
+    modified = ""
+    if board is not None:
+        try:
+            modified = f"  IsModified={board.IsModified()}"
+        except Exception as exc:
+            modified = f"  IsModified=ERR({exc})"
+    print(f"[jBOM-TRACE] {label}{modified}", flush=True)
+
+
 # Steps in display order — matches storyboard progress panel.
 _STEPS: list[str] = ["bom", "pos", "gerbers", "backup"]
 _STEP_LABELS: dict[str, str] = {
@@ -453,7 +465,26 @@ class JBOMFabricationDialog(wx.Dialog):
         # Optional zone fill — smart: skips if zones are already current,
         # auto-saves the board file when fill actually ran.
         if self._cb_fill_zones.GetValue():
+            try:
+                import pcbnew as _pcb  # noqa: PLC0415
+
+                _trace("_on_generate: before _fill_zones()", _pcb.GetBoard())
+            except Exception:
+                pass
             self._fill_zones()
+            try:
+                import pcbnew as _pcb  # noqa: PLC0415
+
+                _trace("_on_generate: after _fill_zones()", _pcb.GetBoard())
+            except Exception:
+                pass
+        else:
+            try:
+                import pcbnew as _pcb  # noqa: PLC0415
+
+                _trace("_on_generate: fill zones checkbox OFF", _pcb.GetBoard())
+            except Exception:
+                pass
 
         # Swap to progress panel
         self._cancel_requested.clear()
@@ -472,6 +503,7 @@ class JBOMFabricationDialog(wx.Dialog):
                 import pcbnew  # noqa: PLC0415
 
                 board = pcbnew.GetBoard()
+                _trace("_worker: thread start", board)
 
                 project_dir = Path(pcb_path).parent if pcb_path else Path(".")
                 production_dir = project_dir / "production"
@@ -486,6 +518,7 @@ class JBOMFabricationDialog(wx.Dialog):
                 # ----------------------------------------------------------
                 # Step 1: BOM
                 # ----------------------------------------------------------
+                _trace("_worker: before BOM step", board)
                 _step("bom", "start")
                 if not cancelled():
                     try:
@@ -511,10 +544,12 @@ class JBOMFabricationDialog(wx.Dialog):
                     except Exception as exc:
                         diagnostics.append(f"BOM generation failed: {exc}")
                 _step("bom", "done")
+                _trace("_worker: after BOM step", board)
 
                 # ----------------------------------------------------------
                 # Step 2: POS
                 # ----------------------------------------------------------
+                _trace("_worker: before POS step", board)
                 _step("pos", "start")
                 if not cancelled():
                     try:
@@ -538,10 +573,12 @@ class JBOMFabricationDialog(wx.Dialog):
                     except Exception as exc:
                         diagnostics.append(f"POS generation failed: {exc}")
                 _step("pos", "done")
+                _trace("_worker: after POS step", board)
 
                 # ----------------------------------------------------------
                 # Step 3: Gerbers (pcbnew PLOT_CONTROLLER — no kicad-cli)
                 # ----------------------------------------------------------
+                _trace("_worker: before Gerbers step", board)
                 _step("gerbers", "start")
                 if not cancelled():
                     try:
@@ -570,10 +607,12 @@ class JBOMFabricationDialog(wx.Dialog):
                     except Exception as exc:
                         diagnostics.append(f"Gerber generation failed: {exc}")
                 _step("gerbers", "done")
+                _trace("_worker: after Gerbers step", board)
 
                 # ----------------------------------------------------------
                 # Step 4: Backup (all three artifacts in one archive)
                 # ----------------------------------------------------------
+                _trace("_worker: before Backup step", board)
                 _step("backup", "start")
                 if do_backup and not cancelled() and artifact_paths:
                     try:
@@ -588,6 +627,7 @@ class JBOMFabricationDialog(wx.Dialog):
                     except Exception as exc:
                         diagnostics.append(f"Backup creation failed: {exc}")
                 _step("backup", "done")
+                _trace("_worker: after Backup step / pipeline complete", board)
 
                 # Build a lightweight result carrier for _on_complete.
                 result = types.SimpleNamespace(
