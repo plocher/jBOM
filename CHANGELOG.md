@@ -1,6 +1,40 @@
 # CHANGELOG
 
 
+## v6.55.2 (2026-05-10)
+
+### Refactoring
+
+* refactor(diagnostics): typed Diagnostic(severity, message) across all result contracts (#245) (#260)
+
+Adds a frozen Diagnostic dataclass to jbom.common.types:
+  severity: Literal["info", "warning", "error"]
+  message:  str
+
+Updates 4 result contracts (BOMResult, POSResult, GerberResult,
+FabricationResult) from tuple[str, ...] to tuple[Diagnostic, ...].
+
+Updates all callsites across:
+  - bom_workflow.py  (run_component_merge, _generate, helper functions)
+  - pos_workflow.py  (run_pos_component_merge, _generate)
+  - gerber_service.py  (GerberExporter._generate_via_*)
+  - gerber_generator.py  (PcbnewGerberGenerator.generate/_load_gerber_policy)
+  - fabrication_orchestration.py  (FabricationWorkflow.run + all helpers)
+
+Updates CLI adapters:
+  - gerbers.py: INFO diagnostics gated on --verbose; WARNING/ERROR always printed
+  - fabrication.py: same severity gating
+
+Updates plugin dialog:
+  - _worker() local list[str] → list[Diagnostic]; append with severity
+  - _on_complete() renders with ⚠/✗ prefix for warning/error
+
+Updates 5 test files to use d.message in assertions.
+1266/1266 tests pass.
+
+Co-authored-by: Oz <oz-agent@warp.dev> ([`9984edd`](https://github.com/plocher/jBOM/commit/9984eddb724eb068f35a9c897c58ca6413baa981))
+
+
 ## v6.55.1 (2026-05-10)
 
 ### Bug Fixes
