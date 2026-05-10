@@ -120,48 +120,67 @@ class PcbnewGerberGenerator:
             plot_controller = pcbnew.PLOT_CONTROLLER(self._board)
             plot_opts = plot_controller.GetPlotOptions()
 
-            plot_opts.SetOutputDirectory(str(output_dir))
-            plot_opts.SetPlotFrameRef(False)
-            plot_opts.SetAutoScale(False)
-            plot_opts.SetScale(1)
-            plot_opts.SetMirror(False)
-            plot_opts.SetUseGerberAttributes(True)
-            plot_opts.SetUseGerberProtelExtensions(protel_extensions)
-            plot_opts.SetUseAuxOrigin(True)
-            plot_opts.SetSubtractMaskFromSilk(True)
-            plot_opts.SetUseGerberX2format(False)
-            plot_opts.SetDrillMarksType(0)  # NO_DRILL_SHAPE
+            # Save the current output directory so we can restore it after
+            # plotting.  SetOutputDirectory() writes into the board's stored
+            # settings; leaving it pointing at a deleted temp dir would
+            # unnecessarily dirty the board and confuse KiCad's plot dialog.
+            _original_output_dir: str = ""
+            try:
+                _original_output_dir = plot_opts.GetOutputDirectory()
+            except Exception:
+                pass
 
-            # SetExcludeEdgeLayer added in KiCad 7; guard for older builds.
-            if hasattr(plot_opts, "SetExcludeEdgeLayer"):
-                plot_opts.SetExcludeEdgeLayer(True)
+            try:
+                plot_opts.SetOutputDirectory(str(output_dir))
+                plot_opts.SetPlotFrameRef(False)
+                plot_opts.SetAutoScale(False)
+                plot_opts.SetScale(1)
+                plot_opts.SetMirror(False)
+                plot_opts.SetUseGerberAttributes(True)
+                plot_opts.SetUseGerberProtelExtensions(protel_extensions)
+                plot_opts.SetUseAuxOrigin(True)
+                plot_opts.SetSubtractMaskFromSilk(True)
+                plot_opts.SetUseGerberX2format(False)
+                plot_opts.SetDrillMarksType(0)  # NO_DRILL_SHAPE
 
-            # SetSketchPadLineWidth may be absent on some builds.
-            if hasattr(plot_opts, "SetSketchPadLineWidth"):
-                plot_opts.SetSketchPadLineWidth(pcbnew.FromMM(0.1))
+                # SetExcludeEdgeLayer added in KiCad 7; guard for older builds.
+                if hasattr(plot_opts, "SetExcludeEdgeLayer"):
+                    plot_opts.SetExcludeEdgeLayer(True)
 
-            for layer_name in layers:
-                layer_id: int = self._board.GetLayerID(layer_name)
+                # SetSketchPadLineWidth may be absent on some builds.
+                if hasattr(plot_opts, "SetSketchPadLineWidth"):
+                    plot_opts.SetSketchPadLineWidth(pcbnew.FromMM(0.1))
 
-                if layer_id == undefined_layer:
-                    diagnostics.append(
-                        f"Gerber: layer {layer_name!r} not present on this board — skipped."
+                for layer_name in layers:
+                    layer_id: int = self._board.GetLayerID(layer_name)
+
+                    if layer_id == undefined_layer:
+                        diagnostics.append(
+                            f"Gerber: layer {layer_name!r} not present on this board — skipped."
+                        )
+                        continue
+
+                    if not self._board.IsLayerEnabled(layer_id):
+                        continue
+
+                    # Use the KiCad layer name (dots → underscores) as the file
+                    # suffix; pcbnew appends the correct Protel extension.
+                    suffix = layer_name.replace(".", "_").replace(" ", "_")
+                    plot_controller.SetLayer(layer_id)
+                    plot_controller.OpenPlotfile(
+                        suffix, pcbnew.PLOT_FORMAT_GERBER, layer_name
                     )
-                    continue
+                    plot_controller.PlotLayer()
 
-                if not self._board.IsLayerEnabled(layer_id):
-                    continue
+                plot_controller.ClosePlot()
 
-                # Use the KiCad layer name (dots → underscores) as the file
-                # suffix; pcbnew appends the correct Protel extension.
-                suffix = layer_name.replace(".", "_").replace(" ", "_")
-                plot_controller.SetLayer(layer_id)
-                plot_controller.OpenPlotfile(
-                    suffix, pcbnew.PLOT_FORMAT_GERBER, layer_name
-                )
-                plot_controller.PlotLayer()
-
-            plot_controller.ClosePlot()
+            finally:
+                # Always restore the original output directory so the board
+                # settings are left in a clean state after generation.
+                try:
+                    plot_opts.SetOutputDirectory(_original_output_dir)
+                except Exception:
+                    pass
 
         except Exception as exc:
             diagnostics.append(f"Gerber plotting failed: {exc}")

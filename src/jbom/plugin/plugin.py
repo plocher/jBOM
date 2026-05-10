@@ -58,10 +58,13 @@ class JBOMFabricationPlugin(pcbnew.ActionPlugin):
         options = load_options(Path(pcb_path)) if pcb_path else None
         template = options.archive_name_template if options else "${TITLE}_${REVISION}"
 
-        # Expand the template using pcbnew's own variable expander so that
-        # custom project-level variables (defined in .kicad_pro) are honoured
-        # in addition to the standard title block variables.
-        archive_name = self._expand_archive_template(board, template)
+        # Expand template via file-based reads only.  The old path called
+        # board.GetProject() / board.GetTitleBlock() via SWIG; in KiCad 10
+        # the ActionPlugin toolbar framework marks the board modified before
+        # Run() is called (confirmed: FT exhibits the same behaviour) so we
+        # cannot prevent the dirty flag from that direction.  We still avoid
+        # adding unnecessary SWIG reads on top of it.
+        archive_name = self._expand_archive_template_from_file(pcb_path, template)
 
         from .dialog import JBOMFabricationDialog
 
@@ -69,16 +72,21 @@ class JBOMFabricationPlugin(pcbnew.ActionPlugin):
         dlg.Show()
 
     @staticmethod
-    def _expand_archive_template(board: object, template: str) -> str:
-        """Expand the archive name template for the given board.
+    def _expand_archive_template_from_file(pcb_path: str, template: str) -> str:
+        """Expand the archive name template using file-based reads only.
+
+        Reads title block metadata directly from the ``.kicad_pcb`` file via
+        jBOM's S-expression parser, bypassing pcbnew SWIG bindings entirely.
+        Standard title block tokens (``${TITLE}``, ``${REVISION}``,
+        ``${DATE}``, ``${COMPANY}``, ``${CURRENT_DATE}``) are supported.
+        Custom ``.kicad_pro`` project variables are not (those require
+        ``pcbnew.ExpandTextVars``).
 
         Priority:
-        1. ``pcbnew.ExpandTextVars(template, project)`` — resolves all KiCad
-           text variables including custom project-level variables.
-        2. jBOM :func:`~jbom.services.text_variable_expander.expand_text_variables`
-           — fallback resolving the standard title block subset.
-        3. PCB filename stem — used when both produce an empty result.
-        4. ``"(unknown)"`` — last resort.
+        1. jBOM :func:`~jbom.services.text_variable_expander.expand_text_variables`
+           on the title block read from disk.
+        2. PCB filename stem — when template expansion yields nothing.
+        3. ``"(unknown)"`` — last resort.
         """
         import re
         from pathlib import Path
@@ -88,35 +96,23 @@ class JBOMFabricationPlugin(pcbnew.ActionPlugin):
             return re.sub(r"[^\w.-]", "_", s).strip("_")
 
         try:
-            # Attempt pcbnew.ExpandTextVars first for full variable support.
-            project = board.GetProject()  # type: ignore[union-attr]
-            expanded = pcbnew.ExpandTextVars(template, project)
-        except Exception:
-            expanded = template
-
-        # Fallback: apply jBOM's own expander for the title block subset.
-        try:
-            from jbom.common.types import TitleBlockMetadata
+            from jbom.services.project_metadata import create_metadata
             from jbom.services.text_variable_expander import expand_text_variables
 
-            tb = board.GetTitleBlock()  # type: ignore[union-attr]
-            meta = TitleBlockMetadata(
-                title=(tb.GetTitle() or "").strip(),
-                revision=(tb.GetRevision() or "").strip(),
-                date=(tb.GetDate() or "").strip(),
-                company=(tb.GetCompany() or "").strip(),
-            )
-            expanded = expand_text_variables(expanded, meta)
+            pcb_file = Path(pcb_path)
+            project_file = pcb_file.parent / f"{pcb_file.parent.name}.kicad_pro"
+            metadata = create_metadata(project_file, pcb_file=pcb_file)
+            meta = metadata.pcb_metadata
+            if meta is not None:
+                expanded = expand_text_variables(template, meta)
+                cleaned = _normalise(expanded)
+                if cleaned:
+                    return cleaned
         except Exception:
             pass
 
-        cleaned = _normalise(expanded)
-        if cleaned:
-            return cleaned
-
-        # Final fallback: PCB filename stem.
+        # Fallback: PCB filename stem.
         try:
-            pcb_path: str = board.GetFileName()  # type: ignore[union-attr]
             if pcb_path:
                 stem = _normalise(Path(pcb_path).stem)
                 if stem:

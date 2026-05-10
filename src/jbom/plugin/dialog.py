@@ -122,6 +122,23 @@ class JBOMFabricationDialog(wx.Dialog):
             load_options(Path(pcb_path)) if pcb_path else PluginOptions()
         )
 
+        # Pre-read title block metadata from disk (no SWIG) so that
+        # _on_archive_template_changed can expand templates without calling
+        # board.GetProject() / board.GetTitleBlock().  In KiCad 10 the
+        # ActionPlugin toolbar framework itself marks the board modified before
+        # Run() is called; we avoid adding further SWIG reads on top of it.
+        self._pcb_title_meta: object | None = None  # TitleBlockMetadata | None
+        if pcb_path:
+            try:
+                from jbom.services.project_metadata import create_metadata
+
+                _pcb_file = Path(pcb_path)
+                _proj_file = _pcb_file.parent / f"{_pcb_file.parent.name}.kicad_pro"
+                _md = create_metadata(_proj_file, pcb_file=_pcb_file)
+                self._pcb_title_meta = _md.pcb_metadata
+            except Exception:
+                pass
+
         # Build UI
         outer = wx.BoxSizer(wx.VERTICAL)
         self._input_panel = self._build_input_panel()
@@ -365,50 +382,33 @@ class JBOMFabricationDialog(wx.Dialog):
     def _on_archive_template_changed(self, _evt: wx.CommandEvent) -> None:
         """Re-expand the template and update the preview + archive_name.
 
-        Called on every keystroke in the Archive text field.  Updates
-        ``self._archive_name`` so that Generate uses the new expansion.
-        Uses the same two-step expansion as plugin.py._expand_archive_template:
-        1. pcbnew.ExpandTextVars for project-level variables
-        2. jBOM TextVariableExpander for standard title block variables
+        Called on every keystroke in the Archive text field.  Uses
+        ``self._pcb_title_meta`` (cached from disk at dialog init time) so
+        that ``board.GetProject()`` / ``board.GetTitleBlock()`` SWIG reads are
+        completely avoided here.  Standard title block tokens are supported;
+        custom ``.kicad_pro`` project variables are not (acceptable trade-off
+        given the KiCad 10 ActionPlugin dirty-flag behavior).
         """
         if self._archive_preview is None:
             return
+        import re
+
         new_template = self._archive_tpl.GetValue()
         try:
-            import re
+            from jbom.services.text_variable_expander import expand_text_variables
 
-            import pcbnew  # noqa: PLC0415 — safe inside KiCad
-
-            board = pcbnew.GetBoard()
-
-            # Step 1: pcbnew.ExpandTextVars handles custom project vars.
-            try:
-                project = board.GetProject()
-                expanded = pcbnew.ExpandTextVars(new_template, project)
-            except Exception:
-                expanded = new_template
-
-            # Step 2: jBOM expander handles standard title block vars
-            # (${TITLE}, ${REVISION}, ${DATE}, ${COMPANY}, ${CURRENT_DATE}).
-            try:
-                from jbom.common.types import TitleBlockMetadata
-                from jbom.services.text_variable_expander import expand_text_variables
-
-                tb = board.GetTitleBlock()
-                meta = TitleBlockMetadata(
-                    title=(tb.GetTitle() or "").strip(),
-                    revision=(tb.GetRevision() or "").strip(),
-                    date=(tb.GetDate() or "").strip(),
-                    company=(tb.GetCompany() or "").strip(),
-                )
-                expanded = expand_text_variables(expanded, meta)
-            except Exception:
-                pass
-
-            cleaned = re.sub(r"[^\w.-]", "_", expanded).strip("_")
-            self._archive_name = cleaned or new_template
+            meta = self._pcb_title_meta  # pre-read in __init__, no SWIG
+            if meta is not None:
+                expanded = expand_text_variables(new_template, meta)
+                cleaned = re.sub(r"[^\w.-]", "_", expanded).strip("_")
+                self._archive_name = cleaned or new_template
+                self._archive_preview.SetLabel(self._archive_name)
+                return
         except Exception:
-            self._archive_name = new_template
+            pass
+
+        # Fallback: show template as-is
+        self._archive_name = new_template
         self._archive_preview.SetLabel(self._archive_name)
 
     def _on_browse_inventory(self, _evt: wx.CommandEvent) -> None:
@@ -570,6 +570,24 @@ class JBOMFabricationDialog(wx.Dialog):
                     except Exception as exc:
                         diagnostics.append(f"Gerber generation failed: {exc}")
                 _step("gerbers", "done")
+
+                # Auto-save after Gerbers: PLOT_CONTROLLER.SetOutputDirectory()
+                # and related setters write into the board's persisted plot
+                # settings, dirtying the board even though no design data
+                # changed.  Saving here keeps the board file in sync with
+                # the generated Gerbers and clears the dirty flag — consistent
+                # with the zone-fill auto-save rationale: running a fab
+                # pipeline means you intend to save.
+                if pcb_path and not cancelled():
+                    try:
+                        import pcbnew as _pcb  # noqa: PLC0415
+
+                        _pcb.SaveBoard(pcb_path, board)
+                    except Exception:
+                        try:
+                            board.Save(pcb_path)
+                        except Exception:
+                            pass  # Non-fatal
 
                 # ----------------------------------------------------------
                 # Step 4: Backup (all three artifacts in one archive)
