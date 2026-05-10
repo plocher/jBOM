@@ -142,6 +142,16 @@ def register_command(subparsers) -> None:
     )
     add_component_filter_arguments(parser, command_type="pos")
     add_fabricator_arguments(parser)
+    parser.add_argument(
+        "--apply-corrections",
+        action="store_true",
+        default=False,
+        help=(
+            "Apply footprint rotation/offset corrections from transformations.csv "
+            "(harvested from Fabrication-Toolkit).  Corrects KiCad-vs-fabricator "
+            "orientation mismatches for JLCPCB and compatible assemblers."
+        ),
+    )
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
     parser.set_defaults(handler=handle_pos)
 
@@ -191,6 +201,7 @@ def _build_pos_job_request(args: argparse.Namespace) -> JobRequest:
         "verbose": bool(args.verbose),
         "list_fields": bool(args.list_fields),
         "include_dnp": bool(getattr(args, "include_dnp", False)),
+        "apply_corrections": bool(getattr(args, "apply_corrections", False)),
     }
     return JobRequest(
         job_type="pos",
@@ -217,6 +228,7 @@ def _build_pos_request(
         list_fields=bool(args.list_fields),
         include_dnp=bool(getattr(args, "include_dnp", False)),
         verbose=bool(args.verbose),
+        apply_corrections=bool(getattr(args, "apply_corrections", False)),
     )
 
 

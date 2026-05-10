@@ -8,6 +8,9 @@ pcb_manufacturing:
 pcb_assembly:
   website: "https://jlcpcb.com/help/article/bill-of-materials-for-pcb-assembly"
 
+# JLCPCB requires CPL rotations in [0°, 360°) — negative KiCad angles are not accepted.
+rotation_convention: jlcpcb
+
 # Ordered supplier profile IDs (position encodes priority).
 # First entry is the fabricator's own catalog.
 suppliers:

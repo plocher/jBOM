@@ -102,6 +102,7 @@ class FabricatorConfig:
     name: str
     pos_columns: Dict[str, str]  # Header -> internal field mapping
     pos_additive_default_fields: Optional[List[str]] = None
+    rotation_convention: Optional[str] = None  # Fabricator-specific angle convention
 
     # Phase 1 schema: ordered supplier profile IDs.
     # Position encodes priority (first entry is most preferred).
@@ -215,12 +216,17 @@ class FabricatorConfig:
 
         tier_overrides = _parse_tier_overrides(data.get("tier_overrides") or [])
         tier_rules = _derive_tier_rules(tier_overrides=tier_overrides)
+        rotation_convention_raw = data.get("rotation_convention")
+        rotation_convention: Optional[str] = (
+            str(rotation_convention_raw).strip() if rotation_convention_raw else None
+        )
 
         return FabricatorConfig(
             id=pid,
             name=name,
             pos_columns=pos_columns,
             pos_additive_default_fields=pos_additive_default_fields,
+            rotation_convention=rotation_convention,
             suppliers=suppliers,
             field_synonyms=field_synonyms,
             tier_rules=tier_rules,
