@@ -91,6 +91,8 @@ class FabricationRequest:
         smd_only: Forward SMD-only filter to POS generation.
         pos_layer: Forward layer filter (``"TOP"`` / ``"BOTTOM"``) to POS.
         pos_origin: Forward origin reference (``"board"`` / ``"aux"``) to POS.
+        skip_backup: When ``True`` skip backup archive creation even when
+            artifacts are present.  Defaults to ``False`` (backup is created).
         debug: When ``True`` preserve intermediate gerber directory after
             packaging for inspection.
         archive_stem: Pre-expanded archive base name (e.g. ``"MyBoard_1.0"``)
@@ -115,6 +117,7 @@ class FabricationRequest:
     smd_only: bool = False
     pos_layer: str = ""
     pos_origin: str = "board"
+    skip_backup: bool = False
     debug: bool = False
     archive_stem: str = ""
 
@@ -152,6 +155,7 @@ class FabricationRequest:
             "pos_origin",
             _normalize_text(self.pos_origin or "board", field_name="pos_origin"),
         )
+        object.__setattr__(self, "skip_backup", bool(self.skip_backup))
         object.__setattr__(self, "debug", bool(self.debug))
         object.__setattr__(self, "archive_stem", str(self.archive_stem or "").strip())
 
@@ -384,9 +388,14 @@ class FabricationWorkflow:
                 step_callback("gerbers", "done")
 
         # ------------------------------------------------------------------
-        # Step 4: Backup (if any files were written)
+        # Step 4: Backup (if any files were written and not skipped by caller)
         # ------------------------------------------------------------------
-        if not request.dry_run and production_dir is not None and artifacts:
+        if (
+            not request.skip_backup
+            and not request.dry_run
+            and production_dir is not None
+            and artifacts
+        ):
             artifact_paths = [a.path for a in artifacts if a.path is not None]
             if artifact_paths:
                 if step_callback:
