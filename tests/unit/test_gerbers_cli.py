@@ -16,6 +16,7 @@ from unittest.mock import patch
 
 from jbom.cli.gerbers import _render_gerber_result
 from jbom.cli.main import create_parser
+from jbom.common.types import Diagnostic
 from jbom.services.gerber_service import GerberResult
 
 
@@ -65,7 +66,7 @@ class TestRenderGerberResult:
     def test_skipped_result_returns_exit_1(self, capsys) -> None:
         result = GerberResult(
             artifacts=(),
-            diagnostics=("kicad-cli not found",),
+            diagnostics=(Diagnostic("error", "kicad-cli not found"),),
             skipped=True,
             skip_reason="kicad_cli_not_found",
         )

@@ -1,8 +1,37 @@
 """Data classes for jBOM components and inventory items."""
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Dict, Optional
+from typing import Dict, Literal, Optional
 from pathlib import Path
+
+
+@dataclass(frozen=True)
+class Diagnostic:
+    """A typed diagnostic message emitted by jBOM services and workflows.
+
+    Carrying severity on every diagnostic enables adapters to filter or
+    render messages without parsing message text:
+
+    * ``"info"``    — informational note; CLI adapters gate on ``--verbose``.
+    * ``"warning"`` — potential issue; always displayed.
+    * ``"error"``   — generation step failed; always displayed.
+
+    Attributes:
+        severity: Severity level token.
+        message:  Human-readable diagnostic text.
+    """
+
+    severity: Literal["info", "warning", "error"]
+    message: str
+
+    def __post_init__(self) -> None:
+        if self.severity not in ("info", "warning", "error"):
+            raise ValueError(
+                f"Diagnostic severity must be 'info', 'warning', or 'error'; "
+                f"got {self.severity!r}"
+            )
+        object.__setattr__(self, "message", str(self.message))
+
 
 # Default priority value
 DEFAULT_PRIORITY = 99
@@ -95,6 +124,7 @@ class InventoryItem:
 __all__ = [
     "DEFAULT_PRIORITY",
     "Component",
+    "Diagnostic",
     "InventoryItem",
     "TitleBlockMetadata",
 ]

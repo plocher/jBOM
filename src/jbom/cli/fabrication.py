@@ -227,8 +227,10 @@ def _execute_fab_command(args) -> int:  # type: ignore[type-arg]
         )
 
         result = FabricationWorkflow().run(request)
-        for diag in result.diagnostics:
-            print(diag, file=sys.stderr)
+        for d in result.diagnostics:
+            if d.severity == "info" and not bool(getattr(args, "verbose", False)):
+                continue
+            print(d.message, file=sys.stderr)
         if result.production_dir is not None:
             print(f"Production directory: {result.production_dir}")
         if result.backup_archive is not None:

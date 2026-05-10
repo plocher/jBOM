@@ -42,6 +42,7 @@ from jbom.application.pos_workflow import (
     POSResult,
     POSWorkflow,
 )
+from jbom.common.types import Diagnostic
 from jbom.services.gerber_service import GerberExporter, GerberRequest, GerberResult
 
 __all__ = [
@@ -209,7 +210,7 @@ class FabricationResult:
     """
 
     artifacts: tuple[FabricationArtifact, ...]
-    diagnostics: tuple[str, ...]
+    diagnostics: tuple[Diagnostic, ...]
     bom_result: BOMResult | None = None
     pos_result: POSResult | None = None
     gerber_result: GerberResult | None = None
@@ -268,7 +269,7 @@ class FabricationWorkflow:
             :class:`FabricationResult` aggregating BOM, POS, and Gerber outputs,
             with all files written to the production/ directory when appropriate.
         """
-        diagnostics: list[str] = []
+        diagnostics: list[Diagnostic] = []
         artifacts: list[FabricationArtifact] = []
         bom_result: BOMResult | None = None
         pos_result: POSResult | None = None
@@ -287,7 +288,9 @@ class FabricationWorkflow:
             try:
                 production_dir.mkdir(parents=True, exist_ok=True)
             except OSError as exc:
-                diagnostics.append(f"Failed to create production directory: {exc}")
+                diagnostics.append(
+                    Diagnostic("error", f"Failed to create production directory: {exc}")
+                )
                 return FabricationResult(
                     artifacts=tuple(artifacts),
                     diagnostics=tuple(diagnostics),
@@ -318,7 +321,9 @@ class FabricationWorkflow:
 
                         BOMWriter.write(bom_result.generation, bom_path, force=True)
                     except Exception as exc:
-                        diagnostics.append(f"BOM write failed: {exc}")
+                        diagnostics.append(
+                            Diagnostic("error", f"BOM write failed: {exc}")
+                        )
                         bom_path = None
                 else:
                     bom_path = bom_result.generation.default_output_path
@@ -352,7 +357,9 @@ class FabricationWorkflow:
 
                         POSWriter.write(pos_result.generation, pos_path, force=True)
                     except Exception as exc:
-                        diagnostics.append(f"POS write failed: {exc}")
+                        diagnostics.append(
+                            Diagnostic("error", f"POS write failed: {exc}")
+                        )
                         pos_path = None
                 else:
                     pos_path = pos_result.generation.default_output_path
@@ -374,7 +381,9 @@ class FabricationWorkflow:
                 step_callback("gerbers", "start")
             if request.dry_run:
                 diagnostics.append(
-                    "Dry run: Gerber generation skipped (no files written)."
+                    Diagnostic(
+                        "info", "Dry run: Gerber generation skipped (no files written)."
+                    )
                 )
             else:
                 (
@@ -431,9 +440,9 @@ class FabricationWorkflow:
 
     def _run_bom(
         self, request: FabricationRequest
-    ) -> tuple[BOMResult | None, list[str]]:
+    ) -> tuple[BOMResult | None, list[Diagnostic]]:
         """Run BOM orchestration and return result + diagnostics."""
-        diagnostics: list[str] = []
+        diagnostics: list[Diagnostic] = []
         try:
             bom_request = BOMRequest(
                 input_path=request.input_path,
@@ -445,14 +454,14 @@ class FabricationWorkflow:
             diagnostics.extend(result.diagnostics)
             return result, diagnostics
         except Exception as exc:
-            diagnostics.append(f"BOM generation failed: {exc}")
+            diagnostics.append(Diagnostic("error", f"BOM generation failed: {exc}"))
             return None, diagnostics
 
     def _run_pos(
         self, request: FabricationRequest
-    ) -> tuple[POSResult | None, list[str]]:
+    ) -> tuple[POSResult | None, list[Diagnostic]]:
         """Run POS orchestration and return result + diagnostics."""
-        diagnostics: list[str] = []
+        diagnostics: list[Diagnostic] = []
         try:
             pos_request = POSRequest(
                 input_path=request.input_path,
@@ -466,14 +475,14 @@ class FabricationWorkflow:
             diagnostics.extend(result.diagnostics)
             return result, diagnostics
         except Exception as exc:
-            diagnostics.append(f"POS generation failed: {exc}")
+            diagnostics.append(Diagnostic("error", f"POS generation failed: {exc}"))
             return None, diagnostics
 
     def _run_gerbers(
         self, request: FabricationRequest
-    ) -> tuple[GerberResult | None, list[str]]:
+    ) -> tuple[GerberResult | None, list[Diagnostic]]:
         """Resolve PCB file and run GerberExporter."""
-        diagnostics: list[str] = []
+        diagnostics: list[Diagnostic] = []
 
         pcb_file, project_dir, resolve_diags = self._resolve_pcb_and_project_dir(
             request
@@ -482,8 +491,11 @@ class FabricationWorkflow:
 
         if pcb_file is None:
             diagnostics.append(
-                "Gerber generation skipped: PCB file could not be resolved "
-                "from the given input path."
+                Diagnostic(
+                    "warning",
+                    "Gerber generation skipped: PCB file could not be resolved "
+                    "from the given input path.",
+                )
             )
             return None, diagnostics
 
@@ -497,18 +509,20 @@ class FabricationWorkflow:
             result = GerberExporter().generate(gerber_request)
             return result, diagnostics
         except Exception as exc:
-            diagnostics.append(f"Gerber generation failed unexpectedly: {exc}")
+            diagnostics.append(
+                Diagnostic("error", f"Gerber generation failed unexpectedly: {exc}")
+            )
             return None, diagnostics
 
     def _resolve_pcb_and_project_dir(
         self, request: FabricationRequest
-    ) -> tuple[Path | None, Path | None, list[str]]:
+    ) -> tuple[Path | None, Path | None, list[Diagnostic]]:
         """Resolve PCB file path and project directory from input_path.
 
         Returns:
             ``(pcb_file, project_directory, diagnostics)``
         """
-        diagnostics: list[str] = []
+        diagnostics: list[Diagnostic] = []
         try:
             from jbom.services.project_file_resolver import ProjectFileResolver
 
@@ -525,7 +539,9 @@ class FabricationWorkflow:
             return pcb_file, project_dir, diagnostics
         except Exception as exc:
             if request.verbose:
-                diagnostics.append(f"Note: could not resolve PCB file: {exc}")
+                diagnostics.append(
+                    Diagnostic("info", f"Note: could not resolve PCB file: {exc}")
+                )
             return None, None, diagnostics
 
     def _resolve_archive_stem(
@@ -582,7 +598,7 @@ class FabricationWorkflow:
         self,
         request: FabricationRequest,
         production_dir: Path | None,
-    ) -> tuple[list[FabricationArtifact], GerberResult | None, list[str]]:
+    ) -> tuple[list[FabricationArtifact], GerberResult | None, list[Diagnostic]]:
         """Generate Gerbers to temp dir, package to production/, return artifacts.
 
         Returns:
@@ -591,11 +607,15 @@ class FabricationWorkflow:
             gerber_result carries the raw GerberExporter result for diagnostics.
         """
         artifacts: list[FabricationArtifact] = []
-        diagnostics: list[str] = []
+        diagnostics: list[Diagnostic] = []
         gerber_result: GerberResult | None = None
 
         if production_dir is None:
-            diagnostics.append("Production dir not available for gerber packaging.")
+            diagnostics.append(
+                Diagnostic(
+                    "warning", "Production dir not available for gerber packaging."
+                )
+            )
             return artifacts, gerber_result, diagnostics
 
         # Generate gerbers to a temporary directory
@@ -619,7 +639,10 @@ class FabricationWorkflow:
 
                 if gerber_result is None or gerber_result.skipped:
                     diagnostics.append(
-                        "Gerber generation skipped or failed; no artifacts to package."
+                        Diagnostic(
+                            "warning",
+                            "Gerber generation skipped or failed; no artifacts to package.",
+                        )
                     )
                     return artifacts, gerber_result, diagnostics
 
@@ -647,10 +670,14 @@ class FabricationWorkflow:
                         )
                     )
                 except Exception as exc:
-                    diagnostics.append(f"Gerber packaging failed: {exc}")
+                    diagnostics.append(
+                        Diagnostic("error", f"Gerber packaging failed: {exc}")
+                    )
 
         except Exception as exc:
-            diagnostics.append(f"Gerber generation or packaging failed: {exc}")
+            diagnostics.append(
+                Diagnostic("error", f"Gerber generation or packaging failed: {exc}")
+            )
 
         return artifacts, gerber_result, diagnostics
 
@@ -659,14 +686,14 @@ class FabricationWorkflow:
         request: FabricationRequest,
         artifact_paths: list[Path],
         production_dir: Path,
-    ) -> tuple[Path | None, list[str]]:
+    ) -> tuple[Path | None, list[Diagnostic]]:
         """Create a dated backup archive of all production artifacts.
 
         Returns:
             ``(backup_archive_path, diagnostics)`` where backup_archive_path
             is None if backup creation failed.
         """
-        diagnostics: list[str] = []
+        diagnostics: list[Diagnostic] = []
 
         try:
             from jbom.services.backup_service import BackupService
@@ -692,7 +719,7 @@ class FabricationWorkflow:
             return backup_archive, diagnostics
 
         except Exception as exc:
-            diagnostics.append(f"Backup creation failed: {exc}")
+            diagnostics.append(Diagnostic("error", f"Backup creation failed: {exc}"))
             return None, diagnostics
 
     def _resolve_gerber_output_dir(

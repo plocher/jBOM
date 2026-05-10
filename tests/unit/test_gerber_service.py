@@ -360,7 +360,7 @@ class TestGerberExporterNoKicadCli:
 
         assert result.skipped is True
         assert result.skip_reason == "kicad_cli_not_found"
-        assert any("kicad-cli" in d for d in result.diagnostics)
+        assert any("kicad-cli" in d.message for d in result.diagnostics)
         assert result.artifacts == ()
 
 
@@ -384,7 +384,7 @@ class TestGerberExporterMissingPcb:
 
         assert result.skipped is True
         assert result.skip_reason == "pcb_file_not_found"
-        assert any("PCB file not found" in d for d in result.diagnostics)
+        assert any("PCB file not found" in d.message for d in result.diagnostics)
 
 
 # ---------------------------------------------------------------------------
@@ -408,7 +408,7 @@ class TestGerberExporterPluginMode:
 
         assert result.skipped is True
         assert result.skip_reason == "pcbnew_api_not_implemented"
-        assert any("not yet implemented" in d for d in result.diagnostics)
+        assert any("not yet implemented" in d.message for d in result.diagnostics)
 
 
 # ---------------------------------------------------------------------------
@@ -442,7 +442,7 @@ class TestGerberExporterCliFailure:
 
         assert result.skipped is True
         assert result.skip_reason == "gerber_export_failed"
-        assert any("failed" in d for d in result.diagnostics)
+        assert any("failed" in d.message for d in result.diagnostics)
 
 
 # ---------------------------------------------------------------------------

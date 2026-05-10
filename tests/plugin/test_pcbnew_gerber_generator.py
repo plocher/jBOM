@@ -68,8 +68,10 @@ class TestLoadGerberPolicy:
         return PcbnewGerberGenerator(board=MagicMock())
 
     def test_returns_default_layers_when_fabricator_not_found(self) -> None:
+        from jbom.common.types import Diagnostic
+
         gen = self._make_generator()
-        diagnostics: list[str] = []
+        diagnostics: list[Diagnostic] = []
         with patch(
             "jbom.plugin.gerber_generator.PcbnewGerberGenerator._load_gerber_policy",
             wraps=gen._load_gerber_policy,
@@ -87,11 +89,13 @@ class TestLoadGerberPolicy:
         assert "Edge.Cuts" in layers
         assert protel is True
         assert drill_cfg == {}
-        assert any("nonexistent" in d for d in diagnostics)
+        assert any("nonexistent" in d.message for d in diagnostics)
 
     def test_returns_fabricator_config_layers_for_jlc(self) -> None:
+        from jbom.common.types import Diagnostic
+
         gen = self._make_generator()
-        diagnostics: list[str] = []
+        diagnostics: list[Diagnostic] = []
         layers, protel, drill_cfg = gen._load_gerber_policy("jlc", diagnostics)
 
         # jlc.fab.yaml specifies 9 standard layers
@@ -103,10 +107,11 @@ class TestLoadGerberPolicy:
         assert diagnostics == []
 
     def test_returns_default_layers_when_gerbers_stanza_empty(self) -> None:
+        from jbom.common.types import Diagnostic
         from jbom.plugin.gerber_generator import _DEFAULT_LAYERS
 
         gen = self._make_generator()
-        diagnostics: list[str] = []
+        diagnostics: list[Diagnostic] = []
 
         fake_config = MagicMock()
         fake_config.gerbers = {}  # empty stanza
@@ -242,7 +247,7 @@ class TestGenerateLayerIteration:
         assert set_layer_calls[0] == call(0)
 
         # Diagnostic must mention the skipped layer
-        assert any("B.Cu" in d for d in result.diagnostics)
+        assert any("B.Cu" in d.message for d in result.diagnostics)
 
     def test_disabled_layer_is_silently_skipped(self, tmp_path: Path) -> None:
         """An explicitly disabled layer is skipped without a diagnostic."""
@@ -256,7 +261,7 @@ class TestGenerateLayerIteration:
         assert len(set_layer_calls) == 1
         assert set_layer_calls[0] == call(0)
         # No diagnostic for disabled layers
-        assert not any("B.Cu" in d for d in result.diagnostics)
+        assert not any("B.Cu" in d.message for d in result.diagnostics)
 
     def test_plot_controller_closed_after_loop(self, tmp_path: Path) -> None:
         """ClosePlot() is called regardless of how many layers were plotted."""
@@ -287,7 +292,7 @@ class TestGenerateLayerIteration:
 
         assert result.skipped is True
         assert result.skip_reason == "plot_error"
-        assert any("plotting" in d.lower() for d in result.diagnostics)
+        assert any("plotting" in d.message.lower() for d in result.diagnostics)
 
 
 # ---------------------------------------------------------------------------

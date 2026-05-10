@@ -156,7 +156,7 @@ class TestFabricationWorkflowDryRun:
             mock_gerber.assert_not_called()
 
         assert result.gerber_result is None
-        assert any("Dry run" in d for d in result.diagnostics)
+        assert any("Dry run" in d.message for d in result.diagnostics)
 
     def test_dry_run_still_processes_bom(self) -> None:
         """dry_run=True should NOT block BOM generation (only Gerbers)."""
@@ -255,7 +255,7 @@ class TestFabricationWorkflowSubServiceFailure:
             result = FabricationWorkflow().run(request)
 
         assert result.bom_result is None
-        assert any("BOM generation failed" in d for d in result.diagnostics)
+        assert any("BOM generation failed" in d.message for d in result.diagnostics)
 
     def test_pos_failure_captured_as_diagnostic(self) -> None:
         request = FabricationRequest(
@@ -270,7 +270,7 @@ class TestFabricationWorkflowSubServiceFailure:
             result = FabricationWorkflow().run(request)
 
         assert result.pos_result is None
-        assert any("POS generation failed" in d for d in result.diagnostics)
+        assert any("POS generation failed" in d.message for d in result.diagnostics)
 
 
 # ---------------------------------------------------------------------------

@@ -182,8 +182,10 @@ def _execute_gerbers_command(args) -> int:  # type: ignore[type-arg]
 
 def _render_gerber_result(result: GerberResult, *, verbose: bool) -> int:
     """Print GerberResult diagnostics and artifact paths; return exit code."""
-    for diagnostic in result.diagnostics:
-        print(diagnostic, file=sys.stderr)
+    for d in result.diagnostics:
+        if d.severity == "info" and not verbose:
+            continue
+        print(d.message, file=sys.stderr)
 
     if result.skipped:
         print(
