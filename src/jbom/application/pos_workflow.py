@@ -8,6 +8,7 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Mapping
 
+from jbom.common.types import Diagnostic
 from jbom.common.field_parser import parse_fields_argument
 from jbom.common.fields import field_to_header
 from jbom.common.options import GeneratorOptions, PlacementOptions
@@ -140,7 +141,7 @@ class POSResult:
     """Result contract emitted by POS application orchestration."""
 
     mode: POSMode
-    diagnostics: tuple[str, ...] = ()
+    diagnostics: tuple[Diagnostic, ...] = ()
     field_listing: POSFieldListingPayload | None = None
     generation: POSGenerationPayload | None = None
 
@@ -171,9 +172,9 @@ def run_pos_component_merge(
     schematic_files: list[Path],
     pcb_file: Path | None,
     verbose: bool,
-) -> tuple[ComponentMergeResult | None, tuple[str, ...]]:
+) -> tuple[ComponentMergeResult | None, tuple[Diagnostic, ...]]:
     """Best-effort collector/merge execution for POS namespace enrichment."""
-    diagnostics: list[str] = []
+    diagnostics: list[Diagnostic] = []
 
     try:
         collector = ProjectComponentCollector()
@@ -187,15 +188,21 @@ def run_pos_component_merge(
         merge_result = merge_service.merge(project_graph)
         if verbose:
             diagnostics.append(
-                "Merge model active: "
-                f"{project_graph.reference_count} references, "
-                f"{len(merge_result.mismatches)} mismatch record(s)"
+                Diagnostic(
+                    "info",
+                    "Merge model active: "
+                    f"{project_graph.reference_count} references, "
+                    f"{len(merge_result.mismatches)} mismatch record(s)",
+                )
             )
         return merge_result, tuple(diagnostics)
     except Exception as exc:
         if verbose:
             diagnostics.append(
-                f"Warning: merge model execution skipped due to error: {exc}"
+                Diagnostic(
+                    "warning",
+                    f"Warning: merge model execution skipped due to error: {exc}",
+                )
             )
         return None, tuple(diagnostics)
 
@@ -445,7 +452,7 @@ class POSWorkflow:
         request: POSRequest,
     ) -> POSResult:
         """Execute POS orchestration and return adapter-ready output payloads."""
-        diagnostics: list[str] = []
+        diagnostics: list[Diagnostic] = []
 
         gen_options = (
             GeneratorOptions(verbose=request.verbose) if request.verbose else None
@@ -459,14 +466,21 @@ class POSWorkflow:
 
         if not resolved_input.is_pcb:
             diagnostics.append(
-                "Note: POS generation requires a PCB file. "
-                f"Found {resolved_input.resolved_path.suffix} file, trying to find matching PCB."
+                Diagnostic(
+                    "info",
+                    "Note: POS generation requires a PCB file. "
+                    f"Found {resolved_input.resolved_path.suffix} file, trying to find matching PCB.",
+                )
             )
             resolved_input = resolver.resolve_for_wrong_file_type(resolved_input, "pcb")
             diagnostics.append(
-                f"found matching PCB {resolved_input.resolved_path.name}"
+                Diagnostic(
+                    "info", f"found matching PCB {resolved_input.resolved_path.name}"
+                )
             )
-            diagnostics.append(f"Using PCB: {resolved_input.resolved_path.name}")
+            diagnostics.append(
+                Diagnostic("info", f"Using PCB: {resolved_input.resolved_path.name}")
+            )
 
         pcb_file = resolved_input.resolved_path
         if not resolved_input.project_context:
@@ -481,7 +495,7 @@ class POSWorkflow:
         try:
             hier_files = list(project_context.get_hierarchical_schematic_files())
             if hier_files and len(hier_files) > 1:
-                diagnostics.append("Processing hierarchical design")
+                diagnostics.append(Diagnostic("info", "Processing hierarchical design"))
         except Exception:
             pass
 
@@ -491,7 +505,9 @@ class POSWorkflow:
             layer_filter=request.layer or None,
         )
         if request.verbose and request.include_dnp:
-            diagnostics.append("Including DNP components in POS output")
+            diagnostics.append(
+                Diagnostic("info", "Including DNP components in POS output")
+            )
 
         board = DefaultKiCadReaderService().read_pcb_file(pcb_file)
         pos_data = POSGenerator(placement_options).generate_pos_data(board)
@@ -507,8 +523,10 @@ class POSWorkflow:
         except Exception as exc:
             if request.verbose:
                 diagnostics.append(
-                    "Warning: could not load schematic files for merge enrichment: "
-                    f"{exc}"
+                    Diagnostic(
+                        "warning",
+                        f"Warning: could not load schematic files for merge enrichment: {exc}",
+                    )
                 )
 
         schematic_components: list[Any] = []
@@ -522,8 +540,10 @@ class POSWorkflow:
                 except Exception as exc:
                     if request.verbose:
                         diagnostics.append(
-                            "Warning: skipping schematic source for merge enrichment "
-                            f"({schematic_file}): {exc}"
+                            Diagnostic(
+                                "warning",
+                                f"Warning: skipping schematic source for merge enrichment ({schematic_file}): {exc}",
+                            )
                         )
         merge_result, merge_diagnostics = run_pos_component_merge(
             schematic_components=schematic_components,

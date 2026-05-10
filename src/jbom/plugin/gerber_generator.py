@@ -18,6 +18,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from jbom.common.types import Diagnostic
 from jbom.services.gerber_service import GerberResult
 
 __all__ = ["PcbnewGerberGenerator"]
@@ -89,7 +90,7 @@ class PcbnewGerberGenerator:
         """
         import pcbnew  # noqa: PLC0415 — only executed inside KiCad
 
-        diagnostics: list[str] = []
+        diagnostics: list[Diagnostic] = []
         artifacts_before_drill: list[Path] = []
 
         output_dir = Path(output_dir)
@@ -98,7 +99,11 @@ class PcbnewGerberGenerator:
         except OSError as exc:
             return GerberResult(
                 artifacts=(),
-                diagnostics=(f"Could not create Gerber output directory: {exc}",),
+                diagnostics=(
+                    Diagnostic(
+                        "error", f"Could not create Gerber output directory: {exc}"
+                    ),
+                ),
                 skipped=True,
                 skip_reason="output_dir_error",
             )
@@ -156,7 +161,10 @@ class PcbnewGerberGenerator:
 
                     if layer_id == undefined_layer:
                         diagnostics.append(
-                            f"Gerber: layer {layer_name!r} not present on this board — skipped."
+                            Diagnostic(
+                                "info",
+                                f"Gerber: layer {layer_name!r} not present on this board — skipped.",
+                            )
                         )
                         continue
 
@@ -183,7 +191,7 @@ class PcbnewGerberGenerator:
                     pass
 
         except Exception as exc:
-            diagnostics.append(f"Gerber plotting failed: {exc}")
+            diagnostics.append(Diagnostic("error", f"Gerber plotting failed: {exc}"))
             return GerberResult(
                 artifacts=(),
                 diagnostics=tuple(diagnostics),
@@ -218,7 +226,10 @@ class PcbnewGerberGenerator:
 
         except Exception as exc:
             diagnostics.append(
-                f"Drill file generation failed (Gerbers were written): {exc}"
+                Diagnostic(
+                    "error",
+                    f"Drill file generation failed (Gerbers were written): {exc}",
+                )
             )
             # Gerbers succeeded — return them even if drills failed.
             if artifacts_before_drill:
@@ -258,7 +269,7 @@ class PcbnewGerberGenerator:
     def _load_gerber_policy(
         self,
         fabricator: str,
-        diagnostics: list[str],
+        diagnostics: list[Diagnostic],
     ) -> tuple[list[str], bool, dict[str, Any]]:
         """Return ``(layers, protel_extensions, drill_config)`` from fabricator config.
 
@@ -289,7 +300,10 @@ class PcbnewGerberGenerator:
             return layers, protel, drill_cfg
         except Exception as exc:
             diagnostics.append(
-                f"Could not load Gerber policy for fabricator {fabricator!r} ({exc}); "
-                "using default layer set."
+                Diagnostic(
+                    "warning",
+                    f"Could not load Gerber policy for fabricator {fabricator!r} ({exc}); "
+                    "using default layer set.",
+                )
             )
             return list(_DEFAULT_LAYERS), True, {}

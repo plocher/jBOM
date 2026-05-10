@@ -151,4 +151,7 @@ def test_generation_orchestration_handles_cross_resolution_and_returns_payload(
         "/tmp/project-dir/project.bom.csv"
     )
     assert result.generation.selected_fields == ("reference", "quantity")
-    assert "found matching schematic project.kicad_sch" in result.diagnostics
+    assert any(
+        "found matching schematic project.kicad_sch" in d.message
+        for d in result.diagnostics
+    )

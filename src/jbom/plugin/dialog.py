@@ -477,7 +477,9 @@ class JBOMFabricationDialog(wx.Dialog):
                 production_dir = project_dir / "production"
                 production_dir.mkdir(parents=True, exist_ok=True)
 
-                diagnostics: list[str] = []
+                from jbom.common.types import Diagnostic as _Diag  # noqa: PLC0415
+
+                diagnostics: list[_Diag] = []
                 artifact_paths: list[Path] = []
 
                 def cancelled() -> bool:
@@ -509,7 +511,9 @@ class JBOMFabricationDialog(wx.Dialog):
                             BOMWriter.write(bom_result.generation, bom_path, force=True)
                             artifact_paths.append(bom_path)
                     except Exception as exc:
-                        diagnostics.append(f"BOM generation failed: {exc}")
+                        diagnostics.append(
+                            _Diag("error", f"BOM generation failed: {exc}")
+                        )
                 _step("bom", "done")
 
                 # ----------------------------------------------------------
@@ -536,7 +540,9 @@ class JBOMFabricationDialog(wx.Dialog):
                             POSWriter.write(pos_result.generation, pos_path, force=True)
                             artifact_paths.append(pos_path)
                     except Exception as exc:
-                        diagnostics.append(f"POS generation failed: {exc}")
+                        diagnostics.append(
+                            _Diag("error", f"POS generation failed: {exc}")
+                        )
                 _step("pos", "done")
 
                 # ----------------------------------------------------------
@@ -568,7 +574,9 @@ class JBOMFabricationDialog(wx.Dialog):
                                 )
                                 artifact_paths.append(gerber_zip)
                     except Exception as exc:
-                        diagnostics.append(f"Gerber generation failed: {exc}")
+                        diagnostics.append(
+                            _Diag("error", f"Gerber generation failed: {exc}")
+                        )
                 _step("gerbers", "done")
 
                 # Auto-save after Gerbers: PLOT_CONTROLLER.SetOutputDirectory()
@@ -604,7 +612,9 @@ class JBOMFabricationDialog(wx.Dialog):
                             archive_stem,
                         )
                     except Exception as exc:
-                        diagnostics.append(f"Backup creation failed: {exc}")
+                        diagnostics.append(
+                            _Diag("error", f"Backup creation failed: {exc}")
+                        )
                 _step("backup", "done")
 
                 # Build a lightweight result carrier for _on_complete.
@@ -682,7 +692,15 @@ class JBOMFabricationDialog(wx.Dialog):
         if stay_open:
             # Show diagnostics and switch Cancel → Close.
             if diagnostics:
-                self._diag_text.SetValue("\n".join(str(d) for d in diagnostics))
+                # Render with severity prefix for warnings/errors; info shown plain.
+                lines = []
+                for d in diagnostics:
+                    prefix = {"warning": "⚠ ", "error": "✗ "}.get(
+                        getattr(d, "severity", ""), ""
+                    )
+                    msg = getattr(d, "message", str(d))
+                    lines.append(f"{prefix}{msg}")
+                self._diag_text.SetValue("\n".join(lines))
                 self._diag_text.Show()
                 self.GetSizer().Layout()
                 self.GetSizer().Fit(self)

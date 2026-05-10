@@ -8,6 +8,7 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Mapping, Optional
 
+from jbom.common.types import Diagnostic
 from jbom.common.field_parser import (
     check_fabricator_field_completeness,
     parse_fields_argument,
@@ -137,7 +138,7 @@ class BOMResult:
     """Result contract emitted by BOM application orchestration."""
 
     mode: BOMMode
-    diagnostics: tuple[str, ...] = ()
+    diagnostics: tuple[Diagnostic, ...] = ()
     field_listing: BOMFieldListingPayload | None = None
     generation: BOMGenerationPayload | None = None
 
@@ -223,7 +224,7 @@ class BOMWorkflow:
     def _generate(self, request: BOMRequest) -> BOMResult:
         """Run BOM generation sequencing independent from CLI adapter concerns."""
 
-        diagnostics: list[str] = []
+        diagnostics: list[Diagnostic] = []
         options = GeneratorOptions(verbose=request.verbose) if request.verbose else None
         resolver = ProjectFileResolver(
             prefer_pcb=False,
@@ -234,17 +235,27 @@ class BOMWorkflow:
 
         if not resolved_input.is_schematic:
             diagnostics.append(
-                "Note: BOM generation requires a schematic file. "
-                f"Found {resolved_input.resolved_path.suffix} file, trying to find matching schematic."
+                Diagnostic(
+                    "info",
+                    "Note: BOM generation requires a schematic file. "
+                    f"Found {resolved_input.resolved_path.suffix} file, trying to find matching schematic.",
+                )
             )
             resolved_input = resolver.resolve_for_wrong_file_type(
                 resolved_input,
                 "schematic",
             )
             diagnostics.append(
-                f"found matching schematic {resolved_input.resolved_path.name}"
+                Diagnostic(
+                    "info",
+                    f"found matching schematic {resolved_input.resolved_path.name}",
+                )
             )
-            diagnostics.append(f"Using schematic: {resolved_input.resolved_path.name}")
+            diagnostics.append(
+                Diagnostic(
+                    "info", f"Using schematic: {resolved_input.resolved_path.name}"
+                )
+            )
 
         if not resolved_input.project_context:
             raise ValueError("No project context available")
@@ -261,14 +272,18 @@ class BOMWorkflow:
         schematic_files = list(hierarchical_files)
         if request.verbose and len(hierarchical_files) > 1:
             diagnostics.append(
-                "Processing hierarchical design with "
-                f"{len(hierarchical_files)} schematic files"
+                Diagnostic(
+                    "info",
+                    f"Processing hierarchical design with {len(hierarchical_files)} schematic files",
+                )
             )
 
         components = []
         for schematic_file in hierarchical_files:
             if request.verbose:
-                diagnostics.append(f"Loading components from {schematic_file.name}")
+                diagnostics.append(
+                    Diagnostic("info", f"Loading components from {schematic_file.name}")
+                )
             file_components = reader.load_components(schematic_file)
             components.extend(file_components)
 
@@ -289,7 +304,9 @@ class BOMWorkflow:
             fabricator_presets,
         )
         if request.verbose:
-            diagnostics.append(f"Selected fields: {', '.join(selected_fields)}")
+            diagnostics.append(
+                Diagnostic("info", f"Selected fields: {', '.join(selected_fields)}")
+            )
 
         if request.fields_argument:
             warning = check_fabricator_field_completeness(
@@ -298,7 +315,7 @@ class BOMWorkflow:
                 fabricator_presets,
             )
             if warning:
-                diagnostics.append(warning)
+                diagnostics.append(Diagnostic("warning", warning))
 
         filters = dict(request.filter_config)
         bom_data = generator.generate_bom_data(components, project_name, filters)
@@ -309,15 +326,20 @@ class BOMWorkflow:
         if request.inventory_files:
             if request.verbose:
                 diagnostics.append(
-                    f"Enhancing BOM with {len(request.inventory_files)} inventory file(s)"
+                    Diagnostic(
+                        "info",
+                        f"Enhancing BOM with {len(request.inventory_files)} inventory file(s)",
+                    )
                 )
             inventory_file = Path(request.inventory_files[0])
             if not inventory_file.exists():
                 raise ValueError(f"Inventory file not found: {inventory_file}")
             if len(request.inventory_files) > 1 and request.verbose:
                 diagnostics.append(
-                    "Note: Using primary inventory file "
-                    f"{inventory_file}, multi-file enhancement coming soon"
+                    Diagnostic(
+                        "info",
+                        f"Note: Using primary inventory file {inventory_file}, multi-file enhancement coming soon",
+                    )
                 )
 
         include_inventory_dnp = not filters.get("exclude_dnp", True)
@@ -368,10 +390,10 @@ def run_component_merge(
     schematic_files: list[Path],
     pcb_file: Optional[Path],
     verbose: bool,
-) -> tuple[ComponentMergeResult | None, tuple[str, ...]]:
+) -> tuple[ComponentMergeResult | None, tuple[Diagnostic, ...]]:
     """Best-effort collector/merge execution for canonical namespace enrichment."""
 
-    diagnostics: list[str] = []
+    diagnostics: list[Diagnostic] = []
     try:
         pcb_components = []
         if pcb_file is not None and pcb_file.exists():
@@ -389,15 +411,21 @@ def run_component_merge(
 
         if verbose:
             diagnostics.append(
-                "Merge model active: "
-                f"{project_graph.reference_count} references, "
-                f"{len(merge_result.mismatches)} mismatch record(s)"
+                Diagnostic(
+                    "info",
+                    "Merge model active: "
+                    f"{project_graph.reference_count} references, "
+                    f"{len(merge_result.mismatches)} mismatch record(s)",
+                )
             )
         return merge_result, tuple(diagnostics)
     except Exception as exc:
         if verbose:
             diagnostics.append(
-                f"Warning: merge model execution skipped due to error: {exc}"
+                Diagnostic(
+                    "warning",
+                    f"Warning: merge model execution skipped due to error: {exc}",
+                )
             )
         return None, tuple(diagnostics)
 
@@ -539,10 +567,10 @@ def _load_pcb_smd_lookup(
     pcb_file: Optional[Path],
     *,
     verbose: bool = False,
-) -> tuple[dict[str, bool], tuple[str, ...]]:
+) -> tuple[dict[str, bool], tuple[Diagnostic, ...]]:
     """Return reference->is_smd lookup from a KiCad PCB file plus diagnostics."""
 
-    diagnostics: list[str] = []
+    diagnostics: list[Diagnostic] = []
     if pcb_file is None or not pcb_file.exists():
         return {}, tuple(diagnostics)
 
@@ -551,7 +579,10 @@ def _load_pcb_smd_lookup(
     except Exception as exc:
         if verbose:
             diagnostics.append(
-                f"Warning: Could not read PCB mount metadata from {pcb_file}: {exc}"
+                Diagnostic(
+                    "warning",
+                    f"Warning: Could not read PCB mount metadata from {pcb_file}: {exc}",
+                )
             )
         return {}, tuple(diagnostics)
 
@@ -591,7 +622,7 @@ def enrich_bom_smd_from_project_pcb(
     pcb_file: Optional[Path],
     *,
     verbose: bool = False,
-) -> tuple[BOMData, tuple[str, ...]]:
+) -> tuple[BOMData, tuple[Diagnostic, ...]]:
     """Populate missing BOM `smd` attributes from PCB mount metadata."""
 
     smd_by_reference, diagnostics = _load_pcb_smd_lookup(pcb_file, verbose=verbose)

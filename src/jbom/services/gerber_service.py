@@ -37,6 +37,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from jbom.common.kicad_runtime import is_running_inside_kicad
+from jbom.common.types import Diagnostic
 
 __all__ = [
     "GerberExporter",
@@ -202,7 +203,7 @@ class GerberResult:
     Attributes:
         artifacts: Paths of all files written to ``output_directory``.
             Empty when ``skipped`` is ``True``.
-        diagnostics: Human-readable messages emitted during generation.
+        diagnostics: Typed diagnostic messages emitted during generation.
             Always present; may be empty on clean success.
         skipped: ``True`` when generation could not proceed (e.g. missing
             ``kicad-cli``, missing PCB file, or plugin-mode stub).
@@ -212,7 +213,7 @@ class GerberResult:
     """
 
     artifacts: tuple[Path, ...]
-    diagnostics: tuple[str, ...]
+    diagnostics: tuple[Diagnostic, ...]
     skipped: bool = False
     skip_reason: str = ""
 
@@ -255,10 +256,13 @@ class GerberExporter:
         return GerberResult(
             artifacts=(),
             diagnostics=(
-                "Gerber generation via the pcbnew Python API is not yet implemented "
-                "(tracked in issue #227). "
-                "To generate Gerbers, run `jbom gerbers` from the command line "
-                "where kicad-cli is available.",
+                Diagnostic(
+                    "warning",
+                    "Gerber generation via the pcbnew Python API is not yet implemented "
+                    "(tracked in issue #227). "
+                    "To generate Gerbers, run `jbom gerbers` from the command line "
+                    "where kicad-cli is available.",
+                ),
             ),
             skipped=True,
             skip_reason="pcbnew_api_not_implemented",
@@ -270,7 +274,7 @@ class GerberExporter:
         if kicad_cli is None:
             return GerberResult(
                 artifacts=(),
-                diagnostics=(_kicad_cli_not_found_message(),),
+                diagnostics=(Diagnostic("error", _kicad_cli_not_found_message()),),
                 skipped=True,
                 skip_reason="kicad_cli_not_found",
             )
@@ -279,8 +283,10 @@ class GerberExporter:
             return GerberResult(
                 artifacts=(),
                 diagnostics=(
-                    f"PCB file not found: {request.pcb_file}. "
-                    "Gerber generation skipped.",
+                    Diagnostic(
+                        "error",
+                        f"PCB file not found: {request.pcb_file}. Gerber generation skipped.",
+                    ),
                 ),
                 skipped=True,
                 skip_reason="pcb_file_not_found",
@@ -288,7 +294,7 @@ class GerberExporter:
 
         request.output_directory.mkdir(parents=True, exist_ok=True)
 
-        diagnostics: list[str] = []
+        diagnostics: list[Diagnostic] = []
         artifacts: list[Path] = []
 
         # --- Gerbers ---
@@ -307,7 +313,7 @@ class GerberExporter:
         gerber_args.append(str(request.pcb_file))
         err = self._run_kicad_cli(kicad_cli, args=gerber_args, step="gerbers")
         if err:
-            diagnostics.append(err)
+            diagnostics.append(Diagnostic("error", err))
             return GerberResult(
                 artifacts=(),
                 diagnostics=tuple(diagnostics),
@@ -336,7 +342,7 @@ class GerberExporter:
             drill_args.append(str(request.pcb_file))
             err = self._run_kicad_cli(kicad_cli, args=drill_args, step="drill")
             if err:
-                diagnostics.append(err)
+                diagnostics.append(Diagnostic("error", err))
             else:
                 after = set(request.output_directory.iterdir())
                 artifacts.extend(sorted(after - before))
@@ -358,7 +364,7 @@ class GerberExporter:
                 step="netlist",
             )
             if err:
-                diagnostics.append(err)
+                diagnostics.append(Diagnostic("error", err))
             else:
                 after = set(request.output_directory.iterdir())
                 artifacts.extend(sorted(after - before))
