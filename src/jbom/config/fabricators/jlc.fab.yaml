@@ -8,8 +8,11 @@ pcb_manufacturing:
 pcb_assembly:
   website: "https://jlcpcb.com/help/article/bill-of-materials-for-pcb-assembly"
 
-# JLCPCB requires CPL rotations in [0°, 360°) — negative KiCad angles are not accepted.
-rotation_convention: jlcpcb
+# CPL rotation output range for JLCPCB's assembler.
+# KiCad stores angles as arbitrary floats (CCW positive).
+# [0, 360] maps the 360° cycle to [0°, 360°): -90° → 270°, 270° stays 270°.
+# Formula: output = ((angle - lo) % 360) + lo  where lo=0.
+cpl_rotation_range: [0, 360]
 
 # Ordered supplier profile IDs (position encodes priority).
 # First entry is the fabricator's own catalog.

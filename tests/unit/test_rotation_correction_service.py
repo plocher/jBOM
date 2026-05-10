@@ -10,8 +10,9 @@ Tier 2 — Pipeline integration (synthetic pos_data rows):
     apply_rotation_corrections() wires the service into pos_data dicts;
     verifies rotation_raw clearing, offset application, diagnostic output.
 
-Tier 3 — Fabricator config (rotation_convention field):
-    jlc.fab.yaml sets rotation_convention: jlcpcb; generic/pcbway default None.
+Tier 3 — Fabricator config (cpl_rotation_range field):
+    jlc.fab.yaml sets cpl_rotation_range: [0, 360]; generic/pcbway have None.
+    apply_fab_rotation_range() folds angles into the declared window.
 
 Tier 4 — FT parity contract (real PCB + fresh FT golden file, contract marker):
     Core-ESP32-Devkit project: jBOM+corrections must match the FT-generated
@@ -29,7 +30,10 @@ from typing import Any
 import pytest
 
 from jbom.services.rotation_correction_service import RotationCorrectionService
-from jbom.application.pos_workflow import apply_rotation_corrections
+from jbom.application.pos_workflow import (
+    apply_fab_rotation_range,
+    apply_rotation_corrections,
+)
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -184,60 +188,23 @@ class TestRotationArithmetic:
         # KiCad 0° + delta -90° = -90° (no normalization)
         assert svc.apply_rotation("SPCoast:SOIC127P798X216-8N", 0.0) == -90.0
 
-    def test_no_convention_preserves_negative_kicad_angle(self) -> None:
-        """Without a convention, raw KiCad negative angles pass through."""
+    def test_apply_rotation_returns_raw_no_range_folding(self) -> None:
+        """apply_rotation always returns the raw delta-adjusted value; no range folding."""
         svc = _service_from_csv_text(
             '"Regex To Match","Rotation","Delta X","Delta Y"\n' '"^SOT-23",180,0,0\n'
         )
-        result = svc.apply_rotation("Resistor_SMD:R_0805", -90.0, convention=None)
+        # No rule match — raw KiCad -90° passes through unchanged
+        result = svc.apply_rotation("Resistor_SMD:R_0805", -90.0)
         assert result == -90.0
 
-    def test_jlcpcb_convention_converts_negative_angle_to_positive(self) -> None:
-        """convention='jlcpcb' folds negative angles into [0, 360)."""
-        svc = _service_from_csv_text(
-            '"Regex To Match","Rotation","Delta X","Delta Y"\n' '"^SOT-23",180,0,0\n'
-        )
-        # No rule match, rotation = -90; with jlcpcb: -90 % 360 = 270
-        result = svc.apply_rotation("Resistor_SMD:R_0805", -90.0, convention="jlcpcb")
-        assert result == 270.0
-
-    def test_jlcpcb_convention_wraps_rotation_above_360(self) -> None:
+    def test_delta_applied_returns_raw_even_when_out_of_0_360(self) -> None:
+        """A 450° result is returned as-is; range folding is done by apply_fab_rotation_range."""
         svc = _service_from_csv_text(
             '"Regex To Match","Rotation","Delta X","Delta Y"\n' '"^SOT-23",270,0,0\n'
         )
-        # KiCad 180° + delta 270° = 450°; jlcpcb convention → 90°
-        result = svc.apply_rotation(
-            "Package_TO_SOT_SMD:SOT-23", 180.0, convention="jlcpcb"
-        )
-        assert result == pytest.approx(90.0)
-
-    def test_jlcpcb_convention_does_not_change_already_valid_rotation(self) -> None:
-        svc = _service_from_csv_text(
-            '"Regex To Match","Rotation","Delta X","Delta Y"\n' '"^SOT-23",90,0,0\n'
-        )
-        # KiCad 90° + delta 90° = 180°; 180 in [0, 360) → stays 180
-        result = svc.apply_rotation(
-            "Package_TO_SOT_SMD:SOT-23", 90.0, convention="jlcpcb"
-        )
-        assert result == pytest.approx(180.0)
-
-    def test_zero_rotation_no_match_jlcpcb_stays_zero(self) -> None:
-        svc = _service_from_csv_text(
-            '"Regex To Match","Rotation","Delta X","Delta Y"\n' '"^SOT-23",180,0,0\n'
-        )
-        assert (
-            svc.apply_rotation("Resistor_SMD:R_0805", 0.0, convention="jlcpcb") == 0.0
-        )
-
-    def test_unknown_convention_falls_through_to_raw(self) -> None:
-        """Unrecognised convention strings preserve raw KiCad angles."""
-        svc = _service_from_csv_text(
-            '"Regex To Match","Rotation","Delta X","Delta Y"\n' '"^SOT-23",180,0,0\n'
-        )
-        result = svc.apply_rotation(
-            "Resistor_SMD:R_0805", -90.0, convention="future_fab"
-        )
-        assert result == -90.0
+        # KiCad 180° + delta 270° = 450° — no folding in apply_rotation
+        result = svc.apply_rotation("Package_TO_SOT_SMD:SOT-23", 180.0)
+        assert result == pytest.approx(450.0)
 
 
 class TestOffsets:
@@ -321,17 +288,11 @@ class TestApplyRotationCorrectionsPipeline:
         corrected, _ = apply_rotation_corrections(rows)
         assert "rotation_raw" not in corrected[0]
 
-    def test_no_convention_preserves_negative_angle(self) -> None:
-        """Without a convention, -90° for an unmatched footprint stays -90°."""
+    def test_corrections_preserve_negative_angle_without_range(self) -> None:
+        """apply_rotation_corrections does NOT fold angles; raw -90° stays -90°."""
         rows = [_pos_row("R1", "Resistor_SMD:R_0805_2012Metric", -90.0)]
-        corrected, _ = apply_rotation_corrections(rows, convention=None)
+        corrected, _ = apply_rotation_corrections(rows)
         assert corrected[0]["rotation"] == pytest.approx(-90.0)
-
-    def test_jlcpcb_convention_converts_negative_angle(self) -> None:
-        """With convention='jlcpcb', -90° for an unmatched footprint becomes 270°."""
-        rows = [_pos_row("R1", "Resistor_SMD:R_0805_2012Metric", -90.0)]
-        corrected, _ = apply_rotation_corrections(rows, convention="jlcpcb")
-        assert corrected[0]["rotation"] == pytest.approx(270.0)
 
     def test_nonzero_offset_updates_x_y(self) -> None:
         """When a DB rule has non-zero X/Y deltas, x_mm and y_mm are adjusted."""
@@ -401,36 +362,145 @@ class TestApplyRotationCorrectionsPipeline:
 
 
 # ---------------------------------------------------------------------------
-# Tier 3 — Fabricator config rotation_convention
+# Tier 3 — Fabricator config cpl_rotation_range + apply_fab_rotation_range
 # ---------------------------------------------------------------------------
 
 
-class TestFabricatorRotationConvention:
-    def test_jlc_has_jlcpcb_rotation_convention(self) -> None:
+class TestFabricatorCplRotationRange:
+    def test_jlc_has_0_360_range(self) -> None:
         from jbom.config.fabricators import load_fabricator
 
         jlc = load_fabricator("jlc")
-        assert jlc.rotation_convention == "jlcpcb"
+        assert jlc.cpl_rotation_range == (0.0, 360.0)
 
-    def test_generic_has_no_rotation_convention(self) -> None:
+    def test_generic_has_no_rotation_range(self) -> None:
         from jbom.config.fabricators import load_fabricator
 
         generic = load_fabricator("generic")
-        assert generic.rotation_convention is None
+        assert generic.cpl_rotation_range is None
 
-    def test_pcbway_has_no_rotation_convention(self) -> None:
-        """PCBWay does not specify a rotation convention."""
+    def test_pcbway_has_no_rotation_range(self) -> None:
         from jbom.config.fabricators import load_fabricator
 
         pcbway = load_fabricator("pcbway")
-        assert pcbway.rotation_convention is None
+        assert pcbway.cpl_rotation_range is None
 
-    def test_rotation_convention_defaults_none_when_absent(self) -> None:
-        """Fabricators without rotation_convention key default to None."""
+    def test_cpl_rotation_range_defaults_none(self) -> None:
         from jbom.config.fabricators import FabricatorConfig
 
-        default = FabricatorConfig.__dataclass_fields__["rotation_convention"].default
+        default = FabricatorConfig.__dataclass_fields__["cpl_rotation_range"].default
         assert default is None
+
+    def test_invalid_range_not_360_span_raises(self) -> None:
+        from jbom.config.fabricators import FabricatorConfig
+
+        with pytest.raises(ValueError, match="spanning exactly 360"):
+            FabricatorConfig.from_yaml_dict(
+                {
+                    "id": "test",
+                    "pos_columns": {"Designator": "reference"},
+                    "suppliers": ["lcsc"],
+                    "field_synonyms": {
+                        "fab_pn": {"display_name": "P", "synonyms": []},
+                        "supplier_pn": {"display_name": "S", "synonyms": []},
+                        "mpn": {"display_name": "M", "synonyms": []},
+                    },
+                    "cpl_rotation_range": [0, 180],  # only 180° span — invalid
+                },
+                default_id="test",
+            )
+
+
+class TestApplyFabRotationRange:
+    """Tests for the data-driven range-folding function (Part 2)."""
+
+    def _make_fab(self, lo: float, hi: float):
+        """Build a minimal FabricatorConfig with the given cpl_rotation_range."""
+        from jbom.config.fabricators import FabricatorConfig
+
+        cfg = FabricatorConfig(
+            id="test",
+            name="Test",
+            pos_columns={"Designator": "reference"},
+            cpl_rotation_range=(lo, hi),
+            suppliers=[],
+        )
+        return cfg
+
+    def test_none_fab_config_returns_unchanged(self) -> None:
+        rows = [_pos_row("R1", "Resistor_SMD:R_0805", -90.0)]
+        result = apply_fab_rotation_range(rows, None)
+        assert result[0]["rotation"] == pytest.approx(-90.0)
+
+    def test_fab_without_range_returns_unchanged(self) -> None:
+        from jbom.config.fabricators import FabricatorConfig
+
+        cfg = FabricatorConfig(
+            id="generic", name="Generic", pos_columns={"D": "r"}, suppliers=[]
+        )
+        rows = [_pos_row("R1", "Resistor_SMD:R_0805", -90.0)]
+        result = apply_fab_rotation_range(rows, cfg)
+        assert result[0]["rotation"] == pytest.approx(-90.0)
+
+    def test_0_360_folds_negative_to_positive(self) -> None:
+        """[0, 360]: -90° → 270°  (JLCPCB use case)."""
+        fab = self._make_fab(0, 360)
+        rows = [_pos_row("R1", "Resistor_SMD:R_0805", -90.0)]
+        result = apply_fab_rotation_range(rows, fab)
+        assert result[0]["rotation"] == pytest.approx(270.0)
+
+    def test_0_360_preserves_already_valid_positive(self) -> None:
+        fab = self._make_fab(0, 360)
+        rows = [_pos_row("R1", "Resistor_SMD:R_0805", 270.0)]
+        result = apply_fab_rotation_range(rows, fab)
+        assert result[0]["rotation"] == pytest.approx(270.0)
+
+    def test_0_360_folds_above_360(self) -> None:
+        """[0, 360]: 450° → 90°."""
+        fab = self._make_fab(0, 360)
+        rows = [_pos_row("U1", "Package_SO:SOIC-8", 450.0)]
+        result = apply_fab_rotation_range(rows, fab)
+        assert result[0]["rotation"] == pytest.approx(90.0)
+
+    def test_neg180_pos180_folds_positive_to_negative(self) -> None:
+        """[-180, 180]: 270° → -90°  (hypothetical alternative convention)."""
+        fab = self._make_fab(-180, 180)
+        rows = [_pos_row("R1", "Resistor_SMD:R_0805", 270.0)]
+        result = apply_fab_rotation_range(rows, fab)
+        assert result[0]["rotation"] == pytest.approx(-90.0)
+
+    def test_neg180_pos180_preserves_already_valid_negative(self) -> None:
+        fab = self._make_fab(-180, 180)
+        rows = [_pos_row("R1", "Resistor_SMD:R_0805", -90.0)]
+        result = apply_fab_rotation_range(rows, fab)
+        assert result[0]["rotation"] == pytest.approx(-90.0)
+
+    def test_rotation_raw_cleared_when_angle_changes(self) -> None:
+        fab = self._make_fab(0, 360)
+        rows = [_pos_row("R1", "Resistor_SMD:R_0805", -90.0, rotation_raw="-90")]
+        result = apply_fab_rotation_range(rows, fab)
+        assert "rotation_raw" not in result[0]
+
+    def test_rotation_raw_preserved_when_angle_unchanged(self) -> None:
+        """If the angle is already in range, no copy is made and rotation_raw kept."""
+        fab = self._make_fab(0, 360)
+        rows = [_pos_row("R1", "Resistor_SMD:R_0805", 90.0, rotation_raw="90")]
+        result = apply_fab_rotation_range(rows, fab)
+        # 90° is already in [0, 360) — same row object, raw preserved
+        assert "rotation_raw" in result[0]
+
+    def test_multiple_rows_all_folded(self) -> None:
+        fab = self._make_fab(0, 360)
+        rows = [
+            _pos_row("R1", "Resistor_SMD:R_0805", -90.0),
+            _pos_row("R2", "Resistor_SMD:R_0805", 0.0),
+            _pos_row("R3", "Resistor_SMD:R_0805", 180.0),
+            _pos_row("R4", "Resistor_SMD:R_0805", 270.0),
+        ]
+        result = apply_fab_rotation_range(rows, fab)
+        assert [r["rotation"] for r in result] == pytest.approx(
+            [270.0, 0.0, 180.0, 270.0]
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -482,9 +552,13 @@ class TestFTParity:
             if ft_rot is None:
                 skipped += 1
                 continue
-            corrected = svc.apply_rotation(
-                r["footprint"], r["rotation"], convention="jlcpcb"
-            )
+            corrected = svc.apply_rotation(r["footprint"], r["rotation"])
+            # Apply JLCPCB range folding (Part 2) separately
+            from jbom.config.fabricators import load_fabricator as _lf
+
+            _jlc = _lf("jlc")
+            folded_rows = apply_fab_rotation_range([{"rotation": corrected}], _jlc)
+            corrected = folded_rows[0]["rotation"]
             if abs(corrected - ft_rot) >= 0.1:
                 mismatches.append(
                     f"{ref}: kicad={r['rotation']:.1f}° → jbom={corrected:.1f}°"
