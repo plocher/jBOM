@@ -13,6 +13,9 @@ from __future__ import annotations
 __all__ = ["fill_zones_if_needed"]
 
 
+_TRACE_LOG = "/tmp/jbom_trace.log"
+
+
 def _trace(label: str, board: object | None = None) -> None:  # pragma: no cover
     """Diagnostic trace — REMOVE before production."""
     modified = ""
@@ -21,7 +24,13 @@ def _trace(label: str, board: object | None = None) -> None:  # pragma: no cover
             modified = f"  IsModified={board.IsModified()}"
         except Exception as exc:
             modified = f"  IsModified=ERR({exc})"
-    print(f"[jBOM-TRACE] {label}{modified}", flush=True)
+    msg = f"[jBOM-TRACE] {label}{modified}"
+    print(msg, flush=True)
+    try:
+        with open(_TRACE_LOG, "a") as _f:
+            _f.write(msg + "\n")
+    except Exception:
+        pass
 
 
 def fill_zones_if_needed(pcb_path: str) -> bool:

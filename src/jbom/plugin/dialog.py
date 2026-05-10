@@ -69,6 +69,9 @@ except ImportError:  # pragma: no cover
     _jbom_version = "unknown"
 
 
+_TRACE_LOG = "/tmp/jbom_trace.log"
+
+
 def _trace(label: str, board: object | None = None) -> None:  # pragma: no cover
     """Diagnostic trace — REMOVE before production."""
     modified = ""
@@ -77,7 +80,13 @@ def _trace(label: str, board: object | None = None) -> None:  # pragma: no cover
             modified = f"  IsModified={board.IsModified()}"
         except Exception as exc:
             modified = f"  IsModified=ERR({exc})"
-    print(f"[jBOM-TRACE] {label}{modified}", flush=True)
+    msg = f"[jBOM-TRACE] {label}{modified}"
+    print(msg, flush=True)
+    try:
+        with open(_TRACE_LOG, "a") as _f:
+            _f.write(msg + "\n")
+    except Exception:
+        pass
 
 
 # Steps in display order — matches storyboard progress panel.
@@ -133,6 +142,22 @@ class JBOMFabricationDialog(wx.Dialog):
         self._options: PluginOptions = (
             load_options(Path(pcb_path)) if pcb_path else PluginOptions()
         )
+
+        # Pre-read title block metadata from disk (no SWIG) so that
+        # _on_archive_template_changed can expand templates without calling
+        # board.GetProject() / board.GetTitleBlock(), which dirty the board
+        # in KiCad 10 even on read-only access.
+        self._pcb_title_meta: object | None = None  # TitleBlockMetadata | None
+        if pcb_path:
+            try:
+                from jbom.services.project_metadata import create_metadata
+
+                _pcb_file = Path(pcb_path)
+                _proj_file = _pcb_file.parent / f"{_pcb_file.parent.name}.kicad_pro"
+                _md = create_metadata(_proj_file, pcb_file=_pcb_file)
+                self._pcb_title_meta = _md.pcb_metadata
+            except Exception:
+                pass
 
         # Build UI
         outer = wx.BoxSizer(wx.VERTICAL)
@@ -379,48 +404,35 @@ class JBOMFabricationDialog(wx.Dialog):
 
         Called on every keystroke in the Archive text field.  Updates
         ``self._archive_name`` so that Generate uses the new expansion.
-        Uses the same two-step expansion as plugin.py._expand_archive_template:
-        1. pcbnew.ExpandTextVars for project-level variables
-        2. jBOM TextVariableExpander for standard title block variables
+
+        Uses file-based title block metadata cached at dialog init time
+        (``self._pcb_title_meta``) so that pcbnew SWIG calls are completely
+        avoided here.  ``board.GetProject()`` / ``board.GetTitleBlock()``
+        dirty the board in KiCad 10 even on read-only access; calling them
+        from an EVT_TEXT handler that fires in the event loop after
+        ``dlg.Show()`` was the root cause of the spurious dirty flag on
+        plugin invocation (issue #255).
         """
         if self._archive_preview is None:
             return
+        import re
+
         new_template = self._archive_tpl.GetValue()
         try:
-            import re
+            from jbom.services.text_variable_expander import expand_text_variables
 
-            import pcbnew  # noqa: PLC0415 — safe inside KiCad
-
-            board = pcbnew.GetBoard()
-
-            # Step 1: pcbnew.ExpandTextVars handles custom project vars.
-            try:
-                project = board.GetProject()
-                expanded = pcbnew.ExpandTextVars(new_template, project)
-            except Exception:
-                expanded = new_template
-
-            # Step 2: jBOM expander handles standard title block vars
-            # (${TITLE}, ${REVISION}, ${DATE}, ${COMPANY}, ${CURRENT_DATE}).
-            try:
-                from jbom.common.types import TitleBlockMetadata
-                from jbom.services.text_variable_expander import expand_text_variables
-
-                tb = board.GetTitleBlock()
-                meta = TitleBlockMetadata(
-                    title=(tb.GetTitle() or "").strip(),
-                    revision=(tb.GetRevision() or "").strip(),
-                    date=(tb.GetDate() or "").strip(),
-                    company=(tb.GetCompany() or "").strip(),
-                )
-                expanded = expand_text_variables(expanded, meta)
-            except Exception:
-                pass
-
-            cleaned = re.sub(r"[^\w.-]", "_", expanded).strip("_")
-            self._archive_name = cleaned or new_template
+            meta = self._pcb_title_meta  # pre-read in __init__, no SWIG
+            if meta is not None:
+                expanded = expand_text_variables(new_template, meta)
+                cleaned = re.sub(r"[^\w.-]", "_", expanded).strip("_")
+                self._archive_name = cleaned or new_template
+                self._archive_preview.SetLabel(self._archive_name)
+                return
         except Exception:
-            self._archive_name = new_template
+            pass
+
+        # Fallback: show template unexpanded
+        self._archive_name = new_template
         self._archive_preview.SetLabel(self._archive_name)
 
     def _on_browse_inventory(self, _evt: wx.CommandEvent) -> None:
