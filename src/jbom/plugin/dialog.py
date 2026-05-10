@@ -229,7 +229,14 @@ class JBOMFabricationDialog(wx.Dialog):
         self._cb_smd_only = _cb("SMD only (placement)", False)
         self._cb_exclude_dnp = _cb("Exclude DNP components")
         self._cb_fill_zones = _cb("Fill all zones before Gerbers")
+        self._cb_fill_zones.SetToolTip(
+            "Fill all zones before Gerbers. Skipped automatically if zones are "
+            "already current; saves the board file automatically if fill was needed."
+        )
         self._cb_backup = _cb("Create backup archive")
+        self._cb_backup.SetToolTip(
+            "Archive BOM, CPL, and Gerbers into a dated backup zip after generation."
+        )
         self._cb_open_folder = _cb("Open production folder when done")
 
         # Grayed placeholder — pending issue #249
@@ -422,6 +429,7 @@ class JBOMFabricationDialog(wx.Dialog):
         fab_id = self._selected_fabricator_id()
         inventory_path = self._inv_text.GetValue().strip()
         smd_only = self._cb_smd_only.GetValue()
+        do_backup = self._cb_backup.GetValue()
         open_folder = self._cb_open_folder.GetValue()
         debug_mode = self._cb_debug.GetValue()
         archive_stem = self._archive_name
@@ -442,7 +450,8 @@ class JBOMFabricationDialog(wx.Dialog):
             except OSError:
                 pass  # Non-fatal; proceed with generation
 
-        # Optional zone fill (in-memory, updates live KiCad view)
+        # Optional zone fill — smart: skips if zones are already current,
+        # auto-saves the board file when fill actually ran.
         if self._cb_fill_zones.GetValue():
             self._fill_zones()
 
@@ -566,7 +575,7 @@ class JBOMFabricationDialog(wx.Dialog):
                 # Step 4: Backup (all three artifacts in one archive)
                 # ----------------------------------------------------------
                 _step("backup", "start")
-                if not cancelled() and artifact_paths:
+                if do_backup and not cancelled() and artifact_paths:
                     try:
                         from jbom.services.backup_service import BackupService
 
@@ -593,26 +602,20 @@ class JBOMFabricationDialog(wx.Dialog):
         thread = threading.Thread(target=_worker, daemon=True)
         thread.start()
 
-    def _fill_zones(self) -> None:
-        """Fill board zones using the pcbnew API (in-memory only).
+    def _fill_zones(self) -> bool:
+        """Fill board zones only if actually needed; auto-save when fill runs.
 
-        Note: pcbnew.Refresh() is intentionally omitted here.  Calling it
-        marks the board as modified in KiCad's undo history, which would
-        prompt the user to save even if they only invoked the plugin and
-        cancelled.  The zone fill is reflected in the exported Gerbers;
-        the live editor view updates automatically when the board reloads.
+        Delegates to :func:`~jbom.plugin.zone_filler.fill_zones_if_needed`
+        which is extracted into a wx-free module for testability.  See that
+        function's docstring for full semantics.
+
+        Returns:
+            ``True`` if ``ZONE_FILLER.Fill()`` was called (zones were stale).
+            ``False`` if fill was skipped (zones already current).
         """
-        try:
-            import pcbnew  # noqa: PLC0415
+        from jbom.plugin.zone_filler import fill_zones_if_needed  # noqa: PLC0415
 
-            board = pcbnew.GetBoard()
-            if board:
-                filler = pcbnew.ZONE_FILLER(board)
-                filler.Fill(board.Zones())
-                # Do NOT call pcbnew.Refresh() — it sets the board's
-                # modified flag and causes an unsaved-changes prompt.
-        except Exception:  # pragma: no cover
-            pass  # Non-fatal; proceed with generation
+        return fill_zones_if_needed(self._pcb_path)
 
     # ------------------------------------------------------------------
     # Event handlers — progress panel
