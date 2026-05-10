@@ -1,6 +1,35 @@
 # CHANGELOG
 
 
+## v6.55.0 (2026-05-10)
+
+### Features
+
+* feat(plugin): Tranche 1 — skip_backup (#254), smart zone fill + auto-save (#255)
+
+#254 — FabricationRequest.skip_backup:
+- Add skip_backup: bool = False field to FabricationRequest
+- Gate FabricationWorkflow backup step on not request.skip_backup
+- Wire dialog Create backup checkbox: do_backup=self._cb_backup.GetValue()
+  gates the backup step in _worker()
+
+#255 — Smart zone fill with no-op detection and auto-save:
+- Extract fill logic to jbom.plugin.zone_filler.fill_zones_if_needed()
+  (wx-free module, testable without KiCad)
+- Skip ZONE_FILLER.Fill() entirely when all zones are already filled and
+  not stale (IsFilled=True, GetNeedRefill=False) — board state untouched
+- When fill genuinely runs: auto-save via pcbnew.SaveBoard() so source file,
+  Gerbers, and backup are all produced from the same consistent state
+- KiCad owns the dirty flag; this code never reads/writes IsModified()
+- Fallback to board.Save() for pre-KiCad-7 builds
+- Add tooltips to Fill zones and Create backup checkboxes
+
+Tests: 13 new unit tests covering skip_backup field/workflow gate and
+all fill_zones_if_needed() paths (no-op, stale, unfilled, save, no-save).
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`850000c`](https://github.com/plocher/jBOM/commit/850000ce1caa4dc524381cb8c39bc4f94e14c631))
+
+
 ## v6.54.0 (2026-05-10)
 
 ### Bug Fixes
