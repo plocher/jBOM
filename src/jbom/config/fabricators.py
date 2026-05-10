@@ -102,7 +102,7 @@ class FabricatorConfig:
     name: str
     pos_columns: Dict[str, str]  # Header -> internal field mapping
     pos_additive_default_fields: Optional[List[str]] = None
-    rotation_convention: Optional[str] = None  # Fabricator-specific angle convention
+    cpl_rotation_range: Optional[tuple] = None  # (lo, hi) — fold CPL angles to [lo, hi)
 
     # Phase 1 schema: ordered supplier profile IDs.
     # Position encodes priority (first entry is most preferred).
@@ -216,17 +216,26 @@ class FabricatorConfig:
 
         tier_overrides = _parse_tier_overrides(data.get("tier_overrides") or [])
         tier_rules = _derive_tier_rules(tier_overrides=tier_overrides)
-        rotation_convention_raw = data.get("rotation_convention")
-        rotation_convention: Optional[str] = (
-            str(rotation_convention_raw).strip() if rotation_convention_raw else None
-        )
+        cpl_rotation_range: Optional[tuple] = None
+        raw_range = data.get("cpl_rotation_range")
+        if raw_range is not None:
+            if (
+                not isinstance(raw_range, (list, tuple))
+                or len(raw_range) != 2
+                or raw_range[1] - raw_range[0] != 360
+            ):
+                raise ValueError(
+                    f"Fabricator '{pid}' cpl_rotation_range must be a two-element "
+                    f"list spanning exactly 360° — e.g. [0, 360] or [-180, 180]"
+                )
+            cpl_rotation_range = (float(raw_range[0]), float(raw_range[1]))
 
         return FabricatorConfig(
             id=pid,
             name=name,
             pos_columns=pos_columns,
             pos_additive_default_fields=pos_additive_default_fields,
-            rotation_convention=rotation_convention,
+            cpl_rotation_range=cpl_rotation_range,
             suppliers=suppliers,
             field_synonyms=field_synonyms,
             tier_rules=tier_rules,

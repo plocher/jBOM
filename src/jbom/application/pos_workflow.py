@@ -355,27 +355,78 @@ def _entry_has_dnp_marker(entry: dict[str, Any]) -> bool:
     return False
 
 
+def apply_fab_rotation_range(
+    pos_data: list[dict[str, Any]],
+    fab_config: FabricatorConfig | None,
+) -> list[dict[str, Any]]:
+    """Fold CPL rotation angles into the fabricator's required output range (Part 2 of 2).
+
+    Applies the ``cpl_rotation_range: [lo, hi]`` setting from the fabricator's
+    ``.fab.yaml``.  This step is independent of the component DB-correction
+    rules and fires for **every** CPL row regardless of whether
+    ``--apply-corrections`` is set.
+
+    The fold formula is::
+
+        output = ((angle - lo) % (hi - lo)) + lo
+
+    Examples:
+      * ``[0, 360]`` (JLCPCB): ``-90\u00b0 \u2192 270\u00b0``, ``270\u00b0 stays 270\u00b0``
+      * ``[-180, 180]`` (hypothetical): ``270\u00b0 \u2192 -90\u00b0``, ``-90\u00b0 stays -90\u00b0``
+
+    When ``fab_config`` is ``None`` or ``cpl_rotation_range`` is unset, the
+    pos_data list is returned unchanged.
+
+    Args:
+        pos_data: List of POS row dictionaries (may be corrected or raw).
+        fab_config: Loaded :class:`~jbom.config.fabricators.FabricatorConfig`,
+            or ``None`` when the fabricator is unknown.
+
+    Returns:
+        New list with ``rotation`` fields folded into the declared range and
+        ``rotation_raw`` cleared so the field resolver uses the updated float.
+    """
+    if fab_config is None or fab_config.cpl_rotation_range is None:
+        return pos_data
+
+    lo, hi = fab_config.cpl_rotation_range
+    span = hi - lo  # always 360.0 (validated at parse time)
+
+    result: list[dict[str, Any]] = []
+    for row in pos_data:
+        angle = float(row.get("rotation", 0.0) or 0.0)
+        folded = ((angle - lo) % span) + lo
+        if folded == angle:
+            result.append(row)
+        else:
+            new_row = dict(row)
+            new_row["rotation"] = folded
+            new_row.pop("rotation_raw", None)
+            result.append(new_row)
+    return result
+
+
 def apply_rotation_corrections(
     pos_data: list[dict[str, Any]],
     *,
     verbose: bool = False,
-    convention: str | None = None,
 ) -> tuple[list[dict[str, Any]], list[Diagnostic]]:
-    """Apply footprint rotation/offset corrections to POS data rows.
+    """Apply footprint DB-correction deltas to POS data rows (Part 1 of 2).
 
     Loads the :class:`~jbom.services.rotation_correction_service.RotationCorrectionService`
-    from the configured search path and applies first-match corrections to
+    from the configured search path and applies first-match deltas to
     each component's ``rotation``, ``x_mm``, and ``y_mm`` fields.
     Raw coordinate tokens (``rotation_raw``, ``x_raw``, ``y_raw``) are cleared
     so the field resolver uses the corrected float values.
 
+    Fab-specific output-range folding is handled separately by
+    :func:`apply_fab_rotation_range`, which runs unconditionally via
+    :class:`POSWorkflow`.
+
     Args:
         pos_data: List of POS row dictionaries from :class:`POSGenerator`.
         verbose: When True, emit a per-component info diagnostic for each
-            corrected row.
-        convention: Named angle convention from the fabricator's
-            ``rotation_convention`` config key (e.g. ``"jlcpcb"``).  ``None``
-            preserves raw KiCad angles.
+            DB-rule hit.
 
     Returns:
         Tuple of (corrected_pos_data, diagnostics).
@@ -396,9 +447,7 @@ def apply_rotation_corrections(
     for row in pos_data:
         footprint = str(row.get("footprint", ""))
         rotation = float(row.get("rotation", 0.0) or 0.0)
-        new_rotation = service.apply_rotation(
-            footprint, rotation, convention=convention
-        )
+        new_rotation = service.apply_rotation(footprint, rotation)
         delta_x, delta_y = service.apply_offset(footprint)
         has_db_rule = service.has_correction(footprint)
 
@@ -603,16 +652,8 @@ class POSWorkflow:
         pos_data = POSGenerator(placement_options).generate_pos_data(board)
 
         if request.apply_corrections:
-            _convention: str | None = None
-            try:
-                from jbom.config.fabricators import load_fabricator
-
-                _fab_cfg = load_fabricator(request.fabricator)
-                _convention = _fab_cfg.rotation_convention
-            except Exception:
-                pass
             pos_data, correction_diagnostics = apply_rotation_corrections(
-                pos_data, verbose=request.verbose, convention=_convention
+                pos_data, verbose=request.verbose
             )
             diagnostics.extend(correction_diagnostics)
 
@@ -660,6 +701,18 @@ class POSWorkflow:
         pos_data = enrich_pos_with_merge_namespaces(pos_data, merge_result)
         pos_data = apply_pos_dnp_filter(pos_data, include_dnp=request.include_dnp)
 
+        # Part 2: fold CPL rotations into the fab's required output range,
+        # unconditionally — fires even without --apply-corrections.
+        # Fab config resolved below; use a best-effort load here.
+        _fab_config_for_range: FabricatorConfig | None = None
+        try:
+            from jbom.config.fabricators import load_fabricator as _lf
+
+            _fab_config_for_range = _lf(request.fabricator)
+        except Exception:
+            pass
+        pos_data = apply_fab_rotation_range(pos_data, _fab_config_for_range)
+
         available_pos_fields = get_available_pos_fields(
             schematic_components=schematic_components,
             pcb_components=list(board.footprints),
@@ -706,6 +759,7 @@ __all__ = [
     "POSRequest",
     "POSResult",
     "POSWorkflow",
+    "apply_fab_rotation_range",
     "apply_pos_dnp_filter",
     "apply_rotation_corrections",
     "enrich_pos_with_merge_namespaces",

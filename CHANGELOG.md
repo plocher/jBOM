@@ -1,6 +1,31 @@
 # CHANGELOG
 
 
+## v6.56.0 (2026-05-10)
+
+### Features
+
+* feat(pos): rotation/offset correction service harvested from FT (#249)
+
+- Add src/jbom/config/transformations.csv (43 rules from Fabrication-Toolkit,
+  MIT license, with attribution header; duplicates deduplicated)
+- Add RotationCorrectionService: first-match regex semantics matching FT,
+  apply_rotation(normalize=) for fabricator-specific angle conventions,
+  apply_offset() for centroid deltas, config search-path override support
+- Add apply_corrections: bool = False to POSRequest, FabricationRequest,
+  --apply-corrections CLI flag to jbom pos
+- Wire normalize_rotation: true into jlc.fab.yaml; FabricatorConfig carries
+  the field; POSWorkflow reads it and passes normalize flag to corrections
+- Enable Apply placement corrections checkbox in plugin dialog (was grayed)
+- 42 new tests: Tier 1 unit, Tier 2 pipeline integration, Tier 3 fabricator
+  config, Tier 4 FT parity contract against Core-ESP32-Devkit (73/73 match)
+- pyproject.toml: add config/*.csv to package-data
+
+Closes #249
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`64ae811`](https://github.com/plocher/jBOM/commit/64ae8117f4c8e7d5025f8af3a6103677c0f0309e))
+
+
 ## v6.55.2 (2026-05-10)
 
 ### Refactoring
