@@ -1,6 +1,353 @@
 # CHANGELOG
 
 
+## v6.54.0 (2026-05-10)
+
+### Bug Fixes
+
+* fix(plugin): retain plugin instance at module level — prevents GC-caused re-invoke failure
+
+Root cause identified from lifecycle trace data:
+
+jBOM was using JBOMFabricationPlugin().register() — the temporary Python
+object has no references after register() returns and may be GC'd by
+CPython's reference counting.
+
+KiCad's ActionPlugin C++ registry stores a pointer to the Python-side
+ActionPlugin wrapper.  If KiCad did not increment the Python refcount when
+registering (common in SWIG bindings), CPython can collect the Python wrapper
+between invocations.  KiCad's C++ call to plugin->Run() on the second click
+then finds a dead/recycled Python object and silently suppresses the invocation
+— Run() is never called, _run_count never reaches #2.
+
+Fix: store the instance in a module-level variable _plugin_instance before
+calling register().  The module persists for the lifetime of the KiCad
+session, keeping the Python wrapper alive indefinitely.
+
+This exactly mirrors Fabrication-Toolkit's confirmed-working pattern:
+  plugin = Plugin()
+  plugin.register()
+
+The logging added in the previous commit will confirm the fix: on the second
+click we should see 'Run() invoked #2' in the scripting console.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`e39f87c`](https://github.com/plocher/jBOM/commit/e39f87cb45ab5035d10d379dba7c0873e7fa0a38))
+
+* fix(plugin): add pcbnew.Refresh() before Destroy() — toolbar re-invoke experiment
+
+Path 1 experiment: add pcbnew.Refresh() at every final teardown point via
+_refresh_and_destroy() helper, mirroring FT's updateDisplay() pattern.
+
+Hypothesis: pcbnew.Refresh() posts an update event to KiCad's wx main loop,
+causing KiCad's toolbar UpdateUI handler to re-evaluate ActionPlugin button
+state.  Without it, the button remains inert after the first dialog close.
+
+Applied at all teardown sites:
+- _on_complete else-branch (auto-close success path)
+- _close_and_open closure (debug/error Close button)
+- _on_close (X button)
+- _on_error Close button
+- Input panel Cancel button
+
+If this fixes re-invoke, root cause analysis will follow to confirm the
+mechanism (UpdateUI cycle vs. wxDialog destructor signal vs. other).
+If not, next step is diagnostic print() logging to determine whether
+Run() is called on the 2nd click or suppressed before that.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`bf354cd`](https://github.com/plocher/jBOM/commit/bf354cd435b72b46e281339f602f07a2c0c3cc6a))
+
+* fix(plugin): wx.Dialog+Show() for toolbar re-invoke; Finder opens in debug mode
+
+Bug 1 — Finder not opening when debug=True then Close:
+_on_complete stay_open branch bound Close to lambda _e: self.Destroy()
+without calling _open_folder first.  Replace with _close_and_open() closure
+that honours open_folder before destroying.
+
+Bug 2 — toolbar button only works once:
+wx.Frame.__init__ creates a wxFrame C++ object; KiCad's plugin framework
+does not re-enable the toolbar button on wxFrame destruction.  wxDialog
+destruction does trigger the re-enable.
+
+Changes:
+- JBOMFabricationDialog now inherits wx.Dialog (not wx.Frame), with
+  wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER and parent=None.
+- parent=None is required: KiCad's C++ dialog tracking triggers the
+  toolbar re-enable on wxDialog destruction regardless of Python parent;
+  a non-None parent also risks window-hierarchy interference.
+- EVT_CLOSE overrides wx.Dialog's default hide-on-close to call Destroy()
+  unconditionally (renamed _on_frame_close -> _on_close).
+- plugin.py: remove wx.FindWindowByName('PcbFrame') lookup and unused
+  wx import; dialog constructor no longer takes a parent argument.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`627baa1`](https://github.com/plocher/jBOM/commit/627baa186a67e2781b1016f817835e812d79d697))
+
+* fix(plugin): correct archive variable expansion; stop setting board modified flag
+
+dialog.py: _on_archive_template_changed now uses the same two-step expansion
+as plugin.py._expand_archive_template():
+  1. pcbnew.ExpandTextVars() for custom project variables
+  2. jBOM TextVariableExpander for standard title block vars
+     (${TITLE}, ${REVISION}, ${DATE}, etc.)
+The previous version only ran step 1; since KiCad 10's ExpandTextVars
+does not expand ${TITLE}/${REVISION} from the title block, the unexpanded
+string '_${REVISION}' was being normalised to 'TITLE___REVISION'.
+
+_fill_zones(): removed pcbnew.Refresh() call.  Refresh() sets the board's
+internal modified flag, which KiCad surfaces as an unsaved-changes prompt
+even if the user only opened and cancelled the plugin.  The zone fill is
+still applied (affects Gerber export); only the live editor redraw is skipped.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`58bb579`](https://github.com/plocher/jBOM/commit/58bb579e46efcaea4dfab37da5f6631257257a60))
+
+* fix(plugin): archive template re-expands live; add Run() traceback guard
+
+dialog.py: _on_archive_template_changed now calls pcbnew.ExpandTextVars()
+on every keystroke to re-expand the edited template, then updates both
+the preview label AND self._archive_name so Generate uses the correct stem.
+Fallback: use literal template text when pcbnew expansion is unavailable.
+
+plugin.py: wrap Run() body in try/except with traceback.print_exc(sys.stderr)
+so that second-click failures are surfaced in KiCad's Scripting Console
+rather than being silently swallowed by KiCad's plugin framework.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`6f70cb4`](https://github.com/plocher/jBOM/commit/6f70cb4f9eca2057d901c15230e9faa0b24c6416))
+
+* fix(discovery): prefer directory-name .kicad_pro when multiple exist
+
+When a project directory contains multiple .kicad_pro files (e.g. a main
+project alongside a sub-project or variant), prefer the file whose stem
+matches the directory name — the canonical KiCad convention.
+
+Falls back to alphabetically first when no directory-name match exists.
+
+This fixes POS (CPL) generation in projects with multi-.kicad_pro dirs,
+unblocking cpl.csv output in the KiCad plugin smoke test.
+
+Updated tests to reflect the new directory-name-preference behavior.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`b1354c6`](https://github.com/plocher/jBOM/commit/b1354c6990cd921ec2da96c8bf7abe967cfbebee))
+
+* fix(py39): add 'from __future__ import annotations' to files missing it
+
+KiCad 10 bundles Python 3.9 which does not support the X | Y union type
+syntax natively at runtime. PEP 563 (from __future__ import annotations)
+makes all annotations lazy strings, enabling X | None syntax in Python 3.9.
+
+Affected files (all were missing the future import):
+- services/project_discovery.py
+- services/project_file_resolver.py
+- services/inventory_reader.py
+- cli/bom.py
+- cli/parts.py
+- cli/pos.py
+
+This fixes the TypeError that prevented POSWorkflow from loading inside
+KiCad 10's embedded Python, causing cpl.csv to not be generated.
+
+Also installed PyYAML into KiCad 10's bundled Python 3.9 (dev loop only;
+PCM archive will vendor it automatically).
+
+1240 tests passing.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`9f05b6e`](https://github.com/plocher/jBOM/commit/9f05b6e788d5ced5b704fe89202678a746b11411))
+
+* fix(plugin): Close button actually closes dialog; success auto-closes
+
+Two bugs fixed:
+1. _on_complete and _on_error changed the Cancel button label to 'Close'
+   but left it bound to _on_progress_cancel which only disabled the button
+   without calling EndModal. Rebind via Unbind+Bind to EndModal instead.
+
+2. Dialog stayed open whenever diagnostics were non-empty, which is always
+   (resolution notes are collected unconditionally per ADR 0006). Changed
+   condition: stay open only on actual failure (production_dir is None) or
+   debug mode. Successful generation with diagnostics now auto-closes and
+   opens Finder as intended.
+
+Also: PyYAML confirmed missing from KiCad 10 bundled Python and installed
+manually for the dev loop. PCM archive will vendor it automatically.
+This fixes the 'only Generic fabricator' issue.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`c4af1ff`](https://github.com/plocher/jBOM/commit/c4af1ffa44e304dcc2adcbffd255d24c586cd58a))
+
+* fix(plugin): fallback archive name to PCB filename stem when title block empty
+
+When the board has no title block title, use the PCB filename stem
+(e.g. 'cpNode-Xiao-68x90' from 'cpNode-Xiao-68x90.kicad_pcb') as the
+archive name, with revision appended if present. Avoids the double-failure
+where empty title block + missing .kicad_pro at guessed path both fail
+and produce '(unknown)'.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`c55ca31`](https://github.com/plocher/jBOM/commit/c55ca315c30e3c62802cc33280d3742e06214827))
+
+* fix(plugin): skip gerbers, use pcbnew title block directly, surface config error
+
+Three smoke-test fixes:
+- skip_gerbers=True: running kicad-cli subprocess from inside a KiCad plugin
+  causes a hang on macOS (two KiCad instances conflict). Gerbers disabled until
+  native pcbnew PLOT_CONTROLLER path is implemented.
+- Archive name: use pcbnew.GetBoard().GetTitleBlock() directly instead of
+  reading from disk — faster and avoids kicad_pro filename guessing.
+  Falls back to the disk-based create_metadata() path if board lookup fails.
+- Fabricator config load error: surface the exception in the Archive label
+  instead of silently falling back to [Generic] only, making the root cause
+  visible in the KiCad dialog.
+
+1219 tests passing.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`7491c90`](https://github.com/plocher/jBOM/commit/7491c903ad32196fbb17f7b7d44814612246eb85))
+
+### Features
+
+* feat(plugin): implement PcbnewGerberGenerator; fix three #227 blockers
+
+Blocker 1 — Gerbers via pcbnew (not kicad-cli):
+- Add src/jbom/plugin/gerber_generator.py with PcbnewGerberGenerator
+  using pcbnew.PLOT_CONTROLLER + EXCELLON_WRITER (ported from FT process.py).
+- Reads fabricator config's gerbers.layers stanza; uses board.GetLayerID()
+  for layer resolution; skips UNDEFINED_LAYER with a diagnostic.
+- Lazy-imports pcbnew inside generate() so the module is importable without KiCad.
+- Remove skip_gerbers=True from dialog._worker(); replace FabricationWorkflow
+  with direct A2 orchestration: BOMWorkflow → BOMWriter, POSWorkflow → POSWriter,
+  PcbnewGerberGenerator → GerberPackager, BackupService (all three artifacts
+  in one atomic backup).
+
+Blocker 2 — Toolbar button works on every click:
+- dialog.py: JBOMFabricationDialog(wx.Dialog) → JBOMFabricationDialog(wx.Frame)
+  with FRAME_FLOAT_ON_PARENT style; EVT_CLOSE handler added.
+- Cancel button explicitly bound to self.Destroy() (wx.Frame does not
+  auto-handle wx.ID_CANCEL).
+- All EndModal() calls replaced with self.Destroy().
+- plugin.py: ShowModal() → Show(); dlg.Destroy() removed (frame owns lifecycle).
+
+Blocker 3 — Gerber zip in production/ AND in backup:
+- Direct consequence of A2 orchestration above: BackupService is called
+  once, after all three artifacts exist, producing a complete backup.
+
+Tests: 13 new tests in tests/plugin/test_pcbnew_gerber_generator.py covering
+importability, _load_gerber_policy (JLC config, fallback), UNDEFINED_LAYER
+skip, disabled-layer skip, plot_error path, artifact collection, and
+no_artifacts path. All 1253 tests pass.
+
+Closes blockers 1, 2, 3 from issue #227.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`fbd6b30`](https://github.com/plocher/jBOM/commit/fbd6b3070769778fe99d4472e62b30f850190450))
+
+* feat(plugin): archive name template with text variable expansion
+
+- TitleBlockMetadata gains date and company fields (both readers updated)
+- TextVariableExpander service: expand_text_variables(template, TitleBlockMetadata)
+  handles ${TITLE}, ${REVISION}, ${DATE}/${ISSUE_DATE}, ${CURRENT_DATE},
+  ${COMPANY}; unknown vars left unchanged for custom project variable pass-through
+- FabricationRequest gains archive_stem: str = '' pre-expanded override;
+  workflow uses it directly when set, falls back to ProjectMetadata otherwise
+- _resolve_archive_stem() helper factors out duplicate stem logic from
+  _run_gerbers_with_packaging and _create_backup
+- PluginOptions gains archive_name_template (default '${TITLE}_${REVISION}')
+- Plugin dialog: Archive row is now editable TextCtrl with italic preview label
+- plugin.py: pcbnew.ExpandTextVars() then jBOM expander fallback then PCB stem
+- 21 new TextVariableExpander unit tests; plugin options test updated
+
+1240 tests passing.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`e607d6e`](https://github.com/plocher/jBOM/commit/e607d6e1d13a35d24679ec3843f41448831a67d8))
+
+* feat(plugin): Session B — full storyboard dialog, step_callback, fabricator names (#227)
+
+Full fabrication dialog replacing the Session A stub:
+
+- src/jbom/plugin/dialog.py: JBOMFabricationDialog — two-panel layout
+  (input → progress) per plugin_ux_storyboard.md. Fabricator dropdown
+  populated from get_fabricators_with_names(), inventory file picker,
+  all storyboard checkboxes (SMD only, Exclude DNP, Fill zones, Create
+  backup [UI only — skip_backup not yet on FabricationRequest], Open folder,
+  Apply corrections [grayed/#249], Debug). Background thread via
+  threading.Thread; step_callback fires wx.CallAfter for per-step gauge
+  updates (BOM / CPL / Gerbers / Backup). Auto-close on success; stays open
+  on error or debug. Opens Finder/Explorer on production folder.
+  load_options() on open, save_options() on Generate.
+
+- src/jbom/plugin/plugin.py: Run() resolves archive name from
+  project_metadata (title block + revision) and passes it to the dialog.
+  Stub dialog reference updated to JBOMFabricationDialog.
+
+- src/jbom/application/fabrication_orchestration.py: Add optional
+  step_callback: Callable[[str, str], None] | None = None to
+  FabricationWorkflow.run(). Naked Callable — workflow stays wx-unaware.
+  Docstring records CLI forward path:
+    lambda step, status: print(f'{step}: {status}')
+  Backwards-compatible: all existing callers pass nothing (None).
+
+- src/jbom/config/fabricators.py: Add get_fabricators_with_names() →
+  list[tuple[str, str]]. Reads FabricatorConfig.name — no YAML changes.
+
+- docs/dev/guides/plugin-dev-setup.md: symlink command, activation steps,
+  sys.path bootstrap explanation, PCM build command, troubleshooting.
+
+New tests (1219 total, +16 from Session B):
+  tests/plugin/test_fabricators_with_names.py — 8 tests
+  tests/services/test_fabrication_step_callback.py — 8 tests
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`ca7606c`](https://github.com/plocher/jBOM/commit/ca7606c7e644d2838e3f33a23368aa1b4cb9d1bc))
+
+* feat(plugin): Session A POC — loadable stub ActionPlugin, options, PCM builder (#227)
+
+Implements issue #227 Session A scope:
+
+- src/jbom/plugin/__init__.py: FT-style guard registers ActionPlugin only
+  inside KiCad (pcbnew in sys.modules). Safe no-op in CLI / test environments.
+  sys.path bootstrap supports both PCM install (vendored jbom/) and dev-loop
+  (symlink src/jbom/plugin → com_spcoast_jbom in KiCad scripting folder).
+
+- src/jbom/plugin/plugin.py: JBOMFabricationPlugin(pcbnew.ActionPlugin)
+  with defaults() (toolbar button, name, description) and Run() that opens
+  the stub dialog. Only imported inside KiCad.
+
+- src/jbom/plugin/dialog.py: JBOMStubDialog — wx.Dialog showing jBOM version
+  and PCB path, with Cancel button. Validates plugin is loadable and clickable.
+  Full storyboard dialog (fabricator dropdown, inventory picker, progress view)
+  deferred to Session B.
+
+- src/jbom/plugin/options.py: PluginOptions dataclass + load_options() /
+  save_options() using git-root resolution → .jbom/jbom-options.json, with
+  ~/.jbom/ fallback. Persists fabricator and inventory_path.
+
+- metadata.json: PCM addon manifest for com.spcoast.jbom. Placeholder
+  download_sha256 / sizes; updated by build script with --update-metadata.
+
+- scripts/build_pcm_package.py: PCM archive builder (stdlib only). Copies
+  plugin adapter files + vendored jbom core + sexpdata + yaml (pure-Python only,
+  compiled .so/.pyd excluded) into the PCM plugins/ layout, zips to
+  dist/jbom-pcm-{version}.zip, prints sha256 and sizes.
+
+- tests/plugin/: 32 new tests covering guard importability (pcbnew absent),
+  _is_standalone sentinel, inner module isolation, CLI independence, and full
+  PluginOptions save/load round-trip with malformed-JSON resilience.
+
+Dev-loop setup (macOS KiCad 9):
+  ln -s $PWD/src/jbom/plugin \
+    ~/Library/Application\ Support/kicad/9.0/scripting/plugins/com_spcoast_jbom
+
+  Note: use com_spcoast_jbom (not jbom) as the symlink name to avoid
+  a sys.path naming conflict with the importable jbom package.
+
+Relates to ADR 0007 Phase 2, ADR 0005 Phase 4.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`ec4f570`](https://github.com/plocher/jBOM/commit/ec4f570efb514b73314dea34471b3dd0982129b7))
+
+### Unknown
+
+* diag(plugin): add lifecycle logging for toolbar re-invoke investigation
+
+Adds [jBOM plugin] / [jBOM dialog] print() traces to stderr at every
+key lifecycle point, visible in KiCad's scripting console
+(Tools -> Scripting Console).
+
+Second click: presence/absence of Run() #2 is the key data point.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`5be647a`](https://github.com/plocher/jBOM/commit/5be647a12be3c9319d4412f9e31d57bcdcd7b2b6))
+
+
 ## v6.53.0 (2026-05-08)
 
 ### Features
