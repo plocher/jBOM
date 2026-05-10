@@ -571,6 +571,24 @@ class JBOMFabricationDialog(wx.Dialog):
                         diagnostics.append(f"Gerber generation failed: {exc}")
                 _step("gerbers", "done")
 
+                # Auto-save after Gerbers: PLOT_CONTROLLER.SetOutputDirectory()
+                # and related setters write into the board's persisted plot
+                # settings, dirtying the board even though no design data
+                # changed.  Saving here keeps the board file in sync with
+                # the generated Gerbers and clears the dirty flag — consistent
+                # with the zone-fill auto-save rationale: running a fab
+                # pipeline means you intend to save.
+                if pcb_path and not cancelled():
+                    try:
+                        import pcbnew as _pcb  # noqa: PLC0415
+
+                        _pcb.SaveBoard(pcb_path, board)
+                    except Exception:
+                        try:
+                            board.Save(pcb_path)
+                        except Exception:
+                            pass  # Non-fatal
+
                 # ----------------------------------------------------------
                 # Step 4: Backup (all three artifacts in one archive)
                 # ----------------------------------------------------------
