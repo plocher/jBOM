@@ -97,67 +97,77 @@ Migration shim: `c:` → `sch:`, `p:` → `pcb:`, `i:` → `inv:` are accepted w
 a deprecation log warning during the ADR 0008 shim period. `k:` is replaced by
 the expression mechanism (D2).
 
-### D2. Value expressions via `${token}` interpolation
+### D2. Value expressions — field references and Python expressions
 
-A `bom_columns` value (or any config value that accepts a field reference) may
-be either:
+A `bom_columns` value (or any config value that accepts a field reference) is
+one of two forms. `:` means exactly one thing throughout: namespace separator.
 
 **A plain field reference** — resolved directly:
 ```yaml
 bom_columns:
-  "Designator": "reference"          # canonical computed field
-  "Package":    "inv:package"        # inventory namespace
-  "Footprint":  "pcb:footprint"      # PCB namespace
+  "Designator": "reference"        # canonical computed field (no namespace)
+  "Package":    "inv:package"      # inventory namespace
+  "Footprint":  "pcb:footprint"    # PCB namespace
 ```
 
-**A Python expression with `${field_ref}` interpolation** — evaluated to produce
-the output value:
+**A Python expression containing field references** — evaluated to produce the
+output value:
 ```yaml
 bom_columns:
-  # Strip KiCad library prefix from footprint (replaces "p:k:footprint")
-  "Footprint": "kicad_strip_library_prefix(${pcb:footprint})"
+  # Strip KiCad library prefix (replaces "p:k:footprint")
+  "Footprint": "kicad_strip_library_prefix(pcb:footprint)"
 
   # Combine two fields
-  "Label":     "f'{${sch:reference}} ({${inv:manufacturer}})'"
+  "Label":     "f'{reference} ({inv:manufacturer})'"
 
   # Arbitrary regex
-  "PN":        "re.sub(r'\\s+', '-', ${inv:manufacturer_part}).upper()"
+  "PN":        "re.sub(r'\\s+', '-', inv:manufacturer_part).upper()"
+
+  # User-defined named transform (see D7)
+  "Footprint": "strip_lib_prefix(pcb:footprint)"
 ```
+
+**Why no `${}` decoration:** in Python expression context, `word:word`
+(namespace-qualified field references) is syntactically invalid Python. The
+preprocessor identifies and binds these unambiguously without additional
+decoration. Canonical field names are valid Python identifiers and are bound
+directly in the eval namespace.
 
 **Expression evaluation contract:**
 
-1. All `${namespace:field}` and `${canonical_field}` tokens are extracted and
-   resolved to string values. Each is bound as a local variable in the
-   evaluation namespace (`:` replaced by `_` in the variable name, e.g.
-   `${pcb:footprint}` → `pcb_footprint`).
+1. Scan the expression string for `word:word` patterns. Each `namespace:field`
+   token is syntactically invalid Python and is unambiguously a field reference.
+   Resolve each to its string value and bind as `namespace_field` in the local
+   variable namespace.
 
-2. The token references in the expression string are replaced with the
-   corresponding variable names.
+2. Canonical field names referenced in the expression are bound by name in the
+   local namespace (e.g., `reference` → the resolved reference value).
 
-3. The resulting string is parsed with `ast.parse(expr, mode='eval')`. This
-   rejects statements, loop constructs, function definitions, and `import`
-   statements at the grammar level — before any evaluation.
+3. Replace `namespace:field` tokens in the expression string with their
+   `namespace_field` variable names. The result is a valid Python expression.
 
-4. The compiled expression is evaluated in a restricted namespace containing:
-   - The resolved token variables
+4. Parse with `ast.parse(expr, mode='eval')`. This rejects statements, loop
+   constructs, function definitions, and `import` statements at the grammar
+   level — before any evaluation.
+
+5. Evaluate in a restricted namespace containing:
+   - The resolved field variables
    - `re` (Python's standard `re` module)
-   - The jBOM expression stdlib (see D3)
+   - The jBOM expression stdlib and user-defined transforms (see D3, D7)
    - No `__builtins__`
 
-5. The return value is coerced to `str`. Exceptions during evaluation surface as
-   a `FieldExpressionError` with the offending expression and token values in
-   the message.
+6. The return value is coerced to `str`. Exceptions surface as a
+   `FieldExpressionError` with the offending expression and field values.
 
-Expressions are detected by the presence of `${...}` in the value string.
-Values without `${...}` are treated as plain field references regardless of
-content.
+**Detection:** a value is an expression if it is not a plain field reference —
+i.e., it contains characters outside `(namespace:)?fieldname` (parentheses,
+quotes, operators, etc.). Plain field references are always tried first.
 
 ### D3. jBOM expression stdlib
 
 A small set of jBOM-curated helper functions is available in every expression
 evaluation namespace. These are regular Python functions (not magic syntax),
-documented, and versioned with jBOM. They provide convenience for common
-jBOM-specific transformations without requiring users to write raw regex.
+documented, and versioned with jBOM.
 
 v1 stdlib:
 ```
@@ -168,11 +178,9 @@ kicad_strip_library_prefix(s)   → re.sub(r'^[^:]+:', '', s)
 
 Users are not limited to the stdlib — `re.sub`, `str` methods, and other
 Python expression constructs work directly. The stdlib is an additive
-convenience layer, not a replacement vocabulary.
-
-New stdlib functions are added as part of jBOM releases. Users who need a
-transformation not in the stdlib can express it directly in the expression
-without waiting for a release.
+convenience layer, not a replacement vocabulary. Users who need a named
+transform not in the stdlib can define it in their own config (see D7)
+without waiting for a jBOM release.
 
 ### D4. Canonical field name registry
 
@@ -233,6 +241,42 @@ same `FieldRefResolver` used by the config loader.
 This makes the CLI and config syntaxes a single documented language rather than
 two diverging conventions.
 
+### D7. User-defined named transforms via `transforms:` stanza
+
+Any `.jbom.yaml` file may define named single-argument transform functions in a
+top-level `transforms:` stanza:
+
+```yaml
+# common.jbom.yaml — team-wide named transforms
+transforms:
+  strip_lib_prefix:
+    expr: "re.sub(r'^[^:]+:', '', value)"
+    doc:  "Remove KiCad library nickname prefix from symbol or footprint"
+
+  normalize_pn:
+    expr: "value.replace(' ', '-').upper()"
+    doc:  "Normalize part number to hyphenated uppercase"
+```
+
+`value` is the implicit single argument. `expr` is validated with
+`ast.parse(mode='eval')` at config load time — malformed transform expressions
+fail early, not at BOM generation time.
+
+Each defined transform is compiled to a single-argument callable and added to
+the expression evaluation namespace alongside the jBOM stdlib (D3). From the
+evaluator's perspective, user-defined and jBOM-stdlib transforms are
+indistinguishable — they are the same kind of thing.
+
+`transforms:` follows the same inheritance rules as all other config content:
+`extends:` chains propagate parent transforms to child profiles; a
+`common.jbom.yaml` at each search-path level contributes ambient transforms
+available to all configs at that level and below. Transform names must not
+collide with jBOM stdlib names (validated at load time with a warning).
+
+This allows `--fields` CLI arguments and config `bom_columns` values to
+reference org-defined transforms by name, enabling a team's `common.jbom.yaml`
+to publish a shared transform library without requiring a jBOM release.
+
 ## Options Considered
 
 ### Option 1 — Named transform vocabulary (rejected)
@@ -251,9 +295,9 @@ registration.
 
 Rejected because: Jinja2 solves document templating (with looping constructs,
 block inheritance, macros). That is more capability — and more cognitive
-surface area — than field value expression requires. The `${token}` +
-`ast.parse(mode='eval')` approach provides the needed expression power without
-the baggage, and without a new dependency.
+surface area — than field value expression requires. The `namespace:field`
+preprocessing + `ast.parse(mode='eval')` approach provides the needed expression
+power without the baggage, and without a new dependency.
 
 ### Option 3 — Pipe model for chained transforms (deferred)
 `"Footprint": "pcb:footprint | strip_kicad_library_prefix | upper"` — a
@@ -263,31 +307,43 @@ Not adopted as the primary mechanism; a pipeline model could be layered on top
 of the expression mechanism in a future ADR if use cases emerge. The expression
 mechanism (D2) handles multi-step transforms natively.
 
-### Option 4 — `${token}` + `ast.parse(mode='eval')` (accepted — this ADR)
-Described in D1–D6 above.
+### Option 3b — `transform:namespace:field` shorthand syntax (rejected)
+`"Footprint": "strip_lib_prefix:pcb:footprint"` — a compact positional syntax
+for applying a named transform to a single field reference.
+
+Rejected because: this overloads `:` with two meanings simultaneously —
+namespace separator AND "apply transform to field". `pcb:` is a namespace
+qualifier; is `strip_lib_prefix:` also a "transform qualifier"? The parser
+would need external knowledge (the namespace vocabulary) to disambiguate,
+reintroducing exactly the kind of implicit magic this ADR is designed to
+eliminate. Function call syntax `strip_lib_prefix(pcb:footprint)` is
+unambiguous, already covered by the expression mechanism, and reads as
+standard Python.
+
+### Option 4 — `namespace:field` preprocessing + `ast.parse(mode='eval')` (accepted — this ADR)
+Described in D1–D7 above.
 
 ## Decision
 
 Adopt the field reference system and value expression mechanism as described
-in D1–D6.
+in D1–D7.
 
 Key properties:
 - Three explicit source namespaces (`sch:`, `pcb:`, `inv:`) replace opaque
-  single-character prefixes.
+  single-character prefixes. `:` means exactly one thing: namespace separator.
 - Canonical computed fields carry no namespace prefix and are defined in a
   single authoritative registry.
-- `${token}` interpolation + `ast.parse(mode='eval')` provides safe, user-
-  extensible field value transformation without requiring jBOM releases for
-  common string manipulation needs.
-- A small jBOM expression stdlib provides named convenience functions without
-  replacing the general expression mechanism.
+- `namespace:field` tokens are syntactically invalid Python and are
+  unambiguously preprocessed before `ast.parse(mode='eval')`. No `${}` decoration.
+- A jBOM expression stdlib provides named convenience functions; users extend
+  it via the `transforms:` stanza in any `.jbom.yaml` without a jBOM release.
 - `field_synonyms` is unified to one structure and one parser across all stanzas.
 - CLI `--fields` and config `bom_columns` share one field reference language.
 
 ## Consequences
 
 ### Positive
-- `p:k:footprint` becomes `kicad_strip_library_prefix(${pcb:footprint})` —
+- `p:k:footprint` becomes `kicad_strip_library_prefix(pcb:footprint)` —
   self-documenting, no magic characters, extensible to any regex the user needs.
 - Users can combine fields, apply regex, and format output values without waiting
   for jBOM releases.
@@ -306,6 +362,9 @@ Key properties:
   restriction, error surfacing).
 - The jBOM expression stdlib must be documented, versioned, and not broken
   across jBOM releases (same API stability bar as the rest of the config API).
+- The `transforms:` stanza adds a new user-facing config concept that must be
+  validated, documented, and handled by the merge engine (inherited via
+  `extends:` and `common.jbom.yaml`).
 
 ### Risks and Mitigations
 - **Risk**: A future Python version changes `ast.parse` expression grammar or
@@ -331,9 +390,6 @@ Key properties:
    component category tokens (`RES`, `res`, `resistor`) are out of scope here.
 3. **Pipe-chained transforms** — reserved for future consideration once
    expression usage patterns are observed in practice.
-4. **User-registerable stdlib extensions** — allowing `common.jbom.yaml` to
-   register named helper functions into the expression stdlib. Deferred until
-   concrete use cases emerge beyond what raw `re` expressions cover.
 
 ## Implementation Phases
 
@@ -343,9 +399,11 @@ Key properties:
 - `src/jbom/config/field_ref.py` — `FieldRef` dataclass (namespace, name,
   expression); `FieldRefResolver.resolve(ref, context)` → value.
 - `src/jbom/config/field_expr.py` — `FieldExpressionEvaluator`:
-  - `${token}` extraction and local variable binding
+  - `namespace:field` token scanning and local variable binding
   - `ast.parse(mode='eval')` + restricted eval
   - jBOM expression stdlib registration
+  - `transforms:` stanza parsing: validate `expr` at load time, compile to
+    callable, add to eval namespace
 - `src/jbom/config/field_synonyms.py` — single shared `parse_field_synonyms()`
   replacing the three divergent parsers.
 - Update `fabricators.py`, `defaults.py`, `suppliers.py` to use shared parser.
