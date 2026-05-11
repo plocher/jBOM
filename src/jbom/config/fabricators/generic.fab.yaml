@@ -46,6 +46,10 @@ pos_columns:
   "Rotation": "rotation"
   "Package": "package"
 
+# Whether jbom fab / plugin should generate designators.csv by default.
+# Set to true in a custom fab YAML to enable for all runs with that fabricator.
+generate_designators: false
+
 # Baseline field set used when users append fields via +syntax (for example,
 # --fields +Value) so additive behavior stays profile-driven and predictable.
 pos_additive_default_fields:
