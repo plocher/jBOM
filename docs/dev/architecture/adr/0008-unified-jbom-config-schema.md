@@ -95,7 +95,50 @@ named configs; the `generic` profile is the implicit fallback when no flag
 is given. CI tests that probe edge cases use explicit flags; tests of generic
 behavior rely on the implied `generic` profile.
 
-## Design Decisions
+## Options Considered
+
+### Option 1 — Status quo: four separate file types (rejected)
+Continue with `*.fab.yaml`, `*.supplier.yaml`, `*.defaults.yaml`, `*.yaml`
+(presets). Low migration cost. Does not address any of the user stories;
+partial-override and cross-stanza composition remain impossible.
+
+### Option 2 — Unified format, dimension flags for stanza selection (rejected)
+Introduce `--fabricator NAME`, `--defaults NAME`, `--supplier NAME` as
+explicit dimension-selecting CLI flags. Each flag extracts only its named
+stanza from the loaded file. Conflicting stanzas from multiple loaded files
+are resolved by flag precedence.
+
+Rejected because: the combinatorics are complex (a 3-file × 3-stanza matrix
+with non-obvious precedence rules); the cross-cutting use case (org tolerance
+floor) requires an additional flag every time; the `common.jbom.yaml` mechanism
+(D5) addresses the same use cases with zero new flags.
+
+### Option 3 — Unified format, no multi-stanza files (rejected)
+Allow `.jbom.yaml` suffix but require each file to contain exactly one stanza.
+Renames `jlc.fab.yaml` to `jlc.jbom.yaml` with `fab:` stanza, etc. Eliminates
+stanza ambiguity.
+
+Rejected because: it does not address Story D (single composite profile per
+fabricator) and does not simplify anything over the current 4-type system
+except the naming convention.
+
+### Option 4 — Unified format, command-scoped stanza selection (accepted — this ADR)
+Described in Decision Details below (D1–D8).
+
+## Decision
+
+Adopt the unified `*.jbom.yaml` schema as described in D1–D8.
+
+Key properties of the accepted design:
+- One file suffix, one inheritance model, one search path, one merge engine.
+- Command provides stanza scope; no dimension-specific CLI flags in v1.
+- `common.jbom.yaml` per search-path level provides composable ambient defaults.
+- `policy.jbom.yaml` per search-path level provides mandate enforcement (deferred).
+- `extends:` + deep-merge + list-replace + `null`-delete enables partial override.
+- `generic.jbom.yaml` consolidates all current generic config files.
+- Legacy file types and prefixes retired atomically with the new loader — no shim.
+
+### Decision Details
 
 ### D1. Unified `*.jbom.yaml` file format
 
@@ -346,49 +389,6 @@ removed as part of this feature branch — not deferred to a follow-on.
 
 `pyproject.toml` `[tool.hatch.build.targets.wheel] include` patterns are
 updated to `*.jbom.yaml` in the same commit.
-
-## Options Considered
-
-### Option 1 — Status quo: four separate file types (rejected)
-Continue with `*.fab.yaml`, `*.supplier.yaml`, `*.defaults.yaml`, `*.yaml`
-(presets). Low migration cost. Does not address any of the user stories;
-partial-override and cross-stanza composition remain impossible.
-
-### Option 2 — Unified format, dimension flags for stanza selection (rejected)
-Introduce `--fabricator NAME`, `--defaults NAME`, `--supplier NAME` as
-explicit dimension-selecting CLI flags. Each flag extracts only its named
-stanza from the loaded file. Conflicting stanzas from multiple loaded files
-are resolved by flag precedence.
-
-Rejected because: the combinatorics are complex (a 3-file × 3-stanza matrix
-with non-obvious precedence rules); the cross-cutting use case (org tolerance
-floor) requires an additional flag every time; the `common.jbom.yaml` mechanism
-(D5) addresses the same use cases with zero new flags.
-
-### Option 3 — Unified format, no multi-stanza files (rejected)
-Allow `.jbom.yaml` suffix but require each file to contain exactly one stanza.
-Renames `jlc.fab.yaml` to `jlc.jbom.yaml` with `fab:` stanza, etc. Eliminates
-stanza ambiguity.
-
-Rejected because: it does not address Story D (single composite profile per
-fabricator) and does not simplify anything over the current 4-type system
-except the naming convention.
-
-### Option 4 — Unified format, command-scoped stanza selection (accepted — this ADR)
-Described in D1–D8 above.
-
-## Decision
-
-Adopt the unified `*.jbom.yaml` schema as described in D1–D8.
-
-Key properties of the accepted design:
-- One file suffix, one inheritance model, one search path, one merge engine.
-- Command provides stanza scope; no dimension-specific CLI flags in v1.
-- `common.jbom.yaml` per search-path level provides composable ambient defaults.
-- `policy.jbom.yaml` per search-path level provides mandate enforcement (deferred).
-- `extends:` + deep-merge + list-replace + `null`-delete enables partial override.
-- `generic.jbom.yaml` consolidates all current generic config files.
-- Legacy file types and prefixes retired atomically with the new loader — no shim.
 
 ## Consequences
 
