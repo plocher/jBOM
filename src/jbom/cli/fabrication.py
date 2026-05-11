@@ -105,6 +105,18 @@ def register_command(subparsers) -> None:  # type: ignore[type-arg]
         help="Inventory CSV to enhance BOM (repeatable)",
     )
 
+    # Designators opt-in
+    parser.add_argument(
+        "--designators",
+        action="store_true",
+        default=False,
+        help=(
+            "Generate designators.csv listing all PCB reference designators "
+            "(REF:COUNT format).  Default is set by the fabricator config "
+            "(generic: off)."
+        ),
+    )
+
     # POS options (forwarded to POS orchestration)
     parser.add_argument(
         "--smd-only",
@@ -207,6 +219,20 @@ def _build_fab_job_request(args) -> JobRequest:  # type: ignore[type-arg]
     )
 
 
+def _resolve_generate_designators(args) -> bool:  # type: ignore[type-arg]
+    """Return effective generate_designators flag: CLI arg or fabricator config default."""
+    if bool(getattr(args, "designators", False)):
+        return True
+    # Fall back to fabricator config default
+    try:
+        from jbom.config.fabricators import load_fabricator
+
+        fab_config = load_fabricator(resolve_fabricator_from_args(args))
+        return fab_config.generate_designators
+    except Exception:
+        return False
+
+
 def _execute_fab_command(args) -> int:  # type: ignore[type-arg]
     """Build FabricationRequest, run FabricationWorkflow, and report outputs."""
     try:
@@ -224,6 +250,7 @@ def _execute_fab_command(args) -> int:  # type: ignore[type-arg]
             pos_layer=str(args.layer or ""),
             pos_origin=str(args.origin or "board"),
             debug=bool(args.debug),
+            generate_designators=_resolve_generate_designators(args),
         )
 
         result = FabricationWorkflow().run(request)

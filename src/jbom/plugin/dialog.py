@@ -265,6 +265,21 @@ class JBOMFabricationDialog(wx.Dialog):
             "in ~/.jbom/ or <project>/.jbom/."
         )
 
+        # Default from fabricator config (generic: False; fab.yaml can set True)
+        _des_default = False
+        try:
+            from jbom.config.fabricators import load_fabricator as _lf
+
+            _des_default = _lf(self._options.fabricator).generate_designators
+        except Exception:
+            pass
+        self._cb_designators = _cb("Generate designators.csv", _des_default)
+        self._cb_designators.SetToolTip(
+            "Write production/designators.csv listing all PCB reference "
+            "designators in REF:COUNT format.  Default is set by the "
+            "fabricator config (generic: off)."
+        )
+
         self._cb_debug = _cb("Keep intermediate files (debug)", False)
 
         for cb in (
@@ -274,6 +289,7 @@ class JBOMFabricationDialog(wx.Dialog):
             self._cb_backup,
             self._cb_open_folder,
             self._cb_corrections,
+            self._cb_designators,
             self._cb_debug,
         ):
             check_sizer.Add(cb, flag=wx.LEFT | wx.BOTTOM, border=4)
@@ -550,6 +566,26 @@ class JBOMFabricationDialog(wx.Dialog):
                             _Diag("error", f"POS generation failed: {exc}")
                         )
                 _step("pos", "done")
+
+                # ----------------------------------------------------------
+                # Step 2.5: Designators CSV (optional, gated by checkbox)
+                # ----------------------------------------------------------
+                if self._cb_designators.GetValue() and not cancelled():
+                    try:
+                        from jbom.services.designators_writer import (
+                            DesignatorsWriter,
+                        )
+
+                        refs = [fp.GetReference() for fp in board.GetFootprints()]
+                        DesignatorsWriter.write(
+                            refs,
+                            production_dir / "designators.csv",
+                            force=True,
+                        )
+                    except Exception as exc:
+                        diagnostics.append(
+                            _Diag("error", f"Designators generation failed: {exc}")
+                        )
 
                 # ----------------------------------------------------------
                 # Step 3: Gerbers (pcbnew PLOT_CONTROLLER — no kicad-cli)

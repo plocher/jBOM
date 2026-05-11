@@ -103,6 +103,7 @@ class FabricatorConfig:
     pos_columns: Dict[str, str]  # Header -> internal field mapping
     pos_additive_default_fields: Optional[List[str]] = None
     cpl_rotation_range: Optional[tuple] = None  # (lo, hi) — fold CPL angles to [lo, hi)
+    generate_designators: bool = False  # When True, fab run produces designators.csv
 
     # Phase 1 schema: ordered supplier profile IDs.
     # Position encodes priority (first entry is most preferred).
@@ -230,12 +231,15 @@ class FabricatorConfig:
                 )
             cpl_rotation_range = (float(raw_range[0]), float(raw_range[1]))
 
+        generate_designators = bool(data.get("generate_designators", False))
+
         return FabricatorConfig(
             id=pid,
             name=name,
             pos_columns=pos_columns,
             pos_additive_default_fields=pos_additive_default_fields,
             cpl_rotation_range=cpl_rotation_range,
+            generate_designators=generate_designators,
             suppliers=suppliers,
             field_synonyms=field_synonyms,
             tier_rules=tier_rules,
