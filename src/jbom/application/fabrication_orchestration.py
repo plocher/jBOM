@@ -105,6 +105,8 @@ class FabricationRequest:
             the workflow derive it from ``ProjectMetadata``.
         apply_corrections: When ``True`` apply footprint rotation/offset
             corrections (from ``transformations.csv``) to the CPL output.
+        generate_designators: When ``True`` write ``production/designators.csv``
+            listing all PCB reference designators in ``REF:COUNT`` format.
     """
 
     input_path: str
@@ -124,6 +126,7 @@ class FabricationRequest:
     debug: bool = False
     archive_stem: str = ""
     apply_corrections: bool = False
+    generate_designators: bool = False
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -163,6 +166,9 @@ class FabricationRequest:
         object.__setattr__(self, "debug", bool(self.debug))
         object.__setattr__(self, "archive_stem", str(self.archive_stem or "").strip())
         object.__setattr__(self, "apply_corrections", bool(self.apply_corrections))
+        object.__setattr__(
+            self, "generate_designators", bool(self.generate_designators)
+        )
 
 
 @dataclass(frozen=True)
@@ -378,6 +384,25 @@ class FabricationWorkflow:
                     )
 
         # ------------------------------------------------------------------
+        # Step 2.5: Designators CSV (gated on request flag; skipped in dry_run)
+        # ------------------------------------------------------------------
+        if (
+            request.generate_designators
+            and not request.dry_run
+            and production_dir is not None
+        ):
+            des_path, des_diagnostics = self._run_designators(request, production_dir)
+            diagnostics.extend(des_diagnostics)
+            if des_path is not None:
+                artifacts.append(
+                    FabricationArtifact(
+                        artifact_type="designators",
+                        path=des_path,
+                        media_type="text/plain",
+                    )
+                )
+
+        # ------------------------------------------------------------------
         # Step 3: Gerbers (skipped in dry_run mode)
         # ------------------------------------------------------------------
         if not request.skip_gerbers:
@@ -481,6 +506,46 @@ class FabricationWorkflow:
             return result, diagnostics
         except Exception as exc:
             diagnostics.append(Diagnostic("error", f"POS generation failed: {exc}"))
+            return None, diagnostics
+
+    def _run_designators(
+        self,
+        request: FabricationRequest,
+        production_dir: Path,
+    ) -> tuple[Path | None, list[Diagnostic]]:
+        """Read PCB footprints and write production/designators.csv.
+
+        Returns:
+            ``(designators_path, diagnostics)`` where path is None on failure.
+        """
+        diagnostics: list[Diagnostic] = []
+        try:
+            from jbom.services.designators_writer import DesignatorsWriter
+            from jbom.services.pcb_reader import DefaultKiCadReaderService
+
+            pcb_file, _project_dir, resolve_diags = self._resolve_pcb_and_project_dir(
+                request
+            )
+            diagnostics.extend(resolve_diags)
+            if pcb_file is None or not pcb_file.exists():
+                diagnostics.append(
+                    Diagnostic("warning", "designators.csv skipped: PCB file not found")
+                )
+                return None, diagnostics
+
+            board = DefaultKiCadReaderService().read_pcb_file(pcb_file)
+            references = [fp.reference for fp in board.footprints]
+            result = DesignatorsWriter.write(
+                references,
+                production_dir / "designators.csv",
+                force=True,
+            )
+            diagnostics.extend(result.diagnostics)
+            return result.path, diagnostics
+        except Exception as exc:
+            diagnostics.append(
+                Diagnostic("error", f"Designators generation failed: {exc}")
+            )
             return None, diagnostics
 
     def _run_gerbers(
