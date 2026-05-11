@@ -117,7 +117,7 @@ gain. The expression `upper(strip_kicad_library_prefix(pcb:footprint))` is
 clearer and already works.
 
 ### Option 3b — `transform:namespace:field` shorthand syntax (rejected)
-`"Footprint": "strip_lib_prefix:pcb:footprint"` — a compact positional syntax
+`"Footprint": "strip_kicad_library_prefix:pcb:footprint"` — a compact positional syntax
 for applying a named transform to a single field reference.
 
 Rejected because: this overloads `:` with two meanings simultaneously —
@@ -131,39 +131,45 @@ standard Python.
 
 ### Option 4 — `namespace:field` preprocessing + `ast.parse(mode='eval')` (accepted)
 
-This option emerged from the successive rejections above:
+A two-part system:
 
-**From Option 1**: a fixed Python vocabulary requires jBOM releases to extend.
-The config that invents a transformation requirement should be able to express
-how to satisfy it — in the same file, without a release cycle.
+1. **Field references** use an explicit `namespace:field` syntax (`pcb:footprint`,
+   `inv:IPN`). In Python expression context, `word:word` is already syntactically
+   invalid — the preprocessor exploits this as an unambiguous signal without
+   requiring any decoration (`${...}` is unnecessary).
 
-**From Option 2**: Jinja2 brings a full template engine when we need only a
-safe expression evaluator. No new dependency; Python's own `ast` module is
-the right tool.
+2. **Value expressions** are Python expressions evaluated with
+   `ast.parse(mode='eval')` in a restricted namespace: `re` plus all
+   config-defined transforms. No imports, no side effects.
 
-**From Option 2b**: `${token}` decoration is unnecessary. `word:word` in Python
-expression context is already a syntax error — the `:` makes the reference
-unambiguous without any additional markers.
+3. **Transforms** are single-argument functions defined in any `.jbom.yaml` via
+   a `transforms:` stanza. The same config that creates a transformation
+   requirement also defines how to satisfy it, with no jBOM release needed.
+   Built-in transforms ship in `common.jbom.yaml`.
 
-**From Option 3**: a pipe DSL adds syntax to learn for zero capability gain;
-standard Python function composition handles the same cases.
-
-**From Option 3b**: `:` must mean one thing. Using it as both namespace
-separator and transform-apply operator requires the parser to know the closed
-set of namespace names — reintroducing exactly the kind of implicit vocabulary
-this design avoids.
-
-The design that emerges: preprocess `namespace:field` tokens to local variable
-bindings (the syntax error is the signal), evaluate as a Python expression with
-`ast.parse(mode='eval')` in a namespace containing `re` and config-defined
-transforms, no Python stdlib. The same `.jbom.yaml` that creates a requirement
-(e.g., "strip the KiCad library prefix") also defines how to satisfy it (the
-transform expression in `transforms:`). See Decision Details below.
+See the Decision below for rationale; Decision Details (D1–D7) for specification.
 
 ## Decision
 
-Adopt the field reference system and value expression mechanism as described
-in D1–D7.
+**Option 4 is approved.** Rationale from the successive rejections:
+
+**From Option 1**: a fixed Python vocabulary requires jBOM releases to extend.
+The config that invents a transformation requirement should define how to satisfy
+it — in the same file, without a release cycle.
+
+**From Option 2**: Jinja2 is a document template engine. Python's `ast` module
+provides the right capability (expression evaluation) without the baggage.
+
+**From Option 2b**: `${...}` decoration is unnecessary. `word:word` in Python
+expression context is already a syntax error — the preprocessor exploits this
+as an unambiguous signal with no additional markers required.
+
+**From Option 3**: a pipe DSL adds syntax to learn with no capability gain;
+standard Python function call composition handles multi-step transforms.
+
+**From Option 3b**: `:` must mean one thing. Using it as both namespace
+separator and transform operator requires the parser to know the closed
+namespace vocabulary — reintroducing the implicit magic this design eliminates.
 
 Key properties:
 - Three explicit source namespaces (`sch:`, `pcb:`, `inv:`) replace opaque
@@ -219,24 +225,15 @@ bom_columns:
 output value:
 ```yaml
 bom_columns:
-  # Strip KiCad library prefix (replaces "p:k:footprint")
+  # Strip KiCad library prefix (replaces "p:k:footprint"; transform from D3/D7)
   "Footprint": "strip_kicad_library_prefix(pcb:footprint)"
 
-  # Combine two fields
+  # Combine two source fields
   "Label":     "f'{reference} ({inv:manufacturer})'"
 
-  # Arbitrary regex
+  # Arbitrary regex inline (no named transform needed)
   "PN":        "re.sub(r'\\s+', '-', inv:manufacturer_part).upper()"
-
-  # User-defined named transform (see D7)
-  "Footprint": "strip_lib_prefix(pcb:footprint)"
 ```
-
-**Why no `${}` decoration** (see Option 2b rejection): in Python expression
-context, `word:word` is already syntactically invalid — the preprocessor
-unambiguously identifies field references without any added markers. Bare
-convenience alias names (Category 3 in D4) are valid Python identifiers and
-are bound directly in the eval namespace after alias resolution.
 
 **Expression evaluation contract:**
 
@@ -395,23 +392,38 @@ two diverging conventions.
 ### D7. User-defined named transforms via `transforms:` stanza
 
 Any `.jbom.yaml` file may define named single-argument transform functions in a
-top-level `transforms:` stanza:
+top-level `transforms:` stanza. The built-in `strip_kicad_library_prefix` (see D3)
+ships this way. Org-level `common.jbom.yaml` files add to that set:
 
 ```yaml
-# common.jbom.yaml — team-wide named transforms
+# $REPO_ROOT/.jbom/common.jbom.yaml — org-wide transforms
 transforms:
-  strip_lib_prefix:
-    expr: "re.sub(r'^[^:]+:', '', value)"
-    doc:  "Remove KiCad library nickname prefix from symbol or footprint"
+  normalize_component_value:
+    expr: "re.sub(r'\\s+', '', value).upper()"
+    doc:  "Normalize component value strings: '10 K' → '10K', '100 nF' → '100NF'"
 
-  normalize_pn:
+  normalize_internal_part_number:
     expr: "value.replace(' ', '-').upper()"
-    doc:  "Normalize part number to hyphenated uppercase"
+    doc:  "Normalize internal part numbers for cross-referencing"
 ```
 
-`value` is the implicit single argument. `expr` is validated with
-`ast.parse(mode='eval')` at config load time — malformed transform expressions
-fail early, not at BOM generation time.
+Usage in a profile that `extends: jlc`:
+
+```yaml
+fab:
+  bom_columns:
+    "Footprint": "strip_kicad_library_prefix(pcb:footprint)"
+    "Value":     "normalize_component_value(sch:Value)"
+    "IPN":       "inv:IPN"    # plain field ref — no transform needed
+```
+
+`value` is the implicit single argument in each `expr`. Naming convention:
+transform names should be descriptive verb phrases that make the action clear
+(`strip_kicad_library_prefix`, `normalize_component_value`); avoid generic names
+(`normalize`, `strip`) that obscure what is being transformed or why.
+
+`expr` is validated with `ast.parse(mode='eval')` at config load time —
+malformed transform expressions fail early, not at BOM generation time.
 
 Each defined transform is compiled to a single-argument callable and added to
 the expression evaluation namespace alongside `re` (D3). From the evaluator's
@@ -470,7 +482,7 @@ to publish a shared transform library without requiring a jBOM release.
   extends: jlc
 
   transforms:
-    normalize_value:
+    normalize_component_value:
       expr: "re.sub(r'\\s+', '', value).upper()"
       doc:  "Normalize value strings: '10 K' → '10K'"
 
@@ -478,14 +490,14 @@ to publish a shared transform library without requiring a jBOM release.
     bom_columns:
       "Surface Mount": null                                   # delete inherited
       "Footprint":     "strip_kicad_library_prefix(pcb:footprint)"
-      "Value":         "normalize_value(sch:Value)"
+      "Value":         "normalize_component_value(sch:Value)"
       "IPN":           "inv:IPN"                              # plain field ref
       "Status":        "inv:PART_STATUS"                      # custom sch attribute
   ```
 
   The plain `"inv:IPN"` and `"inv:PART_STATUS"` lines are readable to any
   engineer. The expression lines require understanding the transform mechanism.
-  The comment on `normalize_value` is the recommended mitigation.
+  The comment on `normalize_component_value` is the recommended mitigation.
 - The `ast.parse` + restricted-eval path adds complexity to the field resolver.
   This complexity is bounded and testable (expression rejection, namespace
   restriction, error surfacing).
