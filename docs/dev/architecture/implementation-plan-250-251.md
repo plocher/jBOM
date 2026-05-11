@@ -1,5 +1,23 @@
+- [Implementation Plan: Config System Rewrite (#250, #251)](#implementation-plan-config-system-rewrite-250-251)
+  - [Context](#context)
+  - [What's already done](#whats-already-done)
+  - [Phase 1a — Pydantic Migration (ADR 0010)](#phase-1a--pydantic-migration-adr-0010)
+    - [Tasks](#tasks)
+  - [Phase 1b — Unified Config Loader (ADR 0008)](#phase-1b--unified-config-loader-adr-0008)
+    - [Tasks](#tasks-1)
+  - [Phase 1c — Field Reference System (ADR 0009)](#phase-1c--field-reference-system-adr-0009)
+    - [Tasks](#tasks-2)
+  - [Phase 1d — Built-in Config File Migration (ADR 0008/0009/0010)](#phase-1d--built-in-config-file-migration-adr-000800090010)
+    - [Files to create](#files-to-create)
+    - [Files to remove](#files-to-remove)
+    - [pyproject.toml updates](#pyprojecttoml-updates)
+  - [Phase 1e — Documentation (ADR 0008 acceptance criteria for #250)](#phase-1e--documentation-adr-0008-acceptance-criteria-for-250)
+    - [Tasks](#tasks-3)
+  - [PR and Merge Checklist](#pr-and-merge-checklist)
+  - [Supervisor Notes for Review](#supervisor-notes-for-review)
+
 # Implementation Plan: Config System Rewrite (#250, #251)
-Branch: feat/config-unified-schema
+Branch: feat/config-unified-schema-impl
 Session role: supervisor/reviewer
 Sub-agent role: implementation
 
@@ -15,7 +33,8 @@ in this branch before merge. No intermediate broken state.
 ## What's already done
 - ADR 0008, 0009, 0010 committed
 - `docs/dev/architecture/config-schema-audit.md` committed
-- Feature branch `feat/config-unified-schema` pushed, PR #267 open
+- Architecture branch `feat/config-unified-schema` pushed, PR #267 approved
+- Feature branch `feat/config-unified-schema-impl` created, open for development work
 
 ---
 
