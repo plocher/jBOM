@@ -49,10 +49,10 @@ schema. This ADR records the design decision for both.
 - **Command-scoped consumption.** Each `jbom <cmd>` knows which stanzas it
   needs; config files may contain multiple stanzas but each command only
   consumes what is relevant.
-- **No external migration burden.** Nothing has shipped externally; backward
-  compatibility with existing user `.jbom/` files is desirable but not blocking.
-- **Buildable in phases.** The design must not require a big-bang rewrite;
-  the legacy file types can coexist as a deprecation shim during migration.
+- **Clean break.** Nothing has shipped externally; legacy file types and
+  prefixes are retired atomically with no shim and no major-version requirement.
+- **Atomic delivery.** The loader, built-in file migration, and legacy file
+  removal land in a single feature branch — no intermediate broken state.
 
 ## User Stories
 
@@ -144,17 +144,43 @@ it uses.
 
 ```
 jbom bom --jlc          # loads jlc.jbom.yaml; bom command uses fab: stanza
-jbom search --lcsc      # loads lcsc.jbom.yaml; search command uses supplier: stanza
+jbom search --lcsc      # loads jlc.jbom.yaml; search command uses supplier: stanza
 jbom bom                # no flag → generic.jbom.yaml (same as today's --generic)
 ```
+
+**Per-stanza `id:` override**: a file-level `id:` is the default for all
+stanzas, but each stanza may declare its own `id:` to control which CLI flag
+reaches it for that command type:
+
+```yaml
+# jlc.jbom.yaml
+id: jlc          # file-level default
+
+fab:             # inherits id: jlc  →  jbom bom --jlc resolves here
+  ...
+
+supplier:
+  id: lcsc       # overrides for this stanza  →  jbom search --lcsc resolves here
+  ...
+```
+
+Both `--jlc` and `--lcsc` resolve to the same file; each command consumes
+its own stanza. The file is named for its primary purpose (the fabricator);
+the supplier stanza self-identifies as `lcsc` because that is the supplier
+name users naturally think in.
+
+For fabricators without a tightly coupled supplier (e.g. PCBWay), the
+`supplier:` stanza may be absent. `jbom search --pcbway` searches using the
+ordered `fab.suppliers:` list from the PCBWay config, falling back to the
+ambient supplier config from the `common.jbom.yaml` chain.
 
 Dimension-specific flags (`--fabricator`, `--defaults`, `--supplier`) are not
 introduced in v1. The `common.jbom.yaml` ambient mechanism (D5) addresses the
 cross-cutting composition use case without needing explicit dimension flags.
 
 Flag auto-generation per command: a command only exposes `--<id>` for profiles
-whose `.jbom.yaml` contains at least one stanza that command consumes. `jbom bom`
-does not expose `--lcsc` if `lcsc.jbom.yaml` has only a `supplier:` stanza.
+whose `.jbom.yaml` contains at least one stanza that command consumes, using
+the effective `id:` for that stanza.
 
 ### D4. Explicit `extends:` inheritance with consistent merge semantics
 
@@ -306,21 +332,20 @@ for any `jbom` invocation in that repo that specifies no named profile —
 without affecting `--jlc` or any other named profile unless those profiles
 explicitly `extends: generic`.
 
-### D8. Migration path and backward compatibility
+### D8. Migration — atomic, no shim
 
-Existing `*.fab.yaml`, `*.supplier.yaml`, and `*.defaults.yaml` files are
-supported as a **deprecation shim** during migration. The new unified loader
-detects the legacy suffix and delegates to the existing per-type loaders with
-a deprecation log warning. The shim will be removed in a future major version.
+Nothing has shipped externally. The legacy file types (`*.fab.yaml`,
+`*.supplier.yaml`, `*.defaults.yaml`) and the legacy field prefix notation
+(`c:`, `p:`, `i:`, `k:`) are retired in the same commit set that introduces
+the new loader. There is no intermediate state with the old files and the new
+loader coexisting, and no deprecation shim.
 
-Built-in config files migrate from the legacy format to `.jbom.yaml` as part
-of this feature branch. The four subdirectories (`fabricators/`, `suppliers/`,
-`defaults/`, `presets/`) are retained during the shim period and removed when
-the shim is removed.
+Built-in config files are converted to `.jbom.yaml` format and the legacy
+subdirectories (`fabricators/`, `suppliers/`, `defaults/`, `presets/`) are
+removed as part of this feature branch — not deferred to a follow-on.
 
-`pyproject.toml` `[tool.hatch.build.targets.wheel] include` patterns must be
-updated to include `*.jbom.yaml` alongside the legacy patterns, and later to
-remove the legacy patterns when the subdirectories are retired.
+`pyproject.toml` `[tool.hatch.build.targets.wheel] include` patterns are
+updated to `*.jbom.yaml` in the same commit.
 
 ## Options Considered
 
@@ -363,7 +388,7 @@ Key properties of the accepted design:
 - `policy.jbom.yaml` per search-path level provides mandate enforcement (deferred).
 - `extends:` + deep-merge + list-replace + `null`-delete enables partial override.
 - `generic.jbom.yaml` consolidates all current generic config files.
-- Legacy file types supported via deprecation shim during migration.
+- Legacy file types and prefixes retired atomically with the new loader — no shim.
 
 ## Consequences
 
@@ -381,8 +406,8 @@ Key properties of the accepted design:
 - Migration work: all built-in config files must be converted to `.jbom.yaml`.
 - `pyproject.toml` package-data declarations must be updated (affects PCM
   archive build per ADR 0007).
-- The deprecation shim period means two code paths for config loading during
-  the transition.
+- The atomic migration (no shim) means the entire built-in config file set
+  must be converted in one branch — no cherry-picking partial migrations.
 - `common.jbom.yaml` files are merged cumulatively (not first-match-wins), which
   is a different behavior from named profile files. This asymmetry must be
   clearly documented.
@@ -399,8 +424,8 @@ Key properties of the accepted design:
   **Mitigation**: document prominently; consider a `_unset:` explicit keyword
   in a future revision.
 - **Risk**: `policy.jbom.yaml` reserved name collision with existing user files.
-  **Mitigation**: Log a deprecation warning if found during the shim period
-  with instructions to rename.
+  **Mitigation**: The loader rejects `policy.jbom.yaml` as a selectable named
+  profile and logs an error if a user attempts to load it with `--policy`.
 
 ## Deferred Items
 
@@ -419,35 +444,43 @@ are recorded here to prevent loss:
 5. **`jbom config show --jlc`** — diagnostic command to print the fully-resolved
    effective config (Story K). Requires the merge engine to be serializable
    back to YAML.
+6. **`defaults.inventory` path** — the `defaults:` stanza could declare a default
+   inventory file path (or list of paths), enabling a `$REPO_ROOT/.jbom/common.jbom.yaml`
+   to specify a corporate or project-family inventory without requiring a
+   `--inventory` CLI flag on every invocation. Follows the same search-path layering
+   as all other `defaults:` content. Deferred to a follow-on issue.
+7. **`import X as Y`** — stanza-level renaming for aliasing an imported profile
+   under a local name. Deferred until concrete use cases emerge.
 
 ## Implementation Phases
 
-**Phase 1 (this feature branch, issues #250 + #251)**
-- Land this ADR.
+**Phase 1 (this feature branch, issues #250 + #251) — atomic delivery**
+- Land this ADR and ADR 0009.
 - Implement the unified loader in `src/jbom/config/unified.py`:
   - `load_unified(name, cwd)` → resolves the full stack (common chain + named
-    profile + extends chain) and returns a raw merged dict.
+    profile + extends chain + per-stanza id resolution) and returns a raw merged dict.
   - Stanza extractors: `fab_config_from_unified(dict)`, `supplier_config_from_unified(dict)`,
     `defaults_config_from_unified(dict)`.
-  - Dispatch to existing `FabricatorConfig.from_yaml_dict`, `SupplierConfig.from_yaml_dict`,
+  - Dispatch to `FabricatorConfig.from_yaml_dict`, `SupplierConfig.from_yaml_dict`,
     `DefaultsConfig.from_yaml_dict` with the extracted stanza dict.
-- Extend `profile_search.py` to recognize `*.jbom.yaml` alongside legacy suffixes.
-- Migrate all built-in config files to `.jbom.yaml` format; consolidate into
-  `generic.jbom.yaml`.
-- Wire the new loader into `fabricators.py:load_fabricator`, `suppliers.py:load_supplier`,
-  `defaults.py:load_defaults` as the primary path (legacy suffix as shim).
+- Update `profile_search.py` to recognize `*.jbom.yaml` only; remove legacy suffix handling.
+- Migrate all built-in config files to `.jbom.yaml` format (including
+  `generic.jbom.yaml` consolidation). Remove legacy subdirectories
+  (`fabricators/`, `suppliers/`, `defaults/`, `presets/`) and legacy files in the same commit.
+- Update `pyproject.toml` package-data for `*.jbom.yaml`; remove legacy patterns.
+- Wire the new loader into `fabricators.py`, `suppliers.py`, `defaults.py` as
+  the sole loading path (no legacy shim).
 - Update `docs/README.configuration.md` to document the new convention (#250
   acceptance criteria).
 - Unit tests for: `_deep_merge`, `null`-delete, `extends:` chain resolution,
-  circular-extends detection, `common.jbom.yaml` cumulative merge.
+  circular-extends detection, `common.jbom.yaml` cumulative merge, per-stanza id.
 - Functional tests for Stories A–E (Stories F, G already covered by existing
   CI design).
 
 **Phase 2 (future issue)**
 - `policy.jbom.yaml` enforcement + `!final` tag.
 - `jbom config show` diagnostic command.
-- Remove legacy file suffix shim after one release cycle.
-- Retire `fabricators/`, `suppliers/`, `defaults/`, `presets/` subdirectories.
+- `defaults.inventory` path configuration.
 
 ## References
 - Issue #250: naming convention normalization
