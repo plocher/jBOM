@@ -155,21 +155,18 @@ def validate_rotation_range(cls, v):
 
 The constraint is now visible in the class definition, not buried in a method.
 
-#### D4. `Field(alias=...)` for transitional legacy key renames
+#### D4. `Field(alias=...)` is not permitted in merged code
 
-When a YAML key cannot be renamed immediately (e.g., `tier_overrides` was the
-YAML key and Python used `tier_rules`), `Field(alias=...)` makes the discrepancy
-explicit and temporary:
+Nothing has shipped externally. There is no compatibility constraint that
+justifies carrying a name mismatch past the migration commit. The alias
+mechanism is scaffolding only: it may appear as an intermediate state during
+a rename commit but must be removed in the same commit that renames the
+Python attribute. A `Field(alias=...)` present at PR review time is a
+merge blocker.
 
-```python
-# Transitional only — must have a cleanup issue filed
-tier_overrides: List[TierOverride] = Field(
-    default=[],
-    alias="tier_overrides",   # legacy YAML key; Python attr must be renamed next
-)
-```
-
-No silent divergence. No "read Python to understand YAML" mystery.
+The correct resolution for any name mismatch is: rename the Python attribute
+to match the YAML key and update all consuming callsites. The schema audit
+identified the full set of such mismatches; it is a bounded list.
 
 #### D5. `model_json_schema()` as the authoritative schema
 
@@ -247,18 +244,34 @@ This ADR directly resolves the following smells from `config-schema-audit.md`:
 
 **Phase 1 (this feature branch, alongside ADR 0008/0009 Phase 1)**
 
-- Add `pydantic>=2.0` to `pyproject.toml` dependencies and PCM vendoring list.
-- Migrate `FabricatorConfig` → Pydantic `BaseModel`:
-  - Rename `tier_rules` attr to `tier_overrides` (or keep computed as D2)
-  - Move validation from `from_yaml_dict()` to `@field_validator` / `@model_validator`
-  - Add `model_config = ConfigDict(extra="ignore")`
-- Migrate `SupplierConfig` → Pydantic `BaseModel`
-- Migrate `DefaultsConfig` → Pydantic `BaseModel`
-- Migrate supporting types: `FieldSynonym`, `TierCondition`, `TierRule`,
-  `SearchProviderConfig`, `InventorySchemaConfig`, `EnrichmentCategoryConfig`
-- Introduce `TierOperator` enum (replaces undocumented string DSL)
-- Update all call sites: `from_yaml_dict()` → `model_validate()`
-- Unit tests: verify `model_json_schema()` output is stable (schema regression test)
+This is a source code refactoring, not merely a config file migration. The
+Pydantic migration touches three layers:
+
+1. **The config models** (`fabricators.py`, `suppliers.py`, `defaults.py`):
+   - Add `pydantic>=2.0` to `pyproject.toml` dependencies and PCM vendoring list.
+   - Replace `@dataclass` with `BaseModel` for `FabricatorConfig`, `SupplierConfig`,
+     `DefaultsConfig` and all supporting types (`FieldSynonym`, `TierCondition`,
+     `TierRule`, `SearchProviderConfig`, `InventorySchemaConfig`,
+     `EnrichmentCategoryConfig`).
+   - Add `model_config = ConfigDict(extra="ignore")` to each model.
+   - Move all validation from `from_yaml_dict()` to `@field_validator` /
+     `@model_validator`. Introduce `TierOperator` enum (replaces undocumented
+     string DSL).
+   - Replace `from_yaml_dict()` call sites with `model_validate()`.
+
+2. **Python attribute renames** (wherever audit-identified YAML/Python
+   mismatches exist): rename the Python attribute to match the YAML key, then
+   update every consuming callsite across the entire codebase. The schema audit
+   identified the full set; it is a bounded list. `Field(alias=...)` must not
+   appear in any merged commit.
+
+3. **Consuming code** (`bom_workflow.py`, `pos_workflow.py`, `cli/*.py`,
+   `services/*.py`, any code that reads a config attribute by name): update
+   attribute references wherever a rename occurred in layer 2. This is
+   mechanical (`git grep` + rename) but must be complete before the branch lands.
+
+- Unit tests: verify `model_json_schema()` output is stable (schema regression
+  test); verify all renamed attributes are reachable through the Pydantic model.
 
 **Phase 2 (alongside ADR 0008/0009 Phase 1b)**
 - Update `docs/README.configuration.md` with generated schema reference.
