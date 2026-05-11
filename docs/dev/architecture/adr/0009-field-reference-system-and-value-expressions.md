@@ -150,13 +150,14 @@ A two-part system:
 ### D1. Source namespace vocabulary
 
 Field references from non-canonical sources carry an explicit namespace prefix.
-Three namespaces are defined:
+Four namespaces are defined:
 
-| Prefix | Source | Description |
-|---|---|---|
-| `sch:` | Schematic | Component properties from `.kicad_sch` (replaces `c:`) |
-| `pcb:` | PCB / placement | Component data from `.kicad_pcb` (replaces `p:`) |
-| `inv:` | Inventory | Fields from matched inventory CSV rows (replaces `i:`) |
+| Prefix | Aliases | Source | Description |
+|---|---|---|---|
+| `sch:` | | Schematic | Component properties from `.kicad_sch` (replaces `c:`) |
+| `pcb:` | | PCB / placement | Component data from `.kicad_pcb` (replaces `p:`) |
+| `inv:` | | Inventory | Fields from matched inventory CSV rows (replaces `i:`) |
+| `a:` | `ann:`, `annotation:` | Annotation | Values written by the `jbom annotate` workflow |
 
 jBOM-computed fields use the `jbom:` prefix (`jbom:quantity`,
 `jbom:fabricator_part_number`, `jbom:smd`). Unqualified source-data names
