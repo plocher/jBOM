@@ -158,11 +158,11 @@ Three namespaces are defined:
 | `pcb:` | PCB / placement | Component data from `.kicad_pcb` (replaces `p:`) |
 | `inv:` | Inventory | Fields from matched inventory CSV rows (replaces `i:`) |
 
-Bare names without a namespace prefix are either jBOM-computed fields (a small
-set: `quantity`, `fabricator_part_number`, `smd`) or unqualified source-data
-names (`value`, `reference`, `footprint`, etc.) that resolve to the originating
-source namespace, disambiguated by `field_precedence_policy` when the same name
-exists in multiple sources. The full taxonomy is described in D4.
+jBOM-computed fields use the `jbom:` prefix (`jbom:quantity`,
+`jbom:fabricator_part_number`, `jbom:smd`). Unqualified source-data names
+(`value`, `reference`, `footprint`, etc.) resolve to their originating source
+namespace, disambiguated by `field_precedence_policy` when the same name exists
+in multiple sources. The full taxonomy is described in D4.
 
 `k:` is not a namespace — it is replaced by the expression mechanism in D2.
 The old single-character prefixes (`c:`, `p:`, `i:`, `k:`) are retired;
@@ -250,7 +250,7 @@ transforms:
 A user can override a built-in transform by defining the same name in their
 own `.jbom.yaml`.
 
-### D4. Field categories — source, computed, and convenience aliases
+### D4. Field categories — source, computed, and unqualified source-data names
 
 Fields accessible in `bom_columns` values, `--fields` arguments, and expressions
 fall into three distinct categories with different natures.
@@ -278,9 +278,9 @@ not passed through from any source:
 
 | Name | Computed by |
 |---|---|
-| `quantity` | Grouping logic (count of identical components) |
-| `fabricator_part_number` | Part number resolution from matched inventory item |
-| `smd` | Calculated from PCB placement type |
+| `jbom:quantity` | Grouping logic (count of identical components) |
+| `jbom:fabricator_part_number` | Part number resolution from matched inventory item |
+| `jbom:smd` | Calculated from PCB placement type |
 
 These are the only fields registered in `src/jbom/config/fields.py`. The earlier
 draft of this ADR incorrectly listed source fields (`reference`, `value`, etc.)
@@ -288,11 +288,11 @@ as "canonical jBOM-computed fields" — they are source fields (Category 3).
 
 `__resolved_fabricator_part_number__` is retired; replaced by `fabricator_part_number`.
 
-The `jbom:` prefix is provisionally reserved for this category:
-`jbom:quantity`, `jbom:fabricator_part_number`, `jbom:smd`. The bare form
-(`quantity`) remains valid as a shorthand. The explicit `jbom:` form is
-useful when an inventory CSV column is also named `quantity` — `jbom:quantity`
-unambiguously selects the computed grouping count, not the inventory column.
+jBOM-computed fields use the `jbom:` namespace: `jbom:quantity`,
+`jbom:fabricator_part_number`, `jbom:smd`. Consistent with the clean-break
+approach of this ADR, no bare shorthand is provided — `jbom:quantity` is the
+canonical form and unambiguously selects the computed grouping count even when
+an inventory CSV column is also named `quantity`.
 
 **Category 3: Unqualified field names — source-data names, policy-disambiguated**
 
@@ -384,11 +384,11 @@ transforms:
 fab:
   bom_columns:
     "Designator": "reference"
-    "Quantity": "quantity"
+    "Quantity": "jbom:quantity"
     "Value": "value"
     "Footprint": "strip_kicad_library_prefix_from_value(pcb:footprint)"
-    "LCSC": "fabricator_part_number"  # JLCPCB requires this column name in BOM
-    "Surface Mount": "smd"
+    "LCSC": "jbom:fabricator_part_number"  # JLCPCB requires this column name in BOM
+    "Surface Mount": "jbom:smd"
     "Comment": "description"
 ```
 
@@ -462,8 +462,8 @@ namespace vocabulary — reintroducing the implicit magic this design eliminates
 Key properties:
 - Three explicit source namespaces (`sch:`, `pcb:`, `inv:`) replace opaque
   single-character prefixes. `:` means exactly one thing: namespace separator.
-- Source fields are runtime-discovered; only three jBOM-computed fields
-  (`quantity`, `fabricator_part_number`, `smd`) are Python-registered.
+- Source fields are runtime-discovered; jBOM-computed fields use the `jbom:`
+  namespace (`jbom:quantity`, `jbom:fabricator_part_number`, `jbom:smd`).
 - Unqualified source-data names (e.g., `value`, `reference`) resolve
   unambiguously when unique; `field_precedence_policy` in `common.jbom.yaml`
   disambiguates when the same name appears in multiple sources.
@@ -564,8 +564,9 @@ Key properties:
 
 **Phase 1 (this feature branch, alongside ADR 0008 Phase 1)**
 - `src/jbom/config/fields.py` — jBOM-computed field registry (Category 2 only:
-  `quantity`, `fabricator_part_number`, `smd`); source namespace constants
-  (`SCH`, `PCB`, `INV`). Source field discovery is runtime, not pre-registered.
+  `jbom:quantity`, `jbom:fabricator_part_number`, `jbom:smd`); source namespace
+  constants (`SCH`, `PCB`, `INV`, `JBOM`). Source field discovery is runtime,
+  not pre-registered.
 - `src/jbom/config/field_ref.py` — `FieldRef` dataclass (namespace, name,
   expression); `FieldRefResolver.resolve(ref, context)` → value.
 - `src/jbom/config/field_expr.py` — `FieldExpressionEvaluator`:
