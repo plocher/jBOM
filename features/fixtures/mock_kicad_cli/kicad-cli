@@ -1,0 +1,162 @@
+#!/usr/bin/env python3
+"""mock-kicad-cli — generates structurally valid Gerber/drill stub files.
+
+Used by jBOM BDD feature tests to exercise the full pipeline
+(argument construction → artifact collection → packaging → backup)
+without requiring a real KiCad installation.
+
+Design:
+  - Layer file list is driven by the --layers argument jBOM passes, not
+    hardcoded.  This validates the contract between jBOM's GerberExporter
+    and kicad-cli's argument interface.
+  - File content uses real Gerber X2 attribute headers so downstream tools
+    and test assertions can inspect them meaningfully.  TF.GenerationSoftware
+    encodes the fabricator; TF.FileFunction encodes the layer.
+  - Edge.Cuts → .gm1  (KiCad 10 actual output, not .gko)
+
+Supported interface (mirrors real kicad-cli):
+  mock-kicad-cli pcb export gerbers --output DIR [--layers L1,L2,...] \
+                 [--no-protel-ext] PCB_FILE
+  mock-kicad-cli pcb export drill   --output DIR \
+                 [--excellon-separate-th] PCB_FILE
+"""
+from __future__ import annotations
+
+import datetime
+import pathlib
+import sys
+
+# Protel extension mapping — KiCad 10 defaults
+PROTEL_EXT: dict[str, str] = {
+    "F.Cu": "gtl",
+    "B.Cu": "gbl",
+    "In1.Cu": "g2",
+    "In2.Cu": "g3",
+    "In3.Cu": "g3",
+    "F.Mask": "gts",
+    "B.Mask": "gbs",
+    "F.Paste": "gtp",
+    "B.Paste": "gbp",
+    "F.Silkscreen": "gto",
+    "B.Silkscreen": "gbo",
+    "Edge.Cuts": "gm1",  # KiCad 10 — NOT .gko
+    "Dwgs.User": "gbr",
+    "Cmts.User": "gbr",
+}
+
+# Gerber X2 TF.FileFunction values per layer
+FILE_FUNCTION: dict[str, str] = {
+    "F.Cu": "Copper,L1,Top",
+    "B.Cu": "Copper,L2,Bot",
+    "In1.Cu": "Copper,L3,Inr",
+    "In2.Cu": "Copper,L4,Inr",
+    "In3.Cu": "Copper,L5,Inr",
+    "F.Mask": "Soldermask,Top",
+    "B.Mask": "Soldermask,Bot",
+    "F.Paste": "SolderPaste,Top",
+    "B.Paste": "SolderPaste,Bot",
+    "F.Silkscreen": "Legend,Top",
+    "B.Silkscreen": "Legend,Bot",
+    "Edge.Cuts": "Profile,NP",
+}
+
+# Default layers when --layers is omitted (kicad-cli exports all active layers)
+DEFAULT_LAYERS: list[str] = ["F.Cu", "B.Cu", "Edge.Cuts"]
+
+
+def _arg(args: list[str], flag: str) -> str | None:
+    """Return the value after flag in args, or None."""
+    try:
+        return args[args.index(flag) + 1]
+    except (ValueError, IndexError):
+        return None
+
+
+def _gerber_content(layer: str, stem: str, fabricator: str, now: str) -> str:
+    """Return a minimal but structurally valid Gerber X2 file body."""
+    fn = FILE_FUNCTION.get(layer, f"Other,{layer}")
+    return (
+        f"G04 #@! TF.GenerationSoftware,jBOM-test,mock-kicad-cli,{fabricator}*\n"
+        f"G04 #@! TF.CreationDate,{now}*\n"
+        f"G04 #@! TF.ProjectId,{stem},mock,0.0*\n"
+        f"G04 #@! TF.SameCoordinates,Original*\n"
+        f"G04 #@! TF.FileFunction,{fn}*\n"
+        f"G04 #@! TF.FilePolarity,Positive*\n"
+        f"%FSLAX46Y46*%\n"
+        f"G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*\n"
+        f"G04 Created by mock-kicad-cli for jBOM testing*\n"
+        f"%MOMM*%\n"
+        f"%LPD*%\n"
+        f"G01*\n"
+        f"M02*\n"
+    )
+
+
+def _drill_content(stem: str, fabricator: str) -> str:
+    """Return a minimal Excellon drill file body."""
+    return (
+        f"; mock-kicad-cli drill stem={stem} fabricator={fabricator}\n"
+        f"M48\n"
+        f"METRIC,LZ\n"
+        f"%\n"
+        f"G90\n"
+        f"G05\n"
+        f"M30\n"
+    )
+
+
+def main() -> int:
+    args = sys.argv[1:]
+
+    is_gerbers = "gerbers" in args
+    is_drill = "drill" in args
+
+    # --output DIR
+    out_str = _arg(args, "--output")
+    out = pathlib.Path(out_str) if out_str else pathlib.Path(".")
+    out.mkdir(parents=True, exist_ok=True)
+
+    # Derive board stem from last positional (PCB file path)
+    positional = [a for a in args if not a.startswith("-")]
+    pcb_path = (
+        pathlib.Path(positional[-1]) if positional else pathlib.Path("board.kicad_pcb")
+    )
+    stem = pcb_path.stem
+
+    # Fabricator passed via --fabricator (jBOM adds this in some paths)
+    fabricator = _arg(args, "--fabricator") or "generic"
+
+    now = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+
+    if is_gerbers:
+        # Layer list: use --layers if provided, else fall back to defaults
+        layers_str = _arg(args, "--layers")
+        layers = (
+            [layer.strip() for layer in layers_str.split(",") if layer.strip()]
+            if layers_str
+            else DEFAULT_LAYERS
+        )
+        protel = "--no-protel-ext" not in args
+
+        for layer in layers:
+            ext = PROTEL_EXT.get(layer, "gbr") if protel else "gbr"
+            safe = layer.replace(".", "_")
+            path = out / f"{stem}-{safe}.{ext}"
+            path.write_text(
+                _gerber_content(layer, stem, fabricator, now), encoding="utf-8"
+            )
+
+    elif is_drill:
+        split = "--excellon-separate-th" in args
+        content = _drill_content(stem, fabricator)
+        if split:
+            (out / f"{stem}-PTH.drl").write_text(content, encoding="utf-8")
+            (out / f"{stem}-NPTH.drl").write_text(content, encoding="utf-8")
+        else:
+            (out / f"{stem}.drl").write_text(content, encoding="utf-8")
+
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

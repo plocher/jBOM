@@ -140,6 +140,9 @@ def step_run_command(context, command):
     env["JBOM_QUIET"] = "1"
     if getattr(context, "trace", False):
         env["JBOM_BEHAVE_TRACE"] = "1"
+    # Apply mock tool overrides (e.g. PATH prefix for mock kicad-cli).
+    # Set by 'Given mock kicad-cli is available' and similar steps.
+    env.update(getattr(context, "mock_env", {}))
 
     try:
         result = subprocess.run(
