@@ -147,46 +147,6 @@ A two-part system:
    requirement also defines how to satisfy it, with no jBOM release needed.
    Built-in transforms ship in `common.jbom.yaml`.
 
-See the Decision below for rationale; Decision Details (D1–D7) for specification.
-
-## Decision
-
-**Option 4 is approved.** Rationale from the successive rejections:
-
-**From Option 1**: a fixed Python vocabulary requires jBOM releases to extend.
-The config that invents a transformation requirement should define how to satisfy
-it — in the same file, without a release cycle.
-
-**From Option 2**: Jinja2 is a document template engine. Python's `ast` module
-provides the right capability (expression evaluation) without the baggage.
-
-**From Option 2b**: `${...}` decoration is unnecessary. `word:word` in Python
-expression context is already a syntax error — the preprocessor exploits this
-as an unambiguous signal with no additional markers required.
-
-**From Option 3**: a pipe DSL adds syntax to learn with no capability gain;
-standard Python function call composition handles multi-step transforms.
-
-**From Option 3b**: `:` must mean one thing. Using it as both namespace
-separator and transform operator requires the parser to know the closed
-namespace vocabulary — reintroducing the implicit magic this design eliminates.
-
-Key properties:
-- Three explicit source namespaces (`sch:`, `pcb:`, `inv:`) replace opaque
-  single-character prefixes. `:` means exactly one thing: namespace separator.
-- Source fields are runtime-discovered; only three jBOM-computed fields
-  (`quantity`, `fabricator_part_number`, `smd`) are Python-registered.
-- Bare convenience alias names resolve via `field_precedence_policy` in
-  `defaults:` — config-owned, not hardcoded.
-- `namespace:field` tokens are syntactically invalid Python and are
-  unambiguously preprocessed before `ast.parse(mode='eval')`. No `${}` decoration.
-- Named transforms (including built-in ones in `common.jbom.yaml`) are
-  config-defined; expression eval provides only `re`. No Python stdlib.
-- `field_synonyms` is unified to one structure and one parser across all stanzas.
-- CLI `--fields` and config `bom_columns` share one field reference language.
-
-### Decision Details
-
 ### D1. Source namespace vocabulary
 
 Field references from non-canonical sources carry an explicit namespace prefix.
@@ -226,7 +186,7 @@ output value:
 ```yaml
 bom_columns:
   # Strip KiCad library prefix (replaces "p:k:footprint"; transform from D3/D7)
-  "Footprint": "strip_kicad_library_prefix(pcb:footprint)"
+  "Footprint": "strip_kicad_library_prefix_from_value(pcb:footprint)"
 
   # Combine two source fields
   "Label":     "f'{reference} ({inv:manufacturer})'"
@@ -282,7 +242,7 @@ The built-in `common.jbom.yaml` shipped with jBOM pre-defines common transforms:
 ```yaml
 # src/jbom/config/common.jbom.yaml (built-in, shipped with jBOM)
 transforms:
-  strip_kicad_library_prefix:
+  strip_kicad_library_prefix_from_value:
     expr: "re.sub(r'^[^:]+:', '', value)"
     doc:  "Remove KiCad library nickname. 'Capacitors_SMD:C_0402' → 'C_0402'"
 ```
@@ -337,7 +297,7 @@ according to the `field_precedence_policy` defined in the active `defaults:`
 stanza:
 
 ```yaml
-# generic.defaults.yaml (existing)
+# common.jbom.yaml (ambient — applied at every search-path level)
 field_precedence_policy:
   schematic_biased:
     - value
@@ -351,14 +311,13 @@ field_precedence_policy:
     ...
 ```
 
-This policy is the config-owned mechanism for convenience alias resolution —
-not a static Python registry. An org can override the policy in their
-`common.jbom.yaml` to change which source namespace a bare name resolves to,
-without changing any code.
+This policy lives in `common.jbom.yaml`, not `generic.jbom.yaml`, because it
+controls how bare field names resolve for every command regardless of which
+named profile is active — exactly what `common.jbom.yaml` is for. An org can
+override or extend the policy in their own `common.jbom.yaml`.
 
-Note: the `field_precedence_policy` as currently defined in `generic.defaults.yaml`
-needs to be extended to fully cover the alias resolution role described here.
-That extension is part of the built-in file migration in Phase 1.
+The `field_precedence_policy` content currently in `generic.defaults.yaml`
+migrates to `common.jbom.yaml` as part of the built-in file migration in Phase 1.
 
 ### D5. Unified `field_synonyms` structure
 
@@ -392,35 +351,48 @@ two diverging conventions.
 ### D7. User-defined named transforms via `transforms:` stanza
 
 Any `.jbom.yaml` file may define named single-argument transform functions in a
-top-level `transforms:` stanza. The built-in `strip_kicad_library_prefix` (see D3)
-ships this way. Org-level `common.jbom.yaml` files add to that set:
+top-level `transforms:` stanza. The built-in `strip_kicad_library_prefix_from_value`
+ships this way in `common.jbom.yaml` (see D3). Org-level and project-level
+`common.jbom.yaml` files extend the transform set at their respective search-path
+levels.
+
+`common.jbom.yaml` files are automatically deep-merged as ambient defaults at
+each search-path level — they are not named profiles. All `common.jbom.yaml`
+files in the search path are cumulative (every level contributes); named profile
+files use first-match-wins. The `policy.jbom.yaml` mandate mechanism (ADR 0008
+D6) can enforce transforms that lower-level configs cannot remove. See ADR 0008
+D5–D6 for the full `common.jbom.yaml` mechanics.
 
 ```yaml
-# $REPO_ROOT/.jbom/common.jbom.yaml — org-wide transforms
+  # src/jbom/config/common.jbom.yaml — definition (ships with jBOM)
 transforms:
-  normalize_component_value:
-    expr: "re.sub(r'\\s+', '', value).upper()"
-    doc:  "Normalize component value strings: '10 K' → '10K', '100 nF' → '100NF'"
+  strip_kicad_library_prefix_from_value:
+    expr: "re.sub(r'^[^:]+:', '', value)"
+    doc:  "'Capacitors_SMD:C_0402' → 'C_0402'"
 
-  normalize_internal_part_number:
-    expr: "value.replace(' ', '-').upper()"
-    doc:  "Normalize internal part numbers for cross-referencing"
-```
-
-Usage in a profile that `extends: jlc`:
-
-```yaml
+  # jlc.jbom.yaml — usage
 fab:
   bom_columns:
-    "Footprint": "strip_kicad_library_prefix(pcb:footprint)"
-    "Value":     "normalize_component_value(sch:Value)"
-    "IPN":       "inv:IPN"    # plain field ref — no transform needed
+    "Designator": "reference"
+    "Quantity": "quantity"
+    "Value": "value"
+    "Footprint": "strip_kicad_library_prefix_from_value(pcb:footprint)"
+    "LCSC": "fabricator_part_number"  # JLCPCB requires this column name in BOM
+    "Surface Mount": "smd"
+    "Comment": "description"
 ```
 
 `value` is the implicit single argument in each `expr`. Naming convention:
-transform names should be descriptive verb phrases that make the action clear
-(`strip_kicad_library_prefix`, `normalize_component_value`); avoid generic names
-(`normalize`, `strip`) that obscure what is being transformed or why.
+the noun `value` must appear in the transform name — it maps directly to the
+`value` parameter used in the `expr`. This makes the connection explicit to
+anyone reading a config file without looking up the transform definition:
+
+- `strip_kicad_library_prefix_from_value` → `re.sub(r'^[^:]+:', '', value)`
+- `normalize_component_value` → `re.sub(r'\\s+', '', value).upper()`
+
+Avoid generic names (`normalize`, `strip`) that omit what is being transformed.
+Avoid names without the `value` noun: the reader needs to know the function
+operates on a single string argument named `value`.
 
 `expr` is validated with `ast.parse(mode='eval')` at config load time —
 malformed transform expressions fail early, not at BOM generation time.
@@ -433,35 +405,60 @@ indistinguishable — they are all config-defined.
 `transforms:` follows the same inheritance rules as all other config content:
 `extends:` chains propagate parent transforms to child profiles; a
 `common.jbom.yaml` at each search-path level contributes ambient transforms
-available to all configs at that level and below. Transform names must not
-collide with built-in transform names from the shipped `common.jbom.yaml`
-(validated at load time with a warning).
+available to all configs at that level and below.
+
+jBOM validates transform names at config load time. When a user-defined name
+matches a built-in from the shipped `common.jbom.yaml`, the user's definition
+shadows the built-in (intentional override is supported) and jBOM logs a
+`NOTICE`-level message so accidental shadows are detectable. Two user-defined
+transforms with the same name in the same file are a load-time error.
 
 This allows `--fields` CLI arguments and config `bom_columns` values to
 reference org-defined transforms by name, enabling a team's `common.jbom.yaml`
 to publish a shared transform library without requiring a jBOM release.
 
+
+## Decision
+
+**Option 4 is approved.** Rationale from the successive rejections:
+
+**From Option 1**: a fixed Python vocabulary requires jBOM releases to extend.
+The config that invents a transformation requirement should define how to satisfy
+it — in the same file, without a release cycle.
+
+**From Option 2**: Jinja2 is a document template engine. Python's `ast` module
+provides the right capability (expression evaluation) without the baggage.
+
+**From Option 2b**: `${...}` decoration is unnecessary. `word:word` in Python
+expression context is already a syntax error — the preprocessor exploits this
+as an unambiguous signal with no additional markers required.
+
+**From Option 3**: a pipe DSL adds syntax to learn with no capability gain;
+standard Python function call composition handles multi-step transforms.
+
+**From Option 3b**: `:` must mean one thing. Using it as both namespace
+separator and transform operator requires the parser to know the closed
+namespace vocabulary — reintroducing the implicit magic this design eliminates.
+
+Key properties:
+- Three explicit source namespaces (`sch:`, `pcb:`, `inv:`) replace opaque
+  single-character prefixes. `:` means exactly one thing: namespace separator.
+- Source fields are runtime-discovered; only three jBOM-computed fields
+  (`quantity`, `fabricator_part_number`, `smd`) are Python-registered.
+- Bare convenience alias names resolve via `field_precedence_policy` in
+  `defaults:` — config-owned, not hardcoded.
+- `namespace:field` tokens are syntactically invalid Python and are
+  unambiguously preprocessed before `ast.parse(mode='eval')`. No `${}` decoration.
+- Named transforms (including built-in ones in `common.jbom.yaml`) are
+  config-defined; expression eval provides only `re`. No Python stdlib.
+- `field_synonyms` is unified to one structure and one parser across all stanzas.
+- CLI `--fields` and config `bom_columns` share one field reference language.
+
 ## Consequences
 
 ### Positive
-- The old `p:k:footprint` becomes transparent: the transform is defined in
-  `common.jbom.yaml` and used in `bom_columns`. Complete picture:
-
-  ```yaml
-  # src/jbom/config/common.jbom.yaml — definition (ships with jBOM)
-  transforms:
-    strip_kicad_library_prefix:
-      expr: "re.sub(r'^[^:]+:', '', value)"
-      doc:  "'Capacitors_SMD:C_0402' → 'C_0402'"
-
-  # jlc.jbom.yaml — usage
-  fab:
-    bom_columns:
-      "Footprint": "strip_kicad_library_prefix(pcb:footprint)"
-  ```
-
-  Both sides live in config. The transform can be inspected, overridden, or
-  replaced without touching Python.
+- The old `p:k:footprint` is no longer magic; it is completely visible in the config files.
+  The transform can be inspected, overridden, or replaced without touching Python.
 - Users can combine fields, apply regex, and format output values without waiting
   for jBOM releases.
 - `__resolved_fabricator_part_number__` is gone; `fabricator_part_number` is a
@@ -489,7 +486,7 @@ to publish a shared transform library without requiring a jBOM release.
   fab:
     bom_columns:
       "Surface Mount": null                                   # delete inherited
-      "Footprint":     "strip_kicad_library_prefix(pcb:footprint)"
+      "Footprint":     "strip_kicad_library_prefix_from_value(pcb:footprint)"
       "Value":         "normalize_component_value(sch:Value)"
       "IPN":           "inv:IPN"                              # plain field ref
       "Status":        "inv:PART_STATUS"                      # custom sch attribute
@@ -562,7 +559,8 @@ to publish a shared transform library without requiring a jBOM release.
 - Update `bom_workflow.py` / CLI `--fields` parser to use `FieldRefResolver`.
 - Built-in config files using old prefixes are migrated in Phase 2; no shim.
 - Unit tests: namespace resolution, expression evaluation, statement rejection,
-  `strip_kicad_library_prefix`, error surfacing, transform compilation.
+  `strip_kicad_library_prefix_from_value`, error surfacing, transform name
+  shadowing (NOTICE logged), duplicate-name error.
 
 **Phase 2 (alongside ADR 0008 Phase 1b — built-in file migration)**
 - Migrate built-in config files: `"p:k:footprint"` → expression form.
