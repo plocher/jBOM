@@ -159,10 +159,10 @@ Three namespaces are defined:
 | `inv:` | Inventory | Fields from matched inventory CSV rows (replaces `i:`) |
 
 Bare names without a namespace prefix are either jBOM-computed fields (a small
-set: `quantity`, `fabricator_part_number`, `smd`) or convenience aliases
-(`value`, `reference`, `footprint`, etc.) that resolve to the appropriate source
-namespace via the active `field_precedence_policy` in `defaults:`. The full
-taxonomy is described in D4.
+set: `quantity`, `fabricator_part_number`, `smd`) or unqualified source-data
+names (`value`, `reference`, `footprint`, etc.) that resolve to the originating
+source namespace, disambiguated by `field_precedence_policy` when the same name
+exists in multiple sources. The full taxonomy is described in D4.
 
 `k:` is not a namespace — it is replaced by the expression mechanism in D2.
 The old single-character prefixes (`c:`, `p:`, `i:`, `k:`) are retired;
@@ -176,7 +176,7 @@ one of two forms. `:` means exactly one thing throughout: namespace separator.
 **A plain field reference** — resolved directly:
 ```yaml
 bom_columns:
-  "Designator": "reference"        # convenience alias (resolves via field_precedence_policy)
+  "Designator": "reference"        # unqualified source-data name (sch:Reference)
   "Package":    "inv:package"      # inventory namespace
   "Footprint":  "pcb:footprint"    # PCB namespace
 ```
@@ -202,10 +202,10 @@ bom_columns:
    Resolve each to its string value and bind as `namespace_field` in the local
    variable namespace.
 
-2. Convenience alias names referenced in the expression are resolved via the
-   active `field_precedence_policy` and bound by name in the local namespace
-   (e.g., `value` → whichever source namespace the policy designates as
-   authoritative for `value`).
+2. Unqualified source-data names referenced in the expression are resolved via
+   the active `field_precedence_policy` when ambiguous across sources, and
+   bound by name in the local namespace (e.g., `value` → `sch:Value` when
+   schematic-biased policy is active and `inv:Value` is not present).
 
 3. Replace `namespace:field` tokens in the expression string with their
    `namespace_field` variable names. The result is a valid Python expression.
@@ -284,17 +284,27 @@ not passed through from any source:
 
 These are the only fields registered in `src/jbom/config/fields.py`. The earlier
 draft of this ADR incorrectly listed source fields (`reference`, `value`, etc.)
-as "canonical jBOM-computed fields" — they are source fields, accessed via
-namespace prefix or convenience alias (Category 3).
+as "canonical jBOM-computed fields" — they are source fields (Category 3).
 
 `__resolved_fabricator_part_number__` is retired; replaced by `fabricator_part_number`.
 
-**Category 3: Convenience aliases — config-defined bare names**
+The `jbom:` prefix is provisionally reserved for this category:
+`jbom:quantity`, `jbom:fabricator_part_number`, `jbom:smd`. The bare form
+(`quantity`) remains valid as a shorthand. The explicit `jbom:` form is
+useful when an inventory CSV column is also named `quantity` — `jbom:quantity`
+unambiguously selects the computed grouping count, not the inventory column.
+
+**Category 3: Unqualified field names — source-data names, policy-disambiguated**
 
 Bare names without a namespace prefix (`value`, `footprint`, `reference`) are
-convenience aliases. They resolve to the appropriate source namespace field
-according to the `field_precedence_policy` defined in the active `defaults:`
-stanza:
+not invented aliases — they are real attribute names that exist in the source
+data. KiCad schematic symbols have a `Value` property; PCB placement has a
+`Footprint` attribute; inventory CSVs use column headers like `Package`. When a
+bare name uniquely identifies one source it resolves there directly. The
+`field_precedence_policy` is invoked only when the same name exists in multiple
+sources simultaneously (e.g., both `sch:Value` and `inv:Value` are present):
+
+The policy lives in `common.jbom.yaml`, applied at each search-path level:
 
 ```yaml
 # common.jbom.yaml (ambient — applied at every search-path level)
@@ -409,9 +419,18 @@ available to all configs at that level and below.
 
 jBOM validates transform names at config load time. When a user-defined name
 matches a built-in from the shipped `common.jbom.yaml`, the user's definition
-shadows the built-in (intentional override is supported) and jBOM logs a
-`NOTICE`-level message so accidental shadows are detectable. Two user-defined
-transforms with the same name in the same file are a load-time error.
+shadows the built-in (intentional override is supported) and jBOM emits a
+`Diagnostic(severity=NOTICE, ...)` through the existing result contract
+diagnostic infrastructure (the same typed `Diagnostic` system used throughout
+jBOM since #245) so accidental shadows surface through normal diagnostic
+reporting. Two user-defined transforms with the same name in the same file are
+a load-time `Diagnostic(severity=ERROR)` that aborts config loading.
+
+The `jbom fields` command (Deferred Item 3) and the `jbom config show` command
+(ADR 0008, Deferred Item 5) belong to a planned diagnostic command group whose
+name and design are not yet specified. The NOTICE for transform shadowing, the
+loaded-transform listing, and the resolved-config display are all outputs of
+that command group.
 
 This allows `--fields` CLI arguments and config `bom_columns` values to
 reference org-defined transforms by name, enabling a team's `common.jbom.yaml`
@@ -445,8 +464,9 @@ Key properties:
   single-character prefixes. `:` means exactly one thing: namespace separator.
 - Source fields are runtime-discovered; only three jBOM-computed fields
   (`quantity`, `fabricator_part_number`, `smd`) are Python-registered.
-- Bare convenience alias names resolve via `field_precedence_policy` in
-  `defaults:` — config-owned, not hardcoded.
+- Unqualified source-data names (e.g., `value`, `reference`) resolve
+  unambiguously when unique; `field_precedence_policy` in `common.jbom.yaml`
+  disambiguates when the same name appears in multiple sources.
 - `namespace:field` tokens are syntactically invalid Python and are
   unambiguously preprocessed before `ast.parse(mode='eval')`. No `${}` decoration.
 - Named transforms (including built-in ones in `common.jbom.yaml`) are
