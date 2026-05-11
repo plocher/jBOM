@@ -89,7 +89,8 @@ three models. (Resolves smell S1.)
 - `FabricatorConfig.model_json_schema()` is stable (schema regression test)
 - No `from_yaml_dict()` method exists in any config class
 - No `Field(alias=...)` exists anywhere in the codebase
-- `git grep "from_yaml_dict"` returns zero results
+- `git grep "from_yaml_dict" -- "src/" "tests/"` returns zero results
+- `git grep "Field(alias" -- "src/" "tests/"` returns zero results
 
 ---
 
@@ -269,6 +270,11 @@ From `suppliers/mouser.supplier.yaml`.
 - No `i:`, `p:`, `c:`, `k:` prefixes in any YAML file
 - All functional tests pass (BDD features pass)
 - `git grep -r "i:package\|p:k:\|c:tolerance"` returns zero results in config files
+- **Phase 1c legacy bridges removed** (were necessary staging; must not survive 1d):
+  - `git grep -n "_parse_legacy_kicad_strip_ref\|legacy.*kicad.*strip" -- src/ tests/` → zero results
+  - `git grep -n "strip_kicad_library_prefix_from_value" -- src/jbom/config/field_expr.py` → zero results
+    (the function is now defined only in `common.jbom.yaml`, not in Python)
+  - `git grep -n "BUILTIN\|builtin_transform\|default_transforms" -- src/jbom/config/field_expr.py` → zero results
 
 ---
 
