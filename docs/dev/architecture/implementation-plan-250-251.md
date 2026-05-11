@@ -84,7 +84,8 @@ three models. (Resolves smell S1.)
 - All `from_yaml_dict()` call sites → `model_validate()`
 
 **Acceptance criteria**:
-- All existing tests pass
+- `pytest tests/` — all unit tests pass
+- `behave features/` — all BDD scenarios pass (functional promises preserved)
 - `FabricatorConfig.model_json_schema()` is stable (schema regression test)
 - No `from_yaml_dict()` method exists in any config class
 - No `Field(alias=...)` exists anywhere in the codebase
@@ -302,8 +303,8 @@ From `suppliers/mouser.supplier.yaml`.
 
 Before requesting merge of PR #267:
 - [ ] All five phases committed on this branch
-- [ ] All existing tests pass
-- [ ] All BDD/functional tests pass (including new Stories A–E from ADR 0008)
+- [ ] `pytest tests/` passes
+- [ ] `behave features/` passes (including new Stories A–E from ADR 0008)
 - [ ] No `from_yaml_dict()` method exists
 - [ ] No `Field(alias=...)` exists
 - [ ] No legacy prefix notation (`i:`, `p:`, `c:`, `k:`) in any config file
