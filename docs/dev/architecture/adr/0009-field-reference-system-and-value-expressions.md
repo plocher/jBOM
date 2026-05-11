@@ -87,11 +87,11 @@ Three namespaces are defined:
 | `pcb:` | PCB / placement | Component data from `.kicad_pcb` (replaces `p:`) |
 | `inv:` | Inventory | Fields from matched inventory CSV rows (replaces `i:`) |
 
-Canonical jBOM-computed fields (`reference`, `quantity`, `value`, `description`,
-`footprint`, `package`, `manufacturer`, `fabricator_part_number`, `smd`, `x`,
-`y`, `rotation`, `side`, etc.) carry **no namespace prefix**. They are resolved
-by jBOM from whichever source is authoritative and need no source qualifier from
-the config author.
+Bare names without a namespace prefix are either jBOM-computed fields (a small
+set: `quantity`, `fabricator_part_number`, `smd`) or convenience aliases
+(`value`, `reference`, `footprint`, etc.) that resolve to the appropriate source
+namespace via the active `field_precedence_policy` in `defaults:`. The full
+taxonomy is described in D4.
 
 `k:` is not a namespace — it is replaced by the expression mechanism in D2.
 The old single-character prefixes (`c:`, `p:`, `i:`, `k:`) are retired;
@@ -105,7 +105,7 @@ one of two forms. `:` means exactly one thing throughout: namespace separator.
 **A plain field reference** — resolved directly:
 ```yaml
 bom_columns:
-  "Designator": "reference"        # canonical computed field (no namespace)
+  "Designator": "reference"        # convenience alias (resolves via field_precedence_policy)
   "Package":    "inv:package"      # inventory namespace
   "Footprint":  "pcb:footprint"    # PCB namespace
 ```
@@ -130,8 +130,8 @@ bom_columns:
 **Why no `${}` decoration:** in Python expression context, `word:word`
 (namespace-qualified field references) is syntactically invalid Python. The
 preprocessor identifies and binds these unambiguously without additional
-decoration. Canonical field names are valid Python identifiers and are bound
-directly in the eval namespace.
+decoration. Bare convenience alias names (Category 3 in D4) are valid Python
+identifiers and are bound directly in the eval namespace after alias resolution.
 
 **Expression evaluation contract:**
 
@@ -140,8 +140,10 @@ directly in the eval namespace.
    Resolve each to its string value and bind as `namespace_field` in the local
    variable namespace.
 
-2. Canonical field names referenced in the expression are bound by name in the
-   local namespace (e.g., `reference` → the resolved reference value).
+2. Convenience alias names referenced in the expression are resolved via the
+   active `field_precedence_policy` and bound by name in the local namespace
+   (e.g., `value` → whichever source namespace the policy designates as
+   authoritative for `value`).
 
 3. Replace `namespace:field` tokens in the expression string with their
    `namespace_field` variable names. The result is a valid Python expression.
@@ -182,35 +184,75 @@ convenience layer, not a replacement vocabulary. Users who need a named
 transform not in the stdlib can define it in their own config (see D7)
 without waiting for a jBOM release.
 
-### D4. Canonical field name registry
+### D4. Field categories — source, computed, and convenience aliases
 
-All valid canonical (no-namespace) field names are defined in a single
-authoritative registry in `src/jbom/config/fields.py`. Config values and CLI
-`--fields` arguments are validated against this registry. Unknown bare names
-produce a warning with the list of valid names.
+Fields accessible in `bom_columns` values, `--fields` arguments, and expressions
+fall into three distinct categories with different natures.
 
-The registry replaces scattered string constants and serves as the definitive
-documentation of what computed fields jBOM produces.
+**Category 1: Source fields — not pre-registered; discovered at runtime**
 
-Initial registry (non-exhaustive — full list in `fields.py`):
+Source fields carry an explicit namespace prefix and their availability is
+determined by the actual data:
+- `sch:*` — whatever symbol properties the KiCad schematic contains
+  (`sch:Value`, `sch:Footprint`, `sch:Reference`, user-defined attributes such
+  as `sch:LCSC`, `sch:PART_STATUS`, ...)
+- `pcb:*` — placement attributes from the PCB file (`pcb:x`, `pcb:y`,
+  `pcb:rotation`, `pcb:side`)
+- `inv:*` — whatever column headers the matched inventory CSV provides
+  (`inv:IPN`, `inv:Supplier`, `inv:SPN`, `inv:MPN`, `inv:Package`, ...)
 
-| Name | Description |
+jBOM cannot enumerate these ahead of time. A user's schematic may have a
+custom `PART_STATUS` attribute; their inventory may use bespoke column names.
+These fields are discovered at evaluation time from the actual data sources.
+
+**Category 2: jBOM-computed fields — a small Python-registered set**
+
+A small set of field names are produced by jBOM's internal processing logic,
+not passed through from any source:
+
+| Name | Computed by |
 |---|---|
-| `reference` | Component designator (R1, C2, U1) |
-| `quantity` | Grouped component count |
-| `value` | Component value |
-| `description` | Component description |
-| `footprint` | Resolved footprint name (normalized) |
-| `package` | Package size / footprint shorthand |
-| `manufacturer` | Manufacturer name |
-| `fabricator_part_number` | Resolved fabricator / supplier part number |
-| `smd` | Surface-mount flag (Y/N) |
-| `x`, `y` | Placement coordinates |
-| `rotation` | Placement rotation |
-| `side` | Board side (F / B) |
+| `quantity` | Grouping logic (count of identical components) |
+| `fabricator_part_number` | Part number resolution from matched inventory item |
+| `smd` | Calculated from PCB placement type |
 
-`__resolved_fabricator_part_number__` is retired. Its role is expressed by the
-canonical field name `fabricator_part_number`.
+These are the only fields registered in `src/jbom/config/fields.py`. The earlier
+draft of this ADR incorrectly listed source fields (`reference`, `value`, etc.)
+as "canonical jBOM-computed fields" — they are source fields, accessed via
+namespace prefix or convenience alias (Category 3).
+
+`__resolved_fabricator_part_number__` is retired; replaced by `fabricator_part_number`.
+
+**Category 3: Convenience aliases — config-defined bare names**
+
+Bare names without a namespace prefix (`value`, `footprint`, `reference`) are
+convenience aliases. They resolve to the appropriate source namespace field
+according to the `field_precedence_policy` defined in the active `defaults:`
+stanza:
+
+```yaml
+# generic.defaults.yaml (existing)
+field_precedence_policy:
+  schematic_biased:
+    - value
+    - tolerance
+    - footprint
+    ...
+  pcb_biased:
+    - x
+    - y
+    - rotation
+    ...
+```
+
+This policy is the config-owned mechanism for convenience alias resolution —
+not a static Python registry. An org can override the policy in their
+`common.jbom.yaml` to change which source namespace a bare name resolves to,
+without changing any code.
+
+Note: the `field_precedence_policy` as currently defined in `generic.defaults.yaml`
+needs to be extended to fully cover the alias resolution role described here.
+That extension is part of the built-in file migration in Phase 1.
 
 ### D5. Unified `field_synonyms` structure
 
@@ -331,8 +373,10 @@ in D1–D7.
 Key properties:
 - Three explicit source namespaces (`sch:`, `pcb:`, `inv:`) replace opaque
   single-character prefixes. `:` means exactly one thing: namespace separator.
-- Canonical computed fields carry no namespace prefix and are defined in a
-  single authoritative registry.
+- Source fields are runtime-discovered; only three jBOM-computed fields
+  (`quantity`, `fabricator_part_number`, `smd`) are Python-registered.
+- Bare convenience alias names resolve via `field_precedence_policy` in
+  `defaults:` — config-owned, not hardcoded.
 - `namespace:field` tokens are syntactically invalid Python and are
   unambiguously preprocessed before `ast.parse(mode='eval')`. No `${}` decoration.
 - A jBOM expression stdlib provides named convenience functions; users extend
@@ -347,8 +391,10 @@ Key properties:
   self-documenting, no magic characters, extensible to any regex the user needs.
 - Users can combine fields, apply regex, and format output values without waiting
   for jBOM releases.
-- `__resolved_fabricator_part_number__` is gone; `fabricator_part_number` is in
-  the canonical registry with a clear definition.
+- `__resolved_fabricator_part_number__` is gone; `fabricator_part_number` is a
+  jBOM-computed field with a clear definition.
+- Source field vocabulary (sch:/pcb:/inv:) is runtime-discovered, not a static
+  Python registry that diverges from reality.
 - `field_synonyms` triplication eliminated; one parser to test and maintain.
 - CLI and config field references are one language; documentation collapses to
   one section.
@@ -389,12 +435,18 @@ Key properties:
    component category tokens (`RES`, `res`, `resistor`) are out of scope here.
 3. **Pipe-chained transforms** — reserved for future consideration once
    expression usage patterns are observed in practice.
+4. **`jbom fields` diagnostic command** — prints the discovered source field
+   sets for the current project: `sch:*` attributes found in the schematic,
+   `pcb:*` placement attributes, `inv:*` inventory column headers, and the
+   three jBOM-computed fields. Complements `jbom config show` (ADR 0008,
+   Deferred Item 5). Useful when authoring `bom_columns` expressions.
 
 ## Implementation Phases
 
 **Phase 1 (this feature branch, alongside ADR 0008 Phase 1)**
-- `src/jbom/config/fields.py` — canonical field name registry as a typed enum
-  or frozenset; source namespace constants.
+- `src/jbom/config/fields.py` — jBOM-computed field registry (Category 2 only:
+  `quantity`, `fabricator_part_number`, `smd`); source namespace constants
+  (`SCH`, `PCB`, `INV`). Source field discovery is runtime, not pre-registered.
 - `src/jbom/config/field_ref.py` — `FieldRef` dataclass (namespace, name,
   expression); `FieldRefResolver.resolve(ref, context)` → value.
 - `src/jbom/config/field_expr.py` — `FieldExpressionEvaluator`:
