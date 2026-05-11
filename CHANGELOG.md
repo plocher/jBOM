@@ -1,6 +1,49 @@
 # CHANGELOG
 
 
+## v6.57.0 (2026-05-11)
+
+### Bug Fixes
+
+* fix(config): declare generate_designators explicitly in generic.fab.yaml
+
+The value was previously implicit (Python dataclass default = False).
+Now the YAML is the source of truth, making the config self-documenting
+and giving users a clear model to copy when writing custom fab YAMLs.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`5875e96`](https://github.com/plocher/jBOM/commit/5875e96bbdedd3b72734d659ea6f865bcf76bfcd))
+
+### Features
+
+* feat(fab): #243 DesignatorsWriter service and --designators flag
+
+- New DesignatorsWriter service (src/jbom/services/designators_writer.py):
+  writes REF:COUNT lines in natural sort order; handles duplicates, empty
+  input, force-overwrite, and parent directory creation.
+
+- FabricatorConfig: add generate_designators: bool = False parsed from
+  fab YAML; future fab configs can set generate_designators: true to
+  enable by default.
+
+- FabricationRequest: add generate_designators: bool = False field.
+
+- FabricationWorkflow: Step 2.5 after POS — reads PCB footprints via
+  DefaultKiCadReaderService and writes production/designators.csv;
+  gated on request.generate_designators and skipped in dry_run.
+
+- CLI jbom fab: --designators flag; falls back to fabricator config
+  default when flag is absent.
+
+- Plugin dialog: Generate designators.csv checkbox, default read from
+  currently-selected fabricator config; _worker uses board.GetFootprints()
+  to avoid re-parsing the PCB file.
+
+- 20 unit tests covering service correctness, config parsing, request
+  contract, and workflow integration (1335 passing total).
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`74162e8`](https://github.com/plocher/jBOM/commit/74162e8b89ef5ab5183368f6c3bbc9f0223056c7))
+
+
 ## v6.56.0 (2026-05-10)
 
 ### Features
