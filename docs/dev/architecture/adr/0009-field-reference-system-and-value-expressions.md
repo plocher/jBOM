@@ -71,8 +71,8 @@ explanation to translate to its Python equivalent is a schema design smell.
   side effects) and require no new parser infrastructure beyond Python's own
   `ast` module.
 - The YAML schema should be isomorphic to the Python data model it serializes.
-- Backward compatibility with `i:`, `p:`, `c:`, `k:` notation is provided by
-  a deprecation shim shared with ADR 0008's migration period.
+- The old `i:`, `p:`, `c:`, `k:` notation is retired with no shim. Nothing
+  has shipped externally; a clean break requires no major version bump.
 
 ## Design Decisions
 
@@ -93,9 +93,9 @@ Canonical jBOM-computed fields (`reference`, `quantity`, `value`, `description`,
 by jBOM from whichever source is authoritative and need no source qualifier from
 the config author.
 
-Migration shim: `c:` → `sch:`, `p:` → `pcb:`, `i:` → `inv:` are accepted with
-a deprecation log warning during the ADR 0008 shim period. `k:` is replaced by
-the expression mechanism (D2).
+`k:` is not a namespace — it is replaced by the expression mechanism in D2.
+The old single-character prefixes (`c:`, `p:`, `i:`, `k:`) are retired;
+no shim or deprecation warning is provided.
 
 ### D2. Value expressions — field references and Python expressions
 
@@ -376,9 +376,8 @@ Key properties:
   **Mitigation**: `FieldExpressionError` surfaces expression + context at the
   point of failure; a future `jbom config show` command (ADR 0008, Deferred 5)
   would allow pre-flight validation.
-- **Risk**: Namespace renames (`c:` → `sch:`) break existing user `.jbom/` files.
-  **Mitigation**: the legacy prefix shim (shared with ADR 0008 migration) accepts
-  and translates old prefixes with a deprecation warning.
+- **Non-risk**: The old single-character prefixes (`c:`, `p:`, `i:`, `k:`) are
+  not supported. No user files exist to break; nothing has shipped externally.
 
 ## Deferred Items
 
@@ -408,9 +407,9 @@ Key properties:
   replacing the three divergent parsers.
 - Update `fabricators.py`, `defaults.py`, `suppliers.py` to use shared parser.
 - Update `bom_workflow.py` / CLI `--fields` parser to use `FieldRefResolver`.
-- Deprecation shim: accept `c:`, `p:`, `i:`, `k:` with warnings.
+- Built-in config files using old prefixes are migrated in Phase 2; no shim.
 - Unit tests: namespace resolution, expression evaluation, statement rejection,
-  `kicad_strip_library_prefix`, error surfacing, legacy prefix shim.
+  `kicad_strip_library_prefix`, error surfacing, transform compilation.
 
 **Phase 2 (alongside ADR 0008 Phase 1b — built-in file migration)**
 - Migrate built-in config files: `"p:k:footprint"` → expression form.
