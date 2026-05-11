@@ -96,13 +96,25 @@ surface area — than field value expression requires. The `namespace:field`
 preprocessing + `ast.parse(mode='eval')` approach provides the needed expression
 power without the baggage, and without a new dependency.
 
-### Option 3 — Pipe model for chained transforms (deferred)
-`"Footprint": "pcb:footprint | strip_kicad_library_prefix | upper"` — a
-Unix-pipeline syntax chaining field read and named transforms.
+### Option 2b — `${token}` interpolation in expression strings (rejected)
+Instead of preprocessing `word:word` tokens, require users to wrap field
+references in `${}` markers: `"re.sub(r'^[^:]+:', '', ${pcb:footprint})"`.
 
-Not adopted as the primary mechanism; a pipeline model could be layered on top
-of the expression mechanism in a future ADR if use cases emerge. The expression
-mechanism (D2) handles multi-step transforms natively.
+Rejected because: in Python expression context, `word:word` is already
+syntactically invalid — the `:` creates a syntax error outside subscript or
+dict literal positions. The preprocessor can unambiguously identify field
+references without any decoration. `${...}` solves a problem that doesn't exist
+and creates visual noise with no semantic value.
+
+### Option 3 — Pipe model for chained transforms (rejected)
+`"Footprint": "pcb:footprint | strip_kicad_library_prefix | upper"` — a
+Unix-pipeline syntax chaining a field read and named transforms.
+
+Rejected because: this is a solution in search of a problem. The expression
+mechanism already handles multi-step transforms natively using standard Python
+function call composition. A pipe DSL adds new syntax to learn for no capability
+gain. The expression `upper(strip_kicad_library_prefix(pcb:footprint))` is
+clearer and already works.
 
 ### Option 3b — `transform:namespace:field` shorthand syntax (rejected)
 `"Footprint": "strip_lib_prefix:pcb:footprint"` — a compact positional syntax
@@ -117,8 +129,36 @@ eliminate. Function call syntax `strip_lib_prefix(pcb:footprint)` is
 unambiguous, already covered by the expression mechanism, and reads as
 standard Python.
 
-### Option 4 — `namespace:field` preprocessing + `ast.parse(mode='eval')` (accepted — this ADR)
-Described in Decision Details below (D1–D7).
+### Option 4 — `namespace:field` preprocessing + `ast.parse(mode='eval')` (accepted)
+
+This option emerged from the successive rejections above:
+
+**From Option 1**: a fixed Python vocabulary requires jBOM releases to extend.
+The config that invents a transformation requirement should be able to express
+how to satisfy it — in the same file, without a release cycle.
+
+**From Option 2**: Jinja2 brings a full template engine when we need only a
+safe expression evaluator. No new dependency; Python's own `ast` module is
+the right tool.
+
+**From Option 2b**: `${token}` decoration is unnecessary. `word:word` in Python
+expression context is already a syntax error — the `:` makes the reference
+unambiguous without any additional markers.
+
+**From Option 3**: a pipe DSL adds syntax to learn for zero capability gain;
+standard Python function composition handles the same cases.
+
+**From Option 3b**: `:` must mean one thing. Using it as both namespace
+separator and transform-apply operator requires the parser to know the closed
+set of namespace names — reintroducing exactly the kind of implicit vocabulary
+this design avoids.
+
+The design that emerges: preprocess `namespace:field` tokens to local variable
+bindings (the syntax error is the signal), evaluate as a Python expression with
+`ast.parse(mode='eval')` in a namespace containing `re` and config-defined
+transforms, no Python stdlib. The same `.jbom.yaml` that creates a requirement
+(e.g., "strip the KiCad library prefix") also defines how to satisfy it (the
+transform expression in `transforms:`). See Decision Details below.
 
 ## Decision
 
@@ -192,11 +232,11 @@ bom_columns:
   "Footprint": "strip_lib_prefix(pcb:footprint)"
 ```
 
-**Why no `${}` decoration:** in Python expression context, `word:word`
-(namespace-qualified field references) is syntactically invalid Python. The
-preprocessor identifies and binds these unambiguously without additional
-decoration. Bare convenience alias names (Category 3 in D4) are valid Python
-identifiers and are bound directly in the eval namespace after alias resolution.
+**Why no `${}` decoration** (see Option 2b rejection): in Python expression
+context, `word:word` is already syntactically invalid — the preprocessor
+unambiguously identifies field references without any added markers. Bare
+convenience alias names (Category 3 in D4) are valid Python identifiers and
+are bound directly in the eval namespace after alias resolution.
 
 **Expression evaluation contract:**
 
@@ -392,8 +432,24 @@ to publish a shared transform library without requiring a jBOM release.
 ## Consequences
 
 ### Positive
-- `p:k:footprint` becomes `strip_kicad_library_prefix(pcb:footprint)` —
-  self-documenting, no magic characters, extensible to any regex the user needs.
+- The old `p:k:footprint` becomes transparent: the transform is defined in
+  `common.jbom.yaml` and used in `bom_columns`. Complete picture:
+
+  ```yaml
+  # src/jbom/config/common.jbom.yaml — definition (ships with jBOM)
+  transforms:
+    strip_kicad_library_prefix:
+      expr: "re.sub(r'^[^:]+:', '', value)"
+      doc:  "'Capacitors_SMD:C_0402' → 'C_0402'"
+
+  # jlc.jbom.yaml — usage
+  fab:
+    bom_columns:
+      "Footprint": "strip_kicad_library_prefix(pcb:footprint)"
+  ```
+
+  Both sides live in config. The transform can be inspected, overridden, or
+  replaced without touching Python.
 - Users can combine fields, apply regex, and format output values without waiting
   for jBOM releases.
 - `__resolved_fabricator_part_number__` is gone; `fabricator_part_number` is a
@@ -407,7 +463,29 @@ to publish a shared transform library without requiring a jBOM release.
 ### Negative / Tradeoffs
 - Expressions in config are harder to read for non-developers than simple field
   references. Plain field references remain the common case; expressions are
-  opt-in for transformation needs.
+  opt-in for transformation needs. A realistic composite config using both:
+
+  ```yaml
+  # $REPO_ROOT/.jbom/acme-jlc.jbom.yaml — corporate JLC fork
+  extends: jlc
+
+  transforms:
+    normalize_value:
+      expr: "re.sub(r'\\s+', '', value).upper()"
+      doc:  "Normalize value strings: '10 K' → '10K'"
+
+  fab:
+    bom_columns:
+      "Surface Mount": null                                   # delete inherited
+      "Footprint":     "strip_kicad_library_prefix(pcb:footprint)"
+      "Value":         "normalize_value(sch:Value)"
+      "IPN":           "inv:IPN"                              # plain field ref
+      "Status":        "inv:PART_STATUS"                      # custom sch attribute
+  ```
+
+  The plain `"inv:IPN"` and `"inv:PART_STATUS"` lines are readable to any
+  engineer. The expression lines require understanding the transform mechanism.
+  The comment on `normalize_value` is the recommended mitigation.
 - The `ast.parse` + restricted-eval path adds complexity to the field resolver.
   This complexity is bounded and testable (expression rejection, namespace
   restriction, error surfacing).
@@ -422,29 +500,36 @@ to publish a shared transform library without requiring a jBOM release.
   `compile/eval` semantics.
   **Mitigation**: expression evaluation is isolated in `FieldExpressionEvaluator`;
   one class to update if Python internals shift.
-- **Risk**: Users write expressions that are technically valid but produce empty
-  strings or exceptions at runtime due to missing field values.
-  **Mitigation**: `FieldExpressionError` surfaces expression + context at the
-  point of failure; a future `jbom config show` command (ADR 0008, Deferred 5)
-  would allow pre-flight validation.
+- **Risk**: Users write expressions that produce wrong output silently (no
+  exception, just an unexpected value) due to wrong field reference or transform.
+  **Mitigation**: `FieldExpressionError` surfaces failures with expression +
+  field values. The `jbom fields` diagnostic command (Deferred 4) will show
+  which transforms are loaded and from which config file; a debug/verbose mode
+  should trace transform input → output at evaluation time.
 - **Non-risk**: The old single-character prefixes (`c:`, `p:`, `i:`, `k:`) are
   not supported. No user files exist to break; nothing has shipped externally.
 
 ## Deferred Items
 
-1. **Value type contracts** — percentage strings (`"5%"`), voltage strings
-   (`"10V"`), wattage strings (`"63mW"`) have no schema-level type contract or
-   normalization rule. These are out of scope here; a follow-on ADR or
-   enhancement tracks them.
-2. **Category token vocabulary** — canonical casing and normalization rules for
-   component category tokens (`RES`, `res`, `resistor`) are out of scope here.
-3. **Pipe-chained transforms** — reserved for future consideration once
-   expression usage patterns are observed in practice.
-4. **`jbom fields` diagnostic command** — prints the discovered source field
+1. **Value type contracts and normalize transforms** — Percentage strings
+   (`"5%"`), voltage strings (`"10V"`), and wattage strings (`"63mW"`) are
+   currently consumed opaquely by jBOM's heuristics engine. Whether these
+   normalizations can be expressed as config-defined transforms (making component
+   matching rules extensible without code changes) is worth exploring in a
+   follow-on design. If feasible, the heuristics engine would become a consumer
+   of config-defined normalizers rather than a holder of hardcoded string
+   patterns.
+2. **Category classification** — Component categories (`RES`, `CAP`, `IND`,
+   etc.) are data-driven: they emerge from the component's content (value,
+   footprint, symbol name), not from a fixed jBOM vocabulary. The heuristic
+   classifier that maps content to category tokens is partly hardcoded in Python.
+   Like value normalization (item 1), config-driven category classification would
+   be the consistent direction. Out of scope here; tracked separately.
+3. **`jbom fields` diagnostic command** — prints the discovered source field
    sets for the current project: `sch:*` attributes found in the schematic,
    `pcb:*` placement attributes, `inv:*` inventory column headers, and the
-   three jBOM-computed fields. Complements `jbom config show` (ADR 0008,
-   Deferred Item 5). Useful when authoring `bom_columns` expressions.
+   three jBOM-computed fields; also lists all loaded transforms and which config
+   file defined each. Complements `jbom config show` (ADR 0008, Deferred Item 5).
 
 ## Implementation Phases
 
