@@ -59,6 +59,7 @@ import sys
 import tempfile
 import threading
 import types
+import os
 from pathlib import Path
 
 import wx
@@ -112,6 +113,11 @@ class JBOMFabricationDialog(wx.Dialog):
         self._fab_ids: list[str] = []
         self._gauges: dict[str, wx.Gauge] = {}
         self._status_texts: dict[str, wx.StaticText] = {}
+        if pcb_path:
+            try:
+                os.environ["JBOM_PROJECT_DIR"] = str(Path(pcb_path).parent.resolve())
+            except OSError:
+                os.environ["JBOM_PROJECT_DIR"] = str(Path(pcb_path).parent)
         # _archive_preview is set by _build_input_panel; updated when template changes
         self._archive_preview: wx.StaticText | None = None
 
