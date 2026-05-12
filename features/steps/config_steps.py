@@ -1,4 +1,4 @@
-"""Behave steps for unified profile hierarchy/discovery behavior."""
+"""Behave steps for profile hierarchy/discovery behavior."""
 
 from __future__ import annotations
 
@@ -36,8 +36,8 @@ def _resolve_path(root: Any, dotted_path: str) -> tuple[bool, Any]:
     return True, current
 
 
-@given('sandbox unified profile "{profile_name}" contains:')
-def given_sandbox_unified_profile_contains(context, profile_name: str) -> None:
+@given('a named profile "{profile_name}" that contains:')
+def given_named_profile_contains(context, profile_name: str) -> None:
     """Write a profile file to <sandbox>/.jbom/<profile>.jbom.yaml."""
     jbom_dir = Path(context.sandbox_root) / ".jbom"
     jbom_dir.mkdir(parents=True, exist_ok=True)
@@ -45,10 +45,14 @@ def given_sandbox_unified_profile_contains(context, profile_name: str) -> None:
     profile_path.write_text((context.text or "").strip() + "\n", encoding="utf-8")
 
 
-@given(
-    'profile directory "{directory_name}" has unified profile "{profile_name}" containing:'
-)
-def given_profile_directory_has_unified_profile(
+@given("a common profile that contains:")
+def given_common_profile_contains(context) -> None:
+    """Write common profile file to <sandbox>/.jbom/common.jbom.yaml."""
+    given_named_profile_contains(context, "common")
+
+
+@given('profile directory "{directory_name}" has profile "{profile_name}" containing:')
+def given_profile_directory_has_profile(
     context, directory_name: str, profile_name: str
 ) -> None:
     """Write a profile file to <sandbox>/<directory_name>/<profile>.jbom.yaml."""
@@ -66,9 +70,9 @@ def given_jbom_profile_path_contains(context, directory_names_csv: str) -> None:
     context.jbom_profile_path_override = os.pathsep.join(abs_dirs)
 
 
-@when('I load unified profile "{profile_name}"')
-def when_i_load_unified_profile(context, profile_name: str) -> None:
-    """Load a unified profile with optional JBOM_PROFILE_PATH override."""
+@when('I load profile "{profile_name}"')
+def when_i_load_profile(context, profile_name: str) -> None:
+    """Load a profile with optional JBOM_PROFILE_PATH override."""
     previous = os.environ.get("JBOM_PROFILE_PATH")
     try:
         override = getattr(context, "jbom_profile_path_override", None)
@@ -76,7 +80,7 @@ def when_i_load_unified_profile(context, profile_name: str) -> None:
             os.environ.pop("JBOM_PROFILE_PATH", None)
         else:
             os.environ["JBOM_PROFILE_PATH"] = override
-        context.loaded_unified_profile = load_unified(
+        context.loaded_profile = load_unified(
             profile_name, cwd=Path(context.sandbox_root)
         )
     finally:
@@ -86,44 +90,44 @@ def when_i_load_unified_profile(context, profile_name: str) -> None:
             os.environ["JBOM_PROFILE_PATH"] = previous
 
 
-@then('merged profile path "{dotted_path}" should equal "{expected_value}"')
-def then_merged_profile_path_should_equal(
+@then('resolved profile value "{dotted_path}" should equal "{expected_value}"')
+def then_resolved_profile_value_should_equal(
     context, dotted_path: str, expected_value: str
 ) -> None:
-    """Assert a scalar merged-profile path equals expected string value."""
-    loaded = getattr(context, "loaded_unified_profile", None)
-    assert isinstance(loaded, dict), "No merged profile loaded"
+    """Assert a scalar resolved-profile value equals expected string value."""
+    loaded = getattr(context, "loaded_profile", None)
+    assert isinstance(loaded, dict), "No resolved profile loaded"
     found, actual = _resolve_path(loaded, dotted_path)
-    assert found, f"Merged profile path not found: {dotted_path}"
+    assert found, f"Resolved profile value not found: {dotted_path}"
     assert str(actual) == expected_value, (
-        f"Merged profile path mismatch for {dotted_path}: "
+        f"Resolved profile value mismatch for {dotted_path}: "
         f"expected {expected_value!r}, got {actual!r}"
     )
 
 
-@then('merged profile path "{dotted_path}" should equal list "{expected_csv}"')
-def then_merged_profile_path_should_equal_list(
+@then('resolved profile value "{dotted_path}" should equal list "{expected_csv}"')
+def then_resolved_profile_value_should_equal_list(
     context, dotted_path: str, expected_csv: str
 ) -> None:
-    """Assert a merged-profile path equals the expected comma-separated list."""
-    loaded = getattr(context, "loaded_unified_profile", None)
-    assert isinstance(loaded, dict), "No merged profile loaded"
+    """Assert a resolved-profile value equals the expected comma-separated list."""
+    loaded = getattr(context, "loaded_profile", None)
+    assert isinstance(loaded, dict), "No resolved profile loaded"
     found, actual = _resolve_path(loaded, dotted_path)
-    assert found, f"Merged profile path not found: {dotted_path}"
+    assert found, f"Resolved profile value not found: {dotted_path}"
     assert isinstance(
         actual, list
-    ), f"Merged profile path {dotted_path} expected list, got {type(actual).__name__}"
+    ), f"Resolved profile value {dotted_path} expected list, got {type(actual).__name__}"
     expected = [item.strip() for item in expected_csv.split(",") if item.strip()]
     assert actual == expected, (
-        f"Merged profile list mismatch for {dotted_path}: "
+        f"Resolved profile list mismatch for {dotted_path}: "
         f"expected {expected!r}, got {actual!r}"
     )
 
 
-@then('merged profile path "{dotted_path}" should be missing')
-def then_merged_profile_path_should_be_missing(context, dotted_path: str) -> None:
-    """Assert a merged-profile path does not exist."""
-    loaded = getattr(context, "loaded_unified_profile", None)
-    assert isinstance(loaded, dict), "No merged profile loaded"
+@then('resolved profile value "{dotted_path}" should be missing')
+def then_resolved_profile_value_should_be_missing(context, dotted_path: str) -> None:
+    """Assert a resolved-profile value does not exist."""
+    loaded = getattr(context, "loaded_profile", None)
+    assert isinstance(loaded, dict), "No resolved profile loaded"
     found, _ = _resolve_path(loaded, dotted_path)
-    assert not found, f"Expected merged profile path to be missing: {dotted_path}"
+    assert not found, f"Expected resolved profile value to be missing: {dotted_path}"
