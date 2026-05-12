@@ -18,6 +18,9 @@ fab:
 
   field_synonyms:
     fab_pn:
+      # Seeed keeps a generic preferred-part label to allow mixed supplier
+      # sourcing while retaining Seeed-specific export headers in bom_columns.
+      # Mechanism docs: docs/README.configuration.md#field_synonyms-mechanism.
       display_name: "Preferred Supplier PN"
     supplier_pn:
       display_name: "Supplier Part Number"
