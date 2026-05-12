@@ -5,8 +5,7 @@ Feature: Audit inventory supplier freshness
   So that I can keep my inventory current and optimal
 
   Scenario: STALE_PART emitted when existing PN not found by fresh search
-    Given a default supplier
-    And an inventory file "inventory.csv" that contains:
+    Given an inventory file "inventory.csv" that contains:
       | RowType | IPN          | Category | Value | Package | Supplier | SPN    |
       | ITEM    | RES_10K_0603 | RES      | 10K   | 0603    | generic  | S99999 |
     When I run "jbom audit inventory.csv --supplier generic"
@@ -15,7 +14,9 @@ Feature: Audit inventory supplier freshness
     And the output should contain "S99999"
 
   Scenario: BETTER_AVAILABLE when search finds a different best PN
-    Given a default supplier
+    Given a supplier profile that contains:
+      | key | value |
+      | id  | generic |
     And a supplier catalog that contains:
       | distributor_pn | manufacturer | mpn             | stock_quantity | price |
       | S25804         | Yageo        | RC0603FR-0710KL | 500            | 0.01  |
@@ -29,7 +30,9 @@ Feature: Audit inventory supplier freshness
     And the output should contain "S25804"
 
   Scenario: Silent when existing PN matches best search result
-    Given a default supplier
+    Given a supplier profile that contains:
+      | key | value |
+      | id  | generic |
     And a supplier catalog that contains:
       | distributor_pn | manufacturer | mpn             | stock_quantity | price |
       | S25804         | Yageo        | RC0603FR-0710KL | 500            | 0.01  |
@@ -42,8 +45,7 @@ Feature: Audit inventory supplier freshness
     And the output should not contain "BETTER_AVAILABLE"
 
   Scenario: No STALE_PART when item has no supplier PN
-    Given a default supplier
-    And an inventory file "inventory.csv" that contains:
+    Given an inventory file "inventory.csv" that contains:
       | RowType | IPN          | Category | Value | Package | Supplier | SPN |
       | ITEM    | RES_10K_0603 | RES      | 10K   | 0603    |          |     |
     When I run "jbom audit inventory.csv --supplier generic"
@@ -51,8 +53,7 @@ Feature: Audit inventory supplier freshness
     And the output should not contain "STALE_PART"
 
   Scenario: Freshness checks run even without --requirements
-    Given a default supplier
-    And an inventory file "inventory.csv" that contains:
+    Given an inventory file "inventory.csv" that contains:
       | RowType | IPN          | Category | Value | Package | Supplier | SPN    |
       | ITEM    | RES_10K_0603 | RES      | 10K   | 0603    | generic  | S99999 |
     When I run "jbom audit inventory.csv --supplier generic -o report.csv"
