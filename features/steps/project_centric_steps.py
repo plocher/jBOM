@@ -616,12 +616,54 @@ def then_inventory_file_contains_value(context, value: str) -> None:
 # -------------------------
 
 
-def _default_supplier_profile_id(context) -> str:
-    """Return the active default supplier profile id for this scenario."""
-    value = (
-        str(getattr(context, "default_supplier_profile_id", "") or "").strip().lower()
-    )
-    return value or "generic"
+def _deep_merge_supplier(
+    base: dict[str, Any], override: dict[str, Any]
+) -> dict[str, Any]:
+    """Deep merge override onto base with list-replace and null-delete semantics."""
+    merged: dict[str, Any] = dict(base)
+    for key, value in override.items():
+        if value is None:
+            merged.pop(key, None)
+            continue
+        existing = merged.get(key)
+        if isinstance(existing, dict) and isinstance(value, dict):
+            merged[key] = _deep_merge_supplier(existing, value)
+            continue
+        merged[key] = value
+    return merged
+
+
+def _set_dotted_mapping_value(
+    target: dict[str, Any], dotted_key: str, value: Any
+) -> None:
+    """Set a dotted-path key inside a nested mapping."""
+    parts = [segment.strip() for segment in str(dotted_key or "").split(".") if segment]
+    if not parts:
+        return
+    cursor = target
+    for key in parts[:-1]:
+        next_value = cursor.get(key)
+        if not isinstance(next_value, dict):
+            next_value = {}
+            cursor[key] = next_value
+        cursor = next_value
+    cursor[parts[-1]] = value
+
+
+def _coerce_supplier_override_value(path: str, raw_value: str) -> Any:
+    """Coerce table values for supplier-profile overrides."""
+    normalized_path = str(path or "").strip().lower()
+    token = str(raw_value or "").strip()
+    lowered = token.lower()
+    if lowered == "null":
+        return None
+    if lowered == "true":
+        return True
+    if lowered == "false":
+        return False
+    if normalized_path in {"search.fields"}:
+        return [item.strip() for item in token.split(",") if item.strip()]
+    return token
 
 
 def _iter_builtin_profile_paths(repo_root: Path) -> list[Path]:
@@ -676,12 +718,15 @@ def _write_supplier_profile(
     *,
     supplier_id: str,
     results: list[dict[str, Any]] | None = None,
+    supplier_overrides: dict[str, Any] | None = None,
 ) -> None:
     """Write a unified supplier profile using built-in metadata + null_api fixtures."""
     import json as _json
 
     sid = (supplier_id or "").strip().lower()
     profile_data = _load_builtin_supplier_profile(sid)
+    if supplier_overrides:
+        profile_data = _deep_merge_supplier(profile_data, supplier_overrides)
     jbom_dir = Path(context.sandbox_root) / ".jbom"
     jbom_dir.mkdir(exist_ok=True)
     provider_cfg: dict[str, Any] = {"type": "null_api"}
@@ -709,15 +754,8 @@ def _write_supplier_profile(
     )
 
 
-def _table_to_supplier_results(context) -> list[dict[str, Any]]:
+def _table_to_supplier_results(context, *, supplier_id: str) -> list[dict[str, Any]]:
     """Convert a Gherkin table into null_api SearchResult fixtures."""
-    supplier_id = str(
-        getattr(
-            context,
-            "_active_supplier_profile_id_for_catalog",
-            _default_supplier_profile_id(context),
-        )
-    ).strip() or _default_supplier_profile_id(context)
     return [
         {
             "manufacturer": r.get("manufacturer", ""),
@@ -736,57 +774,69 @@ def _table_to_supplier_results(context) -> list[dict[str, Any]]:
     ]
 
 
-@given("a generic supplier")
-def given_a_generic_supplier(context) -> None:
-    """Set up an empty generic supplier config (null_api, returns no results).
-    Writes .jbom/generic.jbom.yaml with null_api and no fixtures key.
-    The null_api provider always returns [] when no fixtures are configured.
-    Use 'And a supplier catalog that contains:' to add specific results.
+@given("a supplier profile that contains:")
+def given_a_supplier_profile_that_contains(context) -> None:
+    """Create a supplier profile using explicit table-driven key/value overrides.
+
+    Table columns:
+    | key | value |
+    Example keys: id, name, website, field_synonyms.supplier_pn.display_name.
     """
-    context.default_supplier_profile_id = "generic"
-    _write_supplier_profile(context, supplier_id="generic", results=None)
+    assert (
+        context.table is not None and context.table.rows
+    ), "Expected non-empty table for supplier profile overrides"
+    headings = [h.strip().lower() for h in context.table.headings]
+    assert (
+        "key" in headings and "value" in headings
+    ), "Supplier profile table must include 'key' and 'value' columns"
 
+    key_column = context.table.headings[headings.index("key")]
+    value_column = context.table.headings[headings.index("value")]
+    overrides: dict[str, Any] = {}
+    for row in context.table:
+        path = str(row.get(key_column, "")).strip()
+        value = _coerce_supplier_override_value(path, str(row.get(value_column, "")))
+        _set_dotted_mapping_value(overrides, path, value)
 
-@given("a default supplier")
-def given_a_default_supplier(context) -> None:
-    """Set up an empty default supplier profile for this scenario."""
-    sid = _default_supplier_profile_id(context)
-    _write_supplier_profile(context, supplier_id=sid, results=None)
-
-
-@given('a supplier profile "{supplier_id}"')
-def given_a_supplier_profile(context, supplier_id: str) -> None:
-    """Set up an empty named supplier profile."""
-    sid = str(supplier_id or "").strip().lower()
-    _write_supplier_profile(context, supplier_id=sid, results=None)
-
-
-@given("a supplier catalog that contains:")
-def given_a_supplier_catalog(context) -> None:
-    """Populate the active default supplier with table-driven fixture results.
-
-    Writes .jbom/<supplier>_results.json from the Gherkin table and updates
-    .jbom/<supplier>.jbom.yaml to point the null_api provider at it.
-    Expects a default supplier profile to be available (or runs standalone).
-
-    Table columns: distributor_pn, manufacturer, mpn, stock_quantity, price,
-    description (all optional except distributor_pn).
-    """
-    sid = _default_supplier_profile_id(context)
+    sid = str(overrides.get("id", "") or "").strip().lower() or "generic"
     context._active_supplier_profile_id_for_catalog = sid
     _write_supplier_profile(
         context,
         supplier_id=sid,
-        results=_table_to_supplier_results(context),
+        results=None,
+        supplier_overrides=overrides,
+    )
+
+
+@given("a supplier catalog that contains:")
+def given_a_supplier_catalog(context) -> None:
+    """Populate the active supplier profile with table-driven fixture results.
+
+    Writes .jbom/<supplier>_results.json from the Gherkin table and updates
+    .jbom/<supplier>.jbom.yaml to point the null_api provider at it.
+    Expects 'Given a supplier profile that contains:' first.
+
+    Table columns: distributor_pn, manufacturer, mpn, stock_quantity, price,
+    description (all optional except distributor_pn).
+    """
+    sid = str(getattr(context, "_active_supplier_profile_id_for_catalog", "")).strip()
+    assert sid, (
+        "No active supplier profile selected; use "
+        "'Given a supplier profile that contains:' before catalog fixtures"
+    )
+    _write_supplier_profile(
+        context,
+        supplier_id=sid,
+        results=_table_to_supplier_results(context, supplier_id=sid),
     )
 
 
 @given('a supplier profile "{supplier_id}" with catalog that contains:')
 def given_supplier_profile_with_catalog(context, supplier_id: str) -> None:
-    """Create a named supplier profile backed by table-driven null_api fixtures."""
+    """Backward-compatible wrapper for named profile + catalog setup."""
     context._active_supplier_profile_id_for_catalog = supplier_id
     _write_supplier_profile(
         context,
         supplier_id=supplier_id,
-        results=_table_to_supplier_results(context),
+        results=_table_to_supplier_results(context, supplier_id=supplier_id),
     )
