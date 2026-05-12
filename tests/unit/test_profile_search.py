@@ -1,7 +1,7 @@
 """Unit tests for config/profile_search.py.
 
 Covers:
-- find_profile() returns builtin when no override exists
+- find_profile() returns built-in when no override exists
 - find_profile() returns project-local .jbom/ file first
 - find_profile() returns None when not found anywhere
 - JBOM_PROFILE_PATH env var is included in search dirs
@@ -18,41 +18,42 @@ import pytest
 from jbom.config.profile_search import find_profile, profile_search_dirs
 
 
-def test_find_profile_returns_builtin_when_no_override(tmp_path: Path) -> None:
-    """Should find generic.defaults.yaml from the built-in package dir."""
-    from jbom.config.defaults import _BUILTIN_DIR
+def _write_profile(path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("id: generic\n")
 
-    result = find_profile("generic", "defaults", cwd=tmp_path, builtin_dir=_BUILTIN_DIR)
+
+def test_find_profile_returns_builtin_when_no_override(tmp_path: Path) -> None:
+    """Should find generic.jbom.yaml from the provided built-in dir."""
+    builtin_dir = tmp_path / "builtin"
+    builtin_profile = builtin_dir / "generic.jbom.yaml"
+    _write_profile(builtin_profile)
+
+    result = find_profile("generic", cwd=tmp_path, builtin_dir=builtin_dir)
     assert result is not None
-    assert result.name == "generic.defaults.yaml"
+    assert result.name == "generic.jbom.yaml"
     assert result.exists()
 
 
 def test_find_profile_returns_none_for_unknown_name(tmp_path: Path) -> None:
     """Should return None when no profile matching the name exists anywhere."""
-    from jbom.config.defaults import _BUILTIN_DIR
-
-    result = find_profile(
-        "nonexistent_xyz_profile",
-        "defaults",
-        cwd=tmp_path,
-        builtin_dir=_BUILTIN_DIR,
-    )
+    result = find_profile("nonexistent_xyz_profile", cwd=tmp_path, builtin_dir=tmp_path)
     assert result is None
 
 
 def test_find_profile_prefers_jbom_dir_over_builtin(tmp_path: Path) -> None:
-    """A .jbom/generic.defaults.yaml in cwd shadows the built-in."""
-    from jbom.config.defaults import _BUILTIN_DIR
+    """A .jbom/generic.jbom.yaml in cwd shadows the built-in."""
 
     jbom_dir = tmp_path / ".jbom"
     jbom_dir.mkdir()
-    override = jbom_dir / "generic.defaults.yaml"
+    override = jbom_dir / "generic.jbom.yaml"
     override.write_text(
         "# local override\ndomain_defaults:\n  resistor:\n    tolerance: '1%'\n"
     )
+    builtin_dir = tmp_path / "builtin"
+    _write_profile(builtin_dir / "generic.jbom.yaml")
 
-    result = find_profile("generic", "defaults", cwd=tmp_path, builtin_dir=_BUILTIN_DIR)
+    result = find_profile("generic", cwd=tmp_path, builtin_dir=builtin_dir)
     assert result == override
 
 
@@ -62,12 +63,12 @@ def test_find_profile_uses_jbom_profile_path_env(
     """JBOM_PROFILE_PATH directories are included in search."""
     profile_dir = tmp_path / "org_profiles"
     profile_dir.mkdir()
-    profile_file = profile_dir / "aerospace.defaults.yaml"
-    profile_file.write_text("domain_defaults:\n  resistor:\n    tolerance: '1%'\n")
+    profile_file = profile_dir / "aerospace.jbom.yaml"
+    profile_file.write_text("id: aerospace\n")
 
     monkeypatch.setenv("JBOM_PROFILE_PATH", str(profile_dir))
     # Use a non-existent cwd so .jbom/ there won't match
-    result = find_profile("aerospace", "defaults", cwd=tmp_path / "project")
+    result = find_profile("aerospace", cwd=tmp_path / "project")
     assert result == profile_file
 
 
@@ -124,7 +125,7 @@ def test_find_repo_root_returns_none_at_filesystem_root(tmp_path: Path) -> None:
 
 def test_find_profile_no_builtin_dir_returns_none(tmp_path: Path) -> None:
     """Without builtin_dir, should return None if not found in search path."""
-    result = find_profile("generic", "defaults", cwd=tmp_path, builtin_dir=None)
+    result = find_profile("generic", cwd=tmp_path, builtin_dir=None)
     assert result is None
 
 
@@ -136,9 +137,9 @@ def test_find_profile_multiple_env_paths(
     dir_b = tmp_path / "b"
     dir_a.mkdir()
     dir_b.mkdir()
-    (dir_b / "org.defaults.yaml").write_text("domain_defaults: {}\n")
+    (dir_b / "org.jbom.yaml").write_text("id: org\n")
 
     monkeypatch.setenv("JBOM_PROFILE_PATH", f"{dir_a}:{dir_b}")
 
-    result = find_profile("org", "defaults", cwd=tmp_path / "project")
-    assert result == dir_b / "org.defaults.yaml"
+    result = find_profile("org", cwd=tmp_path / "project")
+    assert result == dir_b / "org.jbom.yaml"
