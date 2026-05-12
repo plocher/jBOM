@@ -617,21 +617,27 @@ def then_inventory_file_contains_value(context, value: str) -> None:
 
 
 def _load_builtin_supplier_profile(supplier_id: str) -> dict[str, Any]:
-    """Load the built-in supplier profile YAML for a supplier id."""
+    """Load built-in supplier profile data for a supplier id."""
     sid = (supplier_id or "").strip().lower()
     repo_root = Path(__file__).resolve().parents[2]
-    profile_path = (
-        repo_root / "src" / "jbom" / "config" / "suppliers" / (f"{sid}.supplier.yaml")
-    )
-    if not profile_path.exists():
-        raise AssertionError(f"Unknown supplier profile fixture source: {sid}")
-
-    data = yaml.safe_load(profile_path.read_text(encoding="utf-8")) or {}
-    if not isinstance(data, dict):
-        raise AssertionError(
-            f"Built-in supplier profile is not a YAML mapping: {profile_path}"
+    config_dir = repo_root / "src" / "jbom" / "config"
+    for profile_path in sorted(config_dir.glob("*.jbom.yaml")):
+        merged = yaml.safe_load(profile_path.read_text(encoding="utf-8")) or {}
+        if not isinstance(merged, dict):
+            continue
+        supplier_data = merged.get("supplier")
+        if not isinstance(supplier_data, dict):
+            continue
+        effective_id = (
+            str(supplier_data.get("id") or merged.get("id") or profile_path.stem)
+            .strip()
+            .lower()
         )
-    return data
+        if effective_id != sid:
+            continue
+        return dict(supplier_data)
+
+    raise AssertionError(f"Unknown supplier profile fixture source: {sid}")
 
 
 def _write_supplier_profile(
@@ -640,7 +646,7 @@ def _write_supplier_profile(
     supplier_id: str,
     results: list[dict[str, Any]] | None = None,
 ) -> None:
-    """Write a supplier profile using built-in metadata + null_api fixtures."""
+    """Write a unified supplier profile using built-in metadata + null_api fixtures."""
     import json as _json
 
     sid = (supplier_id or "").strip().lower()
@@ -660,8 +666,14 @@ def _write_supplier_profile(
     search_cfg["providers"] = [provider_cfg]
     profile_data["search"] = search_cfg
 
-    (jbom_dir / f"{sid}.supplier.yaml").write_text(
-        yaml.safe_dump(profile_data, sort_keys=False),
+    doc_id = str(profile_data.get("id") or sid).strip().lower() or sid
+    profile_doc = {
+        "id": doc_id,
+        "supplier": profile_data,
+    }
+
+    (jbom_dir / f"{sid}.jbom.yaml").write_text(
+        yaml.safe_dump(profile_doc, sort_keys=False),
         encoding="utf-8",
     )
 
@@ -695,8 +707,7 @@ def _table_to_supplier_results(context) -> list[dict[str, Any]]:
 @given("a generic supplier")
 def given_a_generic_supplier(context) -> None:
     """Set up an empty generic supplier config (null_api, returns no results).
-
-    Writes .jbom/generic.supplier.yaml with null_api and no fixtures key.
+    Writes .jbom/generic.jbom.yaml with null_api and no fixtures key.
     The null_api provider always returns [] when no fixtures are configured.
     Use 'And a supplier catalog that contains:' to add specific results.
     """
@@ -708,7 +719,7 @@ def given_a_supplier_catalog(context) -> None:
     """Populate the generic supplier with table-driven fixture results.
 
     Writes .jbom/generic_results.json from the Gherkin table and updates
-    .jbom/generic.supplier.yaml to point the null_api provider at it.
+    .jbom/generic.jbom.yaml to point the null_api provider at it.
     Expects 'Given a generic supplier' to have run first (or runs standalone).
 
     Table columns: distributor_pn, manufacturer, mpn, stock_quantity, price,

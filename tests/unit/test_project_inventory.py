@@ -300,7 +300,7 @@ def test_res_voltage_still_included_in_component_id() -> None:
 def test_led_component_id_fields_overridable_via_jbom_dir(tmp_path: Path) -> None:
     """A project .jbom/ generic override can re-add voltage to LED ComponentIDs.
 
-    Exercises the full profile-search path: a ``generic.defaults.yaml`` in the
+    Exercises the full profile-search path: a ``generic.jbom.yaml`` in the
     project's ``.jbom/`` directory overrides the built-in generic profile.
     ``ProjectInventoryGenerator(cwd=tmp_path)`` picks it up automatically.
     """
@@ -310,11 +310,12 @@ def test_led_component_id_fields_overridable_via_jbom_dir(tmp_path: Path) -> Non
     # Note: do NOT use 'extends: generic' here — this file IS the 'generic' profile
     # for this cwd, so extending 'generic' would create a circular reference.
     # For this test we only need component_id_fields; other sections are omitted.
-    (jbom_dir / "generic.defaults.yaml").write_text(
-        "component_id_fields:\n"
-        "  led:\n"
-        "    - type\n"
-        "    - voltage\n"  # re-add voltage so these two LEDs produce different IDs
+    (jbom_dir / "generic.jbom.yaml").write_text(
+        "defaults:\n"
+        "  component_id_fields:\n"
+        "    led:\n"
+        "      - type\n"
+        "      - voltage\n"  # re-add voltage so these two LEDs produce different IDs
     )
 
     comp_with_v = _comp(
@@ -330,7 +331,7 @@ def test_led_component_id_fields_overridable_via_jbom_dir(tmp_path: Path) -> Non
         footprint="PCM_SPCoast:WS2812B5050",
         reference="LED2",
     )
-    # cwd=tmp_path → the generator discovers .jbom/generic.defaults.yaml and
+    # cwd=tmp_path → the generator discovers .jbom/generic.jbom.yaml and
     # uses it automatically — no config injection required.
     gen = ProjectInventoryGenerator([comp_with_v, comp_without_v], cwd=tmp_path)
     items, _ = gen.load()

@@ -55,11 +55,12 @@ def test_custom_defaults_override_resistor_tolerance(tmp_path: Path) -> None:
     """A profile overriding resistor tolerance to 1% should be used in the plan."""
     jbom_dir = tmp_path / ".jbom"
     jbom_dir.mkdir()
-    (jbom_dir / "tight.defaults.yaml").write_text(
+    (jbom_dir / "tight.jbom.yaml").write_text(
         "extends: generic\n"
-        "domain_defaults:\n"
-        "  resistor:\n"
-        "    tolerance: '1%'\n"
+        "defaults:\n"
+        "  domain_defaults:\n"
+        "    resistor:\n"
+        "      tolerance: '1%'\n"
     )
 
     cfg = load_defaults("tight", cwd=tmp_path)
@@ -101,12 +102,13 @@ def test_custom_defaults_override_capacitor_dielectric(tmp_path: Path) -> None:
     """A profile overriding capacitor dielectric to C0G is used in keyword query."""
     jbom_dir = tmp_path / ".jbom"
     jbom_dir.mkdir()
-    (jbom_dir / "precision.defaults.yaml").write_text(
+    (jbom_dir / "precision.jbom.yaml").write_text(
         "extends: generic\n"
-        "domain_defaults:\n"
-        "  capacitor:\n"
-        "    dielectric: 'C0G'\n"
-        "    tolerance: '5%'\n"
+        "defaults:\n"
+        "  domain_defaults:\n"
+        "    capacitor:\n"
+        "      dielectric: 'C0G'\n"
+        "      tolerance: '5%'\n"
     )
 
     cfg = load_defaults("precision", cwd=tmp_path)
@@ -148,13 +150,14 @@ def test_custom_defaults_routing_rules_respected(tmp_path: Path) -> None:
     """Category route rules from custom profile are used in plan."""
     jbom_dir = tmp_path / ".jbom"
     jbom_dir.mkdir()
-    (jbom_dir / "custom_routes.defaults.yaml").write_text(
+    (jbom_dir / "custom_routes.jbom.yaml").write_text(
         "extends: generic\n"
-        "category_route_rules:\n"
-        "  resistor:\n"
-        "    first_sort: 'Custom Resistors Category'\n"
-        "    second_sort_smd: 'Custom SMD Resistors'\n"
-        "    second_sort_pth: 'Custom PTH Resistors'\n"
+        "defaults:\n"
+        "  category_route_rules:\n"
+        "    resistor:\n"
+        "      first_sort: 'Custom Resistors Category'\n"
+        "      second_sort_smd: 'Custom SMD Resistors'\n"
+        "      second_sort_pth: 'Custom PTH Resistors'\n"
     )
 
     cfg = load_defaults("custom_routes", cwd=tmp_path)

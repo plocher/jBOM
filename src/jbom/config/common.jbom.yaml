@@ -1,0 +1,43 @@
+# Ambient defaults merged across every search-path level.
+
+transforms:
+  strip_kicad_library_prefix_from_value:
+    expr: "re.sub(r'^[^:]+:', '', value)"
+    doc: "Remove KiCad library nickname. 'Capacitors_SMD:C_0402' -> 'C_0402'."
+
+fab:
+  gerbers:
+    layer_sets:
+      standard_2_layer:
+        - "F.Cu"
+        - "B.Cu"
+        - "F.Mask"
+        - "B.Mask"
+        - "F.Paste"
+        - "B.Paste"
+        - "F.Silkscreen"
+        - "B.Silkscreen"
+        - "Edge.Cuts"
+
+defaults:
+  field_precedence_policy:
+    schematic_biased:
+      - value
+      - tolerance
+      - voltage
+      - current
+      - wavelength
+    pcb_biased:
+      - footprint
+      - package
+      - mount_type
+      - side
+      - x
+      - y
+      - rotation
+    inventory_biased:
+      - manufacturer
+      - manufacturer_part
+      - fabricator_part_number
+      - spn
+      - supplier

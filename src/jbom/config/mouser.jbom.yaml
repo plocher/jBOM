@@ -1,0 +1,47 @@
+
+supplier:
+  name: "Mouser"
+  id: "mouser"
+  description: "Mouser Electronics"
+  website: "https://www.mouser.com"
+  field_synonyms:
+    supplier_pn:
+      display_name: "Mouser"
+      synonyms: []
+  part_number:
+    pattern: "^\\d{3}-.*$"
+    example: "595-TPS62133DQCR"
+  url_template: "https://www.mouser.com/ProductDetail/{pn}"
+  search_url_template: "https://www.mouser.com/c/?q={query}"
+
+  search:
+    cache:
+      ttl_hours: 24
+    api:
+      timeout_seconds: 10.0
+      max_retries: 3
+      retry_delay_seconds: 1.0
+
+    providers:
+      - type: mouser_api
+        api_key_env: MOUSER_API_KEY
+
+    # Keyword appended to query per normalized component category.
+    type_query_keywords:
+      RES: "resistor"
+      CAP: "capacitor"
+      IND: "inductor"
+      LED: "LED"
+      DIO: "diode"
+      Z: "zener diode"
+      Q: "transistor"
+      IC: "IC"
+      OSC: "oscillator"
+      REG: "regulator"
+      CON: "connector"
+      CONN: "connector"
+      XFMR: "transformer"
+      XTL: "crystal"
+      SW: "switch"
+      FUSE: "fuse"
+      RLY: "relay"

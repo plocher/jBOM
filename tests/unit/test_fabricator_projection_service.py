@@ -7,17 +7,18 @@ from jbom.services.fabricator_projection_service import FabricatorProjectionServ
 
 def test_build_projection_maps_jlc_bom_headers() -> None:
     service = FabricatorProjectionService()
+    footprint_expr = "strip_kicad_library_prefix_from_value(pcb:footprint)"
     projection = service.build_projection(
         fabricator_id="jlc",
         output_type="bom",
         selected_fields=[
             "reference",
-            "quantity",
+            "jbom:quantity",
             "value",
             "description",
-            "p:k:footprint",
-            "fabricator_part_number",
-            "smd",
+            footprint_expr,
+            "jbom:fabricator_part_number",
+            "jbom:smd",
         ],
     )
 

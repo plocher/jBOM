@@ -1,0 +1,225 @@
+
+fab:
+  name: "JLC"
+  id: "jlc"
+  description: "JLCPCB Fabrication Definitions"
+  pcb_manufacturing:
+    website: "https://jlcpcb.com/help/article/Suggested-Naming-Patterns"
+    kicad_dru: "https://github.com/labtroll/KiCad-DesignRules/blob/main/JLCPCB/JLCPCB.kicad_dru"
+    gerbers: "kicad"
+  pcb_assembly:
+    website: "https://jlcpcb.com/help/article/bill-of-materials-for-pcb-assembly"
+
+  # CPL rotation output range for JLCPCB's assembler.
+  # KiCad stores angles as arbitrary floats (CCW positive).
+  # [0, 360] maps the 360° cycle to [0°, 360°): -90° → 270°, 270° stays 270°.
+  # Formula: output = ((angle - lo) % 360) + lo  where lo=0.
+  cpl_rotation_range: [0, 360]
+
+  # Ordered supplier profile IDs (position encodes priority).
+  # First entry is the fabricator's own catalog.
+  suppliers:
+    - lcsc
+    - mouser
+    - digikey
+    - farnell
+    - newark
+
+  part_number:
+    header: "fabricator_part_number"
+
+  field_synonyms:
+    fab_pn:
+      # display_name is the canonical output header JLCPCB expects.
+      # All synonyms are recognised as equivalent on input (--fields, bom_columns keys,
+      # schematic properties, inventory columns). The output header is always display_name.
+      display_name: "LCSC Part #"
+      synonyms:
+        - "LCSC Part #"      # canonical JLCPCB column name (matches KiCad BOM plugin)
+        - "LCSC Part Number"
+        - "LCSC Part"
+        - "LCSC"
+        - "JLC Part #"
+        - "JLC Part"
+        - "JLC"
+        - "JLCPCB Part #"
+        - "SPN"              # normalized Supplier/SPN inventory schema
+        - "spn"
+    supplier_pn:
+      display_name: "SPN"
+      synonyms:
+        - "SPN"
+        - "spn"
+    mpn:
+      synonyms:
+        - "MPN"
+        - "MFGPN"
+        - "Manufacturer Part Number"
+      display_name: "MPN"
+
+  tier_overrides:
+    - conditions:
+        - field: "Consigned"
+          operator: "truthy"
+    - conditions:
+        - field: "Preferred"
+          operator: "truthy"
+        - field: "fab_pn"
+          operator: "exists"
+
+  bom_columns:
+    "Designator": "reference"
+    "Quantity": "jbom:quantity"
+    "Value": "value"
+    "Comment": "description"
+    "Footprint": "strip_kicad_library_prefix_from_value(pcb:footprint)"
+    "LCSC": "jbom:fabricator_part_number"  # JLCPCB requires this column name in BOM
+    "Surface Mount": "jbom:smd"
+
+  pos_columns:
+    "Designator": "reference"
+    "Mid X": "x"
+    "Mid Y": "y"
+    "Layer": "side"
+    "Rotation": "rotation"
+    "Package": "package"
+
+  presets:
+    default:
+      description: "JLC BOM format for JLCPCB assembly"
+      fields:
+        - "reference"
+        - "jbom:quantity"
+        - "value"
+        - "description"
+        - "strip_kicad_library_prefix_from_value(pcb:footprint)"
+        - "jbom:fabricator_part_number"
+        - "jbom:smd"
+    jlc:
+      description: "JLC preset alias"
+      fields:
+        - "reference"
+        - "jbom:quantity"
+        - "value"
+        - "description"
+        - "jbom:fabricator_part_number"
+
+  cli_aliases:
+    flags: ["--jlc"]
+    presets: ["+jlc"]
+
+  gerbers:
+    layers:
+      - "F.Cu"
+      - "B.Cu"
+      - "F.Mask"
+      - "B.Mask"
+      - "F.Paste"
+      - "B.Paste"
+      - "F.Silkscreen"
+      - "B.Silkscreen"
+      - "Edge.Cuts"
+    naming:
+      protel_extensions: true
+    drill:
+      split_plated_holes: true
+      map_format: "gerber"
+
+supplier:
+  name: "LCSC"
+  id: "lcsc"
+  description: "LCSC Electronics (JLCPCB parts catalog)"
+  website: "https://www.lcsc.com"
+  field_synonyms:
+    supplier_pn:
+      display_name: "LCSC"
+      synonyms: []
+  part_number:
+    pattern: "^C\\d+$"
+    example: "C25231"
+  url_template: "https://www.lcsc.com/product-detail/{pn}.html"
+  search_url_template: "https://www.lcsc.com/search?q={query}"
+
+  search:
+    cache:
+      ttl_hours: 24
+
+    api:
+      timeout_seconds: 20.0
+      max_retries: 3
+      retry_delay_seconds: 1.0
+
+    providers:
+      - type: jlcpcb_api
+        rate_limit_seconds: 2
+
+    # LCSC/JLCPCB search keyword overrides.
+    # Inherits baseline from generic supplier profile; add LCSC-specific terms below.
+    type_query_keywords:
+      RES: "resistor"
+      CAP: "capacitor"
+      IND: "inductor"
+      LED: "LED"
+      DIO: "diode"
+      Q: "transistor"
+      IC: "IC"
+      OSC: "oscillator"
+      REG: "regulator"
+      CON: "connector"
+      CONN: "connector"
+      RLY: "relay"
+      SWI: "switch"
+      FUS: "fuse"
+
+defaults:
+  # LCSC-specific parametric defaults and taxonomy routing.
+  domain_defaults:
+    resistor:
+      tolerance: "5%"
+    capacitor:
+      tolerance: "10%"
+      dielectric: "X7R"
+
+  package_power:
+    "0402": "63mW"
+    "0603": "100mW"
+    "0805": "125mW"
+    "1206": "250mW"
+    "2512": "1W"
+
+  package_voltage:
+    "0402": "10V"
+    "0603": "25V"
+    "0805": "50V"
+    "1206": "50V"
+
+  parametric_query_fields:
+    resistor:
+      - resistance
+      - tolerance
+      - package
+      - power_rating
+      - technology
+    capacitor:
+      - capacitance
+      - tolerance
+      - package
+      - voltage_rating
+      - dielectric
+
+  category_route_rules:
+    resistor:
+      first_sort: "Resistors"
+      second_sort_smd: "Chip Resistor - Surface Mount"
+      second_sort_pth: "Through Hole Resistors"
+    capacitor:
+      first_sort: "Capacitors"
+      second_sort_mlcc: "Multilayer Ceramic Capacitors (MLCC)"
+      second_sort_electrolytic: "Aluminum Electrolytic Capacitors"
+    inductor:
+      first_sort: "Inductors"
+      second_sort_signal: "Inductors (SMD)"
+      second_sort_power: "Power Inductors"
+      second_sort_ferrite: "Ferrite Beads"
+    connector:
+      first_sort: "Connectors"

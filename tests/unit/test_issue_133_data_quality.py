@@ -271,15 +271,16 @@ class TestBug5PermissiveFields:
             parse_fields_argument("", self._available)
 
     def test_jlc_header_tokens_map_to_internal_fields_without_warning(self) -> None:
+        footprint_expr = "strip_kicad_library_prefix_from_value(pcb:footprint)"
         available = {
             "reference": "Reference",
-            "quantity": "Quantity",
+            "jbom:quantity": "Quantity",
             "value": "Value",
             "description": "Description",
             "footprint": "Footprint",
-            "p:k:footprint": "KiCad footprint (library prefix stripped)",
-            "fabricator_part_number": "Fabricator part number",
-            "smd": "Surface mount indicator",
+            footprint_expr: "KiCad footprint (library prefix stripped)",
+            "jbom:fabricator_part_number": "Fabricator part number",
+            "jbom:smd": "Surface mount indicator",
         }
         presets = get_fabricator_presets("jlc")
         selected = parse_fields_argument(
@@ -291,12 +292,12 @@ class TestBug5PermissiveFields:
         )
         assert selected == [
             "reference",
-            "quantity",
+            "jbom:quantity",
             "value",
             "description",
-            "p:k:footprint",
-            "fabricator_part_number",
-            "smd",
+            footprint_expr,
+            "jbom:fabricator_part_number",
+            "jbom:smd",
         ]
         warning = check_fabricator_field_completeness(selected, "jlc", presets)
         assert warning is None

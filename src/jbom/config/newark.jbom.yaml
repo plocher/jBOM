@@ -1,0 +1,8 @@
+
+supplier:
+  id: "newark"
+  name: "Newark"
+  field_synonyms:
+    supplier_pn:
+      display_name: "Newark"
+      synonyms: []
