@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
-_BUILTIN_DIR = Path(__file__).parent
+_BUILTIN_DIR = Path(__file__).parent / "profiles"
 _PROFILE_SUFFIX = ".jbom.yaml"
 _COMMON_PROFILE_NAME = "common"
 _POLICY_PROFILE_NAME = "policy"

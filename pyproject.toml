@@ -63,7 +63,7 @@ package-dir = {"" = "src"}
 [tool.setuptools.package-data]
 # Include configuration files in the package
 jbom = [
-    "config/*.jbom.yaml",
+    "config/profiles/*.jbom.yaml",
     "config/*.csv",
 ]
 
