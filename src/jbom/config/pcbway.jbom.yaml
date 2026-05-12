@@ -3,7 +3,11 @@ fab:
   name: "PCBWay"
   id: "pcbway"
   description: "PCBWay Bill of Materials"
-  website: "https://www.pcbway.com/helpcenter/assembly_help/How_to_place_an_assembly_order.html"
+  pcb_manufacturing:
+    website: "https://www.pcbway.com/helpcenter/assembly_help/How_to_place_an_assembly_order.html"
+    # Informational: copy this .kicad_dru into your KiCad project directory.
+    # KiCad DRU files are per-project; there is no system-wide install path.
+    kicad_dru: "https://pcbwayfile.s3.us-west-2.amazonaws.com/web/230915/KiCAD_Custom_DRC_Rules_for_PCBWay.zip"
 
   # Ordered supplier profile IDs (position encodes priority).
   suppliers:
