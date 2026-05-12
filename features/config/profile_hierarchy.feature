@@ -21,11 +21,9 @@ Feature: Profile hierarchy and discovery
             - mpn
             - package
       """
-    And a named profile "acme" that contains:
+    And a named profile that contains:
       """
-      id: acme
       supplier:
-        id: acme
         name: Acme Electronics
         description: null
         search:
@@ -33,7 +31,7 @@ Feature: Profile hierarchy and discovery
             - mpn
             - description
       """
-    When I load profile "acme"
+    When I load the named profile
     Then resolved profile value "supplier.name" should equal "Acme Electronics"
     And resolved profile value "supplier.website" should equal "https://common.example"
     And resolved profile value "defaults.search.output_fields" should equal list "manufacturer,mpn"
@@ -42,34 +40,32 @@ Feature: Profile hierarchy and discovery
 
   Scenario: first-match named profile wins while common profiles merge cumulatively
     Given a sandbox
-    And profile directory "profiles_low" has profile "common" containing:
+    And profile directory "profiles_low" has a common profile containing:
       """
       defaults:
         field_precedence_policy:
           low_only:
             - manufacturer
       """
-    And profile directory "profiles_high" has profile "common" containing:
+    And profile directory "profiles_high" has a common profile containing:
       """
       defaults:
         field_precedence_policy:
           high_only:
             - mpn
       """
-    And profile directory "profiles_low" has profile "alt" containing:
+    And profile directory "profiles_low" has a named profile containing:
       """
       supplier:
-        id: alt
         name: Lower Priority Supplier
       """
-    And profile directory "profiles_high" has profile "alt" containing:
+    And profile directory "profiles_high" has a named profile containing:
       """
       supplier:
-        id: alt
         name: Higher Priority Supplier
       """
     And JBOM_PROFILE_PATH contains "profiles_high,profiles_low"
-    When I load profile "alt"
+    When I load the named profile
     Then resolved profile value "supplier.name" should equal "Higher Priority Supplier"
     And resolved profile value "defaults.field_precedence_policy.high_only" should equal list "mpn"
     And resolved profile value "defaults.field_precedence_policy.low_only" should equal list "manufacturer"

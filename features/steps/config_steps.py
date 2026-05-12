@@ -10,6 +10,8 @@ from behave import given, then, when
 
 from jbom.config.unified import load_unified
 
+_DEFAULT_NAMED_PROFILE = "named"
+
 
 def _resolve_path(root: Any, dotted_path: str) -> tuple[bool, Any]:
     """Resolve a dotted path into nested dict/list structures."""
@@ -36,19 +38,36 @@ def _resolve_path(root: Any, dotted_path: str) -> tuple[bool, Any]:
     return True, current
 
 
+def _active_named_profile_name(context) -> str:
+    """Return the active anonymous named-profile id for this scenario."""
+    value = str(getattr(context, "active_named_profile_name", "") or "").strip().lower()
+    return value or _DEFAULT_NAMED_PROFILE
+
+
+def _write_profile_file(context, profile_name: str, base_dir: Path) -> None:
+    """Write a profile file to the specified directory."""
+    base_dir.mkdir(parents=True, exist_ok=True)
+    profile_path = base_dir / f"{profile_name}.jbom.yaml"
+    profile_path.write_text((context.text or "").strip() + "\n", encoding="utf-8")
+
+
 @given('a named profile "{profile_name}" that contains:')
 def given_named_profile_contains(context, profile_name: str) -> None:
     """Write a profile file to <sandbox>/.jbom/<profile>.jbom.yaml."""
-    jbom_dir = Path(context.sandbox_root) / ".jbom"
-    jbom_dir.mkdir(parents=True, exist_ok=True)
-    profile_path = jbom_dir / f"{profile_name}.jbom.yaml"
-    profile_path.write_text((context.text or "").strip() + "\n", encoding="utf-8")
+    context.active_named_profile_name = str(profile_name or "").strip().lower()
+    _write_profile_file(context, profile_name, Path(context.sandbox_root) / ".jbom")
+
+
+@given("a named profile that contains:")
+def given_anonymous_named_profile_contains(context) -> None:
+    """Write an anonymous named profile to <sandbox>/.jbom/named.jbom.yaml."""
+    given_named_profile_contains(context, _active_named_profile_name(context))
 
 
 @given("a common profile that contains:")
 def given_common_profile_contains(context) -> None:
     """Write common profile file to <sandbox>/.jbom/common.jbom.yaml."""
-    given_named_profile_contains(context, "common")
+    _write_profile_file(context, "common", Path(context.sandbox_root) / ".jbom")
 
 
 @given('profile directory "{directory_name}" has profile "{profile_name}" containing:')
@@ -57,9 +76,23 @@ def given_profile_directory_has_profile(
 ) -> None:
     """Write a profile file to <sandbox>/<directory_name>/<profile>.jbom.yaml."""
     target_dir = Path(context.sandbox_root) / directory_name
-    target_dir.mkdir(parents=True, exist_ok=True)
-    profile_path = target_dir / f"{profile_name}.jbom.yaml"
-    profile_path.write_text((context.text or "").strip() + "\n", encoding="utf-8")
+    _write_profile_file(context, profile_name, target_dir)
+
+
+@given('profile directory "{directory_name}" has a named profile containing:')
+def given_profile_directory_has_anonymous_named_profile(
+    context, directory_name: str
+) -> None:
+    """Write anonymous named profile file under a specific profile directory."""
+    given_profile_directory_has_profile(
+        context, directory_name, _active_named_profile_name(context)
+    )
+
+
+@given('profile directory "{directory_name}" has a common profile containing:')
+def given_profile_directory_has_common_profile(context, directory_name: str) -> None:
+    """Write common profile file under a specific profile directory."""
+    given_profile_directory_has_profile(context, directory_name, "common")
 
 
 @given('JBOM_PROFILE_PATH contains "{directory_names_csv}"')
@@ -88,6 +121,12 @@ def when_i_load_profile(context, profile_name: str) -> None:
             os.environ.pop("JBOM_PROFILE_PATH", None)
         else:
             os.environ["JBOM_PROFILE_PATH"] = previous
+
+
+@when("I load the named profile")
+def when_i_load_the_named_profile(context) -> None:
+    """Load the active anonymous named profile."""
+    when_i_load_profile(context, _active_named_profile_name(context))
 
 
 @then('resolved profile value "{dotted_path}" should equal "{expected_value}"')
