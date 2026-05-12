@@ -115,6 +115,24 @@ def test_profile_search_dirs_falls_back_when_cwd_unavailable(
     assert dirs[0] == tmp_path / ".jbom"
 
 
+def test_profile_search_dirs_uses_plugin_project_dir_when_cwd_unavailable(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """If Path.cwd() fails, plugin project context should be used first."""
+
+    project_dir = tmp_path / "project"
+    project_dir.mkdir()
+
+    def _raise_cwd() -> Path:
+        raise FileNotFoundError("cwd unavailable")
+
+    monkeypatch.setattr("jbom.config.profile_search.Path.cwd", _raise_cwd)
+    monkeypatch.setenv("JBOM_PROJECT_DIR", str(project_dir))
+
+    dirs = profile_search_dirs()
+    assert dirs[0] == project_dir / ".jbom"
+
+
 def test_find_repo_root_walks_up(tmp_path: Path) -> None:
     """_find_repo_root should walk up to find .git/."""
     from jbom.config.profile_search import _find_repo_root

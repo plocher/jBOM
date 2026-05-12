@@ -96,6 +96,12 @@ def _resolve_search_cwd(cwd: Path | None) -> Path:
     try:
         return (cwd or Path.cwd()).resolve()
     except OSError:
+        plugin_project_dir = os.environ.get("JBOM_PROJECT_DIR", "").strip()
+        if plugin_project_dir:
+            try:
+                return Path(plugin_project_dir).resolve()
+            except OSError:
+                pass
         try:
             return Path.home().resolve()
         except OSError:
