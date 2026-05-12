@@ -12,17 +12,29 @@ jBOM is a comprehensive fabrication tool that provides two main capabilities:
 
 ### Module Structure
 
-jBOM uses a Service-Command architecture (v7.0, 2025):
+jBOM uses an adapter → application → services architecture:
 
 ```
 src/jbom/
-├── cli/                 # Command-line interface (thin wrappers over services)
+├── application/         # Adapter-neutral workflow orchestration
+│   ├── bom_workflow.py             # BOM request/result workflow
+│   ├── pos_workflow.py             # POS request/result workflow
+│   ├── fabrication_orchestration.py  # End-to-end fabrication workflow
+│   └── jobs/                       # Job contracts and runner
+│
+├── cli/                 # Command-line adapters (thin wrappers over application/services)
 │   ├── main.py          # Argparse dispatcher and subcommand registration
+│   ├── __main__.py      # python -m jbom entrypoint
+│   ├── output.py        # Shared output helpers
 │   ├── discovery.py     # Command auto-discovery
 │   ├── formatting.py    # Console output formatting
 │   ├── bom.py           # bom command
+│   ├── fabrication.py   # fabrication command
+│   ├── gerbers.py       # gerbers command
+│   ├── annotate.py      # annotate command
+│   ├── audit.py         # audit command
+│   ├── config.py        # config command
 │   ├── inventory.py     # inventory command
-│   ├── inventory_search.py  # inventory-search command
 │   ├── parts.py         # parts command
 │   ├── pos.py           # pos command
 │   └── search.py        # search command
@@ -43,9 +55,12 @@ src/jbom/
 │   ├── sexp_parser.py           # S-expression parsing
 │   └── value_parsing.py         # Value parsing (R, C, L numeric comparison)
 │
-├── config/              # Configuration: fabricators and suppliers
-│   ├── fabricators.py   # Fabricator definitions and column presets
-│   └── suppliers.py     # Supplier URL and part number configuration
+├── config/              # Unified profile loading and schema models
+│   ├── unified.py       # *.jbom.yaml merge/extends/search engine
+│   ├── profile_search.py  # Search-path resolution (.jbom, env, system, built-ins)
+│   ├── fabricators.py   # Fabricator stanza schema + loaders
+│   ├── suppliers.py     # Supplier stanza schema + loaders
+│   └── defaults.py      # Defaults stanza schema + loaders
 │
 ├── services/            # Business logic
 │   ├── schematic_reader.py          # Parse .kicad_sch files (hierarchical)
@@ -54,34 +69,38 @@ src/jbom/
 │   ├── inventory_matcher.py         # Match schematic components to inventory
 │   ├── inventory_validator.py       # Inventory data validation
 │   ├── bom_generator.py             # Generate BOM CSV output
+│   ├── bom_writer.py                # Persist BOM CSV output
 │   ├── pos_generator.py             # Generate CPL/POS placement output
+│   ├── pos_writer.py                # Persist POS/CPL CSV output
 │   ├── parts_list_generator.py      # Generate parts list output
 │   ├── fabricator_inventory_selector.py  # Fabricator-aware part selection
+│   ├── gerber_service.py            # Gerber export via kicad-cli/pcbnew
+│   ├── gerber_packager.py           # Gerber zip packaging policy
+│   ├── backup_service.py            # Production artifact backup archives
 │   ├── project_context.py           # Project file context
 │   ├── project_discovery.py         # Discover project files in directory
 │   ├── project_file_resolver.py     # Resolve input paths to project files
 │   ├── project_inventory.py         # Per-project inventory management
+│   ├── project_metadata.py          # Title-block/archive metadata extraction
 │   ├── supplier_url_resolver.py     # Resolve supplier URLs from part numbers
 │   └── search/                      # Online component search
 │       ├── models.py                # Search result data models
 │       ├── provider.py              # Abstract search provider interface
-│       ├── mouser_provider.py       # Mouser Electronics API integration
+│       ├── provider_factory.py      # Search provider selection
 │       ├── filtering.py             # Search result filtering
 │       ├── cache.py                 # Search result caching
 │       └── inventory_search_service.py  # Orchestrate inventory-wide search
-│
-└── workflows/           # Workflow registry (extension point)
-    └── registry.py
 ```
 
 **Key Design Principles:**
-- **Service-Command Pattern**: CLI (`cli/`) is a thin presentation layer; all business logic lives in `services/`
+- **Layered orchestration**: Adapters (`cli/`, plugin) call request/result workflows in `application/`, which coordinate lower-level `services/`.
+- **Thin adapters**: CLI modules parse arguments and render diagnostics; orchestration/business rules stay outside adapter code.
 - **Shared Domain Types**: `common/types.py` defines `Component`, `InventoryItem`, `BOMEntry` shared across all layers
-- **Configuration-Driven**: Fabricator column presets in `config/`; component classifier rules in `common/component_classification.py`
-- **No Circular Dependencies**: Clean import hierarchy: `common` → `config` → `services` → `cli`
+- **Configuration-Driven**: Unified `*.jbom.yaml` profiles in `config/` drive fabricator/supplier/default behavior.
+- **No Circular Dependencies**: Clean import hierarchy: `common` → `config/services` → `application` → `cli`
 - **Simple Registration**: CLI subcommands each implement `register_command(subparsers)` and are explicitly imported in `main.py`
 - **Type Safety**: Type hints and dataclasses throughout
-- **Consistent Naming**: Services are named for what they do (`_reader`, `_matcher`, `_generator`)
+- **Consistent Naming**: Workflow classes express outcomes (`BOMWorkflow`, `POSWorkflow`, `FabricationWorkflow`); services remain focused on single responsibilities.
 
 ## Key Features (Technical)
 
@@ -167,18 +186,21 @@ BOM:
 ```
 
 ## Data Flow & Functional Behavior
+1) Adapter to application orchestration
+   - CLI/plugin adapters normalize user intent into request dataclasses.
+   - `application/*` workflows orchestrate step ordering, diagnostics, and artifact contracts.
 
-1) Input discovery
+2) Input discovery
    - Project: the tool looks for a `.kicad_sch` file in the provided project directory.
    - Inventory: loads CSV/Excel/Numbers once; rows are normalized and cached.
 
-2) Schematic parsing
+3) Schematic parsing
    - S-expression parsing via `sexpdata` to extract symbols, Reference, Value, Footprint, Tolerance, W, etc.
 
-3) Component grouping
+4) Component grouping
    - Components are grouped by their best matching inventory item (IPN + footprint) to ensure equivalent components with alternate schematic values (e.g., 330R, 330Ω, 330 ohm) are properly grouped together.
 
-4) Primary filtering per group (high certainty filtering)
+5) Primary filtering per group (high certainty filtering)
    - Determine `comp_type` (RES/CAP/IND/LED/etc.) from the component's `Footprint` field.
    - Extract `comp_pkg` token from footprint (0603, 0805, SOT-23, SOIC, QFN, etc.).
    - Value comparison by type:
@@ -187,30 +209,30 @@ BOM:
      - IND: parse to henrys and compare numerically.
    - Candidates that fail type/package/value checks are excluded before any scoring.
 
-5) Ranking and scoring
+6) Ranking and scoring
    - Priority rank (primary sort): Uses pre-computed Priority column from CSV (1=best, higher=worse).
    - Technical score (secondary sort): points for category match, value match, footprint match, and property matches (e.g., Tolerance, W).
    - Tolerance substitution: tighter tolerances (1%, 5%) can substitute for looser requirements (10%).
    - Sorting key: (priority, technical score).
 
-6) Selection & alternatives
+7) Selection & alternatives
    - First candidate becomes the main BOM row.
    - Up to two alternative candidates are emitted as ALT rows (for visibility of near matches).
 
-7) Warnings (resistors)
+8) Warnings (resistors)
    - If the schematic implies 1% tolerance (trailing digit like 10K0, 47K5, 2M7, or Tolerance ≤ 1%) but none of the matched inventory parts are 1%, the Notes field includes a warning with the best tolerance found among candidates.
 
-8) Value formatting for BOM
+9) Value formatting for BOM
    - R: EIA-like (3R3, 330R, 10K, 10K0, 1M, 1M0), capital K and M. Trailing digit for precision is driven by schematic (trailing digit) or Tolerance ≤ 1%.
    - C: 1uF, 100nF, 220pF; unit appended.
    - L: 10uH, 2m2H, 100nH; unit appended.
 
-9) CSV emission
+10) CSV emission
    - Header built based on flags and whether any notes exist.
    - if  Manufacturer/MFGPN  information is required, use the `-m` option.
    - Additional processing notes are included with the `-v` option.
 
-10) SMD Detection Logic: Robust component classification in _is_smd_component():
+11) SMD Detection Logic: Robust component classification in _is_smd_component():
   1) Explicit SMD field values: Recognizes SMD, Y, YES, TRUE, 1 as SMD
   2) Explicit PTH field values: Recognizes PTH, THT, TH, THROUGH-HOLE, N, NO, FALSE, 0 as non-SMD
   3) Footprint-based inference: For unclear SMD field values, analyzes footprints:
@@ -588,7 +610,7 @@ def handle_validate(args: argparse.Namespace) -> int:
 **Step 2: Register it in `src/jbom/cli/main.py`:**
 
 ```python
-from jbom.cli import bom, inventory, pos, parts, search, inventory_search, validate
+from jbom.cli import bom, inventory, pos, parts, search, validate
 
 # In create_parser():
 validate.register_command(subparsers)
