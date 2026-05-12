@@ -122,10 +122,9 @@ def step_run_command(context, command):
                 a in ("--jlc", "--pcbway", "--seeed", "--generic") for a in raw_args
             )
             if not has_fabricator_flag:
-                fabricator = getattr(
-                    context, "fabricator", "generic"
-                )  # Default to generic if not set
-                raw_args += ["--fabricator", fabricator]
+                fabricator = getattr(context, "fabricator", None)
+                if fabricator:
+                    raw_args += ["--fabricator", fabricator]
 
         cmd = ["python", "-m", "jbom.cli.main"] + raw_args
     else:

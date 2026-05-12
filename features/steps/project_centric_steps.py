@@ -616,12 +616,41 @@ def then_inventory_file_contains_value(context, value: str) -> None:
 # -------------------------
 
 
+def _default_supplier_profile_id(context) -> str:
+    """Return the active default supplier profile id for this scenario."""
+    value = (
+        str(getattr(context, "default_supplier_profile_id", "") or "").strip().lower()
+    )
+    return value or "generic"
+
+
+def _iter_builtin_profile_paths(repo_root: Path) -> list[Path]:
+    """Return built-in unified profile files from current and legacy locations."""
+    candidates: list[Path] = []
+    for directory in (
+        repo_root / "src" / "jbom" / "config" / "profiles",
+        repo_root / "src" / "jbom" / "config",
+    ):
+        if directory.exists():
+            candidates.extend(sorted(directory.glob("*.jbom.yaml")))
+
+    deduped: list[Path] = []
+    seen: set[str] = set()
+    for path in candidates:
+        key = str(path.resolve())
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(path)
+    return deduped
+
+
 def _load_builtin_supplier_profile(supplier_id: str) -> dict[str, Any]:
     """Load built-in supplier profile data for a supplier id."""
     sid = (supplier_id or "").strip().lower()
     repo_root = Path(__file__).resolve().parents[2]
-    config_dir = repo_root / "src" / "jbom" / "config"
-    for profile_path in sorted(config_dir.glob("*.jbom.yaml")):
+    profile_paths = _iter_builtin_profile_paths(repo_root)
+    for profile_path in profile_paths:
         merged = yaml.safe_load(profile_path.read_text(encoding="utf-8")) or {}
         if not isinstance(merged, dict):
             continue
@@ -636,8 +665,10 @@ def _load_builtin_supplier_profile(supplier_id: str) -> dict[str, Any]:
         if effective_id != sid:
             continue
         return dict(supplier_data)
-
-    raise AssertionError(f"Unknown supplier profile fixture source: {sid}")
+    searched = [str(p) for p in profile_paths]
+    raise AssertionError(
+        f"Unknown supplier profile fixture source: {sid} (searched: {searched})"
+    )
 
 
 def _write_supplier_profile(
@@ -680,12 +711,13 @@ def _write_supplier_profile(
 
 def _table_to_supplier_results(context) -> list[dict[str, Any]]:
     """Convert a Gherkin table into null_api SearchResult fixtures."""
-    supplier_id = (
-        str(
-            getattr(context, "_active_supplier_profile_id_for_catalog", "generic")
-        ).strip()
-        or "generic"
-    )
+    supplier_id = str(
+        getattr(
+            context,
+            "_active_supplier_profile_id_for_catalog",
+            _default_supplier_profile_id(context),
+        )
+    ).strip() or _default_supplier_profile_id(context)
     return [
         {
             "manufacturer": r.get("manufacturer", ""),
@@ -711,24 +743,40 @@ def given_a_generic_supplier(context) -> None:
     The null_api provider always returns [] when no fixtures are configured.
     Use 'And a supplier catalog that contains:' to add specific results.
     """
+    context.default_supplier_profile_id = "generic"
     _write_supplier_profile(context, supplier_id="generic", results=None)
+
+
+@given("a default supplier")
+def given_a_default_supplier(context) -> None:
+    """Set up an empty default supplier profile for this scenario."""
+    sid = _default_supplier_profile_id(context)
+    _write_supplier_profile(context, supplier_id=sid, results=None)
+
+
+@given('a supplier profile "{supplier_id}"')
+def given_a_supplier_profile(context, supplier_id: str) -> None:
+    """Set up an empty named supplier profile."""
+    sid = str(supplier_id or "").strip().lower()
+    _write_supplier_profile(context, supplier_id=sid, results=None)
 
 
 @given("a supplier catalog that contains:")
 def given_a_supplier_catalog(context) -> None:
-    """Populate the generic supplier with table-driven fixture results.
+    """Populate the active default supplier with table-driven fixture results.
 
-    Writes .jbom/generic_results.json from the Gherkin table and updates
-    .jbom/generic.jbom.yaml to point the null_api provider at it.
-    Expects 'Given a generic supplier' to have run first (or runs standalone).
+    Writes .jbom/<supplier>_results.json from the Gherkin table and updates
+    .jbom/<supplier>.jbom.yaml to point the null_api provider at it.
+    Expects a default supplier profile to be available (or runs standalone).
 
     Table columns: distributor_pn, manufacturer, mpn, stock_quantity, price,
     description (all optional except distributor_pn).
     """
-    context._active_supplier_profile_id_for_catalog = "generic"
+    sid = _default_supplier_profile_id(context)
+    context._active_supplier_profile_id_for_catalog = sid
     _write_supplier_profile(
         context,
-        supplier_id="generic",
+        supplier_id=sid,
         results=_table_to_supplier_results(context),
     )
 
