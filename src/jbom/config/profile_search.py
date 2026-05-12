@@ -1,7 +1,7 @@
-"""Profile search path resolution for jBOM configuration files.
+"""Profile search path resolution for unified ``*.jbom.yaml`` profiles.
 
-Provides a shared mechanism for locating *.fab.yaml, *.supplier.yaml,
-*.defaults.yaml (and future profile types) across a prioritized search path.
+Provides a shared mechanism for locating named ``<name>.jbom.yaml`` profiles
+across a prioritized search path.
 
 Search order (highest priority first):
   1. <cwd>/.jbom/
@@ -21,19 +21,17 @@ from pathlib import Path
 
 def find_profile(
     name: str,
-    suffix: str,
     *,
     cwd: Path | None = None,
     builtin_dir: Path | None = None,
 ) -> Path | None:
-    """Find the first matching profile file across the search path.
+    """Find the first matching ``<name>.jbom.yaml`` profile across search dirs.
 
     Searches user-configurable locations in priority order, then falls back
     to the built-in package directory if provided.
 
     Args:
         name: Profile name (e.g. 'generic', 'jlc', 'aerospace').
-        suffix: Profile type suffix without dots (e.g. 'fab', 'supplier', 'defaults').
         cwd: Working directory for project-local search. Defaults to Path.cwd().
         builtin_dir: Package-internal directory to check last. Each loader
             passes its own type-specific built-in directory here.
@@ -41,7 +39,7 @@ def find_profile(
     Returns:
         Path to the first matching file found, or None if not found anywhere.
     """
-    filename = f"{name}.{suffix}.yaml"
+    filename = f"{name}.jbom.yaml"
     dirs = list(profile_search_dirs(cwd=cwd))
     if builtin_dir is not None:
         dirs.append(builtin_dir)
