@@ -1,6 +1,48 @@
 # CHANGELOG
 
 
+## v6.58.0 (2026-05-12)
+
+### Bug Fixes
+
+* fix(config): fix JLC DRU URL, add PCBWay DRU URL, clarify per-project note
+
+- jlc.jbom.yaml: fix kicad_dru from GitHub web UI blob URL to raw URL
+- pcbway.jbom.yaml: add pcb_manufacturing stanza with kicad_dru URL
+- Both: clarify that .kicad_dru files are per-project in KiCad; users must
+  copy into their project directory manually (no system-wide install path)
+- jlc.jbom.yaml field_synonyms comment: add 'PCB footprint properties' to
+  the list of contexts where synonyms are recognised
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`e586e6a`](https://github.com/plocher/jBOM/commit/e586e6a0e042203430ba728c27018958e11cdfeb))
+
+### Features
+
+* feat(cli): phase 1e add config schema command and docs
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`35e02b4`](https://github.com/plocher/jBOM/commit/35e02b4742bf313af32189fc325c42e683308b31))
+
+* feat(config): phase 1d migrate profiles to unified .jbom.yaml
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`030bfa5`](https://github.com/plocher/jBOM/commit/030bfa58538a7829009247fb057a873e3a01c87b))
+
+* feat(config): phase 1c introduce field reference resolution
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`5f58f6f`](https://github.com/plocher/jBOM/commit/5f58f6fb00d6b81febfe4dae086375aac6565e9b))
+
+* feat(config): phase 1b add unified profile loader
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`0565383`](https://github.com/plocher/jBOM/commit/056538329b467cb99984f51ed529e7b13990e097))
+
+* feat(config): phase 1a migrate config models to pydantic
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`c07c415`](https://github.com/plocher/jBOM/commit/c07c415154f82084220bf9a095ba363362485b60))
+
+### Unknown
+
+* doc/prep for implementation ([`d7f8529`](https://github.com/plocher/jBOM/commit/d7f85298da7ab0be54ba3ec363606383414cdd23))
+
+
 ## v6.57.0 (2026-05-11)
 
 ### Bug Fixes
