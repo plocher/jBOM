@@ -37,35 +37,92 @@ Feature: Profile hierarchy and discovery
     And resolved profile value "defaults.search.output_fields" should equal list "manufacturer,mpn"
     And resolved profile value "supplier.search.fields" should equal list "mpn,description"
     And resolved profile value "supplier.description" should be missing
-
-  Scenario: first-match named profile wins while common profiles merge cumulatively
+  Scenario: Same named profile in multiple locations resolves from cwd first
     Given a sandbox
-    And profile directory "profiles_low" has a common profile containing:
-      """
-      defaults:
-        field_precedence_policy:
-          low_only:
-            - manufacturer
-      """
-    And profile directory "profiles_high" has a common profile containing:
-      """
-      defaults:
-        field_precedence_policy:
-          high_only:
-            - mpn
-      """
-    And profile directory "profiles_low" has a named profile containing:
+    And the profile repo root is "repo"
+    And the profile load cwd is "repo/work"
+    And a cwd named profile that contains:
       """
       supplier:
-        name: Lower Priority Supplier
+        name: CWD Named Supplier
       """
-    And profile directory "profiles_high" has a named profile containing:
+    And a repo named profile that contains:
       """
       supplier:
-        name: Higher Priority Supplier
+        name: Repo Named Supplier
       """
-    And JBOM_PROFILE_PATH contains "profiles_high,profiles_low"
+    And profile directory "env_profiles" has a named profile containing:
+      """
+      supplier:
+        name: Env Named Supplier
+      """
+    And JBOM_PROFILE_PATH contains "env_profiles"
+    And a home named profile that contains:
+      """
+      supplier:
+        name: Home Named Supplier
+      """
     When I load the named profile
-    Then resolved profile value "supplier.name" should equal "Higher Priority Supplier"
-    And resolved profile value "defaults.field_precedence_policy.high_only" should equal list "mpn"
-    And resolved profile value "defaults.field_precedence_policy.low_only" should equal list "manufacturer"
+    Then resolved profile value "supplier.name" should equal "CWD Named Supplier"
+
+  Scenario: Same named profile falls back to repo root when cwd is missing
+    Given a sandbox
+    And the profile repo root is "repo"
+    And the profile load cwd is "repo/work"
+    And a repo named profile that contains:
+      """
+      supplier:
+        name: Repo Named Supplier
+      """
+    And profile directory "env_profiles" has a named profile containing:
+      """
+      supplier:
+        name: Env Named Supplier
+      """
+    And JBOM_PROFILE_PATH contains "env_profiles"
+    And a home named profile that contains:
+      """
+      supplier:
+        name: Home Named Supplier
+      """
+    When I load the named profile
+    Then resolved profile value "supplier.name" should equal "Repo Named Supplier"
+
+  Scenario: common profiles layer across locations while named comes from lower-priority tier
+    Given a sandbox
+    And the profile repo root is "repo"
+    And the profile load cwd is "repo/work"
+    And a repo common profile that contains:
+      """
+      defaults:
+        search:
+          output_fields:
+            - repo_only
+      supplier:
+        website: https://repo.example
+      """
+    And a cwd common profile that contains:
+      """
+      defaults:
+        search:
+          output_fields:
+            - cwd_only
+      supplier:
+        website: https://cwd.example
+      """
+    And a home common profile that contains:
+      """
+      supplier:
+        description: from_home_common
+      """
+    And profile directory "env_profiles" has a named profile containing:
+      """
+      supplier:
+        name: Env Named Supplier
+      """
+    And JBOM_PROFILE_PATH contains "env_profiles"
+    When I load the named profile
+    Then resolved profile value "supplier.name" should equal "Env Named Supplier"
+    And resolved profile value "supplier.website" should equal "https://cwd.example"
+    And resolved profile value "supplier.description" should equal "from_home_common"
+    And resolved profile value "defaults.search.output_fields" should equal list "cwd_only"
