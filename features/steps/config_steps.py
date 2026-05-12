@@ -44,6 +44,42 @@ def _active_named_profile_name(context) -> str:
     return value or _DEFAULT_NAMED_PROFILE
 
 
+def _profile_load_cwd(context) -> Path:
+    """Return the cwd used for profile resolution."""
+    value = getattr(context, "profile_load_cwd", None)
+    if isinstance(value, Path):
+        return value
+    return Path(context.sandbox_root).resolve()
+
+
+def _profile_repo_root(context) -> Path:
+    """Return the simulated repo root used for profile resolution."""
+    value = getattr(context, "profile_repo_root", None)
+    if isinstance(value, Path):
+        return value
+    return _profile_load_cwd(context)
+
+
+def _profile_home_root(context) -> Path:
+    """Return the simulated HOME directory for profile resolution."""
+    value = getattr(context, "profile_home_root", None)
+    if isinstance(value, Path):
+        return value
+    return (Path(context.sandbox_root) / "_home").resolve()
+
+
+def _profile_dir_for_tier(context, tier: str) -> Path:
+    """Return the .jbom profile directory for a resolution tier."""
+    normalized_tier = str(tier or "").strip().lower()
+    if normalized_tier == "cwd":
+        return _profile_load_cwd(context) / ".jbom"
+    if normalized_tier == "repo":
+        return _profile_repo_root(context) / ".jbom"
+    if normalized_tier == "home":
+        return _profile_home_root(context) / ".jbom"
+    raise ValueError(f"Unknown profile tier: {tier!r}")
+
+
 def _write_profile_file(context, profile_name: str, base_dir: Path) -> None:
     """Write a profile file to the specified directory."""
     base_dir.mkdir(parents=True, exist_ok=True)
@@ -55,7 +91,7 @@ def _write_profile_file(context, profile_name: str, base_dir: Path) -> None:
 def given_named_profile_contains(context, profile_name: str) -> None:
     """Write a profile file to <sandbox>/.jbom/<profile>.jbom.yaml."""
     context.active_named_profile_name = str(profile_name or "").strip().lower()
-    _write_profile_file(context, profile_name, Path(context.sandbox_root) / ".jbom")
+    _write_profile_file(context, profile_name, _profile_dir_for_tier(context, "cwd"))
 
 
 @given("a named profile that contains:")
@@ -66,8 +102,73 @@ def given_anonymous_named_profile_contains(context) -> None:
 
 @given("a common profile that contains:")
 def given_common_profile_contains(context) -> None:
-    """Write common profile file to <sandbox>/.jbom/common.jbom.yaml."""
-    _write_profile_file(context, "common", Path(context.sandbox_root) / ".jbom")
+    """Write common profile file in the active cwd tier."""
+    _write_profile_file(context, "common", _profile_dir_for_tier(context, "cwd"))
+
+
+@given('the profile load cwd is "{rel_path}"')
+def given_profile_load_cwd_is(context, rel_path: str) -> None:
+    """Set the cwd used by profile resolution to sandbox/<rel_path>."""
+    load_cwd = (Path(context.sandbox_root) / rel_path).resolve()
+    load_cwd.mkdir(parents=True, exist_ok=True)
+    context.profile_load_cwd = load_cwd
+
+
+@given('the profile repo root is "{rel_path}"')
+def given_profile_repo_root_is(context, rel_path: str) -> None:
+    """Set a simulated repo root and create .git marker for repo-root discovery."""
+    repo_root = (Path(context.sandbox_root) / rel_path).resolve()
+    repo_root.mkdir(parents=True, exist_ok=True)
+    (repo_root / ".git").mkdir(parents=True, exist_ok=True)
+    context.profile_repo_root = repo_root
+
+
+@given("a cwd named profile that contains:")
+def given_cwd_named_profile_contains(context) -> None:
+    """Write anonymous named profile in the cwd tier."""
+    _write_profile_file(
+        context,
+        _active_named_profile_name(context),
+        _profile_dir_for_tier(context, "cwd"),
+    )
+
+
+@given("a cwd common profile that contains:")
+def given_cwd_common_profile_contains(context) -> None:
+    """Write common profile in the cwd tier."""
+    _write_profile_file(context, "common", _profile_dir_for_tier(context, "cwd"))
+
+
+@given("a repo named profile that contains:")
+def given_repo_named_profile_contains(context) -> None:
+    """Write anonymous named profile in the repo-root tier."""
+    _write_profile_file(
+        context,
+        _active_named_profile_name(context),
+        _profile_dir_for_tier(context, "repo"),
+    )
+
+
+@given("a repo common profile that contains:")
+def given_repo_common_profile_contains(context) -> None:
+    """Write common profile in the repo-root tier."""
+    _write_profile_file(context, "common", _profile_dir_for_tier(context, "repo"))
+
+
+@given("a home named profile that contains:")
+def given_home_named_profile_contains(context) -> None:
+    """Write anonymous named profile in the home tier."""
+    _write_profile_file(
+        context,
+        _active_named_profile_name(context),
+        _profile_dir_for_tier(context, "home"),
+    )
+
+
+@given("a home common profile that contains:")
+def given_home_common_profile_contains(context) -> None:
+    """Write common profile in the home tier."""
+    _write_profile_file(context, "common", _profile_dir_for_tier(context, "home"))
 
 
 @given('profile directory "{directory_name}" has profile "{profile_name}" containing:')
@@ -107,20 +208,28 @@ def given_jbom_profile_path_contains(context, directory_names_csv: str) -> None:
 def when_i_load_profile(context, profile_name: str) -> None:
     """Load a profile with optional JBOM_PROFILE_PATH override."""
     previous = os.environ.get("JBOM_PROFILE_PATH")
+    previous_home = os.environ.get("HOME")
     try:
         override = getattr(context, "jbom_profile_path_override", None)
         if override is None:
             os.environ.pop("JBOM_PROFILE_PATH", None)
         else:
             os.environ["JBOM_PROFILE_PATH"] = override
+        simulated_home = _profile_home_root(context)
+        simulated_home.mkdir(parents=True, exist_ok=True)
+        os.environ["HOME"] = str(simulated_home)
         context.loaded_profile = load_unified(
-            profile_name, cwd=Path(context.sandbox_root)
+            profile_name, cwd=_profile_load_cwd(context)
         )
     finally:
         if previous is None:
             os.environ.pop("JBOM_PROFILE_PATH", None)
         else:
             os.environ["JBOM_PROFILE_PATH"] = previous
+        if previous_home is None:
+            os.environ.pop("HOME", None)
+        else:
+            os.environ["HOME"] = previous_home
 
 
 @when("I load the named profile")
