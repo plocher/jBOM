@@ -33,7 +33,6 @@ fab:
   field_synonyms:
     fab_pn:
       # JLC accepts both LCSC-branded headers and normalized Supplier/SPN aliases.
-      # Mechanism docs: docs/README.configuration.md#field_synonyms-mechanism.
       display_name: "LCSC Part #"
       synonyms:
         - "LCSC Part #"      # canonical JLCPCB column name (matches KiCad BOM plugin)
