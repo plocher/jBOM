@@ -9,6 +9,7 @@ from jbom.cli import (
     annotate,
     audit,
     bom,
+    config,
     fabrication,
     gerbers,
     inventory,
@@ -52,6 +53,7 @@ def create_parser() -> argparse.ArgumentParser:
     # Direct command registration - no registry needed!
     audit.register_command(subparsers)
     bom.register_command(subparsers)
+    config.register_command(subparsers)
     annotate.register_command(subparsers)
     fabrication.register_command(subparsers)
     gerbers.register_command(subparsers)
