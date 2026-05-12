@@ -62,7 +62,7 @@ def profile_search_dirs(*, cwd: Path | None = None) -> list[Path]:
     Returns:
         Ordered list of directories (may include non-existent paths).
     """
-    search_cwd = (cwd or Path.cwd()).resolve()
+    search_cwd = _resolve_search_cwd(cwd)
     dirs: list[Path] = []
 
     # 1. .jbom/ in cwd
@@ -89,6 +89,17 @@ def profile_search_dirs(*, cwd: Path | None = None) -> list[Path]:
     dirs.extend(_platform_system_dirs())
 
     return dirs
+
+
+def _resolve_search_cwd(cwd: Path | None) -> Path:
+    """Resolve the effective cwd for profile search with safe fallbacks."""
+    try:
+        return (cwd or Path.cwd()).resolve()
+    except OSError:
+        try:
+            return Path.home().resolve()
+        except OSError:
+            return Path("/")
 
 
 def _find_repo_root(start: Path) -> Path | None:
