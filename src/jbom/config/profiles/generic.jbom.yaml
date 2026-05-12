@@ -23,7 +23,6 @@ fab:
     fab_pn:
       # Generic keeps a neutral preferred-part label because no single fabricator
       # catalog is implied.
-      # Mechanism docs: docs/README.configuration.md#field_synonyms-mechanism.
       display_name: "Preferred Supplier PN"
     supplier_pn:
       display_name: "Part Number"
