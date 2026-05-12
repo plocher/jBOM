@@ -4,14 +4,20 @@ Extracts and resolves individual field values from BOM entries, applying
 fabricator-specific projection and namespace-aware source selection.
 """
 from __future__ import annotations
+from functools import lru_cache
+from typing import Any, Mapping, Optional
 
-from typing import Any, Optional
-
-from jbom.common.fields import normalize_field_name, split_kicad_strip_field
+from jbom.common.fields import normalize_field_name
 from jbom.common.component_utils import derive_package_from_footprint
 from jbom.services.bom_generator import BOMEntry
 from jbom.services.field_listing_service import resolve_field
+from jbom.config.field_expr import (
+    FieldExpressionEvaluator,
+    TransformCallable,
+)
+from jbom.config.field_ref import FieldContext, FieldRefResolver
 from jbom.config.fabricators import FabricatorConfig
+from jbom.config.unified import load_unified
 
 # Source priority: PCB first, then inventory, then schematic
 _BOM_SOURCE_PRIORITY = ["p", "i", "s"]
@@ -24,206 +30,191 @@ def resolve_bom_field_value(
     fabricator_id: str = "generic",
     fabricator_config: Optional[FabricatorConfig] = None,
 ) -> str:
-    """Extract and resolve a field value from a BOM entry.
+    """Resolve one BOM field token through canonical field-reference semantics."""
 
-    Handles standard fields, namespaced fields (s:, p:, i:, a:), and
-    KiCad strip modifiers (k:). Applies fabricator-specific projection
-    and source precedence rules.
+    raw_field = str(field or "").strip()
+    if not raw_field:
+        return ""
 
-    Args:
-        entry: BOM entry object
-        field: Field name to resolve (standard, namespaced, or with modifier)
-        fabricator_id: Fabricator ID for projection logic
-        fabricator_config: Optional fabricator configuration
-
-    Returns:
-        String value for the field
-    """
-    import logging
-
-    # Handle k: modifier — KiCad LIBRARY:NAME → NAME (strip library nickname).
-    # "k:footprint" defaults to inventory source; use "i:k:", "s:k:", "p:k:" explicitly.
-    kicad_parts = split_kicad_strip_field(field)
-    if kicad_parts is not None:
-        source, inner = kicad_parts
-        if field.startswith("k:"):
-            logging.getLogger(__name__).debug(
-                "k:%s: no source prefix specified, defaulting to i: (inventory). "
-                "Use i:k:, s:k:, or p:k: to be explicit.",
-                inner,
-            )
-        raw = _resolve_namespaced_field_value(
-            entry,
-            source,
-            inner,
-            fabricator_id=fabricator_id,
-            fabricator_config=fabricator_config,
-        )
-        return derive_package_from_footprint(raw)
-
-    # Handle namespaced fields
-    if field.startswith("i:"):
-        return _resolve_namespaced_field_value(
-            entry,
-            "i",
-            field[2:],
-            fabricator_id=fabricator_id,
-            fabricator_config=fabricator_config,
-        )
-
-    if field.startswith("s:"):
-        return _resolve_namespaced_field_value(
-            entry,
-            "s",
-            field[2:],
-            fabricator_id=fabricator_id,
-            fabricator_config=fabricator_config,
-        )
-
-    if field.startswith("p:"):
-        return _resolve_namespaced_field_value(
-            entry,
-            "p",
-            field[2:],
-            fabricator_id=fabricator_id,
-            fabricator_config=fabricator_config,
-        )
-
-    if field.startswith("a:"):
-        return _resolve_annotation_field_value(
-            entry,
-            field[2:],
-            fabricator_id=fabricator_id,
-            fabricator_config=fabricator_config,
-        )
-
-    # Handle standard BOM fields
-    return _resolve_standard_field_value(
+    field_resolver = _field_ref_resolver_for_fabricator(fabricator_id)
+    parsed_input = field_resolver.parse(raw_field)
+    resolved_field_token = (
+        raw_field
+        if parsed_input.is_expression
+        else field_resolver.normalize_reference_token(raw_field)
+    )
+    field_context = _build_field_context(
         entry,
-        field,
         fabricator_id=fabricator_id,
         fabricator_config=fabricator_config,
     )
-
-
-def _resolve_standard_field_value(
-    entry: BOMEntry,
-    field: str,
-    *,
-    fabricator_id: str,
-    fabricator_config: Optional[FabricatorConfig],
-) -> str:
-    """Resolve a standard (non-prefixed) BOM field."""
-    if field == "reference":
-        return entry.references_string
-    if field == "quantity":
-        return str(entry.quantity)
-    if field == "fabricator_part_number":
-        return _resolve_fabricator_part_number(
-            entry,
-            fabricator_id=fabricator_id,
-            fabricator_config=fabricator_config,
-        )
-    if field == "smd":
-        return _resolve_smd_indicator(entry)
-
-    row_sources = _build_bom_row_sources(entry, include_unqualified_fallback=True)
-    if field == "mfgpn":
-        return resolve_field(
-            "manufacturer_part",
-            row_sources,
-            priority=_BOM_SOURCE_PRIORITY,
-        ) or resolve_field(
-            "mfgpn",
-            row_sources,
-            priority=_BOM_SOURCE_PRIORITY,
-        )
-    if field == "package":
-        return resolve_field(
-            "package",
-            row_sources,
-            priority=_BOM_SOURCE_PRIORITY,
-        ) or derive_package_from_footprint(entry.footprint)
-    if field == "lcsc":
-        return resolve_field(
-            "lcsc",
-            row_sources,
-            priority=_BOM_SOURCE_PRIORITY,
-        ) or _get_attribute_value(entry, "LCSC")
-    resolved_value = resolve_field(
-        field,
-        row_sources,
-        priority=_BOM_SOURCE_PRIORITY,
-    )
+    if not parsed_input.is_expression and resolved_field_token == "mfgpn":
+        manufacturer_part = field_resolver.resolve("manufacturer_part", field_context)
+        if manufacturer_part:
+            return manufacturer_part
+    parsed_field = field_resolver.parse(resolved_field_token)
+    resolved_value = field_resolver.resolve(resolved_field_token, field_context)
     if resolved_value:
         return resolved_value
 
-    return _get_attribute_value(entry, field)
+    if parsed_field.is_expression or parsed_field.namespace:
+        return resolved_value
+    if resolved_field_token == "package":
+        return derive_package_from_footprint(entry.footprint)
+    if resolved_field_token == "lcsc":
+        return _get_attribute_value(entry, "LCSC")
+    return _get_attribute_value(entry, resolved_field_token)
 
 
-def _resolve_namespaced_field_value(
-    entry: BOMEntry,
-    namespace: str,
-    namespaced_field: str,
-    *,
-    fabricator_id: str,
-    fabricator_config: Optional[FabricatorConfig],
-) -> str:
-    """Resolve a namespace-qualified field under strict source semantics."""
-    row_sources = _build_bom_row_sources(entry, include_unqualified_fallback=False)
-    return resolve_field(
-        f"{namespace}:{namespaced_field}",
-        row_sources,
-        priority=_BOM_SOURCE_PRIORITY,
+@lru_cache(maxsize=32)
+def _field_ref_resolver_for_fabricator(fabricator_id: str) -> FieldRefResolver:
+    """Return a cached field resolver with transforms for one fabricator profile."""
+
+    return FieldRefResolver(
+        builtin_transforms=_compiled_transform_functions_for_fabricator(fabricator_id)
     )
 
 
-def _resolve_annotation_field_value(
+@lru_cache(maxsize=32)
+def _compiled_transform_functions_for_fabricator(
+    fabricator_id: str,
+) -> dict[str, TransformCallable]:
+    """Load and compile profile transform definitions for expression evaluation."""
+    normalized_fabricator_id = str(fabricator_id or "generic").strip().lower()
+    if not normalized_fabricator_id:
+        return {}
+
+    try:
+        merged_profile = load_unified(normalized_fabricator_id)
+    except Exception:
+        return {}
+
+    transforms_stanza = merged_profile.get("transforms")
+    if not isinstance(transforms_stanza, Mapping):
+        return {}
+
+    compilation_result = FieldExpressionEvaluator().compile_transforms(
+        transforms_stanza,
+        source_name=f"{normalized_fabricator_id}.jbom.yaml",
+    )
+    if any(
+        diagnostic.severity == "error" for diagnostic in compilation_result.diagnostics
+    ):
+        return {}
+    return compilation_result.transforms
+
+
+def _build_field_context(
     entry: BOMEntry,
-    annotation_field: str,
     *,
     fabricator_id: str,
     fabricator_config: Optional[FabricatorConfig],
-) -> str:
-    """Render `a:*` fields as deterministic source annotation lines."""
-    explicit = _get_attribute_value(entry, f"a:{annotation_field}")
-    if explicit:
-        return explicit
+) -> FieldContext:
+    """Build resolver context for one BOM row."""
 
-    lines: list[tuple[str, str]] = []
-
-    for namespace in ("s", "p"):
-        value = _resolve_namespaced_field_value(
-            entry,
-            namespace,
-            annotation_field,
-            fabricator_id=fabricator_id,
-            fabricator_config=fabricator_config,
-        )
-        if value:
-            lines.append((namespace, value))
-
-    inventory_value = _resolve_namespaced_field_value(
+    row_sources = _build_bom_row_sources(entry, include_unqualified_fallback=True)
+    computed_fields = _build_computed_field_values(
         entry,
-        "i",
-        annotation_field,
         fabricator_id=fabricator_id,
         fabricator_config=fabricator_config,
     )
-    if inventory_value:
-        lines.append(("i", inventory_value))
+    annotation_fields = _build_annotation_field_values(entry, row_sources)
+    return FieldContext.from_row_sources(
+        row_sources,
+        computed=computed_fields,
+        annotations=annotation_fields,
+        source_priority=("p", "i", "s"),
+    )
+
+
+def _build_computed_field_values(
+    entry: BOMEntry,
+    *,
+    fabricator_id: str,
+    fabricator_config: Optional[FabricatorConfig],
+) -> dict[str, object]:
+    """Build computed-field values exposed under `jbom:*` references."""
+
+    fabricator_part_number = _resolve_fabricator_part_number(
+        entry,
+        fabricator_id=fabricator_id,
+        fabricator_config=fabricator_config,
+    )
+    smd_value = _resolve_smd_indicator(entry)
+    return {
+        "reference": entry.references_string,
+        "quantity": entry.quantity,
+        "fabricator_part_number": fabricator_part_number,
+        "smd": smd_value,
+        "jbom:quantity": entry.quantity,
+        "jbom:fabricator_part_number": fabricator_part_number,
+        "jbom:smd": smd_value,
+    }
+
+
+def _build_annotation_field_values(
+    entry: BOMEntry,
+    row_sources: Mapping[str, Mapping[str, object]],
+) -> dict[str, str]:
+    """Build concrete `a:*` annotation values from source fields and explicit attrs."""
+
+    annotations: dict[str, str] = {}
+
+    for attribute_key, attribute_value in entry.attributes.items():
+        normalized_key = normalize_field_name(str(attribute_key or ""))
+        if not normalized_key.startswith("a:"):
+            continue
+        annotation_key = normalized_key[2:]
+        if not annotation_key:
+            continue
+        annotation_value = _coerce_output_value(attribute_value)
+        if annotation_value:
+            annotations[annotation_key] = annotation_value
+
+    candidate_field_names: set[str] = set()
+    for source_fields in row_sources.values():
+        for source_field in source_fields.keys():
+            normalized_field_name = normalize_field_name(str(source_field or ""))
+            if normalized_field_name:
+                candidate_field_names.add(normalized_field_name)
+
+    for field_name in sorted(candidate_field_names):
+        if field_name in annotations:
+            continue
+        rendered_annotation = _render_source_annotation_value(field_name, row_sources)
+        if rendered_annotation:
+            annotations[field_name] = rendered_annotation
+
+    return annotations
+
+
+def _render_source_annotation_value(
+    field_name: str,
+    row_sources: Mapping[str, Mapping[str, object]],
+) -> str:
+    """Render `a:<field>` output lines in stable source order."""
+
+    lines: list[tuple[str, str]] = []
+    for namespace in ("s", "p", "i"):
+        value = resolve_field(
+            f"{namespace}:{field_name}",
+            row_sources,
+            priority=_BOM_SOURCE_PRIORITY,
+        )
+        if value:
+            lines.append((namespace, value))
 
     if not lines:
         return ""
 
     unique_lines: list[tuple[str, str]] = []
     seen_pairs: set[tuple[str, str]] = set()
-    for namespace_value in lines:
-        if namespace_value in seen_pairs:
+    for namespace, value in lines:
+        pair = (namespace, value)
+        if pair in seen_pairs:
             continue
-        seen_pairs.add(namespace_value)
-        unique_lines.append(namespace_value)
-
+        seen_pairs.add(pair)
+        unique_lines.append(pair)
     return "\n".join(f"{namespace}:{value}" for namespace, value in unique_lines)
 
 
@@ -296,6 +287,8 @@ def _build_bom_row_sources(
 
     if include_unqualified_fallback:
         # Keep unqualified behavior stable when merge enrichment is absent.
+        if entry.references_string:
+            row_sources["s"].setdefault("reference", entry.references_string)
         if entry.value:
             row_sources["s"].setdefault("value", entry.value)
         if entry.footprint:
