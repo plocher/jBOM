@@ -80,9 +80,11 @@ def test_disk_cache_missing_profile_ttl_falls_back_to_24h(
     supplier = SupplierConfig(
         id="mouser",
         name="Mouser",
-        supplier_label="Mouser",
+        field_synonyms={
+            "supplier_pn": {"display_name": "Mouser", "synonyms": []},
+        },
         # Missing TTL entries on purpose.
-        search_cache_ttl_hours=None,
+        search={"cache": {"ttl_hours": None}},
     )
 
     monkeypatch.setattr(cache_mod, "resolve_supplier_by_id", lambda _sid: supplier)

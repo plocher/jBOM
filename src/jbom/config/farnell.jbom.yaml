@@ -1,0 +1,8 @@
+
+supplier:
+  id: "farnell"
+  name: "Farnell"
+  field_synonyms:
+    supplier_pn:
+      display_name: "Farnell"
+      synonyms: []

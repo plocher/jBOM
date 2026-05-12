@@ -28,6 +28,7 @@ requires-python = ">=3.10"
 dependencies = [
     "sexpdata>=0.0.3",
     "PyYAML>=5.4.0",
+    "pydantic>=2.0",
 ]
 
 [project.optional-dependencies]
@@ -61,11 +62,8 @@ package-dir = {"" = "src"}
 [tool.setuptools.package-data]
 # Include configuration files in the package
 jbom = [
-    "config/*.yaml",
+    "config/*.jbom.yaml",
     "config/*.csv",
-    "config/fabricators/*.yaml",
-    "config/presets/*.yaml",
-    "config/suppliers/*.yaml",
 ]
 
 # Python Semantic Release v9 configuration

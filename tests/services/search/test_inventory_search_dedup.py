@@ -299,8 +299,10 @@ def test_build_query_uses_supplier_config_keywords(monkeypatch) -> None:
     supplier = SupplierConfig(
         id="mouser",
         name="Mouser",
-        supplier_label="Mouser",
-        search_type_query_keywords={"RES": "thick film resistor"},
+        field_synonyms={
+            "supplier_pn": {"display_name": "Mouser", "synonyms": []},
+        },
+        search={"type_query_keywords": {"RES": "thick film resistor"}},
     )
 
     import jbom.services.search.inventory_search_service as iss
