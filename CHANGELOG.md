@@ -1,6 +1,33 @@
 # CHANGELOG
 
 
+## v6.58.1 (2026-05-12)
+
+### Bug Fixes
+
+* fix(tests): harden supplier default and config profile Behave coverage
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`98b5a1c`](https://github.com/plocher/jBOM/commit/98b5a1c15b17a132ce14bf12e4a856a4b5905693))
+
+### Refactoring
+
+* refactor(tests): make profile hierarchy scenarios name-agnostic
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`f749ef0`](https://github.com/plocher/jBOM/commit/f749ef0bff3b397eedb4926139179c640499d16a))
+
+* refactor(tests): clarify profile hierarchy scenario wording
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`26a1f9c`](https://github.com/plocher/jBOM/commit/26a1f9cdd261e7be90a9771cf95a29458462a28c))
+
+* refactor(tests): remove magic supplier defaults in feature scenarios
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`d23fe2c`](https://github.com/plocher/jBOM/commit/d23fe2c24d5868b5159589ea5bb6faabcb2e60e4))
+
+* refactor(config): relocate built-in .jbom profiles under config/profiles (#270)
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`7106a5f`](https://github.com/plocher/jBOM/commit/7106a5f571368a46cee94723add8c44d3fac59cd))
+
+
 ## v6.58.0 (2026-05-12)
 
 ### Bug Fixes
