@@ -188,7 +188,7 @@ field_synonyms:
     synonyms: []
 """
     data = yaml.safe_load(yaml_content)
-    cfg = FabricatorConfig.from_yaml_dict(data, default_id="testfab")
+    cfg = FabricatorConfig.model_validate(data, context={"default_id": "testfab"})
     assert cfg.generate_designators is True
 
 
@@ -222,7 +222,7 @@ field_synonyms:
     synonyms: []
 """
     data = yaml.safe_load(yaml_content)
-    cfg = FabricatorConfig.from_yaml_dict(data, default_id="testfab")
+    cfg = FabricatorConfig.model_validate(data, context={"default_id": "testfab"})
     assert cfg.generate_designators is False
 
 

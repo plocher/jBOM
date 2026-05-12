@@ -3,304 +3,325 @@
 Supplier profiles capture supplier-specific knowledge such as:
 - URL templates for direct product links and search pages
 - Part-number validation patterns
-
-Profiles are loaded from the search path (project .jbom/, JBOM_PROFILE_PATH,
-~/.jbom/, system dirs) before falling back to built-in package profiles.
 """
 
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, Mapping, Optional
 
-from jbom.config.profile_search import find_profile
-from jbom.config.providers import SearchProviderConfig
-
 import yaml
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationInfo,
+    computed_field,
+    field_validator,
+    model_validator,
+)
+
+from jbom.config.field_synonyms import FieldSynonym, parse_field_synonyms
+from jbom.config.profile_search import profile_search_dirs
+from jbom.config.providers import SearchProviderConfig
+from jbom.config.unified import (
+    UnifiedProfileNotFoundError,
+    list_unified_stanza_ids,
+    load_unified,
+    resolve_profile_name_for_stanza_id,
+    supplier_stanza,
+)
 
 
-@dataclass(frozen=True)
-class SupplierFieldSynonym:
-    """Canonical supplier field naming plus accepted synonym headers."""
-
-    display_name: str
-    synonyms: list[str]
+SupplierFieldSynonym = FieldSynonym
 
 
-@dataclass(frozen=True)
-class SupplierConfig:
-    """Configuration for a parts supplier/distributor.
+class SupplierPartNumberConfig(BaseModel):
+    """Supplier part-number validation config."""
 
-    ``supplier_label`` is the value that appears in the ``Supplier`` column of
-    the normalized inventory CSV (e.g. ``"LCSC"`` for LCSC Electronics).  It
-    is NOT a CSV column name.
-    """
+    model_config = ConfigDict(extra="ignore")
+
+    pattern: Optional[str] = None
+    example: Optional[str] = None
+
+    @field_validator("pattern", "example", mode="before")
+    @classmethod
+    def _normalize_optional_string(cls, value: Any) -> Optional[str]:
+        if value is None:
+            return None
+        normalized = str(value).strip()
+        if not normalized:
+            return None
+        return normalized
+
+
+class SupplierSearchCacheConfig(BaseModel):
+    """Supplier search cache tuning options."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    ttl_hours: Optional[float] = None
+
+    @field_validator("ttl_hours", mode="before")
+    @classmethod
+    def _validate_ttl_hours(cls, value: Any) -> Optional[float]:
+        if value is None:
+            return None
+        if not isinstance(value, (int, float)):
+            raise ValueError("search.cache.ttl_hours must be a number or null")
+        return float(value)
+
+
+class SupplierSearchApiConfig(BaseModel):
+    """Supplier search API tuning options."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    timeout_seconds: Optional[float] = None
+    max_retries: Optional[int] = None
+    retry_delay_seconds: Optional[float] = None
+
+    @field_validator("timeout_seconds", mode="before")
+    @classmethod
+    def _validate_timeout_seconds(cls, value: Any) -> Optional[float]:
+        if value is None:
+            return None
+        if not isinstance(value, (int, float)):
+            raise ValueError("search.api.timeout_seconds must be a number or null")
+        return float(value)
+
+    @field_validator("max_retries", mode="before")
+    @classmethod
+    def _validate_max_retries(cls, value: Any) -> Optional[int]:
+        if value is None:
+            return None
+        if not isinstance(value, int):
+            raise ValueError("search.api.max_retries must be an int or null")
+        return int(value)
+
+    @field_validator("retry_delay_seconds", mode="before")
+    @classmethod
+    def _validate_retry_delay_seconds(cls, value: Any) -> Optional[float]:
+        if value is None:
+            return None
+        if not isinstance(value, (int, float)):
+            raise ValueError("search.api.retry_delay_seconds must be a number or null")
+        return float(value)
+
+
+class SupplierSearchConfig(BaseModel):
+    """Supplier `search:` stanza."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    providers: list[SearchProviderConfig] = Field(default_factory=list)
+    fields: list[str] = Field(default_factory=list)
+    cache: SupplierSearchCacheConfig = Field(default_factory=SupplierSearchCacheConfig)
+    api: SupplierSearchApiConfig = Field(default_factory=SupplierSearchApiConfig)
+    type_query_keywords: dict[str, str] = Field(default_factory=dict)
+
+    @field_validator("providers", mode="before")
+    @classmethod
+    def _parse_providers(cls, value: Any) -> list[SearchProviderConfig]:
+        if value is None:
+            return []
+        if not isinstance(value, list):
+            raise ValueError("search.providers must be a list")
+
+        providers: list[SearchProviderConfig] = []
+        for provider_cfg in value:
+            if not isinstance(provider_cfg, dict):
+                raise ValueError("search.providers entries must be mappings")
+
+            ptype = provider_cfg.get("type")
+            if not isinstance(ptype, str) or not ptype.strip():
+                raise ValueError(
+                    "search.providers entries must include non-empty 'type'"
+                )
+
+            extra = {key: val for key, val in provider_cfg.items() if key != "type"}
+            providers.append(
+                SearchProviderConfig.model_validate(
+                    {"type": ptype.strip(), "extra": dict(extra)}
+                )
+            )
+
+        return providers
+
+    @field_validator("fields", mode="before")
+    @classmethod
+    def _normalize_fields(cls, value: Any) -> list[str]:
+        if value is None:
+            return []
+        if not isinstance(value, list):
+            raise ValueError("search.fields must be a list")
+
+        fields: list[str] = []
+        for field_name in value:
+            token = str(field_name or "").strip()
+            if not token:
+                raise ValueError("search.fields entries must be non-empty strings")
+            fields.append(token.lower())
+        return list(dict.fromkeys(fields).keys())
+
+    @field_validator("type_query_keywords", mode="before")
+    @classmethod
+    def _normalize_type_query_keywords(cls, value: Any) -> dict[str, str]:
+        if value is None:
+            return {}
+        if not isinstance(value, dict):
+            raise ValueError("search.type_query_keywords must be a mapping")
+
+        normalized: dict[str, str] = {}
+        for key, val in value.items():
+            if not isinstance(key, str) or not key.strip():
+                raise ValueError(
+                    "search.type_query_keywords keys must be non-empty strings"
+                )
+            if not isinstance(val, str) or not val.strip():
+                raise ValueError(
+                    f"search.type_query_keywords[{key!r}] must be a non-empty string"
+                )
+            normalized[key.strip().upper()] = val.strip()
+        return normalized
+
+
+class SupplierConfig(BaseModel):
+    """Configuration for a parts supplier/distributor."""
+
+    model_config = ConfigDict(extra="ignore")
 
     id: str
     name: str
-    supplier_label: str  # value matched against the Supplier CSV column
-    field_synonyms: dict[str, SupplierFieldSynonym] = field(default_factory=dict)
-
+    field_synonyms: dict[str, SupplierFieldSynonym] = Field(default_factory=dict)
     description: Optional[str] = None
     website: Optional[str] = None
-
     url_template: Optional[str] = None
     search_url_template: Optional[str] = None
+    part_number: SupplierPartNumberConfig = Field(
+        default_factory=SupplierPartNumberConfig
+    )
+    search: SupplierSearchConfig = Field(default_factory=SupplierSearchConfig)
 
-    part_number_pattern: Optional[str] = None
-    part_number_example: Optional[str] = None
+    @model_validator(mode="before")
+    @classmethod
+    def _normalize_input(cls, raw: Any, info: ValidationInfo) -> Dict[str, Any]:
+        if not isinstance(raw, dict):
+            raise ValueError("Supplier config must be a YAML mapping")
 
-    # Search output field selection (applies to console + CSV output).
-    search_fields: list[str] = field(default_factory=list)
+        data = dict(raw)
 
-    # Search provider configuration (ordered fallback chain).
-    # Empty means the supplier has no search capability.
-    search_providers: list[SearchProviderConfig] = field(default_factory=list)
+        default_id = ""
+        if isinstance(info.context, dict):
+            default_id = str(info.context.get("default_id", "")).strip()
+        if "id" not in data and default_id:
+            data["id"] = default_id
+        if "name" not in data and default_id:
+            data["name"] = default_id
 
-    # Search behavior tuning (optional).
-    search_cache_ttl_hours: Optional[float] = None
-    search_timeout_seconds: Optional[float] = None
-    search_max_retries: Optional[int] = None
-    search_retry_delay_seconds: Optional[float] = None
+        return data
 
-    # Optional category -> keyword mapping used by inventory-search query construction.
-    # Keys should be normalized component category tokens (e.g. RES, CAP, IND).
-    search_type_query_keywords: dict[str, str] = field(default_factory=dict)
+    @field_validator("id", "name")
+    @classmethod
+    def _validate_required_strings(cls, value: str) -> str:
+        normalized = str(value or "").strip()
+        if not normalized:
+            raise ValueError("Supplier id/name must be non-empty strings")
+        return normalized
 
-    @staticmethod
-    def from_yaml_dict(data: Dict[str, Any], *, default_id: str) -> "SupplierConfig":
-        """Parse a SupplierConfig from a YAML dict.
+    @field_validator("field_synonyms", mode="before")
+    @classmethod
+    def _parse_field_synonyms(cls, value: Any) -> dict[str, SupplierFieldSynonym]:
+        return parse_field_synonyms(
+            value,
+            context="field_synonyms",
+            strict=True,
+            default_display_name_from_key=False,
+            normalize_canonical_key=lambda key: key.strip().lower(),
+        )
 
-        Args:
-            data: YAML mapping produced by yaml.safe_load().
-            default_id: Supplier ID derived from filename when 'id' is not set.
+    @field_validator(
+        "description", "website", "url_template", "search_url_template", mode="before"
+    )
+    @classmethod
+    def _normalize_optional_strings(cls, value: Any) -> Optional[str]:
+        if value is None:
+            return None
+        if not isinstance(value, str):
+            raise ValueError("Supplier string fields must be strings or null")
+        return value
 
-        Raises:
-            ValueError: When required fields are missing or schema is invalid.
-        """
-
-        if not isinstance(data, dict):
-            raise ValueError(f"Supplier '{default_id}' config must be a YAML mapping")
-
-        sid = data.get("id", default_id)
-        name = data.get("name", default_id)
-        field_synonyms_cfg = data.get("field_synonyms")
-
-        if not isinstance(sid, str) or not sid.strip():
-            raise ValueError("Supplier id must be a non-empty string")
-
-        if not isinstance(name, str) or not name.strip():
-            raise ValueError(f"Supplier '{sid}' name must be a non-empty string")
-
-        if not isinstance(field_synonyms_cfg, dict):
-            raise ValueError(
-                f"Supplier '{sid}' field_synonyms must be a mapping with supplier_pn"
-            )
-
-        parsed_field_synonyms: dict[str, SupplierFieldSynonym] = {}
-        for canonical, cfg in field_synonyms_cfg.items():
-            if not isinstance(canonical, str) or not canonical.strip():
-                raise ValueError(
-                    f"Supplier '{sid}' field_synonyms keys must be non-empty strings"
-                )
-            if not isinstance(cfg, dict):
-                raise ValueError(
-                    f"Supplier '{sid}' field_synonyms[{canonical!r}] must be a mapping"
-                )
-
-            display_name = cfg.get("display_name")
-            if not isinstance(display_name, str) or not display_name.strip():
-                raise ValueError(
-                    f"Supplier '{sid}' field_synonyms[{canonical!r}].display_name must be a non-empty string"
-                )
-
-            synonyms_cfg = cfg.get("synonyms") or []
-            if not isinstance(synonyms_cfg, list) or not all(
-                isinstance(s, str) and s.strip() for s in synonyms_cfg
-            ):
-                raise ValueError(
-                    f"Supplier '{sid}' field_synonyms[{canonical!r}].synonyms must be a list of non-empty strings"
-                )
-
-            parsed_field_synonyms[canonical.strip().lower()] = SupplierFieldSynonym(
-                display_name=display_name.strip(),
-                synonyms=[s.strip() for s in synonyms_cfg],
-            )
-
-        supplier_pn_synonym = parsed_field_synonyms.get("supplier_pn")
+    @model_validator(mode="after")
+    def _validate_relationships(self) -> "SupplierConfig":
+        supplier_pn_synonym = self.field_synonyms.get("supplier_pn")
         if supplier_pn_synonym is None:
             raise ValueError(
-                f"Supplier '{sid}' field_synonyms must define canonical 'supplier_pn'"
-            )
-        supplier_label = supplier_pn_synonym.display_name
-
-        part_number_cfg = data.get("part_number") or {}
-
-        if not isinstance(part_number_cfg, dict):
-            raise ValueError(f"Supplier '{sid}' part_number must be a mapping")
-
-        pattern = part_number_cfg.get("pattern")
-        example = part_number_cfg.get("example")
-
-        if pattern is not None and (
-            not isinstance(pattern, str) or not pattern.strip()
-        ):
-            raise ValueError(f"Supplier '{sid}' part_number.pattern must be a string")
-
-        if example is not None and (
-            not isinstance(example, str) or not example.strip()
-        ):
-            raise ValueError(f"Supplier '{sid}' part_number.example must be a string")
-
-        url_template = data.get("url_template")
-        if url_template is not None and not isinstance(url_template, str):
-            raise ValueError(f"Supplier '{sid}' url_template must be a string or null")
-
-        # Optional search behavior tuning.
-        search_cfg = data.get("search") or {}
-        if not isinstance(search_cfg, dict):
-            raise ValueError(f"Supplier '{sid}' search must be a mapping")
-
-        fields_cfg = search_cfg.get("fields") or []
-        if not isinstance(fields_cfg, list):
-            raise ValueError(f"Supplier '{sid}' search.fields must be a list")
-
-        search_fields: list[str] = []
-        for f in fields_cfg:
-            if not isinstance(f, str) or not f.strip():
-                raise ValueError(
-                    f"Supplier '{sid}' search.fields entries must be non-empty strings"
-                )
-            search_fields.append(f.strip().lower())
-
-        providers_cfg = search_cfg.get("providers") or []
-        if not isinstance(providers_cfg, list):
-            raise ValueError(f"Supplier '{sid}' search.providers must be a list")
-
-        search_providers: list[SearchProviderConfig] = []
-        for p in providers_cfg:
-            if not isinstance(p, dict):
-                raise ValueError(
-                    f"Supplier '{sid}' search.providers entries must be mappings"
-                )
-
-            ptype = p.get("type")
-            if not isinstance(ptype, str) or not ptype.strip():
-                raise ValueError(
-                    f"Supplier '{sid}' search.providers entries must include non-empty 'type'"
-                )
-
-            extra = {k: v for k, v in p.items() if k != "type"}
-            search_providers.append(
-                SearchProviderConfig(type=ptype.strip(), extra=dict(extra))
+                f"Supplier '{self.id}' field_synonyms must define canonical 'supplier_pn'"
             )
 
-        cache_cfg = search_cfg.get("cache") or {}
-        if not isinstance(cache_cfg, dict):
-            raise ValueError(f"Supplier '{sid}' search.cache must be a mapping")
-
-        cache_ttl_hours = cache_cfg.get("ttl_hours")
-        if cache_ttl_hours is not None and not isinstance(
-            cache_ttl_hours, (int, float)
-        ):
-            raise ValueError(
-                f"Supplier '{sid}' search.cache.ttl_hours must be a number or null"
-            )
-
-        api_cfg = search_cfg.get("api") or {}
-        if not isinstance(api_cfg, dict):
-            raise ValueError(f"Supplier '{sid}' search.api must be a mapping")
-
-        type_query_keywords_cfg = search_cfg.get("type_query_keywords") or {}
-        if not isinstance(type_query_keywords_cfg, dict):
-            raise ValueError(
-                f"Supplier '{sid}' search.type_query_keywords must be a mapping"
-            )
-
-        type_query_keywords: dict[str, str] = {}
-        for k, v in type_query_keywords_cfg.items():
-            if not isinstance(k, str) or not k.strip():
-                raise ValueError(
-                    f"Supplier '{sid}' search.type_query_keywords keys must be non-empty strings"
-                )
-            if not isinstance(v, str) or not v.strip():
-                raise ValueError(
-                    f"Supplier '{sid}' search.type_query_keywords[{k!r}] must be a non-empty string"
-                )
-            type_query_keywords[k.strip().upper()] = v.strip()
-
-        timeout_seconds = api_cfg.get("timeout_seconds")
-        if timeout_seconds is not None and not isinstance(
-            timeout_seconds, (int, float)
-        ):
-            raise ValueError(
-                f"Supplier '{sid}' search.api.timeout_seconds must be a number or null"
-            )
-
-        max_retries = api_cfg.get("max_retries")
-        if max_retries is not None and not isinstance(max_retries, int):
-            raise ValueError(
-                f"Supplier '{sid}' search.api.max_retries must be an int or null"
-            )
-
-        retry_delay_seconds = api_cfg.get("retry_delay_seconds")
-        if retry_delay_seconds is not None and not isinstance(
-            retry_delay_seconds, (int, float)
-        ):
-            raise ValueError(
-                f"Supplier '{sid}' search.api.retry_delay_seconds must be a number or null"
-            )
-
-        search_url_template = data.get("search_url_template")
-        if search_url_template is not None and not isinstance(search_url_template, str):
-            raise ValueError(
-                f"Supplier '{sid}' search_url_template must be a string or null"
-            )
-
-        description = data.get("description")
-        if description is not None and not isinstance(description, str):
-            raise ValueError(f"Supplier '{sid}' description must be a string or null")
-
-        website = data.get("website")
-        if website is not None and not isinstance(website, str):
-            raise ValueError(f"Supplier '{sid}' website must be a string or null")
-
-        # Best-effort validation of regex.
-        if isinstance(pattern, str) and pattern.strip():
+        pattern = self.part_number.pattern
+        if pattern:
             try:
                 re.compile(pattern)
-            except re.error as e:
+            except re.error as exc:
                 raise ValueError(
-                    f"Supplier '{sid}' part_number.pattern is not a valid regex: {pattern!r}"
-                ) from e
+                    f"Supplier '{self.id}' part_number.pattern is not a valid regex: {pattern!r}"
+                ) from exc
 
-        return SupplierConfig(
-            id=sid,
-            name=name,
-            supplier_label=supplier_label,
-            field_synonyms=parsed_field_synonyms,
-            description=description,
-            website=website,
-            url_template=url_template,
-            search_url_template=search_url_template,
-            part_number_pattern=pattern,
-            part_number_example=example,
-            search_fields=search_fields,
-            search_providers=search_providers,
-            search_cache_ttl_hours=(
-                float(cache_ttl_hours) if cache_ttl_hours is not None else None
-            ),
-            search_timeout_seconds=(
-                float(timeout_seconds) if timeout_seconds is not None else None
-            ),
-            search_max_retries=(int(max_retries) if max_retries is not None else None),
-            search_retry_delay_seconds=(
-                float(retry_delay_seconds) if retry_delay_seconds is not None else None
-            ),
-            search_type_query_keywords=type_query_keywords,
-        )
+        return self
+
+    @computed_field
+    @property
+    def supplier_label(self) -> str:
+        """Display value matched against the Supplier CSV column."""
+
+        return self.field_synonyms["supplier_pn"].display_name
+
+    @computed_field
+    @property
+    def part_number_pattern(self) -> Optional[str]:
+        return self.part_number.pattern
+
+    @computed_field
+    @property
+    def part_number_example(self) -> Optional[str]:
+        return self.part_number.example
+
+    @computed_field
+    @property
+    def search_fields(self) -> list[str]:
+        return list(self.search.fields)
+
+    @computed_field
+    @property
+    def search_providers(self) -> list[SearchProviderConfig]:
+        return list(self.search.providers)
+
+    @computed_field
+    @property
+    def search_cache_ttl_hours(self) -> Optional[float]:
+        return self.search.cache.ttl_hours
+
+    @computed_field
+    @property
+    def search_timeout_seconds(self) -> Optional[float]:
+        return self.search.api.timeout_seconds
+
+    @computed_field
+    @property
+    def search_max_retries(self) -> Optional[int]:
+        return self.search.api.max_retries
+
+    @computed_field
+    @property
+    def search_retry_delay_seconds(self) -> Optional[float]:
+        return self.search.api.retry_delay_seconds
+
+    @computed_field
+    @property
+    def search_type_query_keywords(self) -> dict[str, str]:
+        return dict(self.search.type_query_keywords)
 
 
 _BUILTIN_DIR = Path(__file__).parent / "suppliers"
@@ -308,14 +329,14 @@ _BUILTIN_DIR = Path(__file__).parent / "suppliers"
 
 def list_suppliers() -> list[str]:
     """List available supplier IDs by scanning the built-in config directory."""
-
-    if not _BUILTIN_DIR.exists():
-        return []
-
-    # Filename: <id>.supplier.yaml
-    return sorted(
-        p.stem.replace(".supplier", "") for p in _BUILTIN_DIR.glob("*.supplier.yaml")
-    )
+    legacy_ids: list[str] = []
+    if _BUILTIN_DIR.exists():
+        legacy_ids = sorted(
+            p.stem.replace(".supplier", "")
+            for p in _BUILTIN_DIR.glob("*.supplier.yaml")
+        )
+    unified_ids = list_unified_stanza_ids("supplier")
+    return sorted(set([*legacy_ids, *unified_ids]))
 
 
 def get_available_suppliers() -> list[str]:
@@ -326,52 +347,47 @@ def get_available_suppliers() -> list[str]:
 
 
 def load_supplier(sid: str) -> SupplierConfig:
-    """Load supplier configuration from YAML file.
-
-    Searches the profile search path (project .jbom/, repo root, JBOM_PROFILE_PATH,
-    ~/.jbom/, system dirs) before falling back to the built-in package directory.
-
-    Args:
-        sid: Supplier ID (filename without .supplier.yaml extension)
-
-    Returns:
-        Parsed SupplierConfig.
-
-    Raises:
-        ValueError: If supplier not found or schema is invalid.
-    """
-
-    path = find_profile(sid, "supplier", builtin_dir=_BUILTIN_DIR)
-    if path is None:
-        raise ValueError(f"Unknown supplier: {sid}")
+    """Load supplier configuration from YAML file."""
+    normalized_sid = str(sid or "").strip().lower()
+    try:
+        merged = load_unified(normalized_sid)
+        return supplier_stanza(merged, default_id=normalized_sid)
+    except UnifiedProfileNotFoundError:
+        mapped_profile_name = resolve_profile_name_for_stanza_id(
+            "supplier", normalized_sid
+        )
+        if mapped_profile_name:
+            merged = load_unified(mapped_profile_name)
+            return supplier_stanza(merged, default_id=normalized_sid)
+        path = _find_legacy_profile(normalized_sid, suffix="supplier")
+        if path is None:
+            raise ValueError(f"Unknown supplier: {normalized_sid}") from None
 
     with open(path, "r", encoding="utf-8") as f:
         data = yaml.safe_load(f) or {}
 
-    if not isinstance(data, dict):
-        raise ValueError(f"Supplier '{sid}' config must be a YAML mapping")
+    return SupplierConfig.model_validate(data, context={"default_id": normalized_sid})
 
-    return SupplierConfig.from_yaml_dict(data, default_id=sid)
+
+def _find_legacy_profile(name: str, *, suffix: str) -> Path | None:
+    filename = f"{name}.{suffix}.yaml"
+    search_dirs = list(profile_search_dirs())
+    search_dirs.append(_BUILTIN_DIR)
+    for directory in search_dirs:
+        candidate = directory / filename
+        if candidate.is_file():
+            return candidate
+    return None
 
 
 def validate_part_number(supplier: SupplierConfig, pn: str) -> bool:
-    """Validate part number using the supplier's regex, when available.
-
-    Validation is advisory: if the supplier has no pattern, validation passes.
-
-    Args:
-        supplier: SupplierConfig used to validate.
-        pn: Part number string.
-
-    Returns:
-        True if pn matches the supplier pattern (or no pattern is defined).
-    """
+    """Validate part number using the supplier's regex, when available."""
 
     pn_norm = (pn or "").strip()
     if not pn_norm:
         return False
 
-    pattern = (supplier.part_number_pattern or "").strip()
+    pattern = (supplier.part_number.pattern or "").strip()
     if not pattern:
         return True
 
@@ -394,11 +410,8 @@ def resolve_supplier_by_id(supplier_id: str) -> Optional[SupplierConfig]:
 
 
 def get_spn_for_item(raw_data: Mapping[str, str], supplier: SupplierConfig) -> str:
-    """Return the SPN from raw_data when the Supplier column matches this supplier.
+    """Return the SPN from raw_data when the Supplier column matches this supplier."""
 
-    Returns the SPN value when ``raw_data['Supplier']`` matches the supplier's
-    ``supplier_label`` (case-insensitive), empty string otherwise.
-    """
     item_supplier = str(raw_data.get("Supplier", "")).strip().lower()
     if item_supplier == supplier.id or item_supplier == supplier.supplier_label.lower():
         return str(raw_data.get("SPN", "")).strip()

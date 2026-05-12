@@ -1,31 +1,32 @@
-"""Defaults profile loader for jBOM component attribute configuration.
-
-Loads *.defaults.yaml profiles from the search path defined in profile_search.
-Supports 'extends: <name>' for single-value overrides without full file copies.
-
-The defaults profile captures:
-  - domain_defaults: Camp 2 electrical attribute defaults per component category
-  - package_power / package_voltage: SMD package-level electrical defaults
-  - parametric_query_fields: JLCPCB/LCSC spec fields per category (Phase 4)
-  - category_route_rules: JLCPCB taxonomy routing (Phase 4)
-  - inventory_schema: canonical inventory overlay/matcher schema contract
-  - enrichment_attributes: Camp 2/3 attribute classification per category (#99)
-  - component_id_fields: optional ComponentID fields included per category
-
-See docs/dev/architecture/component-attribute-enrichment.md for the design model.
-"""
+"""Defaults profile loader for jBOM component attribute configuration."""
 
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 import yaml
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    PrivateAttr,
+    ValidationInfo,
+    computed_field,
+    field_validator,
+    model_validator,
+)
 
 from jbom.common.component_id import KNOWN_OPTIONAL_FIELD_NAMES
-from jbom.config.profile_search import find_profile
+from jbom.config.field_synonyms import FieldSynonym, parse_field_synonyms
+from jbom.config.profile_search import profile_search_dirs
+from jbom.config.unified import (
+    UnifiedProfileNotFoundError,
+    defaults_stanza,
+    load_unified,
+    resolve_profile_name_for_stanza_id,
+)
 
 log = logging.getLogger(__name__)
 
@@ -41,367 +42,423 @@ def _normalize_field_synonym_canonical_key(canonical: str) -> str:
 
 def _normalize_defaults_profile_name(name: str) -> str:
     """Normalize a defaults profile name, falling back to 'generic'."""
+
     normalized = str(name or "").strip().lower()
-    normalized = str(name or "").strip()
     return normalized or "generic"
 
 
-@dataclass(frozen=True)
-class EnrichmentCategoryConfig:
+class EnrichmentCategoryConfig(BaseModel):
     """Camp 2/3 attribute classification for one component category."""
 
-    show_in_mode_a: tuple[str, ...]
-    suppress: tuple[str, ...]
+    model_config = ConfigDict(extra="ignore")
+
+    show_in_mode_a: tuple[str, ...] = Field(default_factory=tuple)
+    suppress: tuple[str, ...] = Field(default_factory=tuple)
+
+    @field_validator("show_in_mode_a", "suppress", mode="before")
+    @classmethod
+    def _normalize_attribute_lists(cls, value: Any) -> tuple[str, ...]:
+        if value is None:
+            return tuple()
+        if not isinstance(value, (list, tuple)):
+            return tuple()
+        return tuple(str(item).strip() for item in value if str(item).strip())
 
 
-@dataclass(frozen=True)
-class FieldSynonymConfig:
-    """Canonical field naming plus accepted synonym headers."""
-
-    display_name: str
-    synonyms: tuple[str, ...]
+FieldSynonymConfig = FieldSynonym
 
 
-def _parse_field_synonym_configs(
-    raw: Any,
-    *,
-    context: str,
-) -> dict[str, FieldSynonymConfig]:
-    """Parse canonical field-synonym config maps with tolerant validation."""
-
-    if raw is None:
-        return {}
-    if not isinstance(raw, dict):
-        log.warning("%s must be a mapping; found %r", context, type(raw).__name__)
-        return {}
-
-    parsed: dict[str, FieldSynonymConfig] = {}
-    for canonical, cfg in raw.items():
-        if not isinstance(cfg, dict):
-            continue
-
-        display_name = str(cfg.get("display_name") or canonical).strip()
-        synonyms_cfg = cfg.get("synonyms") or []
-        if not isinstance(synonyms_cfg, list):
-            log.warning(
-                "%s[%r].synonyms must be a list; found %r",
-                context,
-                canonical,
-                type(synonyms_cfg).__name__,
-            )
-            synonyms_cfg = []
-
-        synonyms = tuple(str(s).strip() for s in synonyms_cfg if str(s).strip())
-        canonical_key = _normalize_field_synonym_canonical_key(canonical)
-        if not canonical_key:
-            continue
-
-        existing = parsed.get(canonical_key)
-        if existing is not None:
-            merged_synonyms = tuple(
-                dict.fromkeys([*existing.synonyms, *synonyms]).keys()
-            )
-            parsed[canonical_key] = FieldSynonymConfig(
-                display_name=existing.display_name or display_name or canonical_key,
-                synonyms=merged_synonyms,
-            )
-        else:
-            parsed[canonical_key] = FieldSynonymConfig(
-                display_name=display_name or canonical_key,
-                synonyms=synonyms,
-            )
-
-    return parsed
-
-
-@dataclass(frozen=True)
-class InventorySchemaConfig:
+class InventorySchemaConfig(BaseModel):
     """Canonical inventory overlay schema and source-field bindings."""
 
+    model_config = ConfigDict(extra="ignore")
+
     canonical_fields: tuple[str, ...]
-    field_synonyms: dict[str, FieldSynonymConfig]
-    enrichment_bindings: dict[str, str]
+    field_synonyms: dict[str, FieldSynonym] = Field(default_factory=dict)
+    enrichment_bindings: dict[str, str] = Field(default_factory=dict)
+
+    @field_validator("canonical_fields", mode="before")
+    @classmethod
+    def _normalize_canonical_fields(cls, value: Any) -> tuple[str, ...]:
+        if value is None:
+            return tuple()
+        if not isinstance(value, (list, tuple)):
+            return tuple()
+        normalized: list[str] = []
+        for field_name in value:
+            token = str(field_name or "").strip().lower()
+            if token:
+                normalized.append(token)
+        return tuple(dict.fromkeys(normalized).keys())
+
+    @field_validator("enrichment_bindings", mode="before")
+    @classmethod
+    def _normalize_enrichment_bindings(cls, value: Any) -> dict[str, str]:
+        if value is None:
+            return {}
+        if not isinstance(value, dict):
+            return {}
+        out: dict[str, str] = {}
+        for raw_canonical, raw_source in value.items():
+            canonical_key = str(raw_canonical or "").strip().lower()
+            source_key = str(raw_source or "").strip()
+            if canonical_key and source_key:
+                out[canonical_key] = source_key
+        return out
 
     @staticmethod
     def default() -> "InventorySchemaConfig":
         """Return the built-in canonical inventory schema contract."""
 
-        return InventorySchemaConfig(
-            canonical_fields=(
-                "inventory_ipn",
-                "manufacturer",
-                "manufacturer_part",
-                "description",
-                "datasheet",
-                "supplier",
-                "spn",
-                "tolerance",
-                "voltage",
-                "wattage",
-                "package",
-                "smd",
-                "fabricator_part_number",
-            ),
-            field_synonyms={
-                "inventory_ipn": FieldSynonymConfig(
-                    display_name="IPN",
-                    synonyms=("ipn",),
-                ),
-                "manufacturer_part": FieldSynonymConfig(
-                    display_name="Manufacturer Part Number",
-                    synonyms=("mfgpn", "mpn", "manufacturer_part_number"),
-                ),
-                "wattage": FieldSynonymConfig(
-                    display_name="Power",
-                    synonyms=("power",),
-                ),
-                "fabricator_part_number": FieldSynonymConfig(
-                    display_name="Fabricator Part Number",
-                    synonyms=("fab_pn", "supplier_pn"),
-                ),
-            },
-            enrichment_bindings={
-                "inventory_ipn": "ipn",
-                "manufacturer": "manufacturer",
-                "manufacturer_part": "mfgpn",
-                "description": "description",
-                "datasheet": "datasheet",
-                "supplier": "supplier",
-                "spn": "spn",
-                "tolerance": "tolerance",
-                "voltage": "voltage",
-                "wattage": "wattage",
-                "package": "package",
-                "smd": "smd",
-                "fabricator_part_number": "__resolved_fabricator_part_number__",
-            },
+        return InventorySchemaConfig.model_validate(
+            {
+                "canonical_fields": [
+                    "inventory_ipn",
+                    "manufacturer",
+                    "manufacturer_part",
+                    "description",
+                    "datasheet",
+                    "supplier",
+                    "spn",
+                    "tolerance",
+                    "voltage",
+                    "wattage",
+                    "package",
+                    "smd",
+                    "fabricator_part_number",
+                ],
+                "field_synonyms": {
+                    "inventory_ipn": {
+                        "display_name": "IPN",
+                        "synonyms": ["ipn"],
+                    },
+                    "manufacturer_part": {
+                        "display_name": "Manufacturer Part Number",
+                        "synonyms": ["mfgpn", "mpn", "manufacturer_part_number"],
+                    },
+                    "wattage": {
+                        "display_name": "Power",
+                        "synonyms": ["power"],
+                    },
+                    "fabricator_part_number": {
+                        "display_name": "Fabricator Part Number",
+                        "synonyms": ["fab_pn", "supplier_pn"],
+                    },
+                },
+                "enrichment_bindings": {
+                    "inventory_ipn": "ipn",
+                    "manufacturer": "manufacturer",
+                    "manufacturer_part": "mfgpn",
+                    "description": "description",
+                    "datasheet": "datasheet",
+                    "supplier": "supplier",
+                    "spn": "spn",
+                    "tolerance": "tolerance",
+                    "voltage": "voltage",
+                    "wattage": "wattage",
+                    "package": "package",
+                    "smd": "smd",
+                    "fabricator_part_number": "__resolved_fabricator_part_number__",
+                },
+            }
         )
 
 
-@dataclass
-class DefaultsConfig:
-    """Loaded defaults profile.
+class DefaultsSearchOutputFieldsConfig(BaseModel):
+    """Search output field configuration section."""
 
-    Contains domain defaults, package-level electrical defaults, JLCPCB
-    parametric query shaping, and enrichment attribute classification (Camp 2/3).
-    """
+    model_config = ConfigDict(extra="ignore")
 
-    name: str
-    domain_defaults: dict[str, dict[str, str]] = field(default_factory=dict)
-    package_power: dict[str, str] = field(default_factory=dict)
-    package_voltage: dict[str, str] = field(default_factory=dict)
-    parametric_query_fields: dict[str, list[str]] = field(default_factory=dict)
-    category_route_rules: dict[str, dict[str, str]] = field(default_factory=dict)
-    enrichment_attributes: dict[str, EnrichmentCategoryConfig] = field(
+    default: tuple[str, ...] = Field(default_factory=tuple)
+
+    @field_validator("default", mode="before")
+    @classmethod
+    def _normalize_default_output_fields(cls, value: Any) -> tuple[str, ...]:
+        if value is None:
+            return tuple()
+        if not isinstance(value, list):
+            return tuple()
+        normalized: list[str] = []
+        for field_name in value:
+            token = str(field_name).strip().lower()
+            if token:
+                normalized.append(token)
+        return tuple(dict.fromkeys(normalized).keys())
+
+
+class DefaultsSearchConfig(BaseModel):
+    """Defaults profile `search:` stanza."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    output_fields: DefaultsSearchOutputFieldsConfig = Field(
+        default_factory=DefaultsSearchOutputFieldsConfig
+    )
+    package_tokens: tuple[str, ...] = Field(default_factory=tuple)
+
+    @field_validator("package_tokens", mode="before")
+    @classmethod
+    def _normalize_package_tokens(cls, value: Any) -> tuple[str, ...]:
+        if value is None:
+            return tuple()
+        if not isinstance(value, list):
+            return tuple()
+        normalized: list[str] = []
+        for token in value:
+            package = str(token).strip().upper()
+            if package:
+                normalized.append(package)
+        return tuple(dict.fromkeys(normalized).keys())
+
+
+class DefaultsConfig(BaseModel):
+    """Loaded defaults profile."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    domain_defaults: dict[str, dict[str, str]] = Field(default_factory=dict)
+    package_power: dict[str, str] = Field(default_factory=dict)
+    package_voltage: dict[str, str] = Field(default_factory=dict)
+    parametric_query_fields: dict[str, list[str]] = Field(default_factory=dict)
+    category_route_rules: dict[str, dict[str, str]] = Field(default_factory=dict)
+    enrichment_attributes: dict[str, EnrichmentCategoryConfig] = Field(
         default_factory=dict
     )
-    field_synonyms: dict[str, FieldSynonymConfig] = field(default_factory=dict)
-    inventory_schema: InventorySchemaConfig = field(
+    field_synonyms: dict[str, FieldSynonym] = Field(default_factory=dict)
+    inventory_schema: InventorySchemaConfig = Field(
         default_factory=InventorySchemaConfig.default
     )
-    search_output_fields_default: tuple[str, ...] = field(default_factory=tuple)
-    search_package_tokens: tuple[str, ...] = field(default_factory=tuple)
-    search_excluded_categories: frozenset[str] = field(default_factory=frozenset)
-    component_id_fields: dict[str, frozenset[str]] = field(default_factory=dict)
-    field_precedence_policy: dict[str, tuple[str, ...]] = field(default_factory=dict)
+    search: DefaultsSearchConfig = Field(default_factory=DefaultsSearchConfig)
+    search_excluded_categories: frozenset[str] = Field(default_factory=frozenset)
+    component_id_fields: dict[str, frozenset[str]] = Field(default_factory=dict)
+    field_precedence_policy: dict[str, tuple[str, ...]] = Field(default_factory=dict)
 
-    @staticmethod
-    def from_yaml_dict(data: dict[str, Any], *, name: str) -> "DefaultsConfig":
-        """Parse a DefaultsConfig from a resolved (extends-merged) YAML dict.
+    _profile_name: str = PrivateAttr(default="generic")
 
-        Args:
-            data: Merged YAML mapping (extends chain already resolved).
-            name: Profile name for identification.
+    @model_validator(mode="after")
+    def _set_profile_name(self, info: ValidationInfo) -> "DefaultsConfig":
+        profile_name = "generic"
+        if isinstance(info.context, dict):
+            profile_name = _normalize_defaults_profile_name(
+                str(info.context.get("profile_name", "generic"))
+            )
+        self._profile_name = profile_name
+        return self
 
-        Returns:
-            Parsed DefaultsConfig.
-        """
-        domain_defaults: dict[str, dict[str, str]] = {}
-        for category, attrs in (data.get("domain_defaults") or {}).items():
+    @computed_field
+    @property
+    def name(self) -> str:
+        """Profile name resolved from load context."""
+
+        return self._profile_name
+
+    @field_validator("domain_defaults", mode="before")
+    @classmethod
+    def _normalize_domain_defaults(cls, value: Any) -> dict[str, dict[str, str]]:
+        if value is None or not isinstance(value, dict):
+            return {}
+        normalized: dict[str, dict[str, str]] = {}
+        for category, attrs in value.items():
             if isinstance(attrs, dict):
-                domain_defaults[str(category).lower()] = {
-                    str(k): str(v) for k, v in attrs.items()
+                normalized[str(category).lower()] = {
+                    str(key): str(val) for key, val in attrs.items()
                 }
+        return normalized
 
-        package_power: dict[str, str] = {
-            str(k).upper(): str(v) for k, v in (data.get("package_power") or {}).items()
-        }
-        package_voltage: dict[str, str] = {
-            str(k).upper(): str(v)
-            for k, v in (data.get("package_voltage") or {}).items()
-        }
+    @field_validator("package_power", "package_voltage", mode="before")
+    @classmethod
+    def _normalize_package_defaults(cls, value: Any) -> dict[str, str]:
+        if value is None or not isinstance(value, dict):
+            return {}
+        return {str(key).upper(): str(val) for key, val in value.items()}
 
-        parametric_query_fields: dict[str, list[str]] = {}
-        for category, fields_list in (
-            data.get("parametric_query_fields") or {}
-        ).items():
+    @field_validator("parametric_query_fields", mode="before")
+    @classmethod
+    def _normalize_parametric_query_fields(cls, value: Any) -> dict[str, list[str]]:
+        if value is None or not isinstance(value, dict):
+            return {}
+        normalized: dict[str, list[str]] = {}
+        for category, fields_list in value.items():
             if isinstance(fields_list, list):
-                parametric_query_fields[str(category).lower()] = [
-                    str(f) for f in fields_list
+                normalized[str(category).lower()] = [
+                    str(field_name) for field_name in fields_list
                 ]
+        return normalized
 
-        category_route_rules: dict[str, dict[str, str]] = {}
-        for category, rules in (data.get("category_route_rules") or {}).items():
+    @field_validator("category_route_rules", mode="before")
+    @classmethod
+    def _normalize_category_route_rules(cls, value: Any) -> dict[str, dict[str, str]]:
+        if value is None or not isinstance(value, dict):
+            return {}
+        normalized: dict[str, dict[str, str]] = {}
+        for category, rules in value.items():
             if isinstance(rules, dict):
-                category_route_rules[str(category).lower()] = {
-                    str(k): str(v) for k, v in rules.items()
+                normalized[str(category).lower()] = {
+                    str(key): str(val) for key, val in rules.items()
                 }
+        return normalized
 
-        enrichment_attributes: dict[str, EnrichmentCategoryConfig] = {}
-        for category, cfg in (data.get("enrichment_attributes") or {}).items():
+    @field_validator("enrichment_attributes", mode="before")
+    @classmethod
+    def _normalize_enrichment_attributes(
+        cls, value: Any
+    ) -> dict[str, EnrichmentCategoryConfig]:
+        if value is None or not isinstance(value, dict):
+            return {}
+        normalized: dict[str, EnrichmentCategoryConfig] = {}
+        for category, cfg in value.items():
             if isinstance(cfg, dict):
-                show = tuple(str(f) for f in (cfg.get("show_in_mode_a") or []))
-                suppress = tuple(str(f) for f in (cfg.get("suppress") or []))
-                enrichment_attributes[str(category).lower()] = EnrichmentCategoryConfig(
-                    show_in_mode_a=show,
-                    suppress=suppress,
-                )
+                normalized[
+                    str(category).lower()
+                ] = EnrichmentCategoryConfig.model_validate(cfg)
+        return normalized
 
-        field_synonyms = _parse_field_synonym_configs(
-            data.get("field_synonyms"),
+    @field_validator("field_synonyms", mode="before")
+    @classmethod
+    def _parse_field_synonyms(cls, value: Any) -> dict[str, FieldSynonym]:
+        return parse_field_synonyms(
+            value,
             context="field_synonyms",
+            strict=False,
+            default_display_name_from_key=True,
+            normalize_canonical_key=_normalize_field_synonym_canonical_key,
+            logger=log,
         )
 
-        inventory_schema = InventorySchemaConfig.default()
-        inventory_schema_cfg = data.get("inventory_schema") or {}
-        if isinstance(inventory_schema_cfg, dict):
-            canonical_fields_cfg = inventory_schema_cfg.get("canonical_fields") or []
-            parsed_canonical_fields = list(inventory_schema.canonical_fields)
-            if isinstance(canonical_fields_cfg, list):
-                normalized_canonical: list[str] = []
-                for field_name in canonical_fields_cfg:
-                    normalized = str(field_name or "").strip().lower()
-                    if normalized:
-                        normalized_canonical.append(normalized)
-                if normalized_canonical:
-                    parsed_canonical_fields = list(
-                        dict.fromkeys(normalized_canonical).keys()
-                    )
-            else:
-                log.warning(
-                    "inventory_schema.canonical_fields must be a list; found %r",
-                    type(canonical_fields_cfg).__name__,
-                )
-
-            parsed_schema_field_synonyms = _parse_field_synonym_configs(
-                inventory_schema_cfg.get("field_synonyms"),
-                context="inventory_schema.field_synonyms",
-            )
-            if parsed_schema_field_synonyms:
-                schema_field_synonyms = parsed_schema_field_synonyms
-            else:
-                schema_field_synonyms = dict(inventory_schema.field_synonyms)
-
-            bindings_cfg = inventory_schema_cfg.get("enrichment_bindings") or {}
-            parsed_bindings = dict(inventory_schema.enrichment_bindings)
-            if isinstance(bindings_cfg, dict):
-                parsed_bindings = {}
-                for raw_canonical, raw_source in bindings_cfg.items():
-                    canonical_key = str(raw_canonical or "").strip().lower()
-                    source_key = str(raw_source or "").strip()
-                    if not canonical_key or not source_key:
-                        continue
-                    parsed_bindings[canonical_key] = source_key
-            else:
-                log.warning(
-                    "inventory_schema.enrichment_bindings must be a mapping; found %r",
-                    type(bindings_cfg).__name__,
-                )
-
-            for canonical_key in schema_field_synonyms.keys():
-                if canonical_key not in parsed_canonical_fields:
-                    parsed_canonical_fields.append(canonical_key)
-            for canonical_key in parsed_bindings.keys():
-                if canonical_key not in parsed_canonical_fields:
-                    parsed_canonical_fields.append(canonical_key)
-
-            inventory_schema = InventorySchemaConfig(
-                canonical_fields=tuple(parsed_canonical_fields),
-                field_synonyms=schema_field_synonyms,
-                enrichment_bindings=parsed_bindings,
-            )
-        else:
+    @field_validator("inventory_schema", mode="before")
+    @classmethod
+    def _parse_inventory_schema(cls, value: Any) -> InventorySchemaConfig:
+        default_schema = InventorySchemaConfig.default()
+        if value is None:
+            return default_schema
+        if isinstance(value, InventorySchemaConfig):
+            return value
+        if not isinstance(value, dict):
             log.warning(
                 "inventory_schema must be a mapping; found %r",
-                type(inventory_schema_cfg).__name__,
+                type(value).__name__,
             )
+            return default_schema
 
-        search_cfg = data.get("search") or {}
-        search_output_fields_default: tuple[str, ...] = tuple()
-        search_package_tokens: tuple[str, ...] = tuple()
-        if isinstance(search_cfg, dict):
-            output_fields_cfg = search_cfg.get("output_fields") or {}
-            if isinstance(output_fields_cfg, dict):
-                default_output_fields = output_fields_cfg.get("default") or []
-                if isinstance(default_output_fields, list):
-                    normalized_fields: list[str] = []
-                    for field_name in default_output_fields:
-                        normalized = str(field_name).strip().lower()
-                        if normalized:
-                            normalized_fields.append(normalized)
-                    search_output_fields_default = tuple(
-                        dict.fromkeys(normalized_fields).keys()
-                    )
-                else:
-                    log.warning(
-                        "search.output_fields.default must be a list; found %r",
-                        type(default_output_fields).__name__,
-                    )
-            else:
-                log.warning(
-                    "search.output_fields must be a mapping; found %r",
-                    type(output_fields_cfg).__name__,
+        canonical_fields_cfg = value.get("canonical_fields")
+        parsed_canonical_fields = list(default_schema.canonical_fields)
+        if isinstance(canonical_fields_cfg, list):
+            normalized_canonical: list[str] = []
+            for field_name in canonical_fields_cfg:
+                token = str(field_name or "").strip().lower()
+                if token:
+                    normalized_canonical.append(token)
+            if normalized_canonical:
+                parsed_canonical_fields = list(
+                    dict.fromkeys(normalized_canonical).keys()
                 )
-
-            package_tokens_cfg = search_cfg.get("package_tokens") or []
-            if isinstance(package_tokens_cfg, list):
-                normalized_package_tokens: list[str] = []
-                for token in package_tokens_cfg:
-                    normalized = str(token).strip().upper()
-                    if normalized:
-                        normalized_package_tokens.append(normalized)
-                search_package_tokens = tuple(
-                    dict.fromkeys(normalized_package_tokens).keys()
-                )
-            else:
-                log.warning(
-                    "search.package_tokens must be a list; found %r",
-                    type(package_tokens_cfg).__name__,
-                )
-        else:
+        elif canonical_fields_cfg is not None:
             log.warning(
-                "search must be a mapping; found %r",
-                type(search_cfg).__name__,
+                "inventory_schema.canonical_fields must be a list; found %r",
+                type(canonical_fields_cfg).__name__,
             )
 
-        raw_excluded = data.get("search_excluded_categories") or []
-        search_excluded_categories: frozenset[str] = frozenset(
-            str(c).upper().strip() for c in raw_excluded if str(c).strip()
+        parsed_schema_field_synonyms = parse_field_synonyms(
+            value.get("field_synonyms"),
+            context="inventory_schema.field_synonyms",
+            strict=False,
+            default_display_name_from_key=True,
+            normalize_canonical_key=_normalize_field_synonym_canonical_key,
+            logger=log,
+        )
+        if parsed_schema_field_synonyms:
+            schema_field_synonyms = parsed_schema_field_synonyms
+        else:
+            schema_field_synonyms = dict(default_schema.field_synonyms)
+
+        bindings_cfg = value.get("enrichment_bindings")
+        parsed_bindings = dict(default_schema.enrichment_bindings)
+        if isinstance(bindings_cfg, dict):
+            parsed_bindings = {}
+            for raw_canonical, raw_source in bindings_cfg.items():
+                canonical_key = str(raw_canonical or "").strip().lower()
+                source_key = str(raw_source or "").strip()
+                if canonical_key and source_key:
+                    parsed_bindings[canonical_key] = source_key
+        elif bindings_cfg is not None:
+            log.warning(
+                "inventory_schema.enrichment_bindings must be a mapping; found %r",
+                type(bindings_cfg).__name__,
+            )
+
+        for canonical_key in schema_field_synonyms.keys():
+            if canonical_key not in parsed_canonical_fields:
+                parsed_canonical_fields.append(canonical_key)
+        for canonical_key in parsed_bindings.keys():
+            if canonical_key not in parsed_canonical_fields:
+                parsed_canonical_fields.append(canonical_key)
+
+        return InventorySchemaConfig.model_validate(
+            {
+                "canonical_fields": parsed_canonical_fields,
+                "field_synonyms": schema_field_synonyms,
+                "enrichment_bindings": parsed_bindings,
+            }
         )
 
-        component_id_fields: dict[str, frozenset[str]] = {}
-        for category, fields_list in (data.get("component_id_fields") or {}).items():
+    @field_validator("search", mode="before")
+    @classmethod
+    def _parse_search_config(cls, value: Any) -> DefaultsSearchConfig:
+        if value is None:
+            return DefaultsSearchConfig()
+        if isinstance(value, DefaultsSearchConfig):
+            return value
+        if not isinstance(value, dict):
+            log.warning("search must be a mapping; found %r", type(value).__name__)
+            return DefaultsSearchConfig()
+        return DefaultsSearchConfig.model_validate(value)
+
+    @field_validator("search_excluded_categories", mode="before")
+    @classmethod
+    def _normalize_search_excluded_categories(cls, value: Any) -> frozenset[str]:
+        if value is None or not isinstance(value, list):
+            return frozenset()
+        return frozenset(
+            str(category).upper().strip() for category in value if str(category).strip()
+        )
+
+    @field_validator("component_id_fields", mode="before")
+    @classmethod
+    def _normalize_component_id_fields(cls, value: Any) -> dict[str, frozenset[str]]:
+        if value is None or not isinstance(value, dict):
+            return {}
+
+        normalized: dict[str, frozenset[str]] = {}
+        for category, fields_list in value.items():
             if not isinstance(fields_list, list):
                 continue
+
             validated: list[str] = []
-            for fname in fields_list:
-                fname_str = str(fname).strip().lower()
-                if fname_str in KNOWN_OPTIONAL_FIELD_NAMES:
-                    validated.append(fname_str)
+            for field_name in fields_list:
+                token = str(field_name).strip().lower()
+                if token in KNOWN_OPTIONAL_FIELD_NAMES:
+                    validated.append(token)
                 else:
                     log.warning(
-                        "component_id_fields[%r]: unknown field name %r "
-                        "(valid names: %s)",
+                        "component_id_fields[%r]: unknown field name %r (valid names: %s)",
                         category,
-                        fname_str,
+                        token,
                         ", ".join(sorted(KNOWN_OPTIONAL_FIELD_NAMES)),
                     )
-            component_id_fields[str(category).lower()] = frozenset(validated)
+            normalized[str(category).lower()] = frozenset(validated)
 
-        field_precedence_policy: dict[str, tuple[str, ...]] = {}
-        for policy_key, raw_fields in (
-            data.get("field_precedence_policy") or {}
-        ).items():
+        return normalized
+
+    @field_validator("field_precedence_policy", mode="before")
+    @classmethod
+    def _normalize_field_precedence_policy(
+        cls, value: Any
+    ) -> dict[str, tuple[str, ...]]:
+        if value is None or not isinstance(value, dict):
+            return {}
+
+        normalized_policy: dict[str, tuple[str, ...]] = {}
+        for policy_key, raw_fields in value.items():
             normalized_key = str(policy_key or "").strip().lower()
             if not normalized_key:
                 continue
@@ -414,60 +471,45 @@ class DefaultsConfig:
                 continue
             normalized_fields: list[str] = []
             for field_name in raw_fields:
-                normalized = str(field_name or "").strip().lower()
-                if normalized:
-                    normalized_fields.append(normalized)
-            field_precedence_policy[normalized_key] = tuple(
+                token = str(field_name or "").strip().lower()
+                if token:
+                    normalized_fields.append(token)
+            normalized_policy[normalized_key] = tuple(
                 dict.fromkeys(normalized_fields).keys()
             )
 
-        return DefaultsConfig(
-            name=name,
-            domain_defaults=domain_defaults,
-            package_power=package_power,
-            package_voltage=package_voltage,
-            parametric_query_fields=parametric_query_fields,
-            category_route_rules=category_route_rules,
-            enrichment_attributes=enrichment_attributes,
-            field_synonyms=field_synonyms,
-            inventory_schema=inventory_schema,
-            search_output_fields_default=search_output_fields_default,
-            search_package_tokens=search_package_tokens,
-            search_excluded_categories=search_excluded_categories,
-            component_id_fields=component_id_fields,
-            field_precedence_policy=field_precedence_policy,
-        )
+        return normalized_policy
 
     def get_domain_default(
         self, category: str, attribute: str, *, fallback: str = ""
     ) -> str:
-        """Return the domain default for a category/attribute pair.
+        """Return the domain default for a category/attribute pair."""
 
-        Args:
-            category: Normalized component category (e.g. 'resistor').
-            attribute: Attribute name (e.g. 'tolerance').
-            fallback: Value to return when no default is configured.
-        """
         return self.domain_defaults.get(category.lower(), {}).get(attribute, fallback)
 
     def get_package_power(self, package: str) -> str:
         """Return the default power rating for an SMD package, or ''."""
+
         return self.package_power.get(package.upper(), "")
 
     def get_package_voltage(self, package: str) -> str:
         """Return the default voltage rating for an SMD package, or ''."""
+
         return self.package_voltage.get(package.upper(), "")
 
     def get_parametric_query_fields(self, category: str) -> list[str]:
         """Return the ordered list of parametric query fields for a category."""
+
         return list(self.parametric_query_fields.get(category.lower(), []))
 
     def get_category_route_rules(self, category: str) -> dict[str, str]:
         """Return the JLCPCB taxonomy routing rules for a category."""
+
         return dict(self.category_route_rules.get(category.lower(), {}))
 
     def get_field_synonym_config(self, canonical: str) -> FieldSynonymConfig | None:
         """Return field synonym config for a canonical key."""
+
         return self.field_synonyms.get(
             _normalize_field_synonym_canonical_key(canonical)
         )
@@ -475,11 +517,7 @@ class DefaultsConfig:
     def get_inventory_schema(self) -> InventorySchemaConfig:
         """Return canonical inventory schema config for overlay/matcher workflows."""
 
-        return InventorySchemaConfig(
-            canonical_fields=tuple(self.inventory_schema.canonical_fields),
-            field_synonyms=dict(self.inventory_schema.field_synonyms),
-            enrichment_bindings=dict(self.inventory_schema.enrichment_bindings),
-        )
+        return InventorySchemaConfig.model_validate(self.inventory_schema.model_dump())
 
     def get_search_excluded_categories(self) -> frozenset[str]:
         """Return the set of component categories excluded from supplier search."""
@@ -489,28 +527,16 @@ class DefaultsConfig:
     def get_search_output_fields_default(self) -> list[str]:
         """Return default search output fields from the active defaults profile."""
 
-        return list(self.search_output_fields_default)
+        return list(self.search.output_fields.default)
 
     def get_search_package_tokens(self) -> list[str]:
         """Return configured package tokens used for search package intent signals."""
 
-        return list(self.search_package_tokens)
+        return list(self.search.package_tokens)
 
     def get_component_id_fields(self, category: str) -> frozenset[str] | None:
-        """Return the optional-field allowlist for *category*, or ``None``.
+        """Return the optional-field allowlist for *category*, or ``None``."""
 
-        ``None`` means the category is not configured — the caller should fall
-        back to including all optional fields (conservative / backward-compatible).
-
-        Args:
-            category: Component category token, any case (e.g. ``"LED"``,
-                ``"res"``, ``"Cap"``).
-
-        Returns:
-            A ``frozenset`` of ``profile_name`` strings (e.g.
-            ``frozenset({"type"})``) when the category is explicitly configured,
-            or ``None`` when it is not.
-        """
         return self.component_id_fields.get(category.lower())
 
     def get_field_precedence_policy(self) -> dict[str, tuple[str, ...]]:
@@ -520,31 +546,27 @@ class DefaultsConfig:
 
 
 def load_defaults(name: str, *, cwd: Path | None = None) -> DefaultsConfig:
-    """Load a named defaults profile from the search path.
-
-    Args:
-        name: Profile name (e.g. 'generic', 'aerospace').
-        cwd: Working directory for project-local search.
-
-    Returns:
-        Parsed DefaultsConfig.
-
-    Raises:
-        ValueError: If the profile is not found anywhere in the search path.
-    """
-    data = _load_yaml_resolved(name, cwd=cwd)
-    return DefaultsConfig.from_yaml_dict(data, name=name)
+    """Load a named defaults profile from the search path."""
+    normalized_name = _normalize_defaults_profile_name(name)
+    try:
+        merged = load_unified(normalized_name, cwd=cwd)
+        return defaults_stanza(merged, default_id=normalized_name)
+    except UnifiedProfileNotFoundError:
+        mapped_profile_name = resolve_profile_name_for_stanza_id(
+            "defaults", normalized_name, cwd=cwd
+        )
+        if mapped_profile_name:
+            merged = load_unified(mapped_profile_name, cwd=cwd)
+            return defaults_stanza(merged, default_id=normalized_name)
+        data = _load_yaml_resolved(normalized_name, cwd=cwd)
+        return DefaultsConfig.model_validate(
+            data, context={"profile_name": normalized_name}
+        )
 
 
 def get_defaults(name: str | None = None, *, cwd: Path | None = None) -> DefaultsConfig:
-    """Load a defaults profile, returning built-in generic on any error.
+    """Load a defaults profile, returning built-in generic on any error."""
 
-    Safe wrapper for callers that must not fail (e.g. query building).
-
-    Args:
-        name: Profile name to load. When omitted, uses the active profile.
-        cwd: Working directory for project-local search.
-    """
     resolved_name = _normalize_defaults_profile_name(
         name if name is not None else _ACTIVE_DEFAULTS_PROFILE
     )
@@ -571,13 +593,8 @@ def set_active_defaults_profile(name: str) -> None:
 
 
 def _load_yaml_resolved(name: str, *, cwd: Path | None = None) -> dict[str, Any]:
-    """Load YAML for a profile, recursively resolving 'extends:' chains.
-
-    Merge semantics:
-    - Dict sections: deep-merged (child keys override parent, recursively)
-    - List sections: replaced entirely by child (not appended)
-    """
-    path = find_profile(name, "defaults", cwd=cwd, builtin_dir=_BUILTIN_DIR)
+    """Load YAML for a profile, recursively resolving 'extends:' chains."""
+    path = _find_legacy_profile(name, suffix="defaults", cwd=cwd)
     if path is None:
         raise ValueError(
             f"Defaults profile not found: {name!r}. "
@@ -598,20 +615,36 @@ def _load_yaml_resolved(name: str, *, cwd: Path | None = None) -> dict[str, Any]
     return raw
 
 
+def _find_legacy_profile(
+    name: str, *, suffix: str, cwd: Path | None = None
+) -> Path | None:
+    filename = f"{name}.{suffix}.yaml"
+    search_dirs = list(profile_search_dirs(cwd=cwd))
+    search_dirs.append(_BUILTIN_DIR)
+    for directory in search_dirs:
+        candidate = directory / filename
+        if candidate.is_file():
+            return candidate
+    return None
+
+
 def _load_builtin_generic() -> DefaultsConfig:
     """Load the built-in generic profile directly (no search path)."""
-    path = _BUILTIN_DIR / "generic.defaults.yaml"
-    with open(path, encoding="utf-8") as f:
-        data = yaml.safe_load(f) or {}
-    return DefaultsConfig.from_yaml_dict(data, name="generic")
+    try:
+        merged = load_unified("generic")
+        return defaults_stanza(merged, default_id="generic")
+    except Exception:
+        # Legacy fallback retained for compatibility if a built-in
+        # generic.defaults.yaml exists in older installations.
+        path = _BUILTIN_DIR / "generic.defaults.yaml"
+        with open(path, encoding="utf-8") as f:
+            data = yaml.safe_load(f) or {}
+        return DefaultsConfig.model_validate(data, context={"profile_name": "generic"})
 
 
 def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
-    """Deep-merge override onto base.
+    """Deep-merge override onto base."""
 
-    - Dict values: merged recursively (child keys overlay parent)
-    - All other values (including lists): child replaces parent entirely
-    """
     result = dict(base)
     for key, value in override.items():
         if key in result and isinstance(result[key], dict) and isinstance(value, dict):

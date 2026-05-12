@@ -52,7 +52,7 @@ def test_load_generic_derives_field_synonyms_and_tier_rules_from_suppliers() -> 
     # With the normalized Supplier/SPN schema, part-number resolution uses
     # item.supplier + item.spn at runtime, not column-name synonym lists.
     # Synonyms are intentionally empty in the new schema.
-    assert isinstance(fab.field_synonyms["supplier_pn"].synonyms, list)
+    assert isinstance(fab.field_synonyms["supplier_pn"].synonyms, tuple)
 
     assert "mpn" in fab.field_synonyms
     assert isinstance(fab.field_synonyms["mpn"], FieldSynonym)
@@ -79,7 +79,7 @@ def test_resolve_field_synonym_is_forgiving() -> None:
     assert fab.resolve_field_synonym("unknown_field") is None
 
 
-def test_from_yaml_dict_rejects_unknown_supplier_ids() -> None:
+def test_model_validate_rejects_unknown_supplier_ids() -> None:
     data = {
         "name": "Example",
         "pos_columns": {"Designator": "reference"},
@@ -87,10 +87,10 @@ def test_from_yaml_dict_rejects_unknown_supplier_ids() -> None:
     }
 
     with pytest.raises(ValueError, match=r"Unknown supplier"):
-        FabricatorConfig.from_yaml_dict(data, default_id="example")
+        FabricatorConfig.model_validate(data, context={"default_id": "example"})
 
 
-def test_from_yaml_dict_rejects_deprecated_priority_fields() -> None:
+def test_model_validate_rejects_deprecated_priority_fields() -> None:
     data = {
         "name": "Example",
         "pos_columns": {"Designator": "reference"},
@@ -104,7 +104,7 @@ def test_from_yaml_dict_rejects_deprecated_priority_fields() -> None:
     }
 
     with pytest.raises(ValueError, match=r"priority_fields"):
-        FabricatorConfig.from_yaml_dict(data, default_id="example")
+        FabricatorConfig.model_validate(data, context={"default_id": "example"})
 
 
 # ---------------------------------------------------------------------------
@@ -188,7 +188,7 @@ def test_all_fabricators_gerbers_stanza_protel_extensions(
     )
 
 
-def test_from_yaml_dict_rejects_unknown_tier_operator() -> None:
+def test_model_validate_rejects_unknown_tier_operator() -> None:
     data = {
         "name": "Example",
         "pos_columns": {"Designator": "reference"},
@@ -204,4 +204,4 @@ def test_from_yaml_dict_rejects_unknown_tier_operator() -> None:
     }
 
     with pytest.raises(ValueError, match=r"operator"):
-        FabricatorConfig.from_yaml_dict(data, default_id="example")
+        FabricatorConfig.model_validate(data, context={"default_id": "example"})

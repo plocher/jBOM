@@ -388,14 +388,14 @@ class TestFabricatorCplRotationRange:
     def test_cpl_rotation_range_defaults_none(self) -> None:
         from jbom.config.fabricators import FabricatorConfig
 
-        default = FabricatorConfig.__dataclass_fields__["cpl_rotation_range"].default
+        default = FabricatorConfig.model_fields["cpl_rotation_range"].default
         assert default is None
 
     def test_invalid_range_not_360_span_raises(self) -> None:
         from jbom.config.fabricators import FabricatorConfig
 
         with pytest.raises(ValueError, match="spanning exactly 360"):
-            FabricatorConfig.from_yaml_dict(
+            FabricatorConfig.model_validate(
                 {
                     "id": "test",
                     "pos_columns": {"Designator": "reference"},
@@ -407,7 +407,7 @@ class TestFabricatorCplRotationRange:
                     },
                     "cpl_rotation_range": [0, 180],  # only 180° span — invalid
                 },
-                default_id="test",
+                context={"default_id": "test"},
             )
 
 
@@ -423,7 +423,12 @@ class TestApplyFabRotationRange:
             name="Test",
             pos_columns={"Designator": "reference"},
             cpl_rotation_range=(lo, hi),
-            suppliers=[],
+            suppliers=["generic"],
+            field_synonyms={
+                "fab_pn": {"display_name": "Fab PN", "synonyms": []},
+                "supplier_pn": {"display_name": "Supplier PN", "synonyms": []},
+                "mpn": {"display_name": "MPN", "synonyms": []},
+            },
         )
         return cfg
 
@@ -436,7 +441,15 @@ class TestApplyFabRotationRange:
         from jbom.config.fabricators import FabricatorConfig
 
         cfg = FabricatorConfig(
-            id="generic", name="Generic", pos_columns={"D": "r"}, suppliers=[]
+            id="generic",
+            name="Generic",
+            pos_columns={"D": "r"},
+            suppliers=["generic"],
+            field_synonyms={
+                "fab_pn": {"display_name": "Fab PN", "synonyms": []},
+                "supplier_pn": {"display_name": "Supplier PN", "synonyms": []},
+                "mpn": {"display_name": "MPN", "synonyms": []},
+            },
         )
         rows = [_pos_row("R1", "Resistor_SMD:R_0805", -90.0)]
         result = apply_fab_rotation_range(rows, cfg)
