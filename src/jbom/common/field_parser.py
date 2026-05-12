@@ -6,8 +6,11 @@ and custom field lists, including mixed syntax like +preset,custom,I:field.
 from __future__ import annotations
 from typing import Dict, List, Optional, Any
 
-from .fields import normalize_field_name, FIELD_PRESETS
+from .fields import FIELD_PRESETS
 from .synonym_normalization import normalize_synonym_token
+from jbom.config.field_ref import FieldRefResolver
+
+_FIELD_REF_RESOLVER = FieldRefResolver()
 
 
 def _resolve_field_token(
@@ -22,7 +25,12 @@ def _resolve_field_token(
     output column headers (e.g. ``Designator`` / ``Surface Mount``).
     """
 
-    normalized_token = normalize_field_name(token)
+    raw_token = str(token or "").strip()
+    parsed_token = _FIELD_REF_RESOLVER.parse(raw_token)
+    if parsed_token.is_expression:
+        return raw_token
+
+    normalized_token = _FIELD_REF_RESOLVER.normalize_reference_token(raw_token)
 
     from jbom.config.fabricators import get_fabricator_column_mapping
 
@@ -33,7 +41,7 @@ def _resolve_field_token(
     if normalized_token in column_mapping.values():
         return normalized_token
 
-    token_key = normalize_synonym_token(token)
+    token_key = normalize_synonym_token(raw_token)
     for header, internal_field in column_mapping.items():
         if normalize_synonym_token(header) == token_key:
             return internal_field

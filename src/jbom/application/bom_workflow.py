@@ -14,6 +14,7 @@ from jbom.common.field_parser import (
     parse_fields_argument,
 )
 from jbom.common.options import GeneratorOptions
+from jbom.config.field_ref import FieldRefResolver
 from jbom.config.fabricators import FabricatorConfig, get_fabricator_presets
 from jbom.services.bom_generator import BOMData, BOMEntry, BOMGenerator
 from jbom.services.component_merge_service import (
@@ -47,6 +48,7 @@ _BOM_COMPUTED_FIELDS: tuple[str, ...] = (
     "lcsc",
     "package",
 )
+_FIELD_REF_RESOLVER = FieldRefResolver()
 
 
 def _freeze_mapping(values: Mapping[str, Any] | None) -> Mapping[str, Any]:
@@ -62,6 +64,15 @@ def _normalize_text(value: str, *, field_name: str) -> str:
     if not normalized:
         raise ValueError(f"{field_name} must be non-empty")
     return normalized
+
+
+def _normalize_selected_field_references(selected_fields: list[str]) -> list[str]:
+    """Normalize selected field tokens via canonical field-reference parsing."""
+
+    return [
+        _FIELD_REF_RESOLVER.normalize_reference_token(field_name)
+        for field_name in selected_fields
+    ]
 
 
 class BOMMode(str, Enum):
@@ -303,6 +314,7 @@ class BOMWorkflow:
             request.fabricator,
             fabricator_presets,
         )
+        selected_fields = _normalize_selected_field_references(selected_fields)
         if request.verbose:
             diagnostics.append(
                 Diagnostic("info", f"Selected fields: {', '.join(selected_fields)}")
