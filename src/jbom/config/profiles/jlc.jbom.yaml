@@ -32,10 +32,8 @@ fab:
 
   field_synonyms:
     fab_pn:
-      # display_name is the canonical output column header JLCPCB expects in the BOM CSV.
-      # Synonyms are accepted anywhere a field reference can appear: --fields args,
-      # bom_columns keys, schematic symbol properties, PCB footprint properties,
-      # and inventory CSV column headers. Output always uses display_name.
+      # JLC accepts both LCSC-branded headers and normalized Supplier/SPN aliases.
+      # Mechanism docs: docs/README.configuration.md#field_synonyms-mechanism.
       display_name: "LCSC Part #"
       synonyms:
         - "LCSC Part #"      # canonical JLCPCB column name (matches KiCad BOM plugin)

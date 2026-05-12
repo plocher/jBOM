@@ -21,6 +21,9 @@ fab:
 
   field_synonyms:
     fab_pn:
+      # PCBWay accepts manufacturer-facing part numbers, so this remains a
+      # neutral preferred-supplier alias in the profile.
+      # Mechanism docs: docs/README.configuration.md#field_synonyms-mechanism.
       display_name: "Preferred Supplier PN"
     supplier_pn:
       display_name: "Supplier Part Number"

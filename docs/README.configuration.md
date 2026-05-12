@@ -46,6 +46,13 @@ Merge semantics are:
 
 Circular `extends:` chains are rejected.
 
+## field_synonyms mechanism
+`field_synonyms` defines canonical field intents and accepted aliases in unified profiles.
+At runtime, synonyms are matched case-insensitively and normalized to canonical keys (for example `fab_pn`, `supplier_pn`, `mpn`), while CSV output headers use the configured `display_name`.
+This allows CLI field arguments, config field references, schematic/PCB properties, and inventory headers to accept legacy or vendor-specific naming without changing internal semantics.
+`fab.field_synonyms` controls fabrication output semantics; `supplier.field_synonyms` controls supplier ID/part-number mapping for supplier workflows.
+Profiles should keep only fabricator/supplier-specific rationale inline and defer mechanism details to this section.
+
 ## Field reference language
 
 Field references in config expressions and field lists follow ADR 0009:
