@@ -5,7 +5,7 @@ Covers:
 - get_defaults() returns generic on unknown name (no raise)
 - load_defaults() raises ValueError for unknown name
 - extends: deep-merge: dict values merged, list values replaced
-- from_yaml_dict: all sections parsed correctly
+- model_validate: all sections parsed correctly
 - Helper methods: get_domain_default, get_package_power, get_package_voltage, etc.
 - _deep_merge semantics
 - component_id_fields: parsing, get_component_id_fields(), validation
@@ -188,11 +188,12 @@ def test_get_defaults_returns_generic_on_unknown_name() -> None:
 def test_get_defaults_uses_active_profile_when_name_omitted(tmp_path: Path) -> None:
     jbom_dir = tmp_path / ".jbom"
     jbom_dir.mkdir()
-    (jbom_dir / "tight.defaults.yaml").write_text(
+    (jbom_dir / "tight.jbom.yaml").write_text(
         "extends: generic\n"
-        "domain_defaults:\n"
-        "  resistor:\n"
-        "    tolerance: '1%'\n"
+        "defaults:\n"
+        "  domain_defaults:\n"
+        "    resistor:\n"
+        "      tolerance: '1%'\n"
     )
 
     previous = get_active_defaults_profile()
@@ -214,12 +215,13 @@ def test_extends_overrides_single_value(tmp_path: Path) -> None:
     """extends: generic + override one tolerance → only that value changes."""
     jbom_dir = tmp_path / ".jbom"
     jbom_dir.mkdir()
-    override = jbom_dir / "aerospace.defaults.yaml"
+    override = jbom_dir / "aerospace.jbom.yaml"
     override.write_text(
         "extends: generic\n"
-        "domain_defaults:\n"
-        "  resistor:\n"
-        "    tolerance: '1%'\n"
+        "defaults:\n"
+        "  domain_defaults:\n"
+        "    resistor:\n"
+        "      tolerance: '1%'\n"
     )
 
     cfg = load_defaults("aerospace", cwd=tmp_path)
@@ -233,12 +235,13 @@ def test_extends_replaces_list_sections(tmp_path: Path) -> None:
     """When a list is overridden, the full list is replaced (not appended)."""
     jbom_dir = tmp_path / ".jbom"
     jbom_dir.mkdir()
-    (jbom_dir / "short.defaults.yaml").write_text(
+    (jbom_dir / "short.jbom.yaml").write_text(
         "extends: generic\n"
-        "parametric_query_fields:\n"
-        "  resistor:\n"
-        "    - resistance\n"
-        "    - tolerance\n"
+        "defaults:\n"
+        "  parametric_query_fields:\n"
+        "    resistor:\n"
+        "      - resistance\n"
+        "      - tolerance\n"
     )
 
     cfg = load_defaults("short", cwd=tmp_path)
@@ -253,11 +256,12 @@ def test_extends_inherits_all_unspecified_sections(tmp_path: Path) -> None:
     """A child that only overrides one section gets all others from parent."""
     jbom_dir = tmp_path / ".jbom"
     jbom_dir.mkdir()
-    (jbom_dir / "minimal.defaults.yaml").write_text(
+    (jbom_dir / "minimal.jbom.yaml").write_text(
         "extends: generic\n"
-        "domain_defaults:\n"
-        "  resistor:\n"
-        "    tolerance: '0.1%'\n"
+        "defaults:\n"
+        "  domain_defaults:\n"
+        "    resistor:\n"
+        "      tolerance: '0.1%'\n"
     )
 
     cfg = load_defaults("minimal", cwd=tmp_path)
@@ -303,35 +307,35 @@ def test_deep_merge_does_not_mutate_base() -> None:
 
 
 # ---------------------------------------------------------------------------
-# from_yaml_dict: parsing edge cases
+# model_validate: parsing edge cases
 # ---------------------------------------------------------------------------
 
 
-def test_from_yaml_dict_tolerates_empty_data() -> None:
-    cfg = DefaultsConfig.from_yaml_dict({}, name="empty")
+def test_model_validate_tolerates_empty_data() -> None:
+    cfg = DefaultsConfig.model_validate({}, context={"profile_name": "empty"})
     assert cfg.name == "empty"
     assert cfg.domain_defaults == {}
     assert cfg.package_power == {}
     assert cfg.get_domain_default("resistor", "tolerance", fallback="5%") == "5%"
 
 
-def test_from_yaml_dict_normalizes_category_to_lowercase() -> None:
+def test_model_validate_normalizes_category_to_lowercase() -> None:
     data = {
         "domain_defaults": {"RESISTOR": {"tolerance": "1%"}},
     }
-    cfg = DefaultsConfig.from_yaml_dict(data, name="test")
+    cfg = DefaultsConfig.model_validate(data, context={"profile_name": "test"})
     assert cfg.get_domain_default("resistor", "tolerance") == "1%"
     assert cfg.get_domain_default("RESISTOR", "tolerance") == "1%"
 
 
-def test_from_yaml_dict_normalizes_package_to_uppercase() -> None:
+def test_model_validate_normalizes_package_to_uppercase() -> None:
     data = {"package_power": {"0603": "100mW"}}
-    cfg = DefaultsConfig.from_yaml_dict(data, name="test")
+    cfg = DefaultsConfig.model_validate(data, context={"profile_name": "test"})
     assert cfg.get_package_power("0603") == "100mW"
     assert cfg.get_package_power("0603") == "100mW"  # upper key lookup
 
 
-def test_from_yaml_dict_parses_field_synonyms() -> None:
+def test_model_validate_parses_field_synonyms() -> None:
     data = {
         "field_synonyms": {
             "voltage": {
@@ -340,37 +344,37 @@ def test_from_yaml_dict_parses_field_synonyms() -> None:
             }
         }
     }
-    cfg = DefaultsConfig.from_yaml_dict(data, name="test")
+    cfg = DefaultsConfig.model_validate(data, context={"profile_name": "test"})
     voltage = cfg.get_field_synonym_config("voltage")
     assert voltage is not None
     assert voltage.display_name == "Voltage"
     assert voltage.synonyms == ("Voltage", "V")
 
 
-def test_from_yaml_dict_parses_field_precedence_policy() -> None:
+def test_model_validate_parses_field_precedence_policy() -> None:
     data = {
         "field_precedence_policy": {
             "schematic_biased": ["value", "tolerance", "value"],
             "pcb_biased": ["footprint", "package"],
         }
     }
-    cfg = DefaultsConfig.from_yaml_dict(data, name="test")
+    cfg = DefaultsConfig.model_validate(data, context={"profile_name": "test"})
     policy = cfg.get_field_precedence_policy()
     assert policy["schematic_biased"] == ("value", "tolerance")
     assert policy["pcb_biased"] == ("footprint", "package")
 
 
-def test_from_yaml_dict_parses_search_package_tokens() -> None:
+def test_model_validate_parses_search_package_tokens() -> None:
     data = {
         "search": {
             "package_tokens": ["0603", " 0805 ", "0603", "1206"],
         }
     }
-    cfg = DefaultsConfig.from_yaml_dict(data, name="test")
+    cfg = DefaultsConfig.model_validate(data, context={"profile_name": "test"})
     assert cfg.get_search_package_tokens() == ["0603", "0805", "1206"]
 
 
-def test_from_yaml_dict_parses_inventory_schema() -> None:
+def test_model_validate_parses_inventory_schema() -> None:
     data = {
         "inventory_schema": {
             "canonical_fields": ["inventory_ipn", "manufacturer_part"],
@@ -390,7 +394,7 @@ def test_from_yaml_dict_parses_inventory_schema() -> None:
             },
         }
     }
-    cfg = DefaultsConfig.from_yaml_dict(data, name="test")
+    cfg = DefaultsConfig.model_validate(data, context={"profile_name": "test"})
     schema = cfg.get_inventory_schema()
     assert schema.canonical_fields == ("inventory_ipn", "manufacturer_part")
     assert schema.field_synonyms["inventory_ipn"].display_name == "IPN"
@@ -468,15 +472,15 @@ def test_get_component_id_fields_is_case_insensitive() -> None:
     assert cfg.get_component_id_fields("RES") == cfg.get_component_id_fields("res")
 
 
-def test_from_yaml_dict_parses_component_id_fields() -> None:
-    """from_yaml_dict parses component_id_fields into frozensets of profile names."""
+def test_model_validate_parses_component_id_fields() -> None:
+    """model_validate parses component_id_fields into frozensets of profile names."""
     data = {
         "component_id_fields": {
             "led": ["type"],
             "res": ["tolerance", "voltage", "wattage"],
         }
     }
-    cfg = DefaultsConfig.from_yaml_dict(data, name="test")
+    cfg = DefaultsConfig.model_validate(data, context={"profile_name": "test"})
     assert cfg.get_component_id_fields("led") == frozenset({"type"})
     assert cfg.get_component_id_fields("res") == frozenset(
         {"tolerance", "voltage", "wattage"}
@@ -484,7 +488,7 @@ def test_from_yaml_dict_parses_component_id_fields() -> None:
     assert cfg.get_component_id_fields("cap") is None  # not listed
 
 
-def test_from_yaml_dict_warns_and_skips_unknown_field_names(
+def test_model_validate_warns_and_skips_unknown_field_names(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     """Unknown profile names are warned about and omitted from the frozenset."""
@@ -496,7 +500,7 @@ def test_from_yaml_dict_warns_and_skips_unknown_field_names(
         }
     }
     with caplog.at_level(logging.WARNING):
-        cfg = DefaultsConfig.from_yaml_dict(data, name="test")
+        cfg = DefaultsConfig.model_validate(data, context={"profile_name": "test"})
     allowed = cfg.get_component_id_fields("led")
     assert allowed == frozenset({"type"})  # 'wavelength' was dropped
     assert any("wavelength" in r.message for r in caplog.records)
@@ -506,12 +510,13 @@ def test_component_id_fields_override_via_jbom_dir(tmp_path: Path) -> None:
     """A project .jbom/ override can customize LED component_id_fields."""
     jbom_dir = tmp_path / ".jbom"
     jbom_dir.mkdir()
-    (jbom_dir / "custom.defaults.yaml").write_text(
+    (jbom_dir / "custom.jbom.yaml").write_text(
         "extends: generic\n"
-        "component_id_fields:\n"
-        "  led:\n"
-        "    - type\n"
-        "    - voltage\n"  # re-add voltage for this project
+        "defaults:\n"
+        "  component_id_fields:\n"
+        "    led:\n"
+        "      - type\n"
+        "      - voltage\n"  # re-add voltage for this project
     )
     cfg = load_defaults("custom", cwd=tmp_path)
     allowed = cfg.get_component_id_fields("led")

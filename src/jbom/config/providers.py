@@ -14,16 +14,15 @@ Provider *types* are internal (e.g. "mouser_api", "jlcpcb_api").
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 if TYPE_CHECKING:
     from jbom.services.search.cache import SearchCache
     from jbom.services.search.provider import SearchProvider
 
 
-@dataclass(frozen=True)
-class SearchProviderConfig:
+class SearchProviderConfig(BaseModel):
     """Typed bag of provider configuration.
 
     Attributes:
@@ -31,8 +30,27 @@ class SearchProviderConfig:
         extra: Provider-specific keys (provider implementation owns this schema).
     """
 
+    model_config = ConfigDict(extra="ignore")
+
     type: str
-    extra: dict[str, Any] = field(default_factory=dict)
+    extra: dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator("type")
+    @classmethod
+    def _validate_type(cls, value: str) -> str:
+        provider_type = str(value or "").strip()
+        if not provider_type:
+            raise ValueError("Provider config missing non-empty 'type'")
+        return provider_type
+
+    @field_validator("extra", mode="before")
+    @classmethod
+    def _normalize_extra(cls, value: Any) -> dict[str, Any]:
+        if value is None:
+            return {}
+        if not isinstance(value, dict):
+            raise ValueError("Provider config 'extra' must be a mapping")
+        return dict(value)
 
     def with_extra(self, updates: dict[str, Any]) -> "SearchProviderConfig":
         """Return a copy with extra keys merged in.
@@ -43,7 +61,7 @@ class SearchProviderConfig:
 
         merged = dict(self.extra)
         merged.update(dict(updates or {}))
-        return SearchProviderConfig(type=self.type, extra=merged)
+        return SearchProviderConfig.model_validate({"type": self.type, "extra": merged})
 
 
 def _registry() -> dict[str, type["SearchProvider"]]:
