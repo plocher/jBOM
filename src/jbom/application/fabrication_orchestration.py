@@ -125,6 +125,7 @@ class FabricationRequest:
     skip_backup: bool = False
     debug: bool = False
     archive_stem: str = ""
+    archive_template: str = ""
     apply_corrections: bool = False
     generate_designators: bool = False
 
@@ -165,6 +166,9 @@ class FabricationRequest:
         object.__setattr__(self, "skip_backup", bool(self.skip_backup))
         object.__setattr__(self, "debug", bool(self.debug))
         object.__setattr__(self, "archive_stem", str(self.archive_stem or "").strip())
+        object.__setattr__(
+            self, "archive_template", str(self.archive_template or "").strip()
+        )
         object.__setattr__(self, "apply_corrections", bool(self.apply_corrections))
         object.__setattr__(
             self, "generate_designators", bool(self.generate_designators)
@@ -622,19 +626,35 @@ class FabricationWorkflow:
     ) -> str:
         """Return the archive base name for gerber zip and backup archives.
 
-        When ``request.archive_stem`` is non-empty it is used directly (caller
-        has pre-expanded any text variables).  Otherwise the stem is derived
-        from :func:`~jbom.services.project_metadata.create_metadata` using the
-        project directory and PCB file.
+        Resolution order:
+
+        1. ``request.archive_stem`` — caller has pre-expanded any text
+           variables (the KiCad plugin does this so the gerber zip name
+           matches the title-block at the moment Run() was invoked).
+        2. ``request.archive_template`` — a template like
+           ``"${TITLE}_${REVISION}"`` expanded against the PCB's title block
+           via :func:`~jbom.services.project_metadata.expand_archive_template`.
+           This is the CLI path: the user passes ``--archive-name`` (or the
+           saved ``archive_name_template`` from ``.jbom/jbom-options.json``)
+           and the workflow resolves it once the PCB has been located.
+        3. Legacy default — project_name normalised, or ``"jbom-production"``
+           if no project metadata is available.
         """
         if request.archive_stem:
             return request.archive_stem
-        try:
-            from jbom.services.project_metadata import (
-                create_metadata,
-                normalize_archive_stem,
-            )
 
+        from jbom.services.project_metadata import (
+            create_metadata,
+            expand_archive_template,
+            normalize_archive_stem,
+        )
+
+        if request.archive_template:
+            resolved = expand_archive_template(request.archive_template, pcb_file)
+            if resolved and resolved != "(unknown)":
+                return resolved
+
+        try:
             effective_project_dir = project_dir or (
                 pcb_file.parent if pcb_file else None
             )

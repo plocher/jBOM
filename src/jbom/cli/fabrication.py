@@ -71,6 +71,18 @@ def register_command(subparsers) -> None:  # type: ignore[type-arg]
             "Default: project directory."
         ),
     )
+    parser.add_argument(
+        "--archive-name",
+        metavar="TEMPLATE",
+        default=None,
+        help=(
+            "Template for the generated archive base name.  Supports KiCad "
+            "title-block variables (${TITLE}, ${REVISION}, ${DATE}, "
+            "${COMPANY}, ${CURRENT_DATE}).  Default: read from "
+            ".jbom/jbom-options.json when present, otherwise "
+            '"${TITLE}_${REVISION}".'
+        ),
+    )
 
     # Step-skipping flags
     parser.add_argument(
@@ -233,6 +245,33 @@ def _resolve_generate_designators(args) -> bool:  # type: ignore[type-arg]
         return False
 
 
+def _resolve_archive_template_from_args(args) -> str:  # type: ignore[type-arg]
+    """Resolve the archive-name template from CLI args or saved options.
+
+    Resolution order, first non-empty wins:
+
+    1. ``--archive-name TEMPLATE`` (explicit CLI override).
+    2. ``archive_name_template`` from ``.jbom/jbom-options.json`` (saved by
+       the plugin or previous CLI runs).
+    3. ``DEFAULT_ARCHIVE_TEMPLATE`` (``${TITLE}_${REVISION}``).
+    """
+    from pathlib import Path
+
+    from jbom.plugin.options import load_options
+    from jbom.services.project_metadata import DEFAULT_ARCHIVE_TEMPLATE
+
+    cli_template = str(getattr(args, "archive_name", None) or "").strip()
+    if cli_template:
+        return cli_template
+    try:
+        saved = load_options(Path(args.input or "."))
+        if saved.archive_name_template:
+            return saved.archive_name_template
+    except Exception:
+        pass
+    return DEFAULT_ARCHIVE_TEMPLATE
+
+
 def _execute_fab_command(args) -> int:  # type: ignore[type-arg]
     """Build FabricationRequest, run FabricationWorkflow, and report outputs."""
     try:
@@ -251,6 +290,7 @@ def _execute_fab_command(args) -> int:  # type: ignore[type-arg]
             pos_origin=str(args.origin or "board"),
             debug=bool(args.debug),
             generate_designators=_resolve_generate_designators(args),
+            archive_template=_resolve_archive_template_from_args(args),
         )
 
         result = FabricationWorkflow().run(request)
