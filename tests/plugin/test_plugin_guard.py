@@ -132,3 +132,125 @@ class TestOptionsModuleImportable:
         assert PluginOptions is not None
         assert load_options is not None
         assert save_options is not None
+
+
+# ---------------------------------------------------------------------------
+# Vendor-folder tag selector (platform-aware bootstrap)
+# ---------------------------------------------------------------------------
+
+
+import pytest  # noqa: E402 — grouped with class below intentionally
+import types  # noqa: E402
+
+
+def _fake_version_info(major: int, minor: int, micro: int = 0) -> types.SimpleNamespace:
+    """Build a stand-in for ``sys.version_info`` that exposes major/minor.
+
+    ``sys.version_info`` is a ``structseq`` and cannot be constructed via the
+    normal type call, so tests substitute a ``SimpleNamespace`` with the
+    attributes our bootstrap actually reads.
+    """
+    return types.SimpleNamespace(major=major, minor=minor, micro=micro)
+
+
+class TestVendorFolderTagSelector:
+    """`_vendor_folder_tag` selects the right `<py>-<plat>` directory."""
+
+    @pytest.mark.parametrize(
+        "platform_name, machine, version_info, expected",
+        [
+            ("darwin", "arm64", (3, 9, 13), "cp39-macosx_arm64"),
+            ("darwin", "x86_64", (3, 9, 13), "cp39-macosx_x86_64"),
+            ("darwin", "arm64", (3, 12, 1), "cp312-macosx_arm64"),
+            ("linux", "x86_64", (3, 9, 18), "cp39-manylinux_x86_64"),
+            ("linux", "aarch64", (3, 12, 2), "cp312-manylinux_aarch64"),
+            ("win32", "AMD64", (3, 9, 13), "cp39-win_amd64"),
+            ("win32", "AMD64", (3, 12, 1), "cp312-win_amd64"),
+        ],
+    )
+    def test_known_targets_select_expected_folder(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        platform_name: str,
+        machine: str,
+        version_info: tuple[int, int, int],
+        expected: str,
+    ) -> None:
+        """Each supported (py, os, arch) combo maps to its vendor folder."""
+        import platform as _platform
+
+        import jbom.plugin as _mod
+
+        monkeypatch.setattr(_mod.sys, "platform", platform_name)
+        monkeypatch.setattr(_mod.sys, "version_info", _fake_version_info(*version_info))
+        monkeypatch.setattr(_platform, "machine", lambda: machine)
+        assert _mod._vendor_folder_tag() == expected
+
+    def test_unsupported_platform_returns_none(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Solaris/BSD/etc. are not in the supported matrix and return None."""
+        import platform as _platform
+
+        import jbom.plugin as _mod
+
+        monkeypatch.setattr(_mod.sys, "platform", "sunos5")
+        monkeypatch.setattr(_platform, "machine", lambda: "sparc")
+        assert _mod._vendor_folder_tag() is None
+
+    def test_pydantic_core_path_returns_none_when_vendor_missing(
+        self, tmp_path
+    ) -> None:
+        """Absent ``_vendor/`` directory yields None, not a crash."""
+        import jbom.plugin as _mod
+
+        assert _mod._vendor_pydantic_core_path(tmp_path) is None
+
+    def test_pydantic_core_path_prefers_exact_tag_match(
+        self, tmp_path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Exact `<tag>` directory wins over the fallback scan."""
+        import platform as _platform
+
+        import jbom.plugin as _mod
+
+        monkeypatch.setattr(_mod.sys, "platform", "darwin")
+        monkeypatch.setattr(_mod.sys, "version_info", _fake_version_info(3, 9, 13))
+        monkeypatch.setattr(_platform, "machine", lambda: "arm64")
+
+        vendor = tmp_path / "_vendor" / "pydantic_core"
+        good = vendor / "cp39-macosx_arm64" / "pydantic_core"
+        good.mkdir(parents=True)
+        (good / "__init__.py").write_text("", encoding="utf-8")
+        # A wrong-target dir must NOT be picked when the exact tag exists.
+        wrong = vendor / "cp312-win_amd64" / "pydantic_core"
+        wrong.mkdir(parents=True)
+        (wrong / "__init__.py").write_text("", encoding="utf-8")
+
+        result = _mod._vendor_pydantic_core_path(tmp_path)
+        assert result == vendor / "cp39-macosx_arm64"
+
+    def test_pydantic_core_path_falls_back_to_local_dir(
+        self, tmp_path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """`--skip-binary-fetch` builds use a ``local_*`` folder; we still pick it."""
+        import platform as _platform
+
+        import jbom.plugin as _mod
+
+        monkeypatch.setattr(_mod.sys, "platform", "darwin")
+        monkeypatch.setattr(_mod.sys, "version_info", _fake_version_info(3, 9, 13))
+        # Force tag lookup to miss by reporting an arch we did not vendor.
+        monkeypatch.setattr(_platform, "machine", lambda: "riscv64")
+
+        local = (
+            tmp_path
+            / "_vendor"
+            / "pydantic_core"
+            / "cp39-local_darwin"
+            / "pydantic_core"
+        )
+        local.mkdir(parents=True)
+        (local / "__init__.py").write_text("", encoding="utf-8")
+        result = _mod._vendor_pydantic_core_path(tmp_path)
+        assert result == local.parent
