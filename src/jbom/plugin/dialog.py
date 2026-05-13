@@ -54,12 +54,14 @@ Reference: ``docs/dev/development_notes/active/plugin_ux_storyboard.md``
 
 from __future__ import annotations
 
+from datetime import datetime
+import json
+import os
 import subprocess
 import sys
 import tempfile
 import threading
 import types
-import os
 from pathlib import Path
 
 import wx
@@ -118,8 +120,28 @@ class JBOMFabricationDialog(wx.Dialog):
                 os.environ["JBOM_PROJECT_DIR"] = str(Path(pcb_path).parent.resolve())
             except OSError:
                 os.environ["JBOM_PROJECT_DIR"] = str(Path(pcb_path).parent)
+        try:
+            from jbom.config.profile_search import clear_profile_eval_trace
+
+            clear_profile_eval_trace()
+        except Exception:
+            pass
+        # Start a new lifecycle run for this dialog invocation; events are
+        # appended via _record_event().  Runs are retained for the KiCad
+        # session lifetime so the developer can compare consecutive runs.
+        from jbom.plugin import diagnostics as _diag
+
+        _diag.begin_run(pcb_path=pcb_path)
+        _diag.record_event("dialog", "open")
         # _archive_preview is set by _build_input_panel; updated when template changes
         self._archive_preview: wx.StaticText | None = None
+        self._diag_notebook: wx.Notebook | None = None
+        self._diag_env_text: wx.TextCtrl | None = None
+        self._diag_profiles_text: wx.TextCtrl | None = None
+        self._diag_lifecycle_text: wx.TextCtrl | None = None
+        self._diag_save_btn: wx.Button | None = None
+        self._diag_refresh_btn: wx.Button | None = None
+        self._profile_eval_boot_error: str | None = None
 
         # Load persisted options; fall back to defaults when absent.
         from jbom.plugin.options import PluginOptions, load_options
@@ -177,10 +199,21 @@ class JBOMFabricationDialog(wx.Dialog):
         font.SetWeight(wx.FONTWEIGHT_BOLD)
         header.SetFont(font)
         sizer.Add(header, flag=wx.ALL, border=10)
+        load_stamp = wx.StaticText(
+            panel,
+            label=self._load_stamp_label(),
+            style=wx.ST_ELLIPSIZE_START,
+        )
+        load_stamp.SetToolTip(self._load_stamp_tooltip())
+        sizer.Add(
+            load_stamp,
+            flag=wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND,
+            border=10,
+        )
         sizer.Add(wx.StaticLine(panel), flag=wx.EXPAND | wx.LEFT | wx.RIGHT, border=8)
 
         # -- Project info grid -------------------------------------------
-        grid = wx.FlexGridSizer(rows=4, cols=2, vgap=4, hgap=8)
+        grid = wx.FlexGridSizer(rows=5, cols=2, vgap=4, hgap=8)
         grid.AddGrowableCol(1, 1)
 
         # Archive template (editable) + preview label
@@ -216,6 +249,7 @@ class JBOMFabricationDialog(wx.Dialog):
         self._fab_choice = wx.Choice(panel, choices=labels)
         self._fab_choice.SetSelection(self._fab_index_for(self._options.fabricator))
         fab_row.Add(self._fab_choice, proportion=1, flag=wx.EXPAND)
+        self._fab_choice.Bind(wx.EVT_CHOICE, self._on_fabricator_changed)
         config_btn = wx.Button(panel, label="Config\u2026", size=(60, -1))
         config_btn.Disable()  # placeholder — full viewer in a future release
         fab_row.Add(config_btn, flag=wx.LEFT, border=4)
@@ -240,6 +274,11 @@ class JBOMFabricationDialog(wx.Dialog):
 
         sizer.Add(grid, flag=wx.ALL | wx.EXPAND, border=10)
         sizer.Add(wx.StaticLine(panel), flag=wx.EXPAND | wx.LEFT | wx.RIGHT, border=8)
+
+        # Diagnostics notebook — hidden until the user enables debug mode.
+        # Replaces the old single "Profile eval" textbox with three tabs:
+        # Environment / Profiles / Lifecycle plus a Save log… button.
+        self._build_diagnostics_notebook(panel, sizer)
 
         # -- Checkboxes --------------------------------------------------
         check_sizer = wx.BoxSizer(wx.VERTICAL)
@@ -287,6 +326,11 @@ class JBOMFabricationDialog(wx.Dialog):
         )
 
         self._cb_debug = _cb("Keep intermediate files (debug)", False)
+        self._cb_debug.SetToolTip(
+            "Keep intermediate files after generation and reveal the diagnostics "
+            "notebook (Environment / Profiles / Lifecycle) at the top of the dialog."
+        )
+        self._cb_debug.Bind(wx.EVT_CHECKBOX, self._on_debug_toggled)
 
         for cb in (
             self._cb_smd_only,
@@ -318,6 +362,125 @@ class JBOMFabricationDialog(wx.Dialog):
 
         panel.SetSizer(sizer)
         return panel
+
+    # ------------------------------------------------------------------
+    # Diagnostics notebook (Environment / Profiles / Lifecycle)
+    # ------------------------------------------------------------------
+
+    def _build_diagnostics_notebook(self, parent: wx.Panel, sizer: wx.BoxSizer) -> None:
+        """Construct the diagnostics notebook + Save log/Refresh buttons.
+
+        The notebook holds three read-only multiline TextCtrls (Environment,
+        Profiles, Lifecycle) plus a Save log… button.  Everything is hidden
+        on dialog open and revealed by toggling the debug checkbox.
+        """
+        self._diag_notebook = wx.Notebook(parent)
+        self._diag_notebook.SetMinSize((-1, 220))
+
+        def _make_tab(label: str) -> wx.TextCtrl:
+            tab = wx.Panel(self._diag_notebook)
+            tab_sizer = wx.BoxSizer(wx.VERTICAL)
+            text = wx.TextCtrl(
+                tab,
+                value="",
+                style=wx.TE_MULTILINE | wx.TE_READONLY | wx.TE_DONTWRAP,
+            )
+            font = wx.Font(wx.FontInfo(10).Family(wx.FONTFAMILY_TELETYPE))
+            text.SetFont(font)
+            tab_sizer.Add(text, proportion=1, flag=wx.EXPAND)
+            tab.SetSizer(tab_sizer)
+            self._diag_notebook.AddPage(tab, label)
+            return text
+
+        self._diag_env_text = _make_tab("Environment")
+        self._diag_profiles_text = _make_tab("Profiles")
+        self._diag_lifecycle_text = _make_tab("Lifecycle")
+
+        btns = wx.BoxSizer(wx.HORIZONTAL)
+        self._diag_refresh_btn = wx.Button(parent, label="Refresh")
+        self._diag_refresh_btn.Bind(
+            wx.EVT_BUTTON, lambda _e: self._refresh_diagnostics()
+        )
+        self._diag_save_btn = wx.Button(parent, label="Save log\u2026")
+        self._diag_save_btn.Bind(wx.EVT_BUTTON, self._on_save_log)
+        btns.AddStretchSpacer(1)
+        btns.Add(self._diag_refresh_btn, flag=wx.RIGHT, border=4)
+        btns.Add(self._diag_save_btn)
+
+        sizer.Add(
+            self._diag_notebook,
+            flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM,
+            border=10,
+        )
+        sizer.Add(btns, flag=wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, border=10)
+
+        self._diag_notebook.Hide()
+        self._diag_refresh_btn.Hide()
+        self._diag_save_btn.Hide()
+
+    def _refresh_diagnostics(self) -> None:
+        """Repopulate all three diagnostics tabs from the diagnostics module."""
+        if self._diag_env_text is None:
+            return
+        try:
+            from jbom.plugin import diagnostics as _diag
+        except Exception as exc:  # pragma: no cover
+            self._diag_env_text.SetValue(f"(diagnostics module unavailable: {exc})")
+            return
+
+        env = _diag.capture_environment()
+        env_text = _diag.render_environment(env)
+        if self._profile_eval_boot_error:
+            env_text += (
+                f"\n\nFabricator load error during dialog open:\n  "
+                f"{self._profile_eval_boot_error}"
+            )
+        self._diag_env_text.SetValue(env_text)
+
+        snapshot: object | None = None
+        try:
+            snapshot = _diag.capture_profile_snapshot(self._selected_fabricator_id())
+            self._diag_profiles_text.SetValue(_diag.render_profiles(snapshot))
+        except Exception as exc:
+            self._diag_profiles_text.SetValue(f"(profile snapshot unavailable: {exc})")
+
+        self._diag_lifecycle_text.SetValue(_diag.render_lifecycle(_diag.get_runs()))
+        # Auto-scroll Lifecycle to the most recent event.
+        self._diag_lifecycle_text.ShowPosition(
+            self._diag_lifecycle_text.GetLastPosition()
+        )
+
+    def _on_save_log(self, _evt: wx.CommandEvent) -> None:
+        """Prompt for a path and write the full text report to disk."""
+        try:
+            from jbom.plugin import diagnostics as _diag
+        except Exception:  # pragma: no cover
+            return
+
+        default_name = datetime.now().strftime("jbom-diagnostics-%Y%m%d-%H%M%S.txt")
+        with wx.FileDialog(
+            self,
+            message="Save diagnostics log",
+            defaultDir=str(Path(self._pcb_path).parent) if self._pcb_path else "",
+            defaultFile=default_name,
+            wildcard="Text files (*.txt)|*.txt|All files (*.*)|*.*",
+            style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT,
+        ) as dlg:
+            if dlg.ShowModal() != wx.ID_OK:
+                return
+            target = Path(dlg.GetPath())
+
+        env = _diag.capture_environment()
+        try:
+            snapshot = _diag.capture_profile_snapshot(self._selected_fabricator_id())
+        except Exception:
+            snapshot = None
+        report = _diag.render_text_report(env, snapshot, _diag.get_runs())
+        try:
+            target.write_text(report, encoding="utf-8")
+            _diag.record_event("diag", f"saved log to {target}")
+        except OSError as exc:
+            _diag.record_event("diag", f"save log failed: {exc}")
 
     # ------------------------------------------------------------------
     # Progress panel
@@ -383,6 +546,7 @@ class JBOMFabricationDialog(wx.Dialog):
         except Exception as _exc:  # pragma: no cover
             # Surface the error in the archive label so it is visible in KiCad.
             self._archive_name = f"(config error: {_exc})"
+            self._profile_eval_boot_error = str(_exc)
             pairs = [("generic", "Generic")]
         ids = [fid for fid, _ in pairs]
         labels = [name for _, name in pairs]
@@ -402,9 +566,89 @@ class JBOMFabricationDialog(wx.Dialog):
             return self._fab_ids[idx]
         return "generic"
 
+    def _load_stamp_label(self) -> str:
+        """Return a concise visible load stamp for manual plugin debugging."""
+        source_file = Path(__file__).resolve()
+        try:
+            timestamp = datetime.fromtimestamp(source_file.stat().st_mtime).strftime(
+                "%Y-%m-%d %H:%M:%S"
+            )
+        except OSError:
+            timestamp = "unknown"
+        pyver = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+        info = self._read_bootstrap_info()
+        mode = str(info.get("mode", "pcm")) if info else "pcm"
+        return f"Load stamp: {timestamp}  •  py {pyver}  •  {mode}"
+
+    def _load_stamp_tooltip(self) -> str:
+        """Return detailed source/bootstrap information for the load stamp.
+
+        Production tooltip is intentionally terse — just the source file path —
+        because bootstrap path details only meaningfully exist when the user
+        launched KiCad with ``JBOM_PLUGIN_DEBUG=1``.  When that env var is set,
+        the platform tag and inserted ``sys.path`` entries are appended.
+        """
+        source_file = Path(__file__).resolve()
+        lines = [f"Source: {source_file}"]
+        info = self._read_bootstrap_info()
+        if info:
+            tag = info.get("tag") or "(no compiled-dep vendor dir selected)"
+            inserted = info.get("inserted") or []
+            lines.append(f"Vendor tag: {tag}")
+            if inserted:
+                lines.append("Inserted sys.path entries:")
+                lines.extend(f"  - {entry}" for entry in inserted)
+        return "\n".join(lines)
+
+    @staticmethod
+    def _read_bootstrap_info() -> dict[str, object] | None:
+        """Parse ``JBOM_PLUGIN_BOOTSTRAP_INFO`` JSON written by the bootstrap.
+
+        The bootstrap only writes this env var when ``JBOM_PLUGIN_DEBUG=1``,
+        so absence is the production-default case and is not an error.
+        """
+        raw = os.environ.get("JBOM_PLUGIN_BOOTSTRAP_INFO", "").strip()
+        if not raw:
+            return None
+        try:
+            data = json.loads(raw)
+        except (TypeError, ValueError):
+            return None
+        return data if isinstance(data, dict) else None
+
     # ------------------------------------------------------------------
     # Event handlers — input panel
     # ------------------------------------------------------------------
+
+    def _on_debug_toggled(self, _evt: wx.CommandEvent) -> None:
+        """Show/hide the diagnostics notebook with the debug checkbox."""
+        show = self._cb_debug.GetValue()
+        for widget in (
+            self._diag_notebook,
+            self._diag_refresh_btn,
+            self._diag_save_btn,
+        ):
+            if widget is not None:
+                widget.Show(show)
+        if show:
+            self._refresh_diagnostics()
+        sizer = self.GetSizer()
+        if sizer is not None:
+            sizer.Layout()
+            sizer.Fit(self)
+
+    def _on_fabricator_changed(self, _evt: wx.CommandEvent) -> None:
+        """Record fabricator selection changes and refresh diagnostics."""
+        try:
+            from jbom.plugin import diagnostics as _diag
+
+            _diag.record_event(
+                "fabricator", f"selected={self._selected_fabricator_id()}"
+            )
+        except Exception:
+            pass
+        if self._cb_debug is not None and self._cb_debug.GetValue():
+            self._refresh_diagnostics()
 
     def _on_archive_template_changed(self, _evt: wx.CommandEvent) -> None:
         """Re-expand the template and update the preview + archive_name.
@@ -454,6 +698,12 @@ class JBOMFabricationDialog(wx.Dialog):
         """Validate, save options, fill zones if requested, then start the thread."""
         # Capture all UI values on the main thread before the worker starts.
         fab_id = self._selected_fabricator_id()
+        try:
+            from jbom.plugin import diagnostics as _diag
+
+            _diag.record_event("generate", f"fab={fab_id}")
+        except Exception:
+            pass
         inventory_path = self._inv_text.GetValue().strip()
         smd_only = self._cb_smd_only.GetValue()
         do_backup = self._cb_backup.GetValue()
@@ -704,6 +954,12 @@ class JBOMFabricationDialog(wx.Dialog):
 
     def _on_step(self, step: str, status: str) -> None:
         """Update the gauge for *step*; called via ``wx.CallAfter`` from thread."""
+        try:
+            from jbom.plugin import diagnostics as _diag
+
+            _diag.record_event(step, status)
+        except Exception:
+            pass
         if step not in self._gauges:
             return
         gauge = self._gauges[step]
@@ -730,6 +986,15 @@ class JBOMFabricationDialog(wx.Dialog):
 
         diagnostics = getattr(result, "diagnostics", ())
         production_dir = getattr(result, "production_dir", None)
+        try:
+            from jbom.plugin import diagnostics as _diag
+
+            _diag.record_event(
+                "complete",
+                f"production_dir={production_dir or '(none)'} diagnostics={len(diagnostics)}",
+            )
+        except Exception:
+            pass
 
         # Distinguish errors (no artifacts produced — production_dir is None)
         # from info-level diagnostics.  Stay open when there was an actual
@@ -772,6 +1037,12 @@ class JBOMFabricationDialog(wx.Dialog):
 
     def _on_error(self, message: str) -> None:
         """Handle unexpected thread exception; called via ``wx.CallAfter``."""
+        try:
+            from jbom.plugin import diagnostics as _diag
+
+            _diag.record_event("error", message)
+        except Exception:
+            pass
         self._diag_text.SetValue(f"Error: {message}")
         self._diag_text.Show()
         self._progress_cancel_btn.SetLabel("Close")
@@ -804,6 +1075,13 @@ class JBOMFabricationDialog(wx.Dialog):
         Mirrors Fabrication-Toolkit's ``updateDisplay`` which always calls
         ``pcbnew.Refresh()`` before ``self.Destroy()``.
         """
+        try:
+            from jbom.plugin import diagnostics as _diag
+
+            _diag.record_event("dialog", "close")
+            _diag.end_run()
+        except Exception:
+            pass
         try:
             import pcbnew  # noqa: PLC0415
 
