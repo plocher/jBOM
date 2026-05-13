@@ -1,0 +1,22 @@
+# Pinned runtime dependencies vendored into the jBOM PCM archive.
+#
+# These versions are validated against KiCad 9 (CPython 3.9) and KiCad 10
+# (CPython 3.12). Bumping versions here requires:
+#   1. Re-running scripts/build_pcm_package.py and checking the generated
+#      plugins/ tree imports cleanly under both Python versions.
+#   2. Updating metadata.json install_size / download_size / sha256 via
+#      `python scripts/build_pcm_package.py --update-metadata`.
+#
+# Compiled deps (pydantic_core) are fetched once per supported target via
+# `pip download --platform=... --python-version=...` and staged into
+# plugins/_vendor/pydantic_core/<py>-<plat>/pydantic_core/.
+#
+# Pure-Python deps below are vendored once from the build host's environment.
+
+pydantic==2.13.4
+pydantic_core==2.46.4
+annotated_types==0.7.0
+typing_extensions==4.15.0
+typing_inspection==0.4.2
+PyYAML==6.0
+sexpdata==1.0.2
