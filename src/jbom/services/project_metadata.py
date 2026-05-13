@@ -131,8 +131,77 @@ def create_metadata(
     )
 
 
+DEFAULT_ARCHIVE_TEMPLATE = "${TITLE}_${REVISION}"
+
+
+def _normalize_archive_filename_stem(value: str) -> str:
+    """Filename-safe normaliser that preserves dots (e.g. revision ``1.0``).
+
+    Mirrors the plugin dialog's ``_normalise`` helper so the CLI and plugin
+    produce identical archive stems.  Replaces unsafe characters with an
+    underscore, keeps word characters, dots, and hyphens; strips leading /
+    trailing underscores.
+    """
+
+    return re.sub(r"[^\w.-]", "_", str(value or "")).strip("_")
+
+
+def expand_archive_template(
+    template: str,
+    pcb_file: Optional[Path],
+) -> str:
+    """Expand KiCad title-block variables in *template* against a PCB file.
+
+    Mirrors the plugin's archive-name expansion so the CLI and plugin produce
+    identical stems for the same project.  Resolves ``${TITLE}``,
+    ``${REVISION}``, ``${DATE}`` / ``${ISSUE_DATE}``, ``${CURRENT_DATE}``, and
+    ``${COMPANY}`` from the PCB title block (read via the file-based S-expr
+    parser, so no KiCad SWIG bindings are required).
+
+    Fallback order when the template expands to an empty / unusable stem:
+
+    1. The PCB filename stem (e.g. ``cpNode-Xiao-68x90``) — only when the
+       PCB file actually exists on disk.
+    2. The literal string ``"(unknown)"``.
+
+    Args:
+        template: Template string.  When empty, ``DEFAULT_ARCHIVE_TEMPLATE``
+            (``"${TITLE}_${REVISION}"``) is used.
+        pcb_file: Optional path to the PCB; when ``None`` or missing, returns
+            ``"(unknown)"``.
+
+    Returns:
+        Filename-safe archive-name stem.  Preserves dots so semantic
+        revisions like ``1.0`` survive normalisation.
+    """
+
+    effective_template = template if template else DEFAULT_ARCHIVE_TEMPLATE
+    if pcb_file is not None and pcb_file.exists():
+        try:
+            from jbom.services.text_variable_expander import expand_text_variables
+
+            project_file = pcb_file.parent / f"{pcb_file.parent.name}.kicad_pro"
+            metadata = create_metadata(project_file, pcb_file=pcb_file)
+            if metadata.pcb_metadata is not None:
+                expanded = expand_text_variables(
+                    effective_template, metadata.pcb_metadata
+                )
+                cleaned = _normalize_archive_filename_stem(expanded)
+                if cleaned:
+                    return cleaned
+        except Exception:
+            pass
+        # PCB exists but title-block expansion yielded nothing usable.
+        stem = _normalize_archive_filename_stem(pcb_file.stem)
+        if stem:
+            return stem
+    return "(unknown)"
+
+
 __all__ = [
+    "DEFAULT_ARCHIVE_TEMPLATE",
     "ProjectMetadata",
     "create_metadata",
+    "expand_archive_template",
     "normalize_archive_stem",
 ]
