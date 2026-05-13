@@ -5,7 +5,7 @@ Feature: BOM Generation (Core Functionality)
 
   Background:
     Given the generic fabricator is selected
-    And a schematic that contains:
+    And a PCB that contains:
       | Reference | Value | Footprint         |
       | R1        | 10K   | R_0805_2012       |
       | C1        | 100nF | C_0603_1608       |
@@ -39,11 +39,16 @@ Feature: BOM Generation (Core Functionality)
     And the output should contain "C1"
 
   Scenario: Handle empty schematic
-    Given a schematic that contains:
+    Given a PCB that contains:
       | Reference | Value | Footprint |
     When I run jbom command "bom -o console"
     Then the command should succeed
     And the output should contain "No components found"
+
+  # The next two scenarios drive divergent sch/pcb fixtures on purpose to
+  # validate the user-facing debugging aid: BOM exposes both `s:` and `p:`
+  # namespaces so DRC issues are easy to see.  This is the only family of
+  # BOM scenarios that legitimately needs a schematic alongside the PCB.
 
   Scenario: BOM list-fields reflects runtime source discovery and computed fields
     Given a schematic that contains:

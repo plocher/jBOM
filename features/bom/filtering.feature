@@ -7,7 +7,7 @@ Feature: BOM Filtering (DNP / Excluded)
     Given the generic fabricator is selected
 
   Scenario: Include DNP components when requested
-    Given a schematic that contains:
+    Given a PCB that contains:
       | Reference | Value | Footprint   | DNP |
       | R1        | 10K   | R_0805_2012 | No  |
       | R2        | 22K   | R_0805_2012 | Yes |
@@ -18,7 +18,7 @@ Feature: BOM Filtering (DNP / Excluded)
       | R2        | 22K   |
 
   Scenario: Exclude DNP components by default
-    Given a schematic that contains:
+    Given a PCB that contains:
       | Reference | Value | Footprint   | DNP |
       | R1        | 10K   | R_0805_2012 | No  |
       | R2        | 22K   | R_0805_2012 | Yes |
@@ -27,7 +27,7 @@ Feature: BOM Filtering (DNP / Excluded)
     And the output should not contain "R2"
 
   Scenario: Include components excluded from BOM when requested
-    Given a schematic that contains:
+    Given a PCB that contains:
       | Reference | Value | Footprint   | ExcludeFromBOM |
       | R1        | 10K   | R_0805_2012 | No             |
       | R2        | 22K   | R_0805_2012 | Yes            |

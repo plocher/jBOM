@@ -7,7 +7,7 @@ Feature: BOM Inventory Enhancement
     Given the generic fabricator is selected
 
   Scenario: Enhance BOM with inventory data
-    Given a schematic that contains:
+    Given a PCB that contains:
       | Reference | Value | Footprint   |
       | R1        | 10K   | R_0805_2012 |
       | C1        | 100nF | C_0603_1608 |
@@ -20,7 +20,7 @@ Feature: BOM Inventory Enhancement
     And the output should contain "Inventory enhanced"
 
   Scenario: Handle missing inventory file
-    Given a schematic that contains:
+    Given a PCB that contains:
       | Reference | Value | Footprint   |
       | R1        | 10K   | R_0805_2012 |
     When I run jbom command "bom --inventory missing.csv"
@@ -28,7 +28,7 @@ Feature: BOM Inventory Enhancement
     And the error output should mention "Inventory file not found"
 
   Scenario: BOM with partial inventory matches
-    Given a schematic that contains:
+    Given a PCB that contains:
       | Reference | Value | Footprint   |
       | R1        | 10K   | R_0805_2012 |
       | R2        | 22K   | R_0805_2012 |
@@ -44,7 +44,7 @@ Feature: BOM Inventory Enhancement
   # Should verify that R1 gets enhanced with RES_10K data using table-driven
   # validation instead of magic hardcoded column expectations.
   Scenario: Enhanced BOM to file output
-    Given a schematic that contains:
+    Given a PCB that contains:
       | Reference | Value | Footprint   |
       | R1        | 10K   | R_0805_2012 |
     And an inventory file "inventory.csv" that contains:
