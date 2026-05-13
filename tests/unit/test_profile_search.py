@@ -176,3 +176,37 @@ def test_find_profile_multiple_env_paths(
 
     result = find_profile("org", cwd=tmp_path / "project")
     assert result == dir_b / "org.jbom.yaml"
+
+
+def test_record_profile_eval_quiet_by_default(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """``record_profile_eval`` must not print to stdout in production mode."""
+    from jbom.config.profile_search import (
+        clear_profile_eval_trace,
+        get_profile_eval_trace,
+        record_profile_eval,
+    )
+
+    monkeypatch.delenv("JBOM_PROFILE_EVAL_VERBOSE", raising=False)
+    clear_profile_eval_trace()
+    record_profile_eval("silent-line")
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "silent-line" in get_profile_eval_trace()
+
+
+def test_record_profile_eval_verbose_env_var_enables_stdout(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Setting ``JBOM_PROFILE_EVAL_VERBOSE=1`` re-enables stdout output."""
+    from jbom.config.profile_search import (
+        clear_profile_eval_trace,
+        record_profile_eval,
+    )
+
+    monkeypatch.setenv("JBOM_PROFILE_EVAL_VERBOSE", "1")
+    clear_profile_eval_trace()
+    record_profile_eval("loud-line")
+    captured = capsys.readouterr()
+    assert "loud-line" in captured.out
