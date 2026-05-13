@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "jbom"
-version = "6.58.1"
+version = "6.59.0"
 description = "Intelligent KiCad Bill of Materials generator with inventory matching"
 readme = "README.md"
 license = "AGPL-3.0-only"
@@ -54,6 +54,7 @@ Issues = "https://github.com/plocher/jBOM/issues"
 
 [project.scripts]
 jbom = "jbom.cli.main:main"
+
 
 
 

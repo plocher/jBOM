@@ -1,6 +1,115 @@
 # CHANGELOG
 
 
+## v6.59.0 (2026-05-13)
+
+### Bug Fixes
+
+* fix(plugin): use project-dir context when cwd is unavailable
+
+When Path.cwd() fails during profile discovery, prefer JBOM_PROJECT_DIR (set by the KiCad plugin dialog from the active board path) before home/root fallbacks.
+
+Add regression test for plugin project-directory fallback.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`5969893`](https://github.com/plocher/jBOM/commit/59698938829fe06e3ba07ce7991ad7a4fffbdcff))
+
+* fix(config): tolerate unavailable cwd during profile discovery
+
+Handle profile search when process cwd cannot be resolved by falling back to HOME (then /), preventing plugin fallback to generic-only fabricator list.
+
+Adds regression coverage for Path.cwd() failure in profile_search_dirs.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`509302a`](https://github.com/plocher/jBOM/commit/509302a751fcfdbf585f6cfcb96c8abe1ed98689))
+
+### Features
+
+* feat(plugin): diagnostics notebook + Save log; consume bootstrap info
+
+Replace the single 'Profile eval' TextCtrl with a wx.Notebook holding
+three read-only monospace tabs (Environment, Profiles, Lifecycle) plus
+'Refresh' and 'Save log...' buttons.  All hidden until the debug
+checkbox is toggled.
+
+* Each dialog open begin_run()s a new LifecycleRun; record_event() hooks
+  fire on dialog open, fabricator change, generate click, every worker
+  step (bom/pos/gerbers/backup x start/done), complete, error,
+  save-log success/failure, and dialog close.  end_run() runs in
+  _refresh_and_destroy so runs always cleanly terminate.
+* Refresh repopulates the three tabs from the diagnostics module; the
+  Lifecycle tab auto-scrolls to the most recent event.
+* Save log...  prompts for a path (default 'jbom-diagnostics-<ts>.txt'
+  next to the PCB) and writes the full text report.
+* Load-stamp tooltip and label now read JBOM_PLUGIN_BOOTSTRAP_INFO
+  (JSON, only present when JBOM_PLUGIN_DEBUG=1) and report the vendor
+  tag + inserted sys.path entries.
+
+Also keeps the dialog lifecycle hardening that fixed the single-
+invocation toolbar-button bug: parent=None, modeless Show(),
+pcbnew.Refresh() before Destroy(), module-level plugin instance held
+in __init__.py.
+
+Refs: #275, #278, #279
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`c88a151`](https://github.com/plocher/jBOM/commit/c88a15136e768ce8d5796528d7ad975fca55ba0f))
+
+* feat(plugin): structured diagnostics module (Environment / Profiles / Lifecycle)
+
+New wx-free jbom.plugin.diagnostics module that captures three layered
+diagnostic views and exposes a plain-text 'Save log...' renderer:
+
+1. Environment snapshot - captured once per Python session: mode, python
+   version, vendor tag, source path/mtime, JBOM_PROJECT_DIR /
+   JBOM_PROFILE_PATH, and the bootstrap-inserted sys.path entries.
+
+2. Profile snapshot - fingerprint-cached over every discoverable
+   *.jbom.yaml file (path + size + mtime).  Search dirs are role-tagged
+   (Project / Home / System / Env / Factory / Other) for compact display.
+   The 'chain_entries' field is the full effective lineage: extends:
+   ancestors followed by every common.jbom.yaml the loader implicitly
+   merges in, ordered most-specific-first.  Each entry is a (role, name)
+   pair so the rendered chain reads like 'Project:jlc -> Factory:common'.
+
+3. Lifecycle log - per-dialog-invocation events retained for the KiCad
+   session (cap 20 runs x 200 events).  begin_run / record_event /
+   end_run primitives plus a get_runs() accessor for callers.
+
+render_text_report() returns the union of all three sections so 'Save
+log...' can write a file users attach to bug reports.
+
+Includes 14 unit tests covering env caching + JSON parsing, profile
+fingerprint cache hit/miss, role classification, common-layer in chain,
+broken-extends truncation, lifecycle event recording, run rotation, and
+text rendering.
+
+Refs: #279
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`1cfcc8a`](https://github.com/plocher/jBOM/commit/1cfcc8a3b2e8d0f70cfc7d65a9b26c0844b70b4e))
+
+* feat(plugin): platform-aware bootstrap selects matching pydantic_core
+
+Replace the dev-loop homebrew/user-site/venv probing with a deterministic
+per-(python, OS, CPU) selector.
+
+* _vendor_folder_tag() maps the running interpreter to a vendor folder name
+  matching the tags produced by scripts/build_pcm_package.py (e.g.
+  cp39-macosx_arm64).
+* _vendor_pydantic_core_path() prefers an exact tag match and falls back to
+  any cp*-local_* directory left by --skip-binary-fetch builds.
+* PCM mode prepends the matching _vendor/pydantic_core/<tag>/ to sys.path
+  before <this_dir>; pure-Python deps are imported from <this_dir>
+  directly.
+* Dev-loop mode keeps <src/> on sys.path so editable jbom imports work; it
+  no longer probes homebrew or user-site automatically.  Developers who
+  need extra deps can set JBOM_PLUGIN_PYTHON_DEPS_DIR (colon/semicolon-
+  separated) to point at their venv site-packages.
+* Bootstrap diagnostics are published into a single JSON env var
+  JBOM_PLUGIN_BOOTSTRAP_INFO, populated only when JBOM_PLUGIN_DEBUG=1.
+
+Refs: #278
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`cb5794a`](https://github.com/plocher/jBOM/commit/cb5794a5ff68317d92ef8be99751518c8c62cbac))
+
+
 ## v6.58.1 (2026-05-12)
 
 ### Bug Fixes
