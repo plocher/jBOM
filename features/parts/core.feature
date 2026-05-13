@@ -75,6 +75,15 @@ Feature: Parts List Generation (Core Functionality)
       | R1,R2,R10 | R_0805_2012 |             |
 
   Scenario: Parts list-fields includes merge namespace fields
+    # Parts is schematic-driven (it groups schematic components by
+    # electro-mechanical attributes) but the project also has a PCB so the
+    # field listing surfaces both namespaces.
+    Given a schematic that contains:
+      | Reference | Value | Footprint   |
+      | R1        | 10K   | R_0805_2012 |
+    And a PCB that contains:
+      | Reference | Value | Footprint   |
+      | R1        | 10K   | R_0805_2012 |
     When I run jbom command "parts --list-fields"
     Then the command should succeed
     And the output should contain "Known parts fields"
@@ -82,7 +91,7 @@ Feature: Parts List Generation (Core Functionality)
     And the output should contain "p:"
     And the output should contain "i:"
     And the output should contain "s:value"
-    And the output should not contain "p:footprint"
+    And the output should contain "p:footprint"
     And the output should not contain "c:value"
     And the output should not contain "a:"
 

@@ -331,7 +331,32 @@ def given_simple_pcb(context) -> None:
     # Create PCB with footprints
     rows: List[Dict[str, Any]] = [row.as_dict() for row in (context.table or [])]
     comps: List[Dict[str, Any]] = []
+    # Columns handled directly by the PCB writer (lower-cased for the lookup
+    # below).  Anything else gets emitted as an opaque ``(property "K" "V")``
+    # entry so that BOM scenarios can carry schematic-style extras (LCSC,
+    # Manufacturer, Lib_ID, ...) entirely from the PCB.
+    _PCB_STANDARD_COLS = {
+        "reference",
+        "x",
+        "y",
+        "rotation",
+        "side",
+        "footprint",
+        "value",
+        "package",
+        "smd",
+        "attrs",
+        "locked",
+        "dnp",
+        "excludefrombom",
+        "exclude_from_bom",
+    }
     for r in rows:
+        extras = {
+            k: v
+            for k, v in r.items()
+            if k.lower() not in _PCB_STANDARD_COLS and str(v or "").strip()
+        }
         comps.append(
             {
                 "Reference": r.get("reference", r.get("Reference", "U1")),
@@ -345,6 +370,12 @@ def given_simple_pcb(context) -> None:
                 "SMD": r.get("smd", r.get("SMD", "")),
                 "Attrs": r.get("attrs", r.get("Attrs", "")),
                 "Locked": r.get("locked", r.get("Locked", "")),
+                "DNP": r.get("dnp", r.get("DNP", "")),
+                "ExcludeFromBOM": r.get(
+                    "excludefrombom",
+                    r.get("ExcludeFromBOM", r.get("exclude_from_bom", "")),
+                ),
+                "ExtraProps": extras,
             }
         )
     # Write PCB file in correct location
@@ -403,12 +434,19 @@ def given_simple_pcb(context) -> None:
         locked_value = str(comp.get("Locked", "") or "").strip().lower()
         is_locked = locked_value in {"yes", "true", "1", "locked"}
 
+        dnp_value = str(comp.get("DNP", "") or "").strip().lower()
+        is_dnp = dnp_value in {"yes", "true", "1", "dnp"}
+        excluded_value = str(comp.get("ExcludeFromBOM", "") or "").strip().lower()
+        is_excluded = excluded_value in {"yes", "true", "1"}
+
         # Build properties list
         properties = [f'(property "Reference" "{ref}")']
         if value:
             properties.append(f'(property "Value" "{value}")')
         if package:
             properties.append(f'(property "Package" "{package}")')
+        for extra_key, extra_value in (comp.get("ExtraProps") or {}).items():
+            properties.append(f'(property "{extra_key}" "{extra_value}")')
 
         properties_str = "\n    ".join(properties)
 
@@ -418,6 +456,14 @@ def given_simple_pcb(context) -> None:
         ]
         if attr:
             footprint_lines.append(f"    {attr}")
+        # DNP and exclude_from_bom are KiCad PCB-level footprint attributes.
+        # The PCB-first BOM contract reads these from the PCB; we emit them
+        # as separate ``(attr ...)`` forms so the parser stores them as
+        # ``footprint.attributes["dnp"] = "yes"`` etc.
+        if is_dnp:
+            footprint_lines.append("    (attr dnp)")
+        if is_excluded:
+            footprint_lines.append("    (attr exclude_from_bom)")
         if is_locked:
             footprint_lines.append("    (locked)")
         footprint_lines.append("  )")

@@ -4,7 +4,7 @@ Feature: Directory-based Project References
     Given a jBOM CSV sandbox
 
   Scenario: BOM command with no project parameter finds current directory project
-    Given a schematic that contains:
+    Given a PCB that contains:
       | Reference | Value | Footprint     |
       | R1        | 10K   | R_0805_2012   |
     When I run jbom command "bom"
@@ -28,7 +28,7 @@ Feature: Directory-based Project References
 
   Scenario: BOM command given directory name finds project in that directory
     Given a project "myproject" placed in "project_dir"
-    And the schematic "myproject" contains:
+    And a PCB that contains:
       | Reference | Value | Footprint     |
       | R1        | 10K   | R_0805_2012   |
     When I run jbom command "bom project_dir"

@@ -13,7 +13,7 @@ Feature: BOM Inventory Enhancement
     And an inventory file "enhanced_inventory.csv" that contains:
       | IPN                  | Category | Value | Description | Package | Manufacturer      | MFGPN   | LCSC  | Datasheet                   |
       | IC-LM358-SOIC8-STD   | IC       | LM358 | Dual Op-Amp | SOIC-8  | Texas Instruments | LM358DR | C7950 | https://ti.com/lit/ds/lm358 |
-    And a schematic that contains:
+    And a PCB that contains:
       | Reference | Value | Footprint         | LibID     |
       | R1        | 10k   | R_0603_1608       | Device:R  |
       | R2        | 10k   | R_0603_1608       | Device:R  |

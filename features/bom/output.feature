@@ -5,7 +5,7 @@ Feature: BOM Output Options
 
   Background:
     Given the generic fabricator is selected
-    And a schematic that contains:
+    And a PCB that contains:
       | Reference | Value | Footprint         |
       | R1        | 10K   | R_0805_2012       |
       | R2        | 10K   | R_0805_2012       |

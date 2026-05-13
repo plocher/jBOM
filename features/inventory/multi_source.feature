@@ -19,6 +19,14 @@ Feature: Multi-Source Inventory
       | R2        | 22k   | R_0603_1608 | Device:R  |
       | C1        | 100nF | C_0603_1608 | Device:C  |
       | LED1      | RED   | LED_0603    | Device:LED|
+    # Inventory scenarios remain schematic-driven, but the BOM-enhancement
+    # scenario in this feature requires a PCB (BOM is PCB-first).
+    And a PCB that contains:
+      | Reference | Value | Footprint   |
+      | R1        | 10k   | R_0603_1608 |
+      | R2        | 22k   | R_0603_1608 |
+      | C1        | 100nF | C_0603_1608 |
+      | LED1      | RED   | LED_0603    |
 
   Scenario: Multiple inventory files in inventory command
     When I run jbom command "inventory --inventory primary_inventory.csv --inventory secondary_inventory.csv --filter-matches -o -"

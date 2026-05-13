@@ -392,8 +392,12 @@ def synthesize_bom_components_from_pcb(
     * Inventory-biased fields (manufacturer, MPN, SPN, fabricator) are left
       empty here; they are filled in by ``InventoryOverlayService`` later in
       the workflow.
-    * ``dnp`` is propagated from the schematic (the user invariant is that
-      schematic DNP flags carry forward to the PCB during ERC/sync).
+    * ``dnp`` and ``in_bom`` are read from PCB footprint attributes
+      (``(attr dnp)`` and ``(attr exclude_from_bom)`` respectively). The
+      schematic is checked only as a fallback for projects where the PCB
+      pre-dates DNP/exclude attributes. ERC/DRC is the user's tool for
+      catching schematic/PCB sync drift; BOM never depends on
+      schematic-only flags.
 
     Schematic-only references (symbols without PCB footprints) are not
     represented; they are intentionally invisible to the BOM per the
@@ -412,6 +416,7 @@ def synthesize_bom_components_from_pcb(
         if not ref:
             continue
         sch = schematic_by_reference.get(ref)
+        fp_attrs = footprint.attributes or {}
 
         # Merged properties: schematic first (schematic-biased fields win on
         # name collision), then PCB attributes for keys the schematic did
@@ -421,7 +426,7 @@ def synthesize_bom_components_from_pcb(
             for key, value in (sch.properties or {}).items():
                 if value and str(value).strip():
                     merged_props[key] = str(value).strip()
-        for key, value in (footprint.attributes or {}).items():
+        for key, value in fp_attrs.items():
             if not value or not str(value).strip():
                 continue
             merged_props.setdefault(key, str(value).strip())
@@ -431,7 +436,7 @@ def synthesize_bom_components_from_pcb(
             merged_props.setdefault("Package", footprint.package_token)
         if footprint.side:
             merged_props.setdefault("Side", footprint.side)
-        mount = str((footprint.attributes or {}).get("mount_type", "")).strip().lower()
+        mount = str(fp_attrs.get("mount_type", "")).strip().lower()
         if mount:
             merged_props.setdefault("smd", "true" if mount == "smd" else "false")
 
@@ -441,10 +446,22 @@ def synthesize_bom_components_from_pcb(
             resolved_value = str(sch.value).strip()
         if not resolved_value:
             for key in ("Value", "value"):
-                pcb_value = (footprint.attributes or {}).get(key, "")
+                pcb_value = fp_attrs.get(key, "")
                 if pcb_value and str(pcb_value).strip():
                     resolved_value = str(pcb_value).strip()
                     break
+
+        # PCB-first DNP / exclude-from-BOM resolution.  The KiCad PCB parser
+        # stores each ``(attr ...)`` token as ``attributes[token] = "yes"``,
+        # so the presence of ``"dnp"`` / ``"exclude_from_bom"`` keys is the
+        # canonical signal.  Schematic flags are only consulted as a
+        # fallback for legacy projects whose PCB pre-dates these attrs.
+        pcb_dnp = _attr_is_yes(fp_attrs, "dnp")
+        pcb_exclude = _attr_is_yes(fp_attrs, "exclude_from_bom")
+        sch_dnp = bool(getattr(sch, "dnp", False)) if sch is not None else False
+        sch_in_bom = bool(getattr(sch, "in_bom", True)) if sch is not None else True
+        resolved_dnp = pcb_dnp or sch_dnp
+        resolved_in_bom = (not pcb_exclude) and sch_in_bom
 
         result.append(
             Component(
@@ -454,14 +471,29 @@ def synthesize_bom_components_from_pcb(
                 footprint=str(footprint.footprint_name or ""),
                 uuid=str(getattr(sch, "uuid", "") or ""),
                 properties=merged_props,
-                in_bom=bool(getattr(sch, "in_bom", True)) if sch is not None else True,
+                in_bom=resolved_in_bom,
                 exclude_from_sim=bool(getattr(sch, "exclude_from_sim", False))
                 if sch is not None
                 else False,
-                dnp=bool(getattr(sch, "dnp", False)) if sch is not None else False,
+                dnp=resolved_dnp,
             )
         )
     return result
+
+
+def _attr_is_yes(attributes: Mapping[str, Any], key: str) -> bool:
+    """Return True when a PCB footprint flag attribute is present and truthy.
+
+    The KiCad PCB parser maps ``(attr <token>)`` entries to
+    ``attributes[<token>] = "yes"``. This helper centralises the
+    case-insensitive yes/true check used by PCB-first BOM resolution for
+    flag-style attributes such as ``dnp`` and ``exclude_from_bom``.
+    """
+
+    raw = attributes.get(key) if attributes else None
+    if raw is None:
+        return False
+    return str(raw).strip().lower() in {"yes", "true", "1"}
 
 
 def run_component_merge(

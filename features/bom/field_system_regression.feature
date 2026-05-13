@@ -4,7 +4,7 @@ Feature: BOM Field System and Output Customization
   So that I can generate BOMs that match different fabricator requirements
 
   Background:
-    Given a schematic that contains:
+    Given a PCB that contains:
       | Reference | Value | Footprint   | SPN    | Manufacturer | MPN      | Package |
       | R1        | 10K   | R_0805_2012 | C17414 | Yageo        | RC0805   | 0805    |
       | C1        | 100nF | C_0603_1608 | C14663 | Murata       | GRM188   | 0603    |

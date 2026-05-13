@@ -8,7 +8,7 @@ Feature: Issue #21 BOM Aggregation Regression Tests
 
   @regression @issue-21
   Scenario: Current default aggregation behavior (value_footprint)
-    Given a schematic that contains:
+    Given a PCB that contains:
       | Reference | Value | Footprint   |
       | R1        | 10K   | R_0805_2012 |
       | R2        | 10K   | R_0805_2012 |
@@ -29,7 +29,7 @@ Feature: Issue #21 BOM Aggregation Regression Tests
 
   @regression @issue-21
   Scenario: Current value_only aggregation behavior
-    Given a schematic that contains:
+    Given a PCB that contains:
       | Reference | Value | Footprint   |
       | R1        | 10K   | R_0805_2012 |
       | R2        | 10K   | R_0603_1608 |
@@ -41,7 +41,7 @@ Feature: Issue #21 BOM Aggregation Regression Tests
 
   @regression @issue-21
   Scenario: Current lib_id_value aggregation behavior
-    Given a schematic that contains:
+    Given a PCB that contains:
       | Reference | Value | Footprint   | Lib_ID          |
       | R1        | 10K   | R_0805_2012 | Device:R        |
       | R2        | 10K   | R_0603_1608 | Device:R        |
@@ -52,7 +52,7 @@ Feature: Issue #21 BOM Aggregation Regression Tests
 
   @regression @issue-21
   Scenario: Future BOM behavior - always aggregates by value+package (footprint)
-    Given a schematic that contains:
+    Given a PCB that contains:
       | Reference | Value | Footprint   |
       | R1        | 10K   | R_0805_2012 |
       | R2        | 10K   | R_0805_2012 |
@@ -73,7 +73,7 @@ Feature: Issue #21 BOM Aggregation Regression Tests
 
   @regression @issue-21
   Scenario: BOM command should not accept aggregation flag after Issue #21
-    Given a schematic that contains:
+    Given a PCB that contains:
       | Reference | Value | Footprint   |
       | R1        | 10K   | R_0805_2012 |
     When I run jbom command "bom --aggregation value_only"
@@ -82,7 +82,7 @@ Feature: Issue #21 BOM Aggregation Regression Tests
 
   @regression @issue-21
   Scenario: Natural reference sorting in aggregated BOM
-    Given a schematic that contains:
+    Given a PCB that contains:
       | Reference | Value | Footprint   |
       | R10       | 10K   | R_0805_2012 |
       | R1        | 10K   | R_0805_2012 |

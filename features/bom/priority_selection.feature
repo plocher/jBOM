@@ -5,7 +5,7 @@ Feature: BOM Priority and Selection Rules
 
   Background:
     Given the generic fabricator is selected
-    And a schematic that contains:
+    And a PCB that contains:
       | Reference | Value | Footprint     | LibID      |
       | C1        | 100nF | C_0805_2012   | Device:C   |
       | C2        | 100nF | C_0805_2012   | Device:C   |

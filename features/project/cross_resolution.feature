@@ -29,14 +29,18 @@ Feature: Cross-Resolution Project References
 
   # Edge cases - missing target files
 
-  Scenario: BOM command given .kicad_pcb file fails when no matching schematic exists
+  Scenario: BOM command given .kicad_pcb file succeeds even without a schematic
+    # PCB-first contract: schematic-only references are invisible to BOM
+    # and a PCB-only project still yields a complete BOM. Missing
+    # schematic is a DRC/ERC concern, not a BOM concern.
     Given a KiCad project
     And the schematic is deleted
     And a PCB that contains:
       | reference | x | y | rotation | side | footprint     |
       | R1        | 5 | 10| 0        | TOP  | R_0805_2012   |
     When I run jbom command "bom project.kicad_pcb"
-    Then the command should fail
+    Then the command should succeed
+    And the output should contain "R1"
 
   Scenario: POS command given .kicad_sch file fails when no matching PCB exists
     Given a KiCad project
