@@ -16,7 +16,10 @@ def run_cmd(args, cwd):
 
 
 def test_bom_verbose_emits_diagnostics_or_artifacts(tmp_path):
-    # Create a minimal schematic via the project-centric steps equivalent
+    # BOM is PCB-driven: a minimal .kicad_pcb is required.  Schematic is
+    # optional enrichment.
+    pcb = tmp_path / "project.kicad_pcb"
+    pcb.write_text("(kicad_pcb (version 20211014))\n", encoding="utf-8")
     sch = tmp_path / "project.kicad_sch"
     sch.write_text("(kicad_sch (version 20211123))\n", encoding="utf-8")
     pro = tmp_path / "project.kicad_pro"
@@ -24,9 +27,12 @@ def test_bom_verbose_emits_diagnostics_or_artifacts(tmp_path):
 
     code, out = run_cmd(["bom", "-v"], cwd=tmp_path)
     assert code == 0
-    # Robust assertion: either diagnostics or the artifact header is present
+    # Robust assertion: success surfaces the artifact write log, the verbose
+    # field selection log, or one of the PCB-first resolution diagnostics.
     assert (
-        ("found schematic" in out)
-        or ("Loading components from" in out)
+        ("BOM written to" in out)
+        or ("Selected fields:" in out)
+        or ("Using PCB:" in out)
+        or ("found matching PCB" in out)
         or ("References,Value,Footprint,Quantity" in out)
     )
