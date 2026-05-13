@@ -31,22 +31,18 @@ def test_pos_workflow_runs_without_cli_import(
         resolved_path = tmp_path / "demo.kicad_pcb"
         project_context = _FakeProjectContext()
 
-    class _FakeResolver:
-        def __init__(self, **_kwargs) -> None:
-            pass
+    from jbom.application import pcb_project_loader
 
-        @staticmethod
-        def resolve_input(_input_path: str) -> _FakeResolvedInput:
-            return _FakeResolvedInput()
+    def _fake_resolve_pcb_input(_input_path, *, artifact_name="BOM", options=None):
+        return pcb_project_loader.ResolvedPcbProject(
+            resolved_input=_FakeResolvedInput(),
+            pcb_path=_FakeResolvedInput.resolved_path,
+            project_context=_FakeProjectContext(),
+            diagnostics=(),
+        )
 
-        @staticmethod
-        def resolve_for_wrong_file_type(_resolved_input, _target: str):
-            raise AssertionError("Cross-resolution should not be used in this test")
-
-    class _FakeReader:
-        @staticmethod
-        def read_pcb_file(_pcb_path: Path):
-            return SimpleNamespace(footprints=[])
+    def _fake_load_board(_pcb_path: Path):
+        return SimpleNamespace(footprints=[])
 
     class _FakeGenerator:
         def __init__(self, _options) -> None:
@@ -73,12 +69,9 @@ def test_pos_workflow_runs_without_cli_import(
             ]
 
     monkeypatch.setattr(
-        "jbom.application.pos_workflow.ProjectFileResolver", _FakeResolver
+        "jbom.application.pos_workflow.resolve_pcb_input", _fake_resolve_pcb_input
     )
-    monkeypatch.setattr(
-        "jbom.application.pos_workflow.DefaultKiCadReaderService",
-        _FakeReader,
-    )
+    monkeypatch.setattr("jbom.application.pos_workflow.load_board", _fake_load_board)
     monkeypatch.setattr("jbom.application.pos_workflow.POSGenerator", _FakeGenerator)
     monkeypatch.setattr(
         "jbom.application.pos_workflow.run_pos_component_merge",
@@ -106,17 +99,12 @@ def test_pos_workflow_list_fields_falls_back_when_discovery_errors(
 ) -> None:
     """Field listing should still succeed when runtime discovery fails."""
 
-    class _FailingResolver:
-        def __init__(self, **_kwargs) -> None:
-            pass
-
-        @staticmethod
-        def resolve_input(_input_path: str):
-            raise RuntimeError("resolver failed")
+    def _failing_resolve(_input_path, *, artifact_name="BOM", options=None):
+        raise RuntimeError("resolver failed")
 
     monkeypatch.setattr(
-        "jbom.application.pos_workflow.ProjectFileResolver",
-        _FailingResolver,
+        "jbom.application.pos_workflow.resolve_pcb_input",
+        _failing_resolve,
     )
 
     service = POSWorkflow()
