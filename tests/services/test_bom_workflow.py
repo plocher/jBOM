@@ -173,8 +173,15 @@ def test_generation_orchestration_handles_cross_resolution_and_returns_payload(
 # ---------------------------------------------------------------------------
 
 
-def test_synthesize_uses_pcb_footprint_and_schematic_value() -> None:
-    """PCB footprint wins; schematic value wins."""
+def test_synthesize_uses_pcb_footprint_and_pcb_value() -> None:
+    """PCB-first contract: footprint AND value come from the PCB when present.
+
+    The PCB's per-footprint ``(property "Value" ...)`` is the canonical
+    value because it's what the assembler reads off the board and it
+    survives ``Update PCB from Schematic`` divergence (the cpNode-Xiao-orig
+    pattern -- schematic carries a uniform default value across many
+    distinct refs while the PCB has the real per-Q values).
+    """
     from jbom.application.bom_workflow import synthesize_bom_components_from_pcb
     from jbom.common.pcb_types import PcbComponent
     from jbom.common.types import Component
@@ -206,11 +213,58 @@ def test_synthesize_uses_pcb_footprint_and_schematic_value() -> None:
     )
     assert len(components) == 1
     assert components[0].reference == "R1"
-    assert components[0].value == "10k"  # schematic-biased
+    assert components[0].value == "4.7k"  # PCB-first: PCB Value wins
     assert components[0].footprint == "Resistor_SMD:R_0603_1608Metric"  # PCB-biased
     assert components[0].properties.get("smd") == "true"
     assert components[0].properties.get("Package") == "0603"
     assert components[0].properties.get("Side") == "TOP"
+
+
+def test_synthesize_pcb_value_wins_across_refs_sharing_schematic_value() -> None:
+    """Regression for cpNode-Xiao-orig: schematic carries the same default
+    ``Value`` across many refs; the PCB has been customised per-ref. The
+    synthesizer must use the PCB value so the BOM doesn't collapse all
+    those refs into a single aggregated row.
+    """
+    from jbom.application.bom_workflow import synthesize_bom_components_from_pcb
+    from jbom.common.pcb_types import PcbComponent
+    from jbom.common.types import Component
+
+    board = SimpleNamespace(
+        footprints=[
+            PcbComponent(
+                reference="R4",
+                footprint_name="Resistor_SMD:R_0603",
+                package_token="0603",
+                center_x_mm=0.0,
+                center_y_mm=0.0,
+                rotation_deg=0.0,
+                side="TOP",
+                attributes={"Value": "470"},
+            ),
+            PcbComponent(
+                reference="R5",
+                footprint_name="Resistor_SMD:R_0603",
+                package_token="0603",
+                center_x_mm=0.0,
+                center_y_mm=0.0,
+                rotation_deg=0.0,
+                side="TOP",
+                attributes={"Value": "2k2"},
+            ),
+        ]
+    )
+    # Schematic-side: both refs carry the same default Value 10k.
+    schematic_components = [
+        Component(reference="R4", lib_id="Device:R", value="10k", footprint=""),
+        Component(reference="R5", lib_id="Device:R", value="10k", footprint=""),
+    ]
+    components = synthesize_bom_components_from_pcb(
+        board=board, schematic_components=schematic_components
+    )
+    by_ref = {c.reference: c for c in components}
+    assert by_ref["R4"].value == "470"
+    assert by_ref["R5"].value == "2k2"
 
 
 def test_synthesize_skips_schematic_only_references() -> None:

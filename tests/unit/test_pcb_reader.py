@@ -57,3 +57,37 @@ def test_parse_footprint_node_preserves_unknown_attr_tokens() -> None:
 
     assert parsed is not None
     assert parsed.attributes["custom_attr_flag"] == "yes"
+
+
+def test_parse_footprint_node_preserves_canonical_fpid_over_schematic_footprint_property() -> (
+    None
+):
+    """PCB-first contract: ``footprint_name`` must be the FPID from the
+    ``(footprint "Lib:Name" ...)`` opener.  When the footprint block also
+    carries a ``(property "Footprint" ...)`` field (which mirrors the
+    schematic-side hint and can disagree with the actual PCB FPID), the
+    reader must record it under ``attributes['schematic_footprint']`` and
+    NOT overwrite ``footprint_name``.  Otherwise the BOM ends up reporting
+    a footprint that doesn't match what's physically on the board (the
+    LEDStripDriver / cpOD-updated provenance bug).
+    """
+
+    reader = DefaultKiCadReaderService()
+    node: list[object] = [
+        Symbol("footprint"),
+        "VendorLib:0805-CAP",  # canonical FPID
+        [Symbol("layer"), "F.Cu"],
+        [Symbol("at"), "10", "20", "0"],
+        [Symbol("property"), "Reference", "C1"],
+        [Symbol("property"), "Value", "1uF"],
+        # Schematic-side hint that disagrees with the placed FPID.
+        [Symbol("property"), "Footprint", "Capacitor_SMD:C_0805_2012Metric"],
+    ]
+
+    parsed = reader._parse_footprint_node(node)
+
+    assert parsed is not None
+    # The canonical PCB FPID survives unchanged.
+    assert parsed.footprint_name == "VendorLib:0805-CAP"
+    # The schematic-side hint is preserved alongside it for diagnostics.
+    assert parsed.attributes["schematic_footprint"] == "Capacitor_SMD:C_0805_2012Metric"

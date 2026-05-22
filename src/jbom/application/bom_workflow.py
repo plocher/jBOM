@@ -385,10 +385,16 @@ def synthesize_bom_components_from_pcb(
     contract:
 
     * PCB-biased: ``footprint`` (from ``footprint_name``), ``package``,
-      ``side``, ``mount_type`` / ``smd``, ``x``, ``y``, ``rotation``.
-    * Schematic-biased: ``value``, ``tolerance``, ``voltage``, ``current``,
-      ``wavelength``.  When the schematic has no record for a reference, the
-      PCB attributes (e.g. footprint ``Value`` field) are the fallback.
+      ``side``, ``mount_type`` / ``smd``, ``x``, ``y``, ``rotation``,
+      and ``value`` -- under the PCB-first contract the PCB ``Value``
+      property is the canonical, per-reference value (it survives
+      ``Update PCB from Schematic`` overrides and is what the assembler
+      reads off the board).  The schematic value is only consulted when
+      the PCB carries no ``Value`` property for that reference.
+    * Auxiliary fields surfaced from the schematic for ``s:``-namespace
+      visibility (DRC-debug): ``tolerance``, ``voltage``, ``current``,
+      ``wavelength``.  These never affect BOM aggregation; they just
+      ride along on the synthesized component for the user.
     * Inventory-biased fields (manufacturer, MPN, SPN, fabricator) are left
       empty here; they are filled in by ``InventoryOverlayService`` later in
       the workflow.
@@ -440,16 +446,22 @@ def synthesize_bom_components_from_pcb(
         if mount:
             merged_props.setdefault("smd", "true" if mount == "smd" else "false")
 
-        # Resolve value: schematic-biased, with PCB attribute fallback.
+        # Resolve value: PCB-first.  The per-footprint ``(property "Value"
+        # ...)`` on the PCB is the canonical value because (a) it's what
+        # the assembler reads off the actual board, and (b) it survives
+        # cases where the schematic carries a uniform default value across
+        # many distinct parts that have been customised on the PCB (the
+        # cpNode-Xiao-orig pattern -- schematic ``BSS138`` everywhere,
+        # PCB carries the real per-Q values).  Schematic ``value`` is the
+        # fallback for the case the PCB has nothing recorded.
         resolved_value = ""
-        if sch is not None and sch.value:
+        for key in ("Value", "value"):
+            pcb_value = fp_attrs.get(key, "")
+            if pcb_value and str(pcb_value).strip():
+                resolved_value = str(pcb_value).strip()
+                break
+        if not resolved_value and sch is not None and sch.value:
             resolved_value = str(sch.value).strip()
-        if not resolved_value:
-            for key in ("Value", "value"):
-                pcb_value = fp_attrs.get(key, "")
-                if pcb_value and str(pcb_value).strip():
-                    resolved_value = str(pcb_value).strip()
-                    break
 
         # PCB-first DNP / exclude-from-BOM resolution.  The KiCad PCB parser
         # stores each ``(attr ...)`` token as ``attributes[token] = "yes"``,
