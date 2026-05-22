@@ -1,6 +1,200 @@
 # CHANGELOG
 
 
+## v6.60.0 (2026-05-22)
+
+### Bug Fixes
+
+* fix(bom): preserve PCB FPID; prefer PCB Value under PCB-first contract
+
+Two fixes surfaced by the jBOM-vs-Fabrication-Toolkit cross-project
+comparison (20 real KiCad projects under /Users/jplocher/Dropbox/KiCad/projects).
+
+Fix #1 -- pcb_reader: preserve canonical FPID
+- src/jbom/services/pcb_reader.py:_parse_footprint_node was overwriting
+  the canonical FPID (from the (footprint "Lib:Name" ...) opener)
+  with whatever the per-footprint (property "Footprint" ...) field
+  carried.  That property is the schematic-side hint that flowed in via
+  'Update PCB from Schematic' and can disagree with the physical
+  footprint placed on the board (e.g. PCB FPID 'VendorLib:0805-CAP' vs
+  schematic property 'Capacitor_SMD:C_0805_2012Metric').  Under the
+  PCB-first contract footprint_name must describe what's physically on
+  the board.  The schematic hint is now stashed under
+  attributes['schematic_footprint'] for DRC-debug visibility.
+- Reproduced in LEDStripDriver, cpOD-updated (C0603K vs C0603).
+
+Fix #3 -- synthesize_bom_components_from_pcb: PCB Value wins
+- The value resolver previously preferred the schematic value when
+  present and fell back to PCB.  Reversed: PCB-first contract says the
+  per-footprint (property "Value" ...) on the PCB is the canonical
+  value because (a) it is what the assembler reads off the actual
+  board, and (b) it survives the cpNode-Xiao-orig pattern where the
+  schematic carries a uniform default across many distinct refs that
+  have been customised on the PCB (e.g. Q1..Q17 all marked 'BSS138' on
+  the schematic while the PCB stores per-Q part numbers).  Schematic
+  Value remains the fallback for the case the PCB has nothing recorded.
+
+Test coverage
+- tests/unit/test_pcb_reader.py: new
+  test_parse_footprint_node_preserves_canonical_fpid_over_schematic_footprint_property
+  pins down Fix #1.
+- tests/services/test_bom_workflow.py: renamed
+  test_synthesize_uses_pcb_footprint_and_pcb_value (was
+  ..._and_schematic_value) and added
+  test_synthesize_pcb_value_wins_across_refs_sharing_schematic_value
+  -- a direct regression test for the cpNode-Xiao-orig pattern.
+
+Validation
+- Full pytest: 1398 passed (was 1396; +2 new tests).
+- Full behave: 47 features / 261 scenarios passed; 0 failed.
+- jBOM-vs-FT comparison: 15/20 [OK] (up from 14/20); cpNode-Xiao-orig
+  fully collapses; cpOD-updated C0603K vs C0603 diff disappears.
+
+Remaining diffs are policy/style, not jBOM bugs:
+- Designator case folding (FT uppercases all designators via
+  GetReference().upper()).
+- LEDStripDriver footprint name length (FT applies its own regex
+  normaliser; jBOM now surfaces the canonical PCB FPID, which is the
+  right thing).
+- cpOD / cpOD-updated DNP refs missing in jBOM by default (FT runs with
+  exclude_dnp=False; jBOM defaults to True).  Use 'jbom bom --include-dnp'
+  to match.
+
+Refs #289.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`59de8a2`](https://github.com/plocher/jBOM/commit/59de8a2ee16ac7bda2d179525b01b02e97ff4a13))
+
+* fix(bom): BOM generation is PCB-driven (PCB-first cutover)
+
+BOMWorkflow now follows the per-artifact contract: PCB is the canonical
+row set, schematic is enrichment.  Built on Stream 1's pcb_project_loader
+helpers so BOM and POS share identical resolve/load/enumerate plumbing
+(only the artifact_name label differs).
+
+Behaviour changes:
+* _generate uses resolve_pcb_input(artifact_name='BOM'); the diagnostic
+  trio now reads 'Note: BOM generation requires a PCB file. ... / found
+  matching PCB ... / Using PCB ...'.  Previously the workflow emitted
+  'requires a schematic file' and resolved PCB input back to the sibling
+  schematic.
+* board.footprints is the canonical row set.
+* New helper synthesize_bom_components_from_pcb(board, schematic_components)
+  produces schematic-shaped Component records keyed by PCB reference:
+  footprint/package/side/mount_type/smd come from the PCB, value comes
+  from the schematic when available (falls back to the PCB Value
+  attribute), dnp propagates from the schematic, and inventory-biased
+  fields are populated later by InventoryOverlayService.
+* References present only in the schematic are intentionally invisible
+  to BOM/POS - schematic/PCB sync is ERC/DRC territory.
+* The post-hoc band-aids enforce_bom_device_footprints and
+  enrich_bom_smd_from_project_pcb are no longer invoked from _generate;
+  their inputs are now PCB-sourced from the start.  The helpers remain
+  defined for downstream tooling but are unused by the BOM workflow.
+
+Tests:
+* tests/services/test_bom_workflow.py monkeypatches the new
+  pcb_project_loader helpers and asserts on the PCB-first diagnostic.
+* Four new behavioural tests for synthesize_bom_components_from_pcb
+  (schematic-biased value, PCB-biased footprint, schematic-only refs
+  invisible, PCB Value fallback, schematic DNP propagation).
+* tests/unit/test_cli_verbose.py fixture now includes a .kicad_pcb (BOM
+  requires it) and assertions accept PCB-first diagnostic patterns.
+
+1391 focused tests pass.
+
+Refs: #281
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`df28d4a`](https://github.com/plocher/jBOM/commit/df28d4af58e92308c5159cd61dee80f89453be69))
+
+### Features
+
+* feat(cli): jbom fab --archive-name parity with plugin
+
+Adds --archive-name TEMPLATE to jbom fab so the CLI produces the same
+gerber archive stem as the plugin for the same project.  Default
+template (_) matches the plugin dialog's editable
+Archive field.
+
+Implementation:
+* New jbom.services.project_metadata.expand_archive_template(template,
+  pcb_file) helper resolves KiCad title-block variables (${TITLE},
+  ${REVISION}, ${DATE}/${ISSUE_DATE}, ${CURRENT_DATE}, ${COMPANY})
+  against the PCB title block read via the file-based S-expression
+  parser.  Falls back to the PCB filename stem when the template
+  expands to nothing usable; returns '(unknown)' only when no PCB
+  exists on disk.  Uses a filename-safe normaliser that preserves dots
+  so revisions like '1.0' survive (the existing
+  normalize_archive_stem stripped non-alphanumeric chars).
+* DEFAULT_ARCHIVE_TEMPLATE constant published from project_metadata so
+  both CLI and plugin share one source of truth.
+* FabricationRequest gains an archive_template field.  The workflow's
+  _resolve_archive_stem now resolves in this priority:
+    1. request.archive_stem (plugin pre-expands and passes the stem)
+    2. request.archive_template (CLI passes the template; workflow
+       expands once it has the resolved PCB path)
+    3. legacy normalize_archive_stem(project_name) fallback
+* CLI fab handler reads --archive-name CLI arg, then the saved
+  archive_name_template from .jbom/jbom-options.json (plugin and CLI
+  share the persisted options file), then DEFAULT_ARCHIVE_TEMPLATE.
+* The plugin dialog's existing _expand_archive_template_from_file
+  remains unchanged and is functionally equivalent.
+
+Result: 'jbom fab' run against the same project as a plugin click
+produces the same archive name (e.g. cpNode-Xiao-68x90_1.0.zip vs the
+previous CLI's cpNode-Xiao-68x90.zip).
+
+Tests: 5 new tests in tests/unit/test_archive_template.py cover:
+title-block expansion, default template fallback, PCB-stem fallback
+when title block is empty, '(unknown)' when PCB missing, and unsafe-
+character normalisation.
+
+Refs: #287
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`c2fbc15`](https://github.com/plocher/jBOM/commit/c2fbc150c2a10197f1686037532d2fb77a8780cd))
+
+### Refactoring
+
+* refactor(application): factor shared PCB-as-row-set plumbing into pcb_project_loader
+
+New jbom.application.pcb_project_loader module centralizes the
+resolve-PCB-input / load-board / collect-project-graph sequence that
+BOM and POS each used to open-code.
+
+API surface:
+* resolve_pcb_input(input_path, *, artifact_name, options) - wraps
+  ProjectFileResolver(prefer_pcb=True, target_file_type='pcb'); emits
+  the canonical 'Note: <artifact> requires a PCB file. / found matching
+  PCB. / Using PCB.' diagnostic trio so BOM and POS produce identical
+  wording (only the artifact label differs).
+* load_board(pcb_path) - thin wrapper around
+  DefaultKiCadReaderService().read_pcb_file(...).
+* list_hierarchical_schematic_files(project_context) - existence-checked
+  enumeration that returns [] on resolver failure.
+* load_schematic_components(files, *, options, verbose) - schematic
+  enrichment loader; per-file failures become warning diagnostics in
+  verbose mode and are swallowed otherwise.
+* collect_project_graph(...) - delegates to ProjectComponentCollector
+  with board.footprints as the canonical PCB input.
+* ResolvedPcbProject - frozen dataclass bundling the resolved input,
+  pcb path, project context, and accumulated diagnostics.
+
+POSWorkflow refactored to use the helpers; no behaviour change. _list_fields
+and _generate no longer hand-roll the resolver + reader + schematic
+enumeration.  Existing POS workflow tests monkeypatch the new helper
+functions instead of the removed direct ProjectFileResolver /
+DefaultKiCadReaderService attributes.
+
+New tests/application/test_pcb_project_loader.py covers resolve_pcb_input
+trio behaviour, artifact_name wording, missing-context fatal-error,
+list_hierarchical_schematic_files filtering, load_schematic_components
+verbose vs silent failure, and collect_project_graph using board
+footprints as the canonical input.
+
+Refs: #280
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`b4fceab`](https://github.com/plocher/jBOM/commit/b4fceab115e95d6fefa998f779f9719b4daaa27f))
+
+
 ## v6.59.0 (2026-05-13)
 
 ### Bug Fixes
