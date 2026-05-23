@@ -575,6 +575,22 @@ jbom audit ./my_project --supplier mouser --api-key YOUR_KEY -o report.csv
 : 1 — error (file not found, invalid option, etc.)
 : 2 — warning (one or more BOM components unmatched; BOM was still written)
 
+## BOM DESIGNATOR CASE POLICY
+
+Designators (reference designators like R1, C2, U3) are preserved exactly as written in the `.kicad_pcb` file.
+KiCad allows mixed-case designators by design (e.g., `U$1`, `License1`, `MountingHole1`, `IO_SEL`, `gnd0`).
+jBOM does not normalize case.
+
+**Comparison with other tools**: Some tools (e.g., Fabrication-Toolkit) uppercase all designators at read time
+(so `License1` becomes `LICENSE1`). jBOM preserves the user's choice of case, which is less surprising and
+respects intentional styling.
+
+**If you need uppercase output**: You can post-process the CSV downstream. For example:
+
+```bash
+awk -F, 'NR==1{print; next}{ $1=toupper($1) }1' bom.csv > bom_uppercase.csv
+```
+
 ## BOM FIELD PRESETS
 
 Use `-f "+PRESET"` or shorthand fabricator flags (`--jlc`, etc.) to imply a preset.

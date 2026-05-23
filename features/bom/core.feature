@@ -81,3 +81,19 @@ Feature: BOM Generation (Core Functionality)
     And the CSV output has rows where:
       | Reference | Value | S:Value | P:Value |
       | R1        | 9K99  | 10K     | 9K99    |
+
+  Scenario: BOM preserves mixed-case designators from KiCad
+    # KiCad allows mixed-case designators by design (e.g., License1, Prop1).
+    # jBOM does not uppercase them at read time; they survive unchanged to output.
+    # This contrasts with tools like Fabrication-Toolkit that normalize to uppercase.
+    Given a PCB that contains:
+      | Reference | Value     | Footprint     |
+      | License1  | OSHW      | LICENSE_LOGO  |
+      | Prop1     | Custom    | CUSTOM_SHAPE  |
+      | R1        | 10K       | R_0805_2012   |
+    When I run jbom command "bom -f reference,quantity,value -o -"
+    Then the command should succeed
+    And the CSV output should contain "License1"
+    And the CSV output should contain "Prop1"
+    And the CSV output should not contain "LICENSE1"
+    And the CSV output should not contain "PROP1"
