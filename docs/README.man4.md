@@ -141,6 +141,18 @@ pads from components that were accidentally omitted from the BOM.
 The plugin's **Exclude DNP components** checkbox has been removed. DNP declarations are now
 always present in the BOM. Procurement filtering can be done downstream on the `DNP` column.
 
+## FOOTPRINT COLUMN
+
+The plugin uses the same Footprint-column contract as `jbom bom`: jBOM emits the canonical
+PCB FPID verbatim from the `.kicad_pcb` `(footprint "Lib:Name" ...)` identifier because that
+is what was fabricated. If this differs from schematic/library aliases or Fabrication-Toolkit
+output, the PCB FPID still wins.
+
+To change what appears in the BOM Footprint column, update the footprint identifier on the PCB
+(for example via **Update PCB from Schematic** with **Update attribute content** enabled),
+then regenerate the BOM. For the full command-line explanation, see
+[README.man1.md](README.man1.md#footprint-column).
+
 ## TROUBLESHOOTING
 
 **Plugin doesn't appear in the list**
