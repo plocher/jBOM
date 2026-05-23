@@ -13,10 +13,10 @@ Feature: BOM Field System and Output Customization
   Scenario: Different fabricators produce different output headers
     When I run jbom command "bom --fabricator generic -o -"
     Then the command should succeed
-    And the output should contain CSV headers "Reference,Quantity,Description,Value,Package,Footprint,Manufacturer,Part Number"
+    And the output should contain CSV headers "Reference,Quantity,Description,Value,Package,Footprint,Manufacturer,Part Number,DNP"
     When I run jbom command "bom --fabricator jlc -o -"
     Then the command should succeed
-    And the output should contain CSV headers "Designator,Quantity,Value,Comment,Footprint,LCSC Part #,Surface Mount"
+    And the output should contain CSV headers "Designator,Quantity,Value,Comment,Footprint,LCSC Part #,Surface Mount,DNP"
     When I run jbom command "bom --fabricator pcbway -o -"
     Then the command should succeed
     And the output should not contain CSV headers "Reference,Quantity,Description,Value,Package,Footprint,Manufacturer,Part Number"
@@ -46,10 +46,10 @@ Feature: BOM Field System and Output Customization
   Scenario: Fabricator-specific presets
     When I run jbom command "bom --fabricator jlc -f +jlc -o -"
     Then the command should succeed
-    And the output should contain CSV headers "Designator,Quantity,Value,Comment,LCSC Part #"
+    And the output should contain CSV headers "Designator,Quantity,Value,Comment,LCSC Part #,DNP"
     When I run jbom command "bom --fabricator generic -f +generic -o -"
     Then the command should succeed
-    And the output should contain CSV headers "Reference,Quantity,Description,Value,Manufacturer,Part Number"
+    And the output should contain CSV headers "Reference,Quantity,Description,Value,Manufacturer,Part Number,DNP"
 
   @regression @current-broken
   Scenario: Mixed syntax - preset plus custom fields
