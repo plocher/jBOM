@@ -45,7 +45,6 @@ from jbom.application.bom_workflow import (
     BOMWorkflow,
     BOMMode,
     BOMRequest,
-    enforce_bom_device_footprints as _service_enforce_bom_device_footprints,
     enrich_bom_smd_from_project_pcb as _service_enrich_bom_smd_from_project_pcb,
     enrich_bom_with_merge_namespaces as _service_enrich_bom_with_merge_namespaces,
     entry_smd_from_reference_lookup as _service_entry_smd_from_reference_lookup,
@@ -731,76 +730,6 @@ def _build_bom_row_sources(
             row_sources["s"].setdefault("package", package_value)
 
     return row_sources
-
-
-def _entry_has_namespaced_field(entry: BOMEntry, namespaced_field: str) -> bool:
-    """Return True when an entry explicitly carries a given namespaced field."""
-
-    normalized_target = normalize_field_name(namespaced_field)
-    for attribute_key in entry.attributes.keys():
-        normalized_key = normalize_field_name(str(attribute_key or ""))
-        if normalized_key == normalized_target:
-            return True
-    return False
-
-
-def _resolve_entry_device_footprint(entry: BOMEntry) -> str:
-    """Resolve the concrete device footprint for BOM/device workflows.
-
-    Precedence is intentionally physical-first:
-    1) Explicit PCB-resolved footprint (`p:footprint`) is authoritative
-    2) If PCB footprint is absent, fall back to schematic footprint (`s:footprint`)
-       then entry footprint
-    """
-
-    row_sources = _build_bom_row_sources(entry, include_unqualified_fallback=True)
-    has_pcb_footprint = _entry_has_namespaced_field(entry, "p:footprint")
-
-    pcb_footprint = resolve_field(
-        "p:footprint",
-        row_sources,
-        priority=_BOM_SOURCE_PRIORITY,
-    )
-    if has_pcb_footprint:
-        return str(pcb_footprint or "").strip()
-
-    schematic_footprint = resolve_field(
-        "s:footprint",
-        row_sources,
-        priority=_BOM_SOURCE_PRIORITY,
-    )
-
-    fallback_footprint = str(entry.footprint or "").strip()
-    for candidate in (schematic_footprint, fallback_footprint):
-        if _is_concrete_footprint(candidate):
-            return str(candidate).strip()
-    for candidate in (schematic_footprint, fallback_footprint):
-        normalized_candidate = str(candidate or "").strip()
-        if normalized_candidate:
-            return normalized_candidate
-
-    return ""
-
-
-def _is_concrete_footprint(value: str) -> bool:
-    """Return True when a footprint token is concrete enough for BOM devices."""
-
-    token = str(value or "").strip()
-    if not token or token == "~":
-        return False
-    if "*" in token or "?" in token:
-        return False
-    return True
-
-
-def _enforce_bom_device_footprints(bom_data: BOMData) -> BOMData:
-    """Enforce concrete footprint availability for BOM/device generation.
-
-    For BOM workflows, a tangible device footprint is mandatory.
-    - resolves entry footprint with PCB precedence (`p:footprint` over schematic)
-    - raises ValueError when a concrete footprint cannot be resolved
-    """
-    return _service_enforce_bom_device_footprints(bom_data)
 
 
 def _resolve_annotation_field_value(
