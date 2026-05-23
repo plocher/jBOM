@@ -1,6 +1,110 @@
 # CHANGELOG
 
 
+## v7.0.0 (2026-05-23)
+
+### Breaking
+
+* feat!: DNP column in BOM; remove --include-dnp/excluded/all flags
+
+Closes #294
+
+## Breaking changes
+
+- `--include-dnp`, `--include-excluded`, and `--include-all` removed from
+  `jbom bom`, `jbom parts`, and `jbom pos`. Each command now has fixed,
+  contract-correct behavior:
+  - bom/parts: DNP rows always included, marked in new `DNP` column
+  - pos: DNP rows always excluded (P&P contract)
+- `POSRequest.include_dnp` field removed
+
+## Added
+
+- `DNP` column in all four fabricator default BOM presets (generic, jlc,
+  pcbway, seeed). Value is `"DNP"` for DNP components, `""` for populated.
+- DNP-aware aggregation: populated and DNP variants of same value+footprint
+  are kept as separate rows (qty never inflated by merging DNP/non-DNP).
+- `dnp` computed BOM field available via `-f "...,dnp,..."`.
+- `dnp` attribute propagated from `Component.dnp` into `BOMEntry.attributes`
+  and `PartsListEntry.attributes` for uniform field access.
+
+## Parts list behavior
+
+Parts list (`jbom parts`) enumerates all design components including DNP.
+No dedicated `dnp` column in default output; attribute available via `-f dnp`.
+
+## Docs / tests
+
+- `docs/README.man1.md`: new "Component Attribute Handling" section.
+- `docs/README.man4.md`: plugin component attribute handling section.
+- `docs/CHANGELOG.md`: migration note for removed flags.
+- `features/bom/filtering.feature`: replaced with 6 new contract scenarios.
+- `features/parts/filtering.feature`: rewritten to match new contract.
+- Unit and integration tests updated/added for new DNP contract.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`4c0a7d7`](https://github.com/plocher/jBOM/commit/4c0a7d7fcd11503a2a3d4f00016923ab58e03778))
+
+### Bug Fixes
+
+* fix: update header regression tests to include new DNP column
+
+Features/bom/field_system_regression.feature had exact-match CSV header
+assertions that broke when the DNP column was added to all fabricator
+default presets in issue #294.  Update the four affected assertions to
+include the trailing DNP column. ([`0830655`](https://github.com/plocher/jBOM/commit/0830655e22297b9521d091f949b538b82f4c4ccc))
+
+### Unknown
+
+* Fix: use correct step definition syntax in designator case scenario ([`6649752`](https://github.com/plocher/jBOM/commit/6649752f3049e4b0e6413d68e3179ecf3c3bf15b))
+
+* Docs: add designator case preservation policy documentation
+
+Issue #292: Document that jBOM preserves mixed-case designators from .kicad_pcb
+files, contrasting with tools like Fabrication-Toolkit that uppercase on read.
+
+Changes:
+- Add "BOM Designator Case Policy" section to docs/README.man1.md
+  - Explains that KiCad allows mixed-case designators (e.g., License1, Prop1)
+  - Clarifies jBOM preserves case as-written (no normalization)
+  - Shows post-processing example if user needs uppercase output
+  - Contrasts with other tools' uppercase-on-read behavior
+- Add functional test in features/bom/core.feature
+  - Scenario: "BOM preserves mixed-case designators from KiCad"
+  - Uses realistic mixed-case refs (License1, Prop1, R1)
+  - Asserts refs survive unchanged to output (not uppercased)
+
+No code changes — documentation and test only.
+
+Fixes #292
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`de88a8d`](https://github.com/plocher/jBOM/commit/de88a8d4dcaa17c2f449b5458b162a9d947fcb5e))
+
+* Fix: remove dead CLI code from issue #291
+
+Under the PCB-first contract (PR #289), the CLI-level footprint enforcement
+helpers are no longer invoked in the live execution path. The service-level
+equivalent (enforce_bom_device_footprints) remains exported for downstream tooling.
+
+Changes:
+- Delete _enforce_bom_device_footprints() from cli/bom.py (and helpers)
+  - _resolve_entry_device_footprint()
+  - _is_concrete_footprint()
+  - _entry_has_namespaced_field()
+- Remove import of enforce_bom_device_footprints from cli/bom.py
+- Delete 5 unit tests in test_bom_cli_field_resolution.py that directly
+  tested the deleted CLI wrapper (functional contract is covered by
+  behave/gherkin tests)
+
+Test results:
+- 1393 unit tests pass (5 fewer, as expected)
+- BOM generation works correctly on real projects
+- No regressions in field resolution or projection logic
+
+Fixes #291
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`f46457a`](https://github.com/plocher/jBOM/commit/f46457a5e25a43c463696bd678edb10c63581cc1))
+
+
 ## v6.60.0 (2026-05-22)
 
 ### Bug Fixes
