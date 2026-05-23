@@ -40,6 +40,7 @@ fab:
     "Comment": "description"
     "Package": "inv:package"
     "Manufacturer Part Number": "jbom:fabricator_part_number"
+    "DNP": "jbom:dnp"
 
   pos_columns:
     "Designator": "reference"
@@ -59,6 +60,7 @@ fab:
         - "description"
         - "inv:package"
         - "jbom:fabricator_part_number"
+        - "jbom:dnp"
 
   cli_aliases:
     flags: ["--pcbway"]

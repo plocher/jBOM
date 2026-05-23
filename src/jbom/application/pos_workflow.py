@@ -77,7 +77,6 @@ class POSRequest:
     origin: str = "board"
     fields: str | None = None
     list_fields: bool = False
-    include_dnp: bool = False
     verbose: bool = False
     apply_corrections: bool = False
 
@@ -106,7 +105,6 @@ class POSRequest:
             str(self.fields).strip() if self.fields is not None else None,
         )
         object.__setattr__(self, "list_fields", bool(self.list_fields))
-        object.__setattr__(self, "include_dnp", bool(self.include_dnp))
         object.__setattr__(self, "verbose", bool(self.verbose))
         object.__setattr__(self, "apply_corrections", bool(self.apply_corrections))
 
@@ -614,10 +612,6 @@ class POSWorkflow:
             smd_only=request.smd_only,
             layer_filter=request.layer or None,
         )
-        if request.verbose and request.include_dnp:
-            diagnostics.append(
-                Diagnostic("info", "Including DNP components in POS output")
-            )
 
         board = load_board(pcb_file)
         pos_data = POSGenerator(placement_options).generate_pos_data(board)
@@ -645,7 +639,8 @@ class POSWorkflow:
         )
         diagnostics.extend(merge_diagnostics)
         pos_data = enrich_pos_with_merge_namespaces(pos_data, merge_result)
-        pos_data = apply_pos_dnp_filter(pos_data, include_dnp=request.include_dnp)
+        # POS unconditionally drops DNP rows — the P&P machine cannot place them.
+        pos_data = apply_pos_dnp_filter(pos_data, include_dnp=False)
 
         # Part 2: fold CPL rotations into the fab's required output range,
         # unconditionally — fires even without --apply-corrections.

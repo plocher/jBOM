@@ -89,12 +89,6 @@ Feature: BOM Inventory Enhancement
     And the output should contain "Inventory enhanced:"
     # Inventory enhancement should work with any fabricator preset
 
-  Scenario: BOM enhancement preserves filtering options
-    When I run jbom command "bom --inventory component_inventory.csv --include-dnp -o console"
-    Then the command should succeed
-    And the output should contain "Bill of Materials"
-    # Should show both enhanced inventory data and respect DNP filtering
-
   Scenario: Multiple inventory files with different component coverage
     When I run jbom command "bom --inventory component_inventory.csv --inventory enhanced_inventory.csv -o - -v"
     Then the command should succeed

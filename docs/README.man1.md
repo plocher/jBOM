@@ -233,15 +233,6 @@ Generates a Bill of Materials aggregated by value+package for procurement. Match
 **--list-fields**
 : List available fields and presets, then exit (no project needed).
 
-**--include-dnp**
-: Include "Do Not Populate" components (excluded by default).
-
-**--include-excluded**
-: Include components marked "Exclude from BOM" (excluded by default).
-
-**--include-all**
-: Include all components: DNP, excluded from BOM, and virtual symbols.
-
 **-v, --verbose**
 : Include Match_Quality, Priority, and Notes columns in output.
 
@@ -289,9 +280,6 @@ Generates a component placement file (CPL/POS) from a KiCad PCB for pick-and-pla
 
 **--origin {board,aux}**
 : Coordinate origin. `board` = board lower-left corner; `aux` = auxiliary axis origin (falls back to board if not defined).
-
-**--include-dnp**
-: Include DNP components in the placement file (excluded by default since they are not assembled).
 
 **-v, --verbose**
 : Enable verbose diagnostic output.
@@ -364,15 +352,6 @@ Generates an electro-mechanically aggregated parts list from schematics. `parts`
 
 **--jlc / --pcbway / --seeed / --generic**
 : Shorthand fabricator flags.
-
-**--include-dnp**
-: Include DNP components (excluded by default).
-
-**--include-excluded**
-: Include BOM-excluded components (excluded by default).
-
-**--include-all**
-: Include all components: DNP, excluded, and virtual symbols.
 
 **-v, --verbose**
 : Verbose output.
@@ -574,6 +553,40 @@ jbom audit ./my_project --supplier mouser --api-key YOUR_KEY -o report.csv
 : 0 — success
 : 1 — error (file not found, invalid option, etc.)
 : 2 — warning (one or more BOM components unmatched; BOM was still written)
+
+## COMPONENT ATTRIBUTE HANDLING
+
+KiCad footprints and schematic symbols carry three flag attributes that control how components
+flow through jBOM's three output commands. These flags are fixed at generation time — no CLI
+flags override them.
+
+| Attribute | `jbom bom` / `jbom parts` | `jbom pos` | Notes |
+|---|---|---|---|
+| `exclude_from_board` | not in output | not in output | Symbol-only: no PCB footprint |
+| `exclude_from_bom` | not in output | not in output | Board feature: logo, mounting hole, fiducial |
+| `dnp` (Do Not Populate) | **included, marked `DNP`** | not in output | Variant/rework spares: pad present, part absent |
+| *(none set)* | included | included | Normal populated component |
+
+**BOM/Parts**: `exclude_from_bom` components (mounting holes, fiducials, OSHW logos) are always
+excluded. DNP components are always included and identified by the `DNP` column value `"DNP"`
+(empty string for populated components). This follows IPC J-STD-001: assembly operators must
+be able to distinguish intentionally empty pads from omitted line items.
+
+**POS**: DNP components are always excluded. The P&P machine's input contract is strictly
+"place these components"; the companion BOM is the authoritative source for DNP declarations.
+
+**Full-board audit**: To enumerate every component regardless of flag — including
+`exclude_from_bom` refs, virtual symbols, and all DNP/non-DNP — use `jbom audit`.
+
+**Migration note** (from pre-v8.x): The `--include-dnp`, `--include-excluded`, and
+`--include-all` flags have been removed from `jbom bom`, `jbom parts`, and `jbom pos`.
+DNP rows now appear in BOM/parts output by default, marked in the `DNP` column.
+Procurement workflows that previously excluded DNP rows should filter on the `DNP` column:
+
+```bash
+# Extract only populated (non-DNP) components from the BOM:
+awk -F, 'NR==1 || $NF != "DNP"' project.bom.csv > populated.bom.csv
+```
 
 ## BOM DESIGNATOR CASE POLICY
 

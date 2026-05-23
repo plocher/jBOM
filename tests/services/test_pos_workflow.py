@@ -83,7 +83,6 @@ def test_pos_workflow_runs_without_cli_import(
         POSRequest(
             input_path=str(tmp_path),
             fields="reference,x,y",
-            include_dnp=False,
             fabricator="generic",
         )
     )

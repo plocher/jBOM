@@ -169,6 +169,133 @@ def test_generation_orchestration_handles_cross_resolution_and_returns_payload(
 
 
 # ---------------------------------------------------------------------------
+# BOM DNP contract
+# ---------------------------------------------------------------------------
+
+
+def test_bom_generator_includes_dnp_rows_by_default() -> None:
+    """DNP rows appear in BOM output by default (no exclude_dnp filter)."""
+    from jbom.services.bom_generator import BOMGenerator
+    from jbom.common.types import Component
+
+    components = [
+        Component(
+            reference="R1",
+            lib_id="Device:R",
+            value="10K",
+            footprint="R_0805",
+            dnp=False,
+        ),
+        Component(
+            reference="R2",
+            lib_id="Device:R",
+            value="No_Load",
+            footprint="R_0805",
+            dnp=True,
+        ),
+    ]
+    bom_data = BOMGenerator("value_footprint").generate_bom_data(
+        components,
+        "Project",
+        {
+            "exclude_dnp": False,
+            "include_only_bom": True,
+            "include_virtual_symbols": False,
+        },
+    )
+    refs = {e.references[0] for e in bom_data.entries}
+    assert "R1" in refs
+    assert "R2" in refs  # DNP row included
+
+
+def test_bom_entry_dnp_attribute_is_set() -> None:
+    """BOMEntry.attributes['dnp'] reflects the component's DNP flag."""
+    from jbom.services.bom_generator import BOMGenerator
+    from jbom.common.types import Component
+
+    components = [
+        Component(
+            reference="R1",
+            lib_id="Device:R",
+            value="10K",
+            footprint="R_0805",
+            dnp=False,
+        ),
+        Component(
+            reference="R2", lib_id="Device:R", value="10K", footprint="R_0805", dnp=True
+        ),
+    ]
+    bom_data = BOMGenerator("value_footprint").generate_bom_data(
+        components,
+        "Project",
+        {
+            "exclude_dnp": False,
+            "include_only_bom": True,
+            "include_virtual_symbols": False,
+        },
+    )
+    by_ref = {e.references[0]: e for e in bom_data.entries}
+    assert by_ref["R1"].attributes["dnp"] is False
+    assert by_ref["R2"].attributes["dnp"] is True
+
+
+def test_bom_dnp_field_resolver_emits_dnp_marker() -> None:
+    """resolve_bom_field_value returns 'DNP' for DNP entries and '' for populated ones."""
+    from jbom.services.bom_generator import BOMEntry
+    from jbom.services.bom_field_resolver import resolve_bom_field_value
+
+    populated = BOMEntry(
+        references=["R1"],
+        value="10K",
+        footprint="R_0805",
+        quantity=1,
+        attributes={"dnp": False},
+    )
+    dnp_entry = BOMEntry(
+        references=["R2"],
+        value="10K",
+        footprint="R_0805",
+        quantity=1,
+        attributes={"dnp": True},
+    )
+
+    assert resolve_bom_field_value(populated, "dnp") == ""
+    assert resolve_bom_field_value(dnp_entry, "dnp") == "DNP"
+
+
+def test_bom_aggregation_separates_populated_and_dnp_variants() -> None:
+    """Populated and DNP variants of the same value+footprint are on separate rows."""
+    from jbom.services.bom_generator import BOMGenerator
+    from jbom.common.types import Component
+
+    components = [
+        Component(
+            reference="R1",
+            lib_id="Device:R",
+            value="10K",
+            footprint="R_0805",
+            dnp=False,
+        ),
+        Component(
+            reference="R2", lib_id="Device:R", value="10K", footprint="R_0805", dnp=True
+        ),
+    ]
+    bom_data = BOMGenerator("value_footprint").generate_bom_data(
+        components,
+        "Project",
+        {
+            "exclude_dnp": False,
+            "include_only_bom": True,
+            "include_virtual_symbols": False,
+        },
+    )
+    # Must be two separate rows — not merged into qty 2
+    assert len(bom_data.entries) == 2
+    for entry in bom_data.entries:
+        assert entry.quantity == 1
+
+
+# ---------------------------------------------------------------------------
 # synthesize_bom_components_from_pcb
 # ---------------------------------------------------------------------------
 

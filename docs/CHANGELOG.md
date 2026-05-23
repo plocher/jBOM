@@ -7,6 +7,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [Unreleased]
 
 ### Breaking Changes
+- **DNP filter flags removed from `jbom bom`, `jbom parts`, and `jbom pos`** (issue #294):
+  `--include-dnp`, `--include-excluded`, and `--include-all` no longer exist on any of these
+  commands. Each command now has fixed, contract-correct behaviour:
+  - `bom` / `parts`: DNP rows are always included with a `DNP` column marker (`"DNP"` or `""`);
+    `exclude_from_bom` refs are always excluded; virtual symbols are always excluded.
+  - `pos`: DNP rows are always excluded (the P&P machine cannot place them).
+  Procurement consumers that previously relied on the default-exclude-DNP behaviour should
+  filter the `dnp` column: `awk -F, 'NR==1 || $NF != "DNP"' project.bom.csv`.
+
+### Added
+- **DNP column in BOM output** (issue #294): all four fabricator presets (`generic`, `jlc`,
+  `pcbway`, `seeed`) now include a `DNP` column in their default field set. Value is `"DNP"`
+  for Do-Not-Populate components and `""` for populated ones. This satisfies IPC J-STD-001.
+- **DNP-aware BOM aggregation** (issue #294): populated and DNP variants of the same
+  `value+footprint` combination are now kept on separate rows so quantity counts are never
+  inflated by merging a populated row with a DNP row.
+
+### Breaking Changes
 - **Minimum KiCad version raised to 9.0** for the PCM-installed plugin.  Pydantic v2,
   on which the unified profile loader depends, requires CPython 3.9+, which lines up
   with KiCad 9 (CPython 3.9) and KiCad 10 (CPython 3.12).  KiCad 6/7/8 are no longer
