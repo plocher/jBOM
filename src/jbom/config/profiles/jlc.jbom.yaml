@@ -75,6 +75,7 @@ fab:
     "Footprint": "strip_kicad_library_prefix_from_value(pcb:footprint)"
     "LCSC": "jbom:fabricator_part_number"  # JLCPCB requires this column name in BOM
     "Surface Mount": "jbom:smd"
+    "DNP": "jbom:dnp"
 
   pos_columns:
     "Designator": "reference"
@@ -95,6 +96,7 @@ fab:
         - "strip_kicad_library_prefix_from_value(pcb:footprint)"
         - "jbom:fabricator_part_number"
         - "jbom:smd"
+        - "jbom:dnp"
     jlc:
       description: "JLC preset alias"
       fields:
@@ -103,6 +105,7 @@ fab:
         - "value"
         - "description"
         - "jbom:fabricator_part_number"
+        - "jbom:dnp"
 
   cli_aliases:
     flags: ["--jlc"]

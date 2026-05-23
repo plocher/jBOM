@@ -50,6 +50,7 @@ _BOM_COMPUTED_FIELDS: tuple[str, ...] = (
     "mfgpn",
     "fabricator_part_number",
     "smd",
+    "dnp",
     "lcsc",
     "package",
 )

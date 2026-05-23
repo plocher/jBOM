@@ -289,7 +289,6 @@ class JBOMFabricationDialog(wx.Dialog):
             return cb
 
         self._cb_smd_only = _cb("SMD only (placement)", False)
-        self._cb_exclude_dnp = _cb("Exclude DNP components")
         self._cb_fill_zones = _cb("Fill all zones before Gerbers")
         self._cb_fill_zones.SetToolTip(
             "Fill all zones before Gerbers. Skipped automatically if zones are "
@@ -334,7 +333,6 @@ class JBOMFabricationDialog(wx.Dialog):
 
         for cb in (
             self._cb_smd_only,
-            self._cb_exclude_dnp,
             self._cb_fill_zones,
             self._cb_backup,
             self._cb_open_folder,

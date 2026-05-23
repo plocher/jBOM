@@ -120,6 +120,9 @@ class PartsListGenerator:
         for group in grouped_components.values():
             representative = group[0]
             refs = natural_sort_references([component.reference for component in group])
+            attrs = representative.properties.copy()
+            # Propagate typed Component flags into attributes for uniform field access.
+            attrs["dnp"] = representative.dnp
             entry = PartsListEntry(
                 refs=refs,
                 value=representative.value,
@@ -132,7 +135,7 @@ class PartsListGenerator:
                 voltage=self._component_property(representative, ["Voltage", "V"]),
                 dielectric=self._component_property(representative, ["Dielectric"]),
                 lib_id=representative.lib_id,
-                attributes=representative.properties.copy(),
+                attributes=attrs,
             )
             entries.append(entry)
 

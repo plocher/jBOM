@@ -122,6 +122,25 @@ The plugin writes a CSV file to the location specified in the KiCad Generate BOM
 
 Exit code is returned to KiCad (0=success, non-zero=error). Errors are logged to stderr.
 
+## COMPONENT ATTRIBUTE HANDLING
+
+KiCad's three component flag attributes have fixed, contract-correct behavior in jBOM output.
+No plugin checkbox or CLI flag overrides them.
+
+| Attribute | BOM output | CPL/POS output |
+|---|---|---|
+| `exclude_from_board` | not in output | not in output |
+| `exclude_from_bom` | not in output | not in output |
+| `dnp` (Do Not Populate) | **included, marked `DNP`** | not in output |
+| *(none set)* | included | included |
+
+DNP rows appear in the BOM with `"DNP"` in the `DNP` column (empty for populated components).
+This is required by IPC J-STD-001 so assembly operators can distinguish intentionally empty
+pads from components that were accidentally omitted from the BOM.
+
+The plugin's **Exclude DNP components** checkbox has been removed. DNP declarations are now
+always present in the BOM. Procurement filtering can be done downstream on the `DNP` column.
+
 ## TROUBLESHOOTING
 
 **Plugin doesn't appear in the list**

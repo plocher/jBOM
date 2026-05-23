@@ -42,6 +42,7 @@ fab:
     "Footprint": "footprint"
     "Manufacturer": "manufacturer"
     "Part Number": "jbom:fabricator_part_number"
+    "DNP": "jbom:dnp"
 
   pos_columns:
     "Designator": "reference"
@@ -78,6 +79,7 @@ fab:
         - "footprint"
         - "manufacturer"
         - "jbom:fabricator_part_number"
+        - "jbom:dnp"
     generic:
       description: "Generic preset alias"
       fields:
@@ -87,6 +89,7 @@ fab:
         - "value"
         - "manufacturer"
         - "jbom:fabricator_part_number"
+        - "jbom:dnp"
 
   cli_aliases:
     flags: ["--generic"]
