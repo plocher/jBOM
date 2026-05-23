@@ -93,7 +93,7 @@ Feature: BOM Generation (Core Functionality)
       | R1        | 10K       | R_0805_2012   |
     When I run jbom command "bom -f reference,quantity,value -o -"
     Then the command should succeed
-    And the CSV output should contain "License1"
-    And the CSV output should contain "Prop1"
-    And the CSV output should not contain "LICENSE1"
-    And the CSV output should not contain "PROP1"
+    And the output should contain "License1"
+    And the output should contain "Prop1"
+    And the output should not contain "LICENSE1"
+    And the output should not contain "PROP1"
