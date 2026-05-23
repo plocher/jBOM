@@ -604,6 +604,23 @@ respects intentional styling.
 awk -F, 'NR==1{print; next}{ $1=toupper($1) }1' bom.csv > bom_uppercase.csv
 ```
 
+## FOOTPRINT COLUMN
+
+`jbom bom` reports the canonical PCB FPID for each component: the literal identifier from
+the `(footprint "Lib:Name" ...)` form in the `.kicad_pcb` file. That value is the
+authoritative record of what was fabricated on the board.
+
+The FPID may differ from:
+- the schematic symbol's `Footprint` property,
+- Fabrication-Toolkit's BOM footprint column (it resolves schematic-side names through
+  KiCad's library system), or
+- project-internal library aliases.
+
+In all cases, the PCB FPID wins because the FPID is what was fabricated. If you want a
+different identifier to appear in the BOM, change it on the PCB (for example via KiCad's
+**Update PCB from Schematic** with **Update attribute content** enabled) and re-run
+`jbom bom`.
+
 ## BOM FIELD PRESETS
 
 Use `-f "+PRESET"` or shorthand fabricator flags (`--jlc`, etc.) to imply a preset.
