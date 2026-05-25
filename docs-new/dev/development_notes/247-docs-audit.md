@@ -1,11 +1,16 @@
 # Issue #247 — Documentation Charter Audit
 
-Status: Pass-1 verdicts complete; disposition execution pending
+Status: **Wave A + Wave B complete; ready for final tree swap** (`git rm -r docs && git mv docs-new docs`)
 Charter: [`docs/README.md`](../../README.md)
 Branch: `issue-247-docs-readme-developer-refresh`
 Parent issue: #247
 Sub-issues: #300 (ADR format normalization 0011–0016) — **complete, awaiting user verification**
-Follow-up issues filed: #301 (reframed: create design doc, do not amend ADR), #302 (F-006 BDD fault testing), #303 (F-007 CLI flag verify), #304 (F-008 Fabrication Platform ADR), #305 (F-013 CHANGELOG generation)
+Follow-up issues filed: #301 (reframed: create design doc), #302 (F-006 BDD fault testing), #303 (F-007 CLI flag verify — **closed by doc fix in `71a427c`**), #304 (F-008 Fabrication Platform ADR), #305 (F-013 CHANGELOG generation), #307 (F-015 multi-file inventory merge), #308 (F-016 project resolution edge cases), #311 (F-017 plugin wrapper docstring)
+
+The `docs/` pre-charter tree now contains only `docs/CHANGELOG.md`
+(deferred to #305 for generation) and `docs/assets/icons/*.png`
+(deferred to future plugin work). All other content has migrated to
+`docs-new/` and source files deleted.
 
 This audit applies the Documentation Charter to the existing `docs/`
 tree and decides the disposition of each file. It is an
@@ -444,6 +449,13 @@ Dispositions actually executed on this branch (in commit order):
 - `fedc407` — **Executed (via #300)**: ADR 0014 (job-contracts) — F-001 verified, divergence filed as #301.
 - `95d62d5` — **Executed (via #300)**: ADR 0015 (config-schema-audit).
 - `563288a` — **Executed (via #300)**: ADR 0016 (eaglelib2kicad-adapter-requirements).
+- `2847371`–`4d66a9a` — **Wave A**: 5 commits (charter → docs/README.md merge, mass deletes, ADR relocations, simple keeps/moves, WARP.md cleanup).
+- `bf4d5cc` — **Wave A.5**: straggler cleanup (.feature relocate, JohnExample.csv delete, requirements/README delete, .DS_Store untrack, etc.).
+- `5f38e23`–`5432181` — **Wave B.1**: 6 sub-agent cherry-picks (bdd-axioms, contributing, user-guide, man5, tutorials, architecture-and-extension) + F-014 fix-up + Wave B.1 source-deletes.
+- `85c7e2e` — deleted misplaced `PROJECT_INPUT_RESOLUTION_TESTS.feature` (CI was failing on 95 undefined steps).
+- `ab61168`–`b441088` — **Wave B.2**: 5 sub-agent cherry-picks (skills-batch, configuration-split, plugin-ux-rewrite, kicad-plugin-cluster, lcsc-and-cli-refs).
+- `71a427c` — F-007 doc fix in `inventory-field-semantics.md` (removed `--triage` section; `--no-aggregate` → `--per-instance` canonical).
+- `f0244ec` — Wave B.2 source-deletes (8 files).
 
 ## Cross-cutting findings
 
@@ -460,6 +472,10 @@ Dispositions actually executed on this branch (in commit order):
 - **F-011** — `sophisticated_inventory_matcher.py` cross-doc references (CONTRIBUTING.md, DEVELOPER_GUIDE.md, README.developer.md) need verification against current `src/`. **Resolves naturally** through the per-file rewrites/splits in this audit; no new issue.
 - **F-012** — Tutorial 4 documents `based_on:` fabricator-profile syntax that doesn't exist in code; canonical is `extends:` per ADR 0008. **Resolution: extends is canonical** (per user disposition). Resolves in T4 rewrite; no new issue.
 - **F-013** — *Resolved by charter amendment `89e890a`.* `CHANGELOG.md` is now defined as fully generated; hand-edits rejected by pre-commit hook + CI staleness check. Malformed `[Unreleased]` section observed today resolves at first generated output. **Implementation tracked by #305**.
+- **F-014** — *Resolved by direct doc edit in `d30444e`.* BDD Axiom #4 (originally multi-modal testing across CLI/API/Plugin) does not match current practice; CLI is a thin layer over service APIs and BDD exercises the CLI. Axiom #4 rewritten in `docs-new/design/bdd-axioms.md` as "Service-API Testing via the CLI Surface"; matching update in `bdd-scenarios` skill. Multi-modal step dispatch was tried and rejected (combinatoric complexity exercising mocks).
+- **F-015** — Multi-file inventory merge gap in `BOMWorkflow._generate()`: only `request.inventory_files[0]` is used; remaining files trigger a "coming soon" diagnostic. Discovered while resolving F-005 (the legacy docs' "first file wins" language). **Filed as #307**.
+- **F-016** — Pre-implementation `PROJECT_INPUT_RESOLUTION_TESTS.feature` (from `dev/development_notes/`) was superseded by the per-aspect features in `features/project/`. Most scenarios duplicate existing coverage; 4 edge cases (absolute paths, trailing slash, permission denied, symlinks) are not covered. Original file deleted in `85c7e2e`; **edge-case gaps filed as #308**.
+- **F-017** — `kicad_jbom_plugin.py` wrapper docstring documents `-i` as a short form for `--inventory`, but `jbom bom` (`src/jbom/cli/bom.py`) doesn't register the alias. **Filed as #311**.
 
 ## Follow-up issues filed
 
