@@ -193,6 +193,19 @@ descriptions; the changelog is a derived view.
 - **Generated docs** are tested by CI: the build fails if the committed
   artifact diverges from a fresh regeneration.
 
+### Writing standards
+
+- Use **jBOM** consistently as the product name (not JBOM, jbom, or
+  j-BOM). The package name `jbom` is lowercase in CLI and code
+  contexts; the product name `jBOM` is mixed-case in prose.
+- Prefer concise prose over long bullet lists. Use bullets when items
+  are genuinely parallel; otherwise structure as paragraphs.
+- Include concrete examples and runnable code snippets when they
+  serve comprehension; omit them when prose suffices.
+- Cross-reference related docs via inline links rather than separate
+  "SEE ALSO" footer sections. The reader should not need to scroll
+  to find the next relevant doc.
+
 ### Skills are the canonical form for procedural how-to
 
 Procedural "how to do X" content — historically authored as "guides" —

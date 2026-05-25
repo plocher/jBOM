@@ -10,48 +10,28 @@ I will treat you as a trusted collaborator, and I expect to be treated the same 
 
 ## Required Development Workflow
 
-**CRITICAL: All development work MUST follow this A-B-C pattern:**
+Follow the **`git-workflow`** project skill
+(`.agents/skills/git-workflow/SKILL.md`) for the feature-branch +
+iterative-pre-commit + semantic-commit + PR-creation procedure.
 
-### A) BEGIN - Feature Branch Creation
-- **ALWAYS start by creating a new feature branch** from main:
-  ```bash
-  git checkout -b feature/issue-N-brief-description
-  ```
-- Branch name should reference the GitHub issue(s) being addressed
-- Examples: `feature/issue-22-fabricator-migration`, `fix/issue-45-cli-help-bug`
-
-### B) PROGRESS - Aggressive Commit Strategy
-- **Make frequent commits** as you work through your plan and tasks
-- **ALWAYS run git add, pre-commit, and commit after each logical change**
-- **Add substantive GitHub issue comments** to document progress, findings, and solutions
-- Use semantic commit messages:
-  - `feat:` for new features
-  - `fix:` for bug fixes
-  - `test:` for adding/updating tests
-  - `docs:` for documentation changes
-  - `refactor:` for code refactoring
-
-
-### C) FINISH - GitHub PR and Issue Closure
-- **Run behave** and address all failures and missing step definitions
-- **Push feature branch** to origin
-- **Create GitHub PR** with comprehensive description including:
-  - Issues addressed (using "Closes #N" syntax)
-  - Changes made with verification steps
-  - Architecture impact
-  - Testing performed
-- **Set PR to close related issues** when merged
-- **Record key deliverables** and changes in the PR description
+Key constraints (rules, not procedure):
+- **Never commit directly to `main`.** All work happens in a feature branch.
+- **Branch names reference the GitHub issue(s) being addressed**:
+  `feature/issue-N-brief-description`, `fix/issue-N-brief-description`.
+- **Add substantive GitHub issue comments** to document progress,
+  findings, and solutions as work proceeds.
+- **All tests must pass before a PR can merge** — see `Testing
+  Requirements` below.
 
 ## jBOM Project Context
 
 jBOM is a sophisticated KiCad Bill of Materials generator in Python. It matches schematic components against inventory files (CSV, Excel, Numbers) to produce fabrication-ready BOMs and CPLs with supplier-neutral designs and flexible output customization.
 
 ### Project Structure
-- **Legacy System**: `~/Dropbox/KiCad/jBOM/src` (READ-ONLY - use for reference and migration)
-- **Active Development**: `~/Dropbox/KiCad/jBOM/` (ALL changes go here)
-- **Architecture**: Domain-centric design with Service-Command pattern
-- **Documentation**: `./docs/` contains architectural and tutorial knowledge
+- **Active source**: `~/Dropbox/KiCad/jBOM/src/jbom/`
+- **Tests**: `~/Dropbox/KiCad/jBOM/tests/` (pytest) and `~/Dropbox/KiCad/jBOM/features/` (behave/BDD)
+- **Architecture**: Domain-centric design; service / command / application layering (see `docs/architecture/adr/`).
+- **Documentation**: `~/Dropbox/KiCad/jBOM/docs/` — governed by `docs/README.md` (the documentation charter).
 
 ## Development Practices
 
@@ -79,15 +59,13 @@ jBOM is a sophisticated KiCad Bill of Materials generator in Python. It matches 
 - **ALWAYS use**: `PYTHONPATH=/Users/jplocher/Dropbox/KiCad/jBOM/src`
 - **Test paths**: Use dot notation (`tests.test_jbom`), not file paths
 
-### Shell (macOS zsh)
-- **Quote handling**: Use single quotes for commit messages with `!` (e.g., `'fix!: something'`)
-- **Git workflow**: Never work directly in main branch
-- **File staging**: Use explicit file lists with `git add`, avoid `git add --all`
-- **Pre-commit**: ALWAYS run and fix issues identified. Re-add files after auto-fixes.
+### Shell + git + GitHub CLI procedure
 
-### GitHub CLI
-- **Issue/PR creation**: Use `--body-file` or JSON representations for complex content
-- **Comments**: Use `gh issue comment N --body "text"` for progress updates
+Procedural guidance for staging, commits, pre-commit handling, zsh
+quoting of conventional-commit messages, and `gh` issue/PR authoring
+lives in the `git-workflow` skill at
+`.agents/skills/git-workflow/SKILL.md`. Follow that skill rather than
+duplicating the steps here.
 
 ## Code Quality Standards
 
@@ -119,12 +97,12 @@ jBOM is a sophisticated KiCad Bill of Materials generator in Python. It matches 
 - **Sample KiCad projects**: `/Users/jplocher/Dropbox/KiCad/projects/{AltmillSwitches,Core-wt32-eth0,LEDStripDriver}`
 
 ## Release Process
-1. **Never work directly in main** - always use feature branches
-2. **Make semantic commits** with conventional commit messages
-3. **Push to feature branch** and create GitHub PR
-4. **Check CI/CD pipeline** results and fix any errors
-5. **Request review** and wait for approval
-6. **Merge when approved** - GitHub Actions handles version bump and PyPI publish
+
+Releases are automated by semantic-release on merge to `main`. The
+developer-facing procedure (feature branch → commits → PR → merge)
+is covered by the `git-workflow` skill. The automation itself (the
+CHANGELOG generator, pre-commit hook, and CI staleness check) is
+tracked by #305.
 
 ## Critical Reminders
 
