@@ -19,8 +19,10 @@ assign custom sentinel semantics to `~`.
 
 - Matching semantics: component-side `~` is treated as blank/no-constraint.
 - Annotate semantics: non-blank CSV cells are written literally, including `~`.
-- Export/round-trip semantics: `inventory --no-aggregate` preserves literal field values,
-  and `annotate` writes user-edited non-blank values as provided.
+- Export/round-trip semantics: `inventory --per-instance` (formerly
+  `--no-aggregate`, retained as a deprecated alias) preserves literal
+  field values, and `annotate` writes user-edited non-blank values as
+  provided.
 
 ### Why blank is unambiguous
 The design workflow is: create project → audit (B1) → optional repair (B2) → fab.
@@ -45,13 +47,6 @@ Required field warnings during annotate:
 - required fields are currently `Value` and `Package`
 - annotate emits warnings when required fields are blank in data rows
 
-## Triage behavior (`--triage`)
-`jbom annotate --triage` reports data rows with required blanks:
-
-- required fields checked: `Value`, `Package`
-- rows with `Project = "Project"` are skipped
-- output is focused on missing required fields only
-
 ## Sub-header row sentinel format
 Inline sub-header rows are identified using:
 
@@ -59,8 +54,10 @@ Inline sub-header rows are identified using:
 
 This sentinel is used to skip both top-level header-like guide rows and per-category sub-header rows during annotate processing.
 
-## `inventory --no-aggregate` (Scope C)
-`jbom inventory --no-aggregate` emits one row per component instance for sparse-fix workflows.
+## `inventory --per-instance`
+`jbom inventory --per-instance` (canonical; `--no-aggregate` retained
+as a deprecated alias) emits one row per component instance for
+sparse-fix workflows.
 
 Current schema prefix:
 
