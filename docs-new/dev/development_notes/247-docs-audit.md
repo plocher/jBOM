@@ -41,7 +41,7 @@ Two passes:
 ## Target tree
 
 Per the charter's folder-structure clause, the post-audit `docs/`
-tree has exactly six top-level folders:
+tree has exactly five top-level folders:
 
 ```
 docs/
@@ -49,9 +49,21 @@ docs/
 ├── architecture/   ← formal, frozen architectural decisions
 ├── design/         ← mutable design rationale
 ├── reference/      ← generated/constructed lookup
-├── skills/         ← actionable how-tos (humans + agents)
 └── tutorials/      ← curated journeys
+
+.agents/                     ← outside docs/, Warp's skill-loader location
+└── skills/
+    ├── README.md         ← explains the symlink convention
+    └── <skill-name>/
+        └── SKILL.md
+
+docs/skills → ../.agents/skills    ← convenience symlink
 ```
+
+Skills live at `.agents/skills/` because the Warp skill loader scans
+specific project-relative directories (not `docs/`). A symlink at
+`docs/skills/` keeps the `docs/` tree navigable without duplicating
+content.
 
 Migration happens in `docs-new/` during the audit; the final commit
 removes empty `docs/` and renames `docs-new/` → `docs/`.
@@ -67,8 +79,9 @@ removes empty `docs/` and renames `docs-new/` → `docs/`.
   check replaces it.
 - **→ADR** — Content is architectural but pre-ADR-format. Converted
   to formal ADR under separately-tracked sub-issue (#300).
-- **→skill** — Procedural how-to; migrates out of `docs/` into the
-  project's skill mechanism.
+- **→skill** — Procedural how-to; migrates out of `docs/` to
+  `.agents/skills/<skill-name>/SKILL.md`. The `docs/skills/` symlink
+  makes the content reachable from the `docs/` tree as well.
 - **→requirements (harvest)** — Content is requirements material
   currently tucked under `features/*/README.md`. Harvested into
   `docs/requirements/`; original location may retain a pointer.
