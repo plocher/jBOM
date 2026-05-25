@@ -95,30 +95,42 @@ via the scenario text rather than one step per concrete value.
 
 ---
 
-## Multi-modal testing (Axiom #4) [STATUS: needs verification]
+## Service-API testing via the CLI surface (Axiom #4)
 
-The design intent is that a single step definition for core behavior should
-exercise CLI, API, and Plugin execution paths automatically, so one scenario
-covers all three rather than three near-identical scenarios.
+jBOM's testing pattern follows the codebase's layered design: the CLI is a
+thin wrapper over the service API, and the plugin (when present) accesses the
+same service API. BDD scenarios exercise the CLI — which by design exercises
+the service API — and that single path is the right level for behavioral
+coverage.
 
-As of the #247 audit the current step library invokes jBOM exclusively via the
-CLI (`python -m jbom.cli.main` in `common_steps.py`).  No API-mode or Plugin
-invocation was found in `features/steps/`.  Before promoting a scenario as
-"multi-modal verified", confirm that the underlying step actually exercises all
-three paths.  If it does not, either extend the step implementation or note the
-gap in the scenario with a `@wip` tag.
-
-The anti-pattern to avoid is writing three separate scenarios:
+**The correct pattern:**
 
 ```gherkin
-# Wrong — DRY violation
+# One scenario per business behavior, exercised through the CLI.
+Scenario: BOM generation matches inventory components by category and value
+```
+
+The step implementation invokes the CLI (`python -m jbom.cli.main` via
+`common_steps.py`). The CLI is thin; what is actually under test is the
+service API behind it. Plugin coverage, when the plugin is exercised, goes
+through the same service API and is tested separately at the plugin boundary.
+
+**Anti-pattern to avoid:** writing three near-identical scenarios for CLI,
+API, and Plugin paths.
+
+```gherkin
+# Wrong — multi-modal duplication
 Scenario: Generate BOM via API
 Scenario: Generate BOM via CLI
 Scenario: Generate BOM via Plugin
 ```
 
-The goal is one scenario backed by a step implementation that dispatches to all
-three execution contexts.
+An earlier formulation of Axiom #4 framed this as a "multi-modal" step
+definition that dispatched to all three execution paths simultaneously. That
+approach was tried and rejected because it expanded combinatoric test
+complexity while only exercising mocks rather than the in-situ paths.
+Multi-modal step dispatch is not a current priority — the CLI-surface BDD
+strategy is what is exercised today.
 
 ---
 

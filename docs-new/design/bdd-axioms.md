@@ -32,18 +32,19 @@ Every external dependency a scenario relies on — configuration files, fabricat
 settings, inventory contents — must be stated explicitly in Given steps.  Hidden
 assumptions make scenarios non-reproducible.
 
-**Axiom #4 — Multi-Modal Testing.** [STATUS: needs verification]
-Core functionality should be tested across CLI, API, and Plugin execution
-contexts rather than writing three separate scenarios for the same behavior.
-The intent is that a single well-written step definition exercises all three
-execution paths automatically.
+**Axiom #4 — Service-API Testing via the CLI Surface.**
+The jBOM design pattern is: define the service API; craft a thin CLI that wraps
+it; test via the CLI (which exercises the service API); add plugin access to
+the same service API when a plugin is appropriate. BDD scenarios target the
+CLI, which by design is a thin layer over the service API. The plugin route,
+when present, also calls the same service API and is exercised independently.
 
-*Verification note:* As of the #247 audit, the current step definitions in
-`features/steps/` invoke jBOM exclusively via the CLI
-(`python -m jbom.cli.main`).  No API-mode or Plugin execution path was found in
-the step implementations.  This axiom describes the design goal; whether it is
-fully realized in the current step library requires confirmation against the
-actual step implementations.  See audit finding in `docs-new/dev/development_notes/247-docs-audit.md`.
+An earlier formulation of this axiom called for "multi-modal" step definitions
+that exercised CLI, API, and Plugin paths from a single scenario. That approach
+was tried and rejected: it expanded combinatoric test complexity while only
+exercising mocks rather than the in-situ paths. Multi-modal step dispatch is
+not a current priority. Scenarios test the CLI; the CLI exercises the service
+API; the plugin (when added) shares the service API.
 
 **Axiom #5 — Internal Consistency.**
 Table column headers in a scenario must exactly match the field names used in
