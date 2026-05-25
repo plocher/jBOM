@@ -118,7 +118,7 @@ the new package automatically on the next behave run.
 
 ## Related
 
-- [`docs-new/README.md`](../../../docs-new/README.md) — documentation charter
+- [`docs/README.md`](../../../docs/README.md) — documentation charter
 - [jBOM WARP.md](../../../WARP.md) — project workflow rules; see Testing
   Requirements for how behave is run in this project
 - [`git-workflow`](../git-workflow/SKILL.md) — commit and PR procedure

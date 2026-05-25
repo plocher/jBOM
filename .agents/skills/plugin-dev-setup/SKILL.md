@@ -24,7 +24,7 @@ is only needed for release preparation or smoke-testing the packaged artifact.
 
 The packaging decision (Option H hybrid model, keeping CLI and plugin in one
 repository) is documented in
-[ADR 0007](../../../docs-new/architecture/adr/0007-plugin-packaging-and-distribution.md).
+[ADR 0007](../../../docs/architecture/adr/0007-plugin-packaging-and-distribution.md).
 
 ## Prerequisites
 
@@ -205,7 +205,7 @@ ln -s "$PWD/src/jbom/plugin" \
 
 ## Related
 
-- [ADR 0007](../../../docs-new/architecture/adr/0007-plugin-packaging-and-distribution.md) — plugin packaging decision (Option H hybrid model)
+- [ADR 0007](../../../docs/architecture/adr/0007-plugin-packaging-and-distribution.md) — plugin packaging decision (Option H hybrid model)
 - `scripts/build_pcm_package.py` — PCM archive builder
 - `src/jbom/plugin/` — plugin source tree
 - [kicad-plugin-setup skill](../kicad-plugin-setup/SKILL.md) — end-user Eeschema BOM plugin registration

@@ -7,9 +7,9 @@ description: Use when adding a new jBOM CLI command, domain service, inventory f
 
 Procedural recipes for extending jBOM. Each recipe is self-contained and references
 the relevant source file. Read
-[`docs-new/design/architecture-overview.md`](../../docs-new/design/architecture-overview.md)
+[`docs/design/architecture-overview.md`](../../docs/design/architecture-overview.md)
 for the structural overview and
-[`docs-new/design/service-command-architecture.md`](../../docs-new/design/service-command-architecture.md)
+[`docs/design/service-command-architecture.md`](../../docs/design/service-command-architecture.md)
 for the design rationale behind the patterns used here.
 
 ## When to use
@@ -370,11 +370,11 @@ state and returns analysis, split it.
 
 ## Related
 
-- [`docs-new/design/architecture-overview.md`](../../docs-new/design/architecture-overview.md)
+- [`docs/design/architecture-overview.md`](../../docs/design/architecture-overview.md)
   — Module structure and key principles
-- [`docs-new/design/service-command-architecture.md`](../../docs-new/design/service-command-architecture.md)
+- [`docs/design/service-command-architecture.md`](../../docs/design/service-command-architecture.md)
   — Design rationale for the service/command layering
-- [`docs-new/architecture/adr/0013-domain-centric-design.md`](../../docs-new/architecture/adr/0013-domain-centric-design.md)
+- [`docs/architecture/adr/0013-domain-centric-design.md`](../../docs/architecture/adr/0013-domain-centric-design.md)
   — Formal architectural commitment
-- [`docs-new/architecture/adr/0001-fabricator-inventory-selection-vs-matcher.md`](../../docs-new/architecture/adr/0001-fabricator-inventory-selection-vs-matcher.md)
+- [`docs/architecture/adr/0001-fabricator-inventory-selection-vs-matcher.md`](../../docs/architecture/adr/0001-fabricator-inventory-selection-vs-matcher.md)
   — Fabricator-aware selection decision

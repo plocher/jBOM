@@ -1,21 +1,44 @@
 ---
 name: kicad-plugin-setup
-description: Register and run jBOM as a KiCad Eeschema BOM plugin. Use when an end user wants to set up kicad_jbom_plugin.py in KiCad's "Tools → Generate BOM → Add plugin" dialog, or when running the plugin interactively from Eeschema.
+description: Manually register a development version of kicad_jbom_plugin.py with KiCad's Eeschema "Tools → Generate BOM → Add plugin" dialog so the developer can test code changes without re-packaging or re-publishing through KiCad's Plugin and Content Manager (PCM). End users should install jBOM via PCM (see docs/reference/kicad-plugin.md#plugin-installation) rather than following this skill.
 ---
 
 # kicad-plugin-setup
 
-How to register and use jBOM as a BOM plugin in KiCad's Eeschema.
+How to manually register a development copy of `kicad_jbom_plugin.py` in
+KiCad's Eeschema BOM dialog so a developer can iterate on the script
+without going through the full PCM publish-and-install cycle for every
+change.
 
 ## When to use
 
-Use this skill when setting up `kicad_jbom_plugin.py` in KiCad so that
-**Tools → Generate BOM** invokes jBOM without leaving the schematic editor.
-For the developer workflow (working on the plugin source itself), see the
+**Audience: developers and agents working on a local checkout of jBOM**
+who need the Eeschema → Generate BOM dialog to invoke *their working
+copy* of `kicad_jbom_plugin.py` rather than a PCM-installed release.
+
+**End users** should install jBOM through KiCad's **Plugin and Content
+Manager** instead; PCM handles installation, upgrades, and the
+platform-specific install directories automatically. See
+[`docs/reference/kicad-plugin.md` → Plugin installation](../../../docs/reference/kicad-plugin.md#plugin-installation)
+for the end-user path. The one-time Eeschema registration step below
+still applies after PCM install, but everything else here — the dev
+working-copy assumption, the manual pip prerequisites, the absolute
+dev paths — is developer-only.
+
+For packaging the plugin into a PCM-installable bundle (the upstream
+side of the PCM path), see the
 [plugin-dev-setup skill](../plugin-dev-setup/SKILL.md).
 
 For a reference of command syntax, output columns, and custom fabricator
-configuration, see [docs-new/reference/kicad-plugin.md](../../../docs-new/reference/kicad-plugin.md).
+configuration, see
+[`docs/reference/kicad-plugin.md`](../../../docs/reference/kicad-plugin.md).
+
+**Agent limitation:** Oz / Warp agents cannot drive KiCad's GUI, so the
+"Registering the plugin in Eeschema" steps below must be performed
+interactively by a human developer. An agent can prepare the script
+on disk, verify it runs from the terminal, and assemble the exact
+command line to paste into the dialog, but cannot click through the
+BOM-plugin dialog itself.
 
 ## Prerequisites
 
@@ -117,7 +140,7 @@ stderr. Common causes of failure:
   Numbers)
 
 For a full troubleshooting guide, see the
-[kicad-plugin reference](../../../docs-new/reference/kicad-plugin.md#troubleshooting).
+[kicad-plugin reference](../../../docs/reference/kicad-plugin.md#troubleshooting).
 
 ## Iterative BOM generation
 

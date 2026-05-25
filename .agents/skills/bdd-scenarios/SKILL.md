@@ -6,7 +6,7 @@ description: Use when writing or reviewing behave/Gherkin scenarios for jBOM —
 # bdd-scenarios
 
 Actionable guidance for writing and reviewing jBOM behave scenarios.
-Apply the [24 BDD axioms](../../../docs-new/design/bdd-axioms.md) consistently
+Apply the [24 BDD axioms](../../../docs/design/bdd-axioms.md) consistently
 across the suite.  This skill covers: how to run the suite, how to apply each
 tier of axioms, what anti-patterns look like next to correct alternatives, and
 the mechanical review checklist to run before committing any scenario.

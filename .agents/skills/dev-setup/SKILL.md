@@ -10,7 +10,7 @@ scratch. Covers installation, the test suite, common extension tasks, and
 package distribution. For the git workflow (branching, committing, opening
 PRs), see the [git-workflow skill](../git-workflow/SKILL.md). For the
 conceptual design principles that govern contributions, see
-[docs/design/contributing.md](../../../docs-new/design/contributing.md).
+[docs/design/contributing.md](../../../docs/design/contributing.md).
 
 ## Prerequisites
 
