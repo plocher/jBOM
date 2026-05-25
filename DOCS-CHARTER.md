@@ -62,6 +62,34 @@ through a bounded, separately-tracked operation that preserves content
 verbatim and records provenance. This is the only permitted
 architecture-content operation outside of adding new ADRs.
 
+## Architecture vs Design — content boundary
+
+Beyond durability, architecture and design carry different *kinds* of
+content:
+
+- **Architecture docs (ADRs)** name the decision — the contract,
+  principle, or commitment. They describe the *what* and *why* at the
+  level of commitment. Their stability comes from the stability of the
+  underlying decision.
+- **Design docs** describe how the architecture is currently
+  instantiated: concrete field shapes, type relationships, helpers,
+  ordering rules. They are mutable because instantiation evolves
+  while the underlying decision holds.
+- **Implementation** (`src/`) is the executable artifact. It is the
+  source of truth for "what the code does today."
+- **Tests** (`features/`, `pytest/`) validate that implementation
+  honors architecture and design.
+
+When an architecture doc accumulates implementation detail (specific
+field names, type signatures, exact ordering enforcement points), it
+accrues maintenance cost without earning durability — the detail
+changes whenever the implementation evolves. Such content belongs in
+design docs, not architecture docs.
+
+When in doubt: would adding, removing, or renaming this field require
+a new ADR? If yes, the content is architecture. If no, the content is
+design.
+
 ## Folder structure
 
 `docs/` contains exactly these top-level folders, each with a single
@@ -127,6 +155,13 @@ plugin already absorb that workflow, and the user-facing docs cover it.
 Completeness is a property of reference material, not a virtue in itself.
 Generated docs win where the reader benefits from exhaustiveness; they
 lose where they would crowd out a curated narrative.
+
+**`CHANGELOG.md` is fully generated.** The repository's changelog is
+produced from conventional commit messages by semantic-release.
+Hand-edits to `CHANGELOG.md` are rejected by a pre-commit hook plus a
+CI staleness check that fails if the committed file diverges from a
+fresh regeneration. Change history lives in commit messages and PR
+descriptions; the changelog is a derived view.
 
 ### Tests appropriate to the job
 
