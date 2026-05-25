@@ -200,7 +200,6 @@ def _build_pos_job_request(args: argparse.Namespace) -> JobRequest:
         "origin": str(args.origin or "board"),
         "verbose": bool(args.verbose),
         "list_fields": bool(args.list_fields),
-        "include_dnp": bool(getattr(args, "include_dnp", False)),
         "apply_corrections": bool(getattr(args, "apply_corrections", False)),
     }
     return JobRequest(
@@ -226,7 +225,6 @@ def _build_pos_request(
         origin=str(args.origin or "board"),
         fields=args.fields if args.fields is not None else None,
         list_fields=bool(args.list_fields),
-        include_dnp=bool(getattr(args, "include_dnp", False)),
         verbose=bool(args.verbose),
         apply_corrections=bool(getattr(args, "apply_corrections", False)),
     )

@@ -32,10 +32,7 @@ fab:
 
   field_synonyms:
     fab_pn:
-      # display_name is the canonical output column header JLCPCB expects in the BOM CSV.
-      # Synonyms are accepted anywhere a field reference can appear: --fields args,
-      # bom_columns keys, schematic symbol properties, PCB footprint properties,
-      # and inventory CSV column headers. Output always uses display_name.
+      # JLC accepts both LCSC-branded headers and normalized Supplier/SPN aliases.
       display_name: "LCSC Part #"
       synonyms:
         - "LCSC Part #"      # canonical JLCPCB column name (matches KiCad BOM plugin)
@@ -78,6 +75,7 @@ fab:
     "Footprint": "strip_kicad_library_prefix_from_value(pcb:footprint)"
     "LCSC": "jbom:fabricator_part_number"  # JLCPCB requires this column name in BOM
     "Surface Mount": "jbom:smd"
+    "DNP": "jbom:dnp"
 
   pos_columns:
     "Designator": "reference"
@@ -98,6 +96,7 @@ fab:
         - "strip_kicad_library_prefix_from_value(pcb:footprint)"
         - "jbom:fabricator_part_number"
         - "jbom:smd"
+        - "jbom:dnp"
     jlc:
       description: "JLC preset alias"
       fields:
@@ -106,6 +105,7 @@ fab:
         - "value"
         - "description"
         - "jbom:fabricator_part_number"
+        - "jbom:dnp"
 
   cli_aliases:
     flags: ["--jlc"]

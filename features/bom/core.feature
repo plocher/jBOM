@@ -5,7 +5,7 @@ Feature: BOM Generation (Core Functionality)
 
   Background:
     Given the generic fabricator is selected
-    And a schematic that contains:
+    And a PCB that contains:
       | Reference | Value | Footprint         |
       | R1        | 10K   | R_0805_2012       |
       | C1        | 100nF | C_0603_1608       |
@@ -39,11 +39,16 @@ Feature: BOM Generation (Core Functionality)
     And the output should contain "C1"
 
   Scenario: Handle empty schematic
-    Given a schematic that contains:
+    Given a PCB that contains:
       | Reference | Value | Footprint |
     When I run jbom command "bom -o console"
     Then the command should succeed
     And the output should contain "No components found"
+
+  # The next two scenarios drive divergent sch/pcb fixtures on purpose to
+  # validate the user-facing debugging aid: BOM exposes both `s:` and `p:`
+  # namespaces so DRC issues are easy to see.  This is the only family of
+  # BOM scenarios that legitimately needs a schematic alongside the PCB.
 
   Scenario: BOM list-fields reflects runtime source discovery and computed fields
     Given a schematic that contains:
@@ -76,3 +81,19 @@ Feature: BOM Generation (Core Functionality)
     And the CSV output has rows where:
       | Reference | Value | S:Value | P:Value |
       | R1        | 9K99  | 10K     | 9K99    |
+
+  Scenario: BOM preserves mixed-case designators from KiCad
+    # KiCad allows mixed-case designators by design (e.g., License1, Prop1).
+    # jBOM does not uppercase them at read time; they survive unchanged to output.
+    # This contrasts with tools like Fabrication-Toolkit that normalize to uppercase.
+    Given a PCB that contains:
+      | Reference | Value     | Footprint     |
+      | License1  | OSHW      | LICENSE_LOGO  |
+      | Prop1     | Custom    | CUSTOM_SHAPE  |
+      | R1        | 10K       | R_0805_2012   |
+    When I run jbom command "bom -f reference,quantity,value -o -"
+    Then the command should succeed
+    And the output should contain "License1"
+    And the output should contain "Prop1"
+    And the output should not contain "LICENSE1"
+    And the output should not contain "PROP1"

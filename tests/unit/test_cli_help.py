@@ -45,8 +45,12 @@ def test_bom_help_includes_fabricator_choices():
 
 def test_bom_help_shows_key_options():
     out = run_help(["bom"]).lower()
-    for token in ["--include-dnp", "--inventory", "-o", "--output"]:
+    # --include-dnp was removed; DNP rows are always included per IPC J-STD-001
+    for token in ["--inventory", "-o", "--output"]:
         assert token in out
+    assert (
+        "--include-dnp" not in out
+    ), "--include-dnp should no longer appear in BOM help"
 
 
 def test_pos_help_shows_core_flags():

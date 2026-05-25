@@ -8,31 +8,41 @@ Feature: File-based Project References
 
   # BOM command with different file types
 
-  Scenario: BOM command given .kicad_pro file with schematic present
-    Given a schematic that contains:
+  Scenario: BOM command given .kicad_pro file resolves to the PCB
+    Given a PCB that contains:
       | Reference | Value | Footprint     |
       | R1        | 10K   | R_0805_2012   |
     When I run jbom command "bom project.kicad_pro"
     Then the command should succeed
 
-  Scenario: BOM command given .kicad_sch file
+  Scenario: BOM command given .kicad_sch file resolves to the matching PCB
+    # PCB-first contract: even when the user points BOM at a schematic
+    # file, the resolver crosses over to the project's PCB.
     Given a schematic that contains:
+      | Reference | Value | Footprint     |
+      | R1        | 10K   | R_0805_2012   |
+    And a PCB that contains:
       | Reference | Value | Footprint     |
       | R1        | 10K   | R_0805_2012   |
     When I run jbom command "bom project.kicad_sch"
     Then the command should succeed
 
-  Scenario: BOM command given .kicad_pro file with no schematic fails
+  Scenario: BOM command given .kicad_pro file with PCB-only project succeeds
+    # PCB-first contract: BOM is generated from board.footprints, so a
+    # project that has lost its schematic still produces a BOM (rows
+    # come from the PCB). DRC/ERC catches the missing-schematic case;
+    # jBOM does not.
     Given a KiCad project
     And the schematic is deleted
     When I run jbom command "bom project.kicad_pro"
-    Then the command should fail
+    Then the command should succeed
 
-  Scenario: BOM command given .kicad_pro file with PCB-only project fails
+  Scenario: BOM command given .kicad_pro file with no PCB fails
     Given a KiCad project
-    And the schematic is deleted
+    And the PCB is deleted
     When I run jbom command "bom project.kicad_pro"
     Then the command should fail
+    And the error output should mention "No PCB file found"
 
   # POS command with different file types
 

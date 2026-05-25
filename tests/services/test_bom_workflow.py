@@ -7,6 +7,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
+from jbom.application import pcb_project_loader
 from jbom.application.bom_workflow import (
     BOMWorkflow,
     BOMMode,
@@ -46,8 +47,15 @@ class _FakeResolvedInput:
         return list(self._hierarchical_files)
 
 
-def test_list_fields_orchestration_returns_known_contract_fields() -> None:
+def test_list_fields_orchestration_returns_known_contract_fields(monkeypatch) -> None:
     """List-fields mode should still return stable known fields if runtime discovery fails."""
+
+    def _failing_resolve(_input_path, *, artifact_name="BOM", options=None):
+        raise RuntimeError("resolver failed")
+
+    monkeypatch.setattr(
+        "jbom.application.bom_workflow.resolve_pcb_input", _failing_resolve
+    )
 
     service = BOMWorkflow()
     request = BOMRequest(
@@ -55,10 +63,7 @@ def test_list_fields_orchestration_returns_known_contract_fields() -> None:
         fabricator="generic",
         list_fields=True,
     )
-
-    with patch("jbom.application.bom_workflow.ProjectFileResolver") as resolver_cls:
-        resolver_cls.return_value.resolve_input.side_effect = ValueError("boom")
-        result = service.run(request)
+    result = service.run(request)
 
     assert result.mode == BOMMode.LIST_FIELDS
     assert result.field_listing is not None
@@ -66,50 +71,58 @@ def test_list_fields_orchestration_returns_known_contract_fields() -> None:
     assert "fabricator_part_number" in result.field_listing.known_fields
 
 
-@patch("jbom.application.bom_workflow.enrich_bom_smd_from_project_pcb")
 @patch("jbom.application.bom_workflow.InventoryOverlayService")
 @patch("jbom.application.bom_workflow.parse_fields_argument")
 @patch("jbom.application.bom_workflow.get_fabricator_presets")
 @patch("jbom.application.bom_workflow.run_component_merge")
 @patch("jbom.application.bom_workflow.BOMGenerator")
-@patch("jbom.application.bom_workflow.SchematicReader")
-@patch("jbom.application.bom_workflow.ProjectFileResolver")
+@patch("jbom.application.bom_workflow.load_board")
+@patch("jbom.application.bom_workflow.load_schematic_components")
+@patch("jbom.application.bom_workflow.list_hierarchical_schematic_files")
+@patch("jbom.application.bom_workflow.resolve_pcb_input")
 def test_generation_orchestration_handles_cross_resolution_and_returns_payload(
-    mock_resolver_cls: MagicMock,
-    mock_reader_cls: MagicMock,
+    mock_resolve_pcb_input: MagicMock,
+    mock_list_hier: MagicMock,
+    mock_load_schematic: MagicMock,
+    mock_load_board: MagicMock,
     mock_generator_cls: MagicMock,
     mock_run_component_merge: MagicMock,
     mock_get_fabricator_presets: MagicMock,
     mock_parse_fields_argument: MagicMock,
     mock_overlay_service_cls: MagicMock,
-    mock_enrich_smd: MagicMock,
 ) -> None:
-    """Generation mode should sequence cross-resolution and payload assembly in service layer."""
+    """Generation mode is PCB-first and surfaces the BOM diagnostic trio."""
+
+    from jbom.common.types import Diagnostic
 
     project_context = _FakeProjectContext(
         project_base_name="project",
         project_directory=Path("/tmp/project-dir"),
-        pcb_file=None,
+        pcb_file=Path("project.kicad_pcb"),
     )
-    wrong_type_input = _FakeResolvedInput(
-        resolved_path=Path("project.kicad_pcb"),
+    pcb_path = Path("project.kicad_pcb")
+    resolved_input = _FakeResolvedInput(
+        resolved_path=pcb_path,
         is_schematic=False,
         project_context=project_context,
-        hierarchical_files=[Path("project.kicad_sch")],
+        hierarchical_files=[],
     )
-    corrected_input = _FakeResolvedInput(
-        resolved_path=Path("project.kicad_sch"),
-        is_schematic=True,
+    mock_resolve_pcb_input.return_value = pcb_project_loader.ResolvedPcbProject(
+        resolved_input=resolved_input,
+        pcb_path=pcb_path,
         project_context=project_context,
-        hierarchical_files=[Path("project.kicad_sch")],
+        diagnostics=(
+            Diagnostic(
+                "info",
+                "Note: BOM generation requires a PCB file. Found .kicad_sch file, trying to find matching PCB.",
+            ),
+            Diagnostic("info", "found matching PCB project.kicad_pcb"),
+            Diagnostic("info", "Using PCB: project.kicad_pcb"),
+        ),
     )
-
-    resolver = mock_resolver_cls.return_value
-    resolver.resolve_input.return_value = wrong_type_input
-    resolver.resolve_for_wrong_file_type.return_value = corrected_input
-
-    reader = mock_reader_cls.return_value
-    reader.load_components.return_value = [object()]
+    mock_list_hier.return_value = []
+    mock_load_schematic.return_value = ([], ())
+    mock_load_board.return_value = SimpleNamespace(footprints=[])
 
     bom_data = BOMData(
         project_name="project",
@@ -133,7 +146,6 @@ def test_generation_orchestration_handles_cross_resolution_and_returns_payload(
 
     overlay_service = mock_overlay_service_cls.return_value
     overlay_service.overlay_bom_data.return_value = SimpleNamespace(bom_data=bom_data)
-    mock_enrich_smd.return_value = (bom_data, ())
 
     request = BOMRequest(
         input_path=".",
@@ -152,6 +164,326 @@ def test_generation_orchestration_handles_cross_resolution_and_returns_payload(
     )
     assert result.generation.selected_fields == ("reference", "quantity")
     assert any(
-        "found matching schematic project.kicad_sch" in d.message
-        for d in result.diagnostics
+        "found matching PCB project.kicad_pcb" in d.message for d in result.diagnostics
     )
+
+
+# ---------------------------------------------------------------------------
+# BOM DNP contract
+# ---------------------------------------------------------------------------
+
+
+def test_bom_generator_includes_dnp_rows_by_default() -> None:
+    """DNP rows appear in BOM output by default (no exclude_dnp filter)."""
+    from jbom.services.bom_generator import BOMGenerator
+    from jbom.common.types import Component
+
+    components = [
+        Component(
+            reference="R1",
+            lib_id="Device:R",
+            value="10K",
+            footprint="R_0805",
+            dnp=False,
+        ),
+        Component(
+            reference="R2",
+            lib_id="Device:R",
+            value="No_Load",
+            footprint="R_0805",
+            dnp=True,
+        ),
+    ]
+    bom_data = BOMGenerator("value_footprint").generate_bom_data(
+        components,
+        "Project",
+        {
+            "exclude_dnp": False,
+            "include_only_bom": True,
+            "include_virtual_symbols": False,
+        },
+    )
+    refs = {e.references[0] for e in bom_data.entries}
+    assert "R1" in refs
+    assert "R2" in refs  # DNP row included
+
+
+def test_bom_entry_dnp_attribute_is_set() -> None:
+    """BOMEntry.attributes['dnp'] reflects the component's DNP flag."""
+    from jbom.services.bom_generator import BOMGenerator
+    from jbom.common.types import Component
+
+    components = [
+        Component(
+            reference="R1",
+            lib_id="Device:R",
+            value="10K",
+            footprint="R_0805",
+            dnp=False,
+        ),
+        Component(
+            reference="R2", lib_id="Device:R", value="10K", footprint="R_0805", dnp=True
+        ),
+    ]
+    bom_data = BOMGenerator("value_footprint").generate_bom_data(
+        components,
+        "Project",
+        {
+            "exclude_dnp": False,
+            "include_only_bom": True,
+            "include_virtual_symbols": False,
+        },
+    )
+    by_ref = {e.references[0]: e for e in bom_data.entries}
+    assert by_ref["R1"].attributes["dnp"] is False
+    assert by_ref["R2"].attributes["dnp"] is True
+
+
+def test_bom_dnp_field_resolver_emits_dnp_marker() -> None:
+    """resolve_bom_field_value returns 'DNP' for DNP entries and '' for populated ones."""
+    from jbom.services.bom_generator import BOMEntry
+    from jbom.services.bom_field_resolver import resolve_bom_field_value
+
+    populated = BOMEntry(
+        references=["R1"],
+        value="10K",
+        footprint="R_0805",
+        quantity=1,
+        attributes={"dnp": False},
+    )
+    dnp_entry = BOMEntry(
+        references=["R2"],
+        value="10K",
+        footprint="R_0805",
+        quantity=1,
+        attributes={"dnp": True},
+    )
+
+    assert resolve_bom_field_value(populated, "dnp") == ""
+    assert resolve_bom_field_value(dnp_entry, "dnp") == "DNP"
+
+
+def test_bom_aggregation_separates_populated_and_dnp_variants() -> None:
+    """Populated and DNP variants of the same value+footprint are on separate rows."""
+    from jbom.services.bom_generator import BOMGenerator
+    from jbom.common.types import Component
+
+    components = [
+        Component(
+            reference="R1",
+            lib_id="Device:R",
+            value="10K",
+            footprint="R_0805",
+            dnp=False,
+        ),
+        Component(
+            reference="R2", lib_id="Device:R", value="10K", footprint="R_0805", dnp=True
+        ),
+    ]
+    bom_data = BOMGenerator("value_footprint").generate_bom_data(
+        components,
+        "Project",
+        {
+            "exclude_dnp": False,
+            "include_only_bom": True,
+            "include_virtual_symbols": False,
+        },
+    )
+    # Must be two separate rows — not merged into qty 2
+    assert len(bom_data.entries) == 2
+    for entry in bom_data.entries:
+        assert entry.quantity == 1
+
+
+# ---------------------------------------------------------------------------
+# synthesize_bom_components_from_pcb
+# ---------------------------------------------------------------------------
+
+
+def test_synthesize_uses_pcb_footprint_and_pcb_value() -> None:
+    """PCB-first contract: footprint AND value come from the PCB when present.
+
+    The PCB's per-footprint ``(property "Value" ...)`` is the canonical
+    value because it's what the assembler reads off the board and it
+    survives ``Update PCB from Schematic`` divergence (the cpNode-Xiao-orig
+    pattern -- schematic carries a uniform default value across many
+    distinct refs while the PCB has the real per-Q values).
+    """
+    from jbom.application.bom_workflow import synthesize_bom_components_from_pcb
+    from jbom.common.pcb_types import PcbComponent
+    from jbom.common.types import Component
+
+    board = SimpleNamespace(
+        footprints=[
+            PcbComponent(
+                reference="R1",
+                footprint_name="Resistor_SMD:R_0603_1608Metric",
+                package_token="0603",
+                center_x_mm=10.0,
+                center_y_mm=20.0,
+                rotation_deg=0.0,
+                side="TOP",
+                attributes={"mount_type": "smd", "Value": "4.7k"},
+            ),
+        ]
+    )
+    schematic_components = [
+        Component(
+            reference="R1",
+            lib_id="Device:R",
+            value="10k",
+            footprint="Resistor_SMD:R_0603",  # schematic wildcard, will be ignored
+        )
+    ]
+    components = synthesize_bom_components_from_pcb(
+        board=board, schematic_components=schematic_components
+    )
+    assert len(components) == 1
+    assert components[0].reference == "R1"
+    assert components[0].value == "4.7k"  # PCB-first: PCB Value wins
+    assert components[0].footprint == "Resistor_SMD:R_0603_1608Metric"  # PCB-biased
+    assert components[0].properties.get("smd") == "true"
+    assert components[0].properties.get("Package") == "0603"
+    assert components[0].properties.get("Side") == "TOP"
+
+
+def test_synthesize_pcb_value_wins_across_refs_sharing_schematic_value() -> None:
+    """Regression for cpNode-Xiao-orig: schematic carries the same default
+    ``Value`` across many refs; the PCB has been customised per-ref. The
+    synthesizer must use the PCB value so the BOM doesn't collapse all
+    those refs into a single aggregated row.
+    """
+    from jbom.application.bom_workflow import synthesize_bom_components_from_pcb
+    from jbom.common.pcb_types import PcbComponent
+    from jbom.common.types import Component
+
+    board = SimpleNamespace(
+        footprints=[
+            PcbComponent(
+                reference="R4",
+                footprint_name="Resistor_SMD:R_0603",
+                package_token="0603",
+                center_x_mm=0.0,
+                center_y_mm=0.0,
+                rotation_deg=0.0,
+                side="TOP",
+                attributes={"Value": "470"},
+            ),
+            PcbComponent(
+                reference="R5",
+                footprint_name="Resistor_SMD:R_0603",
+                package_token="0603",
+                center_x_mm=0.0,
+                center_y_mm=0.0,
+                rotation_deg=0.0,
+                side="TOP",
+                attributes={"Value": "2k2"},
+            ),
+        ]
+    )
+    # Schematic-side: both refs carry the same default Value 10k.
+    schematic_components = [
+        Component(reference="R4", lib_id="Device:R", value="10k", footprint=""),
+        Component(reference="R5", lib_id="Device:R", value="10k", footprint=""),
+    ]
+    components = synthesize_bom_components_from_pcb(
+        board=board, schematic_components=schematic_components
+    )
+    by_ref = {c.reference: c for c in components}
+    assert by_ref["R4"].value == "470"
+    assert by_ref["R5"].value == "2k2"
+
+
+def test_synthesize_skips_schematic_only_references() -> None:
+    """References present only in the schematic are invisible to BOM by design."""
+    from jbom.application.bom_workflow import synthesize_bom_components_from_pcb
+    from jbom.common.pcb_types import PcbComponent
+    from jbom.common.types import Component
+
+    board = SimpleNamespace(
+        footprints=[
+            PcbComponent(
+                reference="R1",
+                footprint_name="Resistor_SMD:R_0603",
+                package_token="0603",
+                center_x_mm=0.0,
+                center_y_mm=0.0,
+                rotation_deg=0.0,
+                side="TOP",
+            )
+        ]
+    )
+    schematic_components = [
+        Component(reference="R1", lib_id="Device:R", value="10k", footprint=""),
+        Component(
+            reference="MH1",  # mounting hole symbol, no PCB footprint
+            lib_id="Mechanical:MountingHole",
+            value="",
+            footprint="",
+        ),
+    ]
+    components = synthesize_bom_components_from_pcb(
+        board=board, schematic_components=schematic_components
+    )
+    refs = [c.reference for c in components]
+    assert refs == ["R1"]
+
+
+def test_synthesize_falls_back_to_pcb_value_when_schematic_silent() -> None:
+    """When schematic has no record, PCB attributes supply the value."""
+    from jbom.application.bom_workflow import synthesize_bom_components_from_pcb
+    from jbom.common.pcb_types import PcbComponent
+
+    board = SimpleNamespace(
+        footprints=[
+            PcbComponent(
+                reference="R9",
+                footprint_name="Resistor_SMD:R_0805",
+                package_token="0805",
+                center_x_mm=0.0,
+                center_y_mm=0.0,
+                rotation_deg=0.0,
+                side="TOP",
+                attributes={"Value": "22k"},
+            )
+        ]
+    )
+    components = synthesize_bom_components_from_pcb(
+        board=board, schematic_components=[]
+    )
+    assert components[0].value == "22k"
+    assert components[0].footprint == "Resistor_SMD:R_0805"
+
+
+def test_synthesize_propagates_schematic_dnp() -> None:
+    """Schematic DNP propagates to the synthesized PCB-first Component."""
+    from jbom.application.bom_workflow import synthesize_bom_components_from_pcb
+    from jbom.common.pcb_types import PcbComponent
+    from jbom.common.types import Component
+
+    board = SimpleNamespace(
+        footprints=[
+            PcbComponent(
+                reference="C2",
+                footprint_name="Capacitor_SMD:C_0402",
+                package_token="0402",
+                center_x_mm=0.0,
+                center_y_mm=0.0,
+                rotation_deg=0.0,
+                side="TOP",
+            )
+        ]
+    )
+    schematic_components = [
+        Component(
+            reference="C2",
+            lib_id="Device:C",
+            value="100nF",
+            footprint="",
+            dnp=True,
+        )
+    ]
+    components = synthesize_bom_components_from_pcb(
+        board=board, schematic_components=schematic_components
+    )
+    assert components[0].dnp is True

@@ -12,84 +12,39 @@ from jbom.common.types import Component
 def add_component_filter_arguments(
     parser: argparse.ArgumentParser, command_type: str = "full"
 ) -> None:
-    """Add component filtering arguments to a CLI parser.
+    """No-op: component filter flags have been removed.
 
-    Args:
-        parser: The argument parser to add filtering options to
-        command_type: Type of command ("full", "pos") to determine which flags to add
+    BOM/Parts use fixed contract-correct defaults (DNP included, exclude_from_bom
+    excluded, virtual symbols excluded).  POS always drops DNP rows.
+    This function is retained as a no-op to avoid import churn at call sites.
     """
-    # Filtering options group
-    filter_group = parser.add_argument_group("component filtering")
-
-    # DNP filtering applies to all commands
-    dnp_help = {
-        "pos": (
-            'Include "Do Not Populate" components in placement file '
-            "(default: excluded since they are not placed during assembly)"
-        ),
-        "full": 'Include "Do Not Populate" components (default: excluded)',
-    }
-
-    filter_group.add_argument(
-        "--include-dnp",
-        action="store_true",
-        help=dnp_help.get(command_type, dnp_help["full"]),
-    )
-
-    # BOM exclusion and virtual symbols only apply to BOM/Parts commands
-    if command_type == "full":
-        filter_group.add_argument(
-            "--include-excluded",
-            action="store_true",
-            help="Include components excluded from BOM (default: excluded)",
-        )
-
-        filter_group.add_argument(
-            "--include-all",
-            action="store_true",
-            help="Include all components (DNP, excluded from BOM, and virtual symbols)",
-        )
 
 
 def create_filter_config(
     args: argparse.Namespace, command_type: str = "full"
 ) -> Dict[str, Any]:
-    """Create filter configuration from CLI arguments.
+    """Return fixed contract-correct filter configuration.
 
     Args:
-        args: Parsed CLI arguments with filter flags
-        command_type: Type of command ("full", "pos") to determine applicable filters
+        args: Parsed CLI arguments (no filter flags are read; kept for call-site compat)
+        command_type: Type of command ("full" for BOM/Parts, "pos" for placement)
 
     Returns:
         Dictionary of filter parameters for service generators
     """
     if command_type == "pos":
-        # POS shows components that get physically placed/populated during assembly
-        # - DNP components are NOT placed by default (exclude_dnp=True)
-        # - BOM-excluded components (mounting holes, logos) still need placement coordinates
-        # - Virtual symbols never have physical placement coordinates
+        # POS: only physically-placed components. DNP = Do Not Place.
         return {
-            "exclude_dnp": not getattr(
-                args, "include_dnp", False
-            ),  # Exclude DNP by default
-            "include_only_bom": False,  # Include BOM-excluded (they still get placed)
-            "include_virtual_symbols": False,  # Virtual symbols have no placement
+            "exclude_dnp": True,
+            "include_only_bom": False,  # BOM-excluded parts (logos, mounting holes) still get placed
+            "include_virtual_symbols": False,
         }
-    else:
-        # Full filtering for BOM/Parts commands
-        # --include-all overrides individual flags
-        if getattr(args, "include_all", False):
-            return {
-                "exclude_dnp": False,
-                "include_only_bom": False,
-                "include_virtual_symbols": True,
-            }
-        else:
-            return {
-                "exclude_dnp": not getattr(args, "include_dnp", False),
-                "include_only_bom": not getattr(args, "include_excluded", False),
-                "include_virtual_symbols": False,
-            }
+    # BOM/Parts: enumerate all design components. DNP rows are included and marked.
+    return {
+        "exclude_dnp": False,
+        "include_only_bom": True,
+        "include_virtual_symbols": False,
+    }
 
 
 def apply_component_filters(
@@ -109,7 +64,7 @@ def apply_component_filters(
     filtered = []
 
     # Extract filter settings with defaults
-    exclude_dnp = filters.get("exclude_dnp", True)
+    exclude_dnp = filters.get("exclude_dnp", False)
     include_only_bom = filters.get("include_only_bom", True)
     include_virtual_symbols = filters.get("include_virtual_symbols", False)
 

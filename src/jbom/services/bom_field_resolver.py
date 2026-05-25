@@ -59,6 +59,10 @@ def resolve_bom_field_value(
 
     if parsed_field.is_expression or parsed_field.namespace:
         return resolved_value
+    if resolved_field_token == "dnp":
+        # dnp is a bool attribute; return "DNP" or "" without going through
+        # _get_attribute_value which would coerce False -> "No".
+        return "DNP" if entry.attributes.get("dnp") else ""
     if resolved_field_token == "package":
         return derive_package_from_footprint(entry.footprint)
     if resolved_field_token == "lcsc":
@@ -141,14 +145,17 @@ def _build_computed_field_values(
         fabricator_config=fabricator_config,
     )
     smd_value = _resolve_smd_indicator(entry)
+    dnp_value = "DNP" if entry.attributes.get("dnp") else ""
     return {
         "reference": entry.references_string,
         "quantity": entry.quantity,
         "fabricator_part_number": fabricator_part_number,
         "smd": smd_value,
+        "dnp": dnp_value,
         "jbom:quantity": entry.quantity,
         "jbom:fabricator_part_number": fabricator_part_number,
         "jbom:smd": smd_value,
+        "jbom:dnp": dnp_value,
     }
 
 

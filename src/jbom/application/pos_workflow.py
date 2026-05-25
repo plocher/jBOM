@@ -8,6 +8,12 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Mapping
 
+from jbom.application.pcb_project_loader import (
+    list_hierarchical_schematic_files,
+    load_board,
+    load_schematic_components,
+    resolve_pcb_input,
+)
 from jbom.common.types import Diagnostic
 from jbom.common.field_parser import parse_fields_argument
 from jbom.common.fields import field_to_header
@@ -22,11 +28,7 @@ from jbom.services.field_listing_service import (
     get_field_names,
     get_namespaced_field_tokens,
 )
-from jbom.services.pcb_reader import DefaultKiCadReaderService
 from jbom.services.pos_generator import POSGenerator
-from jbom.services.project_component_collector import ProjectComponentCollector
-from jbom.services.project_file_resolver import ProjectFileResolver
-from jbom.services.schematic_reader import SchematicReader
 
 _POS_COMPUTED_FIELDS: tuple[str, ...] = (
     "reference",
@@ -75,7 +77,6 @@ class POSRequest:
     origin: str = "board"
     fields: str | None = None
     list_fields: bool = False
-    include_dnp: bool = False
     verbose: bool = False
     apply_corrections: bool = False
 
@@ -104,7 +105,6 @@ class POSRequest:
             str(self.fields).strip() if self.fields is not None else None,
         )
         object.__setattr__(self, "list_fields", bool(self.list_fields))
-        object.__setattr__(self, "include_dnp", bool(self.include_dnp))
         object.__setattr__(self, "verbose", bool(self.verbose))
         object.__setattr__(self, "apply_corrections", bool(self.apply_corrections))
 
@@ -179,6 +179,10 @@ def run_pos_component_merge(
     diagnostics: list[Diagnostic] = []
 
     try:
+        from jbom.services.project_component_collector import (
+            ProjectComponentCollector,
+        )
+
         collector = ProjectComponentCollector()
         project_graph = collector.collect(
             schematic_components=schematic_components,
@@ -541,33 +545,20 @@ class POSWorkflow:
         list_pcb_components: list[Any] = []
         list_schematic_components: list[Any] = []
         try:
-            list_resolver = ProjectFileResolver(
-                prefer_pcb=True,
-                target_file_type="pcb",
+            resolved = resolve_pcb_input(
+                request.input_path,
+                artifact_name="POS",
                 options=gen_options,
             )
-            list_resolved = list_resolver.resolve_input(request.input_path)
-            if not list_resolved.is_pcb:
-                list_resolved = list_resolver.resolve_for_wrong_file_type(
-                    list_resolved,
-                    "pcb",
-                )
-            list_pcb_path = list_resolved.resolved_path
-            if list_pcb_path.exists():
-                list_board = DefaultKiCadReaderService().read_pcb_file(list_pcb_path)
-                list_pcb_components = list(list_board.footprints)
-            list_project_context = list_resolved.project_context
-            if list_project_context is not None:
-                list_schematic_files = [
-                    file_path
-                    for file_path in list_project_context.get_hierarchical_schematic_files()
-                    if file_path.suffix.lower() == ".kicad_sch" and file_path.exists()
-                ]
-                list_schematic_reader = SchematicReader(gen_options)
-                for schematic_file in list_schematic_files:
-                    list_schematic_components.extend(
-                        list_schematic_reader.load_components(schematic_file)
-                    )
+            if resolved.pcb_path.exists():
+                list_pcb_components = list(load_board(resolved.pcb_path).footprints)
+            schematic_files = list_hierarchical_schematic_files(
+                resolved.project_context
+            )
+            list_schematic_components, _ = load_schematic_components(
+                schematic_files,
+                options=gen_options,
+            )
         except Exception:
             pass
 
@@ -596,36 +587,14 @@ class POSWorkflow:
         gen_options = (
             GeneratorOptions(verbose=request.verbose) if request.verbose else None
         )
-        resolver = ProjectFileResolver(
-            prefer_pcb=True,
-            target_file_type="pcb",
+        resolved = resolve_pcb_input(
+            request.input_path,
+            artifact_name="POS",
             options=gen_options,
         )
-        resolved_input = resolver.resolve_input(request.input_path)
-
-        if not resolved_input.is_pcb:
-            diagnostics.append(
-                Diagnostic(
-                    "info",
-                    "Note: POS generation requires a PCB file. "
-                    f"Found {resolved_input.resolved_path.suffix} file, trying to find matching PCB.",
-                )
-            )
-            resolved_input = resolver.resolve_for_wrong_file_type(resolved_input, "pcb")
-            diagnostics.append(
-                Diagnostic(
-                    "info", f"found matching PCB {resolved_input.resolved_path.name}"
-                )
-            )
-            diagnostics.append(
-                Diagnostic("info", f"Using PCB: {resolved_input.resolved_path.name}")
-            )
-
-        pcb_file = resolved_input.resolved_path
-        if not resolved_input.project_context:
-            raise ValueError("No project context available")
-
-        project_context = resolved_input.project_context
+        diagnostics.extend(resolved.diagnostics)
+        pcb_file = resolved.pcb_path
+        project_context = resolved.project_context
         project_name = project_context.project_base_name
         default_output_path = (
             project_context.project_directory / f"{project_name}.pos.csv"
@@ -643,12 +612,8 @@ class POSWorkflow:
             smd_only=request.smd_only,
             layer_filter=request.layer or None,
         )
-        if request.verbose and request.include_dnp:
-            diagnostics.append(
-                Diagnostic("info", "Including DNP components in POS output")
-            )
 
-        board = DefaultKiCadReaderService().read_pcb_file(pcb_file)
+        board = load_board(pcb_file)
         pos_data = POSGenerator(placement_options).generate_pos_data(board)
 
         if request.apply_corrections:
@@ -657,39 +622,14 @@ class POSWorkflow:
             )
             diagnostics.extend(correction_diagnostics)
 
-        schematic_files: list[Path] = []
-        try:
-            discovered_files = list(project_context.get_hierarchical_schematic_files())
-            schematic_files = [
-                file_path
-                for file_path in discovered_files
-                if file_path.suffix.lower() == ".kicad_sch" and file_path.exists()
-            ]
-        except Exception as exc:
-            if request.verbose:
-                diagnostics.append(
-                    Diagnostic(
-                        "warning",
-                        f"Warning: could not load schematic files for merge enrichment: {exc}",
-                    )
-                )
+        schematic_files = list_hierarchical_schematic_files(project_context)
+        schematic_components, schematic_diagnostics = load_schematic_components(
+            schematic_files,
+            options=gen_options,
+            verbose=request.verbose,
+        )
+        diagnostics.extend(schematic_diagnostics)
 
-        schematic_components: list[Any] = []
-        if schematic_files:
-            schematic_reader = SchematicReader(gen_options)
-            for schematic_file in schematic_files:
-                try:
-                    schematic_components.extend(
-                        schematic_reader.load_components(schematic_file)
-                    )
-                except Exception as exc:
-                    if request.verbose:
-                        diagnostics.append(
-                            Diagnostic(
-                                "warning",
-                                f"Warning: skipping schematic source for merge enrichment ({schematic_file}): {exc}",
-                            )
-                        )
         merge_result, merge_diagnostics = run_pos_component_merge(
             schematic_components=schematic_components,
             pcb_components=list(board.footprints),
@@ -699,7 +639,8 @@ class POSWorkflow:
         )
         diagnostics.extend(merge_diagnostics)
         pos_data = enrich_pos_with_merge_namespaces(pos_data, merge_result)
-        pos_data = apply_pos_dnp_filter(pos_data, include_dnp=request.include_dnp)
+        # POS unconditionally drops DNP rows — the P&P machine cannot place them.
+        pos_data = apply_pos_dnp_filter(pos_data, include_dnp=False)
 
         # Part 2: fold CPL rotations into the fab's required output range,
         # unconditionally — fires even without --apply-corrections.

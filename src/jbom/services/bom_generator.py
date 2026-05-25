@@ -120,14 +120,14 @@ class BOMGenerator:
     def _get_aggregation_key(self, component: Component) -> tuple:
         """Get aggregation key for grouping components."""
         if self.aggregation_strategy == "value_footprint":
-            return (component.value, component.footprint)
+            return (component.value, component.footprint, component.dnp)
         elif self.aggregation_strategy == "value_only":
-            return (component.value,)
+            return (component.value, component.dnp)
         elif self.aggregation_strategy == "lib_id_value":
-            return (component.lib_id, component.value)
+            return (component.lib_id, component.value, component.dnp)
         else:
             # Default to value_footprint
-            return (component.value, component.footprint)
+            return (component.value, component.footprint, component.dnp)
 
     def _create_bom_entry(self, components: List[Component]) -> BOMEntry:
         """Create a BOM entry from a group of similar components."""
@@ -153,6 +153,9 @@ class BOMGenerator:
                         or not merged_attributes[normalized_key]
                     ):
                         merged_attributes[normalized_key] = value.strip()
+
+        # Propagate typed Component flags into attributes so field resolvers can surface them.
+        merged_attributes["dnp"] = base_component.dnp
 
         return BOMEntry(
             references=references,

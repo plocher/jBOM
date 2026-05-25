@@ -21,6 +21,8 @@ fab:
 
   field_synonyms:
     fab_pn:
+      # PCBWay accepts manufacturer-facing part numbers, so this remains a
+      # neutral preferred-supplier alias in the profile.
       display_name: "Preferred Supplier PN"
     supplier_pn:
       display_name: "Supplier Part Number"
@@ -38,6 +40,7 @@ fab:
     "Comment": "description"
     "Package": "inv:package"
     "Manufacturer Part Number": "jbom:fabricator_part_number"
+    "DNP": "jbom:dnp"
 
   pos_columns:
     "Designator": "reference"
@@ -57,6 +60,7 @@ fab:
         - "description"
         - "inv:package"
         - "jbom:fabricator_part_number"
+        - "jbom:dnp"
 
   cli_aliases:
     flags: ["--pcbway"]

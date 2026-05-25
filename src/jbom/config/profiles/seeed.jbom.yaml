@@ -18,6 +18,8 @@ fab:
 
   field_synonyms:
     fab_pn:
+      # Seeed keeps a generic preferred-part label to allow mixed supplier
+      # sourcing while retaining Seeed-specific export headers in bom_columns.
       display_name: "Preferred Supplier PN"
     supplier_pn:
       display_name: "Supplier Part Number"
@@ -34,6 +36,7 @@ fab:
     "Value": "value"
     "Package": "inv:package"
     "Seeed Part Number": "jbom:fabricator_part_number"
+    "DNP": "jbom:dnp"
 
   pos_columns:
     "Designator": "reference"
@@ -50,6 +53,7 @@ fab:
         - "jbom:quantity"
         - "inv:package"
         - "jbom:fabricator_part_number"
+        - "jbom:dnp"
 
   cli_aliases:
     flags: ["--seeed"]

@@ -17,7 +17,12 @@ from typing import TYPE_CHECKING, Any, Mapping, MutableMapping
 
 import yaml
 
-from jbom.config.profile_search import profile_search_dirs
+from jbom.config import profile_search as _profile_search
+
+# ``profile_search_dirs`` is re-exported here so legacy callers and tests can
+# monkeypatch ``jbom.config.unified.profile_search_dirs``; ``_effective_search_dirs``
+# resolves it via the module at call time so the patch takes effect.
+from jbom.config.profile_search import profile_search_dirs  # noqa: F401
 
 if TYPE_CHECKING:
     from jbom.config.defaults import DefaultsConfig
@@ -26,11 +31,26 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
-_BUILTIN_DIR = Path(__file__).parent
+_BUILTIN_DIR = Path(__file__).parent / "profiles"
 _PROFILE_SUFFIX = ".jbom.yaml"
 _COMMON_PROFILE_NAME = "common"
 _POLICY_PROFILE_NAME = "policy"
 _VALID_STANZA_NAMES = frozenset({"fab", "supplier", "defaults", "presets"})
+
+
+def _emit_profile_eval(message: str) -> None:
+    """Best-effort profile evaluation trace emission."""
+    try:
+        recorder = getattr(_profile_search, "record_profile_eval", None)
+        if callable(recorder):
+            recorder(message)
+            return
+    except Exception:
+        pass
+    try:
+        print(message, flush=True)
+    except Exception:
+        pass
 
 
 class UnifiedProfileNotFoundError(ValueError):
@@ -100,7 +120,15 @@ def list_unified_stanza_ids(
         )
 
     search_dirs = _effective_search_dirs(cwd=cwd, builtin_dir=builtin_dir)
+    _emit_profile_eval(
+        "[jBOM] unified eval "
+        f"stanza={normalized_stanza!r} search_dirs={[str(path) for path in search_dirs]}"
+    )
     profile_names = _discover_named_profile_names(search_dirs)
+    _emit_profile_eval(
+        "[jBOM] unified eval "
+        f"stanza={normalized_stanza!r} discovered_profiles={profile_names}"
+    )
 
     discovered_ids: set[str] = set()
     for profile_name in profile_names:
@@ -108,11 +136,19 @@ def list_unified_stanza_ids(
             merged_named = _load_named_profile_chain(
                 profile_name, search_dirs, visiting_stack=[]
             )
-        except (UnifiedProfileNotFoundError, ValueError):
+        except (UnifiedProfileNotFoundError, ValueError) as exc:
+            _emit_profile_eval(
+                "[jBOM] unified skip "
+                f"stanza={normalized_stanza!r} profile={profile_name!r} reason={exc}"
+            )
             continue
 
         raw_stanza = merged_named.get(normalized_stanza)
         if not isinstance(raw_stanza, dict):
+            _emit_profile_eval(
+                "[jBOM] unified skip "
+                f"stanza={normalized_stanza!r} profile={profile_name!r} reason=no_stanza"
+            )
             continue
         stanza_mapping = dict(raw_stanza)
         effective_id = _effective_stanza_id(
@@ -120,8 +156,16 @@ def list_unified_stanza_ids(
         )
         if effective_id:
             discovered_ids.add(effective_id)
+            _emit_profile_eval(
+                "[jBOM] unified match "
+                f"stanza={normalized_stanza!r} profile={profile_name!r} id={effective_id!r}"
+            )
 
-    return sorted(discovered_ids)
+    sorted_ids = sorted(discovered_ids)
+    _emit_profile_eval(
+        "[jBOM] unified result " f"stanza={normalized_stanza!r} ids={sorted_ids}"
+    )
+    return sorted_ids
 
 
 def resolve_profile_name_for_stanza_id(
@@ -196,7 +240,11 @@ def defaults_stanza(merged: Mapping[str, Any], *, default_id: str) -> "DefaultsC
 
 
 def _effective_search_dirs(*, cwd: Path | None, builtin_dir: Path | None) -> list[Path]:
-    dirs = list(profile_search_dirs(cwd=cwd))
+    # Look up profile_search_dirs from this module so tests can monkeypatch
+    # `jbom.config.unified.profile_search_dirs` (legacy import surface).
+    import jbom.config.unified as _self
+
+    dirs = list(_self.profile_search_dirs(cwd=cwd))
     dirs.append((builtin_dir or _BUILTIN_DIR).resolve())
     return _dedupe_paths(dirs)
 

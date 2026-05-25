@@ -8,7 +8,14 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Mapping, Optional
 
-from jbom.common.types import Diagnostic
+from jbom.application.pcb_project_loader import (
+    list_hierarchical_schematic_files,
+    load_board,
+    load_schematic_components,
+    resolve_pcb_input,
+)
+from jbom.common.pcb_types import BoardModel
+from jbom.common.types import Component, Diagnostic
 from jbom.common.field_parser import (
     check_fabricator_field_completeness,
     parse_fields_argument,
@@ -31,8 +38,6 @@ from jbom.services.field_listing_service import (
 )
 from jbom.services.pcb_reader import DefaultKiCadReaderService
 from jbom.services.project_component_collector import ProjectComponentCollector
-from jbom.services.project_file_resolver import ProjectFileResolver
-from jbom.services.schematic_reader import SchematicReader
 from jbom.services.fabricator_projection_service import FabricatorProjectionService
 
 _BOM_COMPUTED_FIELDS: tuple[str, ...] = (
@@ -45,6 +50,7 @@ _BOM_COMPUTED_FIELDS: tuple[str, ...] = (
     "mfgpn",
     "fabricator_part_number",
     "smd",
+    "dnp",
     "lcsc",
     "package",
 )
@@ -174,7 +180,15 @@ class BOMResult:
 
 
 class BOMWorkflow:
-    """Application-layer BOM orchestration service."""
+    """Application-layer BOM orchestration service.
+
+    Per-artifact contract: BOM is PCB-driven.  ``board.footprints`` is the
+    canonical row set; schematic data enriches per-reference field values
+    according to ``field_precedence_policy`` (e.g. ``value`` defaults to
+    the schematic, ``footprint`` defaults to the PCB).  Components present
+    only in the schematic are invisible to the BOM by design — schematic /
+    PCB sync is the job of ERC/DRC, not jBOM.
+    """
 
     def run(self, request: BOMRequest) -> BOMResult:
         """Run BOM orchestration and return adapter-neutral result payloads."""
@@ -191,24 +205,13 @@ class BOMWorkflow:
         list_inventory_columns: list[str] = []
 
         try:
-            resolver = ProjectFileResolver(
-                prefer_pcb=False, target_file_type="schematic"
+            resolved = resolve_pcb_input(request.input_path, artifact_name="BOM")
+            if resolved.pcb_path.exists():
+                list_pcb_components = list(load_board(resolved.pcb_path).footprints)
+            schematic_files = list_hierarchical_schematic_files(
+                resolved.project_context
             )
-            resolved = resolver.resolve_input(request.input_path)
-            reader = SchematicReader()
-            for schematic_file in resolved.get_hierarchical_files():
-                list_components.extend(reader.load_components(schematic_file))
-
-            project_context = resolved.project_context
-            if (
-                project_context is not None
-                and project_context.pcb_file is not None
-                and project_context.pcb_file.exists()
-            ):
-                board = DefaultKiCadReaderService().read_pcb_file(
-                    project_context.pcb_file
-                )
-                list_pcb_components.extend(board.footprints)
+            list_components, _ = load_schematic_components(schematic_files)
         except Exception:
             pass
 
@@ -233,75 +236,53 @@ class BOMWorkflow:
         )
 
     def _generate(self, request: BOMRequest) -> BOMResult:
-        """Run BOM generation sequencing independent from CLI adapter concerns."""
+        """Run BOM generation sequencing independent from CLI adapter concerns.
+
+        PCB-first: ``board.footprints`` is the canonical row set.  Schematic
+        components are loaded for enrichment; the value of each BOM entry is
+        resolved via the per-field precedence policy (``value`` is schematic-
+        biased; ``footprint``, ``package``, ``smd`` are PCB-biased;
+        manufacturer/MPN/SPN are inventory-biased).
+        """
 
         diagnostics: list[Diagnostic] = []
         options = GeneratorOptions(verbose=request.verbose) if request.verbose else None
-        resolver = ProjectFileResolver(
-            prefer_pcb=False,
-            target_file_type="schematic",
-            options=options,
+
+        resolved = resolve_pcb_input(
+            request.input_path, artifact_name="BOM", options=options
         )
-        resolved_input = resolver.resolve_input(request.input_path)
-
-        if not resolved_input.is_schematic:
-            diagnostics.append(
-                Diagnostic(
-                    "info",
-                    "Note: BOM generation requires a schematic file. "
-                    f"Found {resolved_input.resolved_path.suffix} file, trying to find matching schematic.",
-                )
-            )
-            resolved_input = resolver.resolve_for_wrong_file_type(
-                resolved_input,
-                "schematic",
-            )
-            diagnostics.append(
-                Diagnostic(
-                    "info",
-                    f"found matching schematic {resolved_input.resolved_path.name}",
-                )
-            )
-            diagnostics.append(
-                Diagnostic(
-                    "info", f"Using schematic: {resolved_input.resolved_path.name}"
-                )
-            )
-
-        if not resolved_input.project_context:
-            raise ValueError("No project context available")
-
-        project_context = resolved_input.project_context
+        diagnostics.extend(resolved.diagnostics)
+        project_context = resolved.project_context
         project_name = project_context.project_base_name
         default_output_path = (
             project_context.project_directory / f"{project_name}.bom.csv"
         )
 
-        reader = SchematicReader(options)
-        generator = BOMGenerator("value_footprint")
-        hierarchical_files = resolved_input.get_hierarchical_files()
-        schematic_files = list(hierarchical_files)
-        if request.verbose and len(hierarchical_files) > 1:
+        board = load_board(resolved.pcb_path)
+        schematic_files = list_hierarchical_schematic_files(project_context)
+        if request.verbose and len(schematic_files) > 1:
             diagnostics.append(
                 Diagnostic(
                     "info",
-                    f"Processing hierarchical design with {len(hierarchical_files)} schematic files",
+                    f"Processing hierarchical design with {len(schematic_files)} schematic files",
                 )
             )
+        schematic_components, schematic_diagnostics = load_schematic_components(
+            schematic_files, options=options, verbose=request.verbose
+        )
+        diagnostics.extend(schematic_diagnostics)
 
-        components = []
-        for schematic_file in hierarchical_files:
-            if request.verbose:
-                diagnostics.append(
-                    Diagnostic("info", f"Loading components from {schematic_file.name}")
-                )
-            file_components = reader.load_components(schematic_file)
-            components.extend(file_components)
+        components = synthesize_bom_components_from_pcb(
+            board=board,
+            schematic_components=schematic_components,
+        )
+
+        generator = BOMGenerator("value_footprint")
 
         merge_result, merge_diagnostics = run_component_merge(
-            components=components,
+            components=schematic_components,
             schematic_files=schematic_files,
-            pcb_file=project_context.pcb_file,
+            pcb_file=resolved.pcb_path,
             verbose=request.verbose,
         )
         diagnostics.extend(merge_diagnostics)
@@ -332,7 +313,11 @@ class BOMWorkflow:
         filters = dict(request.filter_config)
         bom_data = generator.generate_bom_data(components, project_name, filters)
         bom_data = enrich_bom_with_merge_namespaces(bom_data, merge_result)
-        bom_data = enforce_bom_device_footprints(bom_data)
+        # PCB-first: footprint and smd come from the synthesized PCB-sourced
+        # Components directly, so the band-aid post-hoc footprint enforcement
+        # and SMD enrichment that the schematic-driven flow needed are no
+        # longer required.  The helpers remain defined for downstream tooling
+        # but are not invoked from BOMWorkflow._generate.
 
         inventory_file: Path | None = None
         if request.inventory_files:
@@ -368,13 +353,6 @@ class BOMWorkflow:
             include_inventory_dnp=include_inventory_dnp,
         )
 
-        bom_data, smd_diagnostics = enrich_bom_smd_from_project_pcb(
-            bom_data,
-            project_context.pcb_file,
-            verbose=request.verbose,
-        )
-        diagnostics.extend(smd_diagnostics)
-
         projection_service = FabricatorProjectionService()
         projection = projection_service.build_projection(
             fabricator_id=request.fabricator,
@@ -394,6 +372,141 @@ class BOMWorkflow:
                 fabricator_config=fabricator_config,
             ),
         )
+
+
+def synthesize_bom_components_from_pcb(
+    *,
+    board: BoardModel,
+    schematic_components: list[Component],
+) -> list[Component]:
+    """Build schematic-shaped ``Component`` records keyed off the PCB.
+
+    The PCB is the canonical row set: every footprint produces exactly one
+    synthesized ``Component``.  Field values follow the per-artifact
+    contract:
+
+    * PCB-biased: ``footprint`` (from ``footprint_name``), ``package``,
+      ``side``, ``mount_type`` / ``smd``, ``x``, ``y``, ``rotation``,
+      and ``value`` -- under the PCB-first contract the PCB ``Value``
+      property is the canonical, per-reference value (it survives
+      ``Update PCB from Schematic`` overrides and is what the assembler
+      reads off the board).  The schematic value is only consulted when
+      the PCB carries no ``Value`` property for that reference.
+    * Auxiliary fields surfaced from the schematic for ``s:``-namespace
+      visibility (DRC-debug): ``tolerance``, ``voltage``, ``current``,
+      ``wavelength``.  These never affect BOM aggregation; they just
+      ride along on the synthesized component for the user.
+    * Inventory-biased fields (manufacturer, MPN, SPN, fabricator) are left
+      empty here; they are filled in by ``InventoryOverlayService`` later in
+      the workflow.
+    * ``dnp`` and ``in_bom`` are read from PCB footprint attributes
+      (``(attr dnp)`` and ``(attr exclude_from_bom)`` respectively). The
+      schematic is checked only as a fallback for projects where the PCB
+      pre-dates DNP/exclude attributes. ERC/DRC is the user's tool for
+      catching schematic/PCB sync drift; BOM never depends on
+      schematic-only flags.
+
+    Schematic-only references (symbols without PCB footprints) are not
+    represented; they are intentionally invisible to the BOM per the
+    per-artifact contract.
+    """
+
+    schematic_by_reference: dict[str, Component] = {}
+    for sch in schematic_components:
+        ref = str(sch.reference or "").strip()
+        if ref:
+            schematic_by_reference.setdefault(ref, sch)
+
+    result: list[Component] = []
+    for footprint in board.footprints:
+        ref = str(footprint.reference or "").strip()
+        if not ref:
+            continue
+        sch = schematic_by_reference.get(ref)
+        fp_attrs = footprint.attributes or {}
+
+        # Merged properties: schematic first (schematic-biased fields win on
+        # name collision), then PCB attributes for keys the schematic did
+        # not provide.
+        merged_props: dict[str, str] = {}
+        if sch is not None:
+            for key, value in (sch.properties or {}).items():
+                if value and str(value).strip():
+                    merged_props[key] = str(value).strip()
+        for key, value in fp_attrs.items():
+            if not value or not str(value).strip():
+                continue
+            merged_props.setdefault(key, str(value).strip())
+
+        # PCB-biased fields surface even when not in attributes already.
+        if footprint.package_token:
+            merged_props.setdefault("Package", footprint.package_token)
+        if footprint.side:
+            merged_props.setdefault("Side", footprint.side)
+        mount = str(fp_attrs.get("mount_type", "")).strip().lower()
+        if mount:
+            merged_props.setdefault("smd", "true" if mount == "smd" else "false")
+
+        # Resolve value: PCB-first.  The per-footprint ``(property "Value"
+        # ...)`` on the PCB is the canonical value because (a) it's what
+        # the assembler reads off the actual board, and (b) it survives
+        # cases where the schematic carries a uniform default value across
+        # many distinct parts that have been customised on the PCB (the
+        # cpNode-Xiao-orig pattern -- schematic ``BSS138`` everywhere,
+        # PCB carries the real per-Q values).  Schematic ``value`` is the
+        # fallback for the case the PCB has nothing recorded.
+        resolved_value = ""
+        for key in ("Value", "value"):
+            pcb_value = fp_attrs.get(key, "")
+            if pcb_value and str(pcb_value).strip():
+                resolved_value = str(pcb_value).strip()
+                break
+        if not resolved_value and sch is not None and sch.value:
+            resolved_value = str(sch.value).strip()
+
+        # PCB-first DNP / exclude-from-BOM resolution.  The KiCad PCB parser
+        # stores each ``(attr ...)`` token as ``attributes[token] = "yes"``,
+        # so the presence of ``"dnp"`` / ``"exclude_from_bom"`` keys is the
+        # canonical signal.  Schematic flags are only consulted as a
+        # fallback for legacy projects whose PCB pre-dates these attrs.
+        pcb_dnp = _attr_is_yes(fp_attrs, "dnp")
+        pcb_exclude = _attr_is_yes(fp_attrs, "exclude_from_bom")
+        sch_dnp = bool(getattr(sch, "dnp", False)) if sch is not None else False
+        sch_in_bom = bool(getattr(sch, "in_bom", True)) if sch is not None else True
+        resolved_dnp = pcb_dnp or sch_dnp
+        resolved_in_bom = (not pcb_exclude) and sch_in_bom
+
+        result.append(
+            Component(
+                reference=ref,
+                lib_id=str(getattr(sch, "lib_id", "") or ""),
+                value=resolved_value,
+                footprint=str(footprint.footprint_name or ""),
+                uuid=str(getattr(sch, "uuid", "") or ""),
+                properties=merged_props,
+                in_bom=resolved_in_bom,
+                exclude_from_sim=bool(getattr(sch, "exclude_from_sim", False))
+                if sch is not None
+                else False,
+                dnp=resolved_dnp,
+            )
+        )
+    return result
+
+
+def _attr_is_yes(attributes: Mapping[str, Any], key: str) -> bool:
+    """Return True when a PCB footprint flag attribute is present and truthy.
+
+    The KiCad PCB parser maps ``(attr <token>)`` entries to
+    ``attributes[<token>] = "yes"``. This helper centralises the
+    case-insensitive yes/true check used by PCB-first BOM resolution for
+    flag-style attributes such as ``dnp`` and ``exclude_from_bom``.
+    """
+
+    raw = attributes.get(key) if attributes else None
+    if raw is None:
+        return False
+    return str(raw).strip().lower() in {"yes", "true", "1"}
 
 
 def run_component_merge(
@@ -817,4 +930,5 @@ __all__ = [
     "entry_smd_from_reference_lookup",
     "filter_inventory_dnp_entries",
     "run_component_merge",
+    "synthesize_bom_components_from_pcb",
 ]

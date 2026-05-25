@@ -8,7 +8,7 @@ Feature: Issue #21 Conceptual Problem - BOM vs Parts List Distinction
 
   @regression @issue-21 @problem-solved
   Scenario: Problem solved - BOM no longer accepts confusing aggregation options
-    Given a schematic that contains:
+    Given a PCB that contains:
       | Reference | Value | Footprint   |
       | R1        | 10K   | R_0805_2012 |
       | R2        | 10K   | R_0603_1608 |
@@ -20,6 +20,8 @@ Feature: Issue #21 Conceptual Problem - BOM vs Parts List Distinction
 
   @regression @issue-21 @problem-solved
   Scenario: Problem solved - Parts command now provides individual component listing
+    # Parts is schematic-driven: it groups schematic components by
+    # electro-mechanical attributes, so this fixture uses the schematic step.
     Given a schematic that contains:
       | Reference | Value | Footprint   |
       | R1        | 10K   | R_0805_2012 |
@@ -35,7 +37,7 @@ Feature: Issue #21 Conceptual Problem - BOM vs Parts List Distinction
 
   @regression @issue-21 @solution
   Scenario: Solution - BOM always aggregates properly for procurement
-    Given a schematic that contains:
+    Given a PCB that contains:
       | Reference | Value | Footprint   |
       | R1        | 10K   | R_0805_2012 |
       | R2        | 10K   | R_0805_2012 |
@@ -53,6 +55,7 @@ Feature: Issue #21 Conceptual Problem - BOM vs Parts List Distinction
 
   @regression @issue-21 @solution
   Scenario: Solution - Parts list shows individual components for assembly
+    # Parts is schematic-driven (see above).
     Given a schematic that contains:
       | Reference | Value | Footprint   |
       | R1        | 10K   | R_0805_2012 |

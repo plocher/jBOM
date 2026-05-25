@@ -18,6 +18,34 @@ import os
 import sys
 from pathlib import Path
 
+_PROFILE_EVAL_TRACE: list[str] = []
+
+
+def record_profile_eval(message: str) -> None:
+    """Record a profile-evaluation diagnostic line.
+
+    Lines are always retained in the in-memory ring buffer so the plugin
+    dialog's debug panel can show recent activity, but stdout is only written
+    to when ``JBOM_PROFILE_EVAL_VERBOSE=1`` is set in the environment.  This
+    keeps production KiCad sessions free of debug noise while still allowing
+    developers to opt in to live tracing.
+    """
+    _PROFILE_EVAL_TRACE.append(message)
+    if len(_PROFILE_EVAL_TRACE) > 300:
+        del _PROFILE_EVAL_TRACE[:100]
+    if os.environ.get("JBOM_PROFILE_EVAL_VERBOSE", "").strip() == "1":
+        print(message, flush=True)
+
+
+def get_profile_eval_trace() -> tuple[str, ...]:
+    """Return the current in-memory profile evaluation trace lines."""
+    return tuple(_PROFILE_EVAL_TRACE)
+
+
+def clear_profile_eval_trace() -> None:
+    """Clear the in-memory profile evaluation trace lines."""
+    _PROFILE_EVAL_TRACE.clear()
+
 
 def find_profile(
     name: str,
@@ -45,7 +73,11 @@ def find_profile(
         dirs.append(builtin_dir)
     for directory in dirs:
         candidate = directory / filename
+        message = f"[jBOM] profile eval name={name!r} candidate={candidate}"
+        record_profile_eval(message)
         if candidate.is_file():
+            match_message = f"[jBOM] profile match name={name!r} path={candidate}"
+            record_profile_eval(match_message)
             return candidate
     return None
 
@@ -62,7 +94,7 @@ def profile_search_dirs(*, cwd: Path | None = None) -> list[Path]:
     Returns:
         Ordered list of directories (may include non-existent paths).
     """
-    search_cwd = (cwd or Path.cwd()).resolve()
+    search_cwd = _resolve_search_cwd(cwd)
     dirs: list[Path] = []
 
     # 1. .jbom/ in cwd
@@ -89,6 +121,23 @@ def profile_search_dirs(*, cwd: Path | None = None) -> list[Path]:
     dirs.extend(_platform_system_dirs())
 
     return dirs
+
+
+def _resolve_search_cwd(cwd: Path | None) -> Path:
+    """Resolve the effective cwd for profile search with safe fallbacks."""
+    try:
+        return (cwd or Path.cwd()).resolve()
+    except OSError:
+        plugin_project_dir = os.environ.get("JBOM_PROJECT_DIR", "").strip()
+        if plugin_project_dir:
+            try:
+                return Path(plugin_project_dir).resolve()
+            except OSError:
+                pass
+        try:
+            return Path.home().resolve()
+        except OSError:
+            return Path("/")
 
 
 def _find_repo_root(start: Path) -> Path | None:
@@ -120,4 +169,10 @@ def _platform_system_dirs() -> list[Path]:
     return dirs
 
 
-__all__ = ["find_profile", "profile_search_dirs"]
+__all__ = [
+    "clear_profile_eval_trace",
+    "find_profile",
+    "get_profile_eval_trace",
+    "profile_search_dirs",
+    "record_profile_eval",
+]

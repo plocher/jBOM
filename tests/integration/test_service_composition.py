@@ -79,14 +79,14 @@ class TestServiceComposition:
         assert len(components) == 4  # All components loaded
 
         assert bom_data.project_name == "TestProject"
-        assert (
-            bom_data.total_line_items == 2
-        )  # R1+R2 aggregated, C1 separate, R3 filtered out
-        assert bom_data.total_components == 3  # 2 resistors + 1 capacitor
+        # Under the new contract: R1+R2 aggregated (populated), R3 separate (DNP),
+        # C1 separate. 3 line items total.
+        assert bom_data.total_line_items == 3
+        assert bom_data.total_components == 4  # all components including DNP R3
 
         # Verify aggregation worked correctly
 
-        # R1 and R2 should be aggregated
+        # R1 and R2 should be aggregated (both populated, same value+footprint)
         resistor_entry = next(e for e in bom_data.entries if "R1" in e.references)
         assert sorted(resistor_entry.references) == ["R1", "R2"]
         assert resistor_entry.value == "10K"
@@ -100,9 +100,11 @@ class TestServiceComposition:
         assert capacitor_entry.quantity == 1
         assert capacitor_entry.attributes["voltage"] == "50V"
 
-        # R3 should not appear (filtered out due to DNP)
+        # R3 appears as its own DNP row (new contract: DNP included, marked)
         all_references = [ref for entry in bom_data.entries for ref in entry.references]
-        assert "R3" not in all_references
+        assert "R3" in all_references
+        r3_entry = next(e for e in bom_data.entries if "R3" in e.references)
+        assert r3_entry.attributes["dnp"] is True
 
     def test_service_configuration_independence(self):
         """Test that services can be configured independently."""

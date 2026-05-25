@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "jbom"
-version = "6.58.0"
+version = "7.0.0"
 description = "Intelligent KiCad Bill of Materials generator with inventory matching"
 readme = "README.md"
 license = "AGPL-3.0-only"
@@ -57,13 +57,17 @@ jbom = "jbom.cli.main:main"
 
 
 
+
+
+
+
 [tool.setuptools]
 package-dir = {"" = "src"}
 
 [tool.setuptools.package-data]
 # Include configuration files in the package
 jbom = [
-    "config/*.jbom.yaml",
+    "config/profiles/*.jbom.yaml",
     "config/*.csv",
 ]
 

@@ -1,6 +1,440 @@
 # CHANGELOG
 
 
+## v7.0.0 (2026-05-23)
+
+### Breaking
+
+* feat!: DNP column in BOM; remove --include-dnp/excluded/all flags
+
+Closes #294
+
+## Breaking changes
+
+- `--include-dnp`, `--include-excluded`, and `--include-all` removed from
+  `jbom bom`, `jbom parts`, and `jbom pos`. Each command now has fixed,
+  contract-correct behavior:
+  - bom/parts: DNP rows always included, marked in new `DNP` column
+  - pos: DNP rows always excluded (P&P contract)
+- `POSRequest.include_dnp` field removed
+
+## Added
+
+- `DNP` column in all four fabricator default BOM presets (generic, jlc,
+  pcbway, seeed). Value is `"DNP"` for DNP components, `""` for populated.
+- DNP-aware aggregation: populated and DNP variants of same value+footprint
+  are kept as separate rows (qty never inflated by merging DNP/non-DNP).
+- `dnp` computed BOM field available via `-f "...,dnp,..."`.
+- `dnp` attribute propagated from `Component.dnp` into `BOMEntry.attributes`
+  and `PartsListEntry.attributes` for uniform field access.
+
+## Parts list behavior
+
+Parts list (`jbom parts`) enumerates all design components including DNP.
+No dedicated `dnp` column in default output; attribute available via `-f dnp`.
+
+## Docs / tests
+
+- `docs/README.man1.md`: new "Component Attribute Handling" section.
+- `docs/README.man4.md`: plugin component attribute handling section.
+- `docs/CHANGELOG.md`: migration note for removed flags.
+- `features/bom/filtering.feature`: replaced with 6 new contract scenarios.
+- `features/parts/filtering.feature`: rewritten to match new contract.
+- Unit and integration tests updated/added for new DNP contract.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`4c0a7d7`](https://github.com/plocher/jBOM/commit/4c0a7d7fcd11503a2a3d4f00016923ab58e03778))
+
+### Bug Fixes
+
+* fix: update header regression tests to include new DNP column
+
+Features/bom/field_system_regression.feature had exact-match CSV header
+assertions that broke when the DNP column was added to all fabricator
+default presets in issue #294.  Update the four affected assertions to
+include the trailing DNP column. ([`0830655`](https://github.com/plocher/jBOM/commit/0830655e22297b9521d091f949b538b82f4c4ccc))
+
+### Unknown
+
+* Fix: use correct step definition syntax in designator case scenario ([`6649752`](https://github.com/plocher/jBOM/commit/6649752f3049e4b0e6413d68e3179ecf3c3bf15b))
+
+* Docs: add designator case preservation policy documentation
+
+Issue #292: Document that jBOM preserves mixed-case designators from .kicad_pcb
+files, contrasting with tools like Fabrication-Toolkit that uppercase on read.
+
+Changes:
+- Add "BOM Designator Case Policy" section to docs/README.man1.md
+  - Explains that KiCad allows mixed-case designators (e.g., License1, Prop1)
+  - Clarifies jBOM preserves case as-written (no normalization)
+  - Shows post-processing example if user needs uppercase output
+  - Contrasts with other tools' uppercase-on-read behavior
+- Add functional test in features/bom/core.feature
+  - Scenario: "BOM preserves mixed-case designators from KiCad"
+  - Uses realistic mixed-case refs (License1, Prop1, R1)
+  - Asserts refs survive unchanged to output (not uppercased)
+
+No code changes — documentation and test only.
+
+Fixes #292
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`de88a8d`](https://github.com/plocher/jBOM/commit/de88a8d4dcaa17c2f449b5458b162a9d947fcb5e))
+
+* Fix: remove dead CLI code from issue #291
+
+Under the PCB-first contract (PR #289), the CLI-level footprint enforcement
+helpers are no longer invoked in the live execution path. The service-level
+equivalent (enforce_bom_device_footprints) remains exported for downstream tooling.
+
+Changes:
+- Delete _enforce_bom_device_footprints() from cli/bom.py (and helpers)
+  - _resolve_entry_device_footprint()
+  - _is_concrete_footprint()
+  - _entry_has_namespaced_field()
+- Remove import of enforce_bom_device_footprints from cli/bom.py
+- Delete 5 unit tests in test_bom_cli_field_resolution.py that directly
+  tested the deleted CLI wrapper (functional contract is covered by
+  behave/gherkin tests)
+
+Test results:
+- 1393 unit tests pass (5 fewer, as expected)
+- BOM generation works correctly on real projects
+- No regressions in field resolution or projection logic
+
+Fixes #291
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`f46457a`](https://github.com/plocher/jBOM/commit/f46457a5e25a43c463696bd678edb10c63581cc1))
+
+
+## v6.60.0 (2026-05-22)
+
+### Bug Fixes
+
+* fix(bom): preserve PCB FPID; prefer PCB Value under PCB-first contract
+
+Two fixes surfaced by the jBOM-vs-Fabrication-Toolkit cross-project
+comparison (20 real KiCad projects under /Users/jplocher/Dropbox/KiCad/projects).
+
+Fix #1 -- pcb_reader: preserve canonical FPID
+- src/jbom/services/pcb_reader.py:_parse_footprint_node was overwriting
+  the canonical FPID (from the (footprint "Lib:Name" ...) opener)
+  with whatever the per-footprint (property "Footprint" ...) field
+  carried.  That property is the schematic-side hint that flowed in via
+  'Update PCB from Schematic' and can disagree with the physical
+  footprint placed on the board (e.g. PCB FPID 'VendorLib:0805-CAP' vs
+  schematic property 'Capacitor_SMD:C_0805_2012Metric').  Under the
+  PCB-first contract footprint_name must describe what's physically on
+  the board.  The schematic hint is now stashed under
+  attributes['schematic_footprint'] for DRC-debug visibility.
+- Reproduced in LEDStripDriver, cpOD-updated (C0603K vs C0603).
+
+Fix #3 -- synthesize_bom_components_from_pcb: PCB Value wins
+- The value resolver previously preferred the schematic value when
+  present and fell back to PCB.  Reversed: PCB-first contract says the
+  per-footprint (property "Value" ...) on the PCB is the canonical
+  value because (a) it is what the assembler reads off the actual
+  board, and (b) it survives the cpNode-Xiao-orig pattern where the
+  schematic carries a uniform default across many distinct refs that
+  have been customised on the PCB (e.g. Q1..Q17 all marked 'BSS138' on
+  the schematic while the PCB stores per-Q part numbers).  Schematic
+  Value remains the fallback for the case the PCB has nothing recorded.
+
+Test coverage
+- tests/unit/test_pcb_reader.py: new
+  test_parse_footprint_node_preserves_canonical_fpid_over_schematic_footprint_property
+  pins down Fix #1.
+- tests/services/test_bom_workflow.py: renamed
+  test_synthesize_uses_pcb_footprint_and_pcb_value (was
+  ..._and_schematic_value) and added
+  test_synthesize_pcb_value_wins_across_refs_sharing_schematic_value
+  -- a direct regression test for the cpNode-Xiao-orig pattern.
+
+Validation
+- Full pytest: 1398 passed (was 1396; +2 new tests).
+- Full behave: 47 features / 261 scenarios passed; 0 failed.
+- jBOM-vs-FT comparison: 15/20 [OK] (up from 14/20); cpNode-Xiao-orig
+  fully collapses; cpOD-updated C0603K vs C0603 diff disappears.
+
+Remaining diffs are policy/style, not jBOM bugs:
+- Designator case folding (FT uppercases all designators via
+  GetReference().upper()).
+- LEDStripDriver footprint name length (FT applies its own regex
+  normaliser; jBOM now surfaces the canonical PCB FPID, which is the
+  right thing).
+- cpOD / cpOD-updated DNP refs missing in jBOM by default (FT runs with
+  exclude_dnp=False; jBOM defaults to True).  Use 'jbom bom --include-dnp'
+  to match.
+
+Refs #289.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`59de8a2`](https://github.com/plocher/jBOM/commit/59de8a2ee16ac7bda2d179525b01b02e97ff4a13))
+
+* fix(bom): BOM generation is PCB-driven (PCB-first cutover)
+
+BOMWorkflow now follows the per-artifact contract: PCB is the canonical
+row set, schematic is enrichment.  Built on Stream 1's pcb_project_loader
+helpers so BOM and POS share identical resolve/load/enumerate plumbing
+(only the artifact_name label differs).
+
+Behaviour changes:
+* _generate uses resolve_pcb_input(artifact_name='BOM'); the diagnostic
+  trio now reads 'Note: BOM generation requires a PCB file. ... / found
+  matching PCB ... / Using PCB ...'.  Previously the workflow emitted
+  'requires a schematic file' and resolved PCB input back to the sibling
+  schematic.
+* board.footprints is the canonical row set.
+* New helper synthesize_bom_components_from_pcb(board, schematic_components)
+  produces schematic-shaped Component records keyed by PCB reference:
+  footprint/package/side/mount_type/smd come from the PCB, value comes
+  from the schematic when available (falls back to the PCB Value
+  attribute), dnp propagates from the schematic, and inventory-biased
+  fields are populated later by InventoryOverlayService.
+* References present only in the schematic are intentionally invisible
+  to BOM/POS - schematic/PCB sync is ERC/DRC territory.
+* The post-hoc band-aids enforce_bom_device_footprints and
+  enrich_bom_smd_from_project_pcb are no longer invoked from _generate;
+  their inputs are now PCB-sourced from the start.  The helpers remain
+  defined for downstream tooling but are unused by the BOM workflow.
+
+Tests:
+* tests/services/test_bom_workflow.py monkeypatches the new
+  pcb_project_loader helpers and asserts on the PCB-first diagnostic.
+* Four new behavioural tests for synthesize_bom_components_from_pcb
+  (schematic-biased value, PCB-biased footprint, schematic-only refs
+  invisible, PCB Value fallback, schematic DNP propagation).
+* tests/unit/test_cli_verbose.py fixture now includes a .kicad_pcb (BOM
+  requires it) and assertions accept PCB-first diagnostic patterns.
+
+1391 focused tests pass.
+
+Refs: #281
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`df28d4a`](https://github.com/plocher/jBOM/commit/df28d4af58e92308c5159cd61dee80f89453be69))
+
+### Features
+
+* feat(cli): jbom fab --archive-name parity with plugin
+
+Adds --archive-name TEMPLATE to jbom fab so the CLI produces the same
+gerber archive stem as the plugin for the same project.  Default
+template (_) matches the plugin dialog's editable
+Archive field.
+
+Implementation:
+* New jbom.services.project_metadata.expand_archive_template(template,
+  pcb_file) helper resolves KiCad title-block variables (${TITLE},
+  ${REVISION}, ${DATE}/${ISSUE_DATE}, ${CURRENT_DATE}, ${COMPANY})
+  against the PCB title block read via the file-based S-expression
+  parser.  Falls back to the PCB filename stem when the template
+  expands to nothing usable; returns '(unknown)' only when no PCB
+  exists on disk.  Uses a filename-safe normaliser that preserves dots
+  so revisions like '1.0' survive (the existing
+  normalize_archive_stem stripped non-alphanumeric chars).
+* DEFAULT_ARCHIVE_TEMPLATE constant published from project_metadata so
+  both CLI and plugin share one source of truth.
+* FabricationRequest gains an archive_template field.  The workflow's
+  _resolve_archive_stem now resolves in this priority:
+    1. request.archive_stem (plugin pre-expands and passes the stem)
+    2. request.archive_template (CLI passes the template; workflow
+       expands once it has the resolved PCB path)
+    3. legacy normalize_archive_stem(project_name) fallback
+* CLI fab handler reads --archive-name CLI arg, then the saved
+  archive_name_template from .jbom/jbom-options.json (plugin and CLI
+  share the persisted options file), then DEFAULT_ARCHIVE_TEMPLATE.
+* The plugin dialog's existing _expand_archive_template_from_file
+  remains unchanged and is functionally equivalent.
+
+Result: 'jbom fab' run against the same project as a plugin click
+produces the same archive name (e.g. cpNode-Xiao-68x90_1.0.zip vs the
+previous CLI's cpNode-Xiao-68x90.zip).
+
+Tests: 5 new tests in tests/unit/test_archive_template.py cover:
+title-block expansion, default template fallback, PCB-stem fallback
+when title block is empty, '(unknown)' when PCB missing, and unsafe-
+character normalisation.
+
+Refs: #287
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`c2fbc15`](https://github.com/plocher/jBOM/commit/c2fbc150c2a10197f1686037532d2fb77a8780cd))
+
+### Refactoring
+
+* refactor(application): factor shared PCB-as-row-set plumbing into pcb_project_loader
+
+New jbom.application.pcb_project_loader module centralizes the
+resolve-PCB-input / load-board / collect-project-graph sequence that
+BOM and POS each used to open-code.
+
+API surface:
+* resolve_pcb_input(input_path, *, artifact_name, options) - wraps
+  ProjectFileResolver(prefer_pcb=True, target_file_type='pcb'); emits
+  the canonical 'Note: <artifact> requires a PCB file. / found matching
+  PCB. / Using PCB.' diagnostic trio so BOM and POS produce identical
+  wording (only the artifact label differs).
+* load_board(pcb_path) - thin wrapper around
+  DefaultKiCadReaderService().read_pcb_file(...).
+* list_hierarchical_schematic_files(project_context) - existence-checked
+  enumeration that returns [] on resolver failure.
+* load_schematic_components(files, *, options, verbose) - schematic
+  enrichment loader; per-file failures become warning diagnostics in
+  verbose mode and are swallowed otherwise.
+* collect_project_graph(...) - delegates to ProjectComponentCollector
+  with board.footprints as the canonical PCB input.
+* ResolvedPcbProject - frozen dataclass bundling the resolved input,
+  pcb path, project context, and accumulated diagnostics.
+
+POSWorkflow refactored to use the helpers; no behaviour change. _list_fields
+and _generate no longer hand-roll the resolver + reader + schematic
+enumeration.  Existing POS workflow tests monkeypatch the new helper
+functions instead of the removed direct ProjectFileResolver /
+DefaultKiCadReaderService attributes.
+
+New tests/application/test_pcb_project_loader.py covers resolve_pcb_input
+trio behaviour, artifact_name wording, missing-context fatal-error,
+list_hierarchical_schematic_files filtering, load_schematic_components
+verbose vs silent failure, and collect_project_graph using board
+footprints as the canonical input.
+
+Refs: #280
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`b4fceab`](https://github.com/plocher/jBOM/commit/b4fceab115e95d6fefa998f779f9719b4daaa27f))
+
+
+## v6.59.0 (2026-05-13)
+
+### Bug Fixes
+
+* fix(plugin): use project-dir context when cwd is unavailable
+
+When Path.cwd() fails during profile discovery, prefer JBOM_PROJECT_DIR (set by the KiCad plugin dialog from the active board path) before home/root fallbacks.
+
+Add regression test for plugin project-directory fallback.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`5969893`](https://github.com/plocher/jBOM/commit/59698938829fe06e3ba07ce7991ad7a4fffbdcff))
+
+* fix(config): tolerate unavailable cwd during profile discovery
+
+Handle profile search when process cwd cannot be resolved by falling back to HOME (then /), preventing plugin fallback to generic-only fabricator list.
+
+Adds regression coverage for Path.cwd() failure in profile_search_dirs.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`509302a`](https://github.com/plocher/jBOM/commit/509302a751fcfdbf585f6cfcb96c8abe1ed98689))
+
+### Features
+
+* feat(plugin): diagnostics notebook + Save log; consume bootstrap info
+
+Replace the single 'Profile eval' TextCtrl with a wx.Notebook holding
+three read-only monospace tabs (Environment, Profiles, Lifecycle) plus
+'Refresh' and 'Save log...' buttons.  All hidden until the debug
+checkbox is toggled.
+
+* Each dialog open begin_run()s a new LifecycleRun; record_event() hooks
+  fire on dialog open, fabricator change, generate click, every worker
+  step (bom/pos/gerbers/backup x start/done), complete, error,
+  save-log success/failure, and dialog close.  end_run() runs in
+  _refresh_and_destroy so runs always cleanly terminate.
+* Refresh repopulates the three tabs from the diagnostics module; the
+  Lifecycle tab auto-scrolls to the most recent event.
+* Save log...  prompts for a path (default 'jbom-diagnostics-<ts>.txt'
+  next to the PCB) and writes the full text report.
+* Load-stamp tooltip and label now read JBOM_PLUGIN_BOOTSTRAP_INFO
+  (JSON, only present when JBOM_PLUGIN_DEBUG=1) and report the vendor
+  tag + inserted sys.path entries.
+
+Also keeps the dialog lifecycle hardening that fixed the single-
+invocation toolbar-button bug: parent=None, modeless Show(),
+pcbnew.Refresh() before Destroy(), module-level plugin instance held
+in __init__.py.
+
+Refs: #275, #278, #279
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`c88a151`](https://github.com/plocher/jBOM/commit/c88a15136e768ce8d5796528d7ad975fca55ba0f))
+
+* feat(plugin): structured diagnostics module (Environment / Profiles / Lifecycle)
+
+New wx-free jbom.plugin.diagnostics module that captures three layered
+diagnostic views and exposes a plain-text 'Save log...' renderer:
+
+1. Environment snapshot - captured once per Python session: mode, python
+   version, vendor tag, source path/mtime, JBOM_PROJECT_DIR /
+   JBOM_PROFILE_PATH, and the bootstrap-inserted sys.path entries.
+
+2. Profile snapshot - fingerprint-cached over every discoverable
+   *.jbom.yaml file (path + size + mtime).  Search dirs are role-tagged
+   (Project / Home / System / Env / Factory / Other) for compact display.
+   The 'chain_entries' field is the full effective lineage: extends:
+   ancestors followed by every common.jbom.yaml the loader implicitly
+   merges in, ordered most-specific-first.  Each entry is a (role, name)
+   pair so the rendered chain reads like 'Project:jlc -> Factory:common'.
+
+3. Lifecycle log - per-dialog-invocation events retained for the KiCad
+   session (cap 20 runs x 200 events).  begin_run / record_event /
+   end_run primitives plus a get_runs() accessor for callers.
+
+render_text_report() returns the union of all three sections so 'Save
+log...' can write a file users attach to bug reports.
+
+Includes 14 unit tests covering env caching + JSON parsing, profile
+fingerprint cache hit/miss, role classification, common-layer in chain,
+broken-extends truncation, lifecycle event recording, run rotation, and
+text rendering.
+
+Refs: #279
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`1cfcc8a`](https://github.com/plocher/jBOM/commit/1cfcc8a3b2e8d0f70cfc7d65a9b26c0844b70b4e))
+
+* feat(plugin): platform-aware bootstrap selects matching pydantic_core
+
+Replace the dev-loop homebrew/user-site/venv probing with a deterministic
+per-(python, OS, CPU) selector.
+
+* _vendor_folder_tag() maps the running interpreter to a vendor folder name
+  matching the tags produced by scripts/build_pcm_package.py (e.g.
+  cp39-macosx_arm64).
+* _vendor_pydantic_core_path() prefers an exact tag match and falls back to
+  any cp*-local_* directory left by --skip-binary-fetch builds.
+* PCM mode prepends the matching _vendor/pydantic_core/<tag>/ to sys.path
+  before <this_dir>; pure-Python deps are imported from <this_dir>
+  directly.
+* Dev-loop mode keeps <src/> on sys.path so editable jbom imports work; it
+  no longer probes homebrew or user-site automatically.  Developers who
+  need extra deps can set JBOM_PLUGIN_PYTHON_DEPS_DIR (colon/semicolon-
+  separated) to point at their venv site-packages.
+* Bootstrap diagnostics are published into a single JSON env var
+  JBOM_PLUGIN_BOOTSTRAP_INFO, populated only when JBOM_PLUGIN_DEBUG=1.
+
+Refs: #278
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`cb5794a`](https://github.com/plocher/jBOM/commit/cb5794a5ff68317d92ef8be99751518c8c62cbac))
+
+
+## v6.58.1 (2026-05-12)
+
+### Bug Fixes
+
+* fix(tests): harden supplier default and config profile Behave coverage
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`98b5a1c`](https://github.com/plocher/jBOM/commit/98b5a1c15b17a132ce14bf12e4a856a4b5905693))
+
+### Refactoring
+
+* refactor(tests): make profile hierarchy scenarios name-agnostic
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`f749ef0`](https://github.com/plocher/jBOM/commit/f749ef0bff3b397eedb4926139179c640499d16a))
+
+* refactor(tests): clarify profile hierarchy scenario wording
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`26a1f9c`](https://github.com/plocher/jBOM/commit/26a1f9cdd261e7be90a9771cf95a29458462a28c))
+
+* refactor(tests): remove magic supplier defaults in feature scenarios
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`d23fe2c`](https://github.com/plocher/jBOM/commit/d23fe2c24d5868b5159589ea5bb6faabcb2e60e4))
+
+* refactor(config): relocate built-in .jbom profiles under config/profiles (#270)
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`7106a5f`](https://github.com/plocher/jBOM/commit/7106a5f571368a46cee94723add8c44d3fac59cd))
+
+
 ## v6.58.0 (2026-05-12)
 
 ### Bug Fixes

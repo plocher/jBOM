@@ -4,7 +4,7 @@ Feature: BOM Field System and Output Customization
   So that I can generate BOMs that match different fabricator requirements
 
   Background:
-    Given a schematic that contains:
+    Given a PCB that contains:
       | Reference | Value | Footprint   | SPN    | Manufacturer | MPN      | Package |
       | R1        | 10K   | R_0805_2012 | C17414 | Yageo        | RC0805   | 0805    |
       | C1        | 100nF | C_0603_1608 | C14663 | Murata       | GRM188   | 0603    |
@@ -13,10 +13,10 @@ Feature: BOM Field System and Output Customization
   Scenario: Different fabricators produce different output headers
     When I run jbom command "bom --fabricator generic -o -"
     Then the command should succeed
-    And the output should contain CSV headers "Reference,Quantity,Description,Value,Package,Footprint,Manufacturer,Part Number"
+    And the output should contain CSV headers "Reference,Quantity,Description,Value,Package,Footprint,Manufacturer,Part Number,DNP"
     When I run jbom command "bom --fabricator jlc -o -"
     Then the command should succeed
-    And the output should contain CSV headers "Designator,Quantity,Value,Comment,Footprint,LCSC Part #,Surface Mount"
+    And the output should contain CSV headers "Designator,Quantity,Value,Comment,Footprint,LCSC Part #,Surface Mount,DNP"
     When I run jbom command "bom --fabricator pcbway -o -"
     Then the command should succeed
     And the output should not contain CSV headers "Reference,Quantity,Description,Value,Package,Footprint,Manufacturer,Part Number"
@@ -46,10 +46,10 @@ Feature: BOM Field System and Output Customization
   Scenario: Fabricator-specific presets
     When I run jbom command "bom --fabricator jlc -f +jlc -o -"
     Then the command should succeed
-    And the output should contain CSV headers "Designator,Quantity,Value,Comment,LCSC Part #"
+    And the output should contain CSV headers "Designator,Quantity,Value,Comment,LCSC Part #,DNP"
     When I run jbom command "bom --fabricator generic -f +generic -o -"
     Then the command should succeed
-    And the output should contain CSV headers "Reference,Quantity,Description,Value,Manufacturer,Part Number"
+    And the output should contain CSV headers "Reference,Quantity,Description,Value,Manufacturer,Part Number,DNP"
 
   @regression @current-broken
   Scenario: Mixed syntax - preset plus custom fields

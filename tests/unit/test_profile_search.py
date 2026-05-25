@@ -100,6 +100,39 @@ def test_profile_search_dirs_starts_with_cwd_jbom(tmp_path: Path) -> None:
     assert dirs[0] == tmp_path / ".jbom"
 
 
+def test_profile_search_dirs_falls_back_when_cwd_unavailable(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """If Path.cwd() is unavailable, search should fall back to home/.jbom."""
+
+    def _raise_cwd() -> Path:
+        raise FileNotFoundError("cwd unavailable")
+
+    monkeypatch.setattr("jbom.config.profile_search.Path.cwd", _raise_cwd)
+    monkeypatch.setattr("jbom.config.profile_search.Path.home", lambda: tmp_path)
+
+    dirs = profile_search_dirs()
+    assert dirs[0] == tmp_path / ".jbom"
+
+
+def test_profile_search_dirs_uses_plugin_project_dir_when_cwd_unavailable(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """If Path.cwd() fails, plugin project context should be used first."""
+
+    project_dir = tmp_path / "project"
+    project_dir.mkdir()
+
+    def _raise_cwd() -> Path:
+        raise FileNotFoundError("cwd unavailable")
+
+    monkeypatch.setattr("jbom.config.profile_search.Path.cwd", _raise_cwd)
+    monkeypatch.setenv("JBOM_PROJECT_DIR", str(project_dir))
+
+    dirs = profile_search_dirs()
+    assert dirs[0] == project_dir / ".jbom"
+
+
 def test_find_repo_root_walks_up(tmp_path: Path) -> None:
     """_find_repo_root should walk up to find .git/."""
     from jbom.config.profile_search import _find_repo_root
@@ -143,3 +176,37 @@ def test_find_profile_multiple_env_paths(
 
     result = find_profile("org", cwd=tmp_path / "project")
     assert result == dir_b / "org.jbom.yaml"
+
+
+def test_record_profile_eval_quiet_by_default(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """``record_profile_eval`` must not print to stdout in production mode."""
+    from jbom.config.profile_search import (
+        clear_profile_eval_trace,
+        get_profile_eval_trace,
+        record_profile_eval,
+    )
+
+    monkeypatch.delenv("JBOM_PROFILE_EVAL_VERBOSE", raising=False)
+    clear_profile_eval_trace()
+    record_profile_eval("silent-line")
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "silent-line" in get_profile_eval_trace()
+
+
+def test_record_profile_eval_verbose_env_var_enables_stdout(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Setting ``JBOM_PROFILE_EVAL_VERBOSE=1`` re-enables stdout output."""
+    from jbom.config.profile_search import (
+        clear_profile_eval_trace,
+        record_profile_eval,
+    )
+
+    monkeypatch.setenv("JBOM_PROFILE_EVAL_VERBOSE", "1")
+    clear_profile_eval_trace()
+    record_profile_eval("loud-line")
+    captured = capsys.readouterr()
+    assert "loud-line" in captured.out

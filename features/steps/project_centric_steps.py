@@ -331,7 +331,32 @@ def given_simple_pcb(context) -> None:
     # Create PCB with footprints
     rows: List[Dict[str, Any]] = [row.as_dict() for row in (context.table or [])]
     comps: List[Dict[str, Any]] = []
+    # Columns handled directly by the PCB writer (lower-cased for the lookup
+    # below).  Anything else gets emitted as an opaque ``(property "K" "V")``
+    # entry so that BOM scenarios can carry schematic-style extras (LCSC,
+    # Manufacturer, Lib_ID, ...) entirely from the PCB.
+    _PCB_STANDARD_COLS = {
+        "reference",
+        "x",
+        "y",
+        "rotation",
+        "side",
+        "footprint",
+        "value",
+        "package",
+        "smd",
+        "attrs",
+        "locked",
+        "dnp",
+        "excludefrombom",
+        "exclude_from_bom",
+    }
     for r in rows:
+        extras = {
+            k: v
+            for k, v in r.items()
+            if k.lower() not in _PCB_STANDARD_COLS and str(v or "").strip()
+        }
         comps.append(
             {
                 "Reference": r.get("reference", r.get("Reference", "U1")),
@@ -345,6 +370,12 @@ def given_simple_pcb(context) -> None:
                 "SMD": r.get("smd", r.get("SMD", "")),
                 "Attrs": r.get("attrs", r.get("Attrs", "")),
                 "Locked": r.get("locked", r.get("Locked", "")),
+                "DNP": r.get("dnp", r.get("DNP", "")),
+                "ExcludeFromBOM": r.get(
+                    "excludefrombom",
+                    r.get("ExcludeFromBOM", r.get("exclude_from_bom", "")),
+                ),
+                "ExtraProps": extras,
             }
         )
     # Write PCB file in correct location
@@ -403,12 +434,19 @@ def given_simple_pcb(context) -> None:
         locked_value = str(comp.get("Locked", "") or "").strip().lower()
         is_locked = locked_value in {"yes", "true", "1", "locked"}
 
+        dnp_value = str(comp.get("DNP", "") or "").strip().lower()
+        is_dnp = dnp_value in {"yes", "true", "1", "dnp"}
+        excluded_value = str(comp.get("ExcludeFromBOM", "") or "").strip().lower()
+        is_excluded = excluded_value in {"yes", "true", "1"}
+
         # Build properties list
         properties = [f'(property "Reference" "{ref}")']
         if value:
             properties.append(f'(property "Value" "{value}")')
         if package:
             properties.append(f'(property "Package" "{package}")')
+        for extra_key, extra_value in (comp.get("ExtraProps") or {}).items():
+            properties.append(f'(property "{extra_key}" "{extra_value}")')
 
         properties_str = "\n    ".join(properties)
 
@@ -418,6 +456,14 @@ def given_simple_pcb(context) -> None:
         ]
         if attr:
             footprint_lines.append(f"    {attr}")
+        # DNP and exclude_from_bom are KiCad PCB-level footprint attributes.
+        # The PCB-first BOM contract reads these from the PCB; we emit them
+        # as separate ``(attr ...)`` forms so the parser stores them as
+        # ``footprint.attributes["dnp"] = "yes"`` etc.
+        if is_dnp:
+            footprint_lines.append("    (attr dnp)")
+        if is_excluded:
+            footprint_lines.append("    (attr exclude_from_bom)")
         if is_locked:
             footprint_lines.append("    (locked)")
         footprint_lines.append("  )")
@@ -616,12 +662,83 @@ def then_inventory_file_contains_value(context, value: str) -> None:
 # -------------------------
 
 
+def _deep_merge_supplier(
+    base: dict[str, Any], override: dict[str, Any]
+) -> dict[str, Any]:
+    """Deep merge override onto base with list-replace and null-delete semantics."""
+    merged: dict[str, Any] = dict(base)
+    for key, value in override.items():
+        if value is None:
+            merged.pop(key, None)
+            continue
+        existing = merged.get(key)
+        if isinstance(existing, dict) and isinstance(value, dict):
+            merged[key] = _deep_merge_supplier(existing, value)
+            continue
+        merged[key] = value
+    return merged
+
+
+def _set_dotted_mapping_value(
+    target: dict[str, Any], dotted_key: str, value: Any
+) -> None:
+    """Set a dotted-path key inside a nested mapping."""
+    parts = [segment.strip() for segment in str(dotted_key or "").split(".") if segment]
+    if not parts:
+        return
+    cursor = target
+    for key in parts[:-1]:
+        next_value = cursor.get(key)
+        if not isinstance(next_value, dict):
+            next_value = {}
+            cursor[key] = next_value
+        cursor = next_value
+    cursor[parts[-1]] = value
+
+
+def _coerce_supplier_override_value(path: str, raw_value: str) -> Any:
+    """Coerce table values for supplier-profile overrides."""
+    normalized_path = str(path or "").strip().lower()
+    token = str(raw_value or "").strip()
+    lowered = token.lower()
+    if lowered == "null":
+        return None
+    if lowered == "true":
+        return True
+    if lowered == "false":
+        return False
+    if normalized_path in {"search.fields"}:
+        return [item.strip() for item in token.split(",") if item.strip()]
+    return token
+
+
+def _iter_builtin_profile_paths(repo_root: Path) -> list[Path]:
+    """Return built-in unified profile files from current and legacy locations."""
+    candidates: list[Path] = []
+    for directory in (
+        repo_root / "src" / "jbom" / "config" / "profiles",
+        repo_root / "src" / "jbom" / "config",
+    ):
+        if directory.exists():
+            candidates.extend(sorted(directory.glob("*.jbom.yaml")))
+
+    deduped: list[Path] = []
+    seen: set[str] = set()
+    for path in candidates:
+        key = str(path.resolve())
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(path)
+    return deduped
+
+
 def _load_builtin_supplier_profile(supplier_id: str) -> dict[str, Any]:
     """Load built-in supplier profile data for a supplier id."""
     sid = (supplier_id or "").strip().lower()
     repo_root = Path(__file__).resolve().parents[2]
-    config_dir = repo_root / "src" / "jbom" / "config"
-    for profile_path in sorted(config_dir.glob("*.jbom.yaml")):
+    profile_paths = _iter_builtin_profile_paths(repo_root)
+    for profile_path in profile_paths:
         merged = yaml.safe_load(profile_path.read_text(encoding="utf-8")) or {}
         if not isinstance(merged, dict):
             continue
@@ -636,8 +753,10 @@ def _load_builtin_supplier_profile(supplier_id: str) -> dict[str, Any]:
         if effective_id != sid:
             continue
         return dict(supplier_data)
-
-    raise AssertionError(f"Unknown supplier profile fixture source: {sid}")
+    searched = [str(p) for p in profile_paths]
+    raise AssertionError(
+        f"Unknown supplier profile fixture source: {sid} (searched: {searched})"
+    )
 
 
 def _write_supplier_profile(
@@ -645,12 +764,15 @@ def _write_supplier_profile(
     *,
     supplier_id: str,
     results: list[dict[str, Any]] | None = None,
+    supplier_overrides: dict[str, Any] | None = None,
 ) -> None:
     """Write a unified supplier profile using built-in metadata + null_api fixtures."""
     import json as _json
 
     sid = (supplier_id or "").strip().lower()
     profile_data = _load_builtin_supplier_profile(sid)
+    if supplier_overrides:
+        profile_data = _deep_merge_supplier(profile_data, supplier_overrides)
     jbom_dir = Path(context.sandbox_root) / ".jbom"
     jbom_dir.mkdir(exist_ok=True)
     provider_cfg: dict[str, Any] = {"type": "null_api"}
@@ -678,14 +800,8 @@ def _write_supplier_profile(
     )
 
 
-def _table_to_supplier_results(context) -> list[dict[str, Any]]:
+def _table_to_supplier_results(context, *, supplier_id: str) -> list[dict[str, Any]]:
     """Convert a Gherkin table into null_api SearchResult fixtures."""
-    supplier_id = (
-        str(
-            getattr(context, "_active_supplier_profile_id_for_catalog", "generic")
-        ).strip()
-        or "generic"
-    )
     return [
         {
             "manufacturer": r.get("manufacturer", ""),
@@ -704,41 +820,69 @@ def _table_to_supplier_results(context) -> list[dict[str, Any]]:
     ]
 
 
-@given("a generic supplier")
-def given_a_generic_supplier(context) -> None:
-    """Set up an empty generic supplier config (null_api, returns no results).
-    Writes .jbom/generic.jbom.yaml with null_api and no fixtures key.
-    The null_api provider always returns [] when no fixtures are configured.
-    Use 'And a supplier catalog that contains:' to add specific results.
+@given("a supplier profile that contains:")
+def given_a_supplier_profile_that_contains(context) -> None:
+    """Create a supplier profile using explicit table-driven key/value overrides.
+
+    Table columns:
+    | key | value |
+    Example keys: id, name, website, field_synonyms.supplier_pn.display_name.
     """
-    _write_supplier_profile(context, supplier_id="generic", results=None)
+    assert (
+        context.table is not None and context.table.rows
+    ), "Expected non-empty table for supplier profile overrides"
+    headings = [h.strip().lower() for h in context.table.headings]
+    assert (
+        "key" in headings and "value" in headings
+    ), "Supplier profile table must include 'key' and 'value' columns"
+
+    key_column = context.table.headings[headings.index("key")]
+    value_column = context.table.headings[headings.index("value")]
+    overrides: dict[str, Any] = {}
+    for row in context.table:
+        path = str(row.get(key_column, "")).strip()
+        value = _coerce_supplier_override_value(path, str(row.get(value_column, "")))
+        _set_dotted_mapping_value(overrides, path, value)
+
+    sid = str(overrides.get("id", "") or "").strip().lower() or "generic"
+    context._active_supplier_profile_id_for_catalog = sid
+    _write_supplier_profile(
+        context,
+        supplier_id=sid,
+        results=None,
+        supplier_overrides=overrides,
+    )
 
 
 @given("a supplier catalog that contains:")
 def given_a_supplier_catalog(context) -> None:
-    """Populate the generic supplier with table-driven fixture results.
+    """Populate the active supplier profile with table-driven fixture results.
 
-    Writes .jbom/generic_results.json from the Gherkin table and updates
-    .jbom/generic.jbom.yaml to point the null_api provider at it.
-    Expects 'Given a generic supplier' to have run first (or runs standalone).
+    Writes .jbom/<supplier>_results.json from the Gherkin table and updates
+    .jbom/<supplier>.jbom.yaml to point the null_api provider at it.
+    Expects 'Given a supplier profile that contains:' first.
 
     Table columns: distributor_pn, manufacturer, mpn, stock_quantity, price,
     description (all optional except distributor_pn).
     """
-    context._active_supplier_profile_id_for_catalog = "generic"
+    sid = str(getattr(context, "_active_supplier_profile_id_for_catalog", "")).strip()
+    assert sid, (
+        "No active supplier profile selected; use "
+        "'Given a supplier profile that contains:' before catalog fixtures"
+    )
     _write_supplier_profile(
         context,
-        supplier_id="generic",
-        results=_table_to_supplier_results(context),
+        supplier_id=sid,
+        results=_table_to_supplier_results(context, supplier_id=sid),
     )
 
 
 @given('a supplier profile "{supplier_id}" with catalog that contains:')
 def given_supplier_profile_with_catalog(context, supplier_id: str) -> None:
-    """Create a named supplier profile backed by table-driven null_api fixtures."""
+    """Backward-compatible wrapper for named profile + catalog setup."""
     context._active_supplier_profile_id_for_catalog = supplier_id
     _write_supplier_profile(
         context,
         supplier_id=supplier_id,
-        results=_table_to_supplier_results(context),
+        results=_table_to_supplier_results(context, supplier_id=supplier_id),
     )

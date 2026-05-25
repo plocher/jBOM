@@ -6,7 +6,54 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Breaking Changes
+- **DNP filter flags removed from `jbom bom`, `jbom parts`, and `jbom pos`** (issue #294):
+  `--include-dnp`, `--include-excluded`, and `--include-all` no longer exist on any of these
+  commands. Each command now has fixed, contract-correct behaviour:
+  - `bom` / `parts`: DNP rows are always included with a `DNP` column marker (`"DNP"` or `""`);
+    `exclude_from_bom` refs are always excluded; virtual symbols are always excluded.
+  - `pos`: DNP rows are always excluded (the P&P machine cannot place them).
+  Procurement consumers that previously relied on the default-exclude-DNP behaviour should
+  filter the `dnp` column: `awk -F, 'NR==1 || $NF != "DNP"' project.bom.csv`.
+
 ### Added
+- **DNP column in BOM output** (issue #294): all four fabricator presets (`generic`, `jlc`,
+  `pcbway`, `seeed`) now include a `DNP` column in their default field set. Value is `"DNP"`
+  for Do-Not-Populate components and `""` for populated ones. This satisfies IPC J-STD-001.
+- **DNP-aware BOM aggregation** (issue #294): populated and DNP variants of the same
+  `value+footprint` combination are now kept on separate rows so quantity counts are never
+  inflated by merging a populated row with a DNP row.
+
+### Breaking Changes
+- **Minimum KiCad version raised to 9.0** for the PCM-installed plugin.  Pydantic v2,
+  on which the unified profile loader depends, requires CPython 3.9+, which lines up
+  with KiCad 9 (CPython 3.9) and KiCad 10 (CPython 3.12).  KiCad 6/7/8 are no longer
+  validated targets for the plugin; the standalone CLI continues to work anywhere
+  Python 3.10+ is available.
+
+### Added
+- **Production-ready PCM packaging with multi-platform vendored dependencies**:
+  - `scripts/build_pcm_package.py` now fetches `pydantic_core` wheels for every
+    supported (Python, OS, arch) combination via `pip download --platform=...`,
+    extracts each one into `plugins/_vendor/pydantic_core/<py>-<plat>/pydantic_core/`,
+    and ships them in a single PCM archive.  Pure-Python deps (pydantic, pyyaml,
+    typing_extensions, annotated_types, typing_inspection, sexpdata) continue to
+    be vendored once into `plugins/`.
+  - `scripts/_vendor_requirements.txt` pins exact versions for reproducible builds.
+  - New `--skip-binary-fetch` flag on the build script vendors only the build host's
+    local `pydantic_core` for offline iteration (not redistributable).
+  - `src/jbom/plugin/__init__.py` is platform-aware: at load time it picks the
+    matching `_vendor/pydantic_core/<tag>/` directory based on `sys.version_info`,
+    `sys.platform`, and `platform.machine()`, prepending it to `sys.path` so the
+    bundled extension is the one that gets imported.  The dev-loop path drops the
+    homebrew/user-site/venv auto-discovery in favor of an opt-in
+    `JBOM_PLUGIN_PYTHON_DEPS_DIR` environment variable for developer use.
+  - Bootstrap diagnostics now travel through a single JSON env var
+    (`JBOM_PLUGIN_BOOTSTRAP_INFO`), populated only when `JBOM_PLUGIN_DEBUG=1`.
+  - Profile-evaluation tracing is quiet by default; set
+    `JBOM_PROFILE_EVAL_VERBOSE=1` to print each candidate path to stdout.  The
+    in-memory trace ring buffer is unchanged so the plugin dialog's debug panel
+    still surfaces recent activity when the debug checkbox is on.
 - **Production folder, packaging services, and diagnostic collection** (issue #226, ADR 0006):
   - `jbom fab` now writes all fabrication artifacts to a `production/` folder in the project
     directory (or a custom root via `-o/--output-dir`), following the Fabrication Toolkit

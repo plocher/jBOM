@@ -278,7 +278,20 @@ class DefaultKiCadReaderService(KiCadReaderService):
                         elif key == "Value":
                             value = val
                         elif key == "Footprint":
-                            fp_name = val
+                            # PCB-first contract: ``footprint_name`` is the
+                            # canonical FPID from the
+                            # ``(footprint "Lib:Name" ...)`` opener -- it
+                            # describes the *physical* footprint placed on
+                            # the board.  The ``Footprint`` property is the
+                            # schematic-side hint that flowed in via
+                            # ``Update PCB from Schematic`` and may carry a
+                            # completely different library name (e.g. KiCad
+                            # stdlib vs. a vendor library).  We preserve it
+                            # under ``attributes['schematic_footprint']``
+                            # so the BOM can expose ``s:footprint`` for
+                            # DRC-debug scenarios, but the FPID is never
+                            # overwritten.
+                            attributes["schematic_footprint"] = val
                         else:
                             # Store all other properties
                             attributes[key] = val

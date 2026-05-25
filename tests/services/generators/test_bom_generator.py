@@ -200,8 +200,12 @@ class TestBOMGenerator:
         ]
         assert bom_data.entries[0].references == ["GND0", "LEDCOM0"]
 
-    def test_apply_filters_exclude_dnp(self):
-        """Test filtering excludes DNP components."""
+    def test_apply_filters_dnp_included_by_default(self):
+        """DNP components are included in BOM by default (IPC J-STD-001 contract).
+
+        They appear as separate rows marked with the dnp attribute.
+        Use explicit exclude_dnp=True to filter them out.
+        """
         generator = BOMGenerator()
         components = [
             Component(
@@ -228,12 +232,23 @@ class TestBOMGenerator:
             ),
         ]
 
+        # Default: both components included, separate rows (different dnp key)
         bom_data = generator.generate_bom_data(components)
-
-        assert len(bom_data.entries) == 1
-        assert bom_data.entries[0].references == ["R1"]
+        assert len(bom_data.entries) == 2
         assert bom_data.metadata["total_input_components"] == 2
-        assert bom_data.metadata["filtered_components"] == 1
+        assert bom_data.metadata["filtered_components"] == 2
+
+        # Explicit exclude: only R1
+        bom_data_excl = generator.generate_bom_data(
+            components,
+            filters={
+                "exclude_dnp": True,
+                "include_only_bom": True,
+                "include_virtual_symbols": False,
+            },
+        )
+        assert len(bom_data_excl.entries) == 1
+        assert bom_data_excl.entries[0].references == ["R1"]
 
     def test_apply_filters_exclude_not_in_bom(self):
         """Test filtering excludes components not in BOM."""
