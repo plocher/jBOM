@@ -175,33 +175,41 @@ For merge semantics, the `extends:` key, and the `common.jbom.yaml`
 accumulation model, see [Configuration semantics](../design/configuration-semantics.md)
 and [ADR 0008](../architecture/adr/0008-unified-jbom-config-schema.md).
 
-## Plugin script location
+## Plugin installation
 
-The `kicad_jbom_plugin.py` wrapper does not need to live in any specific
-directory — KiCad's BOM-plugin dialog stores the absolute path you provide.
-That said, KiCad maintains per-user scripting-plugin directories per
-platform, and putting the script there keeps it findable across upgrades:
+jBOM's KiCad integration — both the Pcbnew ActionPlugin (toolbar
+button) and the Eeschema BOM-plugin wrapper (`kicad_jbom_plugin.py`)
+— is intended to be installed through KiCad's **Plugin and Content
+Manager (PCM)**. PCM is the recommended and supported install path:
+it handles version upgrades, uninstalls, and dependency tracking, and
+it places the package in the correct platform-specific directory
+automatically:
 
-| Platform | KiCad user scripting plugin directory |
+| Platform | PCM install directory |
 |---|---|
 | **macOS** | `~/Library/Preferences/kicad/<ver>/scripting/plugins/` |
 | **Linux** | `~/.local/share/kicad/<ver>/scripting/plugins/` |
 | **Windows** | `%APPDATA%\kicad\<ver>\scripting\plugins\` |
 
-`<ver>` is the KiCad major.minor version (`9.0`, `10.0`, etc.). These
-directories are also where the KiCad ActionPlugin (the PCBnew toolbar
-button, distributed via the KiCad Plugin and Content Manager) installs by
-convention; see the
+`<ver>` is the KiCad major.minor version (`9.0`, `10.0`, etc.). The
+above paths are informational — users should not need to copy or move
+files into these directories themselves. See the
 [plugin-dev-setup skill](../../.agents/skills/plugin-dev-setup/SKILL.md)
-for the ActionPlugin's specific layout requirements.
+for the jBOM PCM package layout (how the ActionPlugin and BOM-plugin
+wrapper are bundled together).
 
-Note: KiCad's BOM plugins (registered via **Eeschema → Tools → Generate
-BOM → Add plugin**) are not auto-discovered from these directories the way
-ActionPlugins are; you still need to register the path in the Eeschema
-dialog as described in the
-[kicad-plugin-setup skill](../../.agents/skills/kicad-plugin-setup/SKILL.md).
-The convention of co-locating both kinds of plugin under one directory is
-purely organisational.
+After PCM installs the package, the Pcbnew toolbar button appears
+automatically. The Eeschema BOM plugin requires a one-time
+registration via **Eeschema → Tools → Generate BOM → Add plugin**
+pointing at the PCM-installed `kicad_jbom_plugin.py`; KiCad's BOM
+dialog does not auto-discover plugins. See the
+[kicad-plugin-setup skill](../../.agents/skills/kicad-plugin-setup/SKILL.md)
+for the dialog walkthrough.
+
+Manual filesystem placement (cloning the repo, copying the script
+by hand, or `pip install`'ing the wrapper to an arbitrary path) is
+supported for development workflows and edge cases, but is not the
+recommended path for end users.
 
 ## Environment requirements
 
