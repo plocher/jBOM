@@ -25,21 +25,80 @@ generated) or destined to rot. Each doc in the tree must be able to point
 at the job(s) above that it does. Docs that cannot make that claim are
 candidates for deletion.
 
+## Structural axiom — layering and validation pairing
+
+jBOM documentation follows the same layering as the codebase, with each
+layer paired to its validation mechanism:
+
+```
+docs/requirements/   ← what the system must do
+docs/architecture/   ← how we meet the requirements
+features/*           ← how we validate the requirements (BDD)
+docs/design/         ← how we instantiate the architecture
+src/*                ← how we implement the design
+pytest/*             ← how we validate the design (unit)
+```
+
+Each layer answers a different "how" question. The folder structure of
+`docs/` is dictated by this layering — not by audience, not by historical
+accident.
+
+## Architecture vs Design — durability hierarchy
+
+Within the "decision history" job, two distinct sub-categories exist:
+
+- **Architecture** — formal, frozen, additive. Changes only by adding a
+  new ADR (or similarly formal published decision). Existing
+  architectural content is not rewritten; if it appears to disagree with
+  the code, a content-freshness finding is filed and resolved by either
+  correcting the code or publishing a superseding ADR.
+- **Design** — mutable rationale below architecture. Changes as needed,
+  kept honest by the BDD/TDD scaffold. Design decisions may graduate
+  into architecture by being published as ADRs.
+
+Some "architecture" docs that predate the formal ADR process are equally
+architectural in substance; they may be normalized into ADR format
+through a bounded, separately-tracked operation that preserves content
+verbatim and records provenance. This is the only permitted
+architecture-content operation outside of adding new ADRs.
+
+## Folder structure
+
+`docs/` contains exactly these top-level folders, each with a single
+purpose:
+
+- `requirements/` — what the system must do (user scenarios, functional
+  scenarios, use cases)
+- `architecture/` — formal, frozen architectural decisions (ADRs)
+- `design/` — mutable design rationale; bounded by BDD/TDD
+- `reference/` — generated/constructed lookup material
+- `skills/` — actionable how-tos for humans + agents (single source)
+- `tutorials/` — curated learning journeys
+
+Files at `docs/` root (e.g. `README.md`) are tree-level metadata, not
+content.
+
 ## Audiences
 
-Four first-class audiences, served by distinct top-level entry points:
+Four first-class audiences. The folder structure serves them, but
+audience and folder are not 1:1 — most folders serve multiple audiences
+with different content:
 
 - **User** (including the power-user hat) — runs `jbom` from the CLI or
-  the KiCad plugin. Reads `docs/README.man*.md`, tutorials, and how-to
-  recipes.
-- **Config author** — writes `.jbom.yaml`, builds fabricator and supplier
-  profiles. May not read Python. Reads a focused config-authoring guide
-  plus the generated `docs/README.configuration.yaml.md` (per #269).
-- **Developer** — extends jBOM. Reads `docs/dev/*`. Plugin authors are a
-  subset of this audience, distinguished by reading a stable-contract
-  marking within the developer surface rather than a separate doc tree.
+  the KiCad plugin. Primary folders: `tutorials/`, `reference/`.
+- **Config author** — writes `.jbom.yaml`, builds fabricator and
+  supplier profiles. May not read Python. Primary folders: a focused
+  config-authoring guide under `skills/`, plus the generated
+  configuration reference (per #269).
+- **Developer** — extends jBOM. Primary folders: `architecture/`,
+  `design/`, `skills/`, `requirements/`. Plugin authors are a subset
+  distinguished by a stable-contract marking within the developer
+  surface.
 - **Agent working on jBOM** — automation operating on the repository.
-  Reads `WARP.md` and the developer surface.
+  Reads `WARP.md` and the same `skills/` content as developers.
+  Procedural skill content is a single source serving both developer
+  onboarding and agent execution; this audience collapses partially
+  into "developer" for skill-shaped content.
 
 Agents *using* jBOM are not a first-class audience; the CLI and KiCad
 plugin already absorb that workflow, and the user-facing docs cover it.
@@ -75,6 +134,19 @@ lose where they would crowd out a curated narrative.
 - **Generated docs** are tested by CI: the build fails if the committed
   artifact diverges from a fresh regeneration.
 
+### Skills are the canonical form for procedural how-to
+
+Procedural "how to do X" content — historically authored as "guides" —
+is a single artifact serving both human onboarding and agent execution.
+Skills (per the project's skill mechanism) are the canonical form; the
+`docs/skills/` folder collects them. There is no separate `guides/`
+folder; the audiences differ but the content does not.
+
+This is what collapses the developer and agent-working-on-jBOM
+audiences for procedural content. Explanatory and conceptual content
+(design rationale, architectural decisions, etc.) remains
+audience-specific because its presentation differs by reader.
+
 ## Anti-goals
 
 - No documentation for documentation's sake. A doc with no audience and
@@ -89,6 +161,13 @@ lose where they would crowd out a curated narrative.
   generate it.
 - No 1:1 doc-to-feature correspondence as a goal. Curated docs follow
   reader journeys, not feature inventories.
+- No silent rewriting of frozen architecture content. If an audit
+  finds the code disagrees with documented architecture, file a finding
+  and resolve by either correcting the code or publishing a superseding
+  ADR — not by editing the existing architecture doc.
+- No procedural how-to as docs. If a piece of content tells someone how
+  to do a task (rather than explaining a concept or recording a
+  decision), it is a skill, not a doc.
 
 ## Maintenance
 
@@ -103,3 +182,13 @@ re-apply the charter to the extant tree and produce evidence-based
 disposition decisions. The charter does not change as a side effect of
 an audit; an audit either confirms the charter is being honored or
 files findings that lead to charter amendments through normal review.
+
+ADR format normalization (converting pre-ADR-format architectural
+decisions into formal ADRs) is the only permitted architecture-content
+operation outside of adding new ADRs. It requires its own tracking
+(its own issue, e.g. #300 for the 0011–0016 conversion) and produces
+no substantive content changes — only scaffolding and provenance.
+
+Content-freshness drift in any frozen doc is recorded as a finding,
+not corrected in place. The finding is resolved by either fixing the
+code (most common) or publishing a superseding decision (architecture).
