@@ -72,8 +72,17 @@ purpose:
 - `architecture/` — formal, frozen architectural decisions (ADRs)
 - `design/` — mutable design rationale; bounded by BDD/TDD
 - `reference/` — generated/constructed lookup material
-- `skills/` — actionable how-tos for humans + agents (single source)
 - `tutorials/` — curated learning journeys
+
+Skills live at `.agents/skills/<skill-name>/SKILL.md`, not inside
+`docs/`, because the Warp skill loader scans specific project-relative
+directories (`.agents/skills/`, `.warp/skills/`, `.claude/skills/`,
+etc.) and does not scan `docs/`. A convenience symlink at
+`docs/skills/` → `../.agents/skills/` keeps the `docs/` tree navigable
+for humans without duplicating content. On platforms where symlinks
+degrade (Windows without developer mode), the real path under
+`.agents/skills/` remains accessible; the symlink is navigation aid
+only, with a `README.md` in the directory explaining the convention.
 
 Files at `docs/` root (e.g. `README.md`) are tree-level metadata, not
 content.
@@ -138,9 +147,12 @@ lose where they would crowd out a curated narrative.
 
 Procedural "how to do X" content — historically authored as "guides" —
 is a single artifact serving both human onboarding and agent execution.
-Skills (per the project's skill mechanism) are the canonical form; the
-`docs/skills/` folder collects them. There is no separate `guides/`
-folder; the audiences differ but the content does not.
+Skills (per the project's skill mechanism) are the canonical form;
+they live at `.agents/skills/<skill-name>/SKILL.md` (Warp's
+tool-agnostic project-skill location). The `docs/skills/` symlink
+points there as a navigation convenience for the `docs/` tree. There
+is no separate `guides/` folder; the audiences differ but the content
+does not.
 
 This is what collapses the developer and agent-working-on-jBOM
 audiences for procedural content. Explanatory and conceptual content
