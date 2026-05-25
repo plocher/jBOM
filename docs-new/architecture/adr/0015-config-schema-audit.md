@@ -1,9 +1,11 @@
-# Config Schema Vocabulary Audit
+# ADR 0015: Config Schema Vocabulary Audit
+Date: 2026-02-25
+Status: Accepted
+
+## Context
 Generated: 2026-05-11
 Branch: feat/config-unified-schema
 Status: Working document — feeds step 2.5 (design analysis) before Phase 1 implementation
-
-## Purpose
 
 Mechanical extraction of every YAML key name parsed by the three config loaders
 (`fabricators.py`, `suppliers.py`, `defaults.py`) and present in the current
@@ -14,7 +16,9 @@ The design lens criterion from ADR 0009: *every YAML key should correspond to
 a named Python attribute; any key whose meaning requires reading Python to
 understand is a smell.*
 
----
+See also issue #269, which tracks the config unified schema redesign that this audit feeds.
+
+## Decision
 
 ## Complete Key Inventory
 
@@ -329,6 +333,8 @@ All built-in `presets.fields:` lists use bare names like `"reference"`, `"quanti
 
 ---
 
+## Consequences
+
 ## Summary: Rename-only vs. Structural Smells
 
 | Smell | Type | Notes |
@@ -351,3 +357,10 @@ All built-in `presets.fields:` lists use bare names like `"reference"`, `"quanti
 The structural smells (bottom half of table) are the input to step 2.5 design analysis.
 The rename/documentation/migration smells can be handled mechanically during Phase 1
 without a new ADR.
+
+## Provenance
+
+Normalized into formal ADR format on 2026-05-25 under issue #300.
+Source file(s):
+
+- `docs/dev/architecture/config-schema-audit.md` (content preserved verbatim)
