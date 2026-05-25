@@ -1,11 +1,15 @@
-# Component Attribute Enrichment Model
+# ADR 0012: Component Attribute Enrichment Model
+Date: 2026-02-25
+Status: Accepted
+
+## Context
 
 This document defines jBOM's authoritative model for how component attributes are classified,
 surfaced, confirmed, and written back during the inventory enrichment workflow. It captures
 design decisions reached while implementing issues #98 (enrichment output structure) and #99
 (Mode A interactive loop).
 
-## Why This Model Exists: The Legacy Failure
+### Why This Model Exists: The Legacy Failure
 
 Legacy jBOM automatically backfilled attributes — if a resistor had no `Tolerance` field, it
 would silently write `Tolerance=5%` based on a domain default. This was wrong.
@@ -17,12 +21,14 @@ designer consent, and creates false precision in the design record.
 
 Mode A's explicit confirmation loop is the fix to this failure.
 
-## The Three-Camp Attribute Model
+## Decision
+
+### The Three-Camp Attribute Model
 
 Component attributes are classified into three camps based on their origin, meaning, and
 handling rules.
 
-### Camp 1: KiCad-specified attributes (must match)
+#### Camp 1: KiCad-specified attributes (must match)
 
 Attributes the designer explicitly set in the KiCad schematic. These express deliberate
 electro-mechanical constraints.
@@ -38,7 +44,7 @@ Voltage=50V (if set)
 - If two components in the same aggregation group have different Camp 1 values, that is a
   schematic data inconsistency (warning, not silent resolution)
 
-### Camp 2: "Should have been specified" attributes (explicit confirmation required)
+#### Camp 2: "Should have been specified" attributes (explicit confirmation required)
 
 Attributes that have clear domain meaning but the designer left blank, either because the
 default is acceptable or because the parameter didn't feel worth specifying at design time.
@@ -58,7 +64,7 @@ default is acceptable or because the parameter didn't feel worth specifying at d
 **Why the distinction matters**: Automatic backfill (Camp 2 treated as Camp 1) was legacy
 jBOM's primary architectural failure. The 3-camp model exists to prevent this from recurring.
 
-### Camp 3: Catalog-only attributes (silently filtered)
+#### Camp 3: Catalog-only attributes (silently filtered)
 
 Attributes that appear in supplier catalogs or search results but have no design or inventory
 meaning for jBOM's purposes. Showing these to the designer during Mode A creates noise and
@@ -72,7 +78,7 @@ EIA land pattern codes, series/product family names (supplier-internal)
 - Controlled by an `enrichment_attributes` YAML list per component category (see below)
 - Not errors — just not relevant to jBOM's electro-mechanical matching domain
 
-## Information Flow Direction
+### Information Flow Direction
 
 ```
 KiCad Schematic ──→ jBOM matching ──→ Inventory (write-back on confirmation)
@@ -84,11 +90,11 @@ KiCad Schematic ──→ jBOM matching ──→ Inventory (write-back on confi
 inventory. Information **never flows back from jBOM into KiCad**. jBOM is a read-only consumer
 of KiCad data.
 
-## Lifecycle Phases
+### Lifecycle Phases
 
 The 3-camp model has two distinct operating modes depending on project lifecycle phase:
 
-### Designer phase (specification refinement)
+#### Designer phase (specification refinement)
 
 Camp 2 is **active**. This is when Mode A provides value.
 
@@ -102,7 +108,7 @@ supplier part numbers — it is prompting the designer to confirm (or consciousl
 electrical constraints that have domain significance but weren't worth specifying at schematic
 time.
 
-### PM/fabrication phase (frozen)
+#### PM/fabrication phase (frozen)
 
 Camp 2 is **frozen**. Mode A should not be run.
 
@@ -111,7 +117,7 @@ Camp 2 is **frozen**. Mode A should not be run.
 - Mode B (bulk search, no interactive prompts) may still be used to update supply chain fields
   (C-numbers, prices, stock) — these are Camp 3 fields from the design perspective
 
-## Write-back Rules
+### Write-back Rules
 
 When an inventory enrichment operation writes data:
 
@@ -123,7 +129,7 @@ When an inventory enrichment operation writes data:
 | Sourcing fields (C-number, SPN, price, stock) | **Always written** on candidate acceptance |
 | Camp 3 (catalog-only) | **Not written** — excluded by `enrichment_attributes` filter |
 
-## Defaults Profile System (implemented in #98)
+### Defaults Profile System (implemented in #98)
 
 The Camp 2 domain defaults and Camp 3 filter lists live in `*.defaults.yaml` profile files,
 loaded by `jbom.config.defaults`. This is the same pattern as `*.fab.yaml` and
@@ -186,7 +192,7 @@ Defaults reflect **design culture, not supplier taxonomy**. An aerospace org set
 `tolerance: "1%"`; a consumer org uses the generic `"5%"`. Supplier profiles have nothing
 to do with this — they are orthogonal.
 
-## Interaction with Mode A (#99)
+### Interaction with Mode A (#99)
 
 Mode A's per-item loop is structured around this 3-camp model:
 
@@ -202,7 +208,9 @@ Mode A's per-item loop is structured around this 3-camp model:
 manually edited in the schematic. With Mode A, the designer gets a structured, domain-aware
 confirmation workflow that respects the deliberate design decision to leave fields blank.
 
-## Relationship to Existing Architecture
+## Consequences
+
+### Relationship to Existing Architecture
 
 - **Aggregation** (Step 2 in BOM pipeline): operates on Camp 1 attributes only — Camp 2
   absence is part of the electro-mechanical equivalence key
@@ -221,3 +229,10 @@ See also:
 - `src/jbom/config/profile_search.py` — shared search path resolver
 - GitHub #98 — defaults profile system (implemented)
 - GitHub #99 — Mode A interactive loop (pending)
+
+## Provenance
+
+Normalized into formal ADR format on 2026-05-25 under issue #300.
+Source file(s):
+
+- `docs/dev/architecture/component-attribute-enrichment.md` (content preserved verbatim)
