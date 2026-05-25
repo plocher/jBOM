@@ -60,7 +60,7 @@ skill — keep it specific and trigger-oriented.
 
 ## See also
 
-- [`DOCS-CHARTER.md`](../../DOCS-CHARTER.md) — documentation charter,
-  including the rationale for skill placement and the skills-as-canonical-
-  form clause.
+- [`docs/README.md`](../../docs/README.md) — documentation charter
+  (lives at the docs tree root), including the rationale for skill
+  placement and the skills-as-canonical-form clause.
 - Warp Skills documentation: https://docs.warp.dev/agent-platform/warp-agents/skills

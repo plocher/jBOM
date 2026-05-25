@@ -1,13 +1,27 @@
-# jBOM Documentation Charter
+# jBOM Documentation
 
-This document governs what documentation jBOM produces, who it serves, how
-it is authored, and how it is kept honest. It is policy for the `docs/`
-tree (and any documentation adjacent to it); changes to this charter
-require the same review as any other architectural decision.
+This tree contains all jBOM documentation. Five top-level folders, each
+with a single purpose:
 
-The charter is the test future documentation is evaluated against. When
-the charter and an existing doc disagree, the existing doc is wrong until
-proven otherwise.
+- [`requirements/`](requirements/) — what the system must do
+- [`architecture/`](architecture/) — formal, frozen architectural decisions (ADRs)
+- [`design/`](design/) — mutable design rationale
+- [`reference/`](reference/) — generated lookup material
+- [`tutorials/`](tutorials/) — curated learning journeys
+
+Skills (procedural how-tos for humans + agents) live outside `docs/`
+at [`../.agents/skills/`](../.agents/skills/). A convenience symlink
+is available at [`skills/`](skills/).
+
+The rest of this document is the **Documentation Charter** — the
+policy that governs this tree, its folder structure, and the skills
+directory. When the charter and an existing doc disagree, the
+existing doc is wrong until proven otherwise.
+
+Changes to the charter portion of this document require the same
+review as any other architectural decision.
+
+---
 
 ## Why docs exist
 
@@ -56,11 +70,12 @@ Within the "decision history" job, two distinct sub-categories exist:
   kept honest by the BDD/TDD scaffold. Design decisions may graduate
   into architecture by being published as ADRs.
 
-Some "architecture" docs that predate the formal ADR process are equally
-architectural in substance; they may be normalized into ADR format
-through a bounded, separately-tracked operation that preserves content
-verbatim and records provenance. This is the only permitted
-architecture-content operation outside of adding new ADRs.
+Format-level normalization of architecture documents (adding ADR
+scaffolding, recording provenance) may be applied to existing
+architecture documents that lack the standard form. Such
+normalization preserves source content verbatim and is tracked as a
+discrete, reviewable change. It is the only modification of
+architecture content other than publishing a new ADR.
 
 ## Architecture vs Design — content boundary
 
@@ -230,11 +245,9 @@ disposition decisions. The charter does not change as a side effect of
 an audit; an audit either confirms the charter is being honored or
 files findings that lead to charter amendments through normal review.
 
-ADR format normalization (converting pre-ADR-format architectural
-decisions into formal ADRs) is the only permitted architecture-content
-operation outside of adding new ADRs. It requires its own tracking
-(its own issue, e.g. #300 for the 0011–0016 conversion) and produces
-no substantive content changes — only scaffolding and provenance.
+Format-level normalization of architecture documents requires its
+own tracking (a discrete, reviewable change set). It produces no
+substantive content modifications — only scaffolding and provenance.
 
 Content-freshness drift in any frozen doc is recorded as a finding,
 not corrected in place. The finding is resolved by either fixing the

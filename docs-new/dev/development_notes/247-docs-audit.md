@@ -1,7 +1,7 @@
 # Issue #247 — Documentation Charter Audit
 
 Status: Pass-1 verdicts complete; disposition execution pending
-Charter: [`DOCS-CHARTER.md`](../../../DOCS-CHARTER.md)
+Charter: [`docs/README.md`](../../README.md)
 Branch: `issue-247-docs-readme-developer-refresh`
 Parent issue: #247
 Sub-issues: #300 (ADR format normalization 0011–0016) — **complete, awaiting user verification**

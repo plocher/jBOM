@@ -211,7 +211,8 @@ pre-commit run --all-files
 
 ## Related
 
-- [`DOCS-CHARTER.md`](../../../DOCS-CHARTER.md) — documentation charter, including the
+- [`docs/README.md`](../../../docs/README.md) — documentation charter
+  (lives at the docs tree root), including the
   skills-as-canonical-form clause that put this content here.
 - The `WARP.md` rules at repo root govern co-author attribution and
   the broader development workflow.
