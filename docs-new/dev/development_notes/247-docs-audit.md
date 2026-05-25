@@ -1,10 +1,11 @@
 # Issue #247 — Documentation Charter Audit
 
-Status: pre-resolved dispositions captured; Pass-1 pending
+Status: pre-resolved dispositions partially executed; Pass-1 pending
 Charter: [`DOCS-CHARTER.md`](../../../DOCS-CHARTER.md)
 Branch: `issue-247-docs-readme-developer-refresh`
 Parent issue: #247
-Sub-issues: #300 (ADR format normalization 0011–0016)
+Sub-issues: #300 (ADR format normalization 0011–0016) — **complete, awaiting user verification**
+Follow-up issues filed: #301 (ADR 0014 implementation-detail amendment from F-001)
 
 This audit applies the Documentation Charter to the existing `docs/`
 tree and decides the disposition of each file. It is an
@@ -320,18 +321,40 @@ Format per entry:
 
 #### docs/dev/README.md
 
+## Execution log
+
+Dispositions actually executed on this branch (in commit order):
+
+- `f05cc6d` — pre-charter tactical refresh of `docs/README.developer.md` (predates this audit; will be re-evaluated under Pass-1).
+- `2b0a0f6` — Charter + audit scaffold introduced.
+- `ed74e68` — Charter amended: layering axiom, architecture/design split, skills synonymy, freshness rules.
+- `66c8873` — Audit doc: pre-resolved dispositions captured, target tree, #300 filed.
+- `9ce1cd1` — Charter corrected: skills location moved to `.agents/skills/` with `docs/skills/` as symlink.
+- `ab9dfd4` — Audit doc corrected: 5 docs folders + `.agents/skills/`.
+- `a158d25` — **Executed**: GIT_WORKFLOW.md → `.agents/skills/git-workflow/SKILL.md` (skill promotion), `.agents/skills/README.md`, `docs/skills` symlink.
+- `0fc44ee` — Asset commit: `docs/assets/icons/` plugin icons (out-of-band addition, future plugin work).
+- `3398832` — **Executed (via #300)**: ADR 0011 (project-centric-design).
+- `77c0580` — **Executed (via #300)**: ADR 0012 (component-attribute-enrichment).
+- `143fe7a` — **Executed (via #300)**: ADR 0013 (domain-centric-design, 4-file consolidation).
+- `fedc407` — **Executed (via #300)**: ADR 0014 (job-contracts) — F-001 verified, divergence filed as #301.
+- `95d62d5` — **Executed (via #300)**: ADR 0015 (config-schema-audit).
+- `563288a` — **Executed (via #300)**: ADR 0016 (eaglelib2kicad-adapter-requirements).
+
 ## Cross-cutting findings
 
-- **F-001**: `job-contracts.md` content-freshness — needs verification
-  against current `src/jbom/application/jobs/` implementation. Tracked
-  under #300's `0014-job-contracts.md` conversion; divergence triggers
-  a separate code/follow-up issue (not an in-place edit of the
-  architecture doc).
+- **F-001** — *Resolved by filing as #301*. `job-contracts.md` documented contracts diverge from the current implementation in `src/jbom/application/jobs/`: `JobResult.request`, `JobResult.context`, `JobEvent.occurred_at_utc`, `JobEvent.metadata`, plus typed payload dataclasses (`JobProgress`, `JobDiagnostic`, `JobArtifact`), supporting enums (`JobOutcome`, `JobEventKind`, `JobDiagnosticSeverity`), and helper types (`JobRunPayload`, `JobEventStream`) are present in code but not in the ADR. Resolution path per charter: superseding/amending ADR (not an in-place edit).
+- **F-002** — ADR 0013 (domain-centric-design consolidation) contains a minor stale cross-reference within the `Layer responsibilities` subsection (the original "See also: design-patterns.md" now points to content within the same ADR). Cosmetic only; not corrected.
+- **F-003** — ADR 0013 `Integration patterns` subsection contains language asserting CLI orchestrates services, slightly at odds with the layered design which places orchestration in the application layer. Original wording preserved verbatim; resolve via superseding ADR if needed.
 
 ## Follow-up issues filed
 
 - **#300** — `docs(architecture): convert pre-ADR architectural
   decisions to formal ADRs (0011–0016)`. Required child of #247.
+  **Complete**; six ADRs cherry-picked into the parent branch; awaiting
+  user verification before #300 is closed.
+- **#301** — `docs(architecture): amend ADR 0014 — job-contracts
+  omits implementation details (F-001)`. Surfaced during #300's ADR
+  0014 conversion. Resolution path: superseding or amending ADR.
 
 ## Axioms harvested from existing docs
 
