@@ -1,20 +1,59 @@
 # Inventory file format reference
 
-<!-- Candidate for generation: this file documents the InventoryItem Pydantic schema
-     fields and will be superseded by the schema-to-markdown generator planned in #269.
-     Until that generator lands, this is the hand-curated authoritative reference.
-     When #269 lands, delete this file and wire in the generated output with a CI
-     staleness check. -->
+The jBOM inventory file is a user-curated database of components available to
+a project. **The schema is user-defined**, not a fixed jBOM model: jBOM
+expresses *expectations* about what attributes need to be collectable, but
+users may extend, rename, or reorder columns in service of their own
+inventory-management practice. The relationship between an inventory file,
+the active config profile, and the `--fields` CLI argument is what binds a
+particular inventory column-spelling to a particular BOM-output column;
+jBOM deliberately does not hardcode reliance on the spelling or order of
+any attribute. See [Inventory schema, profiles, and `--fields`](#inventory-schema-profiles-and---fields)
+below for how the three combine.
 
-The jBOM inventory file is a structured database of available components. It supports
-three formats: CSV (comma-separated values), Excel (.xlsx, .xls), and Apple Numbers
-(.numbers). All formats share the same logical column structure described here.
+Inventory files support three formats: CSV (comma-separated values), Excel
+(`.xlsx`, `.xls`), and Apple Numbers (`.numbers`). All formats share the
+logical structure described here.
 
-Each row represents either a project requirement (`COMPONENT`) or a stocked part
-(`ITEM`). Columns define the row role and matching or search attributes. For the
-behavioral semantics that govern how these columns are used during matching — including
-the blank-field invariant, tolerance-aware substitution rules, and IPN multi-row design
-intent — see [Inventory matching semantics](../design/inventory-matching-semantics.md).
+Each row represents either a project requirement (`COMPONENT`) or a stocked
+part (`ITEM`). Columns define the row role and matching/search attributes.
+For the behavioral semantics that govern how these columns are used during
+matching — including the blank-field invariant, tolerance-aware substitution
+rules, and IPN multi-row design intent — see
+[Inventory matching semantics](../design/inventory-matching-semantics.md).
+
+## Schema model: denormalized database with IPN as primary key
+
+A jBOM inventory is a **denormalized database**. The primary key is the
+**IPN** (Internal Part Number), which represents the unique electronic and
+mechanical identity of an item — a 1 kΩ 1% 250 mW SMT 0603 resistor is
+one IPN; a 1 kΩ 5% 100 mW SMT 0603 resistor is a different IPN.
+
+**Multiple rows may share the same IPN as long as they differ only in their
+non-electro-mechanical attributes.** This is the supply-chain dimension:
+the same EM-identical part can be available from Mouser as part number
+`652-CR0603FX-1002ELF`, from Digi-Key as `311-1.00KHRCT-ND`, and from LCSC
+as `C25804`. Each is a separate row sharing the same IPN, the same
+electro-mechanical attributes, but a different `Supplier` + `SPN` pair.
+Navigating among these candidates at BOM-generation time — by `Priority`,
+by fabricator preference, by stock availability — is what jBOM does.
+
+Attributes split into two categories:
+
+- **Electro-mechanical attributes** are **constant within an IPN**. These
+  describe what the part *is*: `Category`, `Value`, `Package`, `Tolerance`,
+  `Voltage`, `Current`, `Power`, `Type`, `Form`, `Frequency`, `Stability`,
+  `Load`, `Family`, `mcd`, `Wavelength`, `Angle`, `Pitch`. Two rows with the
+  same IPN must agree on all EM attributes; disagreement is a data error.
+- **Supply-chain attributes** **vary across rows of the same IPN**. These
+  describe where to buy the part: `Manufacturer`, `MFGPN`, `Supplier`, `SPN`,
+  `Datasheet`, `Priority`, and any user-added columns capturing stock
+  level, pricing, or sourcing notes.
+
+The schema-required columns enforce just enough structure to make matching
+work: `RowType`, `IPN` (for `ITEM` rows), `Category`, `Value`, `Package`,
+and `Priority`. Every other column is optional and may be defined by the
+user; jBOM exposes them to the BOM-generation pipeline by name.
 
 ## Required columns
 
@@ -25,15 +64,9 @@ intent — see [Inventory matching semantics](../design/inventory-matching-seman
 : Requirement identifier for `COMPONENT` rows. Leave blank for `ITEM` rows.
 
 **IPN** (Internal Part Number)
-: Required for `ITEM` rows. Leave blank for `COMPONENT` rows.
-
-An IPN represents the unique electronic and mechanical identity of an item. By design,
-an inventory spreadsheet will have many rows sharing the same IPN; each row carries the
-same EM fingerprint but differs in supply chain fields. A dual-sourced part is the
-canonical example: from the designer's perspective there are multiple equivalent parts
-available from different manufacturers, each with its own costs and availability. Each
-of those rows is a candidate for inclusion in a BOM; navigating the choice among
-candidates is where jBOM's usefulness shines.
+: Required for `ITEM` rows. Leave blank for `COMPONENT` rows. See
+  [Schema model](#schema-model-denormalized-database-with-ipn-as-primary-key)
+  above for the full multi-row design intent.
 
 **Category**
 : Component classification (`RES`, `CAP`, `IND`, `LED`, `DIO`, `IC`, `MCU`, `CON`,
@@ -188,6 +221,38 @@ resolve ambiguity between schematic component attributes and inventory item fiel
 tolerance). `C:fieldname` forces use of the schematic component attribute (e.g.,
 `C:Tolerance` → schematic tolerance). An unprefixed name is ambiguous: if both exist,
 the BOM includes both as separate columns.
+
+## Inventory schema, profiles, and `--fields`
+
+The inventory's column set, the active fabricator/supplier profile, and the
+`--fields` (a.k.a. `-f`) CLI argument are three independent surfaces that
+combine to produce a specific BOM:
+
+- **The inventory** declares what attributes exist (by column name) for the
+  rows the user has curated.
+- **The active profile** (a `*.jbom.yaml` file with a `fab:` and/or
+  `supplier:` stanza) declares the *default* column-to-BOM-output mapping
+  for that fabricator. JLCPCB's profile, for example, maps the resolved
+  fabricator part number into a column named `LCSC` because that is the
+  header JLCPCB's upload portal expects.
+- **`--fields`** (or `-f`) overrides the profile's default mapping at
+  invocation time: a comma-separated list of field names selects a subset
+  of inventory columns to surface in the BOM, and a preset name
+  (`+standard`, `+jlc`, `+minimal`, `+all`) selects a named bundle.
+
+Field references inside profiles use the namespace prefixes documented in
+[ADR 0009](../architecture/adr/0009-field-reference-system-and-value-expressions.md)
+(`sch:`, `pcb:`, `inv:`, `a:`, `jbom:`) so a profile can compose values
+from multiple sources. The `field_synonyms` mechanism (see
+[Configuration semantics](../design/configuration-semantics.md)) lets a
+profile accept several spellings of the same logical column (`Mouser PN`,
+`Mouser_PN`, `mouser-pn`, etc.) without burdening the inventory author.
+
+The practical consequence: a single inventory works with any fabricator;
+the profile decides how its columns appear in the BOM. Users who want to
+define their own inventory schema can do so as long as the required
+attributes (above) are present and any custom column the profile or CLI
+references exists in the file under one of its accepted synonyms.
 
 ## Inventory file size limits
 

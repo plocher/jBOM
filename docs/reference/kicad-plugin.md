@@ -175,6 +175,34 @@ For merge semantics, the `extends:` key, and the `common.jbom.yaml`
 accumulation model, see [Configuration semantics](../design/configuration-semantics.md)
 and [ADR 0008](../architecture/adr/0008-unified-jbom-config-schema.md).
 
+## Plugin script location
+
+The `kicad_jbom_plugin.py` wrapper does not need to live in any specific
+directory — KiCad's BOM-plugin dialog stores the absolute path you provide.
+That said, KiCad maintains per-user scripting-plugin directories per
+platform, and putting the script there keeps it findable across upgrades:
+
+| Platform | KiCad user scripting plugin directory |
+|---|---|
+| **macOS** | `~/Library/Preferences/kicad/<ver>/scripting/plugins/` |
+| **Linux** | `~/.local/share/kicad/<ver>/scripting/plugins/` |
+| **Windows** | `%APPDATA%\kicad\<ver>\scripting\plugins\` |
+
+`<ver>` is the KiCad major.minor version (`9.0`, `10.0`, etc.). These
+directories are also where the KiCad ActionPlugin (the PCBnew toolbar
+button, distributed via the KiCad Plugin and Content Manager) installs by
+convention; see the
+[plugin-dev-setup skill](../../.agents/skills/plugin-dev-setup/SKILL.md)
+for the ActionPlugin's specific layout requirements.
+
+Note: KiCad's BOM plugins (registered via **Eeschema → Tools → Generate
+BOM → Add plugin**) are not auto-discovered from these directories the way
+ActionPlugins are; you still need to register the path in the Eeschema
+dialog as described in the
+[kicad-plugin-setup skill](../../.agents/skills/kicad-plugin-setup/SKILL.md).
+The convention of co-locating both kinds of plugin under one directory is
+purely organisational.
+
 ## Environment requirements
 
 - Python 3.10 or newer
