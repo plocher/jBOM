@@ -103,3 +103,13 @@ def test_load_supplier_generic_has_search_fields() -> None:
         "lifecycle_status",
         "description",
     ]
+
+
+def test_load_supplier_returns_isolated_models_between_calls() -> None:
+    first = load_supplier("lcsc")
+    second = load_supplier("lcsc")
+
+    first.field_synonyms["supplier_pn"] = first.field_synonyms[
+        "supplier_pn"
+    ].model_copy(update={"display_name": "Changed"})
+    assert second.field_synonyms["supplier_pn"].display_name == "LCSC"

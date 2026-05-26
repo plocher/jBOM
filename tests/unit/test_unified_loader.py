@@ -204,3 +204,27 @@ def test_stanza_id_override_resolves_to_profile_name_for_lookup_and_flags(
         "supplier", "lcsc", cwd=project, builtin_dir=builtin
     )
     assert resolved_profile == "jlc"
+
+
+def test_load_unified_returns_isolated_mappings_between_calls(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    project = tmp_path / "project"
+    builtin = tmp_path / "builtin"
+    _patch_search_dirs(monkeypatch, [project])
+
+    _write_yaml(
+        project / "generic.jbom.yaml",
+        {
+            "fab": {
+                "name": "Generic",
+                "bom_columns": {"Designator": "reference"},
+            }
+        },
+    )
+
+    first = unified.load_unified("generic", cwd=project, builtin_dir=builtin)
+    second = unified.load_unified("generic", cwd=project, builtin_dir=builtin)
+
+    first["fab"]["bom_columns"]["Designator"] = "changed"
+    assert second["fab"]["bom_columns"]["Designator"] == "reference"

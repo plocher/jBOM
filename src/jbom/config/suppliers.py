@@ -8,6 +8,7 @@ Supplier profiles capture supplier-specific knowledge such as:
 from __future__ import annotations
 
 import re
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, Mapping, Optional
 
@@ -329,14 +330,7 @@ _BUILTIN_DIR = Path(__file__).parent / "suppliers"
 
 def list_suppliers() -> list[str]:
     """List available supplier IDs by scanning the built-in config directory."""
-    legacy_ids: list[str] = []
-    if _BUILTIN_DIR.exists():
-        legacy_ids = sorted(
-            p.stem.replace(".supplier", "")
-            for p in _BUILTIN_DIR.glob("*.supplier.yaml")
-        )
-    unified_ids = list_unified_stanza_ids("supplier")
-    return sorted(set([*legacy_ids, *unified_ids]))
+    return list(_list_suppliers_cached())
 
 
 def get_available_suppliers() -> list[str]:
@@ -349,6 +343,33 @@ def get_available_suppliers() -> list[str]:
 def load_supplier(sid: str) -> SupplierConfig:
     """Load supplier configuration from YAML file."""
     normalized_sid = str(sid or "").strip().lower()
+    config = _load_supplier_cached(normalized_sid)
+    return config.model_copy(deep=True)
+
+
+def clear_supplier_config_caches() -> None:
+    """Clear memoized supplier config caches."""
+
+    _list_suppliers_cached.cache_clear()
+    _load_supplier_cached.cache_clear()
+
+
+@lru_cache(maxsize=1)
+def _list_suppliers_cached() -> tuple[str, ...]:
+    legacy_ids: list[str] = []
+    if _BUILTIN_DIR.exists():
+        legacy_ids = sorted(
+            p.stem.replace(".supplier", "")
+            for p in _BUILTIN_DIR.glob("*.supplier.yaml")
+        )
+    unified_ids = list_unified_stanza_ids("supplier")
+    return tuple(sorted(set([*legacy_ids, *unified_ids])))
+
+
+@lru_cache(maxsize=128)
+def _load_supplier_cached(normalized_sid: str) -> SupplierConfig:
+    if not normalized_sid:
+        raise ValueError("Unknown supplier: ")
     try:
         merged = load_unified(normalized_sid)
         return supplier_stanza(merged, default_id=normalized_sid)
