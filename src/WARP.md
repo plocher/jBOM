@@ -1,15 +1,16 @@
 # Source Code Guidelines
 
 ## Core Application Structure
-- `src/jbom/jbom.py` - Main application (~2700 lines)
-- `src/jbom/__version__.py` - Version information (auto-updated by semantic-release)
-- `src/jbom/cli/` - Command-line interface modules
-- `src/jbom/pcb/` - PCB position file handling
+- `src/jbom/__version__.py` — Version information (auto-updated by semantic-release)
+- `src/jbom/cli/` — Command-line adapters (thin wrappers over application/services)
+- `src/jbom/application/` — Adapter-neutral workflow orchestration
+- `src/jbom/services/` — Business logic
+- `src/jbom/common/` — Shared domain types and utilities
+- `src/jbom/config/` — Unified profile loading and schema models
+- `src/jbom/plugin/` — KiCad plugin integration
 
-## Architecture Patterns
-- **Parsing Phase:** S-expression → `Component` objects
-- **Matching Phase:** Components → `InventoryItem` matching with scoring
-- **Output Phase:** Generate `BOMEntry` objects → CSV/format output
+Layering and per-layer responsibilities are documented in the ADR
+series under `docs/architecture/adr/`. Naming conventions are below.
 
 ## Code Organization Rules
 - Type hints required on all functions
@@ -23,10 +24,18 @@
     - When uncertain about alternate paths or solutions, ask for guidance
 
 ## Design Documentation Expectations
-- Significant architectural decisions must be recorded in `docs/dev/architecture/adr/` as numbered ADRs.
-- Cross-cutting design patterns (e.g., service composition, diagnostic handling) belong in `docs/dev/architecture/design-patterns.md` or `layer-responsibilities.md`.
-- After implementing a feature that introduces or changes an architectural pattern, update the relevant `docs/dev/` files — not just code comments or the GitHub issue.
-- The `src/WARP.md` file records agent-behavior directions; `docs/dev/` is for human-readable design rationale.
+- Significant architectural decisions are recorded in
+  `docs/architecture/adr/` as numbered ADRs.
+- Mutable design rationale (how the architecture is currently
+  instantiated) lives in `docs/design/`. See the documentation
+  charter at `docs/README.md` for the architecture-vs-design
+  content boundary.
+- After implementing a feature that introduces or changes an
+  architectural pattern, update the relevant `docs/` content — not
+  just code comments or the GitHub issue.
+- The `src/WARP.md` file records agent-behavior directions and
+  source-code conventions; `docs/` is for human-readable design and
+  architecture content.
 
 ## Naming Convention (established in issues #224/#237)
 - Class names reflect the **promise** (what the class produces/delivers), not the mechanism.
@@ -37,14 +46,13 @@
 - Private helpers use descriptive functional names: `_list_fields`, `_generate`, not `_orchestrate_*`.
 
 
-## Component Matching Logic
-**Tolerance Substitution:** Tighter tolerances can substitute looser (1% can replace 5%)
-**Priority System:** Lower numbers = higher priority (1 = preferred)
-**Field Normalization:** Always use `normalize_field_name()` for consistent handling
-**Debug Mode:** Use Notes column for detailed matching information
+## See also
 
-## Key Extension Points
-- `ComponentType` enum for new component categories
-- `CATEGORY_FIELDS` dict for category-specific field mappings
-- `_get_component_type()` for detection logic
-- `_match_properties()` for scoring algorithms
+- Component-matching behavioral semantics (tolerance substitution,
+  priority system, field normalization) are documented in
+  `docs/design/inventory-matching-semantics.md` once that doc lands
+  in Wave B.
+- Extension-point recipes (adding a CLI command, a service, a
+  fabricator profile, a supplier provider) live in the
+  `extend-jbom` skill at `.agents/skills/extend-jbom/SKILL.md`
+  once that skill lands in Wave B.

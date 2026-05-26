@@ -14,16 +14,30 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: "3.9"
+        # Match the floor declared by pyproject.toml (requires-python = ">=3.10")
+        # and the version used by semantic-release.yml. test.yml runs the
+        # matrix 3.10 / 3.11 / 3.12; this publish runner only needs to build
+        # a wheel + sdist and run twine check, so any in-matrix version works.
+        python-version: "3.11"
 
-    - name: Install build dependencies
+    - name: Install build and test dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install build twine sexpdata openpyxl numbers-parser
+        # Install the package in editable mode with all optional extras
+        # (openpyxl for .xlsx, numbers-parser for .numbers, requests for
+        # supplier search). Then add the publish-only tooling (build,
+        # twine) and the test runners (pytest, behave) used below.
+        pip install -e .[all]
+        pip install build twine pytest behave
 
     - name: Run tests
       run: |
-        python -m unittest discover -s tests -v
+        # Mirror the invocation used by test.yml so the publish gate
+        # exercises the same test surfaces. PYTHONPATH=src is also
+        # configured in pyproject.toml [tool.pytest.ini_options], but
+        # we set it explicitly so behave picks it up too.
+        PYTHONPATH=src python -m pytest tests/ -v
+        PYTHONPATH=src python -m behave --format progress features/
 
     - name: Build distribution
       run: |
