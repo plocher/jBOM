@@ -173,6 +173,29 @@ gh pr create \
 For zsh-safe gh authoring patterns (issue bodies, comments,
 multi-line content), see the `gh-issues-zsh-safe` skill once it
 lands.
+## Validation policy: CI canaries + full local branch coverage
+
+CI in this repository is treated as a **fast signal canary**, not the
+single source of test confidence. Keep CI checks targeted and
+diagnostic, but do not rely on CI alone as release-quality proof.
+
+Before marking a PR ready for review (or asking for merge), run full
+local validation on the feature branch and report results in the issue
+or PR thread:
+
+```bash
+pre-commit
+PYTHONPATH=/Users/jplocher/Dropbox/KiCad/jBOM/src python -m pytest tests/ -v
+PYTHONPATH=/Users/jplocher/Dropbox/KiCad/jBOM/src python -m behave --format progress
+```
+
+Rules:
+
+- Do **not** skip full local validation just because CI passed.
+- CI simplification should prefer representative canary probes over
+  exhaustive permutations.
+- Preserve deep-diagnostic paths in local/full lanes so failures remain
+  easy to triage when canaries fail.
 
 ## Merge strategy and post-merge cleanup
 
@@ -191,26 +214,42 @@ Preferred merge options (when merge is being performed):
 - GitHub UI: **Rebase and merge**
 - CLI: `gh pr merge <number> --rebase` (agent only with explicit user request)
 
-After merge, verify and clean branches with a patch-equivalence check:
+After merge, branch cleanup is mandatory and must use the automation
+script:
 
 ```bash
-# 1) Refresh refs
-git fetch --prune origin
-
-# 2) Verify branch patch is present in main
-#    '-' means already applied (safe to delete), '+' means still unique
-git cherry -v main feature/issue-N-brief-description
-
-# 3) If safe (all '-' or no output), delete local branch
-git branch -d feature/issue-N-brief-description
-
-# 4) Delete remote branch if it still exists
-git push origin --delete feature/issue-N-brief-description || true
+# Required post-merge cleanup (run from repo root)
+python scripts/post_merge_cleanup.py --branch feature/issue-N-brief-description
 ```
 
-If `git cherry` shows `+` entries, do **not** delete the branch yet.
-Investigate first (wrong target branch, partial merge, or outstanding
-commits not represented in `main`).
+If you omit `--branch`, the script evaluates all eligible non-`main`
+branches (local + remote) and cleans only patch-equivalent branches:
+
+```bash
+python scripts/post_merge_cleanup.py
+```
+
+Optional verification-first preview:
+
+```bash
+python scripts/post_merge_cleanup.py --branch feature/issue-N-brief-description --dry-run
+```
+
+Default output is intentionally quiet on the normative path:
+
+- `Success: deleted: <branch>` (or dry-run equivalent)
+- `Warning: unmerged content: <branch>` for abnormal/unmerged cases
+
+Use `--verbose` to print detailed patch-equivalence diagnostics.
+
+Rules:
+
+- Do **not** manually delete branches before running the script.
+- If the script reports unique `+` commits, stop and investigate
+  (wrong target branch, partial merge, or outstanding commits not
+  represented in `main`).
+- Manual cleanup commands are fallback-only for script failure
+  scenarios and require explicit human approval.
 
 ## Required co-author attribution
 

@@ -18,6 +18,9 @@ Key constraints (rules, not procedure):
 - **Never commit directly to `main`.** All work happens in a feature branch.
 - **Branch names reference the GitHub issue(s) being addressed**:
   `feature/issue-N-brief-description`, `fix/issue-N-brief-description`.
+- **After a PR merge, run scripted branch cleanup** with
+  `python scripts/post_merge_cleanup.py --branch <branch-name>` before
+  considering the workflow complete.
 - **Add substantive GitHub issue comments** to document progress,
   findings, and solutions as work proceeds.
 - **All tests must pass before a PR can merge** — see `Testing
@@ -65,7 +68,8 @@ Procedural guidance for staging, commits, pre-commit handling, zsh
 quoting of conventional-commit messages, and `gh` issue/PR authoring
 lives in the `git-workflow` skill at
 `.agents/skills/git-workflow/SKILL.md`. Follow that skill rather than
-duplicating the steps here.
+duplicating the steps here. This includes mandatory post-merge
+patch-equivalence cleanup via `scripts/post_merge_cleanup.py`.
 
 ## Code Quality Standards
 
