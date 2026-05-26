@@ -174,6 +174,44 @@ For zsh-safe gh authoring patterns (issue bodies, comments,
 multi-line content), see the `gh-issues-zsh-safe` skill once it
 lands.
 
+## Merge strategy and post-merge cleanup
+
+Use **rebase-merge** for PRs in this repository. Rebase merges rewrite
+commit SHAs, so do not rely only on ancestry checks when deciding
+whether to delete branches.
+Normative expectation:
+
+- A human maintainer performs the merge in GitHub UI.
+- Agents prepare the PR, validation evidence, and merge recommendation.
+- Agents must not execute merge commands unless the user explicitly
+  requests the agent to perform the merge.
+
+Preferred merge options (when merge is being performed):
+
+- GitHub UI: **Rebase and merge**
+- CLI: `gh pr merge <number> --rebase` (agent only with explicit user request)
+
+After merge, verify and clean branches with a patch-equivalence check:
+
+```bash
+# 1) Refresh refs
+git fetch --prune origin
+
+# 2) Verify branch patch is present in main
+#    '-' means already applied (safe to delete), '+' means still unique
+git cherry -v main feature/issue-N-brief-description
+
+# 3) If safe (all '-' or no output), delete local branch
+git branch -d feature/issue-N-brief-description
+
+# 4) Delete remote branch if it still exists
+git push origin --delete feature/issue-N-brief-description || true
+```
+
+If `git cherry` shows `+` entries, do **not** delete the branch yet.
+Investigate first (wrong target branch, partial merge, or outstanding
+commits not represented in `main`).
+
 ## Required co-author attribution
 
 Every commit made by Oz must include the co-author line in the
