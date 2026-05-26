@@ -288,7 +288,7 @@ class DefaultKiCadReaderService(KiCadReaderService):
                             # completely different library name (e.g. KiCad
                             # stdlib vs. a vendor library).  We preserve it
                             # under ``attributes['schematic_footprint']``
-                            # so the BOM can expose ``s:footprint`` for
+                            # so the BOM can expose ``sch:footprint`` for
                             # DRC-debug scenarios, but the FPID is never
                             # overwritten.
                             attributes["schematic_footprint"] = val

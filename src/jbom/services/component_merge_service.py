@@ -1,7 +1,7 @@
 """Component merge service for source namespace-aware workflows.
 
 Current scope:
-- build deterministic source and annotation fields (`s:*`, `p:*`, `a:*`)
+- build deterministic source and annotation fields (`sch:*`, `pcb:*`, `ann:*`)
 - emit structured mismatch metadata for source disagreements
 """
 
@@ -10,6 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Literal
 from jbom.common.reference_sort import natural_reference_sort_key
+from jbom.config.fields import ANNOTATION_NAMESPACE, PCB_NAMESPACE, SCH_NAMESPACE
 
 from jbom.services.project_component_collector import (
     ProjectComponentGraph,
@@ -59,8 +60,8 @@ def resolve_grouped_merge_namespace_values(
 ) -> dict[str, str]:
     """Resolve grouped namespace values for one aggregated output entry.
 
-    `s:*` and `p:*` fields are emitted only when grouped references agree.
-    `a:*` fields are always human-oriented: when grouped references disagree on
+    `sch:*` and `pcb:*` fields are emitted only when grouped references agree.
+    `ann:*` fields are always human-oriented: when grouped references disagree on
     annotation text, render a deterministic reference-indexed summary.
     """
 
@@ -117,14 +118,14 @@ def _resolve_grouped_annotation_field_value(
     *,
     field_key: str,
 ) -> str:
-    """Resolve grouped `a:*` annotation text for one field key.
+    """Resolve grouped `ann:*` annotation text for one field key.
 
     Contract:
     - If all grouped references resolve to one summary, return only the summary.
     - If grouped references resolve to multiple summaries, render deterministic
       reference-indexed segments joined by ` || `.
     - Mismatch summaries prefer concise diagnostic wording:
-      `S: and P: differ\\ns:<value>\\np:<value>`.
+      `sch: and pcb: differ\\nsch:<value>\\npcb:<value>`.
     - Non-mismatch summaries collapse to one source value when available.
     """
 
@@ -165,7 +166,7 @@ def _annotation_field_name(field_key: str) -> str:
     """Return the unprefixed field name for an annotation key."""
 
     prefix, separator, remainder = str(field_key or "").partition(":")
-    if separator and prefix == "a" and remainder:
+    if separator and prefix == ANNOTATION_NAMESPACE and remainder:
         return remainder
     return str(field_key or "")
 
@@ -178,8 +179,12 @@ def _build_grouped_annotation_summary(
 ) -> str:
     """Build one grouped annotation summary for a merged reference record."""
 
-    source_s = str(record.source_fields.get(f"s:{field_name}", "")).strip()
-    source_p = str(record.source_fields.get(f"p:{field_name}", "")).strip()
+    source_s = str(
+        record.source_fields.get(f"{SCH_NAMESPACE}:{field_name}", "")
+    ).strip()
+    source_p = str(
+        record.source_fields.get(f"{PCB_NAMESPACE}:{field_name}", "")
+    ).strip()
     explicit_annotation = str(record.annotated_fields.get(field_key, "")).strip()
 
     if source_s and source_p and source_s != source_p:
@@ -200,10 +205,10 @@ def _format_mismatch_annotation_summary(
     source_s: str,
     source_p: str,
 ) -> str:
-    """Render concise mismatch annotation text for grouped `a:*` output."""
-    lines: list[str] = ["S: and P: differ"]
-    lines.append(f"s:{source_s}")
-    lines.append(f"p:{source_p}")
+    """Render concise mismatch annotation text for grouped `ann:*` output."""
+    lines: list[str] = [f"{SCH_NAMESPACE}: and {PCB_NAMESPACE}: differ"]
+    lines.append(f"{SCH_NAMESPACE}:{source_s}")
+    lines.append(f"{PCB_NAMESPACE}:{source_p}")
 
     return "\n".join(lines)
 
@@ -266,15 +271,15 @@ class ComponentMergeService:
     def _build_source_fields(
         self, project_record: ProjectReferenceRecord
     ) -> dict[str, str]:
-        """Build source namespace fields (`s:*`, `p:*`) for one reference."""
+        """Build source namespace fields (`sch:*`, `pcb:*`) for one reference."""
 
         source_fields: dict[str, str] = {}
         schematic_fields = self._extract_schematic_fields(project_record)
         pcb_fields = self._extract_pcb_fields(project_record)
         for field_name, field_value in schematic_fields.items():
-            source_fields[f"s:{field_name}"] = field_value
+            source_fields[f"{SCH_NAMESPACE}:{field_name}"] = field_value
         for field_name, field_value in pcb_fields.items():
-            source_fields[f"p:{field_name}"] = field_value
+            source_fields[f"{PCB_NAMESPACE}:{field_name}"] = field_value
         return source_fields
 
     def _build_mismatches(
@@ -286,8 +291,8 @@ class ComponentMergeService:
 
         mismatches: list[MergeMismatchRecord] = []
         for field_name in self._iter_source_field_names(source_fields):
-            schematic_value = source_fields.get(f"s:{field_name}", "")
-            pcb_value = source_fields.get(f"p:{field_name}", "")
+            schematic_value = source_fields.get(f"{SCH_NAMESPACE}:{field_name}", "")
+            pcb_value = source_fields.get(f"{PCB_NAMESPACE}:{field_name}", "")
             if not schematic_value or not pcb_value or schematic_value == pcb_value:
                 continue
             mismatches.append(
@@ -295,7 +300,10 @@ class ComponentMergeService:
                     reference=reference,
                     field_key=field_name,
                     severity="warning",
-                    source_values={"s": schematic_value, "p": pcb_value},
+                    source_values={
+                        SCH_NAMESPACE: schematic_value,
+                        PCB_NAMESPACE: pcb_value,
+                    },
                 )
             )
         return mismatches
@@ -303,17 +311,23 @@ class ComponentMergeService:
     def _build_annotated_fields(
         self, mismatches: list[MergeMismatchRecord]
     ) -> dict[str, str]:
-        """Build `a:*` annotation cells from mismatch records."""
+        """Build `ann:*` annotation cells from mismatch records."""
 
         annotated: dict[str, str] = {}
         for mismatch in mismatches:
             source_lines = []
-            if mismatch.source_values.get("s"):
-                source_lines.append(f"s:{mismatch.source_values['s']}")
-            if mismatch.source_values.get("p"):
-                source_lines.append(f"p:{mismatch.source_values['p']}")
+            if mismatch.source_values.get(SCH_NAMESPACE):
+                source_lines.append(
+                    f"{SCH_NAMESPACE}:{mismatch.source_values[SCH_NAMESPACE]}"
+                )
+            if mismatch.source_values.get(PCB_NAMESPACE):
+                source_lines.append(
+                    f"{PCB_NAMESPACE}:{mismatch.source_values[PCB_NAMESPACE]}"
+                )
             if source_lines:
-                annotated[f"a:{mismatch.field_key}"] = "\n".join(source_lines)
+                annotated[f"{ANNOTATION_NAMESPACE}:{mismatch.field_key}"] = "\n".join(
+                    source_lines
+                )
         return annotated
 
     def _extract_schematic_fields(
@@ -437,8 +451,9 @@ class ComponentMergeService:
 
         field_names: set[str] = set()
         for prefixed_name in source_fields:
-            if prefixed_name.startswith("s:") or prefixed_name.startswith("p:"):
-                field_names.add(prefixed_name[2:])
+            prefix, separator, field_name = prefixed_name.partition(":")
+            if separator and field_name and prefix in {SCH_NAMESPACE, PCB_NAMESPACE}:
+                field_names.add(field_name)
         return tuple(sorted(field_names))
 
     def _get_component_property(

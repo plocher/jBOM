@@ -392,7 +392,7 @@ def synthesize_bom_components_from_pcb(
       ``Update PCB from Schematic`` overrides and is what the assembler
       reads off the board).  The schematic value is only consulted when
       the PCB carries no ``Value`` property for that reference.
-    * Auxiliary fields surfaced from the schematic for ``s:``-namespace
+    * Auxiliary fields surfaced from the schematic for ``sch:``-namespace
       visibility (DRC-debug): ``tolerance``, ``voltage``, ``current``,
       ``wavelength``.  These never affect BOM aggregation; they just
       ride along on the synthesized component for the user.
@@ -567,7 +567,7 @@ def enrich_bom_with_merge_namespaces(
     bom_data: BOMData,
     merge_result: ComponentMergeResult | None,
 ) -> BOMData:
-    """Attach stable merge-model namespaces (`s:/p:/a:`) onto BOM entries."""
+    """Attach stable merge-model namespaces (`sch:/pcb:/ann:`) onto BOM entries."""
 
     if merge_result is None or not merge_result.records:
         return bom_data
@@ -656,7 +656,7 @@ def _entry_has_inventory_dnp(entry: BOMEntry) -> bool:
     inventory_dnp = entry.attributes.get("inventory_dnp")
     if _is_truthy_inventory_dnp(inventory_dnp):
         return True
-    namespaced_dnp = entry.attributes.get("i:dnp")
+    namespaced_dnp = entry.attributes.get("inv:dnp")
     if _is_truthy_inventory_dnp(namespaced_dnp):
         return True
     return False
@@ -811,12 +811,12 @@ def _entry_has_namespaced_field(entry: BOMEntry, namespaced_field: str) -> bool:
 def _resolve_entry_device_footprint(entry: BOMEntry) -> str:
     """Resolve concrete device footprint with PCB-first precedence."""
 
-    has_pcb_footprint = _entry_has_namespaced_field(entry, "p:footprint")
-    pcb_footprint = str(entry.attributes.get("p:footprint", "") or "").strip()
+    has_pcb_footprint = _entry_has_namespaced_field(entry, "pcb:footprint")
+    pcb_footprint = str(entry.attributes.get("pcb:footprint", "") or "").strip()
     if has_pcb_footprint:
         return pcb_footprint
 
-    schematic_footprint = str(entry.attributes.get("s:footprint", "") or "").strip()
+    schematic_footprint = str(entry.attributes.get("sch:footprint", "") or "").strip()
     fallback_footprint = str(entry.footprint or "").strip()
     for candidate in (schematic_footprint, fallback_footprint):
         if _is_concrete_footprint(candidate):
@@ -881,7 +881,7 @@ def enforce_bom_device_footprints(bom_data: BOMData) -> BOMData:
 
     metadata = dict(bom_data.metadata)
     metadata["device_footprint_contract"] = "enforced"
-    metadata["device_footprint_precedence"] = "p>s"
+    metadata["device_footprint_precedence"] = "pcb>sch"
     return BOMData(
         project_name=bom_data.project_name,
         entries=updated_entries,

@@ -41,7 +41,7 @@ def _make_pcb_component() -> PcbComponent:
 def test_get_field_names_discovers_schematic_fields() -> None:
     names = get_field_names(
         schematic_components=[_make_schematic_component()],
-        source="s",
+        source="sch",
     )
 
     assert {"value", "footprint", "lcsc", "manufacturer"} <= names
@@ -50,7 +50,7 @@ def test_get_field_names_discovers_schematic_fields() -> None:
 def test_get_field_names_discovers_pcb_fields() -> None:
     names = get_field_names(
         pcb_components=[_make_pcb_component()],
-        source="p",
+        source="pcb",
     )
 
     assert {"footprint", "package", "value", "lcsc"} <= names
@@ -59,7 +59,7 @@ def test_get_field_names_discovers_pcb_fields() -> None:
 def test_get_field_names_discovers_inventory_column_names() -> None:
     names = get_field_names(
         inventory_column_names=["Voltage", "Tolerance"],
-        source="i",
+        source="inv",
     )
 
     assert names == {"voltage", "tolerance"}
@@ -78,58 +78,58 @@ def test_get_field_names_source_all_returns_union() -> None:
 
 def test_build_namespace_matrix_excludes_annotation_namespace_column() -> None:
     row = FieldListingService().build_namespace_matrix(
-        ["value", "s:value", "p:value", "i:value", "a:value"]
+        ["value", "sch:value", "pcb:value", "inv:value", "ann:value"]
     )[0]
     console = row.to_console_row()
 
-    assert set(console.keys()) == {"Name", "s:", "p:", "i:"}
-    assert row.s_token == "s:value"
-    assert row.p_token == "p:value"
-    assert row.i_token == "i:value"
+    assert set(console.keys()) == {"Name", "sch:", "pcb:", "inv:"}
+    assert row.sch_token == "sch:value"
+    assert row.pcb_token == "pcb:value"
+    assert row.inv_token == "inv:value"
 
 
 def test_normalize_priority_accepts_string_and_sequence_forms() -> None:
-    assert normalize_priority("pis") == ("p", "i", "s")
-    assert normalize_priority(("s", "i", "p")) == ("s", "i", "p")
+    assert normalize_priority("pcb,inv,sch") == ("pcb", "inv", "sch")
+    assert normalize_priority(("sch", "inv", "pcb")) == ("sch", "inv", "pcb")
 
 
 def test_normalize_priority_rejects_invalid_forms() -> None:
     with pytest.raises(ValueError):
-        normalize_priority("ppi")
+        normalize_priority("pcb,pcb,inv")
 
     with pytest.raises(ValueError):
-        normalize_priority("pix")
+        normalize_priority("pcb,inv,foo")
 
 
 def test_resolve_field_reads_only_requested_source_for_namespaced_tokens() -> None:
     row_sources = {
-        "s": {"value": "10K"},
-        "p": {"value": "9K99"},
-        "i": {"value": "10K-INV"},
+        "sch": {"value": "10K"},
+        "pcb": {"value": "9K99"},
+        "inv": {"value": "10K-INV"},
     }
 
-    assert resolve_field("s:value", row_sources) == "10K"
-    assert resolve_field("p:value", row_sources) == "9K99"
-    assert resolve_field("i:value", row_sources) == "10K-INV"
-    assert resolve_field("p:footprint", row_sources) == ""
+    assert resolve_field("sch:value", row_sources) == "10K"
+    assert resolve_field("pcb:value", row_sources) == "9K99"
+    assert resolve_field("inv:value", row_sources) == "10K-INV"
+    assert resolve_field("pcb:footprint", row_sources) == ""
 
 
 def test_resolve_field_uses_priority_order_for_unqualified_tokens() -> None:
     row_sources = {
-        "s": {"value": "10K"},
-        "p": {"value": "9K99"},
-        "i": {"value": "10K-INV"},
+        "sch": {"value": "10K"},
+        "pcb": {"value": "9K99"},
+        "inv": {"value": "10K-INV"},
     }
 
-    assert resolve_field("value", row_sources, priority="pis") == "9K99"
-    assert resolve_field("value", row_sources, priority="sip") == "10K"
+    assert resolve_field("value", row_sources, priority="pcb,inv,sch") == "9K99"
+    assert resolve_field("value", row_sources, priority="sch,inv,pcb") == "10K"
 
 
 def test_resolve_field_returns_empty_for_unsupported_namespace() -> None:
     row_sources = {
-        "s": {"value": "10K"},
-        "p": {"value": "9K99"},
-        "i": {"value": "10K-INV"},
+        "sch": {"value": "10K"},
+        "pcb": {"value": "9K99"},
+        "inv": {"value": "10K-INV"},
     }
 
-    assert resolve_field("a:value", row_sources) == ""
+    assert resolve_field("ann:value", row_sources) == ""

@@ -75,8 +75,8 @@ def test_enrich_pos_with_merge_namespaces_adds_namespaced_fields() -> None:
         records={
             "R1": MergedReferenceRecord(
                 reference="R1",
-                source_fields={"s:value": "10k", "p:value": "9k99"},
-                annotated_fields={"a:value": "s:10k\np:9k99"},
+                source_fields={"sch:value": "10k", "pcb:value": "9k99"},
+                annotated_fields={"ann:value": "sch:10k\npcb:9k99"},
             )
         },
         mismatches=tuple(),
@@ -85,9 +85,9 @@ def test_enrich_pos_with_merge_namespaces_adds_namespaced_fields() -> None:
 
     enriched = _enrich_pos_with_merge_namespaces(pos_rows, merge_result)
 
-    assert enriched[0]["s:value"] == "10k"
-    assert enriched[0]["p:value"] == "9k99"
-    assert enriched[0]["a:value"] == "s:10k\np:9k99"
+    assert enriched[0]["sch:value"] == "10k"
+    assert enriched[0]["pcb:value"] == "9k99"
+    assert enriched[0]["ann:value"] == "sch:10k\npcb:9k99"
 
 
 def test_enrich_pos_with_merge_namespaces_keeps_rows_without_reference_match() -> None:
@@ -96,7 +96,7 @@ def test_enrich_pos_with_merge_namespaces_keeps_rows_without_reference_match() -
         records={
             "R2": MergedReferenceRecord(
                 reference="R2",
-                source_fields={"s:value": "1k"},
+                source_fields={"sch:value": "1k"},
             )
         },
         mismatches=tuple(),
@@ -105,25 +105,25 @@ def test_enrich_pos_with_merge_namespaces_keeps_rows_without_reference_match() -
 
     enriched = _enrich_pos_with_merge_namespaces(pos_rows, merge_result)
 
-    assert "s:value" not in enriched[0]
+    assert "sch:value" not in enriched[0]
 
 
 def test_get_pos_field_value_reads_explicit_namespaced_fields() -> None:
     entry = {
-        "s:value": "10k",
-        "p:footprint": "R_0603",
+        "sch:value": "10k",
+        "pcb:footprint": "R_0603",
     }
 
-    assert _get_pos_field_value(entry, "s:value") == "10k"
-    assert _get_pos_field_value(entry, "p:footprint") == "R_0603"
+    assert _get_pos_field_value(entry, "sch:value") == "10k"
+    assert _get_pos_field_value(entry, "pcb:footprint") == "R_0603"
 
 
 def test_unqualified_pos_value_prefers_p_then_i_then_s() -> None:
     entry = {
         "value": "",
-        "s:value": "10K",
-        "p:value": "9K99",
-        "i:value": "10K-INV",
+        "sch:value": "10K",
+        "pcb:value": "9K99",
+        "inv:value": "10K-INV",
     }
 
     assert _get_pos_field_value(entry, "value") == "9K99"
@@ -132,8 +132,8 @@ def test_unqualified_pos_value_prefers_p_then_i_then_s() -> None:
 def test_unqualified_pos_value_uses_inventory_when_pcb_missing() -> None:
     entry = {
         "value": "",
-        "s:value": "10K",
-        "i:value": "10K-INV",
+        "sch:value": "10K",
+        "inv:value": "10K-INV",
     }
 
     assert _get_pos_field_value(entry, "value") == "10K-INV"
@@ -141,15 +141,15 @@ def test_unqualified_pos_value_uses_inventory_when_pcb_missing() -> None:
 
 def test_pos_dnp_filter_excludes_schematic_dnp_rows_by_default() -> None:
     rows = [
-        {"reference": "U1", "s:dnp": "Yes"},
-        {"reference": "U2", "s:dnp": "No"},
+        {"reference": "U1", "sch:dnp": "Yes"},
+        {"reference": "U2", "sch:dnp": "No"},
     ]
     filtered = _apply_pos_dnp_filter(rows, component_filters={"exclude_dnp": True})
     assert [row["reference"] for row in filtered] == ["U2"]
 
 
 def test_pos_dnp_filter_respects_include_dnp_flag() -> None:
-    rows = [{"reference": "U1", "s:dnp": "Yes"}]
+    rows = [{"reference": "U1", "sch:dnp": "Yes"}]
     filtered = _apply_pos_dnp_filter(rows, component_filters={"exclude_dnp": False})
     assert [row["reference"] for row in filtered] == ["U1"]
 

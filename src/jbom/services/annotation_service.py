@@ -490,25 +490,25 @@ def _normalize_repair_update_value_with_baseline(
         return parsed_value["bare_value"]
 
     parsed_baseline = _parse_merge_notation_value(baseline_value)
-    baseline_s = parsed_baseline["source_values"].get(
-        "s", parsed_baseline["bare_value"]
+    baseline_schematic = parsed_baseline["source_values"].get(
+        "sch", parsed_baseline["bare_value"]
     )
-    baseline_p = parsed_baseline["source_values"].get(
-        "p", parsed_baseline["bare_value"]
+    baseline_pcb = parsed_baseline["source_values"].get(
+        "pcb", parsed_baseline["bare_value"]
     )
 
-    resolved_s = parsed_value["source_values"].get("s", baseline_s)
-    resolved_p = parsed_value["source_values"].get("p", baseline_p)
+    resolved_schematic = parsed_value["source_values"].get("sch", baseline_schematic)
+    resolved_pcb = parsed_value["source_values"].get("pcb", baseline_pcb)
 
-    if resolved_s:
-        return resolved_s
-    if resolved_p:
-        return resolved_p
+    if resolved_schematic:
+        return resolved_schematic
+    if resolved_pcb:
+        return resolved_pcb
     return ""
 
 
 def _parse_merge_notation_value(raw_value: str) -> dict[str, Any]:
-    """Parse s:/p: merge notation from a repairs cell value."""
+    """Parse sch:/pcb: merge notation from a repairs cell value."""
     text = str(raw_value or "").strip()
     if not text:
         return {
@@ -526,7 +526,7 @@ def _parse_merge_notation_value(raw_value: str) -> dict[str, Any]:
         if ":" in line:
             source, value = line.split(":", 1)
             source_key = source.strip().lower()
-            if source_key in {"s", "p"}:
+            if source_key in {"sch", "pcb"}:
                 source_values[source_key] = value.strip()
                 has_merge_notation = True
                 continue

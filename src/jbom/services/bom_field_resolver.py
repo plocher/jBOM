@@ -16,11 +16,17 @@ from jbom.config.field_expr import (
     TransformCallable,
 )
 from jbom.config.field_ref import FieldContext, FieldRefResolver
+from jbom.config.fields import (
+    ANNOTATION_NAMESPACE,
+    INV_NAMESPACE,
+    PCB_NAMESPACE,
+    SCH_NAMESPACE,
+)
 from jbom.config.fabricators import FabricatorConfig
 from jbom.config.unified import load_unified
 
 # Source priority: PCB first, then inventory, then schematic
-_BOM_SOURCE_PRIORITY = ["p", "i", "s"]
+_BOM_SOURCE_PRIORITY = [PCB_NAMESPACE, INV_NAMESPACE, SCH_NAMESPACE]
 
 
 def resolve_bom_field_value(
@@ -127,7 +133,7 @@ def _build_field_context(
         row_sources,
         computed=computed_fields,
         annotations=annotation_fields,
-        source_priority=("p", "i", "s"),
+        source_priority=(PCB_NAMESPACE, INV_NAMESPACE, SCH_NAMESPACE),
     )
 
 
@@ -163,15 +169,16 @@ def _build_annotation_field_values(
     entry: BOMEntry,
     row_sources: Mapping[str, Mapping[str, object]],
 ) -> dict[str, str]:
-    """Build concrete `a:*` annotation values from source fields and explicit attrs."""
+    """Build concrete `ann:*` annotation values from source fields and explicit attrs."""
 
     annotations: dict[str, str] = {}
 
     for attribute_key, attribute_value in entry.attributes.items():
         normalized_key = normalize_field_name(str(attribute_key or ""))
-        if not normalized_key.startswith("a:"):
+        annotation_prefix = f"{ANNOTATION_NAMESPACE}:"
+        if not normalized_key.startswith(annotation_prefix):
             continue
-        annotation_key = normalized_key[2:]
+        annotation_key = normalized_key[len(annotation_prefix) :]
         if not annotation_key:
             continue
         annotation_value = _coerce_output_value(attribute_value)
@@ -199,10 +206,10 @@ def _render_source_annotation_value(
     field_name: str,
     row_sources: Mapping[str, Mapping[str, object]],
 ) -> str:
-    """Render `a:<field>` output lines in stable source order."""
+    """Render `ann:<field>` output lines in stable source order."""
 
     lines: list[tuple[str, str]] = []
-    for namespace in ("s", "p", "i"):
+    for namespace in (SCH_NAMESPACE, PCB_NAMESPACE, INV_NAMESPACE):
         value = resolve_field(
             f"{namespace}:{field_name}",
             row_sources,
@@ -284,25 +291,33 @@ def _build_bom_row_sources(
     *,
     include_unqualified_fallback: bool,
 ) -> dict[str, dict[str, object]]:
-    """Build source field maps for one BOM row (`s`, `p`, `i`)."""
-    row_sources: dict[str, dict[str, object]] = {"s": {}, "p": {}, "i": {}}
+    """Build source field maps for one BOM row (`sch`, `pcb`, `inv`)."""
+    row_sources: dict[str, dict[str, object]] = {
+        SCH_NAMESPACE: {},
+        PCB_NAMESPACE: {},
+        INV_NAMESPACE: {},
+    }
     for attr_key, attr_value in entry.attributes.items():
         normalized_key = normalize_field_name(str(attr_key or ""))
         prefix, separator, remainder = normalized_key.partition(":")
-        if separator and prefix in {"s", "p", "i"} and remainder:
+        if (
+            separator
+            and prefix in {SCH_NAMESPACE, PCB_NAMESPACE, INV_NAMESPACE}
+            and remainder
+        ):
             row_sources[prefix][remainder] = attr_value
 
     if include_unqualified_fallback:
         # Keep unqualified behavior stable when merge enrichment is absent.
         if entry.references_string:
-            row_sources["s"].setdefault("reference", entry.references_string)
+            row_sources[SCH_NAMESPACE].setdefault("reference", entry.references_string)
         if entry.value:
-            row_sources["s"].setdefault("value", entry.value)
+            row_sources[SCH_NAMESPACE].setdefault("value", entry.value)
         if entry.footprint:
-            row_sources["s"].setdefault("footprint", entry.footprint)
+            row_sources[SCH_NAMESPACE].setdefault("footprint", entry.footprint)
         package_value = _get_attribute_value(entry, "package")
         if package_value:
-            row_sources["s"].setdefault("package", package_value)
+            row_sources[SCH_NAMESPACE].setdefault("package", package_value)
 
     return row_sources
 

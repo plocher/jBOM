@@ -39,11 +39,11 @@ def test_build_projection_unknown_fabricator_uses_default_headers() -> None:
     projection = service.build_projection(
         fabricator_id="nonexistent-fabricator",
         output_type="bom",
-        selected_fields=["reference", "i:package"],
+        selected_fields=["reference", "inv:package"],
     )
 
     assert projection.fabricator_config is None
-    assert projection.headers == ("Reference", "I:Package")
+    assert projection.headers == ("Reference", "INV:Package")
 
 
 def test_build_projection_maps_jlc_pos_headers() -> None:

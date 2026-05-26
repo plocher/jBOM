@@ -55,20 +55,20 @@ Feature: BOM Field System and Output Customization
   Scenario: Mixed syntax - preset plus custom fields
     # +minimal uses the 'spn' field; without --jlc the column header is 'SPN'.
     # JLC fabricator maps fabricator_part_number → 'LCSC Part #' header via bom_columns.
-    When I run jbom command "bom -f +minimal,Manufacturer,I:Voltage -o -"
+    When I run jbom command "bom -f +minimal,Manufacturer,inv:voltage -o -"
     Then the command should succeed
     And the output should contain "Reference"
     And the output should contain "Value"
     And the output should contain "SPN"
     And the output should contain "Manufacturer"
-    And the output should contain "I:Voltage"
+    And the output should contain "INV:Voltage"
 
   @regression @current-broken
   Scenario: Inventory field prefixing
     Given an inventory file with fields "Voltage,Tolerance,Package"
-    When I run jbom command "bom --inventory inventory.csv -f Reference,Value,I:Voltage,I:Tolerance -o -"
+    When I run jbom command "bom --inventory inventory.csv -f Reference,Value,inv:voltage,inv:tolerance -o -"
     Then the command should succeed
-    And the output should contain CSV headers "Reference,Value,I:Voltage,I:Tolerance"
+    And the output should contain CSV headers "Reference,Value,INV:Voltage,INV:Tolerance"
 
   @regression @current-broken
   Scenario: Unknown fields are accepted and produce blank columns

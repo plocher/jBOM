@@ -194,8 +194,8 @@ class InventoryMatcher:
         """
         attributes = entry.attributes or {}
         resolved_footprint = str(
-            attributes.get("p:footprint")
-            or attributes.get("s:footprint")
+            attributes.get("pcb:footprint")
+            or attributes.get("sch:footprint")
             or entry.footprint
             or ""
         ).strip()

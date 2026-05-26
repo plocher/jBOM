@@ -53,7 +53,7 @@ def test_pos_workflow_runs_without_cli_import(
             return [
                 {
                     "reference": "U1",
-                    "s:dnp": "yes",
+                    "sch:dnp": "yes",
                     "x_mm": 1.0,
                     "y_mm": 1.0,
                     "rotation": 0.0,

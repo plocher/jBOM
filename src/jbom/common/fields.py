@@ -60,20 +60,20 @@ def normalize_field_name(field: str) -> str:
     if not field:
         return ""
 
-    # Handle prefixes (I:, S:, P:, and A:) separately
+    # Handle canonical source/annotation prefixes separately
     prefix = ""
-    if field.lower().startswith("i:"):
-        prefix = "i:"
-        field = field[2:]
-    elif field.lower().startswith("s:"):
-        prefix = "s:"
-        field = field[2:]
-    elif field.lower().startswith("p:"):
-        prefix = "p:"
-        field = field[2:]
-    elif field.lower().startswith("a:"):
-        prefix = "a:"
-        field = field[2:]
+    if field.lower().startswith("sch:"):
+        prefix = "sch:"
+        field = field[4:]
+    elif field.lower().startswith("pcb:"):
+        prefix = "pcb:"
+        field = field[4:]
+    elif field.lower().startswith("inv:"):
+        prefix = "inv:"
+        field = field[4:]
+    elif field.lower().startswith("ann:"):
+        prefix = "ann:"
+        field = field[4:]
 
     # Replace spaces and hyphens with underscores
     field = field.replace(" ", "_").replace("-", "_")
@@ -101,7 +101,7 @@ def field_to_header(field: str) -> str:
     Examples:
         'match_quality' -> 'Match Quality'
         'lcsc' -> 'LCSC'
-        'i:package' -> 'I:Package'
+        'inv:package' -> 'INV:Package'
         'mfgpn' -> 'MFGPN'
 
     Args:
@@ -115,18 +115,21 @@ def field_to_header(field: str) -> str:
 
     # Handle prefixes
     prefix = ""
-    if field.lower().startswith("i:"):
-        prefix = "I:"
-        field = field[2:]
-    elif field.lower().startswith("s:"):
-        prefix = "S:"
-        field = field[2:]
-    elif field.lower().startswith("p:"):
-        prefix = "P:"
-        field = field[2:]
-    elif field.lower().startswith("a:"):
-        prefix = "A:"
-        field = field[2:]
+    if field.lower().startswith("inv:"):
+        prefix = "INV:"
+        field = field[4:]
+    elif field.lower().startswith("sch:"):
+        prefix = "SCH:"
+        field = field[4:]
+    elif field.lower().startswith("pcb:"):
+        prefix = "PCB:"
+        field = field[4:]
+    elif field.lower().startswith("ann:"):
+        prefix = "ANN:"
+        field = field[4:]
+    elif field.lower().startswith("jbom:"):
+        prefix = "JBOM:"
+        field = field[5:]
 
     # Split on underscores and handle each part
     parts = field.split("_")
@@ -149,7 +152,7 @@ def field_to_header(field: str) -> str:
 # Field presets - easily extensible data structure
 # All field names stored in normalized snake_case internally
 # Standard BOM fields don't need qualification (reference, quantity, value, etc.)
-# Inventory-specific fields are qualified with i: to avoid ambiguity
+# Inventory-specific fields are qualified with inv: to avoid ambiguity
 FIELD_PRESETS = {
     "default": {
         "fields": [
@@ -263,8 +266,8 @@ def get_available_presets() -> Dict[str, str]:
     return {name: info["description"] for name, info in FIELD_PRESETS.items()}
 
 
-# Valid source prefixes for k: stacking
-_K_MODIFIER_SOURCES: frozenset[str] = frozenset({"s", "p", "i"})
+# Valid canonical source prefixes for k: stacking
+_K_MODIFIER_SOURCES: frozenset[str] = frozenset({"sch", "pcb", "inv"})
 
 
 def split_kicad_strip_field(field: str) -> "tuple[str, str] | None":
@@ -273,23 +276,23 @@ def split_kicad_strip_field(field: str) -> "tuple[str, str] | None":
     The ``k:`` modifier strips the ``LIBRARY:NAME`` prefix from a KiCad field
     value, returning only the ``NAME`` part (e.g. ``SPCoast:0603-RES`` →
     ``0603-RES``).  It must be combined with a source prefix to be
-    unambiguous.  Bare ``k:`` silently defaults to ``i:`` (inventory source);
+    unambiguous.  Bare ``k:`` silently defaults to ``inv:`` (inventory source);
     callers should log a note when verbose/debug mode is active.
 
     Supported forms::
 
-        "k:footprint"       → ("i", "footprint")  # defaults to inventory
-        "i:k:footprint"     → ("i", "footprint")
-        "s:k:footprint"     → ("s", "footprint")
-        "p:k:footprint"     → ("p", "footprint")
-        "k:lib_id"          → ("i", "lib_id")
+        "k:footprint"         → ("inv", "footprint")  # defaults to inventory
+        "inv:k:footprint"     → ("inv", "footprint")
+        "sch:k:footprint"     → ("sch", "footprint")
+        "pcb:k:footprint"     → ("pcb", "footprint")
+        "k:lib_id"            → ("inv", "lib_id")
 
     Returns ``None`` when ``field`` does not use the ``k:`` modifier.
     """
     if field.startswith("k:"):
         inner = field[2:]
         if inner:
-            return "i", inner
+            return "inv", inner
         return None
 
     for src in _K_MODIFIER_SOURCES:

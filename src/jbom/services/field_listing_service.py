@@ -7,7 +7,8 @@ from typing import Iterable, Mapping, Sequence
 
 from jbom.common.fields import normalize_field_name
 
-_SOURCE_PREFIXES: tuple[str, ...] = ("s", "p", "i")
+_SOURCE_PREFIXES: tuple[str, ...] = ("sch", "pcb", "inv")
+_DEFAULT_PRIORITY: tuple[str, ...] = ("pcb", "inv", "sch")
 
 
 @dataclass(frozen=True)
@@ -15,23 +16,23 @@ class FieldNamespaceMatrixRow:
     """One row in the namespace matrix view for a canonical field name."""
 
     name: str
-    s_token: str = ""
-    p_token: str = ""
-    i_token: str = ""
+    sch_token: str = ""
+    pcb_token: str = ""
+    inv_token: str = ""
 
     def to_console_row(self) -> dict[str, str]:
         """Convert row to a console table mapping with fixed matrix columns."""
 
         return {
             "Name": self.name,
-            "s:": self.s_token,
-            "p:": self.p_token,
-            "i:": self.i_token,
+            "sch:": self.sch_token,
+            "pcb:": self.pcb_token,
+            "inv:": self.inv_token,
         }
 
 
 def normalize_priority(priority: str | Sequence[str]) -> tuple[str, ...]:
-    """Normalize source-priority specifiers into an ordered (s|p|i) tuple."""
+    """Normalize source-priority specifiers into canonical source token order."""
 
     if isinstance(priority, str):
         compact = priority.strip().lower()
@@ -44,16 +45,20 @@ def normalize_priority(priority: str | Sequence[str]) -> tuple[str, ...]:
                 if token.strip()
             ]
         else:
-            tokens = list(compact)
+            tokens = [normalize_field_name(compact).strip()]
     else:
-        tokens = [str(token or "").strip().lower() for token in priority if token]
+        tokens = [
+            normalize_field_name(str(token or "")).strip()
+            for token in priority
+            if token
+        ]
 
     if len(tokens) != 3:
         raise ValueError("priority must specify exactly three source tokens")
     if len(set(tokens)) != 3:
         raise ValueError("priority cannot include duplicate source tokens")
     if any(token not in _SOURCE_PREFIXES for token in tokens):
-        raise ValueError("priority may only contain source tokens: s, p, i")
+        raise ValueError("priority may only contain source tokens: sch, pcb, inv")
 
     return tuple(tokens)
 
@@ -62,7 +67,7 @@ def resolve_field(
     field_name: str,
     row_sources: Mapping[str, Mapping[str, object] | None],
     *,
-    priority: str | Sequence[str] = "pis",
+    priority: str | Sequence[str] = _DEFAULT_PRIORITY,
 ) -> str:
     """Resolve one field token from row source maps under source-priority rules."""
 
@@ -107,7 +112,7 @@ def _resolve_unqualified_field(
     field_name: str,
     row_sources: Mapping[str, Mapping[str, object] | None],
     *,
-    priority: str | Sequence[str] = "pis",
+    priority: str | Sequence[str] = _DEFAULT_PRIORITY,
 ) -> str:
     """Resolve an unqualified field using ordered source-priority lookup."""
 
@@ -128,15 +133,15 @@ def get_field_names(
     """Discover normalized field names from schematic/PCB/inventory sources."""
 
     normalized_source = str(source or "all").strip().lower()
-    if normalized_source not in {"s", "p", "i", "all"}:
-        raise ValueError("source must be one of: s, p, i, all")
+    if normalized_source not in {"sch", "pcb", "inv", "all"}:
+        raise ValueError("source must be one of: sch, pcb, inv, all")
 
     discovered: set[str] = set()
-    if normalized_source in {"s", "all"}:
+    if normalized_source in {"sch", "all"}:
         discovered.update(_discover_schematic_fields(schematic_components or []))
-    if normalized_source in {"p", "all"}:
+    if normalized_source in {"pcb", "all"}:
         discovered.update(_discover_pcb_fields(pcb_components or []))
-    if normalized_source in {"i", "all"}:
+    if normalized_source in {"inv", "all"}:
         discovered.update(_discover_inventory_fields(inventory_column_names or []))
     return discovered
 
@@ -147,7 +152,7 @@ def get_namespaced_field_tokens(
     pcb_components: Iterable[object] | None = None,
     inventory_column_names: Iterable[str] | None = None,
 ) -> set[str]:
-    """Return discovered source field tokens formatted as s:/p:/i: entries."""
+    """Return discovered source field tokens formatted as sch:/pcb:/inv: entries."""
 
     tokens: set[str] = set()
     for source in _SOURCE_PREFIXES:
@@ -168,7 +173,7 @@ class FieldListingService:
         self,
         field_tokens: Iterable[str],
     ) -> list[FieldNamespaceMatrixRow]:
-        """Group available tokens into Name|s:|p:|i: rows."""
+        """Group available tokens into Name|sch:|pcb:|inv: rows."""
 
         grouped: dict[str, dict[str, str]] = {}
         for raw_token in field_tokens:
@@ -180,7 +185,7 @@ class FieldListingService:
             if separator and prefix in _SOURCE_PREFIXES and remainder:
                 canonical_name = remainder
                 slot = prefix
-            elif separator and prefix == "a":
+            elif separator and prefix == "ann":
                 continue
             else:
                 canonical_name = normalized_token
@@ -190,9 +195,9 @@ class FieldListingService:
                 canonical_name,
                 {
                     "name": "",
-                    "s": "",
-                    "p": "",
-                    "i": "",
+                    "sch": "",
+                    "pcb": "",
+                    "inv": "",
                 },
             )
             if not row[slot]:
@@ -204,9 +209,9 @@ class FieldListingService:
             matrix_rows.append(
                 FieldNamespaceMatrixRow(
                     name=row["name"] or canonical_name,
-                    s_token=row["s"],
-                    p_token=row["p"],
-                    i_token=row["i"],
+                    sch_token=row["sch"],
+                    pcb_token=row["pcb"],
+                    inv_token=row["inv"],
                 )
             )
         return matrix_rows

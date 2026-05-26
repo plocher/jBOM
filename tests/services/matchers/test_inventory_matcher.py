@@ -218,7 +218,7 @@ class TestInventoryMatcher:
             1,
             "Connector:Conn_01x04",
             {
-                "p:footprint": "Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical"
+                "pcb:footprint": "Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical"
             },
         )
 
