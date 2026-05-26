@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v7.0.2 (2026-05-26)
+
+### Performance Improvements
+
+* perf(config): cache profile loading for CLI startup
+
+Adds memoized unified/fabricator/supplier loader paths with copy-on-read safety and caches parser-time fabricator metadata. Includes regression tests to ensure repeated loads stay mutation-isolated.
+
+Refs #290
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`f622eff`](https://github.com/plocher/jBOM/commit/f622effb2ef5479a9515cb81b921f7e43509b449))
+
+
 ## v7.0.1 (2026-05-26)
 
 ### Refactoring
