@@ -10,10 +10,16 @@ from typing import Any, Optional
 from jbom.common.fields import normalize_field_name, split_kicad_strip_field
 from jbom.common.component_utils import derive_package_from_footprint
 from jbom.services.field_listing_service import resolve_field
+from jbom.config.fields import (
+    ANNOTATION_NAMESPACE,
+    INV_NAMESPACE,
+    PCB_NAMESPACE,
+    SCH_NAMESPACE,
+)
 from jbom.config.fabricators import FabricatorConfig
 
 # Source priority: PCB first, then inventory, then schematic
-_POS_SOURCE_PRIORITY = ["p", "i", "s"]
+_POS_SOURCE_PRIORITY = [PCB_NAMESPACE, INV_NAMESPACE, SCH_NAMESPACE]
 
 
 def resolve_pos_field_value(
@@ -25,7 +31,7 @@ def resolve_pos_field_value(
 ) -> str:
     """Extract and resolve a field value from a POS entry.
 
-    Handles standard fields, namespaced fields (s:, p:, i:, a:), position
+    Handles standard fields, namespaced fields (sch:, pcb:, inv:, ann:), position
     coordinates (x, y, rotation), and KiCad strip modifiers (k:). Applies
     fabricator-specific projection and source precedence rules.
 
@@ -43,14 +49,15 @@ def resolve_pos_field_value(
     row_sources = _build_pos_row_sources(entry)
 
     # Handle k: modifier — KiCad LIBRARY:NAME → NAME (strip library nickname).
-    # "k:footprint" defaults to inventory source; use "i:k:", "s:k:", "p:k:" explicitly.
+    # "k:footprint" defaults to inventory source; use
+    # "inv:k:", "sch:k:", "pcb:k:" explicitly.
     kicad_parts = split_kicad_strip_field(field)
     if kicad_parts is not None:
         source, inner = kicad_parts
         if field.startswith("k:"):
             logging.getLogger(__name__).debug(
-                "k:%s: no source prefix specified, defaulting to i: (inventory). "
-                "Use i:k:, s:k:, or p:k: to be explicit.",
+                "k:%s: no source prefix specified, defaulting to inv: (inventory). "
+                "Use inv:k:, sch:k:, or pcb:k: to be explicit.",
                 inner,
             )
         raw = resolve_field(
@@ -60,9 +67,9 @@ def resolve_pos_field_value(
 
     # Handle namespaced fields
     namespace_prefix, separator, _ = field.partition(":")
-    if separator and namespace_prefix in {"s", "p", "i"}:
+    if separator and namespace_prefix in {SCH_NAMESPACE, PCB_NAMESPACE, INV_NAMESPACE}:
         return resolve_field(field, row_sources, priority=_POS_SOURCE_PRIORITY)
-    if separator and namespace_prefix == "a":
+    if separator and namespace_prefix == ANNOTATION_NAMESPACE:
         return str(entry.get(field, "") or "")
 
     # Handle position coordinates
@@ -123,30 +130,38 @@ def _resolve_fabricator_part_number(
 
 
 def _build_pos_row_sources(entry: dict[str, Any]) -> dict[str, dict[str, object]]:
-    """Build source field maps for one POS row (`s`, `p`, `i`)."""
-    row_sources: dict[str, dict[str, object]] = {"s": {}, "p": {}, "i": {}}
+    """Build source field maps for one POS row (`sch`, `pcb`, `inv`)."""
+    row_sources: dict[str, dict[str, object]] = {
+        SCH_NAMESPACE: {},
+        PCB_NAMESPACE: {},
+        INV_NAMESPACE: {},
+    }
     for key, value in entry.items():
         normalized_key = normalize_field_name(str(key or ""))
         prefix, separator, remainder = normalized_key.partition(":")
-        if separator and prefix in {"s", "p", "i"} and remainder:
+        if (
+            separator
+            and prefix in {SCH_NAMESPACE, PCB_NAMESPACE, INV_NAMESPACE}
+            and remainder
+        ):
             row_sources[prefix][remainder] = value
         elif normalized_key:
-            row_sources["p"].setdefault(normalized_key, value)
+            row_sources[PCB_NAMESPACE].setdefault(normalized_key, value)
 
     if entry.get("x_raw"):
-        row_sources["p"].setdefault("x", entry.get("x_raw"))
+        row_sources[PCB_NAMESPACE].setdefault("x", entry.get("x_raw"))
     elif entry.get("x_mm") is not None:
-        row_sources["p"].setdefault("x", f"{entry['x_mm']:.4f}")
+        row_sources[PCB_NAMESPACE].setdefault("x", f"{entry['x_mm']:.4f}")
 
     if entry.get("y_raw"):
-        row_sources["p"].setdefault("y", entry.get("y_raw"))
+        row_sources[PCB_NAMESPACE].setdefault("y", entry.get("y_raw"))
     elif entry.get("y_mm") is not None:
-        row_sources["p"].setdefault("y", f"{entry['y_mm']:.4f}")
+        row_sources[PCB_NAMESPACE].setdefault("y", f"{entry['y_mm']:.4f}")
 
     if entry.get("rotation_raw") is not None:
-        row_sources["p"].setdefault("rotation", entry.get("rotation_raw"))
+        row_sources[PCB_NAMESPACE].setdefault("rotation", entry.get("rotation_raw"))
     elif entry.get("rotation") is not None:
-        row_sources["p"].setdefault("rotation", f"{entry['rotation']:.1f}")
+        row_sources[PCB_NAMESPACE].setdefault("rotation", f"{entry['rotation']:.1f}")
 
     return row_sources
 

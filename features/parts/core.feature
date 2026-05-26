@@ -66,13 +66,13 @@ Feature: Parts List Generation (Core Functionality)
       | C1        | 8 | 3 | C_0603_1608 |
       | C20       | 9 | 3 | C_0603_1608 |
       | U1        | 1 | 1 | SOIC-8_3.9x4.9mm |
-    When I run jbom command "parts -f refs,s:footprint,a:footprint"
+    When I run jbom command "parts -f refs,sch:footprint,ann:footprint"
     Then the command should succeed
     And the output should contain these fields:
-      | Refs | S:Footprint | A:Footprint |
+      | Refs | SCH:Footprint | ANN:Footprint |
     And the CSV output has rows where:
-      | Refs      | S:Footprint | A:Footprint |
-      | R1,R2,R10 | R_0805_2012 |             |
+      | Refs      | SCH:Footprint | ANN:Footprint |
+      | R1,R2,R10 | R_0805_2012   |               |
 
   Scenario: Parts list-fields includes merge namespace fields
     # Parts is schematic-driven (it groups schematic components by
@@ -87,13 +87,13 @@ Feature: Parts List Generation (Core Functionality)
     When I run jbom command "parts --list-fields"
     Then the command should succeed
     And the output should contain "Known parts fields"
-    And the output should contain "s:"
-    And the output should contain "p:"
-    And the output should contain "i:"
-    And the output should contain "s:value"
-    And the output should contain "p:footprint"
+    And the output should contain "sch:"
+    And the output should contain "pcb:"
+    And the output should contain "inv:"
+    And the output should contain "sch:value"
+    And the output should contain "pcb:footprint"
     And the output should not contain "c:value"
-    And the output should not contain "a:"
+    And the output should not contain "ann:"
 
   Scenario: Parts unqualified fields use SIP source priority
     Given a schematic that contains:
@@ -102,8 +102,8 @@ Feature: Parts List Generation (Core Functionality)
     And a PCB that contains:
       | Reference | X | Y | Footprint   | Value |
       | R1        | 5 | 3 | R_0805_2012 | 9K99  |
-    When I run jbom command "parts -f refs,value,s:value,p:value"
+    When I run jbom command "parts -f refs,value,sch:value,pcb:value"
     Then the command should succeed
     And the CSV output has rows where:
-      | Refs | Value | S:Value | P:Value |
-      | R1   | 10K   | 10K     | 9K99    |
+      | Refs | Value | SCH:Value | PCB:Value |
+      | R1   | 10K   | 10K       | 9K99      |

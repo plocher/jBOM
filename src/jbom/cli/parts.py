@@ -44,9 +44,15 @@ from jbom.common.component_filters import (
     create_filter_config,
 )
 from jbom.config.fabricators import get_available_fabricators
+from jbom.config.fields import (
+    ANNOTATION_NAMESPACE,
+    INV_NAMESPACE,
+    PCB_NAMESPACE,
+    SCH_NAMESPACE,
+)
 from jbom.cli.formatting import Column, print_table, get_terminal_width
 
-_PARTS_SOURCE_PRIORITY = "sip"
+_PARTS_SOURCE_PRIORITY = [SCH_NAMESPACE, INV_NAMESPACE, PCB_NAMESPACE]
 _PARTS_COMPUTED_FIELDS: tuple[str, ...] = (
     "refs",
     "value",
@@ -113,7 +119,7 @@ def _enrich_parts_with_merge_namespaces(
     parts_data: PartsListData,
     merge_result: ComponentMergeResult | None,
 ) -> PartsListData:
-    """Attach merge namespace attributes (`s:/p:/a:`) to parts entries."""
+    """Attach merge namespace attributes (`sch:/pcb:/ann:`) to parts entries."""
 
     if merge_result is None or not merge_result.records:
         return parts_data
@@ -225,9 +231,9 @@ def _list_available_parts_fields(
     )
     columns = [
         Column(header="Name", key="Name", preferred_width=22, wrap=False),
-        Column(header="s:", key="s:", preferred_width=16, wrap=False),
-        Column(header="p:", key="p:", preferred_width=16, wrap=False),
-        Column(header="i:", key="i:", preferred_width=16, wrap=False),
+        Column(header="sch:", key="sch:", preferred_width=16, wrap=False),
+        Column(header="pcb:", key="pcb:", preferred_width=16, wrap=False),
+        Column(header="inv:", key="inv:", preferred_width=16, wrap=False),
     ]
     print_table(
         [row.to_console_row() for row in matrix_rows],
@@ -606,9 +612,9 @@ def _get_parts_field_value(entry: PartsListEntry, field: str) -> str:
     row_sources = _build_parts_row_sources(entry)
 
     namespace_prefix, separator, _ = field.partition(":")
-    if separator and namespace_prefix in {"s", "p", "i"}:
+    if separator and namespace_prefix in {SCH_NAMESPACE, PCB_NAMESPACE, INV_NAMESPACE}:
         return resolve_field(field, row_sources, priority=_PARTS_SOURCE_PRIORITY)
-    if separator and namespace_prefix == "a":
+    if separator and namespace_prefix == ANNOTATION_NAMESPACE:
         return str(entry.attributes.get(field, "") or "")
     if field in {"value", "footprint", "package", "tolerance", "voltage", "dielectric"}:
         return resolve_field(
@@ -636,34 +642,42 @@ def _get_parts_field_value(entry: PartsListEntry, field: str) -> str:
 
 
 def _build_parts_row_sources(entry: PartsListEntry) -> dict[str, dict[str, object]]:
-    """Build source field maps for one parts row (`s`, `p`, `i`)."""
+    """Build source field maps for one parts row (`sch`, `pcb`, `inv`)."""
 
-    row_sources: dict[str, dict[str, object]] = {"s": {}, "p": {}, "i": {}}
+    row_sources: dict[str, dict[str, object]] = {
+        SCH_NAMESPACE: {},
+        PCB_NAMESPACE: {},
+        INV_NAMESPACE: {},
+    }
     for key, value in entry.attributes.items():
         normalized_key = normalize_field_name(str(key or ""))
         prefix, separator, remainder = normalized_key.partition(":")
-        if separator and prefix in {"s", "p", "i"} and remainder:
+        if (
+            separator
+            and prefix in {SCH_NAMESPACE, PCB_NAMESPACE, INV_NAMESPACE}
+            and remainder
+        ):
             row_sources[prefix][remainder] = value
         elif normalized_key:
-            row_sources["s"].setdefault(normalized_key, value)
+            row_sources[SCH_NAMESPACE].setdefault(normalized_key, value)
 
     if entry.value:
-        row_sources["s"].setdefault("value", entry.value)
+        row_sources[SCH_NAMESPACE].setdefault("value", entry.value)
     if entry.footprint:
-        row_sources["s"].setdefault("footprint", entry.footprint)
+        row_sources[SCH_NAMESPACE].setdefault("footprint", entry.footprint)
     if entry.package:
-        row_sources["s"].setdefault("package", entry.package)
+        row_sources[SCH_NAMESPACE].setdefault("package", entry.package)
     if entry.part_type:
-        row_sources["s"].setdefault("part_type", entry.part_type)
-        row_sources["s"].setdefault("type", entry.part_type)
+        row_sources[SCH_NAMESPACE].setdefault("part_type", entry.part_type)
+        row_sources[SCH_NAMESPACE].setdefault("type", entry.part_type)
     if entry.tolerance:
-        row_sources["s"].setdefault("tolerance", entry.tolerance)
+        row_sources[SCH_NAMESPACE].setdefault("tolerance", entry.tolerance)
     if entry.voltage:
-        row_sources["s"].setdefault("voltage", entry.voltage)
+        row_sources[SCH_NAMESPACE].setdefault("voltage", entry.voltage)
     if entry.dielectric:
-        row_sources["s"].setdefault("dielectric", entry.dielectric)
+        row_sources[SCH_NAMESPACE].setdefault("dielectric", entry.dielectric)
     if entry.lib_id:
-        row_sources["s"].setdefault("lib_id", entry.lib_id)
+        row_sources[SCH_NAMESPACE].setdefault("lib_id", entry.lib_id)
 
     return row_sources
 

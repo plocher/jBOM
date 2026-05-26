@@ -2,7 +2,7 @@
 
 The overlay workflow has two stages:
 1. optionally enrich merged BOM entries with inventory matching results.
-2. project inventory-facing attributes into explicit `i:*` namespace fields.
+2. project inventory-facing attributes into explicit `inv:*` namespace fields.
 
 Projected namespace fields are defined by defaults `inventory_schema`
 canonical fields so schema evolution is centralized in one profile.
@@ -29,7 +29,7 @@ class InventoryOverlayResult:
 
 
 class InventoryOverlayService:
-    """Apply inventory enhancement and project explicit `i:*` namespace fields."""
+    """Apply inventory enhancement and project explicit `inv:*` namespace fields."""
 
     def __init__(
         self,
@@ -94,7 +94,7 @@ class InventoryOverlayService:
         )
 
     def _project_inventory_namespace_fields(self, entry: BOMEntry) -> BOMEntry:
-        """Project normalized entry attributes into explicit `i:*` namespace keys."""
+        """Project normalized entry attributes into explicit `inv:*` namespace keys."""
 
         attributes = dict(entry.attributes)
 
@@ -103,14 +103,14 @@ class InventoryOverlayService:
             for field_name in self._namespace_fields:
                 value = self._coerce_inventory_value(attributes.get(field_name))
                 if value:
-                    attributes[f"i:{field_name}"] = value
+                    attributes[f"inv:{field_name}"] = value
 
-        if not self._coerce_inventory_value(attributes.get("i:package")):
+        if not self._coerce_inventory_value(attributes.get("inv:package")):
             package_value = self._coerce_inventory_value(attributes.get("package"))
             if not package_value:
                 package_value = derive_package_from_footprint(entry.footprint)
             if package_value:
-                attributes["i:package"] = package_value
+                attributes["inv:package"] = package_value
 
         return BOMEntry(
             references=entry.references,

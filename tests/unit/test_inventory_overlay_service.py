@@ -33,7 +33,7 @@ class _StubInventoryMatcher:
         return self.result
 
 
-def test_overlay_without_inventory_adds_i_package_fallback() -> None:
+def test_overlay_without_inventory_adds_inv_package_fallback() -> None:
     service = InventoryOverlayService()
     bom_data = BOMData(
         project_name="Demo",
@@ -55,11 +55,11 @@ def test_overlay_without_inventory_adds_i_package_fallback() -> None:
         project_name="Demo",
     )
 
-    assert result.bom_data.entries[0].attributes["i:package"] == "0603-LED"
+    assert result.bom_data.entries[0].attributes["inv:package"] == "0603-LED"
     assert result.bom_data.metadata["inventory_overlay_mode"] == "project_fallback_only"
 
 
-def test_overlay_with_inventory_projects_i_namespace_fields() -> None:
+def test_overlay_with_inventory_projects_inv_namespace_fields() -> None:
     matched_entry = BOMEntry(
         references=["R1"],
         value="10k",
@@ -86,10 +86,10 @@ def test_overlay_with_inventory_projects_i_namespace_fields() -> None:
 
     assert matcher.calls == [(Path("/tmp/inventory.csv"), "jlc", "Demo", False)]
     attributes = result.bom_data.entries[0].attributes
-    assert attributes["i:manufacturer"] == "Yageo"
-    assert attributes["i:manufacturer_part"] == "RC0603"
-    assert attributes["i:package"] == "0603"
-    assert attributes["i:smd"] == "Yes"
+    assert attributes["inv:manufacturer"] == "Yageo"
+    assert attributes["inv:manufacturer_part"] == "RC0603"
+    assert attributes["inv:package"] == "0603"
+    assert attributes["inv:smd"] == "Yes"
     assert result.bom_data.metadata["inventory_overlay_mode"] == "inventory_applied"
 
 
@@ -111,8 +111,8 @@ def test_overlay_without_inventory_match_does_not_project_non_package_fields() -
     )
 
     attributes = result.bom_data.entries[0].attributes
-    assert "i:manufacturer" not in attributes
-    assert attributes["i:package"] == derive_package_from_footprint(
+    assert "inv:manufacturer" not in attributes
+    assert attributes["inv:package"] == derive_package_from_footprint(
         "Resistor_SMD:R_0603_1608Metric"
     )
 

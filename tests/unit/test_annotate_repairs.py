@@ -225,10 +225,10 @@ def test_repairs_wide_missing_placeholders_are_not_applied(tmp_path: Path) -> No
 @pytest.mark.parametrize(
     ("suggested_value", "expected_value"),
     [
-        ("p:something\\ns:else", "else"),
-        ("s:else\\np:something", "else"),
-        ("p:something", "sss"),
-        ("s:else", "else"),
+        ("pcb:something\\nsch:else", "else"),
+        ("sch:else\\npcb:something", "else"),
+        ("pcb:something", "sss"),
+        ("sch:else", "else"),
         ("something", "something"),
     ],
 )
@@ -247,7 +247,7 @@ def test_repairs_wide_merge_notation_uses_current_row_fallbacks(
                 "RowType": "CURRENT",
                 "UUID": "uuid-r1",
                 "RefDes": "R1",
-                "Value": "s:sss\\np:ppp",
+                "Value": "sch:sss\\npcb:ppp",
                 "Action": "",
             },
             {

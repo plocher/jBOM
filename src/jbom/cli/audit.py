@@ -700,17 +700,17 @@ def _normalize_mismatch_field_name(raw_field: str) -> str:
 
 
 def _format_merge_mismatch_cell_value(raw_value: str) -> str:
-    """Render mismatch source summary as multiline s:/p: cell text when possible."""
+    """Render mismatch source summary as multiline sch:/pcb: cell text when possible."""
     text = str(raw_value or "").strip()
     if not text:
         return ""
-    schematic_match = re.search(r"\bs:\s*(.*?)(?:,\s*p:\s*|$)", text)
-    pcb_match = re.search(r"\bp:\s*(.*)$", text)
+    schematic_match = re.search(r"\bsch:\s*(.*?)(?:,\s*pcb:\s*|$)", text)
+    pcb_match = re.search(r"\bpcb:\s*(.*)$", text)
     if schematic_match and pcb_match:
         schematic_value = schematic_match.group(1).strip()
         pcb_value = pcb_match.group(1).strip()
-        return f"s:{schematic_value}\np:{pcb_value}"
-    return text.replace(", p:", "\np:")
+        return f"sch:{schematic_value}\npcb:{pcb_value}"
+    return text.replace(", pcb:", "\npcb:")
 
 
 def _build_project_audit_summary(

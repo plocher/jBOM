@@ -46,7 +46,7 @@ Feature: BOM Generation (Core Functionality)
     And the output should contain "No components found"
 
   # The next two scenarios drive divergent sch/pcb fixtures on purpose to
-  # validate the user-facing debugging aid: BOM exposes both `s:` and `p:`
+  # validate the user-facing debugging aid: BOM exposes both `sch:` and `pcb:`
   # namespaces so DRC issues are easy to see.  This is the only family of
   # BOM scenarios that legitimately needs a schematic alongside the PCB.
 
@@ -60,14 +60,14 @@ Feature: BOM Generation (Core Functionality)
     When I run jbom command "bom --list-fields"
     Then the command should succeed
     And the output should contain "Name"
-    And the output should contain "s:"
-    And the output should contain "p:"
-    And the output should contain "i:"
-    And the output should contain "s:value"
-    And the output should contain "p:value"
-    And the output should contain "s:lcsc"
+    And the output should contain "sch:"
+    And the output should contain "pcb:"
+    And the output should contain "inv:"
+    And the output should contain "sch:value"
+    And the output should contain "pcb:value"
+    And the output should contain "sch:lcsc"
     And the output should contain "quantity"
-    And the output should not contain "a:"
+    And the output should not contain "ann:"
 
   Scenario: BOM unqualified fields use PIS source priority
     Given a schematic that contains:
@@ -76,11 +76,11 @@ Feature: BOM Generation (Core Functionality)
     And a PCB that contains:
       | Reference | X | Y | Footprint   | Value |
       | R1        | 5 | 3 | R_0805_2012 | 9K99  |
-    When I run jbom command "bom -f reference,quantity,value,fabricator_part_number,s:value,p:value -o -"
+    When I run jbom command "bom -f reference,quantity,value,fabricator_part_number,sch:value,pcb:value -o -"
     Then the command should succeed
     And the CSV output has rows where:
-      | Reference | Value | S:Value | P:Value |
-      | R1        | 9K99  | 10K     | 9K99    |
+      | Reference | Value | SCH:Value | PCB:Value |
+      | R1        | 9K99  | 10K       | 9K99      |
 
   Scenario: BOM preserves mixed-case designators from KiCad
     # KiCad allows mixed-case designators by design (e.g., License1, Prop1).

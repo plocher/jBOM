@@ -372,7 +372,7 @@ class SophisticatedInventoryMatcher:
         """
 
         properties = component.properties or {}
-        for key in ("spn", "SPN", "i:spn", "lcsc", "LCSC", "i:lcsc"):
+        for key in ("spn", "SPN", "inv:spn", "lcsc", "LCSC", "inv:lcsc"):
             value = str(properties.get(key, "")).strip()
             if value:
                 return value

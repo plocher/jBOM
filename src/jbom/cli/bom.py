@@ -30,6 +30,12 @@ from jbom.config.fabricators import (
     get_available_fabricators,
     get_fabricator_presets,
 )
+from jbom.config.fields import (
+    ANNOTATION_NAMESPACE,
+    INV_NAMESPACE,
+    PCB_NAMESPACE,
+    SCH_NAMESPACE,
+)
 from jbom.common.fields import (
     get_available_presets,
     normalize_field_name,
@@ -59,14 +65,14 @@ from jbom.application.jobs.contracts import (
 )
 from jbom.application.jobs.runner import JobEventStream, JobRunPayload, JobRunner
 
-_BOM_SOURCE_PRIORITY = "pis"
+_BOM_SOURCE_PRIORITY = [PCB_NAMESPACE, INV_NAMESPACE, SCH_NAMESPACE]
 
 
 def _enrich_bom_with_merge_namespaces(
     bom_data: BOMData,
     merge_result: ComponentMergeResult | None,
 ) -> BOMData:
-    """Attach stable merge-model namespaces (`s:/p:/a:`) onto BOM entries."""
+    """Attach stable merge-model namespaces (`sch:/pcb:/ann:`) onto BOM entries."""
     return _service_enrich_bom_with_merge_namespaces(bom_data, merge_result)
 
 
@@ -324,9 +330,9 @@ def _list_available_fields(
     matrix_rows = FieldListingService().build_namespace_matrix(known_fields.keys())
     columns = [
         Column(header="Name", key="Name", preferred_width=22, wrap=False),
-        Column(header="s:", key="s:", preferred_width=16, wrap=False),
-        Column(header="p:", key="p:", preferred_width=16, wrap=False),
-        Column(header="i:", key="i:", preferred_width=16, wrap=False),
+        Column(header="sch:", key="sch:", preferred_width=16, wrap=False),
+        Column(header="pcb:", key="pcb:", preferred_width=16, wrap=False),
+        Column(header="inv:", key="inv:", preferred_width=16, wrap=False),
     ]
     print_table(
         [row.to_console_row() for row in matrix_rows],
@@ -710,24 +716,32 @@ def _build_bom_row_sources(
     *,
     include_unqualified_fallback: bool,
 ) -> dict[str, dict[str, object]]:
-    """Build source field maps for one BOM row (`s`, `p`, `i`)."""
+    """Build source field maps for one BOM row (`sch`, `pcb`, `inv`)."""
 
-    row_sources: dict[str, dict[str, object]] = {"s": {}, "p": {}, "i": {}}
+    row_sources: dict[str, dict[str, object]] = {
+        SCH_NAMESPACE: {},
+        PCB_NAMESPACE: {},
+        INV_NAMESPACE: {},
+    }
     for attr_key, attr_value in entry.attributes.items():
         normalized_key = normalize_field_name(str(attr_key or ""))
         prefix, separator, remainder = normalized_key.partition(":")
-        if separator and prefix in {"s", "p", "i"} and remainder:
+        if (
+            separator
+            and prefix in {SCH_NAMESPACE, PCB_NAMESPACE, INV_NAMESPACE}
+            and remainder
+        ):
             row_sources[prefix][remainder] = attr_value
 
     if include_unqualified_fallback:
         # Keep unqualified behavior stable when merge enrichment is absent.
         if entry.value:
-            row_sources["s"].setdefault("value", entry.value)
+            row_sources[SCH_NAMESPACE].setdefault("value", entry.value)
         if entry.footprint:
-            row_sources["s"].setdefault("footprint", entry.footprint)
+            row_sources[SCH_NAMESPACE].setdefault("footprint", entry.footprint)
         package_value = _get_attribute_value(entry, "package")
         if package_value:
-            row_sources["s"].setdefault("package", package_value)
+            row_sources[SCH_NAMESPACE].setdefault("package", package_value)
 
     return row_sources
 
@@ -739,15 +753,14 @@ def _resolve_annotation_field_value(
     fabricator_id: str,
     fabricator_config: Optional[FabricatorConfig],
 ) -> str:
-    """Render `a:*` fields as deterministic source annotation lines."""
+    """Render `ann:*` fields as deterministic source annotation lines."""
 
-    explicit = _get_attribute_value(entry, f"a:{annotation_field}")
+    explicit = _get_attribute_value(entry, f"{ANNOTATION_NAMESPACE}:{annotation_field}")
     if explicit:
         return explicit
 
     lines: list[tuple[str, str]] = []
-
-    for namespace in ("s", "p"):
+    for namespace in (SCH_NAMESPACE, PCB_NAMESPACE):
         value = _resolve_namespaced_field_value(
             entry,
             namespace,
@@ -760,13 +773,13 @@ def _resolve_annotation_field_value(
 
     inventory_value = _resolve_namespaced_field_value(
         entry,
-        "i",
+        INV_NAMESPACE,
         annotation_field,
         fabricator_id=fabricator_id,
         fabricator_config=fabricator_config,
     )
     if inventory_value:
-        lines.append(("i", inventory_value))
+        lines.append((INV_NAMESPACE, inventory_value))
 
     if not lines:
         return ""

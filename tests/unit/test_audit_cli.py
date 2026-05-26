@@ -635,7 +635,7 @@ def test_project_mode_includes_merge_mismatch_diagnostics_in_notes() -> None:
             uuid="uuid-r1",
             category="RES",
             field="footprint",
-            current_value="s:SCH:0603, p:PCB:0402",
+            current_value="sch:SCH:0603, pcb:PCB:0402",
             suggested_value="PCB:0402",
             description="R1 footprint mismatch",
         ),
@@ -653,8 +653,8 @@ def test_project_mode_includes_merge_mismatch_diagnostics_in_notes() -> None:
     current = next(row for row in written if row["RowType"] == "CURRENT")
     suggested = next(row for row in written if row["RowType"] == "SUGGESTED")
     assert current["Notes"] == "R1: heuristics are sufficient"
-    assert current["Footprint"] == "s:SCH:0603\np:PCB:0402"
-    assert suggested["Footprint"] == "s:SCH:0603\np:PCB:0402"
+    assert current["Footprint"] == "sch:SCH:0603\npcb:PCB:0402"
+    assert suggested["Footprint"] == "sch:SCH:0603\npcb:PCB:0402"
 
 
 def test_project_mode_matchability_exact_for_supplier_identifier_and_led_color() -> (

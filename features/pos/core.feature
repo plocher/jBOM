@@ -79,17 +79,17 @@ Feature: POS Generation (Core Functionality)
     And a PCB that contains:
       | Reference | X | Y | Side | Footprint   | Value |
       | R1        | 5 | 3 | TOP  | R_0805_2012 | 9K99  |
-    When I run jbom command "pos -f reference,value,s:value,p:value -o -"
+    When I run jbom command "pos -f reference,value,sch:value,pcb:value -o -"
     Then the command should succeed
     And the CSV output has rows where:
-      | Reference | Value | S:Value | P:Value |
-      | R1        | 9K99  | 10K     | 9K99    |
+      | Reference | Value | SCH:Value | PCB:Value |
+      | R1        | 9K99  | 10K       | 9K99      |
 
   Scenario: POS list-fields excludes annotation namespace column
     When I run jbom command "pos --list-fields"
     Then the command should succeed
     And the output should contain "Known POS fields"
-    And the output should contain "s:"
-    And the output should contain "p:"
-    And the output should contain "i:"
-    And the output should not contain "a:"
+    And the output should contain "sch:"
+    And the output should contain "pcb:"
+    And the output should contain "inv:"
+    And the output should not contain "ann:"

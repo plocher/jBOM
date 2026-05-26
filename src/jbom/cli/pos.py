@@ -39,12 +39,13 @@ from jbom.common.cli_fabricator import (
 from jbom.common.component_filters import add_component_filter_arguments
 from jbom.common.fields import normalize_field_name
 from jbom.config.fabricators import FabricatorConfig
+from jbom.config.fields import INV_NAMESPACE, PCB_NAMESPACE, SCH_NAMESPACE
 from jbom.services.fabricator_projection_service import FabricatorProjectionService
 from jbom.services.field_listing_service import FieldListingService
 from jbom.services.pos_field_resolver import resolve_pos_field_value
 
 _NUMERIC_POS_FIELDS: frozenset[str] = frozenset({"x", "y", "rotation"})
-_POS_SOURCE_PRIORITY = "pis"
+_POS_SOURCE_PRIORITY = [PCB_NAMESPACE, INV_NAMESPACE, SCH_NAMESPACE]
 _MAX_POS_CONSOLE_COLUMN_WIDTH = 50
 
 
@@ -334,9 +335,9 @@ def _list_available_pos_fields(
     )
     columns = [
         Column(header="Name", key="Name", preferred_width=22, wrap=False),
-        Column(header="s:", key="s:", preferred_width=16, wrap=False),
-        Column(header="p:", key="p:", preferred_width=16, wrap=False),
-        Column(header="i:", key="i:", preferred_width=16, wrap=False),
+        Column(header="sch:", key="sch:", preferred_width=16, wrap=False),
+        Column(header="pcb:", key="pcb:", preferred_width=16, wrap=False),
+        Column(header="inv:", key="inv:", preferred_width=16, wrap=False),
     ]
     print_table(
         [row.to_console_row() for row in matrix_rows],
@@ -546,30 +547,38 @@ def _get_pos_field_value(
 
 
 def _build_pos_row_sources(entry: dict[str, Any]) -> dict[str, dict[str, object]]:
-    """Build source field maps for one POS row (`s`, `p`, `i`)."""
+    """Build source field maps for one POS row (`sch`, `pcb`, `inv`)."""
 
-    row_sources: dict[str, dict[str, object]] = {"s": {}, "p": {}, "i": {}}
+    row_sources: dict[str, dict[str, object]] = {
+        SCH_NAMESPACE: {},
+        PCB_NAMESPACE: {},
+        INV_NAMESPACE: {},
+    }
     for key, value in entry.items():
         normalized_key = normalize_field_name(str(key or ""))
         prefix, separator, remainder = normalized_key.partition(":")
-        if separator and prefix in {"s", "p", "i"} and remainder:
+        if (
+            separator
+            and prefix in {SCH_NAMESPACE, PCB_NAMESPACE, INV_NAMESPACE}
+            and remainder
+        ):
             row_sources[prefix][remainder] = value
         elif normalized_key:
-            row_sources["p"].setdefault(normalized_key, value)
+            row_sources[PCB_NAMESPACE].setdefault(normalized_key, value)
 
     if entry.get("x_raw"):
-        row_sources["p"].setdefault("x", entry.get("x_raw"))
+        row_sources[PCB_NAMESPACE].setdefault("x", entry.get("x_raw"))
     elif entry.get("x_mm") is not None:
-        row_sources["p"].setdefault("x", f"{entry['x_mm']:.4f}")
+        row_sources[PCB_NAMESPACE].setdefault("x", f"{entry['x_mm']:.4f}")
 
     if entry.get("y_raw"):
-        row_sources["p"].setdefault("y", entry.get("y_raw"))
+        row_sources[PCB_NAMESPACE].setdefault("y", entry.get("y_raw"))
     elif entry.get("y_mm") is not None:
-        row_sources["p"].setdefault("y", f"{entry['y_mm']:.4f}")
+        row_sources[PCB_NAMESPACE].setdefault("y", f"{entry['y_mm']:.4f}")
 
     if entry.get("rotation_raw") is not None:
-        row_sources["p"].setdefault("rotation", entry.get("rotation_raw"))
+        row_sources[PCB_NAMESPACE].setdefault("rotation", entry.get("rotation_raw"))
     elif entry.get("rotation") is not None:
-        row_sources["p"].setdefault("rotation", f"{entry['rotation']:.1f}")
+        row_sources[PCB_NAMESPACE].setdefault("rotation", f"{entry['rotation']:.1f}")
 
     return row_sources

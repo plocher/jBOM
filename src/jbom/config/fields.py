@@ -8,12 +8,13 @@ SCH_NAMESPACE = "sch"
 PCB_NAMESPACE = "pcb"
 INV_NAMESPACE = "inv"
 JBOM_NAMESPACE = "jbom"
-ANNOTATION_NAMESPACE = "a"
+ANNOTATION_NAMESPACE = "ann"
 
 SCH = SCH_NAMESPACE
 PCB = PCB_NAMESPACE
 INV = INV_NAMESPACE
 JBOM = JBOM_NAMESPACE
+ANN = ANNOTATION_NAMESPACE
 
 JBOM_COMPUTED_FIELD_NAMES: frozenset[str] = frozenset(
     {
@@ -46,6 +47,7 @@ def is_jbom_computed(ref: str) -> bool:
 
 
 __all__ = [
+    "ANN",
     "ANNOTATION_NAMESPACE",
     "INV",
     "INV_NAMESPACE",

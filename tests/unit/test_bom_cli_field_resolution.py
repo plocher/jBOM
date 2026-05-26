@@ -86,43 +86,43 @@ def test_entry_smd_lookup_requires_all_known_references_smd() -> None:
 
 
 def test_inventory_package_field_uses_namespaced_value_when_present() -> None:
-    entry = _make_entry({"i:package": "0603-LED"})
-    assert _get_field_value(entry, "i:package", fabricator_id="jlc") == "0603-LED"
+    entry = _make_entry({"inv:package": "0603-LED"})
+    assert _get_field_value(entry, "inv:package", fabricator_id="jlc") == "0603-LED"
 
 
 def test_inventory_package_field_is_strict_namespace_only() -> None:
     entry = _make_entry({"package": "0603-LED"})
-    assert _get_field_value(entry, "i:package", fabricator_id="jlc") == ""
+    assert _get_field_value(entry, "inv:package", fabricator_id="jlc") == ""
 
 
 def test_inventory_package_field_is_blank_without_overlay_projection() -> None:
     entry = _make_entry({}, footprint="SignalMast-ColorLight-SingleHead:0603-LED")
-    assert _get_field_value(entry, "i:package", fabricator_id="jlc") == ""
+    assert _get_field_value(entry, "inv:package", fabricator_id="jlc") == ""
 
 
-def test_s_namespace_field_is_strict_source_namespace() -> None:
-    entry = _make_entry({"description": "Pull-up resistor", "s:value": "9k99"})
-    assert _get_field_value(entry, "s:value", fabricator_id="jlc") == "9k99"
-    assert _get_field_value(entry, "s:description", fabricator_id="jlc") == ""
+def test_sch_namespace_field_is_strict_source_namespace() -> None:
+    entry = _make_entry({"description": "Pull-up resistor", "sch:value": "9k99"})
+    assert _get_field_value(entry, "sch:value", fabricator_id="jlc") == "9k99"
+    assert _get_field_value(entry, "sch:description", fabricator_id="jlc") == ""
 
 
-def test_p_namespace_field_returns_explicit_value_only() -> None:
-    explicit_entry = _make_entry({"p:footprint": "PCB:0603"})
+def test_pcb_namespace_field_returns_explicit_value_only() -> None:
+    explicit_entry = _make_entry({"pcb:footprint": "PCB:0603"})
     assert (
-        _get_field_value(explicit_entry, "p:footprint", fabricator_id="jlc")
+        _get_field_value(explicit_entry, "pcb:footprint", fabricator_id="jlc")
         == "PCB:0603"
     )
 
     fallback_entry = _make_entry({})
-    assert _get_field_value(fallback_entry, "p:footprint", fabricator_id="jlc") == ""
+    assert _get_field_value(fallback_entry, "pcb:footprint", fabricator_id="jlc") == ""
 
 
 def test_unqualified_value_prefers_p_then_i_then_s_sources() -> None:
     entry = _make_entry(
         {
-            "s:value": "10K",
-            "p:value": "9K99",
-            "i:value": "10K-INV",
+            "sch:value": "10K",
+            "pcb:value": "9K99",
+            "inv:value": "10K-INV",
         }
     )
 
@@ -132,28 +132,30 @@ def test_unqualified_value_prefers_p_then_i_then_s_sources() -> None:
 def test_unqualified_value_uses_inventory_when_pcb_value_missing() -> None:
     entry = _make_entry(
         {
-            "s:value": "10K",
-            "i:value": "10K-INV",
+            "sch:value": "10K",
+            "inv:value": "10K-INV",
         }
     )
 
     assert _get_field_value(entry, "value", fabricator_id="jlc") == "10K-INV"
 
 
-def test_a_namespace_field_renders_source_annotation_lines_on_mismatch() -> None:
+def test_ann_namespace_field_renders_source_annotation_lines_on_mismatch() -> None:
     entry = _make_entry(
-        {"s:footprint": "SCH:0603", "p:footprint": "PCB:0402"},
+        {"sch:footprint": "SCH:0603", "pcb:footprint": "PCB:0402"},
         footprint="SCH:0603",
     )
     assert (
-        _get_field_value(entry, "a:footprint", fabricator_id="jlc")
-        == "s:SCH:0603\np:PCB:0402"
+        _get_field_value(entry, "ann:footprint", fabricator_id="jlc")
+        == "sch:SCH:0603\npcb:PCB:0402"
     )
 
 
-def test_a_namespace_field_prefers_explicit_annotation_value() -> None:
-    entry = _make_entry({"a:value": "s:10k\np:9k99"})
-    assert _get_field_value(entry, "a:value", fabricator_id="jlc") == "s:10k\np:9k99"
+def test_ann_namespace_field_prefers_explicit_annotation_value() -> None:
+    entry = _make_entry({"ann:value": "sch:10k\npcb:9k99"})
+    assert (
+        _get_field_value(entry, "ann:value", fabricator_id="jlc") == "sch:10k\npcb:9k99"
+    )
 
 
 def test_merge_namespace_enrichment_adds_uniform_values_to_grouped_entry() -> None:
@@ -175,18 +177,18 @@ def test_merge_namespace_enrichment_adds_uniform_values_to_grouped_entry() -> No
             "R1": MergedReferenceRecord(
                 reference="R1",
                 source_fields={
-                    "s:footprint": "SCH:0603",
-                    "p:footprint": "PCB:0603",
+                    "sch:footprint": "SCH:0603",
+                    "pcb:footprint": "PCB:0603",
                 },
-                annotated_fields={"a:footprint": "s:SCH:0603\np:PCB:0603"},
+                annotated_fields={"ann:footprint": "sch:SCH:0603\npcb:PCB:0603"},
             ),
             "R2": MergedReferenceRecord(
                 reference="R2",
                 source_fields={
-                    "s:footprint": "SCH:0603",
-                    "p:footprint": "PCB:0603",
+                    "sch:footprint": "SCH:0603",
+                    "pcb:footprint": "PCB:0603",
                 },
-                annotated_fields={"a:footprint": "s:SCH:0603\np:PCB:0603"},
+                annotated_fields={"ann:footprint": "sch:SCH:0603\npcb:PCB:0603"},
             ),
         },
         mismatches=tuple(),
@@ -196,9 +198,9 @@ def test_merge_namespace_enrichment_adds_uniform_values_to_grouped_entry() -> No
     enriched = _enrich_bom_with_merge_namespaces(bom_data, merge_result)
 
     attrs = enriched.entries[0].attributes
-    assert attrs["s:footprint"] == "SCH:0603"
-    assert attrs["p:footprint"] == "PCB:0603"
-    assert attrs["a:footprint"] == "S: and P: differ\ns:SCH:0603\np:PCB:0603"
+    assert attrs["sch:footprint"] == "SCH:0603"
+    assert attrs["pcb:footprint"] == "PCB:0603"
+    assert attrs["ann:footprint"] == "sch: and pcb: differ\nsch:SCH:0603\npcb:PCB:0603"
     assert enriched.metadata["merge_model_enabled"] is True
     assert enriched.metadata["merge_model_reference_count"] == 2
     assert enriched.metadata["merge_model_mismatch_count"] == 0
@@ -223,25 +225,25 @@ def test_merge_namespace_enrichment_summarizes_divergent_grouped_annotations() -
             "R1": MergedReferenceRecord(
                 reference="R1",
                 source_fields={
-                    "s:footprint": "SCH:0603",
-                    "p:footprint": "PCB:0402",
+                    "sch:footprint": "SCH:0603",
+                    "pcb:footprint": "PCB:0402",
                 },
-                annotated_fields={"a:footprint": "s:SCH:0603\np:PCB:0402"},
+                annotated_fields={"ann:footprint": "sch:SCH:0603\npcb:PCB:0402"},
             ),
             "R2": MergedReferenceRecord(
                 reference="R2",
                 source_fields={
-                    "s:footprint": "PCB:0603",
-                    "p:footprint": "PCB:0603",
+                    "sch:footprint": "PCB:0603",
+                    "pcb:footprint": "PCB:0603",
                 },
             ),
             "R10": MergedReferenceRecord(
                 reference="R10",
                 source_fields={
-                    "s:footprint": "SCH:0603",
-                    "p:footprint": "PCB:0402",
+                    "sch:footprint": "SCH:0603",
+                    "pcb:footprint": "PCB:0402",
                 },
-                annotated_fields={"a:footprint": "s:SCH:0603\np:PCB:0402"},
+                annotated_fields={"ann:footprint": "sch:SCH:0603\npcb:PCB:0402"},
             ),
         },
         mismatches=tuple(),
@@ -251,8 +253,8 @@ def test_merge_namespace_enrichment_summarizes_divergent_grouped_annotations() -
     enriched = _enrich_bom_with_merge_namespaces(bom_data, merge_result)
 
     assert (
-        enriched.entries[0].attributes["a:footprint"]
-        == "R1,R10 -> S: and P: differ\ns:SCH:0603\np:PCB:0402 || "
+        enriched.entries[0].attributes["ann:footprint"]
+        == "R1,R10 -> sch: and pcb: differ\nsch:SCH:0603\npcb:PCB:0402 || "
         "R2 -> PCB:0603"
     )
 
@@ -275,11 +277,11 @@ def test_merge_namespace_enrichment_skips_conflicting_grouped_values() -> None:
         records={
             "R1": MergedReferenceRecord(
                 reference="R1",
-                source_fields={"s:value": "10k", "p:rotation": "0"},
+                source_fields={"sch:value": "10k", "pcb:rotation": "0"},
             ),
             "R2": MergedReferenceRecord(
                 reference="R2",
-                source_fields={"s:value": "10k", "p:rotation": "90"},
+                source_fields={"sch:value": "10k", "pcb:rotation": "90"},
             ),
         },
         mismatches=tuple(),
@@ -289,8 +291,8 @@ def test_merge_namespace_enrichment_skips_conflicting_grouped_values() -> None:
     enriched = _enrich_bom_with_merge_namespaces(bom_data, merge_result)
 
     attrs = enriched.entries[0].attributes
-    assert attrs["s:value"] == "10k"
-    assert "p:rotation" not in attrs
+    assert attrs["sch:value"] == "10k"
+    assert "pcb:rotation" not in attrs
 
 
 def test_inventory_dnp_filter_excludes_rows_by_default() -> None:

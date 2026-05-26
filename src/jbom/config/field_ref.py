@@ -31,20 +31,16 @@ _DEFAULT_SOURCE_PRIORITY: tuple[str, ...] = (
 )
 
 _SOURCE_NAMESPACE_ALIASES: dict[str, str] = {
-    "s": SCH_NAMESPACE,
-    "sch": SCH_NAMESPACE,
-    "c": SCH_NAMESPACE,
-    "p": PCB_NAMESPACE,
-    "pcb": PCB_NAMESPACE,
-    "i": INV_NAMESPACE,
-    "inv": INV_NAMESPACE,
+    SCH_NAMESPACE: SCH_NAMESPACE,
+    PCB_NAMESPACE: PCB_NAMESPACE,
+    INV_NAMESPACE: INV_NAMESPACE,
 }
 
 _ALL_NAMESPACE_ALIASES: dict[str, str] = {
-    **_SOURCE_NAMESPACE_ALIASES,
+    SCH_NAMESPACE: SCH_NAMESPACE,
+    PCB_NAMESPACE: PCB_NAMESPACE,
+    INV_NAMESPACE: INV_NAMESPACE,
     ANNOTATION_NAMESPACE: ANNOTATION_NAMESPACE,
-    "ann": ANNOTATION_NAMESPACE,
-    "annotation": ANNOTATION_NAMESPACE,
     JBOM_NAMESPACE: JBOM_NAMESPACE,
 }
 
@@ -82,12 +78,12 @@ class FieldContext:
         transforms: Mapping[str, TransformCallable] | None = None,
         source_priority: Sequence[str] | None = None,
     ) -> FieldContext:
-        """Construct context from legacy `s`/`p`/`i` row-source maps."""
+        """Construct context from canonical `sch`/`pcb`/`inv` row-source maps."""
 
         return cls(
-            schematic=row_sources.get("s") or {},
-            pcb=row_sources.get("p") or {},
-            inventory=row_sources.get("i") or {},
+            schematic=row_sources.get(SCH_NAMESPACE) or {},
+            pcb=row_sources.get(PCB_NAMESPACE) or {},
+            inventory=row_sources.get(INV_NAMESPACE) or {},
             computed=computed or {},
             annotations=annotations or {},
             transforms=transforms or {},
@@ -125,7 +121,7 @@ class FieldContext:
         return _mapping_has_normalized_key(self.computed, normalized_field_name)
 
     def resolve_annotation(self, field_name: str) -> str:
-        """Resolve one annotation (`a:*`) field from context."""
+        """Resolve one annotation (`ann:*`) field from context."""
 
         return _lookup_normalized_value(self.annotations, field_name)
 
@@ -363,7 +359,7 @@ def _normalize_computed_mapping(raw_mapping: Mapping[str, object]) -> dict[str, 
 def _normalize_annotation_mapping(
     raw_mapping: Mapping[str, object]
 ) -> dict[str, object]:
-    """Normalize annotation mapping and allow optional `a:` key prefix."""
+    """Normalize annotation mapping and allow optional `ann:` key prefix."""
 
     normalized: dict[str, object] = {}
     for key, value in (raw_mapping or {}).items():

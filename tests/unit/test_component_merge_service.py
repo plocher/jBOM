@@ -72,11 +72,11 @@ def test_merge_creates_namespaced_records_and_mismatch_annotations() -> None:
     assert len(result.mismatches) == 1
     mismatch = result.mismatches[0]
     assert mismatch.field_key == "footprint"
-    assert mismatch.source_values == {"s": "SCH:0603", "p": "PCB:0402"}
+    assert mismatch.source_values == {"sch": "SCH:0603", "pcb": "PCB:0402"}
     merged = result.records["R1"]
-    assert merged.source_fields["s:footprint"] == "SCH:0603"
-    assert merged.source_fields["p:footprint"] == "PCB:0402"
-    assert merged.annotated_fields["a:footprint"] == "s:SCH:0603\np:PCB:0402"
+    assert merged.source_fields["sch:footprint"] == "SCH:0603"
+    assert merged.source_fields["pcb:footprint"] == "PCB:0402"
+    assert merged.annotated_fields["ann:footprint"] == "sch:SCH:0603\npcb:PCB:0402"
 
 
 def test_merge_without_pcb_record_has_no_source_disagreement() -> None:
@@ -90,6 +90,6 @@ def test_merge_without_pcb_record_has_no_source_disagreement() -> None:
     result = service.merge(graph)
 
     merged = result.records["R2"]
-    assert merged.source_fields["s:value"] == "1k"
-    assert merged.source_fields["s:footprint"] == "SCH:0805"
+    assert merged.source_fields["sch:value"] == "1k"
+    assert merged.source_fields["sch:footprint"] == "SCH:0805"
     assert merged.mismatches == tuple()

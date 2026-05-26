@@ -217,7 +217,7 @@ def enrich_pos_with_merge_namespaces(
     pos_data: list[dict[str, Any]],
     merge_result: ComponentMergeResult | None,
 ) -> list[dict[str, Any]]:
-    """Attach merge namespace fields (`s:/p:/a:`) onto POS row dictionaries."""
+    """Attach merge namespace fields (`sch:/pcb:/ann:`) onto POS row dictionaries."""
 
     if merge_result is None or not merge_result.records:
         return pos_data
@@ -352,8 +352,7 @@ def _is_truthy_dnp_marker(value: object) -> bool:
 
 def _entry_has_dnp_marker(entry: dict[str, Any]) -> bool:
     """Return True when a POS row contains schematic/inventory DNP flags."""
-
-    for key in ("dnp", "s:dnp", "i:dnp"):
+    for key in ("dnp", "sch:dnp", "inv:dnp"):
         if _is_truthy_dnp_marker(entry.get(key)):
             return True
     return False
