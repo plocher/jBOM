@@ -205,3 +205,11 @@ def test_model_validate_rejects_unknown_tier_operator() -> None:
 
     with pytest.raises(ValueError, match=r"operator"):
         FabricatorConfig.model_validate(data, context={"default_id": "example"})
+
+
+def test_load_fabricator_returns_isolated_models_between_calls() -> None:
+    first = load_fabricator("jlc")
+    second = load_fabricator("jlc")
+
+    first.pos_columns["Designator"] = "changed"
+    assert second.pos_columns["Designator"] == "reference"

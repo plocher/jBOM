@@ -6,6 +6,7 @@ to eliminate code duplication between BOM and POS commands.
 from __future__ import annotations
 
 import argparse
+from functools import lru_cache
 
 from jbom.config.fabricators import get_available_fabricators, load_fabricator
 
@@ -29,7 +30,8 @@ def add_fabricator_arguments(parser: argparse.ArgumentParser) -> None:
         parser: Argument parser to add fabricator arguments to.
     """
 
-    available = get_available_fabricators()
+    metadata = _fabricator_argument_metadata()
+    available = [fabricator_id for fabricator_id, _display_name in metadata]
 
     # Fabricator selection (for field presets / predictable output)
     parser.add_argument(
@@ -40,12 +42,7 @@ def add_fabricator_arguments(parser: argparse.ArgumentParser) -> None:
     )
 
     # Individual fabricator shorthand flags (e.g. --jlc).
-    for fid in available:
-        try:
-            display_name = load_fabricator(fid).name
-        except Exception:
-            display_name = fid
-
+    for fid, display_name in metadata:
         parser.add_argument(
             f"--{fid}",
             action="store_true",
@@ -69,7 +66,7 @@ def resolve_fabricator_selection_from_args(
         ValueError: when conflicting fabricator arguments are provided.
     """
 
-    available = get_available_fabricators()
+    available = _available_fabricator_ids()
 
     shorthand_selected: list[str] = []
     for fid in available:
@@ -113,3 +110,28 @@ def validate_fabricator_args(args: argparse.Namespace) -> None:
 
     # This is implemented by resolve_fabricator_selection_from_args.
     resolve_fabricator_selection_from_args(args)
+
+
+@lru_cache(maxsize=1)
+def _fabricator_argument_metadata() -> tuple[tuple[str, str], ...]:
+    metadata: list[tuple[str, str]] = []
+    for fid in get_available_fabricators():
+        try:
+            display_name = load_fabricator(fid).name
+        except Exception:
+            display_name = fid
+        metadata.append((fid, display_name))
+    return tuple(metadata)
+
+
+def _available_fabricator_ids() -> list[str]:
+    return [
+        fabricator_id
+        for fabricator_id, _display_name in _fabricator_argument_metadata()
+    ]
+
+
+def clear_fabricator_argument_cache() -> None:
+    """Clear cached parser-time fabricator argument metadata."""
+
+    _fabricator_argument_metadata.cache_clear()

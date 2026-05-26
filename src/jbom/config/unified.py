@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import copy
 import logging
+from functools import lru_cache
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Mapping, MutableMapping
 
@@ -87,14 +88,10 @@ def load_unified(
     if not normalized_name:
         raise ValueError("Unified profile name must be a non-empty string")
 
-    search_dirs = _effective_search_dirs(cwd=cwd, builtin_dir=builtin_dir)
-    _log_policy_profile_notice(search_dirs)
-
-    common_chain = _load_common_chain(search_dirs)
-    named_profile = _load_named_profile_chain(
-        normalized_name, search_dirs, visiting_stack=[]
-    )
-    return _deep_merge(common_chain, named_profile)
+    cwd_token = _path_cache_token(_effective_cwd_for_cache(cwd))
+    builtin_token = _path_cache_token(_effective_builtin_dir_for_cache(builtin_dir))
+    merged = _load_unified_cached(normalized_name, cwd_token, builtin_token)
+    return copy.deepcopy(merged)
 
 
 def list_unified_stanza_ids(
@@ -119,7 +116,98 @@ def list_unified_stanza_ids(
             f"{sorted(_VALID_STANZA_NAMES)}"
         )
 
+    cwd_token = _path_cache_token(_effective_cwd_for_cache(cwd))
+    builtin_token = _path_cache_token(_effective_builtin_dir_for_cache(builtin_dir))
+    stanza_ids = _list_unified_stanza_ids_cached(
+        normalized_stanza, cwd_token, builtin_token
+    )
+    return list(stanza_ids)
+
+
+def resolve_profile_name_for_stanza_id(
+    stanza_name: str,
+    stanza_id: str,
+    *,
+    cwd: Path | None = None,
+    builtin_dir: Path | None = None,
+) -> str | None:
+    """Resolve which named profile owns a stanza with effective ID ``stanza_id``."""
+
+    normalized_stanza = str(stanza_name or "").strip().lower()
+    if normalized_stanza not in _VALID_STANZA_NAMES:
+        raise ValueError(
+            f"Unknown unified stanza name {stanza_name!r}; expected one of "
+            f"{sorted(_VALID_STANZA_NAMES)}"
+        )
+
+    normalized_id = _normalize_profile_name(stanza_id)
+    if not normalized_id:
+        return None
+
+    cwd_token = _path_cache_token(_effective_cwd_for_cache(cwd))
+    builtin_token = _path_cache_token(_effective_builtin_dir_for_cache(builtin_dir))
+    return _resolve_profile_name_for_stanza_id_cached(
+        normalized_stanza,
+        normalized_id,
+        cwd_token,
+        builtin_token,
+    )
+
+
+def clear_unified_loader_caches() -> None:
+    """Clear memoized unified-loader caches."""
+
+    _load_unified_cached.cache_clear()
+    _list_unified_stanza_ids_cached.cache_clear()
+    _resolve_profile_name_for_stanza_id_cached.cache_clear()
+
+
+def _load_unified_uncached(
+    normalized_name: str,
+    *,
+    cwd: Path | None,
+    builtin_dir: Path,
+) -> dict[str, Any]:
     search_dirs = _effective_search_dirs(cwd=cwd, builtin_dir=builtin_dir)
+    _log_policy_profile_notice(search_dirs)
+
+    common_chain = _load_common_chain(search_dirs)
+    named_profile = _load_named_profile_chain(
+        normalized_name, search_dirs, visiting_stack=[]
+    )
+    return _deep_merge(common_chain, named_profile)
+
+
+@lru_cache(maxsize=256)
+def _load_unified_cached(
+    normalized_name: str,
+    cwd_token: str,
+    builtin_token: str,
+) -> dict[str, Any]:
+    builtin_dir = _path_from_cache_token(builtin_token)
+    if builtin_dir is None:
+        raise ValueError("Unified loader cache key missing builtin directory")
+    return _load_unified_uncached(
+        normalized_name,
+        cwd=_path_from_cache_token(cwd_token),
+        builtin_dir=builtin_dir,
+    )
+
+
+@lru_cache(maxsize=256)
+def _list_unified_stanza_ids_cached(
+    normalized_stanza: str,
+    cwd_token: str,
+    builtin_token: str,
+) -> tuple[str, ...]:
+    builtin_dir = _path_from_cache_token(builtin_token)
+    if builtin_dir is None:
+        raise ValueError("Unified stanza cache key missing builtin directory")
+
+    search_dirs = _effective_search_dirs(
+        cwd=_path_from_cache_token(cwd_token),
+        builtin_dir=builtin_dir,
+    )
     _emit_profile_eval(
         "[jBOM] unified eval "
         f"stanza={normalized_stanza!r} search_dirs={[str(path) for path in search_dirs]}"
@@ -161,34 +249,28 @@ def list_unified_stanza_ids(
                 f"stanza={normalized_stanza!r} profile={profile_name!r} id={effective_id!r}"
             )
 
-    sorted_ids = sorted(discovered_ids)
+    sorted_ids = tuple(sorted(discovered_ids))
     _emit_profile_eval(
-        "[jBOM] unified result " f"stanza={normalized_stanza!r} ids={sorted_ids}"
+        "[jBOM] unified result " f"stanza={normalized_stanza!r} ids={list(sorted_ids)}"
     )
     return sorted_ids
 
 
-def resolve_profile_name_for_stanza_id(
-    stanza_name: str,
-    stanza_id: str,
-    *,
-    cwd: Path | None = None,
-    builtin_dir: Path | None = None,
+@lru_cache(maxsize=512)
+def _resolve_profile_name_for_stanza_id_cached(
+    normalized_stanza: str,
+    normalized_id: str,
+    cwd_token: str,
+    builtin_token: str,
 ) -> str | None:
-    """Resolve which named profile owns a stanza with effective ID ``stanza_id``."""
+    builtin_dir = _path_from_cache_token(builtin_token)
+    if builtin_dir is None:
+        raise ValueError("Unified stanza lookup cache key missing builtin directory")
 
-    normalized_stanza = str(stanza_name or "").strip().lower()
-    if normalized_stanza not in _VALID_STANZA_NAMES:
-        raise ValueError(
-            f"Unknown unified stanza name {stanza_name!r}; expected one of "
-            f"{sorted(_VALID_STANZA_NAMES)}"
-        )
-
-    normalized_id = _normalize_profile_name(stanza_id)
-    if not normalized_id:
-        return None
-
-    search_dirs = _effective_search_dirs(cwd=cwd, builtin_dir=builtin_dir)
+    search_dirs = _effective_search_dirs(
+        cwd=_path_from_cache_token(cwd_token),
+        builtin_dir=builtin_dir,
+    )
     profile_names = _discover_named_profile_names(search_dirs)
     for profile_name in profile_names:
         try:
@@ -247,6 +329,28 @@ def _effective_search_dirs(*, cwd: Path | None, builtin_dir: Path | None) -> lis
     dirs = list(_self.profile_search_dirs(cwd=cwd))
     dirs.append((builtin_dir or _BUILTIN_DIR).resolve())
     return _dedupe_paths(dirs)
+
+
+def _effective_cwd_for_cache(cwd: Path | None) -> Path | None:
+    if cwd is not None:
+        return cwd.resolve()
+    try:
+        return Path.cwd().resolve()
+    except OSError:
+        return None
+
+
+def _effective_builtin_dir_for_cache(builtin_dir: Path | None) -> Path:
+    return (builtin_dir or _BUILTIN_DIR).resolve()
+
+
+def _path_cache_token(path: Path | None) -> str:
+    return str(path) if path is not None else ""
+
+
+def _path_from_cache_token(token: str) -> Path | None:
+    normalized = str(token or "").strip()
+    return Path(normalized) if normalized else None
 
 
 def _dedupe_paths(paths: list[Path]) -> list[Path]:
@@ -421,6 +525,7 @@ def _log_policy_profile_notice(search_dirs: list[Path]) -> None:
 
 
 __all__ = [
+    "clear_unified_loader_caches",
     "UnifiedProfileNotFoundError",
     "defaults_stanza",
     "fab_stanza",

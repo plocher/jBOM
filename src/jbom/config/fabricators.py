@@ -6,6 +6,7 @@ Loads fabricator definitions from built-in config files.
 from __future__ import annotations
 
 import logging
+from functools import lru_cache
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional
@@ -404,13 +405,7 @@ _BUILTIN_DIR = Path(__file__).parent / "fabricators"
 
 def list_fabricators() -> list[str]:
     """List available fabricator IDs by scanning config directory."""
-    legacy_ids: list[str] = []
-    if _BUILTIN_DIR.exists():
-        legacy_ids = sorted(
-            p.stem.replace(".fab", "") for p in _BUILTIN_DIR.glob("*.fab.yaml")
-        )
-    unified_ids = list_unified_stanza_ids("fab")
-    return sorted(set([*legacy_ids, *unified_ids]))
+    return list(_list_fabricators_cached())
 
 
 def get_available_fabricators() -> list[str]:
@@ -436,7 +431,32 @@ def get_fabricators_with_names() -> list[tuple[str, str]]:
 def load_fabricator(fid: str) -> FabricatorConfig:
     """Load fabricator configuration from YAML file."""
     normalized_fid = str(fid or "").strip().lower()
+    config = _load_fabricator_cached(normalized_fid)
+    return config.model_copy(deep=True)
 
+
+def clear_fabricator_config_caches() -> None:
+    """Clear memoized fabricator config caches."""
+
+    _list_fabricators_cached.cache_clear()
+    _load_fabricator_cached.cache_clear()
+
+
+@lru_cache(maxsize=1)
+def _list_fabricators_cached() -> tuple[str, ...]:
+    legacy_ids: list[str] = []
+    if _BUILTIN_DIR.exists():
+        legacy_ids = sorted(
+            p.stem.replace(".fab", "") for p in _BUILTIN_DIR.glob("*.fab.yaml")
+        )
+    unified_ids = list_unified_stanza_ids("fab")
+    return tuple(sorted(set([*legacy_ids, *unified_ids])))
+
+
+@lru_cache(maxsize=128)
+def _load_fabricator_cached(normalized_fid: str) -> FabricatorConfig:
+    if not normalized_fid:
+        raise ValueError("Unknown fabricator: ")
     try:
         merged = load_unified(normalized_fid)
         return fab_stanza(merged, default_id=normalized_fid)
