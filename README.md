@@ -132,7 +132,9 @@ Contributions are welcome! jBOM is developed on GitHub at [github.com/plocher/jB
 To contribute:
 1. Fork the repository
 2. Create a feature branch
-3. Run tests: `pytest && python -m behave --format progress`
+3. Run tests locally:
+   - Fast canary: `PYTHONPATH=src python -m pytest tests/unit/test_cli_help.py tests/unit/test_unified_loader.py tests/unit/test_fabricator_config_schema.py tests/unit/test_supplier_config_schema.py -q` and `PYTHONPATH=src python -m behave --format progress features/cli/basics.feature features/project/file.feature features/bom/core.feature features/pos/core.feature features/inventory/core.feature features/audit/core.feature`
+   - Comprehensive: `PYTHONPATH=src python -m pytest tests/ -v` and `PYTHONPATH=src python -m behave --format progress features/`
 4. Submit a pull request
 
 Regenerate deterministic search parity artifacts (fixture-based):

@@ -1,42 +1,143 @@
 name: Tests
-
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main ]
-
+    branches: [main]
+  workflow_dispatch:
 jobs:
-  test:
+  canary:
+    name: Canary (fast)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[all]
+          pip install pytest behave
+      - name: Canary pytest slice
+        run: |
+          PYTHONPATH=src python -m pytest \
+            tests/unit/test_cli_help.py \
+            tests/unit/test_unified_loader.py \
+            tests/unit/test_fabricator_config_schema.py \
+            tests/unit/test_supplier_config_schema.py \
+            -q
+      - name: Canary behave slice
+        run: |
+          PYTHONPATH=src python -m behave --format progress \
+            features/cli/basics.feature \
+            features/project/file.feature \
+            features/bom/core.feature \
+            features/pos/core.feature \
+            features/inventory/core.feature \
+            features/audit/core.feature
+  fat-canary-on-failure:
+    name: Fat Canary (only when canary fails)
+    needs: [canary]
+    if: ${{ needs.canary.result == 'failure' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[all]
+          pip install pytest behave
+      - name: Expanded pytest diagnostics
+        run: |
+          PYTHONPATH=src python -m pytest \
+            tests/unit \
+            tests/services \
+            --durations=50 \
+            --maxfail=1 \
+            -q
+      - name: Expanded behave diagnostics
+        run: |
+          PYTHONPATH=src python -m behave --format progress \
+            features/cli \
+            features/project \
+            features/bom \
+            features/pos \
+            features/inventory \
+            features/audit
+  pytest-matrix:
+    name: Pytest matrix (${{ matrix.python-version }})
+    needs: [canary]
+    if: ${{ github.event_name == 'push' || needs.canary.result == 'success' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
-
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -e .[all]
-        pip install pytest behave
-
-    - name: Run tests
-      run: |
-        PYTHONPATH=src python -m pytest tests/ -v
-        PYTHONPATH=src python -m behave --format progress features/
-
-    - name: Test coverage
-      if: matrix.python-version == '3.10'
-      run: |
-        pip install coverage pytest-cov
-        PYTHONPATH=src coverage run -m pytest tests/
-        coverage report -m
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[all]
+          pip install pytest
+      - name: Run full pytest suite
+        run: |
+          PYTHONPATH=src python -m pytest tests/ -v
+  behave-comprehensive:
+    name: Behave comprehensive
+    needs: [canary]
+    if: ${{ github.event_name == 'push' || needs.canary.result == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[all]
+          pip install behave
+      - name: Run full behave suite
+        run: |
+          PYTHONPATH=src python -m behave --format progress features/
+  coverage:
+    name: Coverage (pytest, 3.10)
+    needs: [canary]
+    if: ${{ github.event_name == 'push' || needs.canary.result == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[all]
+          pip install coverage pytest-cov
+      - name: Run coverage
+        run: |
+          PYTHONPATH=src coverage run -m pytest tests/
+          coverage report -m
