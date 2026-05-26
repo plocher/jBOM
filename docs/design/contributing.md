@@ -70,6 +70,30 @@ alongside the implementation. See the [dev-setup
 skill](../../.agents/skills/dev-setup/SKILL.md) for the concrete commands used
 to run the full suite.
 
+## CI lane model (issue #290)
+
+The repository CI uses a tiered sequence to reduce feedback latency while
+preserving pre-merge confidence:
+
+- **Canary (fast):** a small, high-signal pytest + behave slice for rapid PR
+  feedback.
+- **Fat canary on failure:** runs only when the fast canary fails; executes a
+  broader pytest/behave slice with richer timing detail to accelerate root
+  cause analysis.
+- **Comprehensive lanes:** full pytest compatibility matrix, full behave run,
+  and coverage once the canary is green (or on branch pushes).
+
+Local equivalents:
+
+- Fast canary:
+  `PYTHONPATH=src python -m pytest tests/unit/test_cli_help.py tests/unit/test_unified_loader.py tests/unit/test_fabricator_config_schema.py tests/unit/test_supplier_config_schema.py -q`
+  and
+  `PYTHONPATH=src python -m behave --format progress features/cli/basics.feature features/project/file.feature features/bom/core.feature features/pos/core.feature features/inventory/core.feature features/audit/core.feature`
+- Comprehensive:
+  `PYTHONPATH=src python -m pytest tests/ -v`
+  and
+  `PYTHONPATH=src python -m behave --format progress features/`
+
 ## Project Structure
 
 The codebase is organized around a domain-centric layering that separates
