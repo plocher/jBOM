@@ -1,6 +1,21 @@
 # CHANGELOG
 
 
+## v7.0.1 (2026-05-26)
+
+### Refactoring
+
+* refactor(config): complete canonical sch/pcb/inv/ann namespace migration
+
+Finish the data-side namespace migration by removing remaining short
+prefix usage from merge, resolver, CLI, audit, and overlay code paths.
+Update affected unit and BDD scenarios to assert canonical-only behavior.
+
+Refs #282
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`c4cd239`](https://github.com/plocher/jBOM/commit/c4cd2395783683afc1e10f285699a6391d9a2d45))
+
+
 ## v7.0.0 (2026-05-23)
 
 ### Breaking
