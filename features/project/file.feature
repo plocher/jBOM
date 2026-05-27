@@ -105,3 +105,29 @@ Feature: File-based Project References
   Scenario: Command given nonexistent file fails
     When I run jbom command "bom nonexistent_file.kicad_sch"
     Then the command should fail
+
+  Scenario: BOM command given absolute .kicad_sch path resolves to the matching PCB
+    Given a schematic that contains:
+      | Reference | Value | Footprint     |
+      | R1        | 10K   | R_0805_2012   |
+    And a PCB that contains:
+      | Reference | Value | Footprint     |
+      | R1        | 10K   | R_0805_2012   |
+    When I run jbom using absolute path "project.kicad_sch" for command "bom"
+    Then the command should succeed
+
+  Scenario: POS command given absolute .kicad_pcb path resolves directly to the PCB
+    Given a PCB that contains:
+      | reference | x | y | rotation | side | footprint     |
+      | R1        | 5 | 10| 0        | TOP  | R_0805_2012   |
+    When I run jbom using absolute path "project.kicad_pcb" for command "pos"
+    Then the command should succeed
+
+  Scenario: Inventory command given unreadable .kicad_sch file fails gracefully
+    Given a schematic that contains:
+      | Reference | Value | Footprint     |
+      | R1        | 10K   | R_0805_2012   |
+    And the file "project.kicad_sch" is unreadable
+    When I run jbom command "inventory project.kicad_sch"
+    Then the command should fail
+    And the error output should mention "Permission denied"

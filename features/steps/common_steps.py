@@ -192,6 +192,20 @@ def step_run_jbom_command(context, args):
     step_run_command(context, f"jbom {args}")
 
 
+@when('I run jbom using absolute path "{path_fragment}" for command "{args}"')
+def step_run_jbom_command_with_absolute_path(context, args, path_fragment):
+    """Run a jbom command by resolving a file path to an absolute path first."""
+    from pathlib import Path
+
+    candidate = Path(path_fragment)
+    absolute_path = (
+        candidate
+        if candidate.is_absolute()
+        else (Path(context.sandbox_root) / candidate)
+    ).resolve()
+    step_run_jbom_command(context, f"{args} {absolute_path}")
+
+
 @given('the sample fixtures under "{rel_path}"')
 def step_have_sample_fixtures(context, rel_path):
     """Copy fixture subtree into the per-scenario temp workspace.
