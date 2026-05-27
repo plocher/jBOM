@@ -60,3 +60,22 @@ Feature: Directory-based Project References
     Given an empty directory "empty_dir"
     When I run jbom command "bom empty_dir"
     Then the command should fail
+
+  Scenario: Directory input with trailing slash behaves like directory input without slash
+    Given a project "myproject" placed in "project_dir"
+    And a PCB that contains:
+      | Reference | Value | Footprint     |
+      | R1        | 10K   | R_0805_2012   |
+    When I run jbom command "bom project_dir"
+    And I run jbom command "bom project_dir/"
+    Then the command should succeed
+    And the two command outputs should be identical
+
+  Scenario: BOM command follows a symlinked project directory
+    Given a project "myproject" placed in "real_project"
+    And a PCB that contains:
+      | Reference | Value | Footprint     |
+      | R1        | 10K   | R_0805_2012   |
+    And I create symlink "linked_project" to "real_project"
+    When I run jbom command "bom linked_project"
+    Then the command should succeed
