@@ -67,7 +67,7 @@ are configurable; see [Custom fabricator configuration](#custom-fabricator-confi
 | Description | component description |
 | Value | component value |
 | Package | package code |
-| Footprint | KiCad footprint path |
+| Footprint | canonical PCB FPID from `.kicad_pcb` footprint identifier |
 | Manufacturer | manufacturer name from inventory |
 | Part Number | resolved fabricator part number (Supplier+SPN) |
 
@@ -79,7 +79,7 @@ are configurable; see [Custom fabricator configuration](#custom-fabricator-confi
 | Quantity | aggregate count |
 | Value | component value |
 | Comment | component description |
-| Footprint | KiCad footprint path |
+| Footprint | canonical PCB FPID from `.kicad_pcb` footprint identifier |
 | LCSC | resolved part number — required column name for JLCPCB upload |
 | Surface Mount | SMD flag |
 
@@ -138,6 +138,18 @@ JLCPCB treats blank `LCSC` entries as consigned parts.
 For complete column definitions including optional matching attributes
 (`Tolerance`, `Voltage`, `Current`, etc.), see the
 [inventory file format reference](./inventory-format.md).
+
+## Component attribute contract (DNP / excluded flags)
+
+The plugin follows the same BOM-component contract as `jbom bom`:
+
+- `exclude_from_board` and `exclude_from_bom` footprints are always excluded.
+- DNP footprints are always included in BOM output and marked in the `DNP`
+  column (`"DNP"` for DNP rows, empty string otherwise).
+
+The older plugin-side "Exclude DNP components" behavior is no longer part of
+the contract. If procurement needs a populated-only BOM, filter downstream on
+the `DNP` column.
 
 ## Custom fabricator configuration
 

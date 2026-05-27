@@ -572,6 +572,7 @@ jbom inventory ./my_project --supplier lcsc -o inventory.csv
 
 **Parts CSV**
 : Default name `${ProjectName}.parts.csv` (written in the project directory when `-o` is omitted). One row per electro-mechanical group with a `Refs` column of collapsed references. Use `-o -` for CSV to stdout.
+: DNP rows are included in the default row set. Add `-f dnp` when an explicit DNP marker column is required.
 
 **Exit Codes**
 : 0 — success
@@ -588,13 +589,17 @@ flags override them.
 |---|---|---|---|
 | `exclude_from_board` | not in output | not in output | Symbol-only: no PCB footprint |
 | `exclude_from_bom` | not in output | not in output | Board feature: logo, mounting hole, fiducial |
-| `dnp` (Do Not Populate) | **included, marked `DNP`** | not in output | Variant/rework spares: pad present, part absent |
+| `dnp` (Do Not Populate) | included (see command notes below) | not in output | Variant/rework spares: pad present, part absent |
 | *(none set)* | included | included | Normal populated component |
 
-**BOM/Parts**: `exclude_from_bom` components (mounting holes, fiducials, OSHW logos) are always
+**BOM**: `exclude_from_bom` components (mounting holes, fiducials, OSHW logos) are always
 excluded. DNP components are always included and identified by the `DNP` column value `"DNP"`
 (empty string for populated components). This follows IPC J-STD-001: assembly operators must
 be able to distinguish intentionally empty pads from omitted line items.
+
+**Parts**: DNP components are always included in the output row set. The default parts projection
+does not include a dedicated `DNP` column; include one explicitly via `-f dnp` (or a custom
+projection that includes `dnp`) when a marker column is required.
 
 **POS**: DNP components are always excluded. The P&P machine's input contract is strictly
 "place these components"; the companion BOM is the authoritative source for DNP declarations.
@@ -604,7 +609,8 @@ be able to distinguish intentionally empty pads from omitted line items.
 
 **Migration note** (from pre-v8.x): The `--include-dnp`, `--include-excluded`, and
 `--include-all` flags have been removed from `jbom bom`, `jbom parts`, and `jbom pos`.
-DNP rows now appear in BOM/parts output by default, marked in the `DNP` column.
+DNP rows now appear in BOM output by default, marked in the `DNP` column.
+Parts output includes DNP rows by default; add `-f dnp` to expose an explicit marker column.
 Procurement workflows that previously excluded DNP rows should filter on the `DNP` column:
 
 ```bash
@@ -650,19 +656,19 @@ different identifier to appear in the BOM, change it on the PCB (for example via
 Use `-f "+PRESET"` or shorthand fabricator flags (`--jlc`, etc.) to imply a preset.
 
 **+default**
-: Reference, Quantity, Description, Value, Footprint, Manufacturer, MFGPN, Fabricator, Fabricator Part Number, Datasheet, SMD. Alias: `+standard`.
+: Reference, Quantity, Description, Value, Footprint, Manufacturer, MFGPN, Fabricator, Fabricator Part Number, Datasheet, SMD, DNP. Alias: `+standard`.
 
 **+jlc**
-: Reference, Quantity, Value, Description, LCSC/Fabricator Part Number, SMD. JLCPCB column order. Enabled by `--jlc`.
+: Reference, Quantity, Value, Description, LCSC/Fabricator Part Number, SMD, DNP. JLCPCB column order. Enabled by `--jlc`.
 
 **+pcbway**
-: PCBWay-compatible column set. Enabled by `--pcbway`.
+: PCBWay-compatible column set including DNP marker column. Enabled by `--pcbway`.
 
 **+seeed**
-: Seeed Studio Fusion PCBA column set. Enabled by `--seeed`.
+: Seeed Studio Fusion PCBA column set including DNP marker column. Enabled by `--seeed`.
 
 **+generic**
-: Reference, Quantity, Description, Value, Package, Footprint, Manufacturer, Part Number. Enabled by `--generic`.
+: Reference, Quantity, Description, Value, Package, Footprint, Manufacturer, Part Number, DNP. Enabled by `--generic`.
 
 **+minimal**
 : Reference, Quantity, Value, LCSC. Bare minimum for quick exports.

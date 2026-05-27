@@ -76,6 +76,24 @@ These semantics extend the `extends:` deep-merge machinery already present in
 `defaults.py` to cover all stanza types uniformly. The unified loader reuses
 the same merge engine rather than introducing a second one.
 
+## `field_synonyms` mechanism
+
+`field_synonyms` defines canonical field intents and accepted aliases in
+unified profiles. At runtime, synonyms are matched case-insensitively and
+normalized to canonical keys (for example `fab_pn`, `supplier_pn`, `mpn`),
+while CSV output headers use the configured `display_name`.
+
+This allows CLI field arguments, config field references, schematic/PCB
+properties, and inventory headers to accept legacy or vendor-specific naming
+without changing internal semantics.
+
+`fab.field_synonyms` controls fabrication output semantics;
+`supplier.field_synonyms` controls supplier ID / supplier part-number mapping
+for supplier workflows.
+
+Profile docs should keep only fabricator/supplier-specific rationale inline and
+defer mechanism-level behavior to this section.
+
 ## Field reference namespace
 
 All field references in jBOM configuration follow the
