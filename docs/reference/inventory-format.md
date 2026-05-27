@@ -84,6 +84,9 @@ user; jBOM exposes them to the BOM-generation pipeline by name.
 **Package**
 : Physical package code (`0603`, `0805`, `1206`, `SOT-23`, `SOIC-8`, `QFN-32`, etc.).
   Extracted from the schematic footprint and matched exactly.
+: The BOM `Footprint` output column remains the canonical PCB FPID
+  (`pcb:footprint`) taken from the `.kicad_pcb` footprint identifier; this FPID
+  policy does not add new required inventory-schema columns.
 
 **Priority**
 : Integer ranking (1 = most preferred, higher = less preferred). When multiple
