@@ -1,6 +1,28 @@
 # CHANGELOG
 
 
+## v7.1.0 (2026-05-28)
+
+### Features
+
+* feat(plugin): add KiCad plugin and PCM icons
+
+Wire ActionPlugin light/dark toolbar icons from packaged assets,
+add the PCM package icon, and ensure plugin asset subdirectories
+are included in PCM archive staging.
+
+Add feature and unit coverage for archive icon structure/dimensions,
+and document icon packaging requirements in plugin UX design docs.
+
+Closes #321
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`cada5a3`](https://github.com/plocher/jBOM/commit/cada5a3a4ceeceb2649373a2134ae3b9ea69af66))
+
+### Unknown
+
+* doc:language glossary ([`e9e7d7b`](https://github.com/plocher/jBOM/commit/e9e7d7b8973dad3b74339147a743f855804ca3e3))
+
+
 ## v7.0.2 (2026-05-26)
 
 ### Performance Improvements
