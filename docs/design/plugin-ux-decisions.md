@@ -25,6 +25,43 @@ pure-Python dependencies; PyPI channel for the CLI is unchanged).
 The design decisions below are all at the adapter layer. None of them
 imply changes to the service contracts.
 
+## Plugin icons and PCM packaging
+
+jBOM now ships two distinct icon surfaces because KiCad treats them
+separately:
+
+- **ActionPlugin toolbar icon (Pcbnew runtime):** the SWIG ActionPlugin docs
+  require `icon_file_name` to be an absolute PNG path and recommend 24×24.
+  They also support an optional `dark_icon_file_name` override for dark
+  themes. jBOM uses:
+  - `assets/icons/pcb-fabrication-tool-light-24.png`
+  - `assets/icons/pcb-fabrication-tool-dark-24.png`
+  wired from `plugin.py` via absolute paths computed from `__file__`.
+- **PCM package icon (plugin manager listing):** KiCad addon packaging docs
+  define `resources/icon.png` as the optional 64×64 icon shown in Plugin and
+  Content Manager. jBOM includes this as `resources/icon.png` in the archive.
+
+These are intentionally independent: the 24×24 toolbar icon is consumed by
+Pcbnew's ActionPlugin UI, while PCM uses only `resources/icon.png`.
+
+Creation/update checklist for future icon refreshes:
+
+1. Export/update both toolbar icon variants at 24×24 (`light` + `dark`) in
+   `src/jbom/plugin/assets/icons/`.
+2. Export/update PCM icon at 64×64 in `resources/icon.png`.
+3. Build a local package with `python scripts/build_pcm_package.py` and verify
+   archive paths/sizes:
+   - `plugins/assets/icons/pcb-fabrication-tool-light-24.png` (24×24)
+   - `plugins/assets/icons/pcb-fabrication-tool-dark-24.png` (24×24)
+   - `resources/icon.png` (64×64)
+4. Validate with unit + feature packaging tests before release.
+
+References:
+- KiCad Addon packaging guide:
+  <https://dev-docs.kicad.org/en/addons/index.html>
+- KiCad PCB Python bindings (ActionPlugin icon fields and sizing guidance):
+  <https://dev-docs.kicad.org/en/apis-and-binding/pcbnew/index.html>
+
 ## Two-panel dialog structure
 
 The dialog (`JBOMFabricationDialog`) presents two panels that swap on

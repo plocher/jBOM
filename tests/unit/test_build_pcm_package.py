@@ -129,3 +129,8 @@ def test_skip_binary_fetch_build_produces_expected_layout(
 
     # Metadata
     assert "metadata.json" in names
+    # PCM package icon for Plugin and Content Manager listing
+    assert "resources/icon.png" in names
+    # ActionPlugin toolbar icons (light/dark) bundled with plugin sources
+    assert "plugins/assets/icons/pcb-fabrication-tool-light-24.png" in names
+    assert "plugins/assets/icons/pcb-fabrication-tool-dark-24.png" in names
