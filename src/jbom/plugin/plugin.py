@@ -12,6 +12,8 @@ progress view) is implemented in Session B.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pcbnew  # noqa: F401 — only imported inside KiCad, safe here
 
 
@@ -31,9 +33,15 @@ class JBOMFabricationPlugin(pcbnew.ActionPlugin):
             "Supports JLC, PCBWay, Seeed Studio, and generic fabricators."
         )
         self.show_toolbar_button = True
-        # Toolbar icon (24×24 PNG) lives next to this file.
-        # Empty string → KiCad uses a generic script icon.
-        self.icon_file_name = ""
+        # KiCad ActionPlugin icons must be absolute paths to 24×24 PNG files.
+        plugin_dir = Path(__file__).resolve().parent
+        self.icon_file_name = str(
+            plugin_dir / "assets" / "icons" / "pcb-fabrication-tool-light-24.png"
+        )
+        # Optional dark-theme icon; falls back to icon_file_name if omitted.
+        self.dark_icon_file_name = str(
+            plugin_dir / "assets" / "icons" / "pcb-fabrication-tool-dark-24.png"
+        )
 
     def Run(self) -> None:  # noqa: N802 — KiCad API name
         """Open the jBOM Fabrication dialog."""

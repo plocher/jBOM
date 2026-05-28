@@ -34,7 +34,7 @@ PCM archive layout (per KiCad addon spec)::
             cp39-win_amd64/pydantic_core/...
             cp312-...
       resources/
-        icon.png             ← 64×64 PNG for PCM manager (TODO: add icon)
+        icon.png             ← 64×64 PNG for PCM manager
       metadata.json
 
 The ``plugins/`` directory is what KiCad adds to ``sys.path`` when loading the
@@ -501,11 +501,13 @@ def build(
         # ------------------------------------------------------------------
         print("  copying plugin adapter files…")
         plugin_total = 0
-        for f in sorted(_PLUGIN_SRC.iterdir()):
-            if f.is_file() and not _should_skip(f):
-                dest = plugins_dir / f.name
-                shutil.copy2(f, dest)
-                plugin_total += f.stat().st_size
+        for entry in sorted(_PLUGIN_SRC.iterdir()):
+            dest = plugins_dir / entry.name
+            if entry.is_dir():
+                plugin_total += _copy_tree_filtered(entry, dest)
+            elif entry.is_file() and not _should_skip(entry):
+                shutil.copy2(entry, dest)
+                plugin_total += entry.stat().st_size
         print(f"    {plugin_total:,} bytes")
 
         # ------------------------------------------------------------------
@@ -566,7 +568,7 @@ def build(
             print("  copying resources/…")
             _copy_tree_filtered(_RESOURCES_SRC, stage / "resources")
         else:
-            print("  resources/ not found — skipping (add a 64×64 icon.png later)")
+            print("  resources/ not found — skipping optional PCM icon assets")
 
         # ------------------------------------------------------------------
         # 6. Zip it up
