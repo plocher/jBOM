@@ -21,6 +21,11 @@ from jbom.cli.output import (
     open_output_text_file,
     resolve_output_destination,
 )
+from jbom.cli.supplier_args import (
+    normalize_supplier_ids as _normalize_cli_supplier_ids,
+    parse_supplier_api_key_args as _parse_supplier_api_key_args,
+    resolve_supplier_api_key as _resolve_supplier_api_key,
+)
 from jbom.common.value_parsing import farad_to_eia, henry_to_eia, ohms_to_eia
 from jbom.common.types import Component, InventoryItem
 from jbom.common.options import GeneratorOptions
@@ -185,9 +190,14 @@ def register_command(subparsers) -> None:
     )
     parser.add_argument(
         "--api-key",
-        metavar="KEY",
+        metavar="KEY_OR_SUPPLIER_KEY",
+        action="append",
         default=None,
-        help="API key for the supplier search provider (overrides env vars)",
+        help=(
+            "API key for supplier search providers. "
+            "Use KEY for single-supplier runs, or SUPPLIER_ID=KEY and repeat "
+            "for supplier-scoped keys in multi-supplier runs."
+        ),
     )
     parser.add_argument(
         "--limit",
@@ -478,27 +488,17 @@ def _merge_field_names(all_field_names: set[str]) -> list[str]:
 
 def _normalize_supplier_ids(raw_suppliers: Any) -> list[str]:
     """Normalize and de-duplicate supplier IDs while preserving input order."""
+    return _normalize_cli_supplier_ids(raw_suppliers)
 
-    if raw_suppliers is None:
-        return []
 
-    if isinstance(raw_suppliers, str):
-        candidates = [raw_suppliers]
-    elif isinstance(raw_suppliers, list):
-        candidates = [str(value) for value in raw_suppliers]
-    else:
-        candidates = [str(raw_suppliers)]
+def _resolve_supplier_api_keys(
+    raw_api_keys: Any,
+    *,
+    supplier_ids: list[str],
+) -> tuple[dict[str, str], str | None]:
+    """Resolve supplier-scoped and default API keys from CLI arguments."""
 
-    normalized: list[str] = []
-    seen: set[str] = set()
-    for candidate in candidates:
-        supplier_id = candidate.strip().lower()
-        if not supplier_id or supplier_id in seen:
-            continue
-        seen.add(supplier_id)
-        normalized.append(supplier_id)
-
-    return normalized
+    return _parse_supplier_api_key_args(raw_api_keys, supplier_ids=supplier_ids)
 
 
 def _build_inventory_supplier_services(
@@ -512,8 +512,6 @@ def _build_inventory_supplier_services(
     supplier_ids = _normalize_supplier_ids(getattr(args, "supplier", None))
     if not supplier_ids:
         return []
-
-    api_key = getattr(args, "api_key", None)
     resolved_services: list[tuple[InventorySearchService, SupplierConfig, str]] = []
 
     try:
@@ -521,11 +519,21 @@ def _build_inventory_supplier_services(
         from jbom.services.search.provider_factory import create_search_provider
         from jbom.services.search.inventory_search_service import InventorySearchService
 
+        scoped_api_keys, default_api_key = _resolve_supplier_api_keys(
+            getattr(args, "api_key", None),
+            supplier_ids=supplier_ids,
+        )
+
         for supplier_id in supplier_ids:
             supplier_config = resolve_supplier_by_id(supplier_id)
             if supplier_config is None:
                 print(f"Error: Unknown supplier '{supplier_id}'", file=sys.stderr)
                 continue
+            api_key = _resolve_supplier_api_key(
+                supplier_id,
+                scoped_api_keys=scoped_api_keys,
+                default_api_key=default_api_key,
+            )
 
             provider = create_search_provider(
                 supplier_id,
@@ -539,7 +547,9 @@ def _build_inventory_supplier_services(
             resolved_services.append((service, supplier_config, supplier_id))
 
         return resolved_services
-    except (ValueError, RuntimeError) as exc:
+    except ValueError as exc:
+        raise ValueError(str(exc)) from exc
+    except RuntimeError as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return []
 

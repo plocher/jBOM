@@ -72,6 +72,64 @@ Feature: Inventory supplier PN auto-populate
     And the file "result.csv" should contain "G25804"
     And the file "result.csv" should contain "M25804"
 
+  Scenario: Supplier-scoped API keys are accepted for repeatable supplier enrichment
+    Given a supplier profile that contains:
+      | key | value |
+      | id  | generic |
+    And a supplier catalog that contains:
+      | distributor_pn | manufacturer | mpn             | stock_quantity | price |
+      | G25804         | Yageo        | RC0603FR-0710KL | 500            | 0.01  |
+    And a supplier profile that contains:
+      | key | value |
+      | id  | mouser |
+    And a supplier catalog that contains:
+      | distributor_pn | manufacturer | mpn             | stock_quantity | price |
+      | M25804         | Yageo        | RC0603FR-0710KL | 500            | 0.01  |
+    And a schematic that contains:
+      | Reference | Value | Footprint   | LibID    |
+      | R1        | 10K   | R_0603_1608 | Device:R |
+    When I run jbom command "inventory --supplier generic --supplier mouser --api-key generic=KEY_GENERIC --api-key mouser=KEY_MOUSER -o result.csv"
+    Then the command should succeed
+    And the file "result.csv" contains exactly 3 data rows
+    And the file "result.csv" should contain "G25804"
+    And the file "result.csv" should contain "M25804"
+
+  Scenario: Repeated unscoped API keys map by supplier argument order
+    Given a supplier profile that contains:
+      | key | value |
+      | id  | generic |
+    And a supplier catalog that contains:
+      | distributor_pn | manufacturer | mpn             | stock_quantity | price |
+      | G25804         | Yageo        | RC0603FR-0710KL | 500            | 0.01  |
+    And a supplier profile that contains:
+      | key | value |
+      | id  | mouser |
+    And a supplier catalog that contains:
+      | distributor_pn | manufacturer | mpn             | stock_quantity | price |
+      | M25804         | Yageo        | RC0603FR-0710KL | 500            | 0.01  |
+    And a schematic that contains:
+      | Reference | Value | Footprint   | LibID    |
+      | R1        | 10K   | R_0603_1608 | Device:R |
+    When I run jbom command "inventory --supplier generic --supplier mouser --api-key KEY_GENERIC --api-key KEY_MOUSER -o result.csv"
+    Then the command should succeed
+    And the file "result.csv" contains exactly 3 data rows
+    And the file "result.csv" should contain "G25804"
+    And the file "result.csv" should contain "M25804"
+
+  Scenario: Supplier-scoped API key must match the selected supplier set
+    Given a supplier profile that contains:
+      | key | value |
+      | id  | generic |
+    And a supplier catalog that contains:
+      | distributor_pn | manufacturer | mpn             | stock_quantity | price |
+      | G25804         | Yageo        | RC0603FR-0710KL | 500            | 0.01  |
+    And a schematic that contains:
+      | Reference | Value | Footprint   | LibID    |
+      | R1        | 10K   | R_0603_1608 | Device:R |
+    When I run jbom command "inventory --supplier generic --api-key mouser=KEY_MOUSER -o result.csv"
+    Then the command should fail
+    And the output should contain "not present in --supplier arguments"
+
   Scenario: --limit applies independently to each supplier pass
     Given a supplier profile that contains:
       | key | value |

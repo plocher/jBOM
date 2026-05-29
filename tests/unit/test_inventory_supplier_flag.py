@@ -12,13 +12,18 @@ Covers:
 """
 
 from __future__ import annotations
+import argparse
 
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from jbom.cli.inventory import (
+    _build_inventory_supplier_services,
     _enrich_items_with_supplier,
     _enrich_items_with_suppliers,
     _normalize_supplier_ids,
+    _resolve_supplier_api_keys,
 )
 from jbom.common.types import InventoryItem
 from jbom.services.search.inventory_search_service import (
@@ -461,6 +466,202 @@ class TestNormalizeSupplierIds:
 
     def test_accepts_single_string(self) -> None:
         assert _normalize_supplier_ids(" Mouser ") == ["mouser"]
+
+
+class TestResolveSupplierApiKeys:
+    def test_unscoped_key_is_accepted_for_single_supplier(self) -> None:
+        scoped_keys, default_key = _resolve_supplier_api_keys(
+            ["KEY123"],
+            supplier_ids=["lcsc"],
+        )
+
+        assert scoped_keys == {}
+        assert default_key == "KEY123"
+
+    def test_scoped_keys_are_resolved_per_supplier(self) -> None:
+        scoped_keys, default_key = _resolve_supplier_api_keys(
+            ["lcsc=KEY_LCSC", "mouser=KEY_MOUSER"],
+            supplier_ids=["lcsc", "mouser"],
+        )
+
+        assert scoped_keys == {"lcsc": "KEY_LCSC", "mouser": "KEY_MOUSER"}
+        assert default_key is None
+
+    def test_unscoped_keys_zip_to_supplier_order(self) -> None:
+        scoped_keys, default_key = _resolve_supplier_api_keys(
+            ["KEY_LCSC", "KEY_MOUSER"],
+            supplier_ids=["lcsc", "mouser"],
+        )
+
+        assert scoped_keys == {"lcsc": "KEY_LCSC", "mouser": "KEY_MOUSER"}
+        assert default_key is None
+
+    def test_scoped_key_for_unknown_supplier_is_rejected(self) -> None:
+        try:
+            _resolve_supplier_api_keys(
+                ["mouser=KEY_MOUSER"],
+                supplier_ids=["lcsc"],
+            )
+        except ValueError as exc:
+            assert "not present in --supplier arguments" in str(exc)
+        else:
+            assert False, "Expected ValueError for unknown scoped supplier key"
+
+    def test_multiple_unscoped_keys_require_matching_supplier_count(self) -> None:
+        with pytest.raises(
+            ValueError,
+            match=r"must match the number of --supplier values",
+        ):
+            _resolve_supplier_api_keys(
+                ["KEY_ONE", "KEY_TWO"],
+                supplier_ids=["lcsc"],
+            )
+
+    def test_mixed_scoped_and_unscoped_keys_are_rejected(self) -> None:
+        with pytest.raises(
+            ValueError,
+            match=r"Cannot mix scoped and unscoped --api-key values",
+        ):
+            _resolve_supplier_api_keys(
+                ["KEY_DEFAULT", "mouser=KEY_MOUSER"],
+                supplier_ids=["mouser"],
+            )
+
+
+class TestBuildInventorySupplierServicesApiKeys:
+    def test_build_inventory_supplier_services_applies_scoped_keys_per_supplier(
+        self, monkeypatch
+    ) -> None:
+        create_provider_calls: list[tuple[str, str | None]] = []
+
+        class _FakeSupplierConfig:
+            def __init__(self, supplier_label: str) -> None:
+                self.supplier_label = supplier_label
+
+        class _FakeInventorySearchService:
+            def __init__(
+                self, provider: object, request_delay_seconds: float, verbose: bool
+            ) -> None:
+                self.provider = provider
+                self.request_delay_seconds = request_delay_seconds
+                self.verbose = verbose
+
+        def _fake_resolve_supplier_by_id(
+            supplier_id: str,
+        ) -> _FakeSupplierConfig | None:
+            if supplier_id == "lcsc":
+                return _FakeSupplierConfig("LCSC")
+            if supplier_id == "mouser":
+                return _FakeSupplierConfig("Mouser")
+            return None
+
+        def _fake_create_search_provider(
+            supplier_id: str,
+            *,
+            api_key: str | None = None,
+            cache=None,
+        ) -> object:
+            create_provider_calls.append((supplier_id, api_key))
+            return object()
+
+        monkeypatch.setattr(
+            "jbom.config.suppliers.resolve_supplier_by_id",
+            _fake_resolve_supplier_by_id,
+        )
+        monkeypatch.setattr(
+            "jbom.services.search.provider_factory.create_search_provider",
+            _fake_create_search_provider,
+        )
+        monkeypatch.setattr(
+            "jbom.services.search.inventory_search_service.InventorySearchService",
+            _FakeInventorySearchService,
+        )
+
+        args = argparse.Namespace(
+            supplier=["lcsc", "mouser"],
+            api_key=["lcsc=KEY_LCSC", "mouser=KEY_MOUSER"],
+            verbose=False,
+        )
+        services = _build_inventory_supplier_services(args)
+
+        assert len(services) == 2
+        assert create_provider_calls == [
+            ("lcsc", "KEY_LCSC"),
+            ("mouser", "KEY_MOUSER"),
+        ]
+
+    def test_build_inventory_supplier_services_maps_unscoped_keys_by_order(
+        self, monkeypatch
+    ) -> None:
+        create_provider_calls: list[tuple[str, str | None]] = []
+
+        class _FakeSupplierConfig:
+            def __init__(self, supplier_label: str) -> None:
+                self.supplier_label = supplier_label
+
+        class _FakeInventorySearchService:
+            def __init__(
+                self, provider: object, request_delay_seconds: float, verbose: bool
+            ) -> None:
+                self.provider = provider
+                self.request_delay_seconds = request_delay_seconds
+                self.verbose = verbose
+
+        def _fake_resolve_supplier_by_id(
+            supplier_id: str,
+        ) -> _FakeSupplierConfig | None:
+            if supplier_id == "lcsc":
+                return _FakeSupplierConfig("LCSC")
+            if supplier_id == "mouser":
+                return _FakeSupplierConfig("Mouser")
+            return None
+
+        def _fake_create_search_provider(
+            supplier_id: str,
+            *,
+            api_key: str | None = None,
+            cache=None,
+        ) -> object:
+            create_provider_calls.append((supplier_id, api_key))
+            return object()
+
+        monkeypatch.setattr(
+            "jbom.config.suppliers.resolve_supplier_by_id",
+            _fake_resolve_supplier_by_id,
+        )
+        monkeypatch.setattr(
+            "jbom.services.search.provider_factory.create_search_provider",
+            _fake_create_search_provider,
+        )
+        monkeypatch.setattr(
+            "jbom.services.search.inventory_search_service.InventorySearchService",
+            _FakeInventorySearchService,
+        )
+
+        args = argparse.Namespace(
+            supplier=["lcsc", "mouser"],
+            api_key=["KEY_LCSC", "KEY_MOUSER"],
+            verbose=False,
+        )
+        services = _build_inventory_supplier_services(args)
+
+        assert len(services) == 2
+        assert create_provider_calls == [
+            ("lcsc", "KEY_LCSC"),
+            ("mouser", "KEY_MOUSER"),
+        ]
+
+    def test_build_inventory_supplier_services_rejects_unknown_scoped_key(
+        self,
+    ) -> None:
+        args = argparse.Namespace(
+            supplier=["generic"],
+            api_key=["mouser=KEY_MOUSER"],
+            verbose=False,
+        )
+
+        with pytest.raises(ValueError, match=r"not present in --supplier arguments"):
+            _build_inventory_supplier_services(args)
 
 
 def _dynamic_service_with_candidates(

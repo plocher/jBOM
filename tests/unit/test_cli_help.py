@@ -67,6 +67,7 @@ def test_inventory_help_shows_inventory_interface_tokens():
         "--filter-matches",
         "--per-instance",
         "--supplier",
+        "--api-key",
         "--limit",
         "-o",
         "--output",
@@ -83,6 +84,11 @@ def test_root_help_includes_search_command():
 def test_root_help_includes_annotate_command():
     out = run_help([]).lower()
     assert "annotate" in out
+
+
+def test_root_help_includes_promote_command():
+    out = run_help([]).lower()
+    assert "promote" in out
 
 
 def test_annotate_help_shows_core_flags():
@@ -106,10 +112,20 @@ def test_all_subcommands_show_defaults_option_in_help():
         "inventory",
         "parts",
         "pos",
+        "promote",
         "search",
     ]:
-        out = run_help([command]).lower()
+        sample_args = [command]
+        if command == "promote":
+            sample_args.append("supplier-export.csv")
+        out = run_help(sample_args).lower()
         assert "--defaults" in out, f"jbom {command} --help missing --defaults"
+
+
+def test_promote_help_shows_supplier_flags():
+    out = run_help(["promote", "supplier-export.csv"]).lower()
+    for token in ["--supplier", "--api-key", "--jlc", "-o", "--output"]:
+        assert token in out
 
 
 def test_gerbers_help_shows_key_options():
