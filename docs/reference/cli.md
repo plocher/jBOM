@@ -20,14 +20,15 @@ jbom bom [PROJECT] [--inventory FILE ...] [-o OUTPUT] [BOM OPTIONS]
 jbom pos [PROJECT] [-o OUTPUT] [POS OPTIONS]
 jbom gerbers [PROJECT] [-o OUTPUT_DIR] [--fabricator NAME] [--no-drill] [--netlist] [--dry-run]
 jbom fab [PROJECT] [-o OUTPUT_ROOT] [--fabricator NAME] [--skip-bom] [--skip-pos] [--skip-gerbers] [--debug] [--dry-run]
-jbom inventory [PROJECT] [-o OUTPUT] [INVENTORY OPTIONS]
+jbom inventory [PROJECT] [-o OUTPUT] [--supplier SUPPLIER_ID ...] [--api-key KEY_OR_SUPPLIER_KEY ...] [INVENTORY OPTIONS]
+jbom promote SOURCE_INVENTORY [--supplier SUPPLIER_ID] [--api-key KEY_OR_SUPPLIER_KEY ...] [--jlc] [-o OUTPUT] [-F] [-v]
 jbom parts [PROJECT] [-o OUTPUT] [PARTS OPTIONS]
 jbom search QUERY [SEARCH OPTIONS]
 ```
 
 ## DESCRIPTION
 
-jBOM provides nine subcommands:
+jBOM provides ten subcommands:
 
 - `audit` — diagnose field-quality issues and inventory coverage gaps in KiCad projects or catalog files
 - `annotate` — back-annotate KiCad schematics with approved field values from an audit report
@@ -36,6 +37,7 @@ jBOM provides nine subcommands:
 - `gerbers` — generate Gerber/drill files from a KiCad PCB file via kicad-cli
 - `fab` — one-shot fabrication: BOM + placement + Gerbers, written to a `production/` folder
 - `inventory` — generate an initial inventory template from schematic components
+- `promote` — scaffold a supplier-export CSV into stable inventory shape by stamping supplier context
 - `parts` — generate an unaggregated parts list (one row per component) from schematics
 - `search` — search external distributor catalogs (e.g. LCSC, Mouser) by keyword or part number
 
@@ -323,7 +325,12 @@ Generates an initial inventory template from schematic components. The output is
 : Auto-populate supplier part numbers during inventory generation. Repeat the flag to enrich from multiple suppliers in one run (for example: `--supplier lcsc --supplier mouser`).
 
 **--api-key KEY**
-: API key override for supplier catalog providers.
+: Supplier API key mapping input. Repeatable and validated against `--supplier`.
+: Supported forms:
+  - single unscoped key: `--api-key KEY` (backward-compatible default key)
+  - supplier-scoped key: `--api-key SUPPLIER_ID=KEY` (repeat for each supplier)
+  - ordered unscoped mapping: repeat unscoped keys and repeat `--supplier` with matching count; keys map by supplier argument order
+: Invalid combinations fail fast (mixed scoped/unscoped values, count mismatches, or scoped supplier IDs not present in `--supplier`).
 
 **--limit N**
 : Maximum candidates applied per supplier per unmatched seed row (default: `1`). In multi-supplier mode, the limit is evaluated independently for each supplier pass.
@@ -333,6 +340,57 @@ Generates an initial inventory template from schematic components. The output is
 
 **-v, --verbose**
 : Show loading and processing diagnostics.
+
+## PROMOTE COMMAND
+
+```
+jbom promote SOURCE_INVENTORY [-o OUTPUT] [OPTIONS]
+```
+
+Promotes a supplier-export CSV into a deterministic, inventory-compatible scaffold.
+The command preserves all source columns and appends one stable metadata column:
+`SupplierContext`.
+
+**SOURCE_INVENTORY** (required)
+: Path to the supplier-export CSV to promote.
+
+**--supplier SUPPLIER_ID**
+: Supplier context for promotion. The parser accepts repeated values only when they
+  resolve to the same supplier context.
+
+**--jlc**
+: Shortcut for `--supplier lcsc`.
+
+**--api-key KEY_OR_SUPPLIER_KEY**
+: Optional API key argument, parsed with the same shape rules as `jbom inventory`:
+  - `--api-key KEY`
+  - `--api-key SUPPLIER_ID=KEY`
+: In the current promote scaffold, exactly one effective supplier context is allowed.
+  A scoped key for a different supplier context fails fast.
+
+**-o, --output OUTPUT**
+: Output destination.
+  - Omit `-o` to write `<input>.promoted.csv` next to the source file.
+  - Use `-o console` or `-o -` for CSV to stdout.
+  - Otherwise, treat the value as a file path.
+
+**-F, --force, --Force**
+: Overwrite an existing output file.
+
+**-v, --verbose**
+: Enable verbose diagnostics.
+
+### Current boundary
+
+`jbom promote` currently supports one effective supplier context per invocation.
+The command fails fast when overlapping contexts are requested (for example
+`--jlc --supplier lcsc` or `--supplier lcsc --supplier mouser`). This boundary is
+tracked by issue `#324`.
+
+### Exit codes
+
+- `0` — success
+- `1` — error
 
 ## PARTS COMMAND
 
@@ -570,6 +628,9 @@ jbom inventory ./my_project --supplier lcsc -o inventory.csv
 **Inventory CSV**
 : Default name `part-inventory.csv` (written in the current working directory when `-o` is omitted). Template with IPN, Category, Value, Package, and related columns.
 
+**Promoted CSV**
+: Default name `<input>.promoted.csv` (written next to the source file when `-o` is omitted). Source columns are preserved and `SupplierContext` is added.
+
 **Parts CSV**
 : Default name `${ProjectName}.parts.csv` (written in the project directory when `-o` is omitted). One row per electro-mechanical group with a `Refs` column of collapsed references. Use `-o -` for CSV to stdout.
 : DNP rows are included in the default row set. Add `-f dnp` when an explicit DNP marker column is required.
@@ -726,6 +787,26 @@ jbom inventory MyProject/ -o my_inventory.csv
 Generate inventory with one-pass multi-supplier enrichment:
 ```
 jbom inventory MyProject/ --supplier lcsc --supplier mouser --limit 2 -o inventory.csv
+```
+
+Generate inventory with explicit per-supplier API keys:
+```
+jbom inventory MyProject/ --supplier lcsc --supplier mouser --api-key lcsc=KEY_LCSC --api-key mouser=KEY_MOUSER -o inventory.csv
+```
+
+Generate inventory with repeated unscoped API keys mapped by supplier argument order:
+```
+jbom inventory MyProject/ --supplier lcsc --supplier mouser --api-key KEY_LCSC --api-key KEY_MOUSER -o inventory.csv
+```
+
+Promote a supplier export and stamp explicit supplier context:
+```
+jbom promote examples/JLCPCB-INVENTORY.csv --supplier lcsc -o examples/JLCPCB-INVENTORY.promoted.csv
+```
+
+Promote with shorthand supplier context and scoped API key:
+```
+jbom promote examples/JLCPCB-INVENTORY.csv --jlc --api-key lcsc=KEY123 -o -
 ```
 
 Show only components not yet in an existing inventory:

@@ -7,7 +7,8 @@
 
 This tutorial guides you through common inventory management patterns in jBOM: building an
 inventory from scratch, enhancing it with supplier data, keeping multiple projects in sync,
-and incrementally adding new components without disrupting existing records.
+promoting supplier-export CSVs into canonical inventory shape, and incrementally adding new
+components without disrupting existing records.
 
 ---
 
@@ -42,6 +43,40 @@ are what make the file useful as an inventory source in subsequent runs.
 
 If your project uses hierarchical sheets, jBOM follows the hierarchy automatically.
 You do not need to specify individual sheet files.
+
+---
+
+## Promote a supplier export into canonical inventory shape
+
+When a supplier provides a CSV export, use `jbom promote` to create a deterministic
+inventory scaffold before curation:
+
+```bash
+jbom promote examples/JLCPCB-INVENTORY.csv --supplier lcsc -o examples/JLCPCB-INVENTORY.promoted.csv
+```
+
+The promoted output preserves source columns and adds `SupplierContext`, so downstream
+inventory/BOM workflows have an explicit supplier-context marker.
+
+`--jlc` is shorthand for `--supplier lcsc`:
+
+```bash
+jbom promote examples/JLCPCB-INVENTORY.csv --jlc -o promoted.csv
+```
+
+API key parsing is shape-compatible with `jbom inventory`:
+
+```bash
+# single unscoped key
+jbom promote examples/JLCPCB-INVENTORY.csv --supplier lcsc --api-key KEY123 -o -
+
+# supplier-scoped key
+jbom promote examples/JLCPCB-INVENTORY.csv --supplier lcsc --api-key lcsc=KEY123 -o -
+```
+
+Current boundary: `promote` allows one effective supplier context per run. Overlapping
+contexts (for example `--jlc --supplier lcsc` or `--supplier lcsc --supplier mouser`)
+fail fast while the multi-context design is tracked by issue `#324`.
 
 ---
 
