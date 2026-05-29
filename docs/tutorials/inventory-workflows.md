@@ -74,9 +74,9 @@ jbom promote examples/JLCPCB-INVENTORY.csv --supplier lcsc --api-key KEY123 -o -
 jbom promote examples/JLCPCB-INVENTORY.csv --supplier lcsc --api-key lcsc=KEY123 -o -
 ```
 
-Current boundary: `promote` allows one effective supplier context per run. Overlapping
-contexts (for example `--jlc --supplier lcsc` or `--supplier lcsc --supplier mouser`)
-fail fast while the multi-context design is tracked by issue `#324`.
+Design intent: `promote` and `inventory` share the same supplier-selection and
+supplier-key mapping pattern, so promotion and enrichment workflows are modeled with
+the same CLI shape.
 
 ---
 
