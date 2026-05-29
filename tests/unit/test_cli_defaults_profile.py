@@ -20,6 +20,7 @@ def test_all_subcommands_accept_defaults_argument() -> None:
         ["inventory", ".", "--defaults", custom],
         ["parts", ".", "--defaults", custom],
         ["pos", ".", "--defaults", custom],
+        ["promote", "supplier-export.csv", "--defaults", custom],
         ["search", "10k resistor", "--defaults", custom],
     ]
 
@@ -38,6 +39,7 @@ def test_all_subcommands_default_defaults_profile_to_generic() -> None:
         ["inventory", "."],
         ["parts", "."],
         ["pos", "."],
+        ["promote", "supplier-export.csv"],
         ["search", "10k resistor"],
     ]
 

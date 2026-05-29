@@ -15,6 +15,7 @@ from jbom.cli import (
     inventory,
     pos,
     parts,
+    promote,
     search,
 )
 from jbom.config.defaults import (
@@ -60,6 +61,7 @@ def create_parser() -> argparse.ArgumentParser:
     inventory.register_command(subparsers)
     pos.register_command(subparsers)
     parts.register_command(subparsers)
+    promote.register_command(subparsers)
     search.register_command(subparsers)
     _add_defaults_argument_to_subcommands(subparsers)
 
