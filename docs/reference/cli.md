@@ -21,7 +21,7 @@ jbom pos [PROJECT] [-o OUTPUT] [POS OPTIONS]
 jbom gerbers [PROJECT] [-o OUTPUT_DIR] [--fabricator NAME] [--no-drill] [--netlist] [--dry-run]
 jbom fab [PROJECT] [-o OUTPUT_ROOT] [--fabricator NAME] [--skip-bom] [--skip-pos] [--skip-gerbers] [--debug] [--dry-run]
 jbom inventory [PROJECT] [-o OUTPUT] [--supplier SUPPLIER_ID ...] [--api-key KEY_OR_SUPPLIER_KEY ...] [INVENTORY OPTIONS]
-jbom promote SOURCE_INVENTORY [--supplier SUPPLIER_ID] [--api-key KEY_OR_SUPPLIER_KEY ...] [--jlc] [-o OUTPUT] [-F] [-v]
+jbom promote SOURCE_INVENTORY [--supplier SUPPLIER_ID ...] [--api-key KEY_OR_SUPPLIER_KEY ...] [--jlc] [-o OUTPUT] [-F] [-v]
 jbom parts [PROJECT] [-o OUTPUT] [PARTS OPTIONS]
 jbom search QUERY [SEARCH OPTIONS]
 ```
@@ -355,8 +355,8 @@ The command preserves all source columns and appends one stable metadata column:
 : Path to the supplier-export CSV to promote.
 
 **--supplier SUPPLIER_ID**
-: Supplier context for promotion. The parser accepts repeated values only when they
-  resolve to the same supplier context.
+: Supplier context for promotion. Repeat to express multi-supplier promotion flows,
+  consistent with `jbom inventory` supplier semantics.
 
 **--jlc**
 : Shortcut for `--supplier lcsc`.
@@ -365,8 +365,8 @@ The command preserves all source columns and appends one stable metadata column:
 : Optional API key argument, parsed with the same shape rules as `jbom inventory`:
   - `--api-key KEY`
   - `--api-key SUPPLIER_ID=KEY`
-: In the current promote scaffold, exactly one effective supplier context is allowed.
-  A scoped key for a different supplier context fails fast.
+: In multi-supplier design flows, use supplier-scoped keys (`SUPPLIER_ID=KEY`) or
+  ordered repeated unscoped keys aligned with repeated `--supplier` arguments.
 
 **-o, --output OUTPUT**
 : Output destination.
@@ -380,12 +380,11 @@ The command preserves all source columns and appends one stable metadata column:
 **-v, --verbose**
 : Enable verbose diagnostics.
 
-### Current boundary
+### Design intent
 
-`jbom promote` currently supports one effective supplier context per invocation.
-The command fails fast when overlapping contexts are requested (for example
-`--jlc --supplier lcsc` or `--supplier lcsc --supplier mouser`). This boundary is
-tracked by issue `#324`.
+`jbom promote` is designed to share supplier-selection and API-key mapping semantics
+with `jbom inventory`, so promotion and inventory-enrichment workflows remain
+interchangeable at the CLI contract level.
 
 ### Exit codes
 
