@@ -78,16 +78,20 @@ def test_resolve_promote_api_key_rejects_mismatched_scoped_key() -> None:
         _resolve_promote_api_key(args, supplier_context="lcsc")
 
 
-def test_handle_promote_stamps_supplier_context_column(tmp_path, capsys) -> None:
+def test_handle_promote_writes_canonical_inventory_columns(tmp_path, capsys) -> None:
     source = tmp_path / "jlc-export.csv"
     source.write_text(
-        '"JLC Part #","Description"\n"C2286","1uF 0603"\n',
+        '"Category","JLC Part #","MFR Part #","Footprint","Description"\n'
+        '"Capacitors","C2286","CC0603KRX7R9BB104","0603","0.1uF 50V X7R \u00b110%"\n',
         encoding="utf-8",
     )
+    # No --supplier / --jlc => implicit 'generic' context => no catalog
+    # enrichment is attempted, keeping the test fully offline.
     args = argparse.Namespace(
         source_inventory=str(source),
-        supplier=["lcsc"],
+        supplier=None,
         jlc=False,
+        api_key=None,
         output="-",
         force=False,
         verbose=False,
@@ -101,8 +105,36 @@ def test_handle_promote_stamps_supplier_context_column(tmp_path, capsys) -> None
     rows = list(reader)
 
     assert reader.fieldnames is not None
-    assert "SupplierContext" in reader.fieldnames
-    assert rows[0]["SupplierContext"] == "lcsc"
+    for column in (
+        "RowType",
+        "IPN",
+        "Category",
+        "Value",
+        "Package",
+        "Description",
+        "MFGPN",
+        "Supplier",
+        "SPN",
+        "Tolerance",
+        "Type",
+        "V",
+        "Capacitance",
+        "SupplierContext",
+    ):
+        assert column in reader.fieldnames, column
+
+    row = rows[0]
+    assert row["SupplierContext"] == "generic"
+    assert row["RowType"] == "ITEM"
+    assert row["Category"] == "CAP"
+    assert row["Package"] == "0603"
+    assert row["Value"]  # parser populated some EIA-style value
+    assert row["Capacitance"]
+    assert row["Tolerance"] == "10%"
+    assert row["Type"] == "X7R"
+    assert row["V"] == "50V"
+    assert row["MFGPN"] == "CC0603KRX7R9BB104"
+    assert row["SPN"] == "C2286"
 
 
 def test_handle_promote_fails_fast_on_supplier_overlap(tmp_path, capsys) -> None:
@@ -115,6 +147,7 @@ def test_handle_promote_fails_fast_on_supplier_overlap(tmp_path, capsys) -> None
         source_inventory=str(source),
         supplier=["lcsc", "mouser"],
         jlc=False,
+        api_key=None,
         output="-",
         force=False,
         verbose=False,

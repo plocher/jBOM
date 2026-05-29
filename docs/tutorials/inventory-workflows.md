@@ -48,19 +48,33 @@ You do not need to specify individual sheet files.
 
 ## Promote a supplier export into canonical inventory shape
 
-When a supplier provides a CSV export, use `jbom promote` to create a deterministic
-inventory scaffold before curation:
+When a supplier provides a CSV export, use `jbom promote` to lift it into the
+canonical jBOM inventory schema in one step:
 
 ```bash
-jbom promote examples/JLCPCB-INVENTORY.csv --supplier lcsc -o examples/JLCPCB-INVENTORY.promoted.csv
+jbom promote examples/JLCPCB-INVENTORY.csv --jlc -o examples/JLCPCB-INVENTORY.promoted.csv
 ```
 
-The promoted output preserves source columns and adds `SupplierContext`, so downstream
-inventory/BOM workflows have an explicit supplier-context marker.
+The promoted CSV writes canonical inventory columns first (`RowType`, `IPN`,
+`Category`, `Value`, `Package`, `Description`, `Manufacturer`, `MFGPN`,
+`Supplier`, `SPN`, `Datasheet`, typed EM fields such as `Resistance`,
+`Capacitance`, `Tolerance`, `Type`, `V`, `A`, `W`, `Wavelength`, `mcd`, `Angle`)
+and then preserves the source export's supplemental columns (quantity, pricing,
+etc.) after the canonical block for traceability.
 
-`--jlc` is shorthand for `--supplier lcsc`:
+Internally the workflow runs an adapter (e.g. JLCPCB), a pure description and
+EM parser, an identity policy that builds a deterministic IPN for supported
+categories, and — when an explicit supplier context is selected — a supplier
+enrichment step that uses the provider's MPN lookup (with a keyword search
+fallback) to fill `Manufacturer`, `MFGPN`, and `Datasheet`.
+
+The supplier-search behavior is implied by the supplier flags themselves:
 
 ```bash
+# Offline, parse-only: no --supplier / --jlc => implicit 'generic' context => no catalog.
+jbom promote examples/JLCPCB-INVENTORY.csv -o promoted.csv
+
+# Online enrichment: --jlc (or --supplier <id>) selects a catalog => promote queries it.
 jbom promote examples/JLCPCB-INVENTORY.csv --jlc -o promoted.csv
 ```
 
@@ -74,9 +88,13 @@ jbom promote examples/JLCPCB-INVENTORY.csv --supplier lcsc --api-key KEY123 -o -
 jbom promote examples/JLCPCB-INVENTORY.csv --supplier lcsc --api-key lcsc=KEY123 -o -
 ```
 
+Verbose runs (`-v`) print per-row parse provenance and enrichment outcomes to
+stderr, which is useful when validating that descriptions are being interpreted
+the way you expect.
+
 Design intent: `promote` and `inventory` share the same supplier-selection and
-supplier-key mapping pattern, so promotion and enrichment workflows are modeled with
-the same CLI shape.
+supplier-key mapping pattern, so promotion and enrichment workflows are modeled
+with the same CLI shape and produce the same canonical inventory column set.
 
 ---
 
