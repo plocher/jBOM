@@ -37,7 +37,7 @@ jBOM provides ten subcommands:
 - `gerbers` — generate Gerber/drill files from a KiCad PCB file via kicad-cli
 - `fab` — one-shot fabrication: BOM + placement + Gerbers, written to a `production/` folder
 - `inventory` — generate an initial inventory template from schematic components
-- `promote` — scaffold a supplier-export CSV into stable inventory shape by stamping supplier context
+- `promote` — convert a supplier-export CSV into canonical jBOM inventory rows: parse descriptions, derive identity, and optionally enrich via the selected supplier provider
 - `parts` — generate an unaggregated parts list (one row per component) from schematics
 - `search` — search external distributor catalogs (e.g. LCSC, Mouser) by keyword or part number
 
@@ -347,16 +347,33 @@ Generates an initial inventory template from schematic components. The output is
 jbom promote SOURCE_INVENTORY [-o OUTPUT] [OPTIONS]
 ```
 
-Promotes a supplier-export CSV into a deterministic, inventory-compatible scaffold.
-The command preserves all source columns and appends one stable metadata column:
-`SupplierContext`.
+Converts a supplier-export CSV into canonical jBOM inventory rows. The workflow
+is a small pipeline:
+
+1. A source-export *adapter* normalises each row from a known supplier shape
+   (for example JLCPCB private parts export) into a canonical seed (SPN, MFGPN,
+   manufacturer, description, package, category hint, plus traceability extras).
+2. A pure *description parser* extracts EM fields from the description text and
+   identity hints: Category, Value, Package, Tolerance, Type (MLCC dielectric),
+   V/A/W ratings, Wavelength/mcd/Angle for LEDs, and typed Resistance /
+   Capacitance / Inductance.
+3. An *identity policy* derives a deterministic `IPN` for supported categories
+   (passives + LEDs today) from the parsed identity.
+4. When the user selects an explicit supplier context (`--supplier <id>` or
+   `--jlc`), a *supplier enrichment* step calls the supplier provider's
+   deterministic MPN lookup first, with a keyword search fallback, to fill in
+   `Manufacturer`, `MFGPN`, `Datasheet`, and `SPN`.  Without an explicit
+   supplier flag, the implicit `generic` context carries no catalog and no
+   enrichment is attempted.
+5. The result is written as canonical inventory columns first, followed by any
+   supplemental source columns (qty, pricing) preserved verbatim for traceability.
 
 **SOURCE_INVENTORY** (required)
 : Path to the supplier-export CSV to promote.
 
 **--supplier SUPPLIER_ID**
-: Supplier context for promotion. Repeat to express multi-supplier promotion flows,
-  consistent with `jbom inventory` supplier semantics.
+: Supplier context for promotion. Repeat is accepted and is shape-compatible with
+  `jbom inventory` supplier semantics.
 
 **--jlc**
 : Shortcut for `--supplier lcsc`.
@@ -365,8 +382,6 @@ The command preserves all source columns and appends one stable metadata column:
 : Optional API key argument, parsed with the same shape rules as `jbom inventory`:
   - `--api-key KEY`
   - `--api-key SUPPLIER_ID=KEY`
-: In multi-supplier design flows, use supplier-scoped keys (`SUPPLIER_ID=KEY`) or
-  ordered repeated unscoped keys aligned with repeated `--supplier` arguments.
 
 **-o, --output OUTPUT**
 : Output destination.
@@ -378,13 +393,15 @@ The command preserves all source columns and appends one stable metadata column:
 : Overwrite an existing output file.
 
 **-v, --verbose**
-: Enable verbose diagnostics.
+: Print per-row parse provenance and enrichment outcomes to stderr.
 
 ### Design intent
 
-`jbom promote` is designed to share supplier-selection and API-key mapping semantics
-with `jbom inventory`, so promotion and inventory-enrichment workflows remain
-interchangeable at the CLI contract level.
+`jbom promote` shares supplier-selection and API-key mapping semantics with
+`jbom inventory` so promotion and inventory-enrichment workflows are
+interchangeable at the CLI contract level. The canonical-output schema is the
+same inventory column shape consumed by downstream `jbom bom`, `jbom audit`,
+and `jbom annotate` workflows.
 
 ### Exit codes
 
@@ -628,7 +645,7 @@ jbom inventory ./my_project --supplier lcsc -o inventory.csv
 : Default name `part-inventory.csv` (written in the current working directory when `-o` is omitted). Template with IPN, Category, Value, Package, and related columns.
 
 **Promoted CSV**
-: Default name `<input>.promoted.csv` (written next to the source file when `-o` is omitted). Source columns are preserved and `SupplierContext` is added.
+: Default name `<input>.promoted.csv` (written next to the source file when `-o` is omitted). Canonical inventory columns are written first (`RowType`, `IPN`, `Category`, `Value`, `Package`, `Description`, `Manufacturer`, `MFGPN`, `Supplier`, `SPN`, `Datasheet`, typed EM fields, etc.) with `SupplierContext` carrying the resolved supplier label.  Supplemental source columns from the export (qty, pricing, etc.) are preserved after the canonical block for traceability.
 
 **Parts CSV**
 : Default name `${ProjectName}.parts.csv` (written in the project directory when `-o` is omitted). One row per electro-mechanical group with a `Refs` column of collapsed references. Use `-o -` for CSV to stdout.
