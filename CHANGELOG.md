@@ -1,6 +1,36 @@
 # CHANGELOG
 
 
+## v7.2.0 (2026-05-29)
+
+### Features
+
+* feat(cli): rewrite promote as canonical-inventory workflow
+
+Replace the stamp-only scaffold with a proper promote pipeline: a JLC/generic source adapter, a pure description+EM parser (extracts Category, Value, Package, Tolerance, Type, V/A/W, Wavelength/mcd/Angle, typed R/C/L), a deterministic IPN identity policy, and a canonical-row writer that emits jBOM inventory schema columns followed by preserved supplemental source columns for traceability.
+
+Catalog enrichment is now implicit and tied to supplier context: --supplier <id> or --jlc engages the supplier provider's MPN-first / keyword-fallback search; the implicit 'generic' context carries no catalog and stays offline.  This removes the awkward --no-enrich inversion and the redundant --source-format override (header detection picks the adapter).
+
+Updates promote unit + BDD tests, CLI reference, and inventory-workflows tutorial accordingly.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`8074ece`](https://github.com/plocher/jBOM/commit/8074ece11e739c40534e2dfcfe241e3edda5db18))
+
+* feat(cli): align supplier api-key mapping for inventory and promote
+
+Add shared supplier API-key parsing with scoped SUPPLIER_ID=KEY support plus
+backward-compatible single-key fallback.
+
+For repeated unscoped keys, map keys to supplier argument order when counts
+match and fail fast on mixed or mismatched forms.
+
+Keep promote single-supplier semantics while accepting and validating the same
+API-key shape, and extend unit + behave coverage.
+
+Refs #324
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`35edeef`](https://github.com/plocher/jBOM/commit/35edeefc1faf6375c94a93b5038c21a8a314964e))
+
+
 ## v7.1.0 (2026-05-28)
 
 ### Features
