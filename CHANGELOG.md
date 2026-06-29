@@ -1,6 +1,73 @@
 # CHANGELOG
 
 
+## v7.3.0 (2026-06-29)
+
+### Features
+
+* feat(pcb-project-loader): carry .kicad_pro text_variables on ResolvedPcbProject
+
+ResolvedPcbProject now exposes a text_variables: Mapping[str, str] field
+populated by resolve_pcb_input from the project context's .kicad_pro.
+Reads via jbom.services.project_variables_reader.read_text_variables.
+
+text_variables ingestion is enrichment data, not a precondition of PCB
+resolution: missing files, missing keys, malformed JSON, and test
+doubles without a project_file attribute all fall back to an empty
+read-only map without emitting a diagnostic.
+
+Refs #332 ([`b7cd86d`](https://github.com/plocher/jBOM/commit/b7cd86da575c6abca397f5a0e1bf603a4ef98ec2))
+
+* feat(project-variables): expose .kicad_pro text_variables as typed artifact
+
+Adds jbom.services.project_variables_reader with:
+- ProjectTextVariables (frozen dataclass; variables is a read-only
+  Mapping[str, str], source_path is the .kicad_pro Path)
+- read_text_variables(project_file) helper
+
+Missing or empty text_variables (the modal case) returns an empty map
+with no diagnostic, per #332. Bad inputs (missing file, wrong extension,
+malformed JSON) raise so the resolver path can decide policy.
+
+Refs #332 ([`4d534e7`](https://github.com/plocher/jBOM/commit/4d534e7a9c898cf2c4bf8a0833b2059826d3c2c9))
+
+* feat(schematic-reader): parse title-block comment 1..9 fields
+
+SchematicReader now populates TitleBlockMetadata.comments by walking
+(comment N "...") stanzas under (title_block ...) on the schematic side.
+Mirrors the PCB-side parser added in the previous commit; populates
+independently from its own .kicad_sch file with no cross-file merge or
+reconciliation. Adds a regression test that pins down the SCH/PCB
+independence contract.
+
+Refs #332 ([`b2e5e66`](https://github.com/plocher/jBOM/commit/b2e5e66740bcfecd4bf8c7541c13bd91b23c7ceb))
+
+* feat(pcb-reader): parse title-block comment 1..9 fields
+
+DefaultKiCadReaderService now populates TitleBlockMetadata.comments by
+walking (comment N "...") stanzas under (title_block ...) on the PCB
+side. Verbatim string preservation, missing-vs-empty distinction, and
+mixed-presence layouts are covered by unit tests. The PCB and schematic
+readers populate their TitleBlockMetadata independently; jBOM does not
+reconcile across the two files.
+
+Refs #332 ([`4131286`](https://github.com/plocher/jBOM/commit/413128620a999f251b86bd75a5791cac281bde37))
+
+* feat(types): expose KiCad title-block COMMENT fields on TitleBlockMetadata
+
+Extend TitleBlockMetadata with a frozen comments: Mapping[int, str] field
+so callers can read ${COMMENT1}..${COMMENT9} verbatim. Missing comments
+are absent from the map; empty-string comments are present with an empty
+value, so consumers can distinguish 'no field' from 'field deliberately
+blanked'.
+
+Refs #332 ([`1234f1e`](https://github.com/plocher/jBOM/commit/1234f1eec471f48cd89cf7497a7f61a2bd348824))
+
+### Unknown
+
+* Update LICENSE - should have been MITm not AGPL ([`b324cdf`](https://github.com/plocher/jBOM/commit/b324cdf551e45ebcc00beee797650fdd9d5e498e))
+
+
 ## v7.2.0 (2026-05-29)
 
 ### Features
