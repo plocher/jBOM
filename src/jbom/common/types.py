@@ -1,7 +1,7 @@
 """Data classes for jBOM components and inventory items."""
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Dict, Literal, Optional
+from typing import Dict, Literal, Mapping, Optional
 from pathlib import Path
 
 
@@ -45,13 +45,29 @@ class TitleBlockMetadata:
     section with project metadata including title, revision, date, company, etc.
     This dataclass represents the common extracted metadata from either source.
 
-    All fields default to empty string; callers must handle absent data gracefully.
+    All scalar fields default to empty string; ``comments`` defaults to an
+    empty mapping. Callers must handle absent data gracefully.
+
+    KiCad supports nine user-defined comment fields (``${COMMENT1}`` through
+    ``${COMMENT9}``) inside the ``(title_block ...)`` stanza. They are
+    surfaced here verbatim via :attr:`comments`, keyed by the 1-based KiCad
+    index. Two distinct cases are preserved:
+
+    * Comment *missing* from the file → key absent from :attr:`comments`.
+    * Comment present but *empty* (``(comment 2 "")``) → key present with
+      an empty-string value.
+
+    The schematic and PCB title blocks each populate :class:`TitleBlockMetadata`
+    independently. jBOM never merges or reconciles values across files;
+    cross-file divergence is a consumer concern (KiCad itself permits
+    independent edits after initial sync).
     """
 
     title: str = ""
     revision: str = ""
     date: str = ""  # issue_date from title block (YYYY-MM-DD or designer-formatted)
     company: str = ""  # company / organisation field from title block
+    comments: Mapping[int, str] = field(default_factory=dict)
 
 
 @dataclass
