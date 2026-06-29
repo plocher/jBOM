@@ -170,7 +170,15 @@ class SchematicReader:
         return True
 
     def _extract_title_block_metadata(self, sexp) -> TitleBlockMetadata:
-        """Extract title block metadata from a KiCad schematic S-expression tree."""
+        """Extract title block metadata from a KiCad schematic S-expression tree.
+
+        Populates ``title``, ``revision``, ``date``, ``company``, and the
+        per-file ``comments`` map (``${COMMENT1}``..``${COMMENT9}``).  Values
+        are reported verbatim; missing comments are absent from the map and
+        empty-string comments are preserved as empty strings.  This reader
+        never merges or reconciles with the PCB's title block; cross-file
+        divergence is a consumer concern.
+        """
         from sexpdata import Symbol
 
         if not isinstance(sexp, list) or len(sexp) < 2:
@@ -180,6 +188,7 @@ class SchematicReader:
         revision = ""
         date = ""
         company = ""
+        comments: dict[int, str] = {}
         for item in sexp[1:]:
             if not (
                 isinstance(item, list) and item and item[0] == Symbol("title_block")
@@ -187,23 +196,36 @@ class SchematicReader:
                 continue
 
             for title_block_item in item[1:]:
+                if not (isinstance(title_block_item, list) and title_block_item):
+                    continue
+
+                tag = title_block_item[0]
+                if tag == Symbol("comment") and len(title_block_item) >= 3:
+                    idx = title_block_item[1]
+                    text = title_block_item[2]
+                    if isinstance(idx, int) and isinstance(text, str) and 1 <= idx <= 9:
+                        comments[idx] = text
+                    continue
+
                 if not (
-                    isinstance(title_block_item, list)
-                    and len(title_block_item) >= 2
-                    and isinstance(title_block_item[1], str)
+                    len(title_block_item) >= 2 and isinstance(title_block_item[1], str)
                 ):
                     continue
 
-                if title_block_item[0] == Symbol("title"):
+                if tag == Symbol("title"):
                     title = title_block_item[1]
-                elif title_block_item[0] == Symbol("rev"):
+                elif tag == Symbol("rev"):
                     revision = title_block_item[1]
-                elif title_block_item[0] == Symbol("date"):
+                elif tag == Symbol("date"):
                     date = title_block_item[1]
-                elif title_block_item[0] == Symbol("company"):
+                elif tag == Symbol("company"):
                     company = title_block_item[1]
             break
 
         return TitleBlockMetadata(
-            title=title, revision=revision, date=date, company=company
+            title=title,
+            revision=revision,
+            date=date,
+            company=company,
+            comments=comments,
         )
