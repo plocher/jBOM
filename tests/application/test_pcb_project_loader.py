@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -91,6 +92,9 @@ def test_resolve_pcb_input_emits_no_diagnostics_when_input_is_pcb(
     assert result.pcb_path == pcb_path
     assert result.diagnostics == ()
     assert fake_resolver.resolve_for_wrong_file_type_calls == 0
+    # text_variables defaults to an empty map when the fake project context
+    # carries no .kicad_pro path.
+    assert dict(result.text_variables) == {}
 
 
 def test_resolve_pcb_input_emits_diagnostic_trio_when_input_is_schematic(
@@ -153,6 +157,99 @@ def test_resolve_pcb_input_raises_when_no_project_context(
     )
     with pytest.raises(ValueError, match="No project context available"):
         loader.resolve_pcb_input(str(tmp_path), artifact_name="BOM")
+
+
+# ---------------------------------------------------------------------------
+# resolve_pcb_input: text_variables ingestion (#332)
+# ---------------------------------------------------------------------------
+
+
+class _ProjectContextWithFile:
+    """Stand-in ProjectContext that exposes a real ``.kicad_pro`` path."""
+
+    def __init__(self, project_file: Path) -> None:
+        self.project_file = project_file
+        self.project_base_name = project_file.stem
+        self.project_directory = project_file.parent
+
+    @staticmethod
+    def get_hierarchical_schematic_files() -> list[Path]:
+        return []
+
+
+def _write_kicad_pro(path: Path, payload: Any) -> None:
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+
+def test_resolve_pcb_input_carries_text_variables_when_present(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """``ResolvedPcbProject.text_variables`` mirrors the ``.kicad_pro`` map."""
+    project_file = tmp_path / "demo.kicad_pro"
+    _write_kicad_pro(
+        project_file,
+        {"text_variables": {"DESIGNER": "JP", "STATUS": "released"}},
+    )
+    pcb_path = tmp_path / "demo.kicad_pcb"
+    pcb_path.write_text("(kicad_pcb)", encoding="utf-8")
+    fake_resolver = _FakeResolver(
+        starts_as_pcb=True,
+        starting_path=pcb_path,
+        pcb_path=pcb_path,
+        project_context=_ProjectContextWithFile(project_file),
+    )
+    monkeypatch.setattr(loader, "ProjectFileResolver", lambda **_kwargs: fake_resolver)
+
+    result = loader.resolve_pcb_input(str(pcb_path), artifact_name="BOM")
+    assert dict(result.text_variables) == {
+        "DESIGNER": "JP",
+        "STATUS": "released",
+    }
+
+
+def test_resolve_pcb_input_text_variables_empty_when_absent_from_pro(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """A ``.kicad_pro`` without ``text_variables`` yields an empty map."""
+    project_file = tmp_path / "demo.kicad_pro"
+    _write_kicad_pro(project_file, {"meta": {"version": 1}})
+    pcb_path = tmp_path / "demo.kicad_pcb"
+    pcb_path.write_text("(kicad_pcb)", encoding="utf-8")
+    fake_resolver = _FakeResolver(
+        starts_as_pcb=True,
+        starting_path=pcb_path,
+        pcb_path=pcb_path,
+        project_context=_ProjectContextWithFile(project_file),
+    )
+    monkeypatch.setattr(loader, "ProjectFileResolver", lambda **_kwargs: fake_resolver)
+
+    result = loader.resolve_pcb_input(str(pcb_path), artifact_name="BOM")
+    assert dict(result.text_variables) == {}
+
+
+def test_resolve_pcb_input_swallows_unreadable_kicad_pro(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """A malformed ``.kicad_pro`` must not poison the resolution path.
+
+    Reading text_variables is enrichment data, not a precondition of
+    PCB resolution. Errors there silently fall back to an empty map so
+    the caller can still produce BOM/POS/Gerber artifacts.
+    """
+    project_file = tmp_path / "demo.kicad_pro"
+    project_file.write_text("{not-json", encoding="utf-8")
+    pcb_path = tmp_path / "demo.kicad_pcb"
+    pcb_path.write_text("(kicad_pcb)", encoding="utf-8")
+    fake_resolver = _FakeResolver(
+        starts_as_pcb=True,
+        starting_path=pcb_path,
+        pcb_path=pcb_path,
+        project_context=_ProjectContextWithFile(project_file),
+    )
+    monkeypatch.setattr(loader, "ProjectFileResolver", lambda **_kwargs: fake_resolver)
+
+    result = loader.resolve_pcb_input(str(pcb_path), artifact_name="BOM")
+    assert dict(result.text_variables) == {}
 
 
 # ---------------------------------------------------------------------------

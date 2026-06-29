@@ -26,9 +26,10 @@ right tool for catching them.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Sequence
+from types import MappingProxyType
+from typing import Any, Mapping, Sequence
 
 from jbom.common.options import GeneratorOptions
 from jbom.common.pcb_types import BoardModel
@@ -43,7 +44,10 @@ from jbom.services.project_file_resolver import (
     ProjectFileResolver,
     ResolvedInput,
 )
+from jbom.services.project_variables_reader import read_text_variables
 from jbom.services.schematic_reader import SchematicReader
+
+_EMPTY_TEXT_VARIABLES: Mapping[str, str] = MappingProxyType({})
 
 
 @dataclass(frozen=True)
@@ -55,12 +59,23 @@ class ResolvedPcbProject:
     (typically the ``Note: <artifact> requires a PCB file\u2026 / found
     matching PCB\u2026 / Using PCB\u2026`` trio when the user input pointed at
     something other than a PCB).
+
+    ``text_variables`` carries the ``${VAR}`` substitution map read from
+    the project's ``.kicad_pro``.  Empty when the project file does not
+    declare any (the modal case) or when the resolver could not safely
+    read it; absence is intentional and emits no diagnostic.  Title-block
+    fields (title / rev / date / company / COMMENT N) are NOT included
+    here — those are per-file and read independently by the SCH and PCB
+    readers.
     """
 
     resolved_input: ResolvedInput
     pcb_path: Path
     project_context: ProjectContext
     diagnostics: tuple[Diagnostic, ...] = ()
+    text_variables: Mapping[str, str] = field(
+        default_factory=lambda: _EMPTY_TEXT_VARIABLES
+    )
 
 
 def resolve_pcb_input(
@@ -130,7 +145,26 @@ def resolve_pcb_input(
         pcb_path=resolved.resolved_path,
         project_context=resolved.project_context,
         diagnostics=tuple(diagnostics),
+        text_variables=_load_text_variables(resolved.project_context),
     )
+
+
+def _load_text_variables(project_context: ProjectContext) -> Mapping[str, str]:
+    """Read ``text_variables`` from the project's ``.kicad_pro``, defensively.
+
+    Resolution succeeds even when ``text_variables`` cannot be read — the
+    map is enrichment data, not a precondition.  Missing files, missing
+    keys, malformed JSON, or test doubles without a ``project_file``
+    attribute all fall back to an empty read-only map without emitting a
+    diagnostic.
+    """
+    project_file = getattr(project_context, "project_file", None)
+    if not isinstance(project_file, Path) or not project_file.exists():
+        return _EMPTY_TEXT_VARIABLES
+    try:
+        return read_text_variables(project_file).variables
+    except (FileNotFoundError, ValueError):
+        return _EMPTY_TEXT_VARIABLES
 
 
 def load_board(pcb_path: Path) -> BoardModel:
