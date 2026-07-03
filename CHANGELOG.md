@@ -1,6 +1,29 @@
 # CHANGELOG
 
 
+## v7.3.1 (2026-07-03)
+
+### Bug Fixes
+
+* fix: correct license metadata to MIT
+
+The LICENSE file has always been MIT (copyright John Plocher), but an
+early automated change incorrectly set AGPL-3.0 in package metadata and
+docs without asking. This corrects the three source locations:
+
+- pyproject.toml: license = "MIT" (fixes published PyPI metadata on
+  next release)
+- README.md: License line now matches the LICENSE file it references
+- docs/design/contributing.md: contributor agreement references MIT
+
+The KiCad plugin metadata.json already said MIT. The stale
+src/jbom.egg-info/PKG-INFO regenerates from pyproject at build time.
+
+Fixes #334
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`9314026`](https://github.com/plocher/jBOM/commit/9314026c219de520c3147a410267fbe034e6835b))
+
+
 ## v7.3.0 (2026-06-29)
 
 ### Features
