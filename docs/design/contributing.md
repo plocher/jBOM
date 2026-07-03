@@ -197,6 +197,6 @@ user-visible behavior, BDD scenarios.
 ## Contributor Agreement
 
 By contributing to jBOM, you agree that your contributions will be
-licensed under the AGPLv3 license. Contributions of all kinds are
+licensed under the MIT license. Contributions of all kinds are
 welcome — bug fixes, features, documentation, tests, and feedback. Be
 respectful and professional.

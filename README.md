@@ -145,5 +145,5 @@ Regenerate baseline-vs-candidate parity delta evidence:
 
 See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for details.
 
-**License**: AGPLv3 — See LICENSE file for full terms.
+**License**: MIT — See LICENSE file for full terms.
 Author: John Plocher
