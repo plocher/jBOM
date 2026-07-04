@@ -13,6 +13,9 @@ jobs:
   release:
     runs-on: ubuntu-latest
     concurrency: release
+    defaults:
+      run:
+        shell: bash
 
     steps:
     - uses: actions/checkout@v4
@@ -37,11 +40,97 @@ jobs:
         git config user.name "github-actions"
         git config user.email "github-actions@github.com"
         semantic-release version
+
+    - name: Detect whether a release was cut
+      # semantic-release version may no-op when no relevant commits landed.
+      # Presence of dist/ artifacts is the reliable signal that a new
+      # version was tagged and built; use that to gate every subsequent
+      # release-only step (PyPI publish, PCM build, asset upload, metadata
+      # sync commit).
+      id: release
+      run: |
+        if [ -n "$(ls -A dist 2>/dev/null || true)" ]; then
+          version=$(python -c "import re,sys; m=re.search(r'^version *= *\"([^\"]+)\"', open('pyproject.toml').read(), re.MULTILINE); sys.stdout.write(m.group(1))")
+          echo "released=true" >> "$GITHUB_OUTPUT"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "tag=v${version}" >> "$GITHUB_OUTPUT"
+          echo "Detected new release v${version}"
+        else
+          echo "released=false" >> "$GITHUB_OUTPUT"
+          echo "No new release; skipping publish and asset attach steps."
+        fi
+
     - name: Publish to PyPI
-      if: ${{ hashFiles('dist/*') != '' }}
+      if: steps.release.outputs.released == 'true'
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
       run: |
         pip install twine
-        twine upload dist/*
+        # Upload only the wheel + sdist to PyPI. The PCM zip we're about to
+        # build must NOT be uploaded here — PyPI would reject it. It is
+        # built after this step and attached to the GitHub Release only.
+        twine upload dist/*.whl dist/*.tar.gz
+
+    - name: Install vendored runtime dependencies for PCM build
+      if: steps.release.outputs.released == 'true'
+      # The PCM archive vendors these pure-Python packages from the build
+      # host's site-packages. They must be present for the archive to be
+      # complete; skipping this step yields a silently-broken archive.
+      run: pip install -r scripts/_vendor_requirements.txt
+
+    - name: Build PCM archive and sync metadata.json
+      if: steps.release.outputs.released == 'true'
+      # --update-metadata performs the two-phase manifest sync:
+      # (1) bump versions[0].version and download_url before the archive
+      # is staged, (2) patch download_sha256/install_size/download_size
+      # after zipping. See scripts/build_pcm_package.py._update_metadata.
+      run: |
+        python scripts/build_pcm_package.py --update-metadata
+        # Stable-name copy so
+        # https://github.com/plocher/jBOM/releases/latest/download/jbom-pcm.zip
+        # resolves to the newest release archive without manual maintenance.
+        cp "dist/jbom-pcm-${{ steps.release.outputs.version }}.zip" \
+           dist/jbom-pcm.zip
+
+    - name: Attach release assets
+      if: steps.release.outputs.released == 'true'
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # --clobber makes this step idempotent if the workflow is re-run
+      # against the same tag (e.g. after a transient upload failure).
+      run: |
+        version="${{ steps.release.outputs.version }}"
+        tag="${{ steps.release.outputs.tag }}"
+        gh release upload "${tag}" \
+          "dist/jbom-pcm-${version}.zip" \
+          "dist/jbom-pcm.zip" \
+          --clobber
+        shopt -s nullglob
+        pypi_artifacts=(dist/*.whl dist/*.tar.gz)
+        if [ ${#pypi_artifacts[@]} -gt 0 ]; then
+          gh release upload "${tag}" "${pypi_artifacts[@]}" --clobber
+        fi
+
+    - name: Sync metadata.json back to main
+      if: steps.release.outputs.released == 'true'
+      # metadata.json now reflects the just-released version + sha256. Push
+      # the change back so the PCM manifest at
+      # https://raw.githubusercontent.com/plocher/jBOM/main/metadata.json
+      # stays authoritative for consumers reading the manifest directly.
+      # The `[skip ci]` marker prevents this commit from re-triggering the
+      # release workflow.
+      run: |
+        if git diff --quiet metadata.json; then
+          echo "metadata.json unchanged; nothing to commit."
+          exit 0
+        fi
+        version="${{ steps.release.outputs.version }}"
+        git add metadata.json
+        git commit \
+          -m "chore(release): sync metadata.json for v${version} [skip ci]" \
+          -m "" \
+          -m "Refs #338" \
+          -m "" \
+          -m "Co-Authored-By: Oz <oz-agent@warp.dev>"
+        git push origin HEAD:main
