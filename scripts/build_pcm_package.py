@@ -49,9 +49,14 @@ Flags
 --output-dir DIR
     Directory where the zip is written (default: ``dist/``).
 --update-metadata
-    After building, patch ``metadata.json`` in the repo root with the computed
-    ``download_sha256``, ``install_size``, and ``download_size`` for the
-    current version.  Useful when preparing a release.
+    Synchronize ``metadata.json`` in the repo root with the current build.
+    This flag now performs a two-phase update: before the archive is staged,
+    ``versions[0].version`` and ``download_url`` are rewritten to match the
+    current build version and the ``vX.Y.Z`` release-tag pattern (so the
+    archived copy of ``metadata.json`` also carries the new version). After
+    the zip is built, ``download_sha256``, ``install_size``, and
+    ``download_size`` are patched in with the final values.
+    Used by the release workflow to keep the PCM manifest authoritative.
 --skip-binary-fetch
     Do not call ``pip download`` for compiled deps; only vendor the build
     host's local pydantic_core.  Useful for offline CI smoke tests and for
@@ -72,6 +77,7 @@ import argparse
 import hashlib
 import importlib.util
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -442,24 +448,131 @@ def _read_version() -> str:
     raise RuntimeError(f"Cannot read __version__ from {init_py}")
 
 
+# Default PCM archive-name template. Sibling projects (e.g. kproj) reuse
+# this script by passing their own ``archive_name_template`` when they
+# call ``_update_metadata`` from their own workflow.
+_DEFAULT_ARCHIVE_NAME_TEMPLATE = "jbom-pcm-{version}.zip"
+
+# GitHub homepage → (owner, repo) parser. Trailing slash tolerated;
+# ``.git`` suffix tolerated in case a repo URL was accidentally used.
+_GITHUB_HOMEPAGE_RE = re.compile(
+    r"^https?://github\.com/(?P<owner>[^/]+)/(?P<repo>[^/]+?)(?:\.git)?/?$"
+)
+
+
+def _parse_github_homepage(homepage: str) -> tuple[str, str]:
+    """Return ``(owner, repo)`` parsed from a GitHub homepage URL.
+
+    Raises ``RuntimeError`` when the URL does not match the expected shape;
+    the release-artifact contract in ``release-management/README.md``
+    depends on this URL being derivable so we surface the misconfiguration
+    instead of silently emitting a broken download_url.
+    """
+    match = _GITHUB_HOMEPAGE_RE.match(homepage.strip())
+    if match is None:
+        raise RuntimeError(
+            f"resources.homepage {homepage!r} is not a github.com/<owner>/<repo> URL; "
+            "cannot derive download_url. Fix metadata.json.resources.homepage."
+        )
+    return match.group("owner"), match.group("repo")
+
+
+def _build_download_url(homepage: str, version: str, archive_name_template: str) -> str:
+    """Return the canonical ``download_url`` for a ``vX.Y.Z`` release tag."""
+    owner, repo = _parse_github_homepage(homepage)
+    archive_name = archive_name_template.format(version=version)
+    return (
+        f"https://github.com/{owner}/{repo}/releases/download/"
+        f"v{version}/{archive_name}"
+    )
+
+
+def _default_version_entry(version: str) -> dict:
+    """Return a schema-shaped ``versions[]`` entry with placeholder hash/sizes."""
+    return {
+        "version": version,
+        "status": "stable",
+        "kicad_version": "9.0",
+        "kicad_version_max": "",
+        "download_url": "",
+        "download_sha256": "",
+        "install_size": 0,
+        "download_size": 0,
+    }
+
+
 def _update_metadata(
     version: str,
-    sha256: str,
-    install_size: int,
-    download_size: int,
+    *,
+    sha256: str | None = None,
+    install_size: int | None = None,
+    download_size: int | None = None,
+    metadata_path: Path | None = None,
+    archive_name_template: str = _DEFAULT_ARCHIVE_NAME_TEMPLATE,
 ) -> None:
-    """Patch the repo-root metadata.json with computed release values."""
-    data = json.loads(_METADATA_SRC.read_text(encoding="utf-8"))
-    for v in data.get("versions", []):
-        if v.get("version") == version:
-            v["download_sha256"] = sha256
-            v["install_size"] = install_size
-            v["download_size"] = download_size
-    _METADATA_SRC.write_text(
+    """Synchronize ``metadata.json`` with the current build.
+
+    Always rewrites ``versions[0].version`` and ``download_url`` so the PCM
+    manifest tracks the release currently being built. When ``sha256`` /
+    ``install_size`` / ``download_size`` are supplied, they are written in
+    the same pass. When they are omitted (the pre-archive-staging call),
+    the hash and size fields are reset to placeholders so the archived
+    copy of metadata.json never advertises a stale hash.
+
+    Args:
+        version: The release version (e.g. ``"7.4.0"``).
+        sha256: Optional lowercase hex SHA-256 of the built archive.
+        install_size: Optional uncompressed installed size in bytes.
+        download_size: Optional compressed archive size in bytes.
+        metadata_path: Path to the metadata.json to patch. Defaults to the
+            repo-root manifest. Overridable for tests and for sibling
+            projects that vendor this script.
+        archive_name_template: Format string for the archive filename; must
+            contain ``{version}``. Defaults to ``jbom-pcm-{version}.zip``.
+
+    Regression guard for #338: earlier revisions only patched sha256/sizes
+    on a ``versions[]`` entry whose ``version`` already matched the build,
+    so once semantic-release bumped past the pinned version the manifest
+    silently stopped updating. The new behavior always bumps the entry.
+    """
+    if metadata_path is None:
+        metadata_path = _METADATA_SRC
+
+    data = json.loads(metadata_path.read_text(encoding="utf-8"))
+    homepage = data.get("resources", {}).get("homepage", "")
+    download_url = _build_download_url(homepage, version, archive_name_template)
+
+    versions = data.setdefault("versions", [])
+    if not versions:
+        entry = _default_version_entry(version)
+        versions.append(entry)
+    else:
+        entry = versions[0]
+
+    entry["version"] = version
+    entry["download_url"] = download_url
+
+    if sha256 is not None:
+        entry["download_sha256"] = sha256
+    else:
+        entry["download_sha256"] = ""
+    if install_size is not None:
+        entry["install_size"] = install_size
+    else:
+        entry["install_size"] = 0
+    if download_size is not None:
+        entry["download_size"] = download_size
+    else:
+        entry["download_size"] = 0
+
+    metadata_path.write_text(
         json.dumps(data, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
-    print(f"  updated metadata.json with sha256={sha256[:16]}…")
+    if sha256:
+        print(f"  updated {metadata_path.name}: v{version} " f"sha256={sha256[:16]}…")
+    else:
+        print(f"  updated {metadata_path.name}: v{version} (hash pending)")
 
 
 # ---------------------------------------------------------------------------
@@ -558,6 +671,13 @@ def build(
         # ------------------------------------------------------------------
         # 4. metadata.json → archive root
         # ------------------------------------------------------------------
+        # Pre-stage version+URL sync: ensures the metadata.json that ships
+        # inside the archive carries the version being built (hash/sizes are
+        # placeholders here and are patched into the repo-root manifest in a
+        # second call after zipping — KiCad reads the authoritative manifest
+        # from the release URL, not from inside the archive).
+        if update_metadata:
+            _update_metadata(version)
         print("  copying metadata.json…")
         shutil.copy2(_METADATA_SRC, stage / "metadata.json")
 
@@ -585,7 +705,12 @@ def build(
         print(f"  download: {download_size:,} bytes (compressed)")
 
         if update_metadata:
-            _update_metadata(version, sha256, install_size, download_size)
+            _update_metadata(
+                version,
+                sha256=sha256,
+                install_size=install_size,
+                download_size=download_size,
+            )
 
         return output_zip
 

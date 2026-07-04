@@ -1,19 +1,20 @@
-"""Integration smoke tests for ``scripts/build_pcm_package.py``.
+"""Tests for ``scripts/build_pcm_package.py``.
 
-These tests exercise the build script with ``--skip-binary-fetch`` so they
-run without network access.  They verify the resulting archive layout
-matches expectations:
+Two groups of coverage live here:
 
-* ``plugins/__init__.py`` and the rest of the plugin adapter are present.
-* ``plugins/jbom/`` contains the vendored core (no ``plugin/`` subdir).
-* Pure-Python deps live at ``plugins/<name>/`` (e.g. ``plugins/pydantic/``).
-* The compiled-deps layout exists at ``plugins/_vendor/pydantic_core/<tag>/``.
-* ``metadata.json`` is present at the archive root.
+* Integration smoke tests that exercise the build script with
+  ``--skip-binary-fetch`` so they run without network access. They verify
+  the resulting archive layout matches expectations.
+* Unit tests for ``_update_metadata`` — the metadata.json sync logic that
+  bumps ``versions[0].version`` and rebuilds ``download_url`` from the
+  release tag pattern on every build. These tests use a scratch metadata
+  file so they don't mutate the real repo-root ``metadata.json``.
 """
 
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
 import zipfile
 from pathlib import Path
@@ -134,3 +135,244 @@ def test_skip_binary_fetch_build_produces_expected_layout(
     # ActionPlugin toolbar icons (light/dark) bundled with plugin sources
     assert "plugins/assets/icons/pcb-fabrication-tool-light-24.png" in names
     assert "plugins/assets/icons/pcb-fabrication-tool-dark-24.png" in names
+
+
+# ---------------------------------------------------------------------------
+# _update_metadata: metadata.json version + download_url sync
+# ---------------------------------------------------------------------------
+
+
+def _write_metadata(
+    path: Path,
+    *,
+    versions: list[dict] | None = None,
+    homepage: str = "https://github.com/plocher/jBOM",
+) -> None:
+    """Write a minimal PCM-shaped metadata.json to *path*."""
+    data = {
+        "$schema": "https://go.kicad.org/pcm/schemas/v1",
+        "name": "jBOM Fabrication",
+        "identifier": "com.spcoast.jbom",
+        "type": "plugin",
+        "license": "MIT",
+        "resources": {"homepage": homepage},
+        "versions": versions if versions is not None else [],
+    }
+    path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+
+
+def _read_metadata(path: Path) -> dict:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def test_update_metadata_overwrites_stale_version_entry(
+    tmp_path: Path, build_module
+) -> None:
+    """A stale versions[0] entry gets its version and download_url rebuilt.
+
+    Regression guard for #338: previously ``_update_metadata`` only patched
+    sha256/sizes on a *matching-version* entry, so once semantic-release
+    bumped past the pinned version the manifest silently stopped updating.
+    """
+    meta = tmp_path / "metadata.json"
+    _write_metadata(
+        meta,
+        versions=[
+            {
+                "version": "6.53.0",
+                "status": "stable",
+                "kicad_version": "9.0",
+                "kicad_version_max": "",
+                "download_url": (
+                    "https://github.com/plocher/jBOM/releases/download/"
+                    "pcm-v6.53.0/jbom-pcm-6.53.0.zip"
+                ),
+                "download_sha256": "deadbeef",
+                "install_size": 111,
+                "download_size": 222,
+            }
+        ],
+    )
+
+    build_module._update_metadata(
+        "7.4.0",
+        sha256="a" * 64,
+        install_size=1000,
+        download_size=500,
+        metadata_path=meta,
+    )
+
+    entry = _read_metadata(meta)["versions"][0]
+    assert entry["version"] == "7.4.0"
+    assert entry["download_url"] == (
+        "https://github.com/plocher/jBOM/releases/download/" "v7.4.0/jbom-pcm-7.4.0.zip"
+    )
+    assert entry["download_sha256"] == "a" * 64
+    assert entry["install_size"] == 1000
+    assert entry["download_size"] == 500
+
+
+def test_update_metadata_creates_entry_when_versions_empty(
+    tmp_path: Path, build_module
+) -> None:
+    """An empty ``versions`` list is populated with a full new-release entry."""
+    meta = tmp_path / "metadata.json"
+    _write_metadata(meta, versions=[])
+
+    build_module._update_metadata(
+        "7.4.0",
+        sha256="b" * 64,
+        install_size=42,
+        download_size=21,
+        metadata_path=meta,
+    )
+
+    versions = _read_metadata(meta)["versions"]
+    assert len(versions) == 1
+    assert versions[0]["version"] == "7.4.0"
+    assert versions[0]["download_url"].endswith("/v7.4.0/jbom-pcm-7.4.0.zip")
+    assert versions[0]["download_sha256"] == "b" * 64
+    assert versions[0]["install_size"] == 42
+    assert versions[0]["download_size"] == 21
+    # Sane defaults for schema-required fields.
+    assert "status" in versions[0]
+    assert "kicad_version" in versions[0]
+
+
+def test_update_metadata_preserves_schema_fields_on_bump(
+    tmp_path: Path, build_module
+) -> None:
+    """``status``, ``kicad_version``, ``kicad_version_max`` are preserved."""
+    meta = tmp_path / "metadata.json"
+    _write_metadata(
+        meta,
+        versions=[
+            {
+                "version": "6.53.0",
+                "status": "testing",
+                "kicad_version": "9.0",
+                "kicad_version_max": "9.99",
+                "download_url": "stale",
+                "download_sha256": "",
+                "install_size": 0,
+                "download_size": 0,
+            }
+        ],
+    )
+
+    build_module._update_metadata(
+        "7.4.0",
+        sha256="c" * 64,
+        install_size=1,
+        download_size=1,
+        metadata_path=meta,
+    )
+
+    entry = _read_metadata(meta)["versions"][0]
+    assert entry["status"] == "testing"
+    assert entry["kicad_version"] == "9.0"
+    assert entry["kicad_version_max"] == "9.99"
+
+
+def test_update_metadata_matching_version_still_patches_sha256(
+    tmp_path: Path, build_module
+) -> None:
+    """Backward-compat: matching version entries still get sha256/sizes patched."""
+    meta = tmp_path / "metadata.json"
+    _write_metadata(
+        meta,
+        versions=[
+            {
+                "version": "7.4.0",
+                "status": "stable",
+                "kicad_version": "9.0",
+                "kicad_version_max": "",
+                "download_url": (
+                    "https://github.com/plocher/jBOM/releases/download/"
+                    "v7.4.0/jbom-pcm-7.4.0.zip"
+                ),
+                "download_sha256": "",
+                "install_size": 0,
+                "download_size": 0,
+            }
+        ],
+    )
+
+    build_module._update_metadata(
+        "7.4.0",
+        sha256="d" * 64,
+        install_size=999,
+        download_size=333,
+        metadata_path=meta,
+    )
+
+    entry = _read_metadata(meta)["versions"][0]
+    assert entry["version"] == "7.4.0"
+    assert entry["download_sha256"] == "d" * 64
+    assert entry["install_size"] == 999
+    assert entry["download_size"] == 333
+
+
+def test_update_metadata_derives_owner_repo_from_homepage(
+    tmp_path: Path, build_module
+) -> None:
+    """``download_url`` is derived from ``resources.homepage``.
+
+    This portability guarantee is what lets sibling projects (e.g. kproj)
+    reuse this script by simply pointing their ``resources.homepage`` at
+    their own GitHub repo.
+    """
+    meta = tmp_path / "metadata.json"
+    _write_metadata(meta, homepage="https://github.com/example-org/kproj")
+
+    build_module._update_metadata(
+        "1.2.3",
+        sha256="e" * 64,
+        install_size=1,
+        download_size=1,
+        metadata_path=meta,
+        archive_name_template="kproj-pcm-{version}.zip",
+    )
+
+    entry = _read_metadata(meta)["versions"][0]
+    assert entry["download_url"] == (
+        "https://github.com/example-org/kproj/releases/download/"
+        "v1.2.3/kproj-pcm-1.2.3.zip"
+    )
+
+
+def test_update_metadata_accepts_version_only_call(
+    tmp_path: Path, build_module
+) -> None:
+    """Called with only ``version=``, the entry is rewritten with placeholder hash/sizes.
+
+    Used by the workflow's two-phase update: (1) bump version+URL before
+    the archive is staged so the archived ``metadata.json`` carries the
+    new version, then (2) after zipping, patch sha256/sizes.
+    """
+    meta = tmp_path / "metadata.json"
+    _write_metadata(
+        meta,
+        versions=[
+            {
+                "version": "6.53.0",
+                "status": "stable",
+                "kicad_version": "9.0",
+                "kicad_version_max": "",
+                "download_url": "stale",
+                "download_sha256": "deadbeef",
+                "install_size": 111,
+                "download_size": 222,
+            }
+        ],
+    )
+
+    build_module._update_metadata("7.4.0", metadata_path=meta)
+
+    entry = _read_metadata(meta)["versions"][0]
+    assert entry["version"] == "7.4.0"
+    assert entry["download_url"].endswith("/v7.4.0/jbom-pcm-7.4.0.zip")
+    # Hash/sizes reset — they are re-populated by the post-zip second call.
+    assert entry["download_sha256"] == ""
+    assert entry["install_size"] == 0
+    assert entry["download_size"] == 0
