@@ -129,23 +129,69 @@ follow-up commit from cascading into another release run. See
   overwrite `versions[0]` regardless of prior content; drift is
   self-healing.
 
-## Portability notes
+## Portability and the shared-process principle
 
-The PCM archive contract described here is specific to jBOM, but the
-mechanics are reusable by sibling KiCad-plugin projects (e.g. `kproj`)
-that follow the same conventions:
+Sibling repositories must not evolve arbitrarily different release
+processes. The **shape** of the release chain — feature-branch →
+conventional commits → PR → merge to `main` →
+`semantic-release version` → release-detected gate → PyPI publish →
+attach wheel + sdist to VCS release → (optional domain-specific asset
+steps) → (optional `[skip ci]` sync commit) — is normative across the
+family. Cosmetic differences (step names, gate mechanism, commit
+vocabulary, tag scheme, config layout) between sibling workflows are
+treated as bugs, not stylistic choices.
+
+Divergence is allowed only where a real domain requirement makes it
+necessary. Currently one such divergence exists:
+
+**PCM packaging applies to jBOM only, because jBOM ships a KiCad
+ActionPlugin distributed through KiCad's Plugin and Content Manager.**
+Sibling projects that do not ship a KiCad plugin (e.g. `kproj`, which
+is a pure-Python app) do not need any of the PCM machinery, and their
+release chains should stop at "attach wheel + sdist to VCS release."
+The jBOM-specific steps are:
+
+- PCM archive build (`scripts/build_pcm_package.py`) and its
+  `_vendor_requirements.txt` install step.
+- Stable-name `jbom-pcm.zip` copy and the two-phase
+  `metadata.json` sync (version + URL pre-stage, sha256 + sizes
+  post-zip).
+- The `[skip ci]` `metadata.json` sync commit back to `main`.
+
+Everything else in the chain is generic and every sibling should keep
+it byte-for-byte compatible with jBOM's implementation:
+
+- Release-detected gate that reads the freshly-bumped version from
+  `pyproject.toml` and gates every release-only step on
+  `steps.release.outputs.released == 'true'`.
+- `twine upload dist/*.whl dist/*.tar.gz` (never a bare `dist/*` —
+  keeps room for non-PyPI artifacts alongside).
+- `gh release upload <tag> ... --clobber` for the wheel + sdist mirror
+  attach, so the VCS release is a complete audit trail of what shipped.
+- Semantic-release configuration shape: `version_toml` +
+  `version_variables`, `branch = "main"`, `exclude_commit_patterns`
+  filtering `chore` / `ci` / `docs` / `style` / `test` out of the
+  changelog, `upload_to_vcs_release = true`, `upload_to_pypi = true`.
+- Conventional-commit vocabulary: `fix` → patch, `feat` → minor,
+  breaking change → major, plus non-release types listed above.
+- Feature-branch naming (`feature/issue-N-...` / `fix/issue-N-...`)
+  and the co-author trailer requirement.
+
+When either project's release chain needs to evolve, evaluate the
+change against the sibling. If the change is generic (release
+mechanics), apply it to both. If the change is domain-specific,
+document the divergence and its justification in this section —
+silent divergence is the antipattern this section exists to prevent.
+
+Mechanical reuse notes for the PCM builder itself (in case any future
+sibling ever does ship a KiCad plugin):
 
 - `metadata.json` at the repo root, with `resources.homepage` pointing
-  at the project's GitHub URL.
-- `scripts/build_pcm_package.py` (or an equivalent vendored copy)
-  accepting the same `--update-metadata` flag and its
-  `archive_name_template` argument.
-- Semantic-release-driven `vX.Y.Z` tagging.
-
-`_update_metadata` in the builder derives the `download_url` owner /
-repo from `resources.homepage`, so the same code produces correct URLs
-for any repo following the shape. The archive filename template is a
-parameter, so `kproj-pcm-{version}.zip` is a one-line change.
+  at the project's GitHub URL (`_update_metadata` derives the
+  `owner/repo` in `download_url` from this field, so no per-repo code
+  changes are needed).
+- `_update_metadata`'s `archive_name_template` argument makes the
+  archive filename a one-line customization.
 
 ## Related documents
 
