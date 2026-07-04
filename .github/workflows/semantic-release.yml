@@ -26,7 +26,12 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: "3.11"
+        # Match jBOM's declared floor (``requires-python = ">=3.10"``) so
+        # the release build catches accidental 3.11+ usage before it
+        # reaches users on the minimum supported version. Runner version
+        # is discipline-neutral for the built artifact (pure-Python
+        # wheel + sdist). See release-management/README.md#portability-and-the-shared-process-principle.
+        python-version: "3.10"
 
     - name: Install python-semantic-release
       run: |
