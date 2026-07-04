@@ -109,15 +109,19 @@ For the full step-by-step walkthrough, options, and troubleshooting tips, see th
 
 ## KiCad Integration
 
-Run jBOM directly from KiCad's **Generate BOM** dialog — see [docs/README.man4.md](docs/README.man4.md) for setup.
+jBOM provides a **Pcbnew ActionPlugin** (a toolbar button in the PCB editor) that generates BOM, pick-and-place (CPL), and Gerbers in one click. The plugin is distributed through KiCad's **Plugin and Content Manager (PCM)** as a separate channel from PyPI; `pip install jbom` installs the CLI and library only and does **not** register the KiCad plugin.
 
-Quick summary:
-1. In Eeschema, go to `Tools` → `Generate BOM`.
-2. Add a plugin with the command:
-   ```
-   python3 /path/to/kicad_jbom_plugin.py "%I" --inventory /path/to/inventory.csv -o "%O" --jlc
-   ```
-3. Click `Generate`.
+To install the plugin:
+
+1. Download the latest PCM archive from GitHub's stable-name URL:
+   [`https://github.com/plocher/jBOM/releases/latest/download/jbom-pcm.zip`](https://github.com/plocher/jBOM/releases/latest/download/jbom-pcm.zip)
+   (GitHub redirects `releases/latest/download/<asset>` to whatever asset of that name is attached to the newest release, so the URL never needs to be edited when a new version ships.)
+2. In KiCad, open **Plugin and Content Manager**, choose **Install from File…**, and select the downloaded `jbom-pcm.zip`.
+3. Open the **PCB Editor** (Pcbnew); the jBOM toolbar button appears automatically. Vendored runtime dependencies ship inside the archive, so no additional `pip install` step is required inside KiCad's bundled Python.
+
+For fabricator flags, output columns, inventory requirements, custom fabricator configuration, and troubleshooting, see [docs/reference/kicad-plugin.md](docs/reference/kicad-plugin.md).
+
+**Legacy Eeschema BOM wrapper.** The repo also ships `kicad_jbom_plugin.py`, a thin shim that lets Eeschema's **Tools → Generate BOM** dialog call `jbom bom` for schematic-only BOM output. This path is optional and requires a one-time manual registration via Eeschema's Add-plugin dialog. See the [kicad-plugin-setup skill](.agents/skills/kicad-plugin-setup/SKILL.md) if you need it. Most users should use the PCM ActionPlugin above instead.
 
 ## Configuration
 
