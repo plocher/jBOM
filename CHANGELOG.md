@@ -1,6 +1,47 @@
 # CHANGELOG
 
 
+## v7.3.3 (2026-07-04)
+
+### Bug Fixes
+
+* fix(build): --update-metadata now bumps version and rebuilds download_url
+
+Previously, ``scripts/build_pcm_package.py --update-metadata`` only
+patched ``download_sha256`` / ``install_size`` / ``download_size`` on a
+``metadata.json`` ``versions[]`` entry whose ``version`` already matched
+the build. Once semantic-release bumped the repo version past the
+pinned manifest entry, the flag silently no-oped, leaving the PCM
+manifest permanently stale (repo was at 7.3.2 while metadata.json still
+advertised 6.53.0 with a ``pcm-v6.53.0`` download tag).
+
+Restructures ``_update_metadata`` to always synchronize ``versions[0]``
+with the current build:
+
+- Overwrites ``version`` and rebuilds ``download_url`` from the
+  ``vX.Y.Z`` release-tag pattern.
+- Derives ``owner/repo`` from ``resources.homepage`` so the same code
+  path is reusable by sibling projects (e.g. kproj) that follow the
+  ``metadata.json`` shape.
+- Keeps existing sha256/size patching behavior when hash args are
+  supplied; resets hash/size fields to placeholders when they are not.
+- Populates a schema-shaped entry when ``versions[]`` is empty.
+
+``build()`` now calls ``_update_metadata`` in two phases: once before
+the archive is staged (so the archived ``metadata.json`` carries the
+new version) and once after zipping (so the repo-root manifest carries
+the final hash and sizes).
+
+Adds six unit tests covering: stale-version overwrite, empty-versions
+population, schema-field preservation, matching-version backward-compat,
+homepage-driven owner/repo derivation, and the pre-stage version-only
+call shape used by the workflow.
+
+Refs #338
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`a3ab6d3`](https://github.com/plocher/jBOM/commit/a3ab6d352274a05c1ae22e0c7c10bf4bbe26d33d))
+
+
 ## v7.3.2 (2026-07-04)
 
 ### Bug Fixes
