@@ -2,7 +2,7 @@
   "$schema": "https://go.kicad.org/pcm/schemas/v1",
   "name": "jBOM Fabrication",
   "description": "BOM, pick-and-place, and Gerber fabrication package for KiCad PCB projects",
-  "description_full": "jBOM Fabrication provides one-click BOM, pick-and-place (CPL), and Gerber generation directly from the KiCad PCB editor toolbar. Supports multiple fabricators: JLC PCBA, PCBWay, Seeed Studio, and a generic profile. Per-project fabricator selection and inventory file path are persisted in .jbom/jbom-options.json. Requires KiCad 9.0 or later on macOS, Linux, or Windows. All runtime dependencies (pydantic, pyyaml, etc.) are vendored \u2014 no pip install required. The jBOM CLI and Python library are available separately via pip install jbom.",
+  "description_full": "jBOM Fabrication provides one-click BOM, pick-and-place (CPL), and Gerber generation directly from the KiCad PCB editor toolbar. Supports multiple fabricators: JLC PCBA, PCBWay, Seeed Studio, and a generic profile. Per-project fabricator selection and inventory file path are persisted in .jbom/jbom-options.json. Requires KiCad 9.0 or later on macOS, Linux, or Windows. All runtime dependencies (pydantic, pyyaml, etc.) are vendored — no pip install required. The jBOM CLI and Python library are available separately via pip install jbom.",
   "identifier": "com.spcoast.jbom",
   "type": "plugin",
   "author": {
@@ -25,14 +25,14 @@
   },
   "versions": [
     {
-      "version": "6.53.0",
+      "version": "7.3.3",
       "status": "development",
       "kicad_version": "9.0",
       "kicad_version_max": "",
-      "download_url": "https://github.com/plocher/jBOM/releases/download/pcm-v6.53.0/jbom-pcm-6.53.0.zip",
-      "download_sha256": "",
-      "install_size": 0,
-      "download_size": 0
+      "download_url": "https://github.com/plocher/jBOM/releases/download/v7.3.3/jbom-pcm-7.3.3.zip",
+      "download_sha256": "1ba21afbc8c6b19fdcb3f357a961cd14305252209e180b0c124c4be890c61c36",
+      "install_size": 52509961,
+      "download_size": 20443602
     }
   ]
 }
