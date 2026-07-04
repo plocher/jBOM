@@ -1,6 +1,32 @@
 # CHANGELOG
 
 
+## v7.3.2 (2026-07-04)
+
+### Bug Fixes
+
+* fix(docs): correct KiCad integration section in README
+
+Rewrites the "KiCad Integration" section to describe the current
+supported install path (Pcbnew ActionPlugin via KiCad's Plugin and
+Content Manager) and points at a stable download URL:
+
+  https://github.com/plocher/jBOM/releases/latest/download/jbom-pcm.zip
+
+Also notes that `pip install jbom` installs the CLI/library only and
+does not register the KiCad plugin, and downgrades the legacy
+Eeschema BOM wrapper (kicad_jbom_plugin.py) to an optional path.
+
+The prior text referenced docs/README.man4.md (which does not exist)
+and only described the legacy wrapper. Follow-up work will automate
+attaching a stable-name jbom-pcm.zip asset to every release; that is
+tracked in a separate issue.
+
+Refs #336
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`034f07c`](https://github.com/plocher/jBOM/commit/034f07ce166c88664b7e6b7eb37a3ea86deb50c3))
+
+
 ## v7.3.1 (2026-07-03)
 
 ### Bug Fixes
