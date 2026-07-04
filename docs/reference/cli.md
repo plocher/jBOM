@@ -642,7 +642,7 @@ jbom inventory ./my_project --supplier lcsc -o inventory.csv
 : Default name `${ProjectName}.pos.csv` (written in the project directory when `-o` is omitted). One row per component. Coordinates in mm.
 
 **Inventory CSV**
-: Default name `part-inventory.csv` (written in the current working directory when `-o` is omitted). Template with IPN, Category, Value, Package, and related columns.
+: Defaults to console output when `-o` is omitted. Use `-o <file>` to write a CSV template with IPN, Category, Value, Package, and related columns.
 
 **Promoted CSV**
 : Default name `<input>.promoted.csv` (written next to the source file when `-o` is omitted). Canonical inventory columns are written first (`RowType`, `IPN`, `Category`, `Value`, `Package`, `Description`, `Manufacturer`, `MFGPN`, `Supplier`, `SPN`, `Datasheet`, typed EM fields, etc.) with `SupplierContext` carrying the resolved supplier label.  Supplemental source columns from the export (qty, pricing, etc.) are preserved after the canonical block for traceability.
