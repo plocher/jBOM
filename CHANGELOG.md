@@ -1,6 +1,35 @@
 # CHANGELOG
 
 
+## v7.4.0 (2026-07-13)
+
+### Features
+
+* feat(bom): emit Datasheet Name as a selectable --fields column
+
+Add datasheet_name as a new canonical inventory-schema field (jBOM#348
+schema linkage) bound to the bare 'Datasheet Name' inventory column
+header, distinct from the existing Datasheet (URL) field. This lets
+BOM output request the field via --fields (e.g. DatasheetName or
+inv:datasheet_name), rendering the 'Datasheet Name' header and
+emitting the exact curated Document name for matched Items (Never-
+Rename preserved), or an empty cell for unmatched/uncurated Items.
+
+No changes to the field-selection/resolution machinery were needed:
+the existing enrichment_bindings -> InventoryItem.raw_data fallback
+and unqualified-field resolution paths already support this, mirroring
+how the existing 'datasheet' field works.
+
+Adds a BDD scenario (features/bom/datasheet_name_field.feature)
+covering --fields selection, empty-value passthrough for uncurated
+Items, and --list-fields discovery, plus unit tests for schema
+recognition and empty-value passthrough.
+
+Closes #359
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`e81b13d`](https://github.com/plocher/jBOM/commit/e81b13d6ccd1ef084c5dfca9562d3bfa256e5774))
+
+
 ## v7.3.4 (2026-07-13)
 
 ### Bug Fixes
