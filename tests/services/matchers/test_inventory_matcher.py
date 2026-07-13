@@ -419,8 +419,10 @@ class TestInventoryMatcher:
     ) -> None:
         """Datasheet Name is bound to the bare 'Datasheet Name' inventory header.
 
-        The value must pass through exactly as curated in the inventory (no
-        renaming), per the Never-Rename contract in jBOM#342/#348.
+        The value is the curated value from the inventory, whitespace-
+        normalized (via the shared enrichment/synonym-resolution path's
+        `.strip()`), with interior content otherwise untouched — no renaming,
+        per the Never-Rename contract in jBOM#342/#348.
         """
         item = _make_inventory_item(
             ipn="R_10K",
@@ -449,17 +451,52 @@ class TestInventoryMatcher:
         # Datasheet (URL) is a distinct field and is not conflated with the name.
         assert enriched.attributes["datasheet"] == "https://example.com/rc0603.pdf"
 
-    def test_enrich_entry_datasheet_name_is_empty_for_uncurated_item(self) -> None:
-        """Empty-value passthrough: uncurated Items (no Datasheet Name) yield ''.
+    def test_enrich_entry_datasheet_name_is_whitespace_normalized(self) -> None:
+        """Surrounding whitespace on a curated name is trimmed, not preserved.
 
-        Per CONTEXT.md: an empty Datasheet Name with a populated Datasheet
-        (URL) means the Item is in the Curation Backlog, not the Library.
+        This is intake normalization, not a rename: a name differing only in
+        surrounding whitespace is a curation accident, so the shared
+        enrichment/synonym-resolution path's `.strip()` is intended behavior
+        here, not a Never-Rename violation.
+        """
+        item = _make_inventory_item(
+            ipn="R_10K",
+            manufacturer="Yageo",
+            mfgpn="RC0603FR-0710KL",
+            datasheet="https://example.com/rc0603.pdf",
+            raw_data={"Datasheet Name": "  yageo_rc0603_resistor.pdf  "},
+        )
+        entry = BOMEntry(
+            references=["R1"],
+            value="10K",
+            footprint="R_0603_1608Metric",
+            quantity=1,
+            lib_id="Device:R",
+            attributes={},
+        )
+
+        enriched = InventoryMatcher._enrich_entry(
+            entry,
+            item,
+            fabricator_id="generic",
+            fabricator_config=None,
+        )
+
+        assert enriched.attributes["datasheet_name"] == "yageo_rc0603_resistor.pdf"
+
+    def test_enrich_entry_datasheet_name_is_empty_for_uncurated_item(self) -> None:
+        """Empty-value passthrough: uncurated Items yield '' for Datasheet Name.
+
+        Uses the real Curation-Backlog shape from CONTEXT.md: a populated
+        Datasheet (URL) column with an explicitly empty Datasheet Name column
+        means the Item is in the Curation Backlog, not the Library.
         """
         item = _make_inventory_item(
             ipn="R_22K",
             manufacturer="Yageo",
             mfgpn="RC0603FR-0710KL",
             datasheet="https://example.com/rc0603.pdf",
+            raw_data={"Datasheet Name": ""},
         )
         entry = BOMEntry(
             references=["R2"],
