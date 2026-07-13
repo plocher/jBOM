@@ -214,26 +214,32 @@ Preferred merge options (when merge is being performed):
 - GitHub UI: **Rebase and merge**
 - CLI: `gh pr merge <number> --rebase` (agent only with explicit user request)
 
-After merge, branch cleanup is mandatory and must use the automation
-script:
+After merge, branch cleanup is mandatory and must use the
+`git cleanup-merged` tool (canonical home:
+https://github.com/plocher/Scripts, `git-tools/post_merge_cleanup.py`,
+installed on PATH as `git-cleanup-merged` via `~/bin`):
 
 ```bash
-# Required post-merge cleanup (run from repo root)
-python scripts/post_merge_cleanup.py --branch feature/issue-N-brief-description
+# Required post-merge cleanup
+git cleanup-merged --branch feature/issue-N-brief-description
 ```
 
-If you omit `--branch`, the script evaluates all eligible non-`main`
+If you omit `--branch`, the tool evaluates all eligible non-`main`
 branches (local + remote) and cleans only patch-equivalent branches:
 
 ```bash
-python scripts/post_merge_cleanup.py
+git cleanup-merged
 ```
 
 Optional verification-first preview:
 
 ```bash
-python scripts/post_merge_cleanup.py --branch feature/issue-N-brief-description --dry-run
+git cleanup-merged --branch feature/issue-N-brief-description --dry-run
 ```
+
+If the tool is not installed on this machine, fall back to a manual
+`git cherry -v origin/main <branch>` patch-equivalence check (all
+lines `-`, none `+`) and delete only with explicit human approval.
 
 Default output is intentionally quiet on the normative path:
 
@@ -244,12 +250,12 @@ Use `--verbose` to print detailed patch-equivalence diagnostics.
 
 Rules:
 
-- Do **not** manually delete branches before running the script.
-- If the script reports unique `+` commits, stop and investigate
+- Do **not** manually delete branches before running the tool.
+- If the tool reports unique `+` commits, stop and investigate
   (wrong target branch, partial merge, or outstanding commits not
   represented in `main`).
-- Manual cleanup commands are fallback-only for script failure
-  scenarios and require explicit human approval.
+- Manual cleanup commands are fallback-only for tool failure or
+  tool-not-installed scenarios and require explicit human approval.
 
 ## Required co-author attribution
 
