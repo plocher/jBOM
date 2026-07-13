@@ -30,6 +30,7 @@ from jbom.common.value_parsing import farad_to_eia, henry_to_eia, ohms_to_eia
 from jbom.common.types import Component, InventoryItem
 from jbom.common.options import GeneratorOptions
 from jbom.cli.formatting import print_inventory_table
+from jbom.services.datasheet_staging import resolve_staging_dir, stage_datasheet_url
 from jbom.services.inventory_reader import InventoryReader
 from jbom.common.component_filters import apply_component_filters
 from jbom.services.project_file_resolver import ProjectFileResolver
@@ -682,7 +683,7 @@ def _enrich_items_with_suppliers(
 
     if len(supplier_services) == 1:
         service, supplier_config, supplier_id = supplier_services[0]
-        return _enrich_items_with_supplier(
+        enriched_items, enriched_field_names = _enrich_items_with_supplier(
             items,
             field_names,
             service,
@@ -691,6 +692,8 @@ def _enrich_items_with_suppliers(
             limit=limit,
             verbose=verbose,
         )
+        _stage_datasheets_for_items(enriched_items, verbose=verbose)
+        return enriched_items, enriched_field_names
 
     candidate_limit = max(1, int(limit))
     base_items = list(items)
@@ -763,9 +766,9 @@ def _enrich_items_with_suppliers(
     if priority_assigned and "Priority" not in working_field_names:
         working_field_names = list(working_field_names) + ["Priority"]
 
-    if not added_items:
-        return base_items, working_field_names
-    return base_items + added_items, working_field_names
+    final_items = base_items if not added_items else base_items + added_items
+    _stage_datasheets_for_items(final_items, verbose=verbose)
+    return final_items, working_field_names
 
 
 def _enrich_items_with_supplier(
@@ -929,6 +932,37 @@ def _apply_supplier_candidate_to_item(
         item.manufacturer = candidate.manufacturer
     if not (item.mfgpn or "").strip() and candidate.mpn:
         item.mfgpn = candidate.mpn
+    if not (item.datasheet or "").strip() and getattr(candidate, "datasheet", ""):
+        item.datasheet = candidate.datasheet
+        item.raw_data["Datasheet"] = candidate.datasheet
+
+
+def _stage_datasheets_for_items(
+    items: "list[InventoryItem]", *, verbose: bool = False
+) -> None:
+    """Always-on staging fetch (jBOM#355): stage every encountered Datasheet URL.
+
+    Rides the already-networked ``jbom inventory --supplier`` flow. Covers
+    both items whose Datasheet URL was just populated by supplier
+    enrichment and items that already carried one before enrichment ran.
+    Already-admitted items (``Datasheet Name`` populated) and already-staged
+    URLs are skipped idempotently by :func:`stage_datasheet_url`. Fetch and
+    staging failures never fail the inventory command; they are reported to
+    stderr as warnings only.
+    """
+
+    staging_dir = resolve_staging_dir()
+    for item in items:
+        url = (item.datasheet or "").strip()
+        if not url:
+            continue
+        outcome = stage_datasheet_url(url, item=item, staging_dir=staging_dir)
+        if outcome.status == "flagged":
+            print(f"Warning: {outcome.message}", file=sys.stderr)
+        elif outcome.status == "fetch-error":
+            print(f"Warning: {outcome.message}", file=sys.stderr)
+        elif verbose and outcome.status == "verified":
+            print(f"  {outcome.message}", file=sys.stderr)
 
 
 def _handle_generate_inventory(input_path: str, args: argparse.Namespace) -> int:

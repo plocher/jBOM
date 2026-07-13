@@ -22,6 +22,7 @@ from jbom.cli.output import (
 from jbom.config.defaults import get_defaults
 from jbom.config.providers import get_provider, list_searchable_suppliers
 from jbom.config.suppliers import load_supplier, resolve_supplier_by_id
+from jbom.services.datasheet_staging import resolve_staging_dir, stage_datasheet_url
 from jbom.services.search.cache import DiskSearchCache, InMemorySearchCache, SearchCache
 from jbom.services.search.diagnostics import (
     SearchPipelineDiagnostics,
@@ -346,6 +347,8 @@ def handle_search(
     if bool(getattr(args, "debug", False)):
         _print_search_debug_diagnostics(diagnostics)
 
+    _stage_result_datasheets(results)
+
     force = bool(getattr(args, "force", False))
     return _output_results(
         results,
@@ -403,6 +406,28 @@ def _run_adaptive_search_pipeline(
             break
         fetch_limit = next_fetch_limit
     return best_results, best_diagnostics
+
+
+def _stage_result_datasheets(results: list[SearchResult]) -> None:
+    """Always-on staging fetch (jBOM#355): stage any Datasheet URL encountered.
+
+    Rides the already-networked ``jbom search`` flow. No inventory context is
+    available here, so admission (``Datasheet Name``) skips never apply --
+    only already-staged skips, verified-PDF writes, and HTML-impostor flags.
+    Fetch/staging failures never fail the search command; they are reported
+    to stderr as warnings only.
+    """
+
+    staging_dir = resolve_staging_dir()
+    for result in results:
+        url = (result.datasheet or "").strip()
+        if not url:
+            continue
+        outcome = stage_datasheet_url(url, staging_dir=staging_dir)
+        if outcome.status == "flagged":
+            print(f"Warning: {outcome.message}", file=sys.stderr)
+        elif outcome.status == "fetch-error":
+            print(f"Warning: {outcome.message}", file=sys.stderr)
 
 
 def _apply_result_pipeline(
