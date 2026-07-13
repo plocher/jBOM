@@ -20,6 +20,7 @@ making real HTTP requests (see ``jbom.services.datasheet_staging``).
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -194,3 +195,69 @@ def then_staging_dir_contains_exactly_n_staged_files(context, count: int) -> Non
     assert (
         len(staged) == count
     ), f"Expected exactly {count} staged file(s), found {len(staged)}: {staged}"
+
+
+@given('a poisoned "real" HOME profile with a datasheet staging_dir binding')
+def given_a_poisoned_real_home_profile(context) -> None:
+    """Simulate a maintainer's real $HOME already binding a staging_dir.
+
+    Writes a ``.jbom/common.jbom.yaml`` under a directory standing in for
+    "the developer's actual home directory" (never the harness's own
+    sandboxed ``context.fake_home``), and points the *current test
+    process's* ``HOME`` env var at it -- mirroring exactly what a real
+    maintainer's shell environment looks like once they've configured
+    datasheet staging for their own invocations.
+
+    The assertion this proves: ``common_steps.step_run_command`` must
+    override ``HOME`` for the CLI subprocess regardless of what ``HOME``
+    happens to be in the *outer* (test-harness) process, so this poisoned
+    binding never resolves inside the subprocess under test.
+    """
+
+    poisoned_home = Path(context.sandbox_root) / "_poisoned_real_home"
+    poison_target = Path(context.sandbox_root) / "_poison_target"
+    context.poison_target = poison_target
+
+    jbom_dir = poisoned_home / ".jbom"
+    jbom_dir.mkdir(parents=True, exist_ok=True)
+    (jbom_dir / "common.jbom.yaml").write_text(
+        yaml.safe_dump(
+            {"defaults": {"datasheet_staging": {"staging_dir": str(poison_target)}}},
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+
+    # Also supply working fetch-budget values via the (safe, sandboxed) cwd
+    # tier -- the supplier-profile steps this scenario also uses shadow the
+    # builtin generic.jbom.yaml wholesale (see given_a_staging_directory's
+    # docstring), which would otherwise leave max_fetches_per_run at its
+    # Python-level "unconfigured" fallback of 0 and mask the very leak this
+    # scenario exists to catch (a zero budget skips every real fetch
+    # attempt regardless of which staging_dir would have been used).
+    _set_datasheet_staging_value(context, "max_fetches_per_run", 20)
+    _set_datasheet_staging_value(context, "fetch_time_budget_seconds", 30)
+
+    previous_home = os.environ.get("HOME")
+    os.environ["HOME"] = str(poisoned_home)
+
+    def _restore_home() -> None:
+        if previous_home is None:
+            os.environ.pop("HOME", None)
+        else:
+            os.environ["HOME"] = previous_home
+
+    context.add_cleanup(_restore_home)
+
+
+@then("the poisoned staging directory was never written to")
+def then_poisoned_staging_directory_untouched(context) -> None:
+    poison_target = getattr(context, "poison_target", None)
+    assert (
+        poison_target is not None
+    ), "Use 'Given a poisoned \"real\" HOME profile ...' first"
+    assert not poison_target.exists(), (
+        f"Poisoned real-HOME staging_dir leaked into the CLI subprocess: "
+        f"{poison_target} was created with contents "
+        f"{list(poison_target.glob('*')) if poison_target.exists() else []}"
+    )

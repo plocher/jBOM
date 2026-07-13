@@ -46,6 +46,14 @@ def before_scenario(context, scenario):
     context.sandbox_root = tmp
     context.project_root = tmp
 
+    # Sandboxed HOME for CLI subprocesses (see common_steps.step_run_command).
+    # Every scenario gets an isolated $HOME so profile resolution can never
+    # fall through to the developer's real ~/.jbom/ -- e.g. a real
+    # datasheet_staging.staging_dir binding must never leak into a test run.
+    fake_home = tmp / "_home"
+    fake_home.mkdir(parents=True, exist_ok=True)
+    context.fake_home = fake_home
+
 
 def after_scenario(context, scenario):
     """Clean up the per-scenario temp workspace."""
