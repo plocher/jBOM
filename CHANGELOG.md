@@ -1,6 +1,26 @@
 # CHANGELOG
 
 
+## v7.3.4 (2026-07-13)
+
+### Bug Fixes
+
+* fix(scripts): harden post_merge_cleanup against silent git hangs
+
+run_git now redirects stdin to DEVNULL, disables interactive git/ssh
+prompts (GIT_TERMINAL_PROMPT=0, ssh BatchMode), and bounds network
+operations (fetch --prune, push --delete) with a timeout that surfaces
+as a failed result instead of an indefinite stall.
+
+Closes #364
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`2ae97a3`](https://github.com/plocher/jBOM/commit/2ae97a355959ab3e06d46b3c9d96fd4617c8a1da))
+
+### Unknown
+
+* add wayfinder skill details ([`61b3c51`](https://github.com/plocher/jBOM/commit/61b3c511c6266a14fbfba206c32ea365b7b07163))
+
+
 ## v7.3.3 (2026-07-04)
 
 ### Bug Fixes
