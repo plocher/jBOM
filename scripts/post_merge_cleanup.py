@@ -19,9 +19,14 @@ RFE behavior:
 from __future__ import annotations
 
 import argparse
+import os
 import subprocess
 import sys
 from dataclasses import dataclass
+
+#: Upper bound for git operations that touch the network (fetch, push).
+#: Generous enough for slow links; prevents indefinite silent stalls.
+GIT_NETWORK_TIMEOUT_SECONDS = 120.0
 
 
 @dataclass(frozen=True)
@@ -74,15 +79,39 @@ class CleanupOutcome:
 
 
 def run_git(
-    args: list[str], *, capture_output: bool = True
+    args: list[str], *, capture_output: bool = True, timeout: float | None = None
 ) -> subprocess.CompletedProcess[str]:
-    """Run a git command and return the completed process without raising."""
-    return subprocess.run(
-        ["git", "--no-pager", *args],
-        check=False,
-        text=True,
-        capture_output=capture_output,
-    )
+    """Run a git command and return the completed process without raising.
+
+    Hardened against silent hangs (#364):
+    - stdin is redirected to DEVNULL so git can never block on hidden prompts
+      (prompt text would otherwise be swallowed by the captured stderr)
+    - GIT_TERMINAL_PROMPT=0 and ssh BatchMode make git fail fast instead of
+      prompting for credentials/passphrases/host keys
+    - an optional timeout bounds network operations; expiry is converted to
+      a failed CompletedProcess rather than an exception
+    """
+    env = os.environ.copy()
+    env["GIT_TERMINAL_PROMPT"] = "0"
+    env.setdefault("GIT_SSH_COMMAND", "ssh -oBatchMode=yes")
+    cmd = ["git", "--no-pager", *args]
+    try:
+        return subprocess.run(
+            cmd,
+            check=False,
+            text=True,
+            capture_output=capture_output,
+            stdin=subprocess.DEVNULL,
+            timeout=timeout,
+            env=env,
+        )
+    except subprocess.TimeoutExpired:
+        return subprocess.CompletedProcess(
+            args=cmd,
+            returncode=124,
+            stdout="",
+            stderr=f"git {' '.join(args)} timed out after {timeout}s",
+        )
 
 
 def git_ref_exists(ref: str) -> bool:
@@ -108,7 +137,7 @@ def fetch_and_prune(remote: str, *, dry_run: bool, verbose: bool) -> int:
             print(f"[dry-run] git --no-pager {' '.join(cmd)}")
         return 0
 
-    result = run_git(cmd, capture_output=True)
+    result = run_git(cmd, capture_output=True, timeout=GIT_NETWORK_TIMEOUT_SECONDS)
     if result.returncode != 0:
         stderr = (result.stderr or "").strip()
         print(f"Error: failed to fetch/prune {remote}: {stderr}", file=sys.stderr)
@@ -219,7 +248,7 @@ def delete_remote_branch(
             print(f"[dry-run] git --no-pager {' '.join(cmd)}")
         return 0
 
-    result = run_git(cmd, capture_output=True)
+    result = run_git(cmd, capture_output=True, timeout=GIT_NETWORK_TIMEOUT_SECONDS)
     if result.returncode != 0:
         stderr = (result.stderr or "").strip()
         print(
