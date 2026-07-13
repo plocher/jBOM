@@ -48,6 +48,12 @@ from jbom.services.audit_service import (
     _EXACT_THRESHOLD as _AUDIT_MATCH_EXACT_THRESHOLD,
 )
 from jbom.services.audit_service import _resolve_project as _resolve_project_for_cli
+from jbom.services.datasheet_url_upgrade_report import (
+    build_upgrade_report,
+    render_full_sheet_paste,
+    resolve_check_urls_fetch,
+)
+from jbom.services.inventory_reader import InventoryReader
 from jbom.services.schematic_reader import SchematicReader
 from jbom.services.search.inventory_search_service import InventorySearchService
 
@@ -247,6 +253,19 @@ def register_command(subparsers: argparse._SubParsersAction) -> None:  # type: i
         help="API key for the supplier search provider (overrides env vars)",
     )
 
+    # Opt-in URL recovery ladder (jBOM#358; inventory mode only).
+    parser.add_argument(
+        "--check-urls",
+        dest="check_urls",
+        action="store_true",
+        help=(
+            "Opt-in: walk the Datasheet URL recovery ladder (inventory mode only). "
+            "Detects HTML impostors/dead links, proposes URL upgrades as a "
+            "full-sheet-paste CSV for human application. No network access unless "
+            "this flag is given; never writes to the inventory."
+        ),
+    )
+
     parser.set_defaults(handler=handle_audit)
 
 
@@ -260,7 +279,19 @@ def handle_audit(args: argparse.Namespace) -> int:
         inputs = [Path(p) for p in args.inputs]
 
         # Mode detection: all .csv → inventory mode; anything else → project mode.
-        if all(p.suffix.lower() == ".csv" for p in inputs):
+        is_inventory_mode = all(p.suffix.lower() == ".csv" for p in inputs)
+
+        if getattr(args, "check_urls", False):
+            if not is_inventory_mode:
+                print(
+                    "Error: --check-urls is only valid in inventory mode "
+                    "(positional arguments must be .csv files)",
+                    file=sys.stderr,
+                )
+                return 1
+            return _run_check_urls_mode(args, inputs)
+
+        if is_inventory_mode:
             return _run_inventory_mode(args, inputs)
         return _run_project_mode(args, inputs)
 
@@ -342,6 +373,76 @@ def _run_inventory_mode(args: argparse.Namespace, inputs: list[Path]) -> int:
     _print_summary(report)
 
     return report.exit_code_strict() if args.strict else report.exit_code
+
+
+def _run_check_urls_mode(args: argparse.Namespace, inputs: list[Path]) -> int:
+    """Execute the opt-in ``--check-urls`` recovery-ladder pass (jBOM#358).
+
+    Walks the recovery ladder for every ITEM's recorded ``Datasheet`` URL
+    and emits a full-sheet-paste CSV with any recoverable upgrades applied
+    to the ``Datasheet`` column -- every other row/column passes through
+    unchanged, in original sheet order, ready for a human to paste back.
+    This never writes to the inventory file itself.
+
+    No network access happens unless this function is actually reached
+    (i.e. ``--check-urls`` was explicitly given).
+    """
+    if args.inventory is not None:
+        print(
+            "Error: --inventory is not valid with --check-urls",
+            file=sys.stderr,
+        )
+        return 1
+    if args.requirements is not None:
+        print(
+            "Error: --requirements is not valid with --check-urls",
+            file=sys.stderr,
+        )
+        return 1
+
+    reader = InventoryReader(inputs)
+    items, fieldnames = reader.load()
+
+    defaults = get_defaults()
+    fetch = resolve_check_urls_fetch(
+        defaults.get_check_urls_config().fetch_fixtures_manifest
+    )
+
+    proposals = build_upgrade_report(items, fetch=fetch)
+    report_fieldnames, rows = render_full_sheet_paste(items, proposals, fieldnames)
+
+    destination = _resolve_audit_output_destination(getattr(args, "output", None))
+    if destination.kind == OutputKind.CONSOLE:
+        _print_audit_console_table(
+            rows,
+            report_fieldnames,
+            title="Datasheet URL check (full-sheet paste)",
+        )
+    elif destination.kind == OutputKind.STDOUT:
+        buf = io.StringIO()
+        _write_csv_rows(buf, report_fieldnames, rows)
+        print(buf.getvalue(), end="")
+    else:
+        if not destination.path:
+            raise ValueError(
+                "Internal error: file output selected but no path provided"
+            )
+        with destination.path.open("w", encoding="utf-8", newline="") as handle:
+            _write_csv_rows(handle, report_fieldnames, rows)
+        print(f"URL check report written to {destination.path}", file=sys.stderr)
+
+    upgraded = sum(
+        1 for p in proposals if p.proposed_url and p.proposed_url != p.original_url
+    )
+    manual = sum(1 for p in proposals if p.outcome == "manual")
+    dead = sum(1 for p in proposals if p.outcome == "dead")
+    print(
+        f"URL check complete: {len(proposals)} URL(s) checked, "
+        f"{upgraded} upgrade(s) proposed, {manual} need manual review, "
+        f"{dead} dead by design.",
+        file=sys.stderr,
+    )
+    return 0
 
 
 def _build_supplier_service(
