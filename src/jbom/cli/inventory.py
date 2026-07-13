@@ -30,7 +30,14 @@ from jbom.common.value_parsing import farad_to_eia, henry_to_eia, ohms_to_eia
 from jbom.common.types import Component, InventoryItem
 from jbom.common.options import GeneratorOptions
 from jbom.cli.formatting import print_inventory_table
-from jbom.services.datasheet_staging import stage_datasheet_urls
+from jbom.services.datasheet_staging import resolve_staging_dir, stage_datasheet_urls
+from jbom.services.inventory_admit import (
+    apply_admit_manifest,
+    propose_admit_manifest,
+    read_admit_manifest,
+    write_admit_manifest,
+    write_paste_file,
+)
 from jbom.services.inventory_reader import InventoryReader
 from jbom.common.component_filters import apply_component_filters
 from jbom.services.project_file_resolver import ProjectFileResolver
@@ -211,7 +218,60 @@ def register_command(subparsers) -> None:
         ),
     )
 
+    # 'jbom inventory admit' -- the datasheet library admission gate (jBOM#356).
+    # Dispatched by first-positional-token detection (see handle_inventory),
+    # matching this codebase's existing mode-detection convention (cf.
+    # jbom audit's project/inventory mode split) rather than nested argparse
+    # subparsers, which don't compose cleanly with the '*' input positional
+    # already registered above.
+    parser.add_argument(
+        "--apply",
+        action="store_true",
+        dest="admit_apply",
+        help=(
+            "[admit] Apply a (human-edited) admit manifest: move accepted "
+            "PDFs into the library and emit the Datasheet Name paste-file."
+        ),
+    )
+    parser.add_argument(
+        "--manifest",
+        metavar="PATH",
+        type=Path,
+        default=None,
+        dest="admit_manifest",
+        help=(
+            "[admit] Manifest CSV path: written by propose mode, read by "
+            "--apply. Defaults to 'admit-manifest.csv' inside the staging "
+            "directory."
+        ),
+    )
+    parser.add_argument(
+        "--staging-dir",
+        metavar="PATH",
+        type=Path,
+        default=None,
+        dest="admit_staging_dir",
+        help=(
+            "[admit] Override the configured datasheet_staging.staging_dir "
+            "for this invocation."
+        ),
+    )
+    parser.add_argument(
+        "--library-dir",
+        metavar="PATH",
+        type=Path,
+        default=None,
+        dest="admit_library_dir",
+        help=(
+            "[admit] Library 'datasheets/' directory. Defaults to a "
+            "'datasheets' sibling of the staging directory."
+        ),
+    )
+
     parser.set_defaults(handler=handle_inventory)
+
+
+_ADMIT_SUBCOMMAND = "admit"
 
 
 def handle_inventory(args: argparse.Namespace) -> int:
@@ -220,6 +280,9 @@ def handle_inventory(args: argparse.Namespace) -> int:
         # Normalise input: None or empty list -> ["."] (current directory)
         raw_inputs: list[str] = args.input or ["."]
 
+        if raw_inputs[0] == _ADMIT_SUBCOMMAND:
+            return _handle_inventory_admit(raw_inputs[1:], args)
+
         if len(raw_inputs) > 1:
             return _handle_batch_inventory(raw_inputs, args)
         # Single-project: delegate to the existing handler unchanged
@@ -227,6 +290,161 @@ def handle_inventory(args: argparse.Namespace) -> int:
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1
+
+
+def _handle_inventory_admit(
+    extra_positionals: list[str], args: argparse.Namespace
+) -> int:
+    """Handle 'jbom inventory admit' -- the datasheet library admission gate (jBOM#356).
+
+    Propose mode (default) scans the configured staging directory and
+    writes a proposal manifest for human review. ``--apply`` reads a
+    (human-edited) manifest, moves accepted PDFs into the library, and
+    emits the full-sheet ``Datasheet Name`` paste-file proposal.
+    """
+    if extra_positionals:
+        print(
+            "Error: 'jbom inventory admit' does not accept extra positional "
+            f"arguments yet: {extra_positionals!r}. Edit the manifest and "
+            "re-run with --apply.",
+            file=sys.stderr,
+        )
+        return 1
+
+    staging_dir = args.admit_staging_dir or resolve_staging_dir()
+    if staging_dir is None:
+        print(
+            "Error: no staging directory configured "
+            "(datasheet_staging.staging_dir); nothing to admit. Set it in "
+            "~/.jbom/common.jbom.yaml (see jBOM#355).",
+            file=sys.stderr,
+        )
+        return 1
+
+    library_dir = args.admit_library_dir or (staging_dir.parent / "datasheets")
+    manifest_path = args.admit_manifest or (staging_dir / "admit-manifest.csv")
+
+    if args.admit_apply:
+        return _apply_inventory_admit(manifest_path, staging_dir, library_dir, args)
+
+    return _propose_inventory_admit(staging_dir, library_dir, manifest_path, args)
+
+
+def _propose_inventory_admit(
+    staging_dir: Path,
+    library_dir: Path,
+    manifest_path: Path,
+    args: argparse.Namespace,
+) -> int:
+    """Scan the staging directory and write the proposed admit manifest CSV."""
+    inventory_files = args.inventory_files or []
+    if not inventory_files:
+        print(
+            "Error: 'jbom inventory admit' requires --inventory <catalog.csv> "
+            "(repeatable) to resolve staged files against the backlog "
+            "(rows with a Datasheet URL but no Datasheet Name).",
+            file=sys.stderr,
+        )
+        return 1
+
+    for inventory_file in inventory_files:
+        if not inventory_file.exists():
+            print(f"Error: Inventory file not found: {inventory_file}", file=sys.stderr)
+            return 1
+
+    inventory_items, _ = InventoryReader(inventory_files).load()
+
+    rows = propose_admit_manifest(
+        staging_dir=staging_dir,
+        library_dir=library_dir,
+        inventory_items=inventory_items,
+    )
+
+    if not rows:
+        print("No verified staged files found; nothing to propose.", file=sys.stderr)
+        return 0
+
+    refused = (
+        f"Error: Manifest file '{manifest_path}' already exists. "
+        "Use --force to overwrite."
+    )
+    try:
+        with open_output_text_file(
+            manifest_path, force=args.force, refused_message=refused
+        ) as handle:
+            write_admit_manifest(rows, handle)
+    except OutputRefusedError as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
+
+    counts: dict[str, int] = {}
+    for row in rows:
+        counts[row.disposition] = counts.get(row.disposition, 0) + 1
+    counts_summary = ", ".join(
+        f"{count} {disposition}" for disposition, count in sorted(counts.items())
+    )
+    print(
+        f"Proposed admit manifest written to {manifest_path} "
+        f"({len(rows)} candidate(s): {counts_summary}). "
+        "Edit Action/ProposedName then re-run with --apply."
+    )
+    return 0
+
+
+def _apply_inventory_admit(
+    manifest_path: Path,
+    staging_dir: Path,
+    library_dir: Path,
+    args: argparse.Namespace,
+) -> int:
+    """Read a (human-edited) manifest and apply the admit gate."""
+    if not manifest_path.exists():
+        print(f"Error: Manifest file not found: {manifest_path}", file=sys.stderr)
+        return 1
+
+    with manifest_path.open("r", encoding="utf-8", newline="") as handle:
+        rows = read_admit_manifest(handle)
+
+    result = apply_admit_manifest(
+        rows, staging_dir=staging_dir, library_dir=library_dir
+    )
+
+    for outcome in result.outcomes:
+        if outcome.status == "refused-never-rename":
+            print(f"Error: {outcome.message}", file=sys.stderr)
+        elif args.verbose and outcome.status in ("admitted", "already-admitted"):
+            print(f"  {outcome.message}", file=sys.stderr)
+
+    dest = resolve_output_destination(
+        args.output, default_destination=OutputDestination(OutputKind.STDOUT)
+    )
+    if dest.kind in (OutputKind.CONSOLE, OutputKind.STDOUT):
+        write_paste_file(result.paste_rows, sys.stdout)
+    else:
+        if not dest.path:
+            raise ValueError(
+                "Internal error: file output selected but no path provided"
+            )
+        refused = (
+            f"Error: Output file '{dest.path}' already exists. "
+            "Use --force to overwrite."
+        )
+        try:
+            with open_output_text_file(
+                dest.path, force=args.force, refused_message=refused
+            ) as handle:
+                write_paste_file(result.paste_rows, handle)
+        except OutputRefusedError as exc:
+            print(str(exc), file=sys.stderr)
+            return 1
+
+    print(
+        f"Admit complete: {result.admitted_count} admitted, "
+        f"{result.refused_count} refused (never-rename), "
+        f"{len(result.paste_rows)} paste-file row(s).",
+        file=sys.stderr,
+    )
+    return 1 if result.refused_count else 0
 
 
 def _load_components_from_path(
