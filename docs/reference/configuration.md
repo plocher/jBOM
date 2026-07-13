@@ -166,6 +166,56 @@ Activate by setting:
 export JBOM_PROFILE_PATH=/shared/jbom
 ```
 
+### `datasheet_staging:` sub-stanza (jBOM#355)
+
+Governs the always-on staging fetch that rides `jbom search` and `jbom
+inventory --supplier`: whenever an Item's Datasheet URL is encountered, it
+is fetched into a gitignored `staging/` directory for later human review via
+`jbom inventory admit`. See `docs/reference/cli.md` for the full behavioral
+write-up (idempotency, `file(1)`-style PDF verification, HTML-impostor
+flagging).
+
+Key fields:
+
+- `staging_dir:` — target directory for staged downloads. This is a
+  **user-machine binding**: it names a local checkout of the
+  SPCoast-inventory repo, which lives at a different path on every
+  machine. The shipped `generic.jbom.yaml` deliberately never declares a
+  value for it (there is no sensible one to ship). **With no `staging_dir`
+  configured, the staging fetch is inert** — a silent no-op, not a warning
+  — so nothing changes for any invocation until a user opts in. Set it once
+  in your own `~/.jbom/common.jbom.yaml` (see example below) to enable
+  staging for every invocation on that machine.
+- `max_fetches_per_run:` — maximum number of real network fetches one
+  `jbom search` or `jbom inventory --supplier` invocation will attempt.
+  Shipped in `generic.jbom.yaml` (currently `20`), since this is a generic,
+  non-machine-specific tuning knob.
+- `fetch_time_budget_seconds:` — wall-clock budget for real fetches in one
+  invocation. Shipped in `generic.jbom.yaml` (currently `30`). Once either
+  limit is hit, remaining Datasheet URLs are skipped for that run with a
+  one-line stderr summary; nothing else about the command fails.
+
+> **Overriding `max_fetches_per_run`/`fetch_time_budget_seconds`**: because
+> the builtin `generic.jbom.yaml` declares concrete values for these two
+> keys, a `common.jbom.yaml` override of them is clobbered by the builtin
+> (the named-profile chain always wins over the `common.jbom.yaml` chain
+> during merge for any key both declare — the same behavior every other
+> `generic.jbom.yaml`-declared default has, e.g. `domain_defaults`).
+> Override them the same way you would any other `generic.jbom.yaml` value:
+> via a project- or user-level `.jbom/generic.jbom.yaml` that shadows the
+> builtin file. `staging_dir` has no such caveat, since the builtin never
+> declares it.
+
+### Example: enable staging for every invocation on this machine
+
+Place in `~/.jbom/common.jbom.yaml`:
+
+```yaml
+defaults:
+  datasheet_staging:
+    staging_dir: "/Users/you/checkouts/SPCoast-inventory/staging"
+```
+
 ## `presets:` stanza
 
 Named field-set collections shared across profiles. Consumed wherever preset

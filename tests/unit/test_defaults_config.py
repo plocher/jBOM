@@ -27,6 +27,7 @@ from jbom.config.defaults import (
     load_defaults,
     set_active_defaults_profile,
 )
+from jbom.config.unified import clear_unified_loader_caches
 
 
 # ---------------------------------------------------------------------------
@@ -187,6 +188,88 @@ def test_generic_profile_recognizes_datasheet_name_canonical_field() -> None:
         schema.enrichment_bindings["datasheet"]
         != schema.enrichment_bindings["datasheet_name"]
     )
+
+
+# ---------------------------------------------------------------------------
+# datasheet_staging: stanza (jBOM#355)
+# ---------------------------------------------------------------------------
+
+
+def test_generic_profile_has_datasheet_staging_defaults() -> None:
+    cfg = load_defaults("generic")
+    staging_cfg = cfg.get_datasheet_staging_config()
+    assert staging_cfg.staging_dir == ""
+    assert staging_cfg.max_fetches_per_run == 20
+    assert staging_cfg.fetch_time_budget_seconds == 30.0
+    assert staging_cfg.fetch_fixtures_manifest == ""
+
+
+def test_home_common_jbom_yaml_can_bind_staging_dir(tmp_path: Path) -> None:
+    """``staging_dir`` is a user-machine binding: the shipped generic profile
+    never declares it, so a user's ``~/.jbom/common.jbom.yaml`` (modeled
+    here via a project-cwd ``common.jbom.yaml`` for test simplicity) can set
+    it without being clobbered by the builtin profile.
+    """
+
+    jbom_dir = tmp_path / ".jbom"
+    _write_yaml(
+        jbom_dir / "common.jbom.yaml",
+        {"defaults": {"datasheet_staging": {"staging_dir": "/custom/staging"}}},
+    )
+
+    cfg = get_defaults(cwd=tmp_path)
+    staging_cfg = cfg.get_datasheet_staging_config()
+    assert staging_cfg.staging_dir == "/custom/staging"
+    # Generic, non-machine-specific values still come from the builtin profile.
+    assert staging_cfg.max_fetches_per_run == 20
+    assert staging_cfg.fetch_time_budget_seconds == 30.0
+
+
+def test_project_generic_jbom_yaml_override_wins_over_common(
+    tmp_path: Path,
+) -> None:
+    jbom_dir = tmp_path / ".jbom"
+    _write_yaml(
+        jbom_dir / "common.jbom.yaml",
+        {"defaults": {"datasheet_staging": {"staging_dir": "/from/common"}}},
+    )
+    _write_yaml(
+        jbom_dir / "generic.jbom.yaml",
+        {"defaults": {"datasheet_staging": {"staging_dir": "/from/project"}}},
+    )
+
+    cfg = get_defaults(cwd=tmp_path)
+    assert cfg.get_datasheet_staging_config().staging_dir == "/from/project"
+
+
+def test_max_fetches_per_run_override_requires_a_named_profile_shadow(
+    tmp_path: Path,
+) -> None:
+    """``max_fetches_per_run`` is declared with a concrete value in the
+    builtin ``generic.jbom.yaml``, so -- consistent with every other key the
+    builtin declares (e.g. ``domain_defaults``) -- a ``common.jbom.yaml``
+    override of it is clobbered by the builtin; overriding it requires
+    shadowing the named profile itself (a project ``.jbom/generic.jbom.yaml``
+    that declares the same key), the same pattern used for other generic.
+    jbom.yaml-declared values throughout this codebase.
+    """
+
+    jbom_dir = tmp_path / ".jbom"
+    _write_yaml(
+        jbom_dir / "common.jbom.yaml",
+        {"defaults": {"datasheet_staging": {"max_fetches_per_run": 5}}},
+    )
+
+    cfg = get_defaults(cwd=tmp_path)
+    assert cfg.get_datasheet_staging_config().max_fetches_per_run == 20
+
+    _write_yaml(
+        jbom_dir / "generic.jbom.yaml",
+        {"defaults": {"datasheet_staging": {"max_fetches_per_run": 5}}},
+    )
+    clear_unified_loader_caches()
+    cfg = get_defaults(cwd=tmp_path)
+    assert cfg.get_datasheet_staging_config().max_fetches_per_run == 5
 
 
 # ---------------------------------------------------------------------------

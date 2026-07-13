@@ -30,7 +30,7 @@ from jbom.common.value_parsing import farad_to_eia, henry_to_eia, ohms_to_eia
 from jbom.common.types import Component, InventoryItem
 from jbom.common.options import GeneratorOptions
 from jbom.cli.formatting import print_inventory_table
-from jbom.services.datasheet_staging import resolve_staging_dir, stage_datasheet_url
+from jbom.services.datasheet_staging import stage_datasheet_urls
 from jbom.services.inventory_reader import InventoryReader
 from jbom.common.component_filters import apply_component_filters
 from jbom.services.project_file_resolver import ProjectFileResolver
@@ -946,23 +946,31 @@ def _stage_datasheets_for_items(
     both items whose Datasheet URL was just populated by supplier
     enrichment and items that already carried one before enrichment ran.
     Already-admitted items (``Datasheet Name`` populated) and already-staged
-    URLs are skipped idempotently by :func:`stage_datasheet_url`. Fetch and
-    staging failures never fail the inventory command; they are reported to
-    stderr as warnings only.
+    URLs are skipped idempotently, for free, by
+    :func:`~jbom.services.datasheet_staging.stage_datasheet_urls`. Real
+    fetch attempts are bounded by the active profile's
+    ``datasheet_staging.max_fetches_per_run`` /
+    ``fetch_time_budget_seconds``, so a large inventory run never stalls on
+    a long tail of slow downloads. Fetch/staging failures and a
+    budget-exceeded summary never fail the inventory command; they are
+    reported to stderr as warnings only.
     """
 
-    staging_dir = resolve_staging_dir()
-    for item in items:
-        url = (item.datasheet or "").strip()
-        if not url:
-            continue
-        outcome = stage_datasheet_url(url, item=item, staging_dir=staging_dir)
-        if outcome.status == "flagged":
-            print(f"Warning: {outcome.message}", file=sys.stderr)
-        elif outcome.status == "fetch-error":
+    entries = [
+        (item.datasheet, item) for item in items if (item.datasheet or "").strip()
+    ]
+    if not entries:
+        return
+
+    batch = stage_datasheet_urls(entries)
+    for outcome in batch.outcomes:
+        if outcome.status in ("flagged", "fetch-error"):
             print(f"Warning: {outcome.message}", file=sys.stderr)
         elif verbose and outcome.status == "verified":
             print(f"  {outcome.message}", file=sys.stderr)
+    summary = batch.summary_message()
+    if summary:
+        print(f"Warning: {summary}", file=sys.stderr)
 
 
 def _handle_generate_inventory(input_path: str, args: argparse.Namespace) -> int:

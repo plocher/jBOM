@@ -341,6 +341,17 @@ Generates an initial inventory template from schematic components. The output is
 **-v, --verbose**
 : Show loading and processing diagnostics.
 
+### Datasheet staging fetch (side effect)
+
+When `--supplier` is given, every Item's Datasheet URL encountered during
+enrichment (freshly populated by a supplier candidate, or already present on
+the row) is fetched into a staging directory for later human review. This
+rides the same always-on staging fetch as `jbom search` -- see that
+command's "Datasheet staging fetch" note above for the full behavior
+(idempotency, PDF/HTML verification, fetch budget, profile-based
+configuration). Items that already have a `Datasheet Name` (already in the
+Library) are skipped for free, without a network call.
+
 ## PROMOTE COMMAND
 
 ```
@@ -485,8 +496,43 @@ Searches distributor catalogs for parts matching a keyword or part number.
   - Use `-o -` for CSV to stdout.
   - Otherwise, treat the value as a file path.
 
+**--inventory CATALOG_CSV**
+: Optional. Cross-reference results against an existing inventory catalog so
+  already-admitted Datasheet documents (rows with a populated `Datasheet
+  Name`) are never re-staged by the datasheet staging fetch (see below).
+
 **-F, --force, --Force**
 : Overwrite an existing output file.
+
+### Datasheet staging fetch (side effect, opt-in per machine)
+
+Whenever a search result carries a Datasheet URL, `jbom search` fetches it
+into a staging directory for later human review, in addition to printing
+results (jBOM#355). This is **inert by default**: `staging_dir` is a
+user-machine binding (it names a local SPCoast-inventory checkout) that the
+shipped profile never sets, so nothing changes for any invocation until you
+configure it once in your own `~/.jbom/common.jbom.yaml` -- see
+[`configuration.md`](configuration.md#datasheet_staging-sub-stanza-jbom355).
+Once configured:
+
+- Downloads land with a `.unverified` suffix until a `file(1)`-style content
+  check confirms the payload is a real PDF; verified files get a plain
+  `.pdf` suffix. HTML responses (a common supplier-side "document not
+  found" placeholder) stay flagged `.unverified` and print a warning to
+  stderr; they are never admitted automatically.
+- Idempotent: a URL already staged (verified or flagged) is never re-fetched.
+  When `--inventory` is given, a URL already admitted (`Datasheet Name`
+  populated on a matching row) is also skipped.
+- Bounded: one invocation attempts at most `datasheet_staging.max_fetches_per_run`
+  real fetches (shipped default 20) within `fetch_time_budget_seconds`
+  (shipped default 30). Once either limit is hit, remaining URLs are
+  skipped with a one-line stderr summary; the command still succeeds.
+- Never fails the command: fetch errors are reported as stderr warnings only.
+
+`jbom inventory --supplier` has the identical side effect for every Item's
+Datasheet URL encountered during supplier enrichment (see the INVENTORY
+COMMAND section above); it does not need `--inventory` for admitted-skip
+since it already operates on inventory Items directly.
 
 ## GERBERS COMMAND
 

@@ -79,13 +79,17 @@ def _make_item(
 
 
 def _make_result(
-    *, pn: str = "S25804", mfr: str = "Yageo", mpn: str = "RC0603"
+    *,
+    pn: str = "S25804",
+    mfr: str = "Yageo",
+    mpn: str = "RC0603",
+    datasheet: str = "",
 ) -> SearchResult:
     return SearchResult(
         manufacturer=mfr,
         mpn=mpn,
         description="RES 10K 1% 0603",
-        datasheet="",
+        datasheet=datasheet,
         distributor="generic",
         distributor_part_number=pn,
         availability="500 In Stock",
@@ -97,10 +101,11 @@ def _make_result(
 
 
 def _candidate(
-    pn: str = "S25804", mfr: str = "Yageo", mpn: str = "RC0603"
+    pn: str = "S25804", mfr: str = "Yageo", mpn: str = "RC0603", datasheet: str = ""
 ) -> InventorySearchCandidate:
     return InventorySearchCandidate(
-        result=_make_result(pn=pn, mfr=mfr, mpn=mpn), match_score=80
+        result=_make_result(pn=pn, mfr=mfr, mpn=mpn, datasheet=datasheet),
+        match_score=80,
     )
 
 
@@ -319,6 +324,36 @@ class TestEnrichSuccessful:
         items_out, _ = _enrich([item], ["IPN"], service, filter_returns=[item])
 
         assert items_out[0].mfgpn == "RC0402FR-07100KL"
+
+    def test_datasheet_backfilled_when_blank(self) -> None:
+        item = _make_item()
+        record = InventorySearchRecord(
+            inventory_item=item,
+            query="10K",
+            candidates=[
+                _candidate("S25804", datasheet="https://example.com/lm358.pdf")
+            ],
+        )
+        service = _mock_service([record])
+        items_out, _ = _enrich([item], ["IPN"], service, filter_returns=[item])
+
+        assert items_out[0].datasheet == "https://example.com/lm358.pdf"
+        assert items_out[0].raw_data.get("Datasheet") == "https://example.com/lm358.pdf"
+
+    def test_datasheet_not_overwritten_when_present(self) -> None:
+        item = _make_item()
+        item.datasheet = "https://example.com/original.pdf"
+        record = InventorySearchRecord(
+            inventory_item=item,
+            query="10K",
+            candidates=[
+                _candidate("S25804", datasheet="https://example.com/candidate.pdf")
+            ],
+        )
+        service = _mock_service([record])
+        items_out, _ = _enrich([item], ["IPN"], service, filter_returns=[item])
+
+        assert items_out[0].datasheet == "https://example.com/original.pdf"
 
     def test_limit_gt_one_emits_ranked_alternatives(self) -> None:
         item = _make_item()
