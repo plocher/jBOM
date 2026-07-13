@@ -139,6 +139,15 @@ def step_run_command(context, command):
     env["JBOM_QUIET"] = "1"
     if getattr(context, "trace", False):
         env["JBOM_BEHAVE_TRACE"] = "1"
+
+    # Hermeticity: force every CLI subprocess to resolve profiles against
+    # this scenario's sandboxed $HOME (features/environment.py), never the
+    # real developer/CI $HOME, and never a real $JBOM_PROFILE_PATH inherited
+    # from the outer shell. A scenario that wants org-level profile search
+    # path behavior sets JBOM_PROFILE_PATH explicitly via its own steps.
+    env["HOME"] = str(getattr(context, "fake_home", context.sandbox_root))
+    env.pop("JBOM_PROFILE_PATH", None)
+
     # Apply mock tool overrides (e.g. PATH prefix for mock kicad-cli).
     # Set by 'Given mock kicad-cli is available' and similar steps.
     env.update(getattr(context, "mock_env", {}))
