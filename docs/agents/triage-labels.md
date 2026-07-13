@@ -9,3 +9,12 @@ The skills speak in terms of five canonical triage roles. This file maps those r
 - `wontfix` -> `wontfix` (will not be actioned)
 
 When a skill mentions a role (for example "apply the AFK-ready triage label"), use the corresponding label string from this mapping.
+
+## Model guidance for `ready-for-agent` issues
+
+When applying `ready-for-agent`, add a `Suggested model:` line to the issue body when the choice matters. Default to cost-effective models — a fully-specified ticket needs execution, not deep reasoning. Reserve high-reasoning / high-cost models for issues that genuinely require them (novel design work, subtle cross-cutting refactors, specialized domain knowledge), and justify the spend in the suggestion.
+
+Examples:
+
+- `Suggested model: cost-effective tier — well-specified plumbing; acceptance criteria are mechanical.`
+- `Suggested model: high-reasoning tier — cross-service refactor with subtle rollback semantics.`
