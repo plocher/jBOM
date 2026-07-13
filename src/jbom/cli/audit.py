@@ -191,6 +191,20 @@ def register_command(subparsers: argparse._SubParsersAction) -> None:  # type: i
     )
 
     parser.add_argument(
+        "--datasheet-library",
+        metavar="LIBRARY_DIR",
+        type=Path,
+        default=None,
+        help=(
+            "SPCoast-inventory checkout root (containing datasheets/) for the "
+            "datasheet document-library file-presence checks (inventory mode "
+            "only; triggers DATASHEET_FILE_MISSING / DATASHEET_ORPHAN_FILE rows). "
+            "Other datasheet-library hygiene checks (backlog, name/provenance "
+            "lints, token normalization) always run in inventory mode."
+        ),
+    )
+
+    parser.add_argument(
         "-o",
         "--output",
         metavar="DEST",
@@ -274,6 +288,14 @@ def _run_project_mode(args: argparse.Namespace, inputs: list[Path]) -> int:
         )
         return 1
 
+    if getattr(args, "datasheet_library", None) is not None:
+        print(
+            "Error: --datasheet-library is only valid in inventory mode "
+            "(positional arguments must be .csv files for inventory mode)",
+            file=sys.stderr,
+        )
+        return 1
+
     supplier_service, supplier_id = _build_supplier_service(args)
 
     service = AuditService()
@@ -313,6 +335,7 @@ def _run_inventory_mode(args: argparse.Namespace, inputs: list[Path]) -> int:
         requirements_path=getattr(args, "requirements", None),
         supplier_service=supplier_service,
         supplier_id=supplier_id,
+        library_dir=getattr(args, "datasheet_library", None),
     )
 
     _write_inventory_report(args, report)
