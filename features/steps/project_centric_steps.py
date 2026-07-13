@@ -809,7 +809,7 @@ def _table_to_supplier_results(context, *, supplier_id: str) -> list[dict[str, A
             "distributor": supplier_id,
             "distributor_part_number": r.get("distributor_pn", ""),
             "description": r.get("description", ""),
-            "datasheet": "",
+            "datasheet": r.get("datasheet", ""),
             "availability": f"{r.get('stock_quantity', '0')} In Stock",
             "price": r.get("price", ""),
             "details_url": "",

@@ -15,7 +15,10 @@ def _sr(**kw) -> SearchResult:
         manufacturer="Yageo",
         mpn="RC0603FR-0710KL",
         description="RES 10K",
-        datasheet="http://example",
+        # Deliberately empty: a non-empty Datasheet URL would trigger the
+        # jBOM#355 always-on staging fetch, which would attempt a real
+        # network request unless explicitly under test for that behavior.
+        datasheet="",
         distributor="mouser",
         distributor_part_number="123-ABC",
         availability="6,609 In Stock",
