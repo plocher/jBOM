@@ -19,8 +19,9 @@ Key constraints (rules, not procedure):
 - **Branch names reference the GitHub issue(s) being addressed**:
   `feature/issue-N-brief-description`, `fix/issue-N-brief-description`.
 - **After a PR merge, run scripted branch cleanup** with
-  `python scripts/post_merge_cleanup.py --branch <branch-name>` before
-  considering the workflow complete.
+  `git cleanup-merged --branch <branch-name>` before considering the
+  workflow complete (tool from https://github.com/plocher/Scripts,
+  installed on PATH via `~/bin`).
 - **Add substantive GitHub issue comments** to document progress,
   findings, and solutions as work proceeds.
 - **All tests must pass before a PR can merge** — see `Testing
@@ -69,7 +70,7 @@ quoting of conventional-commit messages, and `gh` issue/PR authoring
 lives in the `git-workflow` skill at
 `.agents/skills/git-workflow/SKILL.md`. Follow that skill rather than
 duplicating the steps here. This includes mandatory post-merge
-patch-equivalence cleanup via `scripts/post_merge_cleanup.py`.
+patch-equivalence cleanup via `git cleanup-merged`.
 
 ## Code Quality Standards
 
