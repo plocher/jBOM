@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import csv
 import io
+from collections import OrderedDict
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
@@ -32,6 +33,16 @@ from jbom.common.field_taxonomy import (
 )
 from jbom.common.types import Component, InventoryItem
 from jbom.services.component_merge_service import ComponentMergeService
+from jbom.services.datasheet_library import (
+    datasheet_filename,
+    extract_name_tokens,
+    find_near_collisions,
+    get_datasheet_name,
+    group_case_insensitive_variants,
+    normalize_token as _normalize_manufacturer_token,
+    resolve_canonical_spellings,
+    scan_library_pdfs,
+)
 from jbom.services.inventory_reader import InventoryReader
 from jbom.services.project_component_collector import ProjectComponentCollector
 from jbom.services.schematic_reader import SchematicReader
@@ -87,6 +98,29 @@ class CheckType(str, Enum):
     STALE_PART = "STALE_PART"  # existing PN not found in fresh catalog search
     BETTER_AVAILABLE = "BETTER_AVAILABLE"  # fresh search found a different/better PN
     SPEC_MISMATCH = "SPEC_MISMATCH"  # reserved: supplier PN doesn't match item spec
+
+    # Datasheet document-library hygiene checks (jBOM#357). Read-only, offline;
+    # see jBOM#342 (map), #346/#348/#351 (lint decisions), #349 (audit surface).
+    DATASHEET_BACKLOG = "DATASHEET_BACKLOG"  # Datasheet URL populated, Name empty
+    DATASHEET_PROVENANCE_MISSING = (
+        "DATASHEET_PROVENANCE_MISSING"  # Name, no URL anywhere in group
+    )
+    DATASHEET_PROVENANCE_CONFLICT = (
+        "DATASHEET_PROVENANCE_CONFLICT"  # >1 URL row per Name
+    )
+    DATASHEET_NAME_CASE_MISMATCH = (
+        "DATASHEET_NAME_CASE_MISMATCH"  # inconsistent casing, same name
+    )
+    DATASHEET_NAME_NEAR_COLLISION = (
+        "DATASHEET_NAME_NEAR_COLLISION"  # suspiciously similar names
+    )
+    DATASHEET_FILE_MISSING = (
+        "DATASHEET_FILE_MISSING"  # Name has no datasheets/<name>.pdf
+    )
+    DATASHEET_ORPHAN_FILE = "DATASHEET_ORPHAN_FILE"  # PDF unreferenced by any Item
+    DATASHEET_TOKEN_MISMATCH = (
+        "DATASHEET_TOKEN_MISMATCH"  # manufacturer/tech spelling drift
+    )
 
 
 class Severity(str, Enum):
@@ -479,6 +513,7 @@ class AuditService:
         requirements_path: Optional[Path] = None,
         supplier_service: Optional[InventorySearchService] = None,
         supplier_id: str = "",
+        library_dir: Optional[Path] = None,
     ) -> AuditReport:
         """Audit inventory catalog(s) for coverage and quality.
 
@@ -491,6 +526,9 @@ class AuditService:
                 When provided, each COMPONENT requirement is also checked
                 against the supplier catalog.
             supplier_id: Display name for the supplier used in row descriptions.
+            library_dir: Optional path to the SPCoast-inventory checkout root
+                (containing ``datasheets/``). When provided, file-presence
+                datasheet-library checks (jBOM#357) also run.
 
         Returns:
             :class:`AuditReport` with all findings.
@@ -505,7 +543,17 @@ class AuditService:
             items, _ = reader.load()
             catalog_items.extend(i for i in items if i.row_type.upper() == "ITEM")
 
-        # No requirements and no supplier check? Nothing to do.
+        # Datasheet-library hygiene checks (jBOM#357) run unconditionally for
+        # any loaded catalog: they are read-only, offline, and need no flags
+        # beyond the catalog itself (file-presence checks additionally need
+        # library_dir; see _check_datasheet_library).
+        for datasheet_row in self._check_datasheet_library(
+            catalog_items, catalog_file_str, library_dir
+        ):
+            report.rows.append(datasheet_row)
+            _increment_counter(report, datasheet_row.severity)
+
+        # No requirements and no supplier check? Nothing further to do.
         if requirements_path is None and supplier_service is None:
             return report
 
@@ -579,6 +627,282 @@ class AuditService:
                 report.info_count += 1
 
         return report
+
+    # ------------------------------------------------------------------
+    # Private helpers — datasheet document-library hygiene (jBOM#357)
+    # ------------------------------------------------------------------
+
+    def _check_datasheet_library(
+        self,
+        catalog_items: list[InventoryItem],
+        catalog_file: str,
+        library_dir: Optional[Path],
+    ) -> list[AuditRow]:
+        """Run read-only datasheet document-library hygiene checks.
+
+        Implements the lints decided in jBOM#346 (naming/uniqueness/token
+        normalization), jBOM#348 (Name→URL schema linkage, amended by
+        jBOM#351's one-URL-per-Name provenance rule), and jBOM#351
+        (structural backlog framing). All checks are offline; file-presence
+        checks additionally require *library_dir*.
+
+        Args:
+            catalog_items: ITEM rows from the inventory catalog.
+            catalog_file: String path to the catalog file (used in rows).
+            library_dir: SPCoast-inventory checkout root, or ``None`` to
+                skip file-presence checks.
+
+        Returns:
+            List of :class:`AuditRow` findings, offline-first ordering.
+        """
+        rows: list[AuditRow] = []
+
+        by_exact_name: dict[str, list[InventoryItem]] = OrderedDict()
+        for item in catalog_items:
+            name = get_datasheet_name(item)
+            if name:
+                by_exact_name.setdefault(name, []).append(item)
+
+        rows.extend(self._check_datasheet_backlog(catalog_items, catalog_file))
+        rows.extend(self._check_datasheet_provenance(by_exact_name, catalog_file))
+        rows.extend(self._check_datasheet_name_collisions(by_exact_name, catalog_file))
+        if library_dir is not None:
+            rows.extend(
+                self._check_datasheet_file_presence(
+                    by_exact_name, catalog_file, library_dir
+                )
+            )
+        rows.extend(
+            self._check_datasheet_token_normalization(
+                catalog_items, by_exact_name, catalog_file
+            )
+        )
+
+        return rows
+
+    def _check_datasheet_backlog(
+        self, catalog_items: list[InventoryItem], catalog_file: str
+    ) -> list[AuditRow]:
+        """Return DATASHEET_BACKLOG rows: URL populated, Name empty (jBOM#348)."""
+        rows: list[AuditRow] = []
+        for item in catalog_items:
+            url = (item.datasheet or "").strip()
+            if url and not get_datasheet_name(item):
+                rows.append(
+                    AuditRow(
+                        check_type=CheckType.DATASHEET_BACKLOG,
+                        severity=Severity.INFO,
+                        catalog_file=catalog_file,
+                        ipn=item.ipn,
+                        category=item.category or "",
+                        field="Datasheet Name",
+                        current_value=url,
+                        description=(
+                            f"IPN {item.ipn!r}: Datasheet URL populated but "
+                            "Datasheet Name is empty (dig-deeper backlog)."
+                        ),
+                    )
+                )
+        return rows
+
+    def _check_datasheet_provenance(
+        self,
+        by_exact_name: dict[str, list[InventoryItem]],
+        catalog_file: str,
+    ) -> list[AuditRow]:
+        """Return provenance rows for the one-URL-per-Name rule (jBOM#348/#351)."""
+        rows: list[AuditRow] = []
+        for name, members in by_exact_name.items():
+            with_url = [m for m in members if (m.datasheet or "").strip()]
+            if not with_url:
+                rows.append(
+                    AuditRow(
+                        check_type=CheckType.DATASHEET_PROVENANCE_MISSING,
+                        severity=Severity.WARN,
+                        catalog_file=catalog_file,
+                        category=members[0].category or "",
+                        field="Datasheet Name",
+                        current_value=name,
+                        description=(
+                            f"Datasheet Name {name!r}: no row carries the "
+                            "canonical-source URL (provenance missing)."
+                        ),
+                    )
+                )
+            elif len(with_url) > 1:
+                ipns = ", ".join(m.ipn for m in with_url if m.ipn)
+                rows.append(
+                    AuditRow(
+                        check_type=CheckType.DATASHEET_PROVENANCE_CONFLICT,
+                        severity=Severity.ERROR,
+                        catalog_file=catalog_file,
+                        category=members[0].category or "",
+                        field="Datasheet Name",
+                        current_value=name,
+                        description=(
+                            f"Datasheet Name {name!r}: {len(with_url)} rows "
+                            f"carry a Datasheet URL ({ipns}); the "
+                            "one-URL-per-Name rule allows exactly one."
+                        ),
+                    )
+                )
+        return rows
+
+    def _check_datasheet_name_collisions(
+        self,
+        by_exact_name: dict[str, list[InventoryItem]],
+        catalog_file: str,
+    ) -> list[AuditRow]:
+        """Return case-insensitive uniqueness and near-collision rows (jBOM#346)."""
+        rows: list[AuditRow] = []
+
+        for lowered, variants in group_case_insensitive_variants(
+            by_exact_name.keys()
+        ).items():
+            if len(variants) > 1:
+                rows.append(
+                    AuditRow(
+                        check_type=CheckType.DATASHEET_NAME_CASE_MISMATCH,
+                        severity=Severity.ERROR,
+                        catalog_file=catalog_file,
+                        field="Datasheet Name",
+                        current_value=", ".join(sorted(variants)),
+                        description=(
+                            "Datasheet Name collides case-insensitively with "
+                            f"inconsistent casing: {sorted(variants)}."
+                        ),
+                    )
+                )
+
+        for name_a, name_b, ratio in find_near_collisions(by_exact_name.keys()):
+            rows.append(
+                AuditRow(
+                    check_type=CheckType.DATASHEET_NAME_NEAR_COLLISION,
+                    severity=Severity.WARN,
+                    catalog_file=catalog_file,
+                    field="Datasheet Name",
+                    current_value=name_a,
+                    suggested_value=name_b,
+                    description=(
+                        f"Datasheet Names {name_a!r} and {name_b!r} are "
+                        f"suspiciously similar ({ratio:.0%}); check for "
+                        "spelling drift."
+                    ),
+                )
+            )
+        return rows
+
+    def _check_datasheet_file_presence(
+        self,
+        by_exact_name: dict[str, list[InventoryItem]],
+        catalog_file: str,
+        library_dir: Path,
+    ) -> list[AuditRow]:
+        """Return file-presence rows against the library checkout (jBOM#348)."""
+        rows: list[AuditRow] = []
+        library_pdf_stems = scan_library_pdfs(library_dir)
+        library_pdf_stems_lower = {stem.lower() for stem in library_pdf_stems}
+        referenced_lower: set[str] = set()
+
+        for name, members in by_exact_name.items():
+            referenced_lower.add(name.lower())
+            if name.lower() not in library_pdf_stems_lower:
+                ipns = ", ".join(m.ipn for m in members if m.ipn)
+                rows.append(
+                    AuditRow(
+                        check_type=CheckType.DATASHEET_FILE_MISSING,
+                        severity=Severity.ERROR,
+                        catalog_file=catalog_file,
+                        category=members[0].category or "",
+                        field="Datasheet Name",
+                        current_value=name,
+                        description=(
+                            f"Datasheet Name {name!r} (IPN(s): {ipns}) has no "
+                            f"matching {datasheet_filename(name)} under "
+                            f"{library_dir}/datasheets/."
+                        ),
+                    )
+                )
+
+        for stem in library_pdf_stems:
+            if stem.lower() not in referenced_lower:
+                rows.append(
+                    AuditRow(
+                        check_type=CheckType.DATASHEET_ORPHAN_FILE,
+                        severity=Severity.WARN,
+                        catalog_file=catalog_file,
+                        field="Datasheet Name",
+                        current_value=stem,
+                        description=(
+                            f"datasheets/{stem}.pdf is not referenced by any "
+                            "Item's Datasheet Name."
+                        ),
+                    )
+                )
+        return rows
+
+    def _check_datasheet_token_normalization(
+        self,
+        catalog_items: list[InventoryItem],
+        by_exact_name: dict[str, list[InventoryItem]],
+        catalog_file: str,
+    ) -> list[AuditRow]:
+        """Return manufacturer/tech token spelling-drift rows (jBOM#346)."""
+        rows: list[AuditRow] = []
+        canonical = resolve_canonical_spellings(
+            item.manufacturer or "" for item in catalog_items
+        )
+
+        for item in catalog_items:
+            manufacturer = (item.manufacturer or "").strip()
+            if not manufacturer:
+                continue
+            canonical_spelling = canonical.get(
+                _normalize_manufacturer_token(manufacturer), ""
+            )
+            if canonical_spelling and canonical_spelling != manufacturer:
+                rows.append(
+                    AuditRow(
+                        check_type=CheckType.DATASHEET_TOKEN_MISMATCH,
+                        severity=Severity.WARN,
+                        catalog_file=catalog_file,
+                        ipn=item.ipn,
+                        category=item.category or "",
+                        field="Manufacturer",
+                        current_value=manufacturer,
+                        suggested_value=canonical_spelling,
+                        description=(
+                            f"IPN {item.ipn!r}: Manufacturer spelling "
+                            f"{manufacturer!r} diverges from canonical "
+                            f"spelling {canonical_spelling!r}."
+                        ),
+                    )
+                )
+
+        for name, members in by_exact_name.items():
+            for token in extract_name_tokens(name):
+                canonical_spelling = canonical.get(
+                    _normalize_manufacturer_token(token), ""
+                )
+                if canonical_spelling and canonical_spelling != token:
+                    rows.append(
+                        AuditRow(
+                            check_type=CheckType.DATASHEET_TOKEN_MISMATCH,
+                            severity=Severity.WARN,
+                            catalog_file=catalog_file,
+                            category=members[0].category or "",
+                            field="Datasheet Name",
+                            current_value=name,
+                            suggested_value=canonical_spelling,
+                            description=(
+                                f"Datasheet Name {name!r}: token {token!r} "
+                                "diverges from canonical manufacturer "
+                                f"spelling {canonical_spelling!r}."
+                            ),
+                        )
+                    )
+                    break  # one finding per name is enough signal
+        return rows
 
     # ------------------------------------------------------------------
     # Private helpers — supplier validation
