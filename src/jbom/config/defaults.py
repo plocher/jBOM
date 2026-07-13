@@ -262,6 +262,31 @@ class DatasheetStagingConfig(BaseModel):
         return max(0.0, float(value))
 
 
+class CheckUrlsConfig(BaseModel):
+    """Defaults profile ``check_urls:`` stanza (jBOM#358).
+
+    ``jbom audit --check-urls`` is opt-in via the CLI flag itself (default
+    off, no network unless given); this stanza exists solely to let tests
+    redirect the recovery ladder's HTTP fetch to local fixture files
+    instead of the network, mirroring
+    :class:`DatasheetStagingConfig`'s ``fetch_fixtures_manifest``.
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    # Test-only escape hatch: when non-empty, the check-urls fetch resolves
+    # URLs against a local ``{url: file_path}`` JSON manifest instead of
+    # the network. Never set this in a production profile.
+    fetch_fixtures_manifest: str = ""
+
+    @field_validator("fetch_fixtures_manifest", mode="before")
+    @classmethod
+    def _normalize_fetch_fixtures_manifest(cls, value: Any) -> str:
+        if value is None:
+            return ""
+        return str(value).strip()
+
+
 class DefaultsConfig(BaseModel):
     """Loaded defaults profile."""
 
@@ -283,6 +308,7 @@ class DefaultsConfig(BaseModel):
     datasheet_staging: DatasheetStagingConfig = Field(
         default_factory=DatasheetStagingConfig
     )
+    check_urls: CheckUrlsConfig = Field(default_factory=CheckUrlsConfig)
     search_excluded_categories: frozenset[str] = Field(default_factory=frozenset)
     component_id_fields: dict[str, frozenset[str]] = Field(default_factory=dict)
     field_precedence_policy: dict[str, tuple[str, ...]] = Field(default_factory=dict)
@@ -616,6 +642,11 @@ class DefaultsConfig(BaseModel):
         """Return the datasheet staging fetch config (jBOM#355)."""
 
         return self.datasheet_staging
+
+    def get_check_urls_config(self) -> CheckUrlsConfig:
+        """Return the check-urls fetch config (jBOM#358)."""
+
+        return self.check_urls
 
 
 def load_defaults(name: str, *, cwd: Path | None = None) -> DefaultsConfig:

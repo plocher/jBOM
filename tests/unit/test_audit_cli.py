@@ -1011,3 +1011,87 @@ def test_handle_audit_returns_1_on_file_not_found(tmp_path: Path) -> None:
         result = handle_audit(args)
 
     assert result == 1
+
+
+# ---------------------------------------------------------------------------
+# --check-urls (jBOM#358): opt-in, default off, inventory-mode only
+# ---------------------------------------------------------------------------
+
+
+def test_check_urls_flag_parsed_and_defaults_to_false() -> None:
+    parser = create_parser()
+    args = parser.parse_args(["audit", "."])
+    assert args.check_urls is False
+
+    args = parser.parse_args(["audit", ".", "--check-urls"])
+    assert args.check_urls is True
+
+
+def test_check_urls_in_project_mode_returns_1(tmp_path: Path) -> None:
+    """--check-urls is inventory-mode only; project-mode input is an error."""
+    args = _make_args(inputs=[str(tmp_path)], check_urls=True)
+    result = handle_audit(args)
+    assert result == 1
+
+
+def test_check_urls_never_calls_audit_service(tmp_path: Path) -> None:
+    """--check-urls bypasses AuditService entirely (self-contained dispatch)."""
+    cat = tmp_path / "catalog.csv"
+    cat.write_text("RowType,IPN,Category,Datasheet\n", encoding="utf-8")
+
+    with patch("jbom.cli.audit.AuditService") as MockService:
+        instance = MockService.return_value
+
+        args = _make_args(inputs=[str(cat)], check_urls=True)
+        result = handle_audit(args)
+
+        instance.audit_inventory.assert_not_called()
+        instance.audit_project.assert_not_called()
+
+    assert result == 0
+
+
+def test_check_urls_never_touches_network_without_fixtures(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """No fixture manifest configured -> default_fetch would touch the network;
+    assert it is simply never called for a catalog with no Datasheet URLs.
+    """
+    cat = tmp_path / "catalog.csv"
+    cat.write_text("RowType,IPN,Category,Datasheet\nITEM,R001,RES,\n", encoding="utf-8")
+
+    def _explode(_url: str) -> bytes:
+        raise AssertionError("must never touch the network in tests")
+
+    monkeypatch.setattr(
+        "jbom.services.datasheet_url_upgrade_report.default_fetch", _explode
+    )
+
+    args = _make_args(inputs=[str(cat)], check_urls=True)
+    result = handle_audit(args)
+
+    assert result == 0
+
+
+def test_check_urls_with_inventory_flag_returns_1(tmp_path: Path) -> None:
+    cat = tmp_path / "catalog.csv"
+    cat.write_text("RowType,IPN,Category,Datasheet\n", encoding="utf-8")
+
+    args = _make_args(inputs=[str(cat)], check_urls=True, inventory=Path("other.csv"))
+    result = handle_audit(args)
+    assert result == 1
+
+
+def test_check_urls_writes_full_sheet_paste_csv(tmp_path: Path) -> None:
+    cat = tmp_path / "catalog.csv"
+    cat.write_text("RowType,IPN,Category,Datasheet\nITEM,R001,RES,\n", encoding="utf-8")
+    report_path = tmp_path / "report.csv"
+
+    args = _make_args(inputs=[str(cat)], check_urls=True, output=report_path)
+    result = handle_audit(args)
+
+    assert result == 0
+    assert report_path.exists()
+    content = report_path.read_text(encoding="utf-8")
+    assert "Datasheet" in content
+    assert "R001" in content
