@@ -19,10 +19,11 @@ from jbom.cli.output import (
     open_output_text_file,
     resolve_output_destination,
 )
+from jbom.common.types import InventoryItem
 from jbom.config.defaults import get_defaults
 from jbom.config.providers import get_provider, list_searchable_suppliers
 from jbom.config.suppliers import load_supplier, resolve_supplier_by_id
-from jbom.services.datasheet_staging import resolve_staging_dir, stage_datasheet_url
+from jbom.services.datasheet_staging import is_admitted, stage_datasheet_urls
 from jbom.services.search.cache import DiskSearchCache, InMemorySearchCache, SearchCache
 from jbom.services.search.diagnostics import (
     SearchPipelineDiagnostics,
@@ -303,6 +304,14 @@ def register_command(subparsers) -> None:
         "--output",
         help="Output destination: omit for console, use 'console' for table, '-' for CSV to stdout, or a file path",
     )
+    parser.add_argument(
+        "--inventory",
+        help=(
+            "Optional inventory CSV to cross-reference for already-admitted "
+            "Datasheet URLs (Datasheet Name populated); admitted documents "
+            "are never re-staged by the always-on staging fetch (jBOM#355)."
+        ),
+    )
     add_force_argument(parser)
 
     parser.set_defaults(handler=handle_search)
@@ -347,7 +356,8 @@ def handle_search(
     if bool(getattr(args, "debug", False)):
         _print_search_debug_diagnostics(diagnostics)
 
-    _stage_result_datasheets(results)
+    admitted_by_url = _load_admitted_datasheet_lookup(getattr(args, "inventory", None))
+    _stage_result_datasheets(results, admitted_by_url)
 
     force = bool(getattr(args, "force", False))
     return _output_results(
@@ -408,26 +418,72 @@ def _run_adaptive_search_pipeline(
     return best_results, best_diagnostics
 
 
-def _stage_result_datasheets(results: list[SearchResult]) -> None:
-    """Always-on staging fetch (jBOM#355): stage any Datasheet URL encountered.
+def _load_admitted_datasheet_lookup(
+    inventory_path: str | None,
+) -> dict[str, InventoryItem]:
+    """Load an optional ``--inventory`` CSV and index admitted Datasheet URLs.
 
-    Rides the already-networked ``jbom search`` flow. No inventory context is
-    available here, so admission (``Datasheet Name``) skips never apply --
-    only already-staged skips, verified-PDF writes, and HTML-impostor flags.
-    Fetch/staging failures never fail the search command; they are reported
-    to stderr as warnings only.
+    Returns a ``{Datasheet URL: InventoryItem}`` map for rows that already
+    have a ``Datasheet Name`` (i.e. the document is in the Library). Used so
+    ``jbom search`` can honor the admitted-skip rule even though it has no
+    other inventory context of its own.
     """
 
-    staging_dir = resolve_staging_dir()
-    for result in results:
-        url = (result.datasheet or "").strip()
-        if not url:
-            continue
-        outcome = stage_datasheet_url(url, staging_dir=staging_dir)
-        if outcome.status == "flagged":
+    if not inventory_path:
+        return {}
+
+    from pathlib import Path as _Path
+
+    from jbom.services.inventory_reader import InventoryReader
+
+    try:
+        items, _fields = InventoryReader(_Path(inventory_path)).load()
+    except Exception as exc:
+        print(
+            f"Warning: could not load --inventory {inventory_path!r} for "
+            f"datasheet admission check: {exc}",
+            file=sys.stderr,
+        )
+        return {}
+
+    lookup: dict[str, InventoryItem] = {}
+    for item in items:
+        url = (item.datasheet or "").strip()
+        if url and is_admitted(item):
+            lookup[url] = item
+    return lookup
+
+
+def _stage_result_datasheets(
+    results: list[SearchResult],
+    admitted_by_url: dict[str, InventoryItem] | None = None,
+) -> None:
+    """Always-on staging fetch (jBOM#355): stage any Datasheet URL encountered.
+
+    Rides the already-networked ``jbom search`` flow. When ``--inventory`` was
+    given, results whose Datasheet URL matches an admitted Item (see
+    :func:`_load_admitted_datasheet_lookup`) are skipped for free -- never
+    re-fetched, never counted against the fetch budget. Fetch/staging
+    failures and a budget-exceeded summary are reported to stderr as
+    warnings only; they never fail the search command.
+    """
+
+    admitted_by_url = admitted_by_url or {}
+    entries = [
+        (result.datasheet, admitted_by_url.get((result.datasheet or "").strip()))
+        for result in results
+        if (result.datasheet or "").strip()
+    ]
+    if not entries:
+        return
+
+    batch = stage_datasheet_urls(entries)
+    for outcome in batch.outcomes:
+        if outcome.status in ("flagged", "fetch-error"):
             print(f"Warning: {outcome.message}", file=sys.stderr)
-        elif outcome.status == "fetch-error":
-            print(f"Warning: {outcome.message}", file=sys.stderr)
+    summary = batch.summary_message()
+    if summary:
+        print(f"Warning: {summary}", file=sys.stderr)
 
 
 def _apply_result_pipeline(

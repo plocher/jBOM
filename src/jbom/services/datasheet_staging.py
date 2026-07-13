@@ -22,20 +22,28 @@ Name, Never-Rename):
   ``datasheets/`` directory is the separate ``jbom inventory admit`` gate
   (jBOM#356), which depends on the staging layout documented here but is
   out of scope for this module.
+
+Configuration is sourced entirely from jBOM's ``defaults:`` profile stanza
+(see ``datasheet_staging:`` in ``docs/reference/configuration.md``) rather
+than ad hoc environment variables, so staging directory / fetch-budget
+overrides follow the same ``.jbom/`` profile-hierarchy precedence as every
+other jBOM setting.
 """
 
 from __future__ import annotations
 
 import hashlib
+import json
 import logging
-import os
 import re
-from dataclasses import dataclass
+import time
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Iterable, Optional
 from urllib.parse import urlparse
 
 from jbom.common.types import InventoryItem
+from jbom.config.defaults import DefaultsConfig, get_defaults
 
 log = logging.getLogger(__name__)
 
@@ -48,16 +56,6 @@ UNVERIFIED_SUFFIX = ".unverified"
 VERIFIED_SUFFIX = ".pdf"
 
 _DATASHEET_NAME_COLUMN = "Datasheet Name"
-_ENV_STAGING_DIR = "JBOM_STAGING_DIR"
-_ENV_INVENTORY_ROOT = "JBOM_INVENTORY_ROOT"
-_DEFAULT_INVENTORY_ROOT = Path.home() / "Dropbox" / "KiCad" / "SPCoast-inventory"
-
-# Test seam only: when set, default_fetch() reads response bytes from a local
-# JSON manifest (``{url: local_file_path}``) instead of making a real network
-# request. Used exclusively by BDD scenarios that exercise the CLI as a
-# subprocess (features/steps/datasheet_staging_steps.py); never read by
-# production code paths unless a developer explicitly sets it.
-_ENV_FETCH_FIXTURES = "JBOM_DATASHEET_FETCH_FIXTURES"
 
 _PDF_MAGIC = b"%PDF-"
 _PDF_MAGIC_SEARCH_WINDOW = 1024
@@ -65,39 +63,52 @@ _HTML_MARKERS = (b"<!doctype html", b"<html", b"<head", b"<body")
 _HTML_SNIFF_WINDOW = 2048
 
 
-def resolve_staging_dir(explicit: Path | str | None = None) -> Path:
-    """Resolve the staging directory using a documented precedence order.
+def resolve_staging_dir(
+    explicit: Path | str | None = None,
+    *,
+    cwd: Path | None = None,
+    defaults: DefaultsConfig | None = None,
+) -> Path | None:
+    """Resolve the staging directory via the profile system.
 
     Precedence (highest first):
 
     1. *explicit* -- an explicit override passed by the caller.
-    2. ``JBOM_STAGING_DIR`` environment variable -- a direct path to the
-       staging directory itself.
-    3. ``JBOM_INVENTORY_ROOT`` environment variable -- path to the
-       SPCoast-inventory checkout; staging directory is ``<root>/staging``.
-    4. A sensible, non-hardcoded-username default:
-       ``~/Dropbox/KiCad/SPCoast-inventory/staging``.
+    2. ``defaults:.datasheet_staging.staging_dir`` from the active jBOM
+       profile (project ``.jbom/`` overrides > ``common.jbom.yaml`` >
+       ``$JBOM_PROFILE_PATH`` > ``~/.jbom/`` > built-in), the same
+       resolution order used by every other jBOM configuration value.
+
+    The staging directory is a user-machine binding (it names a checkout of
+    the SPCoast-inventory repo, which lives at a different path per
+    machine), so there is deliberately no code-level fallback path: when
+    neither of the above is set, this returns ``None`` and staging is
+    inert. A user enables it once, for every invocation, by declaring
+    ``defaults.datasheet_staging.staging_dir`` in their own
+    ``~/.jbom/common.jbom.yaml``.
 
     Args:
         explicit: Optional caller-supplied override.
+        cwd: Working directory used for project-local profile search. Passed
+            straight through to :func:`jbom.config.defaults.get_defaults`.
+        defaults: Optional pre-loaded :class:`DefaultsConfig`, to avoid
+            reloading the profile when the caller already has one.
 
     Returns:
-        Resolved path to the staging directory. The directory is not
-        created here; callers create it lazily on first write.
+        Resolved path to the staging directory, or ``None`` when staging is
+        not configured. The directory is not created here; callers create
+        it lazily on first write.
     """
 
     if explicit:
         return Path(explicit)
 
-    env_staging_dir = os.environ.get(_ENV_STAGING_DIR, "").strip()
-    if env_staging_dir:
-        return Path(env_staging_dir)
+    cfg = defaults if defaults is not None else get_defaults(cwd=cwd)
+    configured = cfg.get_datasheet_staging_config().staging_dir
+    if configured:
+        return Path(configured).expanduser()
 
-    env_inventory_root = os.environ.get(_ENV_INVENTORY_ROOT, "").strip()
-    if env_inventory_root:
-        return Path(env_inventory_root) / "staging"
-
-    return _DEFAULT_INVENTORY_ROOT / "staging"
+    return None
 
 
 def looks_like_pdf(content: bytes) -> bool:
@@ -155,9 +166,9 @@ class StagingOutcome:
     """Result of one :func:`stage_datasheet_url` call.
 
     Attributes:
-        status: One of ``"skip-empty-url"``, ``"admitted-skip"``,
-            ``"staged-skip"``, ``"verified"``, ``"flagged"``, or
-            ``"fetch-error"``.
+        status: One of ``"inactive"``, ``"skip-empty-url"``,
+            ``"admitted-skip"``, ``"staged-skip"``, ``"verified"``,
+            ``"flagged"``, ``"fetch-error"``, or ``"budget-skip"``.
         path: The staged file path, when one exists.
         message: Human-readable summary, suitable for verbose/warning output.
     """
@@ -168,16 +179,7 @@ class StagingOutcome:
 
 
 def default_fetch(url: str, *, timeout: float = 20.0) -> bytes:
-    """Fetch *url* over the network and return the raw response body.
-
-    When ``JBOM_DATASHEET_FETCH_FIXTURES`` is set (a test-only seam), reads
-    response bytes from the local file mapped to *url* in that JSON manifest
-    instead of making a real network request.
-    """
-
-    fixtures_path = os.environ.get(_ENV_FETCH_FIXTURES, "").strip()
-    if fixtures_path:
-        return _fetch_from_fixture_manifest(url, Path(fixtures_path))
+    """Fetch *url* over the network and return the raw response body."""
 
     if requests is None:  # pragma: no cover - exercised only without requests
         raise RuntimeError(
@@ -189,10 +191,31 @@ def default_fetch(url: str, *, timeout: float = 20.0) -> bytes:
     return response.content
 
 
+def _resolve_fetch(fetch_fixtures_manifest: str) -> Callable[[str], bytes]:
+    """Return the effective fetch callable for a staging batch.
+
+    When *fetch_fixtures_manifest* is set (test-only; see
+    ``DatasheetStagingConfig.fetch_fixtures_manifest``), URLs are resolved
+    against that local JSON manifest instead of the network. Otherwise the
+    current module-level :func:`default_fetch` is used -- looked up by name
+    at call time (not bound at import time) so tests can monkeypatch
+    ``jbom.services.datasheet_staging.default_fetch`` directly.
+    """
+
+    manifest = (fetch_fixtures_manifest or "").strip()
+    if not manifest:
+        return default_fetch
+
+    manifest_path = Path(manifest)
+
+    def _fixture_fetch(url: str) -> bytes:
+        return _fetch_from_fixture_manifest(url, manifest_path)
+
+    return _fixture_fetch
+
+
 def _fetch_from_fixture_manifest(url: str, manifest_path: Path) -> bytes:
     """Resolve *url* to local fixture bytes via a ``{url: file_path}`` manifest."""
-
-    import json
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     file_path = manifest.get(url)
@@ -207,8 +230,9 @@ def stage_datasheet_url(
     url: str,
     *,
     item: InventoryItem | None = None,
-    staging_dir: Path,
-    fetch: Callable[[str], bytes] = default_fetch,
+    staging_dir: Path | None,
+    fetch: Optional[Callable[[str], bytes]] = None,
+    fetch_fixtures_manifest: str = "",
 ) -> StagingOutcome:
     """Idempotently stage one Datasheet URL.
 
@@ -218,12 +242,27 @@ def stage_datasheet_url(
         item: Optional owning :class:`InventoryItem`, used only to check
             :func:`is_admitted` (already-in-Library skip).
         staging_dir: Resolved staging directory (see
-            :func:`resolve_staging_dir`).
-        fetch: Injectable network fetch callable, ``url -> bytes``.
+            :func:`resolve_staging_dir`), or ``None`` when staging is not
+            configured -- in which case this is a silent no-op.
+        fetch: Injectable network fetch callable, ``url -> bytes``. When
+            omitted, resolved from *fetch_fixtures_manifest* (falling back to
+            :func:`default_fetch`).
+        fetch_fixtures_manifest: Test-only fixture-manifest path; ignored
+            when *fetch* is provided explicitly.
 
     Returns:
         A :class:`StagingOutcome` describing what happened.
     """
+
+    if staging_dir is None:
+        log.debug(
+            "Datasheet staging inactive (no datasheet_staging.staging_dir "
+            "configured); skipping %r.",
+            url,
+        )
+        return StagingOutcome(
+            status="inactive", message="Datasheet staging is not configured."
+        )
 
     url = (url or "").strip()
     if not url:
@@ -246,8 +285,12 @@ def stage_datasheet_url(
             message=f"Already staged: {existing.name}",
         )
 
+    resolved_fetch = (
+        fetch if fetch is not None else _resolve_fetch(fetch_fixtures_manifest)
+    )
+
     try:
-        content = fetch(url)
+        content = resolved_fetch(url)
     except Exception as exc:
         return StagingOutcome(
             status="fetch-error", message=f"Failed to fetch {url!r}: {exc}"
@@ -275,9 +318,130 @@ def stage_datasheet_url(
     return StagingOutcome(status="flagged", path=unverified_path, message=warning)
 
 
+@dataclass(frozen=True)
+class StagingBatchResult:
+    """Outcome of one :func:`stage_datasheet_urls` batch run.
+
+    Attributes:
+        outcomes: One :class:`StagingOutcome` per URL that was evaluated
+            (admitted/staged skips included; budget-skipped entries are
+            *not* included here, see ``skipped_for_budget``).
+        attempted: Number of URLs that required an actual network fetch
+            attempt (excludes free admitted/staged skips).
+        budget_exceeded: True when ``max_fetches_per_run`` or
+            ``fetch_time_budget_seconds`` was hit before all entries were
+            processed.
+        skipped_for_budget: Number of entries left unprocessed because the
+            budget was exceeded.
+    """
+
+    outcomes: list[StagingOutcome] = field(default_factory=list)
+    attempted: int = 0
+    budget_exceeded: bool = False
+    skipped_for_budget: int = 0
+
+    def summary_message(self) -> str:
+        """Return a one-line human-readable summary for CLI output."""
+
+        if not self.budget_exceeded:
+            return ""
+        return (
+            "Datasheet staging budget exceeded "
+            f"(attempted={self.attempted}); skipped {self.skipped_for_budget} "
+            "remaining URL(s) this run."
+        )
+
+
+def stage_datasheet_urls(
+    entries: Iterable[tuple[str, Optional[InventoryItem]]],
+    *,
+    cwd: Path | None = None,
+    defaults: DefaultsConfig | None = None,
+) -> StagingBatchResult:
+    """Stage a batch of ``(url, item)`` pairs, honoring the fetch budget.
+
+    This is the shared orchestration used by both ``jbom search`` and
+    ``jbom inventory --supplier``: it resolves the staging directory and
+    fetch behavior once from the active profile (see
+    :class:`~jbom.config.defaults.DatasheetStagingConfig`), then stages each
+    entry via :func:`stage_datasheet_url`, stopping early -- without failing
+    the surrounding command -- once ``max_fetches_per_run`` or
+    ``fetch_time_budget_seconds`` is exceeded. Admitted/already-staged
+    entries are always processed (they never touch the network), so the
+    budget only governs real fetch attempts.
+
+    Args:
+        entries: Iterable of ``(datasheet_url, inventory_item_or_none)``.
+        cwd: Working directory for profile resolution.
+        defaults: Optional pre-loaded :class:`DefaultsConfig`.
+
+    Returns:
+        A :class:`StagingBatchResult` summarizing what happened.
+    """
+
+    cfg = defaults if defaults is not None else get_defaults(cwd=cwd)
+    staging_cfg = cfg.get_datasheet_staging_config()
+    staging_dir = resolve_staging_dir(defaults=cfg)
+    if staging_dir is None:
+        # Staging is a user-machine opt-in (datasheet_staging.staging_dir is
+        # unset). Inert: no fetches, no filesystem writes, no per-URL log
+        # noise -- just a single debug-level note.
+        log.debug(
+            "Datasheet staging inactive (no datasheet_staging.staging_dir "
+            "configured); skipping this batch."
+        )
+        return StagingBatchResult()
+
+    fetch = _resolve_fetch(staging_cfg.fetch_fixtures_manifest)
+    max_fetches = staging_cfg.max_fetches_per_run
+    time_budget = staging_cfg.fetch_time_budget_seconds
+
+    outcomes: list[StagingOutcome] = []
+    attempted = 0
+    skipped_for_budget = 0
+    budget_exceeded = False
+    start = time.monotonic()
+
+    for url, item in entries:
+        normalized_url = (url or "").strip()
+        if not normalized_url:
+            continue
+
+        if budget_exceeded:
+            skipped_for_budget += 1
+            continue
+
+        stem = staged_filename_for_url(normalized_url)
+        free = is_admitted(item) or (
+            find_existing_staged_path(staging_dir, stem) is not None
+        )
+        if not free:
+            over_count = attempted >= max_fetches
+            over_time = (time.monotonic() - start) >= time_budget
+            if over_count or over_time:
+                budget_exceeded = True
+                skipped_for_budget += 1
+                continue
+            attempted += 1
+
+        outcomes.append(
+            stage_datasheet_url(
+                normalized_url, item=item, staging_dir=staging_dir, fetch=fetch
+            )
+        )
+
+    return StagingBatchResult(
+        outcomes=outcomes,
+        attempted=attempted,
+        budget_exceeded=budget_exceeded,
+        skipped_for_budget=skipped_for_budget,
+    )
+
+
 __all__ = [
     "UNVERIFIED_SUFFIX",
     "VERIFIED_SUFFIX",
+    "StagingBatchResult",
     "StagingOutcome",
     "default_fetch",
     "find_existing_staged_path",
@@ -286,5 +450,6 @@ __all__ = [
     "looks_like_pdf",
     "resolve_staging_dir",
     "stage_datasheet_url",
+    "stage_datasheet_urls",
     "staged_filename_for_url",
 ]

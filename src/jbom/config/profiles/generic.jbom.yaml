@@ -367,6 +367,22 @@ defaults:
       fabricator_part_number: __resolved_fabricator_part_number__
 
   # ---------------------------------------------------------------------------
+  # Datasheet staging fetch (jBOM#355): always-on staging fetch that rides
+  # `jbom search` / `jbom inventory --supplier`, bounded so an invocation
+  # never stalls on a long tail of slow/hanging downloads. Once either limit
+  # is hit, remaining Datasheet URLs are skipped for that run with a
+  # one-line stderr summary; nothing else about the command fails.
+  #
+  # staging_dir is deliberately NOT declared here: it names a user-machine
+  # SPCoast-inventory checkout, so it is a user binding set in the user's
+  # own ~/.jbom/common.jbom.yaml, not a value the shipped generic profile
+  # can know. With no staging_dir configured, staging is inert (a no-op).
+  # ---------------------------------------------------------------------------
+  datasheet_staging:
+    max_fetches_per_run: 20
+    fetch_time_budget_seconds: 30
+
+  # ---------------------------------------------------------------------------
   # Default CLI search output fields (used when supplier profile has no override).
   # ---------------------------------------------------------------------------
   search:

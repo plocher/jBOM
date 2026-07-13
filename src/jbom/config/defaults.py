@@ -211,6 +211,55 @@ class DefaultsSearchConfig(BaseModel):
         return tuple(dict.fromkeys(normalized).keys())
 
 
+class DatasheetStagingConfig(BaseModel):
+    """Defaults profile ``datasheet_staging:`` stanza (jBOM#355).
+
+    Governs the always-on staging fetch that rides ``jbom search`` and
+    ``jbom inventory --supplier``. See ``docs/reference/configuration.md``
+    for the full write-up.
+
+    Per jBOM convention, business-meaningful defaults are declared in the
+    ``generic.jbom.yaml`` profile (``max_fetches_per_run``,
+    ``fetch_time_budget_seconds``), not hardcoded here -- the Python-level
+    fallbacks below are structurally neutral ("unconfigured"), reachable
+    only if profile loading fails entirely. ``staging_dir`` is a
+    user-machine binding (it names a local SPCoast-inventory checkout) and
+    is deliberately never declared in the shipped ``generic.jbom.yaml``;
+    users set it in their own ``~/.jbom/common.jbom.yaml``.
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    staging_dir: str = ""
+    max_fetches_per_run: int = 0
+    fetch_time_budget_seconds: float = 0.0
+    # Test-only escape hatch: when non-empty, default_fetch() resolves URLs
+    # against a local ``{url: file_path}`` JSON manifest instead of the
+    # network. Never set this in a production profile.
+    fetch_fixtures_manifest: str = ""
+
+    @field_validator("staging_dir", "fetch_fixtures_manifest", mode="before")
+    @classmethod
+    def _normalize_optional_path_strings(cls, value: Any) -> str:
+        if value is None:
+            return ""
+        return str(value).strip()
+
+    @field_validator("max_fetches_per_run", mode="before")
+    @classmethod
+    def _validate_max_fetches_per_run(cls, value: Any) -> int:
+        if value is None:
+            return 0
+        return max(0, int(value))
+
+    @field_validator("fetch_time_budget_seconds", mode="before")
+    @classmethod
+    def _validate_fetch_time_budget_seconds(cls, value: Any) -> float:
+        if value is None:
+            return 0.0
+        return max(0.0, float(value))
+
+
 class DefaultsConfig(BaseModel):
     """Loaded defaults profile."""
 
@@ -229,6 +278,9 @@ class DefaultsConfig(BaseModel):
         default_factory=InventorySchemaConfig.default
     )
     search: DefaultsSearchConfig = Field(default_factory=DefaultsSearchConfig)
+    datasheet_staging: DatasheetStagingConfig = Field(
+        default_factory=DatasheetStagingConfig
+    )
     search_excluded_categories: frozenset[str] = Field(default_factory=frozenset)
     component_id_fields: dict[str, frozenset[str]] = Field(default_factory=dict)
     field_precedence_policy: dict[str, tuple[str, ...]] = Field(default_factory=dict)
@@ -413,6 +465,20 @@ class DefaultsConfig(BaseModel):
             return DefaultsSearchConfig()
         return DefaultsSearchConfig.model_validate(value)
 
+    @field_validator("datasheet_staging", mode="before")
+    @classmethod
+    def _parse_datasheet_staging_config(cls, value: Any) -> DatasheetStagingConfig:
+        if value is None:
+            return DatasheetStagingConfig()
+        if isinstance(value, DatasheetStagingConfig):
+            return value
+        if not isinstance(value, dict):
+            log.warning(
+                "datasheet_staging must be a mapping; found %r", type(value).__name__
+            )
+            return DatasheetStagingConfig()
+        return DatasheetStagingConfig.model_validate(value)
+
     @field_validator("search_excluded_categories", mode="before")
     @classmethod
     def _normalize_search_excluded_categories(cls, value: Any) -> frozenset[str]:
@@ -544,6 +610,11 @@ class DefaultsConfig(BaseModel):
 
         return dict(self.field_precedence_policy)
 
+    def get_datasheet_staging_config(self) -> DatasheetStagingConfig:
+        """Return the datasheet staging fetch config (jBOM#355)."""
+
+        return self.datasheet_staging
+
 
 def load_defaults(name: str, *, cwd: Path | None = None) -> DefaultsConfig:
     """Load a named defaults profile from the search path."""
@@ -655,6 +726,7 @@ def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any
 
 
 __all__ = [
+    "DatasheetStagingConfig",
     "DefaultsConfig",
     "EnrichmentCategoryConfig",
     "FieldSynonymConfig",

@@ -1,6 +1,8 @@
 """Unit tests for jbom.services.datasheet_staging (jBOM#355).
 
-All fetches are injected fakes; no real network access is ever performed.
+All fetches are injected fakes; no real network access is ever performed
+(and the autouse ``_hermetic_datasheet_staging`` fixture in ``tests/conftest.py``
+would raise loudly if one slipped through).
 """
 
 from __future__ import annotations
@@ -8,6 +10,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from jbom.common.types import InventoryItem
+from jbom.config.defaults import DefaultsConfig
 from jbom.services.datasheet_staging import (
     find_existing_staged_path,
     is_admitted,
@@ -15,6 +18,7 @@ from jbom.services.datasheet_staging import (
     looks_like_pdf,
     resolve_staging_dir,
     stage_datasheet_url,
+    stage_datasheet_urls,
     staged_filename_for_url,
 )
 
@@ -37,6 +41,35 @@ def _make_item(*, datasheet_name: str = "") -> InventoryItem:
         amperage="",
         wattage="",
         raw_data={"Datasheet Name": datasheet_name} if datasheet_name else {},
+    )
+
+
+def _defaults_with_staging_dir(staging_dir: Path) -> DefaultsConfig:
+    # max_fetches_per_run / fetch_time_budget_seconds mirror generic.jbom.yaml's
+    # shipped values: DatasheetStagingConfig's own Python-level defaults are
+    # deliberately 0/0.0 ("unconfigured"), per jBOM's no-hardcoded-defaults-in-
+    # code convention -- real values always come from the profile.
+    return DefaultsConfig.model_validate(
+        {
+            "datasheet_staging": {
+                "staging_dir": str(staging_dir),
+                "max_fetches_per_run": 20,
+                "fetch_time_budget_seconds": 30.0,
+            }
+        }
+    )
+
+
+def _defaults_with_budget(
+    *, max_fetches_per_run: int = 20, fetch_time_budget_seconds: float = 30.0
+) -> DefaultsConfig:
+    return DefaultsConfig.model_validate(
+        {
+            "datasheet_staging": {
+                "max_fetches_per_run": max_fetches_per_run,
+                "fetch_time_budget_seconds": fetch_time_budget_seconds,
+            }
+        }
     )
 
 
@@ -111,34 +144,31 @@ class TestIsAdmitted:
 
 
 class TestResolveStagingDir:
-    def test_explicit_override_wins(self, tmp_path: Path, monkeypatch) -> None:
-        monkeypatch.setenv("JBOM_STAGING_DIR", str(tmp_path / "env-staging"))
-        monkeypatch.setenv("JBOM_INVENTORY_ROOT", str(tmp_path / "env-root"))
+    def test_explicit_override_wins(self, tmp_path: Path) -> None:
+        cfg = _defaults_with_staging_dir(tmp_path / "profile-staging")
         explicit = tmp_path / "explicit"
-        assert resolve_staging_dir(explicit) == explicit
+        assert resolve_staging_dir(explicit, defaults=cfg) == explicit
 
-    def test_staging_dir_env_var_used_when_no_explicit(
+    def test_profile_configured_staging_dir_is_honored(self, tmp_path: Path) -> None:
+        configured = tmp_path / "profile-staging"
+        cfg = _defaults_with_staging_dir(configured)
+        assert resolve_staging_dir(defaults=cfg) == configured
+
+    def test_profile_staging_dir_supports_tilde_expansion(
         self, tmp_path: Path, monkeypatch
     ) -> None:
-        staging_dir = tmp_path / "env-staging"
-        monkeypatch.setenv("JBOM_STAGING_DIR", str(staging_dir))
-        monkeypatch.delenv("JBOM_INVENTORY_ROOT", raising=False)
-        assert resolve_staging_dir() == staging_dir
+        monkeypatch.setenv("HOME", str(tmp_path))
+        cfg = DefaultsConfig.model_validate(
+            {"datasheet_staging": {"staging_dir": "~/my-staging"}}
+        )
+        assert resolve_staging_dir(defaults=cfg) == tmp_path / "my-staging"
 
-    def test_inventory_root_env_var_appends_staging(
-        self, tmp_path: Path, monkeypatch
-    ) -> None:
-        root = tmp_path / "SPCoast-inventory"
-        monkeypatch.delenv("JBOM_STAGING_DIR", raising=False)
-        monkeypatch.setenv("JBOM_INVENTORY_ROOT", str(root))
-        assert resolve_staging_dir() == root / "staging"
-
-    def test_default_when_nothing_configured(self, monkeypatch) -> None:
-        monkeypatch.delenv("JBOM_STAGING_DIR", raising=False)
-        monkeypatch.delenv("JBOM_INVENTORY_ROOT", raising=False)
-        result = resolve_staging_dir()
-        assert result.name == "staging"
-        assert "SPCoast-inventory" in result.parts
+    def test_returns_none_when_unconfigured(self) -> None:
+        # staging_dir is a user-machine binding (names a local
+        # SPCoast-inventory checkout); there is deliberately no code-level
+        # fallback path, so an unconfigured profile means "inactive".
+        cfg = DefaultsConfig.model_validate({})
+        assert resolve_staging_dir(defaults=cfg) is None
 
 
 class TestFindExistingStagedPath:
@@ -165,6 +195,14 @@ class TestFindExistingStagedPath:
 
 
 class TestStageDatasheetUrl:
+    def test_inactive_when_staging_dir_is_none(self) -> None:
+        outcome = stage_datasheet_url(
+            "https://example.com/docs/lm358.pdf",
+            staging_dir=None,
+            fetch=_unused_fetch,
+        )
+        assert outcome.status == "inactive"
+
     def test_empty_url_is_skipped(self, tmp_path: Path) -> None:
         outcome = stage_datasheet_url("", staging_dir=tmp_path, fetch=_unused_fetch)
         assert outcome.status == "skip-empty-url"
@@ -292,6 +330,170 @@ class TestStageDatasheetUrl:
 
         assert outcome.status == "verified"
         assert staging_dir.is_dir()
+
+    def test_fixture_manifest_resolves_bytes_without_a_fetch_callable(
+        self, tmp_path: Path
+    ) -> None:
+        pdf_file = tmp_path / "fixture.pdf"
+        pdf_file.write_bytes(_PDF_BYTES)
+        manifest_path = tmp_path / "manifest.json"
+        manifest_path.write_text(
+            '{"https://example.com/docs/lm358.pdf": "%s"}' % pdf_file, encoding="utf-8"
+        )
+
+        outcome = stage_datasheet_url(
+            "https://example.com/docs/lm358.pdf",
+            staging_dir=tmp_path / "staging",
+            fetch_fixtures_manifest=str(manifest_path),
+        )
+
+        assert outcome.status == "verified"
+
+
+class TestStageDatasheetUrls:
+    def test_inert_when_staging_dir_unconfigured(self) -> None:
+        cfg = DefaultsConfig.model_validate({})
+        entries = [("https://example.com/docs/a.pdf", None)]
+
+        result = stage_datasheet_urls(entries, defaults=cfg)
+
+        assert result.outcomes == []
+        assert result.attempted == 0
+        assert result.budget_exceeded is False
+
+    def test_stages_multiple_entries(self, tmp_path: Path) -> None:
+        cfg = _defaults_with_staging_dir(tmp_path)
+        entries = [
+            ("https://example.com/docs/a.pdf", None),
+            ("https://example.com/docs/b.pdf", None),
+        ]
+
+        # Real calls require monkeypatching default_fetch (module-level),
+        # which the autouse hermetic fixture forbids by default -- so patch
+        # it locally for this test.
+        import jbom.services.datasheet_staging as _mod
+
+        original = _mod.default_fetch
+        try:
+            _mod.default_fetch = lambda url, **_: _PDF_BYTES
+            result = stage_datasheet_urls(entries, defaults=cfg)
+        finally:
+            _mod.default_fetch = original
+
+        assert len(result.outcomes) == 2
+        assert all(o.status == "verified" for o in result.outcomes)
+        assert result.attempted == 2
+        assert result.budget_exceeded is False
+        assert result.summary_message() == ""
+
+    def test_empty_and_admitted_entries_are_free(self, tmp_path: Path) -> None:
+        cfg = _defaults_with_staging_dir(tmp_path)
+        admitted_item = _make_item(datasheet_name="LM358-series")
+        entries = [
+            ("", None),
+            ("https://example.com/docs/admitted.pdf", admitted_item),
+        ]
+
+        result = stage_datasheet_urls(entries, defaults=cfg)
+
+        assert len(result.outcomes) == 1
+        assert result.outcomes[0].status == "admitted-skip"
+        assert result.attempted == 0
+        assert result.budget_exceeded is False
+
+    def test_max_fetches_per_run_caps_real_fetch_attempts(self, tmp_path: Path) -> None:
+        cfg = _defaults_with_budget(
+            max_fetches_per_run=1, fetch_time_budget_seconds=30.0
+        )
+        # Redirect staging_dir onto tmp_path via a second profile merge.
+        cfg = DefaultsConfig.model_validate(
+            {
+                "datasheet_staging": {
+                    "staging_dir": str(tmp_path),
+                    "max_fetches_per_run": 1,
+                    "fetch_time_budget_seconds": 30.0,
+                }
+            }
+        )
+        entries = [
+            ("https://example.com/docs/a.pdf", None),
+            ("https://example.com/docs/b.pdf", None),
+            ("https://example.com/docs/c.pdf", None),
+        ]
+
+        import jbom.services.datasheet_staging as _mod
+
+        original = _mod.default_fetch
+        try:
+            _mod.default_fetch = lambda url, **_: _PDF_BYTES
+            result = stage_datasheet_urls(entries, defaults=cfg)
+        finally:
+            _mod.default_fetch = original
+
+        assert result.attempted == 1
+        assert result.budget_exceeded is True
+        assert result.skipped_for_budget == 2
+        assert len(result.outcomes) == 1
+        assert "budget exceeded" in result.summary_message()
+
+    def test_zero_time_budget_blocks_all_real_fetches(self, tmp_path: Path) -> None:
+        cfg = DefaultsConfig.model_validate(
+            {
+                "datasheet_staging": {
+                    "staging_dir": str(tmp_path),
+                    "max_fetches_per_run": 20,
+                    "fetch_time_budget_seconds": 0.0,
+                }
+            }
+        )
+        entries = [("https://example.com/docs/a.pdf", None)]
+
+        import jbom.services.datasheet_staging as _mod
+
+        original = _mod.default_fetch
+        try:
+            _mod.default_fetch = lambda url, **_: _PDF_BYTES
+            result = stage_datasheet_urls(entries, defaults=cfg)
+        finally:
+            _mod.default_fetch = original
+
+        assert result.attempted == 0
+        assert result.budget_exceeded is True
+        assert result.skipped_for_budget == 1
+
+    def test_free_entries_do_not_count_against_budget(self, tmp_path: Path) -> None:
+        cfg = DefaultsConfig.model_validate(
+            {
+                "datasheet_staging": {
+                    "staging_dir": str(tmp_path),
+                    "max_fetches_per_run": 1,
+                    "fetch_time_budget_seconds": 30.0,
+                }
+            }
+        )
+        admitted_item = _make_item(datasheet_name="LM358-series")
+        entries = [
+            ("https://example.com/docs/admitted-1.pdf", admitted_item),
+            ("https://example.com/docs/admitted-2.pdf", admitted_item),
+            ("https://example.com/docs/real.pdf", None),
+        ]
+
+        import jbom.services.datasheet_staging as _mod
+
+        original = _mod.default_fetch
+        try:
+            _mod.default_fetch = lambda url, **_: _PDF_BYTES
+            result = stage_datasheet_urls(entries, defaults=cfg)
+        finally:
+            _mod.default_fetch = original
+
+        assert result.attempted == 1
+        assert result.budget_exceeded is False
+        assert [o.status for o in result.outcomes] == [
+            "admitted-skip",
+            "admitted-skip",
+            "verified",
+        ]
 
 
 def _unused_fetch(url: str) -> bytes:  # pragma: no cover - defensive guard
