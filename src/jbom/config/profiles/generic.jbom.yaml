@@ -323,6 +323,7 @@ defaults:
       - manufacturer_part
       - description
       - datasheet
+      - datasheet_name
       - supplier
       - spn
       - tolerance
@@ -357,6 +358,7 @@ defaults:
       manufacturer_part: mfgpn
       description: description
       datasheet: datasheet
+      datasheet_name: "Datasheet Name"
       supplier: supplier
       spn: spn
       tolerance: tolerance

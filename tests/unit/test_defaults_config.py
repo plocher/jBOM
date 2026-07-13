@@ -169,6 +169,26 @@ def test_generic_profile_has_inventory_schema_contract() -> None:
     )
 
 
+def test_generic_profile_recognizes_datasheet_name_canonical_field() -> None:
+    """Datasheet Name is a canonical inventory field distinct from Datasheet (jBOM#359).
+
+    Per the datasheet library schema (jBOM#348): presence of a curated
+    Datasheet Name means the Item's datasheet is validated and in the
+    Library; the binding source is the bare inventory column header so the
+    emitted value is exactly the inventory's Datasheet Name (never renamed).
+    """
+    cfg = load_defaults("generic")
+    schema = cfg.get_inventory_schema()
+    assert "datasheet_name" in schema.canonical_fields
+    assert "datasheet" in schema.canonical_fields
+    assert schema.enrichment_bindings["datasheet_name"] == "Datasheet Name"
+    # Distinct binding source from the (URL) Datasheet column.
+    assert (
+        schema.enrichment_bindings["datasheet"]
+        != schema.enrichment_bindings["datasheet_name"]
+    )
+
+
 # ---------------------------------------------------------------------------
 # Error handling
 # ---------------------------------------------------------------------------
