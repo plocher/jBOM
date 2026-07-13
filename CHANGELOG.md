@@ -1,6 +1,77 @@
 # CHANGELOG
 
 
+## v7.5.0 (2026-07-13)
+
+### Bug Fixes
+
+* fix(inventory): make datasheet staging a profile-driven, opt-in user binding
+
+Fold in review + human course-correction on the profile-mechanism rework:
+
+- staging_dir is a user-machine binding (names a local SPCoast-inventory
+  checkout) with no sensible generic value, so the shipped generic.jbom.yaml
+  never declares it and there is no code-level fallback path anymore.
+  Datasheet staging is now a true no-op/inert (debug-level note only, no
+  per-run warning) until a user configures
+  defaults.datasheet_staging.staging_dir in their own
+  ~/.jbom/common.jbom.yaml.
+- max_fetches_per_run / fetch_time_budget_seconds remain generic,
+  non-machine-specific tuning knobs, now declared with concrete values in
+  generic.jbom.yaml (previously hardcoded as Python-level Pydantic defaults,
+  a jBOM anti-pattern: attribute defaults belong in profiles, not code).
+- Added the missing admitted-skip path for jbom search via a new optional
+  --inventory cross-reference argument, and a profile-configurable fetch
+  budget (max_fetches_per_run / fetch_time_budget_seconds) so an invocation
+  can never stall on a long tail of slow/hanging downloads; both bounded
+  by a one-line stderr summary, never failing the command.
+- Replaced the ad hoc JBOM_STAGING_DIR/JBOM_INVENTORY_ROOT env-var chain
+  with the same .jbom/ profile-hierarchy precedence every other jBOM
+  setting uses; BDD scenarios now configure staging via a sandboxed
+  common.jbom.yaml instead of environment variables.
+- Added a hermetic pytest guard (tests/conftest.py) that makes any real
+  network fetch attempt raise immediately, and unit/BDD coverage for the
+  admitted-skip, fetch-budget-cap, and inert-when-unconfigured behaviors.
+- Datasheet backfill coverage for _apply_supplier_candidate_to_item added
+  alongside the existing manufacturer/mfgpn backfill tests.
+- Docs (cli.md, configuration.md) updated to document the user-machine
+  binding, the inert-by-default behavior, and the generic.jbom.yaml
+  override caveat for the two generic tuning knobs.
+
+Refs #349 #345
+Closes #355
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`23e2446`](https://github.com/plocher/jBOM/commit/23e2446acecdf0111cfb64fea40b72d9b9da2b41))
+
+### Features
+
+* feat(inventory): always-on staging fetch for datasheet URLs
+
+Adds jbom.services.datasheet_staging, an idempotent staging fetch that
+rides the already-networked `jbom search` and `jbom inventory --supplier`
+flows. Whenever a Datasheet URL is encountered, it is fetched into a
+staging/ directory (default resolution: JBOM_STAGING_DIR env var, then
+JBOM_INVENTORY_ROOT env var + /staging, then a home-relative default --
+never a hardcoded username path). Downloads land with a .unverified
+suffix until a file(1)-style content check confirms the payload is a
+real PDF; verified PDFs get a plain .pdf suffix. HTML impostors keep the
+.unverified suffix and are flagged with a warning, never promoted.
+
+Staging is idempotent: already-staged URLs (verified or flagged) and
+already-admitted items (Datasheet Name populated) are skipped without a
+fetch. No inventory writes occur; admission into datasheets/ remains the
+separate jbom inventory admit gate (#356).
+
+cli/inventory.py also gains the missing Datasheet URL propagation from
+supplier search candidates onto InventoryItem.datasheet, which is the
+hook this feature needed to observe supplier-populated Datasheet URLs.
+
+Refs #349 #345
+Closes #355
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`06bf90b`](https://github.com/plocher/jBOM/commit/06bf90b972a5cd03e950858ffe1c479595a0fe2d))
+
+
 ## v7.4.0 (2026-07-13)
 
 ### Features
