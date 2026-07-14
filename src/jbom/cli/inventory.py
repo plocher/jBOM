@@ -397,7 +397,14 @@ def _apply_inventory_admit(
     library_dir: Path,
     args: argparse.Namespace,
 ) -> int:
-    """Read a (human-edited) manifest and apply the admit gate."""
+    """Read a (human-edited) manifest and apply the admit gate.
+
+    Rows commit independently and in manifest order: a row refused by the
+    invalid-name or never-rename guard is skipped without affecting any
+    other row in the same manifest -- rows admitted earlier or later in
+    the same ``--apply`` run are never rolled back or blocked by one
+    refused row.
+    """
     if not manifest_path.exists():
         print(f"Error: Manifest file not found: {manifest_path}", file=sys.stderr)
         return 1
@@ -410,7 +417,7 @@ def _apply_inventory_admit(
     )
 
     for outcome in result.outcomes:
-        if outcome.status == "refused-never-rename":
+        if outcome.status.startswith("refused-"):
             print(f"Error: {outcome.message}", file=sys.stderr)
         elif args.verbose and outcome.status in ("admitted", "already-admitted"):
             print(f"  {outcome.message}", file=sys.stderr)
@@ -440,7 +447,7 @@ def _apply_inventory_admit(
 
     print(
         f"Admit complete: {result.admitted_count} admitted, "
-        f"{result.refused_count} refused (never-rename), "
+        f"{result.refused_count} refused (never-rename/invalid-name), "
         f"{len(result.paste_rows)} paste-file row(s).",
         file=sys.stderr,
     )

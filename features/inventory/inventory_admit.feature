@@ -38,6 +38,20 @@ Feature: Datasheet library admission gate (jbom inventory admit)
     And the output should contain "Never-rename"
     And the published document "IC-TI-LM358D" still has its original content
 
+  Scenario: apply refuses a path-traversal ProposedName and writes nothing outside the library
+    Given an inventory file "library.csv" that contains:
+      | IPN      | Category | Value  | Description | Package | Manufacturer | MFGPN  | Datasheet                           | Datasheet Name |
+      | IC_LM358 | IC       | LM358D | Dual Op-Amp  | SOIC-8  | TI           | LM358D | https://example.com/docs/lm358.pdf  |                |
+    And the staging directory already has a verified PDF staged for "https://example.com/docs/lm358.pdf"
+    When I run jbom command "inventory admit --inventory library.csv --manifest manifest.csv"
+    Then the command should succeed
+    When I edit the manifest "manifest.csv" to set ProposedName "../../evil" for staged file matching "https://example.com/docs/lm358.pdf"
+    And I run jbom command "inventory admit --apply --manifest manifest.csv -o paste.csv"
+    Then the command should fail
+    And the output should contain "ProposedName"
+    And nothing named "evil.pdf" exists outside the library directory
+    And the library contains exactly 0 published documents
+
   Scenario: one family document names every member Item
     Given an inventory file "library.csv" that contains:
       | IPN      | Category | Value | Description       | Package | Manufacturer | MFGPN          | Datasheet                                    | Datasheet Name |

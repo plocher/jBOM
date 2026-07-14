@@ -103,6 +103,30 @@ def then_manifest_contains_exactly_n_rows(context, filename: str, count: int) ->
     ), f"Expected exactly {count} manifest row(s), got {len(rows)}: {rows}"
 
 
+def _edit_manifest_column_for_url(
+    context, filename: str, column: str, value: str, url: str
+) -> None:
+    """Shared implementation: rewrite one manifest cell for the row matching *url*."""
+
+    path = context.project_root / filename
+    with path.open("r", encoding="utf-8", newline="") as handle:
+        reader = csv.DictReader(handle)
+        fieldnames = reader.fieldnames or []
+        rows = list(reader)
+
+    matched = False
+    for row in rows:
+        if row.get("SourceURL", "") == url:
+            row[column] = value
+            matched = True
+    assert matched, f"No manifest row found with SourceURL={url!r} in {filename}"
+
+    with path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
+
+
 @when(
     'I edit the manifest "{filename}" to set Action "{action}" for staged file '
     'matching "{url}"'
@@ -117,20 +141,62 @@ def when_edit_manifest_action_for_url(
     collision, to exercise the never-rename guard at apply time.
     """
 
-    path = context.project_root / filename
-    with path.open("r", encoding="utf-8", newline="") as handle:
-        reader = csv.DictReader(handle)
-        fieldnames = reader.fieldnames or []
-        rows = list(reader)
+    _edit_manifest_column_for_url(context, filename, "Action", action, url)
 
-    matched = False
-    for row in rows:
-        if row.get("SourceURL", "") == url:
-            row["Action"] = action
-            matched = True
-    assert matched, f"No manifest row found with SourceURL={url!r} in {filename}"
 
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
-        writer.writeheader()
-        writer.writerows(rows)
+@when(
+    'I edit the manifest "{filename}" to set ProposedName "{name}" for staged file '
+    'matching "{url}"'
+)
+def when_edit_manifest_proposed_name_for_url(
+    context, filename: str, name: str, url: str
+) -> None:
+    """Simulate a human typing an unsafe ProposedName into the manifest.
+
+    Exercises the apply-time path-traversal guard: a crafted name like
+    ``"../../evil"`` must be refused, never trusted as a bare filename
+    stem.
+    """
+
+    _edit_manifest_column_for_url(context, filename, "ProposedName", name, url)
+
+
+@then('nothing named "{filename}" exists outside the library directory')
+def then_nothing_named_exists_outside_library(context, filename: str) -> None:
+    """Assert a crafted ProposedName never wrote a file outside datasheets/.
+
+    Checks both inside the sandbox tree (the whole scenario workspace) and
+    several levels above the sandbox root -- a ``"../../evil"`` style
+    traversal from the library directory (a fixed two levels under the
+    sandbox root: ``<sandbox>/staging/../datasheets``) would land outside
+    the sandbox tree entirely, so scanning only inside the sandbox would
+    not catch a real escape. This is the belt-and-braces proof that a
+    path-traversal ProposedName was refused, not merely refused-with-a-
+    caveat.
+    """
+
+    sandbox_root = Path(context.sandbox_root)
+    library_dir = _library_dir(context)
+
+    for path in sandbox_root.rglob(filename):
+        assert library_dir in path.parents or path.parent == library_dir, (
+            f"Found {path} outside the library directory ({library_dir}) -- "
+            "a path-traversal ProposedName was not refused."
+        )
+
+    # Also scan a few levels above the sandbox root -- where a "../../evil"
+    # style traversal rooted at <sandbox>/datasheets would actually resolve
+    # to (outside the sandbox tree, and outside anywhere rglob above would
+    # ever look).
+    probe_dir = sandbox_root
+    for _ in range(5):
+        probe_dir = probe_dir.parent
+        candidate = probe_dir / filename
+        assert not candidate.exists(), (
+            f"Found {candidate} outside the sandbox and library directory -- "
+            "a path-traversal ProposedName was not refused."
+        )
+
+    # Also confirm it did not land inside the library either (this filename
+    # was never a legitimate ProposedName in these scenarios).
+    assert not (library_dir / filename).exists()

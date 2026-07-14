@@ -90,6 +90,8 @@ To find LCSC part numbers:
 
 > **Coming soon**: `jbom inventory MyProject/ --supplier lcsc --limit 3 -o inventory.csv` will search and populate part numbers automatically.
 
+> **Curating a shared datasheet library?** Datasheet URLs encountered by `jbom search` / `jbom inventory --supplier` are automatically staged for review once you configure `datasheet_staging.staging_dir` in your own `~/.jbom/common.jbom.yaml`. `jbom inventory admit` is the gate that turns staged PDFs into a reviewed, named library: it proposes a manifest (curated name, matching inventory rows), you edit it, then `--apply` moves accepted PDFs into `datasheets/<name>.pdf` and hands back a paste-file for the `Datasheet Name` column. See [docs/reference/cli.md](docs/reference/cli.md#admit-subcommand-jbom-inventory-admit).
+
 ### 4. Generate fabrication files
 
 Use `jbom fab` for a one-shot run that writes everything to a `production/` folder:
