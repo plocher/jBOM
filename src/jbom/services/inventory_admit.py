@@ -40,6 +40,7 @@ from __future__ import annotations
 import csv
 import hashlib
 import re
+import unicodedata
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterable, TextIO
@@ -167,7 +168,9 @@ class AdmitApplyOutcome:
         row: The manifest row this outcome corresponds to.
         status: ``"admitted"``, ``"skipped"``, ``"already-admitted"``
             (idempotent no-op; byte-identical content already at the
-            target name), or ``"refused-never-rename"``.
+            target name), ``"refused-never-rename"``, or
+            ``"refused-invalid-name"`` (unsafe ``ProposedName``, e.g. a path
+            traversal attempt).
         message: Human-readable detail, suitable for CLI warning output.
     """
 
@@ -202,11 +205,55 @@ class AdmitApplyResult:
 
     @property
     def refused_count(self) -> int:
-        """Number of rows refused by the never-rename guard."""
+        """Number of rows refused (never-rename guard or invalid-name guard)."""
 
         return sum(
-            1 for outcome in self.outcomes if outcome.status == "refused-never-rename"
+            1 for outcome in self.outcomes if outcome.status.startswith("refused-")
         )
+
+
+def _normalize_name(name: str) -> str:
+    """NFC-normalize and strip a proposed/published name for safe comparison.
+
+    The manifest is human-edited free text; normalizing to NFC before any
+    comparison or filesystem use prevents unicode-variant spellings (NFC vs
+    NFD encodings of the same visible characters) from slipping past the
+    case-insensitive uniqueness invariant (jBOM#346).
+    """
+
+    return unicodedata.normalize("NFC", str(name or "").strip())
+
+
+def invalid_proposed_name_reason(
+    proposed_name: str, *, library_dir: Path
+) -> str | None:
+    """Return a reason string when *proposed_name* is unsafe to use as a
+    library filename stem, or ``None`` when it is safe.
+
+    The admit manifest is human-edited free text, so a crafted
+    ``ProposedName`` (e.g. ``"../../evil"`` or an absolute path) must never
+    be trusted as a bare filename stem -- doing so would let a manifest
+    write outside the library directory. Rejects path separators, ``.``/
+    ``..`` components, and absolute paths outright, then (belt-and-braces)
+    verifies the fully resolved target still lands directly inside
+    *library_dir*.
+    """
+
+    name = _normalize_name(proposed_name)
+    if not name:
+        return "ProposedName is empty"
+    if "/" in name or "\\" in name or "\x00" in name:
+        return f"ProposedName contains a path separator: {proposed_name!r}"
+    if name in (".", ".."):
+        return f"ProposedName is a path traversal component: {proposed_name!r}"
+    if Path(name).is_absolute():
+        return f"ProposedName is an absolute path: {proposed_name!r}"
+
+    resolved_library_dir = library_dir.resolve()
+    resolved_target = (library_dir / f"{name}.pdf").resolve()
+    if resolved_target.parent != resolved_library_dir:
+        return f"ProposedName escapes the library directory: {proposed_name!r}"
+    return None
 
 
 def _sanitize_name_token(value: str) -> str:
@@ -294,13 +341,19 @@ def _sha256_of_file(path: Path) -> str:
 
 
 def _library_name_index(library_dir: Path) -> dict[str, Path]:
-    """Return a case-insensitive index of published names -> file paths."""
+    """Return a case-insensitive index of published names -> file paths.
+
+    Keys are NFC-normalized and lower-cased, so lookups are both
+    unicode-normalization-insensitive and OS-independent case-insensitive
+    (never relying on the host filesystem's own case sensitivity, which
+    varies between macOS/Windows and Linux).
+    """
 
     if not library_dir.is_dir():
         return {}
     index: dict[str, Path] = {}
     for candidate in library_dir.glob("*.pdf"):
-        index[candidate.stem.lower()] = candidate
+        index[_normalize_name(candidate.stem).lower()] = candidate
     return index
 
 
@@ -319,7 +372,7 @@ def never_rename_violation(
     """
 
     index = _library_name_index(library_dir)
-    existing = index.get(proposed_name.strip().lower())
+    existing = index.get(_normalize_name(proposed_name).lower())
     if existing is None:
         return None
     if _sha256_of_file(existing) == _sha256_of_file(staged_path):
@@ -414,7 +467,7 @@ def propose_admit_manifest(
         )
 
         index = _library_name_index(library_dir)
-        existing = index.get(proposed_name.lower())
+        existing = index.get(_normalize_name(proposed_name).lower())
         if existing is not None and _sha256_of_file(existing) == _sha256_of_file(
             staged_path
         ):
@@ -484,12 +537,14 @@ def apply_admit_manifest(
 ) -> AdmitApplyResult:
     """Apply a human-edited manifest: move accepted PDFs into the library.
 
-    Only rows with ``Action == "ADMIT"`` are processed. Each admitted row's
-    never-rename status is checked before any filesystem mutation for that
-    row; a violation refuses that row without moving its file (no partial
-    mutation). Successfully admitted rows contribute one paste-file entry
-    per member IPN, all carrying the row's proposed name (family docs name
-    every member the same way).
+    Only rows with ``Action == "ADMIT"`` are processed. Rows commit
+    independently and in manifest order: each row's safety checks (invalid
+    name, then never-rename) run before any filesystem mutation *for that
+    row*, and a refusal skips only that row -- it never aborts or rolls
+    back rows already admitted earlier in the same batch. Successfully
+    admitted rows contribute one paste-file entry per member IPN, all
+    carrying the row's proposed name (family docs name every member the
+    same way).
 
     Args:
         rows: Manifest rows, typically from :func:`read_admit_manifest`.
@@ -515,13 +570,31 @@ def apply_admit_manifest(
             )
             continue
 
-        proposed_name = row.proposed_name.strip()
+        proposed_name = _normalize_name(row.proposed_name)
         if not proposed_name:
             outcomes.append(
                 AdmitApplyOutcome(
                     row=row,
                     status="skipped",
                     message="ADMIT row has no ProposedName; skipped.",
+                )
+            )
+            continue
+
+        # Path-safety guard runs first and unconditionally: the manifest is
+        # human-edited free text, so a crafted ProposedName must never reach
+        # a filesystem write, regardless of whether the staged file exists.
+        invalid_reason = invalid_proposed_name_reason(
+            proposed_name, library_dir=library_dir
+        )
+        if invalid_reason is not None:
+            outcomes.append(
+                AdmitApplyOutcome(
+                    row=row,
+                    status="refused-invalid-name",
+                    message=(
+                        f"Refusing to admit {row.staged_file!r}: {invalid_reason}"
+                    ),
                 )
             )
             continue
@@ -558,14 +631,21 @@ def apply_admit_manifest(
             )
             continue
 
-        target_path = library_dir / f"{proposed_name}.pdf"
-        if target_path.exists():
+        # OS-independent idempotent-reuse check: look up the target name in
+        # the same case-insensitive/NFC-normalized index never_rename_
+        # violation already consulted (never_rename_violation having passed
+        # means either no match, or a byte-identical match) rather than
+        # target_path.exists(), which only detects a case-variant match on
+        # filesystems that happen to be case-insensitive (e.g. macOS).
+        existing = _library_name_index(library_dir).get(proposed_name.lower())
+        if existing is not None:
             # Idempotent re-admission of byte-identical content: no move
             # needed, but still contributes paste rows.
             status = "already-admitted"
-            message = f"{proposed_name}.pdf already published; no changes made."
+            message = f"{existing.name} already published; no changes made."
         else:
             library_dir.mkdir(parents=True, exist_ok=True)
+            target_path = library_dir / f"{proposed_name}.pdf"
             staged_path.replace(target_path)
             status = "admitted"
             message = f"Admitted {row.staged_file!r} as {proposed_name}.pdf"
@@ -604,6 +684,7 @@ __all__ = [
     "AdmitApplyResult",
     "AdmitManifestRow",
     "apply_admit_manifest",
+    "invalid_proposed_name_reason",
     "never_rename_violation",
     "propose_admit_manifest",
     "propose_document_name",

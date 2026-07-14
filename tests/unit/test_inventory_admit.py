@@ -15,6 +15,7 @@ from jbom.services.inventory_admit import (
     DISPOSITION_UNRESOLVABLE,
     AdmitManifestRow,
     apply_admit_manifest,
+    invalid_proposed_name_reason,
     never_rename_violation,
     propose_admit_manifest,
     propose_document_name,
@@ -154,6 +155,46 @@ class TestNeverRenameViolation:
         )
 
 
+class TestInvalidProposedNameReason:
+    def test_none_for_safe_name(self, tmp_path: Path) -> None:
+        library_dir = tmp_path / "datasheets"
+        assert (
+            invalid_proposed_name_reason("IC-TI-LM358D", library_dir=library_dir)
+            is None
+        )
+
+    def test_rejects_relative_path_traversal(self, tmp_path: Path) -> None:
+        library_dir = tmp_path / "datasheets"
+        reason = invalid_proposed_name_reason("../../evil", library_dir=library_dir)
+        assert reason is not None
+        assert "path separator" in reason
+
+    def test_rejects_nested_subdirectory(self, tmp_path: Path) -> None:
+        library_dir = tmp_path / "datasheets"
+        reason = invalid_proposed_name_reason("sub/evil", library_dir=library_dir)
+        assert reason is not None
+
+    def test_rejects_backslash_traversal(self, tmp_path: Path) -> None:
+        library_dir = tmp_path / "datasheets"
+        reason = invalid_proposed_name_reason("..\\evil", library_dir=library_dir)
+        assert reason is not None
+
+    def test_rejects_absolute_path(self, tmp_path: Path) -> None:
+        library_dir = tmp_path / "datasheets"
+        reason = invalid_proposed_name_reason("/etc/passwd", library_dir=library_dir)
+        assert reason is not None
+
+    def test_rejects_bare_dot_dot(self, tmp_path: Path) -> None:
+        library_dir = tmp_path / "datasheets"
+        reason = invalid_proposed_name_reason("..", library_dir=library_dir)
+        assert reason is not None
+
+    def test_rejects_empty_name(self, tmp_path: Path) -> None:
+        library_dir = tmp_path / "datasheets"
+        reason = invalid_proposed_name_reason("   ", library_dir=library_dir)
+        assert reason is not None
+
+
 class TestManifestCsvRoundTrip:
     def test_round_trips_all_fields(self) -> None:
         rows = [
@@ -204,6 +245,35 @@ class TestManifestCsvRoundTrip:
         assert parsed[0].action == "ADMIT"
         assert parsed[0].proposed_name == "Human-Renamed-Doc"
         assert parsed[0].member_ipns == ("RES_A", "RES_B")
+
+    def test_missing_optional_columns_default_to_empty(self) -> None:
+        """A hand-trimmed manifest missing DupeOf/MemberIPNs must still parse."""
+        buf = io.StringIO(
+            "Action,ProposedName,Disposition,StagedFile,SourceURL\n"
+            "ADMIT,Minimal-Doc,new,stem-min.pdf,https://x/min.pdf\n"
+        )
+        parsed = read_admit_manifest(buf)
+        assert parsed[0].proposed_name == "Minimal-Doc"
+        assert parsed[0].dupe_of == ""
+        assert parsed[0].member_ipns == ()
+
+    def test_duplicate_staged_file_rows_are_preserved_independently(self) -> None:
+        """The manifest is a flat CSV with no uniqueness constraint on
+        StagedFile/SourceURL -- a human accidentally duplicating a row (e.g.
+        via spreadsheet copy-paste) must round-trip both rows unchanged;
+        de-duplication is not this module's job. (apply_admit_manifest
+        processes each row independently, so a duplicate simply re-attempts
+        the same admission -- the second attempt becomes an idempotent
+        no-op once the first succeeds.)
+        """
+        buf = io.StringIO(
+            "Action,ProposedName,Disposition,DupeOf,StagedFile,SourceURL,MemberIPNs\n"
+            "ADMIT,Dup-Doc,new,,stem-dup.pdf,https://x/dup.pdf,IC_A\n"
+            "ADMIT,Dup-Doc,new,,stem-dup.pdf,https://x/dup.pdf,IC_A\n"
+        )
+        parsed = read_admit_manifest(buf)
+        assert len(parsed) == 2
+        assert parsed[0] == parsed[1]
 
 
 class TestProposeAdmitManifest:
@@ -578,6 +648,213 @@ class TestApplyAdmitManifest:
         assert result.outcomes[0].status == "skipped"
         assert result.admitted_count == 0
         assert result.refused_count == 0
+
+    def test_path_traversal_proposed_name_is_refused_and_writes_nothing_outside_library(
+        self, tmp_path: Path
+    ) -> None:
+        """A crafted ProposedName in a human-edited manifest must never
+        escape the library directory (reviewer-demonstrated live escape on
+        PR#373: ``proposed_name="../../evil"``).
+        """
+        staging_dir = tmp_path / "staging"
+        staging_dir.mkdir()
+        library_dir = tmp_path / "library" / "datasheets"
+        library_dir.mkdir(parents=True)
+        (staging_dir / "stem-evil.pdf").write_bytes(_PDF_BYTES_A)
+
+        rows = [
+            AdmitManifestRow(
+                action=ACTION_ADMIT,
+                proposed_name="../../evil",
+                disposition=DISPOSITION_NEW,
+                dupe_of="",
+                staged_file="stem-evil.pdf",
+                source_url="https://example.com/evil.pdf",
+                member_ipns=("IC_EVIL",),
+            )
+        ]
+
+        result = apply_admit_manifest(
+            rows, staging_dir=staging_dir, library_dir=library_dir
+        )
+
+        assert result.outcomes[0].status == "refused-invalid-name"
+        assert result.refused_count == 1
+        assert result.admitted_count == 0
+        assert result.paste_rows == []
+        # The staged file must still be exactly where it was -- no move, no
+        # write anywhere, including outside the library directory tree.
+        assert (staging_dir / "stem-evil.pdf").read_bytes() == _PDF_BYTES_A
+        assert not (tmp_path / "library" / "evil.pdf").exists()
+        assert not (tmp_path / "evil.pdf").exists()
+        assert list(library_dir.glob("*.pdf")) == []
+
+    def test_absolute_path_proposed_name_is_refused(self, tmp_path: Path) -> None:
+        staging_dir = tmp_path / "staging"
+        staging_dir.mkdir()
+        library_dir = tmp_path / "datasheets"
+        outside_target = tmp_path / "outside-target.pdf"
+        (staging_dir / "stem-abs.pdf").write_bytes(_PDF_BYTES_A)
+
+        rows = [
+            AdmitManifestRow(
+                action=ACTION_ADMIT,
+                proposed_name=str(outside_target.with_suffix("")),
+                disposition=DISPOSITION_NEW,
+                dupe_of="",
+                staged_file="stem-abs.pdf",
+                source_url="https://example.com/abs.pdf",
+                member_ipns=("IC_ABS",),
+            )
+        ]
+
+        result = apply_admit_manifest(
+            rows, staging_dir=staging_dir, library_dir=library_dir
+        )
+
+        assert result.outcomes[0].status == "refused-invalid-name"
+        assert not outside_target.exists()
+
+    def test_unicode_variant_name_is_treated_as_the_same_published_document(
+        self, tmp_path: Path
+    ) -> None:
+        """NFC vs NFD encodings of the same visible name must not bypass
+        the case-insensitive uniqueness invariant (jBOM#346)."""
+        import unicodedata
+
+        staging_dir = tmp_path / "staging"
+        staging_dir.mkdir()
+        library_dir = tmp_path / "datasheets"
+        library_dir.mkdir()
+
+        nfc_name = unicodedata.normalize("NFC", "Cafe\u0301-Doc")  # "Café-Doc" (NFC)
+        nfd_name = unicodedata.normalize("NFD", nfc_name)  # same text, NFD encoding
+        assert nfc_name != nfd_name  # sanity: genuinely different byte sequences
+
+        (library_dir / f"{nfc_name}.pdf").write_bytes(_PDF_BYTES_A)
+        (staging_dir / "stem-variant.pdf").write_bytes(_PDF_BYTES_B)
+
+        rows = [
+            AdmitManifestRow(
+                action=ACTION_ADMIT,
+                proposed_name=nfd_name,
+                disposition=DISPOSITION_NEW,
+                dupe_of="",
+                staged_file="stem-variant.pdf",
+                source_url="https://example.com/variant.pdf",
+                member_ipns=("IC_VARIANT",),
+            )
+        ]
+
+        result = apply_admit_manifest(
+            rows, staging_dir=staging_dir, library_dir=library_dir
+        )
+
+        # Different content under the "same" (unicode-normalized) name is a
+        # never-rename violation, not a fresh admission.
+        assert result.outcomes[0].status == "refused-never-rename"
+
+    def test_case_variant_reuse_is_idempotent_without_relying_on_filesystem_case_sensitivity(
+        self, tmp_path: Path
+    ) -> None:
+        """Re-admitting identical content under a different-case spelling of
+        an existing published name must be detected via the case-insensitive
+        index, not ``Path.exists()`` (which only "works" on filesystems that
+        happen to be case-insensitive, e.g. macOS/Windows -- not Linux)."""
+        staging_dir = tmp_path / "staging"
+        staging_dir.mkdir()
+        library_dir = tmp_path / "datasheets"
+        library_dir.mkdir()
+        (library_dir / "Existing-Doc.pdf").write_bytes(_PDF_BYTES_A)
+        (staging_dir / "stem-case.pdf").write_bytes(_PDF_BYTES_A)
+
+        rows = [
+            AdmitManifestRow(
+                action=ACTION_ADMIT,
+                proposed_name="existing-doc",  # case-variant spelling
+                disposition=DISPOSITION_DUPE_OF,
+                dupe_of="Existing-Doc",
+                staged_file="stem-case.pdf",
+                source_url="https://example.com/case.pdf",
+                member_ipns=("IC_CASE",),
+            )
+        ]
+
+        result = apply_admit_manifest(
+            rows, staging_dir=staging_dir, library_dir=library_dir
+        )
+
+        assert result.outcomes[0].status == "already-admitted"
+        # Exactly one published file exists -- no case-variant duplicate was
+        # created, regardless of host filesystem case sensitivity.
+        assert [p.name for p in library_dir.glob("*.pdf")] == ["Existing-Doc.pdf"]
+
+
+class TestApplyAdmitManifestPartialBatch:
+    def test_one_refused_row_does_not_block_other_rows_in_the_same_batch(
+        self, tmp_path: Path
+    ) -> None:
+        """Row-by-row commit semantics: rows are independent within one
+        ``--apply`` run -- a refusal on one row must not prevent, roll back,
+        or otherwise affect any other row in the same manifest."""
+        staging_dir = tmp_path / "staging"
+        staging_dir.mkdir()
+        library_dir = tmp_path / "datasheets"
+        library_dir.mkdir()
+        (library_dir / "Published-Name.pdf").write_bytes(_PDF_BYTES_A)
+
+        (staging_dir / "stem-good-1.pdf").write_bytes(_PDF_BYTES_A)
+        (staging_dir / "stem-bad.pdf").write_bytes(_PDF_BYTES_B)
+        (staging_dir / "stem-good-2.pdf").write_bytes(b"%PDF-1.4\n%datasheet C\n%%EOF")
+
+        rows = [
+            AdmitManifestRow(
+                action=ACTION_ADMIT,
+                proposed_name="IC-First-Doc",
+                disposition=DISPOSITION_NEW,
+                dupe_of="",
+                staged_file="stem-good-1.pdf",
+                source_url="https://example.com/first.pdf",
+                member_ipns=("IC_FIRST",),
+            ),
+            AdmitManifestRow(
+                action=ACTION_ADMIT,
+                # Collides with a published doc of different content --
+                # must be refused without affecting the other two rows.
+                proposed_name="Published-Name",
+                disposition=DISPOSITION_COLLISION,
+                dupe_of="",
+                staged_file="stem-bad.pdf",
+                source_url="https://example.com/bad.pdf",
+                member_ipns=("IC_BAD",),
+            ),
+            AdmitManifestRow(
+                action=ACTION_ADMIT,
+                proposed_name="IC-Third-Doc",
+                disposition=DISPOSITION_NEW,
+                dupe_of="",
+                staged_file="stem-good-2.pdf",
+                source_url="https://example.com/third.pdf",
+                member_ipns=("IC_THIRD",),
+            ),
+        ]
+
+        result = apply_admit_manifest(
+            rows, staging_dir=staging_dir, library_dir=library_dir
+        )
+
+        assert result.admitted_count == 2
+        assert result.refused_count == 1
+        assert (library_dir / "IC-First-Doc.pdf").is_file()
+        assert (library_dir / "IC-Third-Doc.pdf").is_file()
+        # The refused row's staged file is untouched and never landed under
+        # the colliding published name.
+        assert (staging_dir / "stem-bad.pdf").read_bytes() == _PDF_BYTES_B
+        assert (library_dir / "Published-Name.pdf").read_bytes() == _PDF_BYTES_A
+        assert set(result.paste_rows) == {
+            ("IC_FIRST", "IC-First-Doc"),
+            ("IC_THIRD", "IC-Third-Doc"),
+        }
 
 
 class TestWritePasteFile:

@@ -118,21 +118,31 @@ user; jBOM exposes them to the BOM-generation pipeline by name.
   inventories should use `Supplier` + `SPN` instead.
 
 **Datasheet**
-: URL to the component datasheet PDF. When a curated `Datasheet Name` (below) is
-  shared by multiple rows, the one-URL-per-Name rule applies: exactly one of those
-  rows should carry the canonical-source URL (the row the library copy was actually
-  acquired from); the other member rows leave `Datasheet` blank. `jbom audit`
-  enforces this (`DATASHEET_PROVENANCE_MISSING` / `DATASHEET_PROVENANCE_CONFLICT`);
-  see [docs/reference/cli.md](cli.md#audit-command).
+: URL to the component datasheet PDF. Once a document is admitted to the
+  library, this cell records the canonical source URL the library copy was
+  actually acquired from -- a provenance trail, not a live-link guarantee.
+  When a curated `Datasheet Name` (below) is shared by multiple rows (a
+  family of parts with one document), the one-URL-per-Name rule applies:
+  exactly one of those rows carries the canonical-source URL; the other
+  member rows leave `Datasheet` blank. `jbom audit` enforces this
+  (`DATASHEET_PROVENANCE_MISSING` / `DATASHEET_PROVENANCE_CONFLICT`); see
+  [docs/reference/cli.md](cli.md#audit-command).
 
 **Datasheet Name**
-: Curated name of the document in the shared datasheet document library, resolving by
-  convention to `datasheets/<name>.pdf` (no path, no `.pdf` extension stored in the
-  cell). Presence of `Datasheet Name` is what marks an Item as curated; `Datasheet`
-  URL populated with `Datasheet Name` empty is the structural "dig-deeper" backlog.
-  `jbom audit` runs read-only naming, provenance, and (with `--datasheet-library`)
-  file-presence checks against this column; see
-  [docs/reference/cli.md](cli.md#audit-command).
+: Curated name of the item's datasheet document in the shared datasheet
+  document library, resolving by convention to `datasheets/<name>.pdf` (no
+  path, no `.pdf` extension stored in the cell). Presence of `Datasheet
+  Name` is what marks an Item as curated; `Datasheet` URL populated with
+  `Datasheet Name` empty is the structural "dig-deeper" backlog.
+  `jbom audit` runs read-only naming, provenance, and (with
+  `--datasheet-library`) file-presence checks against this column; see
+  [docs/reference/cli.md](cli.md#audit-command). This cell is never
+  populated by jBOM directly: `jbom inventory admit` (see
+  [docs/reference/cli.md](cli.md#admit-subcommand-jbom-inventory-admit)) is
+  the sole gate into the library, and its `--apply` phase only ever
+  *proposes* the value via a full-sheet paste-file the human pastes into
+  this column by hand -- consistent with jBOM's human-sole-writer rule for
+  the canonical inventory file.
 
 **Keywords**
 : Comma-separated search keywords. Not currently used in matching but available for

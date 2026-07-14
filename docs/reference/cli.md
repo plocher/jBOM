@@ -21,6 +21,8 @@ jbom pos [PROJECT] [-o OUTPUT] [POS OPTIONS]
 jbom gerbers [PROJECT] [-o OUTPUT_DIR] [--fabricator NAME] [--no-drill] [--netlist] [--dry-run]
 jbom fab [PROJECT] [-o OUTPUT_ROOT] [--fabricator NAME] [--skip-bom] [--skip-pos] [--skip-gerbers] [--debug] [--dry-run]
 jbom inventory [PROJECT] [-o OUTPUT] [--supplier SUPPLIER_ID ...] [--api-key KEY_OR_SUPPLIER_KEY ...] [INVENTORY OPTIONS]
+jbom inventory admit [--inventory CATALOG_CSV ...] [--manifest PATH] [--staging-dir PATH] [--library-dir PATH]
+jbom inventory admit --apply [--manifest PATH] [-o PASTE_CSV] [-F] [-v]
 jbom promote SOURCE_INVENTORY [--supplier SUPPLIER_ID ...] [--api-key KEY_OR_SUPPLIER_KEY ...] [--jlc] [-o OUTPUT] [-F] [-v]
 jbom parts [PROJECT] [-o OUTPUT] [PARTS OPTIONS]
 jbom search QUERY [SEARCH OPTIONS]
@@ -431,6 +433,123 @@ command's "Datasheet staging fetch" note above for the full behavior
 (idempotency, PDF/HTML verification, fetch budget, profile-based
 configuration). Items that already have a `Datasheet Name` (already in the
 Library) are skipped for free, without a network call.
+
+### ADMIT SUBCOMMAND (`jbom inventory admit`)
+
+```
+jbom inventory admit [--inventory CATALOG_CSV ...] [--manifest PATH] [--staging-dir PATH] [--library-dir PATH]
+jbom inventory admit --apply [--manifest PATH] [-o PASTE_CSV] [-F] [-v]
+```
+
+The sole gate into the datasheet document library (jBOM#356): a two-phase
+**propose → human edit → apply** workflow. Datasheet documents never enter
+the library any other way -- neither the staging fetch (`jbom search` /
+`jbom inventory --supplier`, above) nor any other command writes into
+`datasheets/`.
+
+The staging directory comes exclusively from the
+`datasheet_staging.staging_dir` profile key (see
+[`configuration.md`](configuration.md#datasheet_staging-sub-stanza-jbom355)) --
+the same user-machine binding the staging fetch uses. There is no fallback
+path and no environment variable: when it is unconfigured, `admit` reports
+an error and there is nothing to admit. `--staging-dir` overrides it for one
+invocation; `--library-dir` overrides the library's `datasheets/` directory,
+which otherwise defaults to a `datasheets` sibling of the staging directory
+(i.e. `<staging_dir>/../datasheets`, matching the SPCoast-inventory layout).
+
+#### Propose (default mode)
+
+Scans the staging directory for verified PDFs (`.pdf`; `.unverified` files
+are never proposed) and matches each one back to the inventory backlog --
+rows with a populated `Datasheet` URL but no `Datasheet Name` yet, loaded
+from `--inventory CATALOG_CSV` (repeatable, required for propose). Items
+sharing one Datasheet URL (family members, e.g. several resistor rows
+that only differ by tolerance/value) are grouped into a single manifest
+candidate. Writes a manifest CSV (default `admit-manifest.csv` inside the
+staging directory; override with `--manifest PATH`) with one row per
+staged file:
+
+| Column | Meaning |
+| --- | --- |
+| `Action` | `ADMIT` (accept) or `SKIP` (leave staged). Propose defaults this based on `Disposition`; edit it before `--apply`. |
+| `ProposedName` | Curated `Datasheet Name` (no path, no extension) — the library filename stem. A best-effort heuristic derived from `Category`/`Manufacturer`/`MFGPN` (family candidates get a `-series` suffix). **Always review and correct before `--apply`.** |
+| `Disposition` | `new` (fresh candidate, `Action=ADMIT`), `dupe-of` (byte-identical to an already-published document, `Action=ADMIT`, idempotent), `collision` (name already published under different content, `Action=SKIP` — resolve by hand), or `unresolvable` (no matching backlog row, `Action=SKIP`). |
+| `DupeOf` | For `dupe-of` rows, the existing published name. |
+| `StagedFile` | Filename of the verified PDF within the staging directory. |
+| `SourceURL` | The Datasheet URL this file was staged from. |
+| `MemberIPNs` | Semicolon-separated IPNs of every backlog Item sharing `SourceURL` — the Items this admission will name. |
+
+**--inventory CATALOG_CSV**
+: Inventory catalog(s) to resolve the backlog against. Required for propose mode; repeatable.
+
+**--manifest PATH**
+: Manifest CSV path. Written by propose; read by `--apply`. Default: `admit-manifest.csv` inside the staging directory.
+
+**--staging-dir PATH**
+: Override the configured staging directory for this invocation.
+
+**--library-dir PATH**
+: Override the library's `datasheets/` directory.
+
+**-F, --force, --Force**
+: Overwrite an existing manifest file.
+
+#### Apply (`--apply`)
+
+Reads the (human-edited) manifest and, for every `Action=ADMIT` row, moves
+its staged PDF into `datasheets/<ProposedName>.pdf` and writes one
+full-sheet `Datasheet Name` paste-file row (`IPN`, `Datasheet Name`) per
+member IPN — ready for the human to paste into the canonical inventory at
+the matching rows. jBOM never writes to the inventory itself (per the
+human-sole-writer ruling); the paste-file is a proposal, not a write.
+Output defaults to stdout CSV; use `-o PATH` for a file, or `-o console`
+for a table.
+
+**Never-rename guard**: before moving anything, each `ADMIT` row is checked
+against the library. A `ProposedName` that collides (case-insensitively —
+library filesystems are case-insensitive) with an already-published
+document of *different* content is refused; a published document's name
+and content are never silently overwritten or renamed. Re-admitting
+byte-identical content under its own published name is a no-op, not a
+violation. `ProposedName` is also validated as a bare filename stem —
+path separators, `.`/`..` components, and absolute paths are refused
+outright, so a manifest can never write outside `datasheets/`.
+
+**Row-by-row commit semantics**: rows commit independently, in manifest
+order. A row refused by either guard is skipped without affecting any
+other row in the same `--apply` run — rows admitted earlier or later in
+the same batch are never rolled back or blocked by one refused row. Refused
+rows print an `Error:` line to stderr identifying the row and reason, and
+the command exits `1` if any row was refused, even though other rows in
+the same run succeeded.
+
+**--apply**
+: Switch to apply mode (reads `--manifest` instead of writing it).
+
+**-o, --output PASTE_CSV**
+: Paste-file output destination. Default: CSV to stdout. `-o console` prints a table; otherwise treat the value as a file path.
+
+**-v, --verbose**
+: Print one line per admitted/already-admitted row to stderr.
+
+### Exit codes (admit)
+
+- `0` — propose: manifest written (or nothing to propose); apply: every `ADMIT` row processed without a guard refusal.
+- `1` — propose: no staging directory configured, missing/invalid `--inventory`, or manifest already exists without `--force`; apply: manifest not found, or one or more rows refused by a guard.
+
+### Example workflow
+
+```sh
+# 1. Propose: scan staging, write a manifest for review
+jbom inventory admit --inventory library.csv --manifest admit-manifest.csv
+
+# 2. Edit admit-manifest.csv by hand: correct ProposedName, set Action=ADMIT/SKIP
+
+# 3. Apply: move accepted PDFs into datasheets/, write the paste-file proposal
+jbom inventory admit --apply --manifest admit-manifest.csv -o datasheet-names.csv
+
+# 4. Paste datasheet-names.csv's Datasheet Name column into library.csv by hand
+```
 
 ## PROMOTE COMMAND
 
