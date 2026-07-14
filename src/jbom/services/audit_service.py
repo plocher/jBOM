@@ -710,7 +710,15 @@ class AuditService:
         by_exact_name: dict[str, list[InventoryItem]],
         catalog_file: str,
     ) -> list[AuditRow]:
-        """Return provenance rows for the one-URL-per-Name rule (jBOM#348/#351)."""
+        """Return provenance rows for the one-URL-per-Name rule (jBOM#348/#351).
+
+        Note: *by_exact_name* groups by exact string, not case-folded. This
+        is intentional -- case variants of the same name are a distinct
+        defect (DATASHEET_NAME_CASE_MISMATCH, see
+        _check_datasheet_name_collisions) and are surfaced there rather than
+        silently merged into one provenance group here, which would risk
+        double-counting or masking findings across the two checks.
+        """
         rows: list[AuditRow] = []
         for name, members in by_exact_name.items():
             with_url = [m for m in members if (m.datasheet or "").strip()]
