@@ -48,9 +48,13 @@ The BOM workflow keeps designs supplier-neutral: components carry generic values
 ## GLOBAL OPTIONS
 
 **-q, --quiet**
-: Suppress informational diagnostics printed to stderr. Errors are still emitted.
-  Note: this flag operates at the CLI adapter level. Service-layer diagnostics are always
-  collected and available regardless of this flag.
+: Suppress `info` and `warning` severity diagnostics printed to stderr (e.g. `bom`'s
+  "Missing important ... fields" completeness warning, `Selected fields: ...`, and
+  similar guidance). `error` severity diagnostics are always printed regardless of
+  this flag. Stdout is never affected -- `-o -` CSV output stays pure CSV whether or
+  not `-q` is given; diagnostics always go to stderr. This flag operates at the CLI
+  adapter level via the shared `print_diagnostics()` helper; service-layer diagnostics
+  are always collected and available regardless of this flag.
 
 **--version**
 : Print jBOM version and exit.
@@ -318,6 +322,12 @@ Generates a Bill of Materials aggregated by value+package for procurement. Match
 
 **-f, --fields FIELDS**
 : Output columns. Use a preset with `+` prefix (`+standard`, `+jlc`, `+minimal`, `+all`, `+generic`, `+default`), a comma-separated field list, or both: `+jlc,CustomField`.
+: When `-f/--fields` is given, jBOM checks the selection against the active fabricator's
+  (or generic's) default preset and emits a `warning`-severity diagnostic on stderr if
+  important fields (`fabricator_part_number`, `reference`, `quantity`, `value`) are
+  missing, e.g. `Warning: Missing important generic fields: value`. This warning applies
+  regardless of whether a fabricator was explicitly selected. Use `-q/--quiet` to
+  suppress it; stdout CSV output is unaffected either way.
 
 **--list-fields**
 : List available fields and presets, then exit (no project needed).

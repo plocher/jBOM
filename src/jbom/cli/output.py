@@ -12,10 +12,14 @@ Also centralizes overwrite protection via `-F/--force/--Force`.
 from __future__ import annotations
 
 import argparse
+import os
+import sys
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Callable, TextIO
+from typing import Callable, Iterable, TextIO
+
+from jbom.common.types import Diagnostic
 
 
 class OutputKind(str, Enum):
@@ -75,6 +79,33 @@ def resolve_output_destination(
         return OutputDestination(OutputKind.STDOUT)
 
     return OutputDestination(OutputKind.FILE, path=Path(out))
+
+
+def print_diagnostics(
+    diagnostics: Iterable[Diagnostic],
+    *,
+    file: TextIO | None = None,
+) -> None:
+    """Render diagnostics honoring the global `-q/--quiet` (`JBOM_QUIET`) flag.
+
+    `info` and `warning` severities are suppressed when `JBOM_QUIET` is set
+    (see `-q/--quiet` in `jbom/cli/main.py`). `error` severity is always
+    printed regardless of quiet mode. All diagnostics are written to `file`
+    (stderr by default), never to stdout, preserving stdout CSV purity for
+    `-o -` output.
+
+    Args:
+        diagnostics: Diagnostics to render.
+        file: Stream to write rendered diagnostics to (defaults to the
+            current `sys.stderr`, resolved at call time).
+    """
+
+    destination = file if file is not None else sys.stderr
+    quiet = bool(os.environ.get("JBOM_QUIET"))
+    for diagnostic in diagnostics:
+        if quiet and diagnostic.severity != "error":
+            continue
+        print(diagnostic, file=destination)
 
 
 class OutputRefusedError(RuntimeError):
