@@ -25,14 +25,14 @@
   },
   "versions": [
     {
-      "version": "7.7.0",
+      "version": "7.8.0",
       "status": "development",
       "kicad_version": "9.0",
       "kicad_version_max": "",
-      "download_url": "https://github.com/plocher/jBOM/releases/download/v7.7.0/jbom-pcm-7.7.0.zip",
-      "download_sha256": "f8c60884c8aaf1ee3f6bf4f4223248b567e7118ceb9f9001ae93a86b20052103",
-      "install_size": 52583150,
-      "download_size": 20465956
+      "download_url": "https://github.com/plocher/jBOM/releases/download/v7.8.0/jbom-pcm-7.8.0.zip",
+      "download_sha256": "9c23954f00ce2a62d67cba0a06e4b1b7a1313047d672b9e93789c3379dbe7927",
+      "install_size": 52616072,
+      "download_size": 20475603
     }
   ]
 }
