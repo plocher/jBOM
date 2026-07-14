@@ -105,7 +105,7 @@ def print_diagnostics(
     for diagnostic in diagnostics:
         if quiet and diagnostic.severity != "error":
             continue
-        print(diagnostic, file=destination)
+        print(diagnostic.message, file=destination)
 
 
 class OutputRefusedError(RuntimeError):
