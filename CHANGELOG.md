@@ -1,6 +1,62 @@
 # CHANGELOG
 
 
+## v7.8.1 (2026-07-14)
+
+### Bug Fixes
+
+* fix(cli): route bom's exception-handler errors through print_diagnostics
+
+The 'errors still print with -q' scenario wasn't actually load-bearing:
+_execute_bom_command()'s broad except-handler printed error text
+directly (print(f"Error: {e}")) rather than through print_diagnostics(),
+so the shared helper's error-severity-always-prints guarantee had no
+real test coverage for that path. Route it through print_diagnostics()
+as an error-severity Diagnostic so all bom diagnostic rendering funnels
+through the one helper. Also switch print_diagnostics() to print
+diagnostic.message (not the raw dataclass repr) so routed error text
+stays byte-identical to the prior 'Error: <e>' output.
+
+Mutation-verified: temporarily making print_diagnostics() unconditionally
+suppress under JBOM_QUIET (including error severity) causes 'Errors
+still print with -q' in features/bom/quiet_diagnostics.feature to fail;
+reverting restores the pass.
+
+Full suites re-run clean: 1649 pytest, 313 behave scenarios (2099 steps).
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`aaa77b9`](https://github.com/plocher/jBOM/commit/aaa77b9d906888f1252290c28cb66033793f4377))
+
+* fix(cli): honor -q/--quiet for bom diagnostics (#375)
+
+The -q/--quiet global flag promised to suppress diagnostic guidance
+output but the bom adapter's diagnostics-printing loop ignored
+JBOM_QUIET, so the check_fabricator_field_completeness() warning
+(and other info/warning diagnostics) always printed regardless of -q.
+
+Add a shared print_diagnostics() helper in jbom.cli.output that
+suppresses info/warning severities when JBOM_QUIET is set while
+always printing error severity, and wire it into bom.py's two
+diagnostic-rendering loops. Stdout purity for '-o -' CSV output is
+unaffected either way; diagnostics only ever go to stderr.
+
+Also stop forcing JBOM_QUIET=1 globally in the behave test harness
+(features/steps/common_steps.py) - it was a no-op safety net that
+never took effect while the underlying bug existed. Scenarios that
+want quiet behavior now pass -q explicitly, which exercises the real
+code path.
+
+Add unit tests for print_diagnostics and a new behave feature
+(features/bom/quiet_diagnostics.feature) covering: warning visible
+on stderr without -q with pure-CSV stdout, warning suppressed with
+-q, errors still printed with -q, and verbose info suppressed with
+-q. Update docs/reference/cli.md to describe -q and the -f/--fields
+completeness warning accurately.
+
+Closes #375
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`c3509c9`](https://github.com/plocher/jBOM/commit/c3509c9579bcb60626b3658d5b684a2ff0b1ed63))
+
+
 ## v7.8.0 (2026-07-14)
 
 ### Bug Fixes
