@@ -1,6 +1,86 @@
 # CHANGELOG
 
 
+## v7.8.0 (2026-07-14)
+
+### Bug Fixes
+
+* fix(inventory): block path-traversal admit names, doc jbom inventory admit
+
+Reviewer-blocking fix on PR #373: a human-edited manifest ProposedName
+like "../../evil" was trusted as a bare filename stem, letting --apply
+write outside datasheets/. apply_admit_manifest() now runs a dedicated
+invalid_proposed_name_reason() containment guard before any filesystem
+mutation for a row -- rejecting path separators, '.'/'..' components,
+and absolute paths outright, then verifying the resolved target still
+lands directly inside the library directory. A refused row is skipped
+(status=refused-invalid-name) without affecting any other row in the
+same --apply batch.
+
+Folded in two related advisories while touching the same guard:
+- Proposed/published names are NFC-normalized before every comparison,
+  so unicode-variant spellings (NFC vs NFD) can't bypass the
+  case-insensitive uniqueness invariant.
+- The idempotent re-admission check now uses the same case-insensitive
+  name index never_rename_violation() already consults, instead of
+  Path.exists(), which only 'worked' on filesystems that happen to be
+  case-insensitive (macOS/Windows) and would have created a case-variant
+  duplicate file on a case-sensitive filesystem (Linux).
+
+Adds required user/developer documentation for the new command:
+- docs/reference/cli.md: full ADMIT SUBCOMMAND section (propose vs
+  --apply, manifest CSV schema, never-rename guard, row-by-row commit
+  semantics on refusal, output locations, staging-dir configuration
+  contract).
+- docs/reference/inventory-format.md: documents the Datasheet Name
+  column and its admit-paste-file provenance.
+- README.md: short admit example in the Quick Start flow.
+
+New tests: path-traversal/absolute-path/bare-dot-dot rejection, unicode
+NFC/NFD collision detection, cross-platform idempotent reuse, and a
+multi-row partial-batch commit test proving one refused row never
+blocks or rolls back other rows in the same manifest. New behave
+scenario proves a traversal row is refused end-to-end via the CLI and
+nothing lands outside the library.
+
+Refs #356
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`c0150d0`](https://github.com/plocher/jBOM/commit/c0150d0cdf3c37358aaa8b7d049ec872f75caf8c))
+
+### Features
+
+* feat(inventory): add jbom inventory admit datasheet library gate
+
+Implements the admission gate decided in jBOM#349: jbom inventory admit
+is the sole gate into the SPCoast-inventory datasheet library, via a
+propose -> human edit -> apply manifest workflow.
+
+- Propose scans the configured datasheet_staging.staging_dir (jBOM#355)
+  for verified PDFs, matches each against the inventory backlog (rows
+  with a Datasheet URL but no Datasheet Name), groups family members
+  sharing one URL into a single candidate, and proposes a best-effort
+  curated name from Category/Manufacturer/MFGPN (bom-datasheets POC
+  convention, -series suffix for family docs per jBOM#346).
+- Apply reads the (human-edited) manifest, moves ADMIT rows into
+  datasheets/<name>.pdf, and writes a full-sheet Datasheet Name
+  paste-file proposal -- jBOM never writes to the inventory itself
+  (jBOM#347/#348).
+- Never-rename guard: refuses (case-insensitively) any name that would
+  collide with a published document of different content, without
+  mutating anything for that row. Re-admitting byte-identical content
+  under its own name is an idempotent no-op.
+
+New service jbom.services.inventory_admit with unit tests covering
+manifest CSV round-trip, name proposal, family grouping, dupe-of
+detection, and the never-rename guard. Behave scenarios cover the
+propose/apply round-trip, family-doc grouping, and collision refusal,
+following the hermetic staging-directory harness from jBOM#355/PR#368.
+
+Closes #356
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`63e0097`](https://github.com/plocher/jBOM/commit/63e009798d272731b3e524e7132ab4eda216b10f))
+
+
 ## v7.7.0 (2026-07-14)
 
 ### Features
