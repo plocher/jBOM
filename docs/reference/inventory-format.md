@@ -118,7 +118,21 @@ user; jBOM exposes them to the BOM-generation pipeline by name.
   inventories should use `Supplier` + `SPN` instead.
 
 **Datasheet**
-: URL to the component datasheet PDF.
+: URL to the component datasheet PDF. When a curated `Datasheet Name` (below) is
+  shared by multiple rows, the one-URL-per-Name rule applies: exactly one of those
+  rows should carry the canonical-source URL (the row the library copy was actually
+  acquired from); the other member rows leave `Datasheet` blank. `jbom audit`
+  enforces this (`DATASHEET_PROVENANCE_MISSING` / `DATASHEET_PROVENANCE_CONFLICT`);
+  see [docs/reference/cli.md](cli.md#audit-command).
+
+**Datasheet Name**
+: Curated name of the document in the shared datasheet document library, resolving by
+  convention to `datasheets/<name>.pdf` (no path, no `.pdf` extension stored in the
+  cell). Presence of `Datasheet Name` is what marks an Item as curated; `Datasheet`
+  URL populated with `Datasheet Name` empty is the structural "dig-deeper" backlog.
+  `jbom audit` runs read-only naming, provenance, and (with `--datasheet-library`)
+  file-presence checks against this column; see
+  [docs/reference/cli.md](cli.md#audit-command).
 
 **Keywords**
 : Comma-separated search keywords. Not currently used in matching but available for
