@@ -1,6 +1,39 @@
 # CHANGELOG
 
 
+## v7.6.0 (2026-07-14)
+
+### Features
+
+* feat(audit): add read-only datasheet document-library hygiene checks
+
+Implements jBOM#357: jbom audit inventory mode grows offline lints for
+the shared SPCoast-inventory datasheet document library (map: #342):
+
+- Name->URL consistency (one-URL-per-Name provenance rule, #351):
+  DATASHEET_PROVENANCE_MISSING / DATASHEET_PROVENANCE_CONFLICT
+- Case-insensitive Datasheet Name uniqueness + near-collision detection:
+  DATASHEET_NAME_CASE_MISMATCH / DATASHEET_NAME_NEAR_COLLISION
+- File presence against the SPCoast-inventory checkout (opt-in via new
+  --datasheet-library flag): DATASHEET_FILE_MISSING / DATASHEET_ORPHAN_FILE
+- Manufacturer/tech token normalization shared with the Manufacturer
+  column (#346): DATASHEET_TOKEN_MISMATCH
+- Structural backlog report (URL populated, Name empty, #348):
+  DATASHEET_BACKLOG
+
+All checks are read-only and offline. The non-file-presence checks run
+unconditionally whenever an inventory catalog is audited; file-presence
+checks additionally require --datasheet-library pointing at the library
+checkout root. Exit codes follow existing severity conventions (ERROR
+findings fail the command; --strict promotes WARN as well), making
+jbom audit usable as a CI gate in SPCoast-inventory.
+
+Adds pure helper module jbom.services.datasheet_library and behave
+coverage for a clean pass plus each violation class.
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`a9ac95c`](https://github.com/plocher/jBOM/commit/a9ac95c608b295fa8e50b0424c72301b7e5688ac))
+
+
 ## v7.5.0 (2026-07-13)
 
 ### Bug Fixes
