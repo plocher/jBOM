@@ -1,6 +1,50 @@
 # CHANGELOG
 
 
+## v7.7.0 (2026-07-14)
+
+### Features
+
+* feat(audit): add opt-in --check-urls datasheet URL recovery ladder
+
+Implements jBOM#358: jbom audit --check-urls, an opt-in (default off,
+no network unless given) command that walks the five-rung LCSC URL
+recovery ladder discovered by the jBOM#351 curation pass:
+
+1. wmsc.lcsc.com CDN direct fetch (validated as-is).
+2. LCSC viewer URL -> CDN mechanical transform.
+3. Bare LCSC C-number -> product-detail API lookup for a durable
+   datasheet.lcsc.com PDF URL.
+4. Distributor/manufacturer URLs -- retried only, never guessed; a
+   canonical mirror hunt is documented as human/agent judgment and is
+   deliberately not mechanized.
+5. Signed/ephemeral URLs -- detected and reported dead by design,
+   never fetched or stored.
+
+Also implements convergence support: Items sharing a Datasheet Name
+that disagree on URL are proposed a canonical URL, feeding the
+Name->URL lint from the audit-hygiene ticket (#357).
+
+Output is a full-sheet-paste CSV (all rows, original order, only the
+Datasheet cell rewritten where an upgrade is proposed) -- the shape
+the curation pass found actually worked for human application. This
+never writes to the inventory file itself.
+
+New self-contained modules:
+- services/datasheet_url_recovery.py (ladder logic)
+- services/datasheet_url_upgrade_report.py (convergence + rendering)
+
+All network access is injected; hermetic tests use a fixture-manifest
+fetch, mirroring the existing datasheet_staging pattern. CLI edits to
+the shared audit.py file are additive and minimal (one flag, one
+self-contained dispatch branch) to avoid conflicting with #357's
+parallel audit-hygiene work.
+
+Closes #358
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`78b7e96`](https://github.com/plocher/jBOM/commit/78b7e9619f8cf10efb6d21069e7cf33c60c0c57b))
+
+
 ## v7.6.0 (2026-07-14)
 
 ### Features
