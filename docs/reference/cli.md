@@ -14,7 +14,7 @@ jbom — generate Bill of Materials, Placement Files, and Parts Lists from KiCad
 
 ```
 jbom [-q] [--version]
-jbom audit PATH [PATH ...] [--inventory CATALOG_CSV] [--supplier NAME] [--api-key KEY] [--requirements REQ_CSV] [--datasheet-library LIBRARY_DIR] [-o REPORT_CSV] [--strict] [-v]
+jbom audit PATH [PATH ...] [--inventory CATALOG_CSV] [--supplier NAME] [--api-key KEY] [--requirements REQ_CSV] [--datasheet-library LIBRARY_DIR] [--check-urls] [-o REPORT_CSV] [--strict] [-v]
 jbom annotate INPUT [--repairs REPORT_CSV] [--normalize] [--dry-run]
 jbom bom [PROJECT] [--inventory FILE ...] [-o OUTPUT] [BOM OPTIONS]
 jbom pos [PROJECT] [-o OUTPUT] [POS OPTIONS]
@@ -57,7 +57,7 @@ The BOM workflow keeps designs supplier-neutral: components carry generic values
 
 ```
 jbom audit PATH [PATH ...]  [--inventory CATALOG_CSV]  [--supplier NAME] [--api-key KEY]  [-o REPORT_CSV]  [--strict] [-v]
-jbom audit CAT.CSV [...]    [--requirements REQ_CSV]   [--supplier NAME] [--api-key KEY]  [--datasheet-library LIBRARY_DIR]  [-o REPORT_CSV]  [--strict] [-v]
+jbom audit CAT.CSV [...]    [--requirements REQ_CSV]   [--supplier NAME] [--api-key KEY]  [--datasheet-library LIBRARY_DIR] [--check-urls] [-o REPORT_CSV]  [--strict] [-v]
 ```
 
 Diagnoses field-quality issues and inventory coverage gaps. Mode is detected automatically from the positional arguments:
@@ -110,6 +110,9 @@ Diagnoses field-quality issues and inventory coverage gaps. Mode is detected aut
   - A `Datasheet Name` has no matching `datasheets/<name>.pdf` → `DATASHEET_FILE_MISSING / ERROR`
   - A PDF under `datasheets/` is not referenced by any Item's `Datasheet Name` → `DATASHEET_ORPHAN_FILE / WARN`
 
+**Datasheet URL recovery ladder (inventory mode + `--check-urls`, opt-in, NETWORK)**
+: See ["Datasheet URL recovery ladder" below](#datasheet-url-recovery-ladder---check-urls-opt-in-network) for the full write-up. Summary: walks each `ITEM` row's `Datasheet` URL through a five-rung recovery ladder (direct fetch, LCSC viewer→CDN transform, LCSC product-detail API, manufacturer-URL retry, signed/ephemeral dead-by-design detection) and proposes upgrades. **Makes real network requests** -- this is the only `jbom audit` check that does so, and only when `--check-urls` is explicitly given (default off).
+
 ### Arguments
 
 **PATH** (one or more, required)
@@ -129,6 +132,9 @@ Diagnoses field-quality issues and inventory coverage gaps. Mode is detected aut
 
 **--datasheet-library LIBRARY_DIR**
 : SPCoast-inventory checkout root (containing `datasheets/`) for datasheet document-library file-presence checks (inventory mode only; rejected in project mode). Enables `DATASHEET_FILE_MISSING` / `DATASHEET_ORPHAN_FILE` rows. The other datasheet-library hygiene checks (backlog, name/provenance lints, token normalization) always run in inventory mode regardless of this flag.
+
+**--check-urls**
+: Opt-in (default off; inventory mode only). Walks the Datasheet URL recovery ladder for every `ITEM` row and writes a full-sheet-paste CSV of proposed URL upgrades instead of the normal audit report. **Makes network requests** -- see ["Datasheet URL recovery ladder"](#datasheet-url-recovery-ladder---check-urls-opt-in-network) below. Mutually exclusive with `--inventory` and `--requirements`; rejected in project mode.
 
 **-o, --output REPORT_CSV**
 : Write the audit report to this file. If omitted, CSV is written to stdout.
@@ -163,6 +169,57 @@ Diagnoses field-quality issues and inventory coverage gaps. Mode is detected aut
 - `0` — no `ERROR`-severity rows (default)
 - `1` — one or more `ERROR`-severity rows; or any `WARN`-severity rows when `--strict` is passed
 
+`--check-urls` does not participate in the ERROR/WARN severity model above:
+it exits `0` whenever the ladder ran to completion, regardless of how many
+URLs came back `manual` (needs human/agent review) or `dead` (signed/
+ephemeral, dead by design); it exits `1` only on a hard error (bad input
+path, unreadable file, etc.). Per-URL outcomes are summarized on stderr
+and reflected in the full-sheet-paste CSV -- see below.
+
+### Datasheet URL recovery ladder (`--check-urls`, opt-in, NETWORK)
+
+Mechanizes the five-rung LCSC URL recovery ladder discovered by the
+SPCoast-inventory curation pass (jBOM#351;
+`SPCoast-inventory docs/curation-pass-2026-07.md`). For every `ITEM` row
+with a populated `Datasheet` URL:
+
+1. **Direct fetch** -- the recorded URL is fetched and checked: a real PDF
+   is left as-is; an HTML response (impostor) or fetch error continues to
+   the next applicable rung.
+2. **LCSC viewer -> CDN transform** -- `www.lcsc.com/datasheet/lcsc_datasheet_...`
+   viewer-page URLs (HTML shells; not fetchable by curl) are mechanically
+   rewritten to their durable `wmsc.lcsc.com` CDN path and re-fetched.
+3. **LCSC product-detail API** -- bare LCSC C-number URLs are looked up via
+   the product-detail API, which returns a durable
+   `datasheet.lcsc.com/datasheet/pdf/<hash>.pdf` URL.
+4. **Manufacturer/distributor retry** -- non-LCSC URLs that failed rung 1
+   are retried once; if they still fail, they are reported for manual/agent
+   review. **No mirror-guessing or web search is ever attempted** here --
+   the curation pass found that locating a canonical mirror is a human/
+   agent judgment call, not a mechanizable step, and this ladder never
+   invents a URL.
+5. **Signed/ephemeral URLs** (e.g. time-limited object-storage tokens) are
+   detected up front by URL pattern and reported dead by design -- never
+   fetched, never proposed as a recovery target.
+
+**Convergence**: when multiple `ITEM` rows share a `Datasheet Name` but
+disagree on `Datasheet` URL, the URL that resolves cleanly (rung 1) or was
+mechanically recovered (rungs 2-3) is proposed as the canonical URL for
+every disagreeing member. No canonical URL is invented if none of the
+members resolve.
+
+**Output**: a full-sheet-paste CSV -- every row from the input inventory,
+in original order, with only the `Datasheet` cell rewritten where an
+upgrade is proposed. Every other row and column passes through unchanged.
+**This command never writes to the inventory file itself** -- a human
+reviews the proposals and pastes the upgraded column back into the
+spreadsheet by hand.
+
+```sh
+# Check Datasheet URLs and write proposed upgrades for human review
+jbom audit catalog.csv --check-urls -o url_upgrades.csv
+```
+
 ### Example workflow
 
 ```sh
@@ -177,6 +234,9 @@ jbom audit catalog.csv --requirements requirements.csv -o catalog_report.csv
 
 # 4. Audit the datasheet document library (offline hygiene + file presence)
 jbom audit catalog.csv --datasheet-library ~/Dropbox/workspace/SPCoast-inventory -o datasheet_report.csv
+
+# 5. Check Datasheet URLs and propose upgrades (opt-in, makes network requests)
+jbom audit catalog.csv --check-urls -o url_upgrades.csv
 ```
 
 ## ANNOTATE COMMAND

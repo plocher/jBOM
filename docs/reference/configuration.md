@@ -216,6 +216,26 @@ defaults:
     staging_dir: "/Users/you/checkouts/SPCoast-inventory/staging"
 ```
 
+### `check_urls:` sub-stanza (jBOM#358)
+
+Supports `jbom audit --check-urls` -- the opt-in Datasheet URL recovery
+ladder. See `docs/reference/cli.md` for the full behavioral write-up
+(the five-rung ladder, convergence, and the full-sheet-paste output).
+
+Unlike `datasheet_staging:`, `--check-urls` is opt-in via the CLI flag
+itself, not a profile binding -- there is no `staging_dir`-style "inert
+until configured" knob here, and no fetch budget knobs currently exist
+for this command.
+
+Key fields:
+
+- `fetch_fixtures_manifest:` -- **test-only escape hatch.** When set,
+  resolves URLs against a local `{url: file_path}` JSON manifest instead
+  of the network. This key exists solely so this repository's own test
+  suite can exercise the recovery ladder hermetically; it is **not**
+  intended to appear in any user profile, and its current lack of
+  production-profile gating is tracked as a hardening gap in jBOM#372.
+
 ## `presets:` stanza
 
 Named field-set collections shared across profiles. Consumed wherever preset
