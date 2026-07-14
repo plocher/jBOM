@@ -16,6 +16,7 @@ from jbom.cli.output import (
     print_diagnostics,
     resolve_output_destination,
 )
+from jbom.common.types import Diagnostic
 from jbom.services.bom_generator import BOMData, BOMEntry
 from jbom.services.fabricator_projection_service import (
     FabricatorProjectionService,
@@ -308,7 +309,7 @@ def _execute_bom_command(args: argparse.Namespace) -> int:
         )
 
     except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
+        print_diagnostics([Diagnostic("error", f"Error: {e}")])
         return 1
 
 
