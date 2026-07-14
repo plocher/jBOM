@@ -73,6 +73,12 @@ If your inventory carries `Datasheet`/`Datasheet Name` columns for a shared data
 jbom audit inventory.csv --datasheet-library ~/Dropbox/workspace/SPCoast-inventory
 ```
 
+To opt in to checking whether your inventory's Datasheet URLs still resolve (and get proposed upgrades for dead/impostor ones), pass `--check-urls`. This makes network requests and is off by default:
+
+```bash
+jbom audit inventory.csv --check-urls -o url_upgrades.csv
+```
+
 ### 3. Fill in part numbers for JLC's LCSC supplier
 
 An inventory file maps your generic schematic values to real parts from a supplier's catalog — in this case LCSC, which JLCPCB uses for sourcing. Open `inventory.csv` and fill in the **LCSC** column for each part you want JLCPCB to source. Set **Priority** to `1` on rows you want matched first.
