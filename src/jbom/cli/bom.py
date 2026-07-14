@@ -13,6 +13,7 @@ from jbom.cli.output import (
     OutputRefusedError,
     add_force_argument,
     open_output_text_file,
+    print_diagnostics,
     resolve_output_destination,
 )
 from jbom.services.bom_generator import BOMData, BOMEntry
@@ -284,8 +285,7 @@ def _execute_bom_command(args: argparse.Namespace) -> int:
             list_fields=bool(args.list_fields),
         )
         result = BOMWorkflow().run(request)
-        for diagnostic in result.diagnostics:
-            print(diagnostic, file=sys.stderr)
+        print_diagnostics(result.diagnostics)
 
         if result.mode == BOMMode.LIST_FIELDS:
             if result.field_listing is None:
@@ -389,8 +389,7 @@ def _enrich_bom_smd_from_project_pcb(
         pcb_file,
         verbose=verbose,
     )
-    for diagnostic in diagnostics:
-        print(diagnostic, file=sys.stderr)
+    print_diagnostics(diagnostics)
     return enriched_bom_data
 
 

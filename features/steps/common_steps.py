@@ -135,8 +135,13 @@ def step_run_command(context, command):
 
     env = os.environ.copy()
     env["PYTHONPATH"] = str(context.src_root)
-    # Suppress noisy informational stderr in tests so CSV parsing is clean
-    env["JBOM_QUIET"] = "1"
+    # Do NOT force JBOM_QUIET here: -q/--quiet is a real, testable CLI
+    # behavior (see features/bom/quiet_diagnostics.feature). Scenarios that
+    # want quiet output pass `-q`/`--quiet` explicitly on the command line,
+    # which sets JBOM_QUIET=1 via jbom.cli.main. Forcing it ambiently for
+    # every subprocess would silence info/warning diagnostics that other
+    # scenarios assert on (e.g. inventory-enhancement verbose messages).
+    env.pop("JBOM_QUIET", None)
     if getattr(context, "trace", False):
         env["JBOM_BEHAVE_TRACE"] = "1"
 
@@ -162,6 +167,8 @@ def step_run_command(context, command):
         )
         context.last_command = command
         context.last_output = result.stdout + result.stderr
+        context.last_stdout = result.stdout
+        context.last_stderr = result.stderr
         context.last_exit_code = result.returncode
         if getattr(context, "trace", False):
             post_tree = _tree(str(context.sandbox_root))
@@ -493,6 +500,53 @@ def step_error_output_should_contain_messages(context):
             expected=content,
             actual=error_output,
         )
+
+
+@then('the stdout output should contain "{text}"')
+def step_stdout_should_contain(context, text):
+    """Assert *text* appears in the process's stdout stream in isolation."""
+    out = getattr(context, "last_stdout", "")
+    assert out and _csv_contains_fields(
+        out, text
+    ), f"Expected text not found in stdout: {text}\nStdout:\n{out}"
+
+
+@then('the stdout output should not contain "{text}"')
+def step_stdout_should_not_contain(context, text):
+    """Assert *text* does NOT appear in the process's stdout stream.
+
+    Used to prove diagnostics never leak into `-o -` CSV stdout, regardless
+    of whether they are visible on stderr.
+    """
+    out = getattr(context, "last_stdout", "")
+    assert text not in out, f"Unexpected text found in stdout: {text}\nStdout:\n{out}"
+
+
+@then("the stdout output should be valid CSV")
+def step_stdout_should_be_valid_csv(context):
+    """Assert stdout parses as CSV with at least a header row.
+
+    Proves stdout stays pure CSV even when diagnostics are emitted on
+    stderr alongside it (see Issue #375).
+    """
+    out = getattr(context, "last_stdout", "")
+    assert out.strip(), "No stdout captured"
+    rows = list(csv.reader(out.splitlines()))
+    assert rows and len(rows[0]) >= 1, f"Stdout does not look like CSV:\n{out}"
+
+
+@then('the stderr output should contain "{text}"')
+def step_stderr_should_contain(context, text):
+    """Assert *text* appears on stderr in isolation."""
+    out = getattr(context, "last_stderr", "")
+    assert text in out, f"Expected text not found in stderr: {text}\nStderr:\n{out}"
+
+
+@then('the stderr output should not contain "{text}"')
+def step_stderr_should_not_contain(context, text):
+    """Assert *text* does NOT appear on stderr."""
+    out = getattr(context, "last_stderr", "")
+    assert text not in out, f"Unexpected text found in stderr: {text}\nStderr:\n{out}"
 
 
 @then("the error output should be empty")
