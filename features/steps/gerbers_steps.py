@@ -8,6 +8,7 @@ Covers:
 """
 
 from __future__ import annotations
+from fnmatch import fnmatch
 
 import os
 import shutil
@@ -334,6 +335,24 @@ def step_backup_zip_entry_count(context, count: int) -> None:
         context,
         expected=f"{count} entries",
         actual=f"{len(names)} entries: {sorted(names)}",
+    )
+
+
+@then('the backup zip should contain an entry matching "{glob_pattern}"')
+def step_backup_zip_contains_matching_entry(context, glob_pattern: str) -> None:
+    """Assert the backup zip contains at least one matching entry name."""
+    backups = Path(context.sandbox_root) / "production" / "backups"
+    zips = list(backups.glob("*.zip")) if backups.is_dir() else []
+    assert len(zips) >= 1, "No backup zip found in production/backups/"
+    with zipfile.ZipFile(zips[0]) as zf:
+        names = zf.namelist()
+    matches = [n for n in names if fnmatch(n, glob_pattern)]
+    assert_with_diagnostics(
+        len(matches) > 0,
+        f"Backup zip contains no entry matching '{glob_pattern}'",
+        context,
+        expected=f"entry matching '{glob_pattern}'",
+        actual=f"entries: {sorted(names)}",
     )
 
 

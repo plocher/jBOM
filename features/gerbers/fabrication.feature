@@ -11,7 +11,10 @@ Feature: jbom fab — complete fabrication pipeline (BOM + CPL + Gerbers + Backu
   #     cpl.csv                               ← CPL/placement
   #     {title}_{revision}.zip                ← Gerber archive
   #     backups/
-  #       {title}_{revision}_{timestamp}.zip  ← snapshot of all three artifacts
+  #       {title}_{revision}_{timestamp}.zip  ← snapshot containing:
+  #                                              jbom.csv, cpl.csv,
+  #                                              gerber zip, and
+  #                                              {project}-design-sources.zip
 
   Background:
     Given a PCB that contains:
@@ -44,11 +47,12 @@ Feature: jbom fab — complete fabrication pipeline (BOM + CPL + Gerbers + Backu
     And the gerber zip should contain a file for layer "B.Cu"
     And the gerber zip should contain a file for layer "Edge.Cuts"
 
-  Scenario: backup contains all three production artifacts
-    # BOM + CPL + gerber zip = 3 entries in the backup archive
+  Scenario: backup contains production artifacts plus design-source archive
+    # BOM + CPL + gerber zip + nested design-source zip = 4 entries
     When I run jbom command "fab ."
     Then the command should succeed
-    And the backup zip should contain 3 files
+    And the backup zip should contain 4 files
+    And the backup zip should contain an entry matching "*-design-sources.zip"
 
   Scenario: --skip-gerbers produces BOM and CPL but no gerber zip
     When I run jbom command "fab . --skip-gerbers"
@@ -58,11 +62,12 @@ Feature: jbom fab — complete fabrication pipeline (BOM + CPL + Gerbers + Backu
     And the production artifact "cpl.csv" should exist
     And no file matching "*.zip" should exist in production/
 
-  Scenario: --skip-gerbers backup contains only BOM and CPL
-    # Without gerbers, only 2 artifacts are in the backup
+  Scenario: --skip-gerbers backup contains BOM/CPL plus design-source archive
+    # Without gerbers, backup still includes nested design-source zip
     When I run jbom command "fab . --skip-gerbers"
     Then the command should succeed
-    And the backup zip should contain 2 files
+    And the backup zip should contain 3 files
+    And the backup zip should contain an entry matching "*-design-sources.zip"
 
   Scenario: --skip-bom skips BOM generation but still creates CPL and gerbers
     When I run jbom command "fab . --skip-bom"
