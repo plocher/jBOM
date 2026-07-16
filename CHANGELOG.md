@@ -1,6 +1,26 @@
 # CHANGELOG
 
 
+## v7.9.0 (2026-07-16)
+
+### Features
+
+* feat(backup): embed design-source zip in production backup archives
+
+Add DesignSourcePackager and include a nested design-source archive
+in backup composition for both FabricationWorkflow and the plugin
+worker path. The backup zip now captures production artifacts plus a
+project source snapshot without requiring a separate sibling backups
+location.
+
+Also adds unit/workflow tests and updates CLI/plugin docs to reflect
+backup archive contents.
+
+Refs #378
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`b625338`](https://github.com/plocher/jBOM/commit/b625338335d0332f633c0add76f37a202462aad8))
+
+
 ## v7.8.2 (2026-07-16)
 
 ### Bug Fixes
