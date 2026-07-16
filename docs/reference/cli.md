@@ -804,7 +804,9 @@ production/
   cpl.csv                            ← CPL/placement
   {title}_{revision}.zip             ← Gerber archive for fab upload
   backups/
-    {title}_{revision}_{timestamp}.zip   ← dated snapshot of all artifacts
+    {title}_{revision}_{timestamp}.zip   ← dated snapshot containing
+                                            jbom.csv, cpl.csv, gerber zip,
+                                            and {project}-design-sources.zip
 ```
 `{title}` and `{revision}` are read from the KiCad title block; absent title falls back
 to the `.kicad_pro` basename.

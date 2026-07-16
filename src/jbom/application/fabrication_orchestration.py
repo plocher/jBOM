@@ -801,12 +801,33 @@ class FabricationWorkflow:
 
             backup_service = BackupService()
             backup_dir = production_dir / "backups"
-            backup_archive = backup_service.backup(
-                artifact_paths,
-                backup_dir,
-                archive_stem,
-            )
-            return backup_archive, diagnostics
+            backup_artifacts = [Path(p) for p in artifact_paths]
+
+            with tempfile.TemporaryDirectory() as temp_dir:
+                try:
+                    from jbom.services.design_source_packager import (
+                        DesignSourcePackager,
+                    )
+
+                    design_archive = (
+                        Path(temp_dir) / f"{project_dir.name}-design-sources.zip"
+                    )
+                    DesignSourcePackager().package(project_dir, design_archive)
+                    backup_artifacts.append(design_archive)
+                except Exception as exc:
+                    diagnostics.append(
+                        Diagnostic(
+                            "warning",
+                            f"Design-source backup archive skipped: {exc}",
+                        )
+                    )
+
+                backup_archive = backup_service.backup(
+                    backup_artifacts,
+                    backup_dir,
+                    archive_stem,
+                )
+                return backup_archive, diagnostics
 
         except Exception as exc:
             diagnostics.append(Diagnostic("error", f"Backup creation failed: {exc}"))
