@@ -112,7 +112,8 @@ The plugin's background worker directly sequences four service calls:
 1. `BOMWorkflow().run()` → `BOMWriter` → `production/jbom.csv`
 2. `POSWorkflow().run()` → `POSWriter` → `production/cpl.csv`
 3. `PcbnewGerberGenerator(board).generate()` → `GerberPackager` → `production/{stem}.zip`
-4. `BackupService().backup()` → `production/backups/{stem}_{timestamp}.zip`
+4. `DesignSourcePackager().package()` (temp nested source zip) + `BackupService().backup()`
+   → `production/backups/{stem}_{timestamp}.zip`
 
 `FabricationWorkflow` is intentionally not used from the plugin for two
 reasons. First, its `kicad-cli` subprocess path hangs inside KiCad's

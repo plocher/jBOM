@@ -900,16 +900,39 @@ class JBOMFabricationDialog(wx.Dialog):
                             pass  # Non-fatal
 
                 # ----------------------------------------------------------
-                # Step 4: Backup (all three artifacts in one archive)
+                # Step 4: Backup (production artifacts + design-source archive)
                 # ----------------------------------------------------------
                 _step("backup", "start")
                 if do_backup and not cancelled() and artifact_paths:
                     try:
                         from jbom.services.backup_service import BackupService
 
+                        backup_artifacts = [Path(p) for p in artifact_paths]
+                        with tempfile.TemporaryDirectory() as temp_dir:
+                            try:
+                                from jbom.services.design_source_packager import (
+                                    DesignSourcePackager,
+                                )
+
+                                design_archive = (
+                                    Path(temp_dir)
+                                    / f"{project_dir.name}-design-sources.zip"
+                                )
+                                DesignSourcePackager().package(
+                                    project_dir, design_archive
+                                )
+                                backup_artifacts.append(design_archive)
+                            except Exception as exc:
+                                diagnostics.append(
+                                    _Diag(
+                                        "warning",
+                                        f"Design-source backup archive skipped: {exc}",
+                                    )
+                                )
+
                         backup_dir = production_dir / "backups"
                         BackupService().backup(
-                            artifact_paths,
+                            backup_artifacts,
                             backup_dir,
                             archive_stem,
                         )

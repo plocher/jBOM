@@ -298,3 +298,69 @@ class TestFabricationResultStructure:
         )
         assert isinstance(result.artifacts, tuple)
         assert len(result.artifacts) == 1
+
+
+class TestFabricationBackupComposition:
+    """Backup composition behavior for production + design-source artifacts."""
+
+    def test_create_backup_adds_design_source_archive(self, tmp_path: Path) -> None:
+        """Workflow backup should include nested design-source archive input."""
+        project_dir = tmp_path / "proj"
+        project_dir.mkdir()
+        (project_dir / "proj.kicad_pro").write_text("(kicad_project)", encoding="utf-8")
+        (project_dir / "proj.kicad_pcb").write_text("(kicad_pcb)", encoding="utf-8")
+
+        production_dir = project_dir / "production"
+        production_dir.mkdir()
+        bom_path = production_dir / "jbom.csv"
+        bom_path.write_text("bom", encoding="utf-8")
+
+        request = FabricationRequest(
+            input_path=str(project_dir),
+            archive_stem="proj_1.0",
+        )
+        workflow = FabricationWorkflow()
+        captured: dict[str, object] = {}
+
+        def _fake_backup(
+            artifact_paths: list[Path], backup_dir: Path, archive_stem: str
+        ) -> Path:
+            captured["artifact_paths"] = list(artifact_paths)
+            captured["backup_dir"] = backup_dir
+            captured["archive_stem"] = archive_stem
+            result = backup_dir / "proj_1.0_2026-07-16_15-30-38.zip"
+            result.parent.mkdir(parents=True, exist_ok=True)
+            result.write_text("backup", encoding="utf-8")
+            return result
+
+        with (
+            patch(
+                "jbom.services.backup_service.BackupService.backup",
+                side_effect=_fake_backup,
+            ),
+            patch(
+                "jbom.services.design_source_packager.DesignSourcePackager.package"
+            ) as mock_package,
+        ):
+            mock_package.side_effect = (
+                lambda project, archive: archive.write_text("design", encoding="utf-8")
+                or archive
+            )
+            backup_archive, diagnostics = workflow._create_backup(
+                request,
+                [bom_path],
+                production_dir,
+            )
+
+        assert backup_archive is not None
+        assert backup_archive.exists()
+        assert diagnostics == []
+
+        artifact_paths = captured.get("artifact_paths")
+        assert isinstance(artifact_paths, list)
+        assert bom_path in artifact_paths
+        assert any(
+            path.name == "proj-design-sources.zip"
+            for path in artifact_paths
+            if isinstance(path, Path)
+        )
