@@ -63,6 +63,7 @@ import tempfile
 import threading
 import types
 from pathlib import Path
+from typing import Callable
 
 import wx
 
@@ -95,6 +96,9 @@ class JBOMFabricationDialog(wx.Dialog):
         pcb_path: Filesystem path of the active PCB file, or empty string.
         archive_name: Human-readable archive stem from the project title block
             (e.g. ``"MyProject_1.0"``).  Shown as a read-only label.
+        on_destroy: Optional callback invoked exactly once just before
+            ``Destroy()`` is called, allowing the plugin adapter to clear any
+            retained dialog reference.
     """
 
     def __init__(
@@ -102,6 +106,7 @@ class JBOMFabricationDialog(wx.Dialog):
         *,
         pcb_path: str = "",
         archive_name: str = "",
+        on_destroy: Callable[[], None] | None = None,
     ) -> None:
         super().__init__(
             None,  # parent=None — required for correct KiCad toolbar re-enable
@@ -111,6 +116,7 @@ class JBOMFabricationDialog(wx.Dialog):
 
         self._pcb_path = pcb_path
         self._archive_name = archive_name or "(unknown)"
+        self._on_destroy = on_destroy
         self._cancel_requested = threading.Event()
         self._fab_ids: list[str] = []
         self._gauges: dict[str, wx.Gauge] = {}
@@ -1086,6 +1092,13 @@ class JBOMFabricationDialog(wx.Dialog):
             pcbnew.Refresh()
         except Exception:  # pragma: no cover
             pass  # Non-fatal: Destroy() still runs
+        if self._on_destroy is not None:
+            callback = self._on_destroy
+            self._on_destroy = None
+            try:
+                callback()
+            except Exception:
+                pass
         self.Destroy()
 
     @staticmethod
