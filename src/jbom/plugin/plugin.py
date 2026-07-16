@@ -24,6 +24,11 @@ class JBOMFabricationPlugin(pcbnew.ActionPlugin):
     then calls ``Run()`` each time the user activates the toolbar button.
     """
 
+    def __init__(self) -> None:
+        """Initialise plugin lifecycle state."""
+        super().__init__()
+        self._active_dialog: object | None = None
+
     def defaults(self) -> None:
         """Register plugin metadata with KiCad's plugin manager."""
         self.name = "jBOM Fabrication"
@@ -55,6 +60,8 @@ class JBOMFabricationPlugin(pcbnew.ActionPlugin):
 
     def _run_impl(self) -> None:
         """Implementation body of Run(); separated for exception tracing."""
+        if self._raise_existing_dialog_if_active():
+            return
         board = pcbnew.GetBoard()
         pcb_path: str = board.GetFileName() if board else ""
 
@@ -76,8 +83,46 @@ class JBOMFabricationPlugin(pcbnew.ActionPlugin):
 
         from .dialog import JBOMFabricationDialog
 
-        dlg = JBOMFabricationDialog(pcb_path=pcb_path, archive_name=archive_name)
+        dlg = JBOMFabricationDialog(
+            pcb_path=pcb_path,
+            archive_name=archive_name,
+            on_destroy=self._clear_active_dialog,
+        )
+        self._active_dialog = dlg
         dlg.Show()
+
+    def _raise_existing_dialog_if_active(self) -> bool:
+        """Raise and focus an existing dialog if one is still active.
+
+        Returns:
+            ``True`` when an existing dialog handled the action and no new
+            dialog should be created; ``False`` when a new dialog should open.
+        """
+        if self._active_dialog is None:
+            return False
+        try:
+            is_visible = False
+            if hasattr(self._active_dialog, "IsShownOnScreen"):
+                is_visible = bool(self._active_dialog.IsShownOnScreen())
+            elif hasattr(self._active_dialog, "IsShown"):
+                is_visible = bool(self._active_dialog.IsShown())
+            if is_visible:
+                if hasattr(self._active_dialog, "Raise"):
+                    self._active_dialog.Raise()
+                if hasattr(self._active_dialog, "RequestUserAttention"):
+                    self._active_dialog.RequestUserAttention()
+                return True
+        except Exception:
+            # Stale or already-destroyed wrapped object; clear and reopen.
+            self._active_dialog = None
+            return False
+        # Dialog reference exists but is no longer visible; clear and reopen.
+        self._active_dialog = None
+        return False
+
+    def _clear_active_dialog(self) -> None:
+        """Clear plugin-held dialog reference on dialog teardown."""
+        self._active_dialog = None
 
     @staticmethod
     def _expand_archive_template_from_file(pcb_path: str, template: str) -> str:
