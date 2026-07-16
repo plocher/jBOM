@@ -1,6 +1,25 @@
 # CHANGELOG
 
 
+## v7.8.2 (2026-07-16)
+
+### Bug Fixes
+
+* fix(plugin): harden ActionPlugin dialog reinvocation lifecycle
+
+Retain the active modeless dialog on the plugin instance, focus the
+existing dialog on repeated toolbar clicks, and clear the retained
+reference via a one-shot teardown callback before dialog destroy.
+
+Adds regression tests that exercise repeated Run() calls, teardown
+callback clearing, and stale wrapped-object replacement behavior at
+the plugin adapter seam.
+
+Refs #377
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`c07d869`](https://github.com/plocher/jBOM/commit/c07d86989d7ef6a3fee53b11f4e948fd5286a653))
+
+
 ## v7.8.1 (2026-07-14)
 
 ### Bug Fixes
