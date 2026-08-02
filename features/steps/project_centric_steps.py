@@ -489,6 +489,12 @@ def given_generic_fabricator(context) -> None:
     context.fabricator = "generic"
 
 
+@given("the {fabricator_id} fabricator is selected")
+def given_named_fabricator(context, fabricator_id: str) -> None:
+    """Select an arbitrary fabricator profile by id (e.g. jlc, pcbway)."""
+    context.fabricator = str(fabricator_id).strip()
+
+
 @given('a KiCad project directory "{name}"')
 def given_kicad_project_directory(context, name: str) -> None:
     """Create a KiCad project directory for external testing (without changing cwd).

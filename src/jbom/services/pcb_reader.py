@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Optional
 
-from jbom.common.pcb_types import BoardModel, PcbComponent
+from jbom.common.pcb_types import BoardModel, PadLocal, PcbComponent
 from jbom.common.types import TitleBlockMetadata
 
 
@@ -174,6 +174,37 @@ class DefaultKiCadReaderService(KiCadReaderService):
                 and isinstance(item[1], str)
             ):
                 board.kicad_version = item[1]
+            elif isinstance(item, list) and item and item[0] == Symbol("setup"):
+                self._extract_setup_origins(item, board)
+
+    def _extract_setup_origins(self, setup_node: list, board: BoardModel) -> None:
+        """Populate aux/grid origin fields from the PCB ``(setup …)`` block.
+
+        KiCad stores:
+        - ``(aux_axis_origin x y)`` — drill/place-file origin (pcbnew
+          ``GetAuxOrigin()``)
+        - ``(grid_origin x y)`` — editor grid origin (display-only for CPL)
+
+        When ``aux_axis_origin`` is absent, ``aux_origin_mm`` is left as
+        ``None`` so consumers can treat it as ``(0, 0)`` — the same default
+        pcbnew reports when no auxiliary origin has been set.
+        """
+        from sexpdata import Symbol
+
+        for child in setup_node[1:]:
+            if not (isinstance(child, list) and child):
+                continue
+            tag = child[0]
+            if tag == Symbol("aux_axis_origin") and len(child) >= 3:
+                try:
+                    board.aux_origin_mm = (float(child[1]), float(child[2]))
+                except (TypeError, ValueError):
+                    pass
+            elif tag == Symbol("grid_origin") and len(child) >= 3:
+                try:
+                    board.grid_origin_mm = (float(child[1]), float(child[2]))
+                except (TypeError, ValueError):
+                    pass
 
     def _extract_title_block_metadata(self, sexp) -> TitleBlockMetadata:
         """Extract title block metadata from a KiCad PCB S-expression tree.
@@ -252,6 +283,7 @@ class DefaultKiCadReaderService(KiCadReaderService):
         x_raw = y_raw = rot_raw = None
         side = "TOP"
         attributes = {}
+        pads: list[PadLocal] = []
 
         for child in node[2:]:
             if not (isinstance(child, list) and child):
@@ -280,6 +312,11 @@ class DefaultKiCadReaderService(KiCadReaderService):
                         rot = float(child[3])
                 except (ValueError, TypeError):
                     pass  # Keep defaults
+
+            elif head == Symbol("pad"):
+                pad = self._parse_pad_node(child)
+                if pad is not None:
+                    pads.append(pad)
 
             elif head == Symbol("fp_text") and len(child) >= 3:
                 # (fp_text reference "R1" ...) or (fp_text value "1K" ...)
@@ -372,6 +409,62 @@ class DefaultKiCadReaderService(KiCadReaderService):
             center_y_raw=y_raw,
             rotation_raw=rot_raw,
             attributes=attributes,
+            pads=tuple(pads),
+        )
+
+    def _parse_pad_node(self, node: list) -> Optional[PadLocal]:
+        """Parse a footprint ``(pad …)`` node into footprint-local coordinates.
+
+        Expected shape (KiCad 6/7/8)::
+
+            (pad "1" thru_hole circle (at x y [rot]) (size w h) …)
+
+        Returns ``None`` when the pad has no usable ``(at …)`` position.
+        """
+        from sexpdata import Symbol
+
+        if len(node) < 4:
+            return None
+
+        name = str(node[1]) if isinstance(node[1], str) else str(node[1] or "")
+        pad_type = str(node[2]) if not isinstance(node[2], list) else ""
+
+        x_mm = y_mm = 0.0
+        rot_deg = 0.0
+        width_mm = height_mm = 0.0
+        has_at = False
+
+        for child in node[3:]:
+            if not (isinstance(child, list) and child):
+                continue
+            head = child[0]
+            if head == Symbol("at") and len(child) >= 3:
+                try:
+                    x_mm = float(child[1])
+                    y_mm = float(child[2])
+                    if len(child) >= 4:
+                        rot_deg = float(child[3])
+                    has_at = True
+                except (TypeError, ValueError):
+                    return None
+            elif head == Symbol("size") and len(child) >= 3:
+                try:
+                    width_mm = float(child[1])
+                    height_mm = float(child[2])
+                except (TypeError, ValueError):
+                    pass
+
+        if not has_at:
+            return None
+
+        return PadLocal(
+            x_mm=x_mm,
+            y_mm=y_mm,
+            rotation_deg=rot_deg,
+            width_mm=width_mm,
+            height_mm=height_mm,
+            name=name,
+            pad_type=str(pad_type),
         )
 
     def _extract_package_token(self, footprint_name: str) -> str:

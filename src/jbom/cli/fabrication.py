@@ -143,8 +143,25 @@ def register_command(subparsers) -> None:  # type: ignore[type-arg]
     parser.add_argument(
         "--origin",
         choices=["board", "aux"],
-        default="board",
-        help="Origin reference for POS coordinates (default: board)",
+        default=None,
+        help=(
+            "Origin reference for POS coordinates. "
+            "Default: fabricator profile (JLC: aux) or board"
+        ),
+    )
+    corr = parser.add_mutually_exclusive_group()
+    corr.add_argument(
+        "--apply-corrections",
+        action="store_true",
+        default=None,
+        dest="apply_corrections",
+        help="Apply CPL rotation/offset DB corrections (on by default for JLC)",
+    )
+    corr.add_argument(
+        "--no-apply-corrections",
+        action="store_false",
+        dest="apply_corrections",
+        help="Disable CPL rotation/offset DB corrections",
     )
 
     # Dry-run
@@ -287,10 +304,11 @@ def _execute_fab_command(args) -> int:  # type: ignore[type-arg]
             inventory_files=tuple(str(p) for p in (args.inventory_files or [])),
             smd_only=bool(args.smd_only),
             pos_layer=str(args.layer or ""),
-            pos_origin=str(args.origin or "board"),
+            pos_origin=str(args.origin or ""),
             debug=bool(args.debug),
             generate_designators=_resolve_generate_designators(args),
             archive_template=_resolve_archive_template_from_args(args),
+            apply_corrections=getattr(args, "apply_corrections", None),
         )
 
         result = FabricationWorkflow().run(request)

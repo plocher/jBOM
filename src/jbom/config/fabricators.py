@@ -144,6 +144,11 @@ class FabricatorConfig(BaseModel):
     pos_additive_default_fields: Optional[List[str]] = None
     cpl_rotation_range: Optional[tuple[float, float]] = None  # (lo, hi)
     generate_designators: bool = False
+    # JLC/FT place-file defaults (generic leaves these off / board/anchor/up)
+    apply_corrections_default: bool = False
+    default_pos_origin: str = "board"  # board | aux
+    default_y_direction: str = "up"  # up | down (down = FT place-file Y)
+    default_position_mode: str = "anchor"  # anchor | auto | pad_center
 
     # Phase 1 schema: ordered supplier profile IDs.
     # Position encodes priority (first entry is most preferred).

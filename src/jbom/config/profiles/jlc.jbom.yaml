@@ -18,6 +18,16 @@ fab:
   # Formula: output = ((angle - lo) % 360) + lo  where lo=0.
   cpl_rotation_range: [0, 360]
 
+  # Fabrication-Toolkit parity for JLCPCB CPL output:
+  # - apply transformations.csv rotation/offset DB by default
+  # - aux origin (pcbnew GetAuxOrigin; (0,0) when unset)
+  # - place-file Y polarity (negate after origin)
+  # - SMD=anchor / THT=pad-centre placement
+  apply_corrections_default: true
+  default_pos_origin: aux
+  default_y_direction: down
+  default_position_mode: auto
+
   # Ordered supplier profile IDs (position encodes priority).
   # First entry is the fabricator's own catalog.
   suppliers:
