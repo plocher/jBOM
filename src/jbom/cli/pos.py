@@ -124,8 +124,33 @@ def register_command(subparsers) -> None:
     parser.add_argument(
         "--origin",
         choices=["board", "aux"],
-        default="board",
-        help="Origin reference (default: board)",
+        default=None,
+        help=(
+            "Origin reference for POS coordinates. "
+            "Default: fabricator profile (JLC: aux) or board"
+        ),
+    )
+    parser.add_argument(
+        "--y-direction",
+        choices=["up", "down"],
+        default=None,
+        dest="y_direction",
+        help=(
+            "Place-file Y polarity after origin subtraction. "
+            "'down' matches Fabrication-Toolkit / industry CPL (Y increases up). "
+            "Default: fabricator profile (JLC: down) or up"
+        ),
+    )
+    parser.add_argument(
+        "--position-mode",
+        choices=["anchor", "auto", "pad_center"],
+        default=None,
+        dest="position_mode",
+        help=(
+            "Component position mode. "
+            "'auto' matches Fabrication-Toolkit (SMD=anchor, THT=pad centre). "
+            "Default: fabricator profile (JLC: auto) or anchor"
+        ),
     )
     parser.add_argument(
         "-f",
@@ -143,15 +168,22 @@ def register_command(subparsers) -> None:
     )
     add_component_filter_arguments(parser, command_type="pos")
     add_fabricator_arguments(parser)
-    parser.add_argument(
+    corr = parser.add_mutually_exclusive_group()
+    corr.add_argument(
         "--apply-corrections",
         action="store_true",
-        default=False,
+        default=None,
+        dest="apply_corrections",
         help=(
             "Apply footprint rotation/offset corrections from transformations.csv "
-            "(harvested from Fabrication-Toolkit).  Corrects KiCad-vs-fabricator "
-            "orientation mismatches for JLCPCB and compatible assemblers."
+            "(harvested from Fabrication-Toolkit).  On by default for JLC."
         ),
+    )
+    corr.add_argument(
+        "--no-apply-corrections",
+        action="store_false",
+        dest="apply_corrections",
+        help="Disable footprint rotation/offset corrections (overrides JLC default).",
     )
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
     parser.set_defaults(handler=handle_pos)
@@ -198,10 +230,12 @@ def _build_pos_job_request(args: argparse.Namespace) -> JobRequest:
         "fabricator": resolve_fabricator_from_args(args),
         "smd_only": bool(args.smd_only),
         "layer": str(args.layer or ""),
-        "origin": str(args.origin or "board"),
+        "origin": str(args.origin or ""),
+        "y_direction": str(getattr(args, "y_direction", None) or ""),
+        "position_mode": str(getattr(args, "position_mode", None) or ""),
         "verbose": bool(args.verbose),
         "list_fields": bool(args.list_fields),
-        "apply_corrections": bool(getattr(args, "apply_corrections", False)),
+        "apply_corrections": getattr(args, "apply_corrections", None),
     }
     return JobRequest(
         job_type="pos",
@@ -223,11 +257,13 @@ def _build_pos_request(
         fabricator=resolve_fabricator_from_args(args),
         smd_only=bool(args.smd_only),
         layer=str(args.layer or ""),
-        origin=str(args.origin or "board"),
+        origin=str(args.origin or ""),
         fields=args.fields if args.fields is not None else None,
         list_fields=bool(args.list_fields),
         verbose=bool(args.verbose),
-        apply_corrections=bool(getattr(args, "apply_corrections", False)),
+        apply_corrections=getattr(args, "apply_corrections", None),
+        y_direction=str(getattr(args, "y_direction", None) or ""),
+        position_mode=str(getattr(args, "position_mode", None) or ""),
     )
 
 

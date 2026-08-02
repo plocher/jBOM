@@ -121,12 +121,12 @@ class FabricationRequest:
     inventory_files: tuple[str, ...] = field(default_factory=tuple)
     smd_only: bool = False
     pos_layer: str = ""
-    pos_origin: str = "board"
+    pos_origin: str = ""
     skip_backup: bool = False
     debug: bool = False
     archive_stem: str = ""
     archive_template: str = ""
-    apply_corrections: bool = False
+    apply_corrections: bool | None = None
     generate_designators: bool = False
 
     def __post_init__(self) -> None:
@@ -158,18 +158,15 @@ class FabricationRequest:
         )
         object.__setattr__(self, "smd_only", bool(self.smd_only))
         object.__setattr__(self, "pos_layer", str(self.pos_layer or "").strip())
-        object.__setattr__(
-            self,
-            "pos_origin",
-            _normalize_text(self.pos_origin or "board", field_name="pos_origin"),
-        )
+        object.__setattr__(self, "pos_origin", str(self.pos_origin or "").strip())
         object.__setattr__(self, "skip_backup", bool(self.skip_backup))
         object.__setattr__(self, "debug", bool(self.debug))
         object.__setattr__(self, "archive_stem", str(self.archive_stem or "").strip())
         object.__setattr__(
             self, "archive_template", str(self.archive_template or "").strip()
         )
-        object.__setattr__(self, "apply_corrections", bool(self.apply_corrections))
+        if self.apply_corrections is not None:
+            object.__setattr__(self, "apply_corrections", bool(self.apply_corrections))
         object.__setattr__(
             self, "generate_designators", bool(self.generate_designators)
         )

@@ -15,3 +15,13 @@ Feature: POS Units and Origin
     Then the command should succeed
     And the output should contain "R1"
     And the output should contain "C1"
+
+  Scenario: Aux origin with place-file Y-down polarity
+    Given a PCB that contains:
+      | Reference | X | Y | Side | Footprint   |
+      | R1        | 10| 5 | TOP  | R_0805_2012 |
+    When I run jbom command "pos --origin aux --y-direction down -o -"
+    Then the command should succeed
+    And the CSV output has rows where:
+      | Designator | Mid X   | Mid Y   |
+      | R1         | 10.0000 | -5.0000 |

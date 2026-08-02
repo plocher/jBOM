@@ -74,11 +74,13 @@ class POSRequest:
     fabricator: str = "generic"
     smd_only: bool = False
     layer: str = ""
-    origin: str = "board"
+    origin: str = ""
     fields: str | None = None
     list_fields: bool = False
     verbose: bool = False
-    apply_corrections: bool = False
+    apply_corrections: bool | None = None
+    y_direction: str = ""
+    position_mode: str = ""
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -94,11 +96,7 @@ class POSRequest:
         )
         object.__setattr__(self, "smd_only", bool(self.smd_only))
         object.__setattr__(self, "layer", str(self.layer or "").strip())
-        object.__setattr__(
-            self,
-            "origin",
-            _normalize_text(self.origin or "board", field_name="origin"),
-        )
+        object.__setattr__(self, "origin", str(self.origin or "").strip())
         object.__setattr__(
             self,
             "fields",
@@ -106,7 +104,11 @@ class POSRequest:
         )
         object.__setattr__(self, "list_fields", bool(self.list_fields))
         object.__setattr__(self, "verbose", bool(self.verbose))
-        object.__setattr__(self, "apply_corrections", bool(self.apply_corrections))
+        # None means "use fabricator default" — resolved in POSWorkflow._generate.
+        if self.apply_corrections is not None:
+            object.__setattr__(self, "apply_corrections", bool(self.apply_corrections))
+        object.__setattr__(self, "y_direction", str(self.y_direction or "").strip())
+        object.__setattr__(self, "position_mode", str(self.position_mode or "").strip())
 
 
 @dataclass(frozen=True)
@@ -461,8 +463,18 @@ def apply_rotation_corrections(
         # (e.g. KiCad -90° becomes 270° for fabricators).
         new_row.pop("rotation_raw", None)
         if delta_x != 0.0 or delta_y != 0.0:
-            new_row["x_mm"] = float(row.get("x_mm", 0.0) or 0.0) + delta_x
-            new_row["y_mm"] = float(row.get("y_mm", 0.0) or 0.0) + delta_y
+            from jbom.services.pos_generator import rotate_offset
+
+            # Offsets in transformations.csv are footprint-local; rotate into
+            # place-file space using the *uncorrected* KiCad rotation (FT).
+            ox, oy = rotate_offset(
+                delta_x,
+                delta_y,
+                rotation,
+                side=str(row.get("side", "TOP")),
+            )
+            new_row["x_mm"] = float(row.get("x_mm", 0.0) or 0.0) + ox
+            new_row["y_mm"] = float(row.get("y_mm", 0.0) or 0.0) + oy
             new_row.pop("x_raw", None)
             new_row.pop("y_raw", None)
         corrected.append(new_row)
@@ -606,8 +618,40 @@ class POSWorkflow:
         except Exception:
             pass
 
+        # Resolve fabricator-driven POS defaults early so placement options
+        # and correction enablement match the selected fabricator profile.
+        fab_config_early: FabricatorConfig | None = None
+        try:
+            from jbom.config.fabricators import load_fabricator as _lf_early
+
+            fab_config_early = _lf_early(request.fabricator)
+        except Exception:
+            fab_config_early = None
+
+        origin = (
+            request.origin
+            or (fab_config_early.default_pos_origin if fab_config_early else "")
+            or "board"
+        )
+        y_direction = request.y_direction or (
+            fab_config_early.default_y_direction if fab_config_early else "up"
+        )
+        position_mode = request.position_mode or (
+            fab_config_early.default_position_mode if fab_config_early else "anchor"
+        )
+        if request.apply_corrections is None:
+            apply_corrections = bool(
+                fab_config_early.apply_corrections_default
+                if fab_config_early is not None
+                else False
+            )
+        else:
+            apply_corrections = bool(request.apply_corrections)
+
         placement_options = PlacementOptions(
-            origin=request.origin,
+            origin=origin,  # type: ignore[arg-type]
+            y_direction=y_direction,  # type: ignore[arg-type]
+            position_mode=position_mode,  # type: ignore[arg-type]
             smd_only=request.smd_only,
             layer_filter=request.layer or None,
         )
@@ -615,7 +659,7 @@ class POSWorkflow:
         board = load_board(pcb_file)
         pos_data = POSGenerator(placement_options).generate_pos_data(board)
 
-        if request.apply_corrections:
+        if apply_corrections:
             pos_data, correction_diagnostics = apply_rotation_corrections(
                 pos_data, verbose=request.verbose
             )

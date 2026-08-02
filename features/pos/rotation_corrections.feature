@@ -56,3 +56,25 @@ Feature: POS Rotation Corrections (DB-driven, Part 1 of 2)
       | C1         | 180.0    |
       | U1         | 270.0    |
       | R1         | 0.0      |
+
+  Scenario: JLC fabricator applies corrections by default
+    Given the jlc fabricator is selected
+    And a PCB that contains:
+      | Reference | X | Y | Rotation | Side | Footprint |
+      | U1        | 10| 5 | 0        | TOP  | SOT-23_3  |
+    When I run jbom command "pos --jlc -o -"
+    Then the command should succeed
+    And the CSV output has rows where:
+      | Designator | Rotation |
+      | U1         | 180.0    |
+
+  Scenario: --no-apply-corrections disables JLC default corrections
+    Given the jlc fabricator is selected
+    And a PCB that contains:
+      | Reference | X | Y | Rotation | Side | Footprint |
+      | U1        | 10| 5 | 0        | TOP  | SOT-23_3  |
+    When I run jbom command "pos --jlc --no-apply-corrections -o -"
+    Then the command should succeed
+    And the CSV output has rows where:
+      | Designator | Rotation |
+      | U1         | 0        |

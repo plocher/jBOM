@@ -49,7 +49,8 @@ class TestFabricationRequestValidation:
         assert req.skip_gerbers is False
         assert req.dry_run is False
         assert req.inventory_files == ()
-        assert req.pos_origin == "board"
+        assert req.pos_origin == ""  # empty => fabricator profile default
+        assert req.apply_corrections is None  # fabricator profile default
 
     def test_inventory_files_coerced_to_tuple(self) -> None:
         req = FabricationRequest(

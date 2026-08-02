@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from sexpdata import Symbol
 
 from jbom.common.types import TitleBlockMetadata
@@ -180,3 +182,60 @@ def test_pcb_title_block_preserves_raw_comment_strings() -> None:
     sexp = _pcb_sexp_with_title_block([_comment(3, raw)])
     metadata = reader._extract_title_block_metadata(sexp)
     assert metadata.comments[3] == raw
+
+
+def test_parse_footprint_node_captures_pads() -> None:
+    """Pad nodes should populate footprint-local pad list."""
+    from sexpdata import Symbol
+
+    reader = DefaultKiCadReaderService()
+    node: list[object] = [
+        Symbol("footprint"),
+        "Conn:HDR",
+        [Symbol("layer"), "F.Cu"],
+        [Symbol("at"), "10", "20", "90"],
+        [Symbol("property"), "Reference", "J1"],
+        [Symbol("property"), "Value", "HDR"],
+        [Symbol("attr"), Symbol("through_hole")],
+        [
+            Symbol("pad"),
+            "1",
+            Symbol("thru_hole"),
+            Symbol("circle"),
+            [Symbol("at"), "0", "0"],
+            [Symbol("size"), "1.5", "1.5"],
+        ],
+        [
+            Symbol("pad"),
+            "2",
+            Symbol("thru_hole"),
+            Symbol("circle"),
+            [Symbol("at"), "2.54", "0", "180"],
+            [Symbol("size"), "1.5", "1.5"],
+        ],
+    ]
+    parsed = reader._parse_footprint_node(node)
+    assert parsed is not None
+    assert len(parsed.pads) == 2
+    assert parsed.pads[0].x_mm == pytest.approx(0.0)
+    assert parsed.pads[1].x_mm == pytest.approx(2.54)
+    assert parsed.pads[1].rotation_deg == pytest.approx(180.0)
+
+
+def test_extract_setup_origins_aux_and_grid() -> None:
+    """Board setup should populate aux_origin_mm and grid_origin_mm."""
+    from pathlib import Path
+
+    from jbom.common.pcb_types import BoardModel
+    from sexpdata import Symbol
+
+    reader = DefaultKiCadReaderService()
+    board = BoardModel(path=Path("t.kicad_pcb"))
+    setup = [
+        Symbol("setup"),
+        [Symbol("grid_origin"), 127, 127.1],
+        [Symbol("aux_axis_origin"), 10.5, 20.25],
+    ]
+    reader._extract_setup_origins(setup, board)
+    assert board.aux_origin_mm == pytest.approx((10.5, 20.25))
+    assert board.grid_origin_mm == pytest.approx((127.0, 127.1))

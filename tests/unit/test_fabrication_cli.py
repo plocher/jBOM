@@ -39,7 +39,7 @@ class TestFabCommandRegistration:
         assert args.skip_pos is False
         assert args.skip_gerbers is False
         assert args.dry_run is False
-        assert args.origin == "board"
+        assert args.origin is None  # fabricator profile supplies default
 
     def test_skip_flags_are_parseable(self) -> None:
         parser = create_parser()
