@@ -1,6 +1,28 @@
 # CHANGELOG
 
 
+## v7.9.1 (2026-08-03)
+
+### Bug Fixes
+
+* fix(pos): match Fabrication-Toolkit JLC CPL X/Y/Rotation
+
+jBOM CPL output diverged from Fabrication-Toolkit positions because
+origin/Y polarity were unused, placement used footprint anchors only,
+and transformations.csv corrections were opt-in even for --jlc.
+
+- Parse aux_axis_origin/grid_origin and pad local coords from PCB
+- Apply aux origin, place-file Y-down, and SMD-anchor/THT pad-centre
+  placement for the JLC fabricator profile by default
+- Enable transformations.csv corrections by default for JLC with
+  --no-apply-corrections opt-out; rotate DB XY offsets like FT
+- Add unit/contract/BDD coverage including cpNode-IOX FT golden parity
+
+Fixes #383
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`572a378`](https://github.com/plocher/jBOM/commit/572a378be0212cbaa3a32a274188e86c8021b4c4))
+
+
 ## v7.9.0 (2026-07-16)
 
 ### Features
