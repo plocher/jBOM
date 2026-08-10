@@ -70,18 +70,31 @@ alongside the implementation. See the [dev-setup
 skill](../../.agents/skills/dev-setup/SKILL.md) for the concrete commands used
 to run the full suite.
 
-## CI lane model (issue #290)
+## CI lane model (issues #290, #397)
 
 The repository CI uses a tiered sequence to reduce feedback latency while
 preserving pre-merge confidence:
 
+- **Classify:** a fast path-based gate that inspects the PR's changed files.
+  When every changed file is non-code (`docs/**`, `**/*.md`, `.agents/**`,
+  `LICENSE`, `.gitignore`), all test lanes are skipped — a docs-only PR
+  completes CI in seconds. Changed paths are ground truth; commit-message
+  semantics are deliberately not used. Pushes to `main`/`develop` always run
+  the full pipeline.
 - **Canary (fast):** a small, high-signal pytest + behave slice for rapid PR
   feedback.
 - **Fat canary on failure:** runs only when the fast canary fails; executes a
   broader pytest/behave slice with richer timing detail to accelerate root
   cause analysis.
-- **Comprehensive lanes:** full pytest compatibility matrix, full behave run,
-  and coverage once the canary is green (or on branch pushes).
+- **Comprehensive lanes:** full behave run plus a pytest compatibility
+  matrix once the canary is green. PRs test the oldest and newest supported
+  Python versions (3.10, 3.12); pushes to `main` run the full 3.10/3.11/3.12
+  matrix. Coverage reporting rides the 3.10 matrix leg (`pytest --cov`)
+  rather than a separate job. All lanes cache pip installs.
+
+This structure is safe because the development workflow requires the full
+local suite to pass before any PR is opened — CI is a safety net, not the
+first line of defense (see the git-workflow skill's validation policy).
 
 Local equivalents:
 
