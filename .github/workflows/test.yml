@@ -6,17 +6,53 @@ on:
     branches: [main]
   workflow_dispatch:
 jobs:
+  classify:
+    name: Classify changes
+    runs-on: ubuntu-latest
+    outputs:
+      code_changed: ${{ steps.diff.outputs.code_changed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Determine whether any code paths changed
+        id: diff
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          if [ "$EVENT_NAME" != "pull_request" ]; then
+            echo "Non-PR event ($EVENT_NAME): full run."
+            echo "code_changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          changed=$(git diff --name-only "origin/${BASE_REF}...HEAD")
+          echo "Changed files:"
+          echo "$changed"
+          code_changed=false
+          while IFS= read -r f; do
+            [ -z "$f" ] && continue
+            case "$f" in
+              docs/*|*.md|.agents/*|LICENSE|.gitignore) ;;
+              *) code_changed=true ;;
+            esac
+          done <<< "$changed"
+          echo "code_changed=$code_changed" >> "$GITHUB_OUTPUT"
+          echo "code_changed=$code_changed"
   canary:
     name: Canary (fast)
+    needs: [classify]
+    if: ${{ needs.classify.outputs.code_changed == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Set up Python 3.11
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: pip
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -42,16 +78,17 @@ jobs:
   fat-canary-on-failure:
     name: Fat Canary (only when canary fails)
     needs: [canary]
-    if: ${{ needs.canary.result == 'failure' }}
+    if: ${{ always() && needs.canary.result == 'failure' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Set up Python 3.11
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: pip
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -77,40 +114,47 @@ jobs:
   pytest-matrix:
     name: Pytest matrix (${{ matrix.python-version }})
     needs: [canary]
-    if: ${{ github.event_name == 'push' || needs.canary.result == 'success' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.10", "3.11", "3.12"]
+        # Full 3-version matrix on push to main/develop; PRs run the
+        # oldest and newest supported versions only.
+        python-version: ${{ github.event_name == 'push' && fromJSON('["3.10", "3.11", "3.12"]') || fromJSON('["3.10", "3.12"]') }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+          cache: pip
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -e .[all]
-          pip install pytest
+          pip install pytest pytest-cov
       - name: Run full pytest suite
+        if: ${{ matrix.python-version != '3.10' }}
         run: |
           PYTHONPATH=src python -m pytest tests/ -v
+      - name: Run full pytest suite with coverage
+        if: ${{ matrix.python-version == '3.10' }}
+        run: |
+          PYTHONPATH=src python -m pytest tests/ -v --cov=jbom --cov-report=term-missing
   behave-comprehensive:
     name: Behave comprehensive
     needs: [canary]
-    if: ${{ github.event_name == 'push' || needs.canary.result == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Set up Python 3.10
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.10"
+          cache: pip
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -119,25 +163,3 @@ jobs:
       - name: Run full behave suite
         run: |
           PYTHONPATH=src python -m behave --format progress features/
-  coverage:
-    name: Coverage (pytest, 3.10)
-    needs: [canary]
-    if: ${{ github.event_name == 'push' || needs.canary.result == 'success' }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Set up Python 3.10
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -e .[all]
-          pip install coverage pytest-cov
-      - name: Run coverage
-        run: |
-          PYTHONPATH=src coverage run -m pytest tests/
-          coverage report -m
