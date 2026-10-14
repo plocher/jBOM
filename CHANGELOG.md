@@ -1,6 +1,41 @@
 # CHANGELOG
 
 
+## v7.10.0 (2026-10-14)
+
+### Features
+
+* feat(matcher): connector gender + pin-count signals; ignore KiCad tool metadata for socket intent
+
+PCB-first synthesized components carry KiCad library metadata such as
+KiLib_Generator: connector/pin_header_socket on every generated pin
+header footprint. _component_has_socket_intent() scanned all property
+values for the SOCKET token, so male pin headers were treated as
+sockets and female socket inventory rows received +55 bogus points,
+outranking correct male header candidates (e.g. cpNode-Xiao J12/J13
+matched a 1x04 Female Socket instead of a 1x02 Male Header).
+
+Changes:
+- Deny-list KiCad tool/library metadata property keys when scanning
+  for socket intent; user fields (reference, value, lib_id, footprint,
+  user properties) still count.
+- New connector gender signal: classify component and inventory text
+  as male/female; matching gender earns a small bonus, conflicting
+  gender a strong penalty.
+- New connector pin-count consistency check outside the socket path:
+  component footprint pin count (authoritative) vs item pin evidence;
+  conflicts are rejected, agreements rewarded. This corrects matches
+  even when the schematic/PCB Value is stale.
+
+Validation: 11 new unit tests; full pytest (1678 passed) and behave
+(316 scenarios passed) suites green.
+
+Fixes #403
+Closes #404
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`7daf21e`](https://github.com/plocher/jBOM/commit/7daf21e4182d7f958ddf4f9d5c158e0e6bcc868c))
+
+
 ## v7.9.1 (2026-08-03)
 
 ### Bug Fixes
