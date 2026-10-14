@@ -55,6 +55,33 @@ _SOCKET_PACKAGE_PATTERNS: tuple[tuple[str, str], ...] = (
     ("qfp", r"qfp[-_ ]?\d*"),
     ("small_outline", r"(?:soic|sop|ssop|tssop|msop)[-_ ]?\d*"),
 )
+# KiCad tool/library metadata property keys that must never be treated as
+# user design intent (issue #403). PCB-synthesized components carry fields
+# like ``KiLib_Generator: connector/pin_header_socket`` on every generated
+# pin header footprint, male or female.
+_TOOL_METADATA_PROPERTY_KEYS = {
+    "kilib_generator",
+    "ki_fp_filters",
+    "ki_keywords",
+    "ki_description",
+    "ki_locked",
+    "layer",
+    "side",
+    "smd",
+    "mount_type",
+    "through_hole",
+    "sheetname",
+    "sheetfile",
+    "exclude_from_bom",
+    "exclude_from_sim",
+    "in_bom",
+    "dnp",
+    "board_only",
+    "allow_missing_courtyard",
+    "allow_soldermask_bridges",
+}
+_FEMALE_GENDER_PATTERN = re.compile(r"female|socket|receptacle", re.IGNORECASE)
+_MALE_GENDER_PATTERN = re.compile(r"pin[\s_-]?header|plug|\bmale\b", re.IGNORECASE)
 _IDENTITY_ANCHOR_REQUIRED_TYPES = {
     ComponentType.INTEGRATED_CIRCUIT,
     ComponentType.REGULATOR,
@@ -490,9 +517,33 @@ class SophisticatedInventoryMatcher:
 
         candidate_text = [component.lib_id, component.value, component.footprint]
         candidate_text.extend(
-            str(value) for value in (component.properties or {}).values()
+            str(value)
+            for key, value in (component.properties or {}).items()
+            if str(key).strip().lower() not in _TOOL_METADATA_PROPERTY_KEYS
         )
         return any(cls._contains_socket_token(value) for value in candidate_text)
+
+    @staticmethod
+    def _connector_gender(*texts: str) -> str:
+        """Classify free-form connector text as \"male\", \"female\", or \"\".
+
+        Returns the gender only when the evidence is unambiguous; mixed or
+        absent evidence yields an empty string.
+        """
+
+        male = False
+        female = False
+        for raw in texts:
+            text = str(raw or "").strip()
+            if not text:
+                continue
+            if _FEMALE_GENDER_PATTERN.search(text):
+                female = True
+            if _MALE_GENDER_PATTERN.search(text):
+                male = True
+        if male == female:
+            return ""
+        return "male" if male else "female"
 
     @classmethod
     def _item_has_socket_intent(cls, item: InventoryItem) -> bool:
@@ -672,6 +723,48 @@ class SophisticatedInventoryMatcher:
                     contribute("socket_pitch_match", 16, "footprint")
                 else:
                     contribute("socket_pitch_conflict", -45)
+                    hard_reject = True
+
+        connector_context = (
+            component_type == ComponentType.CONNECTOR
+            or item_category == ComponentType.CONNECTOR
+        )
+        if connector_context:
+            component_gender = self._connector_gender(
+                component.value, component.lib_id, component.footprint
+            )
+            item_gender = self._connector_gender(
+                item.type, item.name, item.description, item.value, item.ipn
+            )
+            if component_gender and item_gender:
+                if component_gender == item_gender:
+                    contribute("connector_gender_match", 12, "package")
+                else:
+                    contribute("connector_gender_conflict", -40)
+
+        if connector_context and not socket_pair:
+            # Pin-count consistency with the component footprint as the
+            # authoritative source (the schematic value may be stale).
+            component_pin_counts = self._extract_pin_count_candidates(
+                component.footprint
+            )
+            item_pin_counts = self._extract_pin_count_candidates(
+                item.pins,
+                item.package,
+                item.value,
+                item.name,
+                item.description,
+                str(raw.get("Pins", "")),
+                str(raw.get("Pin", "")),
+                str(raw.get("Pin Count", "")),
+                item.footprint_full,
+                str(raw.get("Footprint", "")),
+            )
+            if component_pin_counts and item_pin_counts:
+                if component_pin_counts & item_pin_counts:
+                    contribute("connector_pin_count_match", 20, "footprint")
+                else:
+                    contribute("connector_pin_count_conflict", -60)
                     hard_reject = True
 
         inferred_value_category = self._infer_value_category(component.value)
