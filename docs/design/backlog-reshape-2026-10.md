@@ -1,7 +1,8 @@
 # Backlog reshape — 2026-10
 
-**Status:** Step 3 locked — Step 4 in progress (2026-10-16)
+**Status:** Step 4 executed (2026-10-16)
 **Charter:** [`evolution-charter.md`](evolution-charter.md) (Accepted 2026-10-16)
+**Docs PR:** https://github.com/plocher/jBOM/pull/410
 **Step 3 locks:** close #342; reframe #381 in place; use `docs-debt` milestone; no Track 2 drops.
 
 Legend for **Action**:
@@ -156,4 +157,11 @@ Milestones to create in Step 4 (names from charter §6):
 3. **`docs-debt` milestone** — yes.
 4. **Track 2 drops** — none; keep full spine.
 
-Step 4 executes the tables above under these locks.
+Step 4 executed under these locks:
+
+- Milestones created: `cli-concept-model`, `inventory-lifecycle`, `search-framework`, `correctness-hygiene`, `horizon`, `docs-debt`
+- Closed: #195 (done), #395 (dup of #398), #342 (map done)
+- Track 2 reframed + charter comments; #307 product labels fixed
+- #381 reframed to bulk-break cost + agent brief + `ready-for-agent`
+- Agent briefs: #398, #374, #313; notes on #372, #385
+- Park comments: search/horizon/docs-debt issues
