@@ -1,6 +1,6 @@
 # ADR 0010: Pydantic BaseModel as Config Schema Binding Mechanism
 Date: 2026-05-11
-Status: Proposed
+Status: Accepted
 Related: ADR 0008, ADR 0009, docs/dev/architecture/config-schema-audit.md
 
 ## Context

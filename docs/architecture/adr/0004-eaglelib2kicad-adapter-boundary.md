@@ -1,6 +1,6 @@
 # ADR 0004: EagleLib2KiCad Integration Boundary — Service-Surface-First, Phased Convergence
 Date: 2026-04-29
-Status: Proposed (awaiting review)
+Status: Accepted
 Related: #214
 ## Context
 jBOM already has service APIs for project context, inventory context, supplier search, and matching. EagleLib2KiCad integration requires additional contexts (Eagle libraries and KiCad symbol/footprint library management). A new parallel adapter model layer would duplicate contract surfaces and increase maintenance cost.

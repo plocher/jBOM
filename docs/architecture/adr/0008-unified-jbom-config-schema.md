@@ -1,6 +1,6 @@
 # ADR 0008: Unified jBOM Configuration Schema
 Date: 2026-05-11
-Status: Proposed
+Status: Accepted
 Related: #250, #251, ADR 0007
 
 ## Context

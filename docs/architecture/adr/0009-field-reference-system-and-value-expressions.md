@@ -1,6 +1,6 @@
 # ADR 0009: Field Reference System and Value Expressions
 Date: 2026-05-11
-Status: Proposed
+Status: Accepted
 Related: #250, #251, ADR 0008
 
 ## Context
