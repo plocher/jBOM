@@ -1,18 +1,20 @@
 # CHANGELOG
 
 
-## Unreleased
+## v7.11.0 (2026-10-16)
 
 ### Features
 
-* feat(bom): group-fill blank Datasheet URLs from Datasheet Name family
+* feat(bom): group-fill blank Datasheet URLs from Name family
 
-Inventory keeps one-URL-per-Name provenance (siblings leave Datasheet blank).
-BOM enrichment now fills those blanks at emit time from the family's single
-distinct non-empty URL. Populated cells stay verbatim; missing or conflicting
-URLs stay blank. Inventory files are never rewritten.
+At BOM enrichment emit time, blank Datasheet cells inherit the family's
+single distinct non-empty URL (case-insensitive Datasheet Name match).
+Populated cells stay verbatim; missing or conflicting URLs stay blank.
+Inventory files are never rewritten.
 
-Refs #374
+Closes #374
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`d81c148`](https://github.com/plocher/jBOM/commit/d81c14814b9dfa372aac8cc0b04c2a223c7d653d))
 
 
 ## v7.10.2 (2026-10-16)
