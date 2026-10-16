@@ -1,6 +1,6 @@
 # ADR 0003: Search Heuristic Signal Framework
 Date: 2026-03-18
-Status: Proposed (awaiting review)
+Status: Accepted
 Related: #204
 ## Problem
 jBOM's search and match heuristics are inconsistently hardcoded across multiple files and are incomplete.
