@@ -133,3 +133,29 @@ def test_pos_projection_service_preserves_user_headers() -> None:
 
     assert selected_fields == ["reference", "x", "y", "side"]
     assert headers == ["Reference", "X", "Y", "Side"]
+
+
+def test_apply_pos_dnp_filter_drops_dnp_and_not_in_pos() -> None:
+    from jbom.application.pos_workflow import apply_pos_dnp_filter
+
+    rows = [
+        {"reference": "R1", "x_mm": 1.0},
+        {"reference": "R2", "dnp": "Yes"},
+        {"reference": "R3", "sch:dnp": "yes"},
+        {"reference": "R4", "sch:in_pos_files": "No"},
+        {"reference": "R5", "pcb:exclude_from_pos_files": "yes"},
+        {"reference": "R6", "in_pos_files": "No"},
+    ]
+    kept = apply_pos_dnp_filter(rows, include_dnp=False)
+    assert [r["reference"] for r in kept] == ["R1"]
+
+
+def test_apply_pos_dnp_filter_can_keep_dnp_but_still_drops_not_in_pos() -> None:
+    from jbom.application.pos_workflow import apply_pos_dnp_filter
+
+    rows = [
+        {"reference": "R1", "dnp": "Yes"},
+        {"reference": "R2", "sch:in_pos_files": "No"},
+    ]
+    kept = apply_pos_dnp_filter(rows, include_dnp=True)
+    assert [r["reference"] for r in kept] == ["R1"]

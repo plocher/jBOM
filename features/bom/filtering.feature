@@ -61,6 +61,38 @@ Feature: BOM Filtering (DNP / Excluded)
     And the output should contain "R1"
     And the output should not contain "R2"
 
+
+  Scenario: BOM includes schematic-only in-BOM parts excluded from the board
+    # Mating plugs: Exclude from board (no PCB footprint) but still in BOM for procurement.
+    Given a schematic that contains:
+      | Reference | Value                   | Footprint   | LibID                          | OnBoard | InPosFiles | DNP |
+      | J11       | SOCKET                  | Socket_1x04 | Connector:Socket               | Yes     | Yes        | No  |
+      | J22       | CON_1x04-3.5-plug-screw |             | Connector:Screw_Terminal_01x04 | No      | No         | Yes |
+    And a PCB that contains:
+      | Reference | Value  | Footprint   | X | Y |
+      | J11       | SOCKET | Socket_1x04 | 5 | 5 |
+    When I run jbom command "bom -o -"
+    Then the command should succeed
+    And the output should contain "J11"
+    And the output should contain "J22"
+    And the CSV output has rows where:
+      | Reference | Value                   | DNP |
+      | J11       | SOCKET                  |     |
+      | J22       | CON_1x04-3.5-plug-screw | DNP |
+
+  Scenario: BOM drops schematic-only symbols marked exclude-from-BOM
+    Given a schematic that contains:
+      | Reference | Value | Footprint | LibID              | OnBoard | ExcludeFromBOM |
+      | R1        | 10K   | R_0805    | Device:R           | Yes     | No             |
+      | DOC1      | Note  |           | Mechanical:Graphic | No      | Yes            |
+    And a PCB that contains:
+      | Reference | Value | Footprint | X | Y |
+      | R1        | 10K   | R_0805    | 5 | 5 |
+    When I run jbom command "bom -o -"
+    Then the command should succeed
+    And the output should contain "R1"
+    And the output should not contain "DOC1"
+
   Scenario: BOM CLI no longer accepts the removed filter flags
     Given a PCB that contains:
       | Reference | Value | Footprint   |

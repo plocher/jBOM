@@ -354,8 +354,36 @@ def _is_truthy_dnp_marker(value: object) -> bool:
 
 def _entry_has_dnp_marker(entry: dict[str, Any]) -> bool:
     """Return True when a POS row contains schematic/inventory DNP flags."""
-    for key in ("dnp", "sch:dnp", "inv:dnp"):
+    for key in ("dnp", "sch:dnp", "inv:dnp", "pcb:dnp"):
         if _is_truthy_dnp_marker(entry.get(key)):
+            return True
+    return False
+
+
+def _is_falsey_in_pos_marker(value: object) -> bool:
+    """Return True when an in-POS marker explicitly says the part is excluded."""
+
+    if isinstance(value, bool):
+        return not value
+    normalized = str(value or "").strip().lower()
+    if not normalized:
+        return False
+    return normalized in {"0", "false", "f", "no", "n"}
+
+
+def _entry_excluded_from_pos_files(entry: dict[str, Any]) -> bool:
+    """Return True when KiCad Not-in-POS / exclude-from-POS flags bar placement."""
+
+    for key in (
+        "exclude_from_pos_files",
+        "exclude_from_position_files",
+        "pcb:exclude_from_pos_files",
+        "pcb:exclude_from_position_files",
+    ):
+        if _is_truthy_dnp_marker(entry.get(key)):
+            return True
+    for key in ("in_pos_files", "sch:in_pos_files"):
+        if _is_falsey_in_pos_marker(entry.get(key)):
             return True
     return False
 
@@ -512,11 +540,20 @@ def apply_pos_dnp_filter(
     *,
     include_dnp: bool,
 ) -> list[dict[str, Any]]:
-    """Filter DNP rows from POS data unless `include_dnp` is enabled."""
+    """Filter non-placeable POS rows (DNP and exclude-from-POS).
 
-    if include_dnp:
-        return pos_data
-    return [entry for entry in pos_data if not _entry_has_dnp_marker(entry)]
+    DNP rows are dropped unless ``include_dnp`` is enabled (tests only).
+    KiCad Not-in-POS / exclude-from-POS is always honored.
+    """
+
+    filtered: list[dict[str, Any]] = []
+    for entry in pos_data:
+        if _entry_excluded_from_pos_files(entry):
+            continue
+        if not include_dnp and _entry_has_dnp_marker(entry):
+            continue
+        filtered.append(entry)
+    return filtered
 
 
 def _parse_requested_field_tokens(raw_fields: str) -> list[str]:
@@ -682,7 +719,7 @@ class POSWorkflow:
         )
         diagnostics.extend(merge_diagnostics)
         pos_data = enrich_pos_with_merge_namespaces(pos_data, merge_result)
-        # POS unconditionally drops DNP rows — the P&P machine cannot place them.
+        # POS drops DNP and Not-in-POS rows — the P&P machine cannot place them.
         pos_data = apply_pos_dnp_filter(pos_data, include_dnp=False)
 
         # Part 2: fold CPL rotations into the fab's required output range,

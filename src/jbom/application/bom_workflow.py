@@ -182,12 +182,12 @@ class BOMResult:
 class BOMWorkflow:
     """Application-layer BOM orchestration service.
 
-    Per-artifact contract: BOM is PCB-driven.  ``board.footprints`` is the
-    canonical row set; schematic data enriches per-reference field values
-    according to ``field_precedence_policy`` (e.g. ``value`` defaults to
-    the schematic, ``footprint`` defaults to the PCB).  Components present
-    only in the schematic are invisible to the BOM by design — schematic /
-    PCB sync is the job of ERC/DRC, not jBOM.
+    Per-artifact contract: BOM is PCB-first.  ``board.footprints`` are the
+    primary row set; schematic data enriches per-reference field values.
+    Schematic-only symbols that remain ``in_bom=yes`` (typically exclude-from-
+    board mating hardware with no exported footprint) are appended so they can
+    still be ordered.  Exclude-from-BOM symbols stay off the BOM (parts list
+    is the schematic ToC).
     """
 
     def run(self, request: BOMRequest) -> BOMResult:
@@ -274,6 +274,10 @@ class BOMWorkflow:
 
         components = synthesize_bom_components_from_pcb(
             board=board,
+            schematic_components=schematic_components,
+        )
+        components = append_schematic_only_in_bom_components(
+            pcb_sourced_components=components,
             schematic_components=schematic_components,
         )
 
@@ -402,13 +406,13 @@ def synthesize_bom_components_from_pcb(
     * ``dnp`` and ``in_bom`` are read from PCB footprint attributes
       (``(attr dnp)`` and ``(attr exclude_from_bom)`` respectively). The
       schematic is checked only as a fallback for projects where the PCB
-      pre-dates DNP/exclude attributes. ERC/DRC is the user's tool for
-      catching schematic/PCB sync drift; BOM never depends on
-      schematic-only flags.
+      pre-dates DNP/exclude attributes.
 
-    Schematic-only references (symbols without PCB footprints) are not
-    represented; they are intentionally invisible to the BOM per the
-    per-artifact contract.
+    Schematic-only references (no matching PCB footprint) that remain
+    ``in_bom=yes`` are **not** added here — call
+    :func:`append_schematic_only_in_bom_components` after this helper so
+    exclude-from-board mating plugs and similar orderable leftovers appear
+    on the BOM.
     """
 
     schematic_by_reference: dict[str, Component] = {}
@@ -489,9 +493,71 @@ def synthesize_bom_components_from_pcb(
                 if sch is not None
                 else False,
                 dnp=resolved_dnp,
+                on_board=True,
+                in_pos_files=(
+                    bool(getattr(sch, "in_pos_files", True))
+                    if sch is not None
+                    else True
+                ),
             )
         )
     return result
+
+
+def append_schematic_only_in_bom_components(
+    *,
+    pcb_sourced_components: list[Component],
+    schematic_components: list[Component],
+) -> list[Component]:
+    """Append schematic-only ``in_bom`` components missing from the PCB row set.
+
+    KiCad "Exclude from board" (``on_board=no``) prevents footprint export, so
+    mating plugs and similar orderable hardware never appear in
+    ``board.footprints``.  When those symbols still have ``in_bom=yes``, they
+    must appear on the BOM for procurement even though POS correctly ignores
+    them (no coordinates / not in POS file).
+
+    Args:
+        pcb_sourced_components: Components already synthesized from PCB footprints.
+        schematic_components: Full schematic component list.
+
+    Returns:
+        Combined list: PCB-sourced rows first, then schematic-only in-BOM leftovers.
+    """
+
+    pcb_refs = {
+        str(component.reference or "").strip()
+        for component in pcb_sourced_components
+        if str(component.reference or "").strip()
+    }
+    extras: list[Component] = []
+    for sch in schematic_components:
+        ref = str(sch.reference or "").strip()
+        if not ref or ref in pcb_refs:
+            continue
+        if not bool(getattr(sch, "in_bom", True)):
+            continue
+        if ref.startswith("#"):
+            continue
+        extras.append(
+            Component(
+                reference=ref,
+                lib_id=str(sch.lib_id or ""),
+                value=str(sch.value or ""),
+                footprint=str(sch.footprint or ""),
+                uuid=str(getattr(sch, "uuid", "") or ""),
+                properties=dict(sch.properties or {}),
+                in_bom=True,
+                exclude_from_sim=bool(getattr(sch, "exclude_from_sim", False)),
+                dnp=bool(getattr(sch, "dnp", False)),
+                on_board=bool(getattr(sch, "on_board", True)),
+                in_pos_files=bool(getattr(sch, "in_pos_files", True)),
+                source_file=getattr(sch, "source_file", None),
+            )
+        )
+    if not extras:
+        return pcb_sourced_components
+    return list(pcb_sourced_components) + extras
 
 
 def _attr_is_yes(attributes: Mapping[str, Any], key: str) -> bool:
@@ -931,4 +997,5 @@ __all__ = [
     "filter_inventory_dnp_entries",
     "run_component_merge",
     "synthesize_bom_components_from_pcb",
+    "append_schematic_only_in_bom_components",
 ]

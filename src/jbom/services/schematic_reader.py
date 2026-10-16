@@ -102,6 +102,8 @@ class SchematicReader:
         in_bom = True
         exclude_from_sim = False
         dnp = False
+        on_board = True
+        in_pos_files = True
         properties = {}
         has_instances = False
         has_position = False
@@ -122,6 +124,10 @@ class SchematicReader:
                     exclude_from_sim = item[1] == Symbol("yes")
                 elif tag == Symbol("dnp") and len(item) >= 2:
                     dnp = item[1] == Symbol("yes")
+                elif tag == Symbol("on_board") and len(item) >= 2:
+                    on_board = item[1] == Symbol("yes")
+                elif tag == Symbol("in_pos_files") and len(item) >= 2:
+                    in_pos_files = item[1] == Symbol("yes")
                 elif tag == Symbol("instances") and len(item) >= 2:
                     has_instances = True
                 elif tag == Symbol("property") and len(item) >= 3:
@@ -155,6 +161,8 @@ class SchematicReader:
             in_bom=in_bom,
             exclude_from_sim=exclude_from_sim,
             dnp=dnp,
+            on_board=on_board,
+            in_pos_files=in_pos_files,
         )
 
     def _should_include_component(self, component: Component) -> bool:

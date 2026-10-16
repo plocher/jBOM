@@ -446,7 +446,7 @@ def handle_parts(args: argparse.Namespace) -> int:
             fabricator = "generic"
 
         # Generate basic parts list with common filtering logic
-        filters = create_filter_config(args)
+        filters = create_filter_config(args, command_type="parts")
         parts_data = generator.generate_parts_list_data(
             components, project_name, filters
         )

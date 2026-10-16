@@ -270,3 +270,34 @@ class TestReaderIndependence:
         assert pcb_meta.comments[1] == "pcb-designer"
         assert sch_meta.comments[9] == "sch-status"
         assert pcb_meta.comments[9] == "pcb-status"
+
+
+def test_schematic_reader_parses_on_board_and_in_pos_files(tmp_path) -> None:
+    from jbom.services.schematic_reader import SchematicReader
+
+    sch = tmp_path / "flags.kicad_sch"
+    sch.write_text(
+        """(kicad_sch (version 20211123) (generator eeschema)
+  (symbol (lib_id "Connector:Plug") (at 10 10 0) (unit 1)
+    (in_bom yes)
+    (on_board no)
+    (in_pos_files no)
+    (dnp yes)
+    (property "Reference" "J22" (at 10 10 0))
+    (property "Value" "PLUG" (at 10 12 0))
+    (property "Footprint" "" (at 10 14 0))
+  )
+)
+""",
+        encoding="utf-8",
+    )
+    comps = SchematicReader().load_components(sch)
+    if isinstance(comps, tuple):
+        comps = comps[0]
+    assert len(comps) == 1
+    c = comps[0]
+    assert c.reference == "J22"
+    assert c.on_board is False
+    assert c.in_pos_files is False
+    assert c.dnp is True
+    assert c.in_bom is True

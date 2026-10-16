@@ -393,6 +393,10 @@ class ComponentMergeService:
         )
         if bool(getattr(component, "dnp", False)):
             schematic_fields["dnp"] = "Yes"
+        if not bool(getattr(component, "in_pos_files", True)):
+            schematic_fields["in_pos_files"] = "No"
+        if not bool(getattr(component, "on_board", True)):
+            schematic_fields["on_board"] = "No"
 
         return schematic_fields
 
@@ -441,6 +445,13 @@ class ComponentMergeService:
             if component.rotation_raw is not None
             else f"{component.rotation_deg:.1f}",
         )
+        attributes = getattr(component, "attributes", {}) or {}
+        if self._is_truthy_flag(attributes.get("dnp")):
+            pcb_fields["dnp"] = "Yes"
+        if self._is_truthy_flag(
+            attributes.get("exclude_from_pos_files")
+        ) or self._is_truthy_flag(attributes.get("exclude_from_position_files")):
+            pcb_fields["exclude_from_pos_files"] = "Yes"
 
         return pcb_fields
 
@@ -476,6 +487,15 @@ class ComponentMergeService:
             if lowered:
                 return lowered
         return ""
+
+    @staticmethod
+    def _is_truthy_flag(value: object) -> bool:
+        """Return True when a KiCad flag-like attribute is enabled."""
+
+        if isinstance(value, bool):
+            return value
+        normalized = str(value or "").strip().lower()
+        return normalized in {"1", "true", "t", "yes", "y", "x"}
 
     def _get_pcb_attribute(
         self,

@@ -22,10 +22,9 @@ Feature: Parts List Filtering
       | R1,R2 | 10K   |
       | C1    | 100nF |
 
-  Scenario: Parts list excludes components marked exclude_from_bom
-    # Components explicitly flagged out of the BOM (mounting holes, logos,
-    # fiducials) are excluded. No flag can override this; use jbom audit
-    # for full-board inventory.
+  Scenario: Parts list keeps exclude_from_bom refs as schematic ToC
+    # Parts is a schematic table of contents. Exclude-from-BOM board chrome
+    # still appears here; BOM is the procurement list that drops those refs.
     Given a schematic that contains:
       | Reference | Value | Footprint   | ExcludeFromBOM |
       | R1        | 10K   | R_0805_2012 | No             |
@@ -36,10 +35,8 @@ Feature: Parts List Filtering
     And the CSV output has rows where:
       | Refs | Value |
       | R1   | 10K   |
+      | MH1  | ~     |
       | C1   | 100nF |
-    And the CSV output does not contain components where:
-      | Refs |
-      | MH1  |
 
   Scenario: Parts list excludes virtual symbols automatically
     Given a schematic that contains:

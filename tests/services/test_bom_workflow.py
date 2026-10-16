@@ -487,3 +487,80 @@ def test_synthesize_propagates_schematic_dnp() -> None:
         board=board, schematic_components=schematic_components
     )
     assert components[0].dnp is True
+
+
+def test_append_schematic_only_in_bom_components_adds_mating_plugs() -> None:
+    """Schematic-only in_bom parts (exclude-from-board plugs) join the BOM set."""
+    from jbom.application.bom_workflow import append_schematic_only_in_bom_components
+    from jbom.common.types import Component
+
+    pcb = [
+        Component(
+            reference="J11",
+            lib_id="Connector:Socket",
+            value="SOCKET",
+            footprint="Socket_1x04",
+            in_bom=True,
+        )
+    ]
+    sch = [
+        Component(
+            reference="J11",
+            lib_id="Connector:Socket",
+            value="SOCKET",
+            footprint="Socket_1x04",
+            in_bom=True,
+        ),
+        Component(
+            reference="J22",
+            lib_id="Connector:Screw_Terminal_01x04",
+            value="CON_1x04-3.5-plug-screw",
+            footprint="",
+            in_bom=True,
+            dnp=True,
+            on_board=False,
+            in_pos_files=False,
+        ),
+        Component(
+            reference="MH1",
+            lib_id="Mechanical:MountingHole",
+            value="~",
+            footprint="",
+            in_bom=False,
+            on_board=False,
+        ),
+    ]
+
+    combined = append_schematic_only_in_bom_components(
+        pcb_sourced_components=pcb, schematic_components=sch
+    )
+    refs = [c.reference for c in combined]
+    assert refs == ["J11", "J22"]
+    plug = next(c for c in combined if c.reference == "J22")
+    assert plug.dnp is True
+    assert plug.on_board is False
+    assert plug.in_pos_files is False
+    assert plug.value == "CON_1x04-3.5-plug-screw"
+
+
+def test_append_schematic_only_skips_virtual_and_existing_pcb_refs() -> None:
+    from jbom.application.bom_workflow import append_schematic_only_in_bom_components
+    from jbom.common.types import Component
+
+    pcb = [
+        Component(reference="R1", lib_id="Device:R", value="10k", footprint="R_0603")
+    ]
+    sch = [
+        Component(reference="R1", lib_id="Device:R", value="10k", footprint="R_0603"),
+        Component(
+            reference="#PWR01",
+            lib_id="power:GND",
+            value="GND",
+            footprint="",
+            in_bom=True,
+        ),
+    ]
+    combined = append_schematic_only_in_bom_components(
+        pcb_sourced_components=pcb, schematic_components=sch
+    )
+    assert [c.reference for c in combined] == ["R1"]
