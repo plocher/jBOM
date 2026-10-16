@@ -1,9 +1,8 @@
 # Backlog reshape — 2026-10
 
-**Status:** Proposed execution plan (Step 3)
+**Status:** Step 3 locked — Step 4 in progress (2026-10-16)
 **Charter:** [`evolution-charter.md`](evolution-charter.md) (Accepted 2026-10-16)
-**Step 4:** apply this table on GitHub (milestones, labels, closes, reframes).
-  Do not execute tracker mutations until the maintainer green-lights Step 4.
+**Step 3 locks:** close #342; reframe #381 in place; use `docs-debt` milestone; no Track 2 drops.
 
 Legend for **Action**:
 
@@ -150,11 +149,11 @@ Milestones to create in Step 4 (names from charter §6):
 
 ---
 
-## Open Step 3 questions for maintainer
+## Step 3 locks (2026-10-16)
 
-1. **#342** — close map as done, or keep as cross-repo hub?
-2. **#381** — reframe in place vs close + fresh `feat(bom): cost field` issue?
-3. **Sixth milestone `docs-debt`** — yes, or fold into `horizon`?
-4. Any Track 2 issue to **drop** entirely (wontfix) before Step 4?
+1. **#342** — close map as done (hub not required).
+2. **#381** — reframe in place to thin bulk-break cost field.
+3. **`docs-debt` milestone** — yes.
+4. **Track 2 drops** — none; keep full spine.
 
-When these four are answered, Step 3 is locked and Step 4 can run.
+Step 4 executes the tables above under these locks.
