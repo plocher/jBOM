@@ -235,9 +235,11 @@ class DatasheetStagingConfig(BaseModel):
     staging_dir: str = ""
     max_fetches_per_run: int = 0
     fetch_time_budget_seconds: float = 0.0
-    # Test-only escape hatch: when non-empty, default_fetch() resolves URLs
+    # Test-only escape hatch (jBOM#372): when non-empty *and*
+    # JBOM_ALLOW_FETCH_FIXTURES is enabled, default_fetch() resolves URLs
     # against a local ``{url: file_path}`` JSON manifest instead of the
-    # network. Never set this in a production profile.
+    # network. Setting this key without the allow env fails loudly — never
+    # silently. Never set this in a production profile.
     fetch_fixtures_manifest: str = ""
 
     @field_validator("staging_dir", "fetch_fixtures_manifest", mode="before")
@@ -274,9 +276,11 @@ class CheckUrlsConfig(BaseModel):
 
     model_config = ConfigDict(extra="ignore")
 
-    # Test-only escape hatch: when non-empty, the check-urls fetch resolves
+    # Test-only escape hatch (jBOM#372): when non-empty *and*
+    # JBOM_ALLOW_FETCH_FIXTURES is enabled, the check-urls fetch resolves
     # URLs against a local ``{url: file_path}`` JSON manifest instead of
-    # the network. Never set this in a production profile.
+    # the network. Setting this key without the allow env fails loudly —
+    # never silently. Never set this in a production profile.
     fetch_fixtures_manifest: str = ""
 
     @field_validator("fetch_fixtures_manifest", mode="before")

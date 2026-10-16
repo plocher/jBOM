@@ -69,6 +69,23 @@ def _set_datasheet_staging_value(context, key: str, value: Any) -> None:
     _write_common_profile(context, data)
 
 
+def _enable_fetch_fixtures_allow(context) -> None:
+    """Permit the test-only fixtures gate for this scenario's CLI subprocess.
+
+    jBOM#372 requires ``JBOM_ALLOW_FETCH_FIXTURES`` before any
+    ``fetch_fixtures_manifest`` profile key is honored. Production-like
+    scenarios that deliberately omit this env prove the gate refuses loudly.
+    """
+
+    from jbom.common.fetch_fixtures import ALLOW_FETCH_FIXTURES_ENV
+
+    mock_env = getattr(context, "mock_env", None)
+    if mock_env is None:
+        mock_env = {}
+        context.mock_env = mock_env
+    mock_env[ALLOW_FETCH_FIXTURES_ENV] = "1"
+
+
 def _fixture_manifest_path(context) -> Path:
     """Return this scenario's fixture manifest path, creating it if needed."""
 
@@ -78,6 +95,7 @@ def _fixture_manifest_path(context) -> Path:
         _set_datasheet_staging_value(
             context, "fetch_fixtures_manifest", str(manifest_path)
         )
+        _enable_fetch_fixtures_allow(context)
     return manifest_path
 
 
@@ -98,6 +116,18 @@ def _staging_dir(context) -> Path:
     staging_dir = getattr(context, "staging_dir", None)
     assert staging_dir is not None, "Use 'Given a staging directory' first"
     return staging_dir
+
+
+@given(
+    "a user profile sets datasheet_staging fetch_fixtures_manifest without the allow env"
+)
+def given_user_profile_staging_fixtures_without_allow(context) -> None:
+    """Production-like profile: fixtures key set, allow env deliberately omitted."""
+
+    manifest_path = Path(context.sandbox_root) / "_rogue_datasheet_fixtures.json"
+    manifest_path.write_text("{}", encoding="utf-8")
+    _set_datasheet_staging_value(context, "fetch_fixtures_manifest", str(manifest_path))
+    # Intentionally do NOT call _enable_fetch_fixtures_allow.
 
 
 @given("a staging directory")

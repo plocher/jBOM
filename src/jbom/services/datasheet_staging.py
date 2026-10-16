@@ -33,7 +33,6 @@ other jBOM setting.
 from __future__ import annotations
 
 import hashlib
-import json
 import logging
 import re
 import time
@@ -42,6 +41,7 @@ from pathlib import Path
 from typing import Callable, Iterable, Optional
 from urllib.parse import urlparse
 
+from jbom.common.fetch_fixtures import resolve_fixture_fetch
 from jbom.common.types import InventoryItem
 from jbom.config.defaults import DefaultsConfig, get_defaults
 
@@ -196,34 +196,22 @@ def _resolve_fetch(fetch_fixtures_manifest: str) -> Callable[[str], bytes]:
 
     When *fetch_fixtures_manifest* is set (test-only; see
     ``DatasheetStagingConfig.fetch_fixtures_manifest``), URLs are resolved
-    against that local JSON manifest instead of the network. Otherwise the
-    current module-level :func:`default_fetch` is used -- looked up by name
-    at call time (not bound at import time) so tests can monkeypatch
+    against that local JSON manifest instead of the network — but only when
+    the process has explicitly allowed fixtures via
+    ``JBOM_ALLOW_FETCH_FIXTURES`` (jBOM#372). Otherwise the current
+    module-level :func:`default_fetch` is used -- looked up by name at call
+    time (not bound at import time) so tests can monkeypatch
     ``jbom.services.datasheet_staging.default_fetch`` directly.
+
+    Raises:
+        FetchFixturesNotAllowedError: Manifest is configured without the
+            allow env (never silent).
     """
 
-    manifest = (fetch_fixtures_manifest or "").strip()
-    if not manifest:
-        return default_fetch
-
-    manifest_path = Path(manifest)
-
-    def _fixture_fetch(url: str) -> bytes:
-        return _fetch_from_fixture_manifest(url, manifest_path)
-
-    return _fixture_fetch
-
-
-def _fetch_from_fixture_manifest(url: str, manifest_path: Path) -> bytes:
-    """Resolve *url* to local fixture bytes via a ``{url: file_path}`` manifest."""
-
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    file_path = manifest.get(url)
-    if not file_path:
-        raise RuntimeError(
-            f"No fixture registered for datasheet URL {url!r} in {manifest_path}"
-        )
-    return Path(file_path).read_bytes()
+    fixture_fetch = resolve_fixture_fetch(fetch_fixtures_manifest)
+    if fixture_fetch is not None:
+        return fixture_fetch
+    return default_fetch
 
 
 def stage_datasheet_url(

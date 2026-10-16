@@ -223,7 +223,12 @@ def test_resolve_check_urls_fetch_empty_manifest_returns_default_fetch() -> None
     assert resolve_check_urls_fetch("") is default_fetch
 
 
-def test_resolve_check_urls_fetch_reads_from_manifest(tmp_path: Path) -> None:
+def test_resolve_check_urls_fetch_reads_from_manifest(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from jbom.common.fetch_fixtures import ALLOW_FETCH_FIXTURES_ENV
+
+    monkeypatch.setenv(ALLOW_FETCH_FIXTURES_ENV, "1")
     fixture_file = tmp_path / "fixture.bin"
     fixture_file.write_bytes(_PDF_BYTES)
 
@@ -238,8 +243,11 @@ def test_resolve_check_urls_fetch_reads_from_manifest(tmp_path: Path) -> None:
 
 
 def test_resolve_check_urls_fetch_raises_for_unregistered_url(
-    tmp_path: Path,
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    from jbom.common.fetch_fixtures import ALLOW_FETCH_FIXTURES_ENV
+
+    monkeypatch.setenv(ALLOW_FETCH_FIXTURES_ENV, "1")
     manifest_path = tmp_path / "manifest.json"
     manifest_path.write_text("{}", encoding="utf-8")
 

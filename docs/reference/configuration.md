@@ -194,6 +194,16 @@ Key fields:
   invocation. Shipped in `generic.jbom.yaml` (currently `30`). Once either
   limit is hit, remaining Datasheet URLs are skipped for that run with a
   one-line stderr summary; nothing else about the command fails.
+- `fetch_fixtures_manifest:` — **test-only escape hatch (jBOM#372).** When
+  set, and only when the process environment also sets
+  `JBOM_ALLOW_FETCH_FIXTURES` to a truthy value (`1` / `true` / `yes` /
+  `on`), resolves Datasheet URLs against a local `{url: file_path}` JSON
+  manifest instead of the network. Setting this key in a user profile
+  **without** the allow env fails loudly — it never silently substitutes
+  fixture payloads. When fixtures *are* active, jBOM prints a prominent
+  stderr warning. This key exists solely so this repository's own test
+  suite can exercise staging hermetically; do **not** put it in any user
+  or production profile.
 
 > **Overriding `max_fetches_per_run`/`fetch_time_budget_seconds`**: because
 > the builtin `generic.jbom.yaml` declares concrete values for these two
@@ -229,12 +239,13 @@ for this command.
 
 Key fields:
 
-- `fetch_fixtures_manifest:` -- **test-only escape hatch.** When set,
-  resolves URLs against a local `{url: file_path}` JSON manifest instead
-  of the network. This key exists solely so this repository's own test
-  suite can exercise the recovery ladder hermetically; it is **not**
-  intended to appear in any user profile, and its current lack of
-  production-profile gating is tracked as a hardening gap in jBOM#372.
+- `fetch_fixtures_manifest:` -- **test-only escape hatch (jBOM#372).** When
+  set, and only when `JBOM_ALLOW_FETCH_FIXTURES` is truthy in the process
+  environment, resolves URLs against a local `{url: file_path}` JSON
+  manifest instead of the network. Same gate as
+  `defaults.datasheet_staging.fetch_fixtures_manifest`: without the allow
+  env the key fails loudly; when active, jBOM prints a prominent stderr
+  warning. Do **not** put this key in any user or production profile.
 
 ## `presets:` stanza
 
