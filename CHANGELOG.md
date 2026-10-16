@@ -1,23 +1,21 @@
 # CHANGELOG
 
 
-## Unreleased
+## v7.12.0 (2026-10-16)
 
 ### Features
 
 * feat(bom): optional cost field from LCSC/JLC bulk-break price
 
-Add optional BOM ``cost`` via ``--fields cost`` (or ``+default,cost``).
-When selected, jBOM resolves an LCSC C-number identity on each row and
-fills unit price from JLCPCB ``componentPrices`` at the bulk qty-50
-class (not qty-1). Missing identity or failed lookup leaves cost empty;
-the BOM still succeeds. Cost is never written to inventory.
-
-Not KiCost: single-supplier bulk unit price only.
+Add optional BOM cost via --fields cost. When selected, resolve an
+LCSC C-number on each row and fill unit price from JLCPCB
+componentPrices at the bulk qty-50 class (not qty-1). Missing
+identity or failed lookup leaves cost empty; BOM still succeeds.
+Cost is never written to inventory. Offline fixtures + docs.
 
 Closes #381
 
-Co-Authored-By: Oz <oz-agent@warp.dev>
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`34afa9f`](https://github.com/plocher/jBOM/commit/34afa9f99b90b9f919019f74790d9864fdb39970))
 
 
 ## v7.11.0 (2026-10-16)
