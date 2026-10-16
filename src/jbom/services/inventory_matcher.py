@@ -16,6 +16,10 @@ from jbom.common.types import Component, InventoryItem
 from jbom.config.defaults import get_defaults
 from jbom.config.fabricators import FabricatorConfig, load_fabricator
 from jbom.services.bom_generator import BOMEntry, BOMData
+from jbom.services.datasheet_group_fill import (
+    build_datasheet_family_url_map,
+    resolve_output_datasheet,
+)
 from jbom.services.fabricator_inventory_selector import FabricatorInventorySelector
 from jbom.services.inventory_reader import InventoryReader
 from jbom.services.sophisticated_inventory_matcher import (
@@ -67,6 +71,10 @@ class InventoryMatcher:
         if not inventory_items:
             return bom_data
 
+        # Derived emit-time map: blank Datasheet cells fill from the family's
+        # single distinct URL (jBOM#374). Inventory on disk is never rewritten.
+        datasheet_family_urls = build_datasheet_family_url_map(inventory_items)
+
         # Step 2: Filter inventory through fabricator profile
         eligible_items, fabricator_config = self._filter_by_fabricator(
             inventory_items, fabricator_id, project_name
@@ -93,6 +101,7 @@ class InventoryMatcher:
                     best.inventory_item,
                     fabricator_id=fabricator_id,
                     fabricator_config=fabricator_config,
+                    datasheet_family_urls=datasheet_family_urls,
                 )
                 enhanced_entries.append(enhanced_entry)
                 matched_count += 1
@@ -273,6 +282,7 @@ class InventoryMatcher:
         *,
         fabricator_id: str,
         fabricator_config: Optional[FabricatorConfig],
+        datasheet_family_urls: Optional[dict[str, str]] = None,
     ) -> BOMEntry:
         """Enrich a BOM entry with data from the best-matching inventory item."""
         enhanced_attributes = entry.attributes.copy()
@@ -285,11 +295,13 @@ class InventoryMatcher:
         )
         schema = get_defaults().get_inventory_schema()
         enhanced_attributes["inventory_matched"] = True
+        family_urls = datasheet_family_urls or {}
         for canonical_key, source_key in schema.enrichment_bindings.items():
             resolved_value = InventoryMatcher._resolve_enrichment_source_value(
                 item,
                 source_key=source_key,
                 fabricator_part_number=fabricator_part_number,
+                datasheet_family_urls=family_urls,
             )
 
             if isinstance(resolved_value, str):
@@ -316,6 +328,7 @@ class InventoryMatcher:
         *,
         source_key: str,
         fabricator_part_number: str,
+        datasheet_family_urls: Optional[dict[str, str]] = None,
     ) -> Any:
         """Resolve one enrichment source token into an inventory-derived value."""
 
@@ -325,6 +338,9 @@ class InventoryMatcher:
 
         if source_token == "__resolved_fabricator_part_number__":
             return fabricator_part_number
+
+        if source_token == "datasheet":
+            return resolve_output_datasheet(item, datasheet_family_urls or {})
 
         if hasattr(item, source_token):
             return getattr(item, source_token)

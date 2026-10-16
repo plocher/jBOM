@@ -298,6 +298,13 @@ jbom bom [PROJECT] [--inventory FILE ...] [-o OUTPUT] [OPTIONS]
 
 Generates a Bill of Materials aggregated by value+package for procurement. Matches schematic components against an inventory file to produce fabrication-ready output.
 
+When inventory uses the one-URL-per-Name datasheet provenance rule (one
+canonical `Datasheet` URL per shared `Datasheet Name`, siblings blank),
+BOM/PARTS generation group-fills blank `Datasheet` output cells from that
+family's single distinct non-empty URL. Already-populated cells pass through
+unchanged. Families with zero URLs or conflicting distinct URLs emit blank
+(audit owns those states). The inventory file on disk is never modified.
+
 **PROJECT** (optional, default: current directory)
 : Path to a KiCad project directory, `.kicad_pro`, `.kicad_sch`, or a base name. The project directory must contain exactly one `*.kicad_pro` file. Hierarchical schematics are processed automatically when a project directory is given.
 

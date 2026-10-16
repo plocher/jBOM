@@ -123,7 +123,9 @@ by the user; jBOM exposes them to the BOM-generation pipeline by name.
   exactly one of those rows carries the canonical-source URL; the other
   member rows leave `Datasheet` blank. `jbom audit` enforces this
   (`DATASHEET_PROVENANCE_MISSING` / `DATASHEET_PROVENANCE_CONFLICT`); see
-  [docs/reference/cli.md](cli.md#audit-command).
+  [docs/reference/cli.md](cli.md#audit-command). Generated BOM/PARTS output
+  group-fills blank `Datasheet` cells from that canonical family row at
+  emit time (derived value only; the inventory file is never rewritten).
 
 **Datasheet Name**
 : Curated name of the item's datasheet document in the shared datasheet
