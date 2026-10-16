@@ -1,6 +1,26 @@
 # CHANGELOG
 
 
+## v7.10.2 (2026-10-16)
+
+### Bug Fixes
+
+* fix(config): gate test-only fetch_fixtures_manifest out of production
+
+fetch_fixtures_manifest profile keys for datasheet staging and
+audit --check-urls only take effect when JBOM_ALLOW_FETCH_FIXTURES is
+truthy. Without the allow env the key fails loudly; when active, a
+prominent stderr notice is emitted. Behave fixture steps enable the
+allow env only for the sanctioned sandbox path.
+
+Also strengthen test_check_urls_never_touches_network_without_fixtures
+to exercise a populated Datasheet URL row.
+
+Closes #372
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`2a6bcb5`](https://github.com/plocher/jBOM/commit/2a6bcb5b158fc8229d43b7d9df1e08310a5ae31a))
+
+
 ## v7.10.1 (2026-10-16)
 
 ### Bug Fixes
