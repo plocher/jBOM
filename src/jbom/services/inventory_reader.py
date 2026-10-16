@@ -30,6 +30,7 @@ from jbom.services.jlc_loader import JLCPrivateInventoryLoader
 
 log = logging.getLogger(__name__)
 
+# Legacy dual-row tags still accepted on read. Product model is stocked Items only.
 _ROW_TYPE_ITEM = "ITEM"
 _ROW_TYPE_COMPONENT = "COMPONENT"
 
@@ -60,14 +61,16 @@ def _resolve_component_id(
     stored_id: str,
     row: Dict[str, str],
 ) -> str:
-    """Return a current-version ComponentID for a COMPONENT row.
+    """Return a current-version ComponentID for legacy requirement harvest rows.
+
+    Kept for compatibility with older CSVs and ``jbom inventory`` harvest
+    output that still carry ``RowType=COMPONENT``. Stocked Item rows pass
+    *stored_id* through unchanged. Dual-row inventory is not a product model.
 
     If *stored_id* is already at the current encoding version it is returned
-    unchanged.  Otherwise the ID is regenerated from the row's field data so
+    unchanged. Otherwise the ID is regenerated from the row's field data so
     that stale IDs (e.g. legacy ``REQ1|...`` format, wrong version number, or
     blank) are transparently upgraded on load without requiring manual action.
-
-    ITEM rows are returned as-is (they do not carry a ComponentID).
     """
     if row_type != _ROW_TYPE_COMPONENT:
         return stored_id

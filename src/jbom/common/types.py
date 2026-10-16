@@ -114,8 +114,11 @@ class InventoryItem:
     manufacturer: str = ""
     mfgpn: str = ""
     datasheet: str = ""
-    row_type: str = "ITEM"  # COMPONENT or ITEM
-    component_id: str = ""  # Requirement identity for COMPONENT rows
+    # Legacy dual-row tag (ITEM/COMPONENT). Product model is stocked Items only;
+    # BOM matching uses IPN-bearing Item rows. See inventory-format.md legacy note.
+    row_type: str = "ITEM"
+    # Harvest/grouping identity from project inventory generation (not dual-row schema).
+    component_id: str = ""
     package: str = ""
     uuid: str = ""  # KiCad UUID for back-annotation
     fabricator: str = ""  # Specific fabricator for this item (e.g. "JLC", "Seeed")

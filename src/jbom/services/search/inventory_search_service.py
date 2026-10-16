@@ -130,7 +130,12 @@ class InventorySearchService:
     def split_rows_by_type(
         items: list[InventoryItem],
     ) -> tuple[list[InventoryItem], list[InventoryItem]]:
-        """Return (component_rows, item_rows) based on RowType."""
+        """Split legacy harvest rows from stocked Item rows.
+
+        Returns ``(legacy_component_rows, item_rows)``. The dual-row product
+        model is abandoned; this split exists for compatibility with harvest
+        CSVs that still tag ``RowType=COMPONENT``.
+        """
         component_rows: list[InventoryItem] = []
         item_rows: list[InventoryItem] = []
         for item in items:

@@ -127,7 +127,7 @@ def register_command(subparsers) -> None:
         help=(
             "Path(s) to .kicad_sch file, project directory, or base name. "
             "Accepts multiple paths for batch mode (default: current directory). "
-            "Multiple projects are merged with COMPONENT rows deduplicated on ComponentID."
+            "Multiple projects are merged with harvest rows deduplicated on ComponentID."
         ),
     )
 
@@ -560,7 +560,7 @@ def _load_components_from_path(
 
 
 def _handle_batch_inventory(input_paths: list[str], args: argparse.Namespace) -> int:
-    """Process multiple project paths, merge and deduplicate COMPONENT rows.
+    """Process multiple project paths, merge and deduplicate harvest rows.
 
     Deduplication key: ``component_id`` (first-seen across projects wins).
     Field names are unioned across all projects so no data is lost.
@@ -1032,7 +1032,7 @@ def _enrich_items_with_supplier(
     if candidate_limit > 1 and "Priority" not in field_names:
         field_names = list(field_names) + ["Priority"]
 
-    # Enrich both ITEM rows (inventory catalog) and COMPONENT rows (schematic-generated).
+    # Enrich stocked Items and legacy harvest rows that still lack a supplier PN.
     item_rows = [
         i
         for i in items

@@ -157,7 +157,7 @@ against a live supplier catalog:
 jbom audit inventory.csv --supplier mouser -o freshness_report.csv
 ```
 
-**What it checks** (for each `ITEM` row with a `Supplier` and `SPN`):
+**What it checks** (for each catalog Item row with a `Supplier` and `SPN`):
 
 | Outcome | Meaning |
 |---------|---------|
@@ -224,7 +224,7 @@ pip install jbom[numbers]  # for .numbers
 are poor, check that your inventory `Value` and `Package` fields use standard
 conventions (e.g., `10K` not `10000`, `0603` not `0603_1608Metric`).
 
-**Rows not being searched**: Only `ITEM` rows in recognised categories (RES,
+**Rows not being searched**: Only stocked Item rows in recognised categories (RES,
 CAP, IND, etc.) are searched. Use `--dry-run` to see exactly which rows would
 be searched (see hypothesis note above).
 

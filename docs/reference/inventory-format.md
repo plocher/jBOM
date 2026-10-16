@@ -1,22 +1,26 @@
 # Inventory file format reference
 
-The jBOM inventory file is a user-curated database of components available to
-a project. **The schema is user-defined**, not a fixed jBOM model: jBOM
-expresses *expectations* about what attributes need to be collectable, but
-users may extend, rename, or reorder columns in service of their own
-inventory-management practice. The relationship between an inventory file,
-the active config profile, and the `--fields` CLI argument is what binds a
-particular inventory column-spelling to a particular BOM-output column;
-jBOM deliberately does not hardcode reliance on the spelling or order of
-any attribute. See [Inventory schema, profiles, and `--fields`](#inventory-schema-profiles-and---fields)
+The jBOM inventory file is a user-curated catalog of **stocked parts**
+available to a project. **The schema is user-defined**, not a fixed jBOM
+model: jBOM expresses *expectations* about what attributes need to be
+collectable, but users may extend, rename, or reorder columns in service of
+their own inventory-management practice. The relationship between an
+inventory file, the active config profile, and the `--fields` CLI argument is
+what binds a particular inventory column-spelling to a particular BOM-output
+column; jBOM deliberately does not hardcode reliance on the spelling or order
+of any attribute. See
+[Inventory schema, profiles, and `--fields`](#inventory-schema-profiles-and---fields)
 below for how the three combine.
 
 Inventory files support three formats: CSV (comma-separated values), Excel
 (`.xlsx`, `.xls`), and Apple Numbers (`.numbers`). All formats share the
 logical structure described here.
 
-Each row represents either a project requirement (`COMPONENT`) or a stocked
-part (`ITEM`). Columns define the row role and matching/search attributes.
+**Each row is an Item** — one stocked part (or one supply-chain candidate for
+the same electro-mechanical identity). Matching is schematic
+`Component` → ranked inventory `Item` candidates (1:many). Inventory files do
+**not** store schematic requirements as a second row kind.
+
 For the behavioral semantics that govern how these columns are used during
 matching — including the blank-field invariant, tolerance-aware substitution
 rules, and IPN multi-row design intent — see
@@ -50,23 +54,16 @@ Attributes split into two categories:
   `Datasheet`, `Priority`, and any user-added columns capturing stock
   level, pricing, or sourcing notes.
 
-The schema-required columns enforce just enough structure to make matching
-work: `RowType`, `IPN` (for `ITEM` rows), `Category`, `Value`, `Package`,
-and `Priority`. Every other column is optional and may be defined by the
-user; jBOM exposes them to the BOM-generation pipeline by name.
+The columns that matter for matching are `IPN`, `Category`, `Value`,
+`Package`, and `Priority`. Every other column is optional and may be defined
+by the user; jBOM exposes them to the BOM-generation pipeline by name.
 
 ## Required columns
 
-**RowType**
-: Row role discriminator: `COMPONENT` or `ITEM`.
-
-**ComponentID**
-: Requirement identifier for `COMPONENT` rows. Leave blank for `ITEM` rows.
-
 **IPN** (Internal Part Number)
-: Required for `ITEM` rows. Leave blank for `COMPONENT` rows. See
-  [Schema model](#schema-model-denormalized-database-with-ipn-as-primary-key)
-  above for the full multi-row design intent.
+: Primary identity for a stocked Item. Required for rows used in BOM matching.
+  See [Schema model](#schema-model-denormalized-database-with-ipn-as-primary-key)
+  above for the multi-row (multi-supplier) design intent.
 
 **Category**
 : Component classification (`RES`, `CAP`, `IND`, `LED`, `DIO`, `IC`, `MCU`, `CON`,
@@ -226,17 +223,16 @@ The example below uses the legacy `LCSC` column for illustration of the format. 
 inventories should replace `LCSC` with the `Supplier` + `SPN` pair.
 
 ```csv
-RowType,ComponentID,IPN,Category,Package,Value,Tolerance,LCSC,Manufacturer,MFGPN,Description,Datasheet,SMD,Priority
-COMPONENT,REQ1|CAT=RES|VAL=10K|PKG=0603|TOL=5%|V=|A=|W=|TYPE=,,RES,0603,10K,5%,,,,,,,,99
-ITEM,,R001,RES,0603,330R,5%,C25231,UNI-ROYAL,0603WAJ0331T5E,330Ω 5% 0603,,SMD,1
-ITEM,,R002,RES,0603,10K,1%,C25232,YAGEO,RC0603FR-0710KL,10kΩ 1% 0603,,SMD,1
+IPN,Category,Package,Value,Tolerance,LCSC,Manufacturer,MFGPN,Description,Datasheet,SMD,Priority
+R001,RES,0603,330R,5%,C25231,UNI-ROYAL,0603WAJ0331T5E,330Ω 5% 0603,,SMD,1
+R002,RES,0603,10K,1%,C25232,YAGEO,RC0603FR-0710KL,10kΩ 1% 0603,,SMD,1
 ```
 
 Equivalent modern form using `Supplier` and `SPN`:
 
 ```csv
-RowType,ComponentID,IPN,Category,Package,Value,Tolerance,Supplier,SPN,Manufacturer,MFGPN,Description,Datasheet,SMD,Priority
-ITEM,,R001,RES,0603,330R,5%,lcsc,C25231,UNI-ROYAL,0603WAJ0331T5E,330Ω 5% 0603,,SMD,1
+IPN,Category,Package,Value,Tolerance,Supplier,SPN,Manufacturer,MFGPN,Description,Datasheet,SMD,Priority
+R001,RES,0603,330R,5%,lcsc,C25231,UNI-ROYAL,0603WAJ0331T5E,330Ω 5% 0603,,SMD,1
 ```
 
 ## Field disambiguation (I: and C: prefixes)
@@ -248,6 +244,9 @@ resolve ambiguity between schematic component attributes and inventory item fiel
 tolerance). `C:fieldname` forces use of the schematic component attribute (e.g.,
 `C:Tolerance` → schematic tolerance). An unprefixed name is ambiguous: if both exist,
 the BOM includes both as separate columns.
+
+These prefixes name **data sources** (inventory vs schematic), not inventory row
+kinds.
 
 ## Inventory schema, profiles, and `--fields`
 
@@ -306,23 +305,45 @@ skipped. Quoted fields and embedded newlines are handled per RFC 4180.
 
 ### Excel files (.xlsx, .xls)
 
-jBOM searches the first 10 rows for the `IPN` column to detect the header row, then
-extracts data starting from the row after the header. Arbitrary row and column offsets
-within the spreadsheet are handled; empty cells are treated as missing values. Requires
-the `openpyxl` package.
+jBOM searches the first 10 rows for a characteristic column such as `IPN` or
+`Category` to detect the header row, then extracts data starting from the row after
+the header. Arbitrary row and column offsets within the spreadsheet are handled; empty
+cells are treated as missing values. Requires the `openpyxl` package.
 
 ### Apple Numbers files (.numbers)
 
 Data is extracted from the first table in the first sheet. Header detection follows the
-same IPN-search logic as Excel. Requires the `numbers-parser` package.
+same characteristic-column search as Excel. Requires the `numbers-parser` package.
 
 ## Validation
 
 jBOM validates the inventory on load. The `Category` column is required and is
-auto-uppercased for matching. `ITEM` rows require a non-blank `IPN`; `COMPONENT` rows
-require a non-blank `ComponentID`. The `Value` field is parsed numerically for `RES`,
-`CAP`, and `IND` categories. Package values are whitespace-normalized. A missing or
-non-integer `Priority` defaults to 99.
+auto-uppercased for matching. Stocked Item rows used for BOM matching need a
+non-blank `IPN` (rows without an IPN are skipped for matching). The `Value` field is
+parsed numerically for `RES`, `CAP`, and `IND` categories. Package values are
+whitespace-normalized. A missing or non-integer `Priority` defaults to 99.
 
 Invalid or missing optional columns are tolerated: matching simply skips any properties
 whose column is absent or blank.
+
+## Legacy columns (`RowType`, `ComponentID`)
+
+Older inventories and some intermediate CLI outputs may still carry a `RowType`
+column (`ITEM` / `COMPONENT`) and a `ComponentID` column. That dual-row framing is
+**abandoned** as a product model (charter axiom: Item is the row; schematic
+`Component` → inventory `Item` is 1:many).
+
+Compatibility today:
+
+- Readers still accept a `RowType` column when present.
+- BOM matching uses stocked Item rows (historically tagged `ITEM`, or untagged rows
+  with an IPN). Requirement-only rows without an IPN are not BOM candidates.
+- `jbom inventory` may still emit a harvest CSV that includes `RowType` /
+  `ComponentID` as intermediate grouping metadata for coverage/audit workflows.
+  That harvest is not the curated stocked-parts catalog.
+- New curated inventories should omit `RowType` and `ComponentID` and use the
+  Item columns above (as in `examples/SPCoast-INVENTORY.csv`).
+
+Do not reopen a dual-row inventory product model. Migration is mechanical: keep
+rows that represent stocked parts (with IPN), drop requirement-only rows from the
+catalog file, and ignore obsolete `RowType`/`ComponentID` cells.

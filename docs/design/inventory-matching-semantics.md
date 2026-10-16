@@ -39,7 +39,7 @@ manufacturer. This is the canonical way to represent multi-sourced or dual-sourc
 parts.
 
 The consequence is that matching produces a candidate pool, not a single result.
-Multiple ITEM rows with the same IPN are each independently evaluated as candidates;
+Multiple Item rows with the same IPN are each independently evaluated as candidates;
 they are ranked by priority and technical score to select the most appropriate for the
 current BOM context. jBOM's value is precisely in navigating this candidate pool
 deterministically.
@@ -53,7 +53,7 @@ remainder.
 
 ## Primary filtering
 
-Matching begins with a mandatory filter stage. An ITEM row is admitted to the candidate
+Matching begins with a mandatory filter stage. An Item row is admitted to the candidate
 pool only if all of the following hold:
 
 - Its `Category` matches the schematic component's detected type.
@@ -83,7 +83,7 @@ schematic component carries a Value constraint.
 
 ## Scoring and candidate selection
 
-When multiple ITEM rows pass the primary filter, jBOM ranks them by a composite score:
+When multiple Item rows pass the primary filter, jBOM ranks them by a composite score:
 
 **Technical score** is accumulated from optional attribute matches. Tolerance, Voltage,
 Current, Power, and similar attributes each contribute when both the schematic component

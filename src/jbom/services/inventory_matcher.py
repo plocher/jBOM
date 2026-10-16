@@ -132,6 +132,7 @@ class InventoryMatcher:
         try:
             loader = InventoryReader(inventory_file)
             inventory_items, _ = loader.load()
+            # Stocked Items only. Legacy COMPONENT harvest rows are not BOM candidates.
             return [
                 item
                 for item in inventory_items

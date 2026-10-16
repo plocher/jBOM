@@ -131,7 +131,12 @@ class ProjectInventoryGenerator:
         return result
 
     def load(self) -> Tuple[List[InventoryItem], List[str]]:
-        """Generate COMPONENT rows from project requirements.
+        """Generate a project harvest of unique EM requirement groups.
+
+        Output may still label rows with legacy ``RowType=COMPONENT`` and a
+        ``ComponentID`` grouping key for audit/coverage workflows. That is
+        intermediate harvest metadata, not the dual-row inventory product
+        model (stocked catalogs are Item rows with IPN).
 
         Returns:
             Tuple of (inventory items list, field names list)
@@ -214,7 +219,7 @@ class ProjectInventoryGenerator:
         return self.inventory, sorted(list(self.inventory_fields))
 
     def load_per_instance(self) -> Tuple[List[InventoryItem], List[str]]:
-        """Generate one COMPONENT row per component instance for --per-instance output.
+        """Generate one harvest row per component instance for --per-instance output.
 
         Returns:
             Tuple of (inventory items list, field names list)
