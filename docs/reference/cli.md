@@ -86,7 +86,7 @@ Diagnoses field-quality issues and inventory coverage gaps. Mode is detected aut
   - Single exact match or IPN/MPN exclusive match → silent
 
 **Coverage check (inventory mode + `--requirements`)**
-: Same four-outcome model applied to COMPONENT rows from the requirements file against catalog ITEM rows.
+: Same four-outcome model applied to requirement rows from a `jbom inventory` harvest CSV against catalog Item rows.
 : Catalog items not matched by any requirement → `UNUSED_ITEM / INFO`
 
 **Supplier validation (project mode + `--supplier`)**
@@ -96,7 +96,7 @@ Diagnoses field-quality issues and inventory coverage gaps. Mode is detected aut
   - Silent when both local inventory and supplier match.
 
 **Supplier freshness checks (inventory mode + `--supplier`)**
-: When all positionals are `.csv` files and `--supplier` is given, each `ITEM` row's supplier PN is validated against a fresh catalog search:
+: When all positionals are `.csv` files and `--supplier` is given, each catalog Item row's supplier PN is validated against a fresh catalog search:
   - Existing PN not found by a fresh search → `STALE_PART / WARN`
   - Fresh search returns a better PN than the one recorded → `BETTER_AVAILABLE / WARN`
   - Existing PN matches the best search result → silent
@@ -117,7 +117,7 @@ Diagnoses field-quality issues and inventory coverage gaps. Mode is detected aut
   - A PDF under `datasheets/` is not referenced by any Item's `Datasheet Name` → `DATASHEET_ORPHAN_FILE / WARN`
 
 **Datasheet URL recovery ladder (inventory mode + `--check-urls`, opt-in, NETWORK)**
-: See ["Datasheet URL recovery ladder" below](#datasheet-url-recovery-ladder---check-urls-opt-in-network) for the full write-up. Summary: walks each `ITEM` row's `Datasheet` URL through a five-rung recovery ladder (direct fetch, LCSC viewer→CDN transform, LCSC product-detail API, manufacturer-URL retry, signed/ephemeral dead-by-design detection) and proposes upgrades. **Makes real network requests** -- this is the only `jbom audit` check that does so, and only when `--check-urls` is explicitly given (default off).
+: See ["Datasheet URL recovery ladder" below](#datasheet-url-recovery-ladder---check-urls-opt-in-network) for the full write-up. Summary: walks each catalog Item row's `Datasheet` URL through a five-rung recovery ladder (direct fetch, LCSC viewer→CDN transform, LCSC product-detail API, manufacturer-URL retry, signed/ephemeral dead-by-design detection) and proposes upgrades. **Makes real network requests** -- this is the only `jbom audit` check that does so, and only when `--check-urls` is explicitly given (default off).
 
 ### Arguments
 
@@ -128,7 +128,7 @@ Diagnoses field-quality issues and inventory coverage gaps. Mode is detected aut
 : Inventory catalog for a coverage dry-run (project mode only).
 
 **--supplier NAME**
-: Search a distributor catalog to check supplier coverage for each component. Choices: `mouser`, `lcsc`, `generic`. Set `MOUSER_API_KEY` environment variable or use `--api-key`. May be combined with `--inventory` to also detect `INVENTORY_GAP` rows. In inventory mode (all positionals are `.csv` files), runs freshness checks (`STALE_PART`, `BETTER_AVAILABLE`) against each `ITEM` row.
+: Search a distributor catalog to check supplier coverage for each component. Choices: `mouser`, `lcsc`, `generic`. Set `MOUSER_API_KEY` environment variable or use `--api-key`. May be combined with `--inventory` to also detect `INVENTORY_GAP` rows. In inventory mode (all positionals are `.csv` files), runs freshness checks (`STALE_PART`, `BETTER_AVAILABLE`) against each catalog Item row.
 
 **--api-key KEY**
 : API key for the `--supplier` provider, overrides the provider-specific environment variable.
@@ -186,7 +186,7 @@ and reflected in the full-sheet-paste CSV -- see below.
 
 Mechanizes the five-rung LCSC URL recovery ladder discovered by the
 SPCoast-inventory curation pass (jBOM#351;
-`SPCoast-inventory docs/curation-pass-2026-07.md`). For every `ITEM` row
+`SPCoast-inventory docs/curation-pass-2026-07.md`). For every catalog Item row
 with a populated `Datasheet` URL:
 
 1. **Direct fetch** -- the recorded URL is fetched and checked: a real PDF
@@ -208,7 +208,7 @@ with a populated `Datasheet` URL:
    detected up front by URL pattern and reported dead by design -- never
    fetched, never proposed as a recovery target.
 
-**Convergence**: when multiple `ITEM` rows share a `Datasheet Name` but
+**Convergence**: when multiple Item rows share a `Datasheet Name` but
 disagree on `Datasheet` URL, the URL that resolves cleanly (rung 1) or was
 mechanically recovered (rungs 2-3) is proposed as the canonical URL for
 every disagreeing member. No canonical URL is invented if none of the
@@ -902,7 +902,7 @@ jbom inventory ./my_project --supplier lcsc -o inventory.csv
 : Defaults to console output when `-o` is omitted. Use `-o <file>` to write a CSV template with IPN, Category, Value, Package, and related columns.
 
 **Promoted CSV**
-: Default name `<input>.promoted.csv` (written next to the source file when `-o` is omitted). Canonical inventory columns are written first (`RowType`, `IPN`, `Category`, `Value`, `Package`, `Description`, `Manufacturer`, `MFGPN`, `Supplier`, `SPN`, `Datasheet`, typed EM fields, etc.) with `SupplierContext` carrying the resolved supplier label.  Supplemental source columns from the export (qty, pricing, etc.) are preserved after the canonical block for traceability.
+: Default name `<input>.promoted.csv` (written next to the source file when `-o` is omitted). Canonical inventory Item columns are written first (`IPN`, `Category`, `Value`, `Package`, `Description`, `Manufacturer`, `MFGPN`, `Supplier`, `SPN`, `Datasheet`, typed EM fields, etc.) with `SupplierContext` carrying the resolved supplier label. Supplemental source columns from the export (qty, pricing, etc.) are preserved after the canonical block for traceability. A legacy `RowType` cell may still appear for older tooling; it is not part of the stocked-parts product model.
 
 **Parts CSV**
 : Default name `${ProjectName}.parts.csv` (written in the project directory when `-o` is omitted). One row per electro-mechanical group with a `Refs` column of collapsed references. Use `-o -` for CSV to stdout.
@@ -1163,17 +1163,23 @@ jbom bom project --inventory inv.csv -f "REFERENCE,MATCH_QUALITY,I:PACKAGE"
 
 ## INVENTORY FILE FORMAT
 
-Required columns:
-: RowType, ComponentID, Category, Value, Package
-: Plus `IPN` for ITEM rows
+Each catalog row is a stocked **Item**. Matching is schematic Component → Item
+candidates (1:many). See [`reference/inventory-format.md`](inventory-format.md).
+
+Required columns for matching:
+: IPN, Category, Value, Package, Priority
 
 Optional columns:
-: Manufacturer, MFGPN, Datasheet, Keywords, SMD, Tolerance, Voltage, Current, Power, Type, Form, Frequency, Stability, Load, Family, mcd, Wavelength, Angle, Pitch
+: Manufacturer, MFGPN, Supplier, SPN, Datasheet, Keywords, SMD, Tolerance, Voltage, Current, Power, Type, Form, Frequency, Stability, Load, Family, mcd, Wavelength, Angle, Pitch
 
 Legacy aliases accepted:
 : V/Volts -> Voltage, A/Amperage -> Current, W/Wattage -> Power
 
 **Priority** uses integer ranking (1 = preferred, higher = less preferred). When multiple parts match, the lowest Priority is selected.
+
+Legacy `RowType` / `ComponentID` columns may still appear in older files or
+harvest CSVs; they are not part of the curated Item model. Do not reopen a
+dual-row inventory schema.
 
 See [`design/inventory-field-semantics.md`](../design/inventory-field-semantics.md) for
 the two-state value model, annotate write-back rules, and per-instance sub-header format.

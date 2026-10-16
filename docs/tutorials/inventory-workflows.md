@@ -55,7 +55,7 @@ canonical jBOM inventory schema in one step:
 jbom promote examples/JLCPCB-INVENTORY.csv --jlc -o examples/JLCPCB-INVENTORY.promoted.csv
 ```
 
-The promoted CSV writes canonical inventory columns first (`RowType`, `IPN`,
+The promoted CSV writes canonical inventory Item columns first (`IPN`,
 `Category`, `Value`, `Package`, `Description`, `Manufacturer`, `MFGPN`,
 `Supplier`, `SPN`, `Datasheet`, typed EM fields such as `Resistance`,
 `Capacitance`, `Tolerance`, `Type`, `V`, `A`, `W`, `Wavelength`, `mcd`, `Angle`)
