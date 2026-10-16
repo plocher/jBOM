@@ -1,6 +1,31 @@
 # CHANGELOG
 
 
+## v7.10.1 (2026-10-16)
+
+### Bug Fixes
+
+* fix(bom): include schematic-only in-BOM parts; honor Not-in-POS
+
+BOM was PCB-footprint-only, so exclude-from-board mating plugs (in_bom=yes,
+no PCB footprint) never appeared for procurement. POS already dropped some
+exclude-from-pos PCB attrs but did not fully honor schematic in_pos_files=no
+after merge. Parts used the same include_only_bom filter as BOM and hid
+schematic ToC chrome.
+
+Changes:
+- Parse schematic on_board and in_pos_files onto Component.
+- BOM: PCB first, then append schematic-only in_bom leftovers (e.g. plugs).
+- Parts: include_only_bom=False so exclude-from-BOM stays on the sch ToC.
+- POS: after merge, drop DNP and Not-in-POS / exclude_from_pos markers.
+- Merge exposes sch in_pos_files / on_board and pcb dnp / exclude_from_pos.
+- Docs + BDD/unit coverage; cpNode-IOX J22-J27 now BOM lines with DNP.
+
+Fixes #408
+
+Co-Authored-By: Oz <oz-agent@warp.dev> ([`2f032a7`](https://github.com/plocher/jBOM/commit/2f032a73c15b7a479d00d716b7b1b284a5933674))
+
+
 ## v7.10.0 (2026-10-14)
 
 ### Features
