@@ -1,8 +1,10 @@
 # jBOM Evolution Charter
 
-**Status:** DRAFT — working notes for backlog grooming (2026-10)
+**Status:** Accepted — 2026-10-16
 **Job:** Intent + axioms + negative space for the next medium-term arc
 **Not:** a release plan, a sprint board, or a substitute for ADRs
+
+**Grill:** Q1–Q7 locked — see §9.
 
 When this charter and an issue disagree, stop and reconcile deliberately.
 When this charter and an Accepted ADR disagree, the ADR wins until amended.
@@ -126,7 +128,7 @@ Short proof statements. Detail and history live in ADRs and maps.
 | Surface | Posture | Default work shape |
 |---------|---------|--------------------|
 | bom / parts / pos / gerbers / fab | **Mature** | Bugs, parity, small ergonomics; no redesign without a forcing function |
-| Matcher (passives + growing actives) | **Transitional** | Extend under ADR 0003; corpus-gated; avoid one-off category rules |
+| Matcher (passives + growing actives) | **Transitional** | Extend under ADR 0003; avoid one-off category rules; corpus gates search/ranking policy only (Q4) |
 | Datasheet library loop | **Mostly shipped** | Residual output/UX; curation is data work (SPCoast-inventory) |
 | CLI grammar / style guide | **In design** | Finish map #385 before large CLI renames land in bulk |
 | Inventory lifecycle (create/merge/audit/freshness/alts) | **Immature** | Realize ADR 0018; multi-file merge; promote→merge absorption |
@@ -141,12 +143,22 @@ Short proof statements. Detail and history live in ADRs and maps.
 Tracks are parallelizable only where noted. Within a track, prefer finishing
 the design gate before a pile of implementation issues.
 
-### Track 0 — Correctness and conveyor hygiene (ongoing, small capacity)
+### Track 0 — Correctness and conveyor hygiene (ongoing, curated capacity)
 
-- CPL/FT parity bugs (#395/#398 — likely duplicate).
+**Capacity rule (Q3):** spend the “~20%” on *curation that unlocks agent
+progress*, not on open-ended human debugging. If an item can be human-shaped
+once (repro, acceptance, boundaries) and handed to an agent or loosely coupled
+sub-agent for closure, it belongs here and often simplifies later lifts. If it
+cannot be made agent-ready without a design rabbit hole, park it — those become
+momentum sinks that destroy Tracks 1–2.
+
+- CPL/FT parity bugs (#395/#398 — likely duplicate): curate then delegate if sharp.
 - Ready-for-agent leftovers (#372).
+- Thin cost field path (Q5): LCSC/SPN → JLCPCB catalog price at a bulk break
+  (e.g. qty 20 or 50 — not the inflated qty-1 price) as an optional BOM
+  `--fields` value — good-enough, not KiCost-in-core. Spike/close #381 against
+  that bar.
 - Label/milestone hygiene once Step 4 runs.
-- Do not let this track consume the whole calendar.
 
 ### Track 1 — Finish the CLI concept model (gate)
 
@@ -166,10 +178,12 @@ Suggested sequence (adjust under grill):
 
 1. Multi-file inventory merge in BOMWorkflow / inventory merge (#307) — user
    already thinks this works.
-2. Promote realization under ADR 0018: export-in-config (#327), provider-first
-   enrichment (#329), fail-fast overlap (#324), vocab-in-defaults (#328).
-3. Absorb promote into `inventory merge` per ratified sentences (#390) once
-   CLI track allows.
+2. Promote realization under ADR 0018 **under the current `promote` name**:
+   export-in-config (#327), provider-first enrichment (#329), fail-fast
+   overlap (#324), vocab-in-defaults (#328). End-state name is
+   `inventory merge`; do not rename until internals are real (Q2).
+3. Absorb promote into `inventory merge` per ratified sentences (#390) when
+   Track 1 grammar + rollout (#401) say switch — not before.
 4. Curation power: cross-supplier alternatives (#330), freshness/lifecycle
    stamp (#331).
 5. Finish ADR 0008 remnant purge when it collides with the above (#326), not
@@ -178,14 +192,22 @@ Suggested sequence (adjust under grill):
 
 Parked, not cancelled: profile hermetic search-path design (#369).
 
-### Track 3 — Search and match framework (secondary product bet)
+### Track 3 — Search and match framework (secondary; deliberately deprioritized)
+
+Search is hard. It may need solutions *outside* jBOM (other engines, other
+products, thinner integration). Doing search-first is a distraction from the
+inventory lifecycle bet. This track stays alive so work does not vanish, but
+it does not win calendar fights against Tracks 1–2.
 
 1. Close or rewrite zombie umbrella #195 (children done).
 2. Land or supersede ADR 0003 realization via #204 (framework) with
-   measurement via #181 (corpus).
-3. KiCost spike (#381) only as input to “do we integrate cost, or stay
-   handoff-only?” — decision required.
+   measurement via #181 (corpus) — when capacity allows, not as a pioneer.
+3. Full KiCost absorption stays out of scope. Cost for *this* arc is the thin
+   Track 0 path (Q5), not a search-engine project. #381 closes by confirming
+   or rejecting that bar — not by importing KiCost.
 4. Category expansion follows framework + corpus, not the reverse.
+5. Prefer external or shared solutions over deepening one-off search cleverness
+   inside jBOM when the problem is general catalog retrieval.
 
 ### Track 4 — Horizon and adapters (capacity-boxed)
 
@@ -194,6 +216,15 @@ Parked, not cancelled: profile hermetic search-path design (#369).
 - EagleLib2KiCad (#214): keep service-surface-first (ADR 0004/0016); do not
   pull conversion into jBOM core.
 - External publish/cost tools: prefer compose-with over absorb-into.
+- **Shared Python KiCad API package (ecosystem horizon).** jBOM's services
+  layer is already a KiCad API in disguise. The same head-space is shared with
+  kproj, kDoctor, FieldUnit (`~/Dropbox/Arduino/libraries/FieldUnit`), and
+  FieldUnit-Subdivision (`~/Dropbox/workspace/FieldUnit-Subdivision`). At some
+  point those services should coalesce into a shared package consumed by all
+  of them. This arc does **not** start that extraction: keep service boundaries
+  clean (ADR 0013/0005) so extraction stays possible; open a dedicated map
+  only when two or more sister tools are blocked on duplication. Until then,
+  treat cross-tool API dreams as horizon, not Track 2 scope.
 
 ### Track 5 — Docs and debt that unlock the above
 
@@ -236,10 +267,16 @@ until destination is met, then close.
 - Becoming a full PLM, purchasing system, or multi-user inventory server.
 - Silent auto-rewrite of the user’s inventory file as a default path.
 - Compat shims / aliases for CLI renames (in-house retool is acceptable).
-- Absorbing KiCost, Eagle conversion, or kproj publish into jBOM core.
+- Absorbing KiCost (or any full multi-supplier cost engine) into jBOM core.
+  Thin bulk-break price-as-BOM-field (LCSC/JLC, qty 20 or 50 class) is allowed
+  (Q5); that is not KiCost.
+- Absorbing Eagle conversion or kproj publish into jBOM core.
 - Per-project PDF datasheet trees (library + deep links won).
 - Reopening the COMPONENT/ITEM dual RowType model.
 - Multi-supplier composition inside `promote` (stays inventory-side).
+- Extracting the shared KiCad Python API package during this inventory/CLI
+  arc (keep seams clean; extract later under its own map).
+- Making search “solved inside jBOM” a gate for inventory lifecycle work.
 
 ---
 
@@ -255,22 +292,40 @@ until destination is met, then close.
 
 ---
 
-## 9. Open questions (grill list)
+## 9. Grill log and remaining questions
 
-Resolve these before treating the charter as Accepted:
+### Locked
 
-1. **Primary bet:** Is Track 2 (inventory lifecycle) correctly ranked above
-   Track 3 (search framework) for the next 1–2 quarters?
-2. **Promote timing:** Finish promote internals (#327/#329) before CLI rename
-   to `inventory merge`, or rename shell first and keep internals behind it?
-3. **Capacity split:** What steady fraction of effort stays on Track 0
-   (hygiene) vs design tracks while #385 is unfinished?
-4. **Corpus ownership:** Is #181 a gate for all matcher changes, or only for
-   search-provider work?
-5. **KiCost:** Are we open to “cost as a report command,” or is cost forever
-   outside jBOM?
-6. **Charter home:** Keep as `docs/design/evolution-charter.md` (mutable
-   design) and graduate stable axioms into ADR(s) / CONTEXT when accepted?
+1. **Primary bet (Q1) — locked 2026-10-16.** Track ranking stands:
+   Track 1 (CLI gate) → Track 2 (inventory lifecycle, primary product bet) →
+   Track 3 (search, secondary). Search is hard and may need solutions outside
+   jBOM; doing it first would be completely distracting.
+2. **Promote timing (Q2) — locked 2026-10-16.** Option A: internals first,
+   rename later. Deepen #327/#329/#324/#328 under today’s `promote`; absorb
+   into `inventory merge` only when Track 1 + #401 switch. No alias shim.
+   Step 4 issues should say “merge intake (today: `promote`)” where useful.
+3. **Capacity split (Q3) — locked 2026-10-16.** ~20% Track 0 only when spent
+   on *human curation that unlocks agent/sub-agent closure*. Prefer items that
+   simplify later loosely coupled orchestration. If an item cannot be shaped
+   for handoff without a design sink, park it — do not let it eat Tracks 1–2.
+4. **Corpus ownership (Q4) — locked 2026-10-16.** #181 gates search-provider
+   and ranking-policy work, not every matcher or BOM-field change.
+5. **Cost (Q5) — locked 2026-10-16.** Good-enough path: resolve price from
+   LCSC/JLCPCB identity at a **bulk break quantity** (qty 20 or 50 class — not
+   qty-1, which is often ~2× bulk) and expose via BOM `--fields` (e.g. `cost`).
+   Delegatable Track 0 / small feature — not KiCost-in-core. Close or re-scope
+   #381 against that bar. Full multi-supplier cost engine stays negative space.
+6. **Charter home (Q6) — locked 2026-10-16.** Lives at
+   `docs/design/evolution-charter.md`. On Accept, status bump; graduate binding
+   axioms to ADR/CONTEXT only as needed. Track list stays mutable design.
+7. **Shared KiCad API package (Q7) — locked 2026-10-16.** Horizon-only this
+   arc; heads-up that parallel sister-tool work exists. Forcing function to open
+   a map: two or more tools blocked on duplication. Keep service seams clean.
+
+### Still open
+
+- None. Charter **Accepted** 2026-10-16. Next: Step 3 reshape backlog against
+  tracks; Step 4 rewrite GitHub issues/milestones/labels.
 
 ---
 
@@ -279,3 +334,12 @@ Resolve these before treating the charter as Accepted:
 - 2026-10-16 — DRAFT opened from backlog inventory (31 open issues) and
   existing ADRs / maps #385 #342 / ADR 0018. ADRs 0003, 0004, 0008, 0009,
   0010 marked Accepted to match practice.
+- 2026-10-16 — Q1 locked (inventory over search). Track 3 deprioritized with
+  external-solution bias. Shared Python KiCad API package recorded as
+  ecosystem horizon (Track 4 / negative space), not this arc's extraction work.
+  §3 axioms accepted as solid.
+- 2026-10-16 — Q2 locked: promote internals before `inventory merge` rename.
+- 2026-10-16 — Q3–Q7 locked: curation-for-agents capacity rule; corpus scope;
+  thin LCSC/JLC bulk-break cost-as-BOM-field; charter home; shared API horizon
+  heads-up. Initial grill complete.
+- 2026-10-16 — **Accepted.**
