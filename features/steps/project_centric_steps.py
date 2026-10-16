@@ -33,6 +33,8 @@ def _write_schematic_local(
         lib = row.get("LibID", "Device:Generic")
         dnp = row.get("DNP", "No")
         exclude_from_bom = row.get("ExcludeFromBOM", "No")
+        on_board = row.get("OnBoard", row.get("on_board", "Yes"))
+        in_pos_files = row.get("InPosFiles", row.get("in_pos_files", "Yes"))
 
         # Determine extra properties (all table columns beyond the known standard ones).
         _STANDARD_COLS = {
@@ -43,6 +45,10 @@ def _write_schematic_local(
             "Package",
             "DNP",
             "ExcludeFromBOM",
+            "OnBoard",
+            "on_board",
+            "InPosFiles",
+            "in_pos_files",
             "UUID",
         }
         extra_props = {
@@ -57,6 +63,10 @@ def _write_schematic_local(
             symbol_parts.append("(dnp yes)")
         if exclude_from_bom.lower() in ["yes", "true", "1"]:
             symbol_parts.append("(in_bom no)")
+        if str(on_board).lower() in ["no", "false", "0"]:
+            symbol_parts.append("(on_board no)")
+        if str(in_pos_files).lower() in ["no", "false", "0"]:
+            symbol_parts.append("(in_pos_files no)")
         if uuid:
             symbol_parts.append(f'(uuid "{uuid}")')
 

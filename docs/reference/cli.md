@@ -919,27 +919,32 @@ KiCad footprints and schematic symbols carry three flag attributes that control 
 flow through jBOM's three output commands. These flags are fixed at generation time — no CLI
 flags override them.
 
-| Attribute | `jbom bom` / `jbom parts` | `jbom pos` | Notes |
-|---|---|---|---|
-| `exclude_from_board` | not in output | not in output | Symbol-only: no PCB footprint |
-| `exclude_from_bom` | not in output | not in output | Board feature: logo, mounting hole, fiducial |
-| `dnp` (Do Not Populate) | included (see command notes below) | not in output | Variant/rework spares: pad present, part absent |
-| *(none set)* | included | included | Normal populated component |
+| Attribute | `jbom bom` | `jbom parts` | `jbom pos` | Notes |
+|---|---|---|---|---|
+| `exclude_from_board` (`on_board=no`) | included if still `in_bom` | included | not in output | No footprint export; mating plugs / off-board orderables |
+| `exclude_from_bom` (`in_bom=no`) | not in output | included | n/a (PCB-driven) | Board chrome on sch ToC; not a procurement line |
+| `exclude_from_pos` / `in_pos_files=no` | n/a | n/a | not in output | Not-in-POS flag; honored in addition to DNP |
+| `dnp` (Do Not Populate) | included (marked) | included | not in output | Pad may exist; do not place |
+| *(none set)* | included | included | included | Normal populated component |
 
-**BOM**: `exclude_from_bom` components (mounting holes, fiducials, OSHW logos) are always
-excluded. DNP components are always included and identified by the `DNP` column value `"DNP"`
+**BOM**: PCB footprints first, then schematic-only symbols that remain `in_bom=yes`
+(typically exclude-from-board mating hardware with no exported footprint). `exclude_from_bom`
+components (mounting holes, fiducials, OSHW logos) are always excluded from the BOM.
+DNP components are always included and identified by the `DNP` column value `"DNP"`
 (empty string for populated components). This follows IPC J-STD-001: assembly operators must
 be able to distinguish intentionally empty pads from omitted line items.
 
-**Parts**: DNP components are always included in the output row set. The default parts projection
-does not include a dedicated `DNP` column; include one explicitly via `-f dnp` (or a custom
-projection that includes `dnp`) when a marker column is required.
+**Parts**: Schematic table of contents. DNP and exclude-from-BOM symbols remain visible.
+The default parts projection does not include a dedicated `DNP` column; include one
+explicitly via `-f dnp` when a marker column is required.
 
-**POS**: DNP components are always excluded. The P&P machine's input contract is strictly
-"place these components"; the companion BOM is the authoritative source for DNP declarations.
+**POS**: PCB-only (needs coordinates). DNP and Not-in-POS (`in_pos_files=no` /
+`exclude_from_pos_files`) components are always excluded. The P&P machine's input contract
+is strictly "place these components"; the companion BOM is the authoritative source for
+DNP and off-board orderables.
 
 **Full-board audit**: To enumerate every component regardless of flag — including
-`exclude_from_bom` refs, virtual symbols, and all DNP/non-DNP — use `jbom audit`.
+virtual symbols and all DNP/non-DNP — use `jbom audit`.
 
 **Migration note** (from pre-v8.x): The `--include-dnp`, `--include-excluded`, and
 `--include-all` flags have been removed from `jbom bom`, `jbom parts`, and `jbom pos`.

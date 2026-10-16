@@ -39,7 +39,14 @@ def create_filter_config(
             "include_only_bom": False,  # BOM-excluded parts (logos, mounting holes) still get placed
             "include_virtual_symbols": False,
         }
-    # BOM/Parts: enumerate all design components. DNP rows are included and marked.
+    if command_type == "parts":
+        # Parts is a schematic table of contents: keep exclude-from-BOM symbols.
+        return {
+            "exclude_dnp": False,
+            "include_only_bom": False,
+            "include_virtual_symbols": False,
+        }
+    # BOM: procurement/assembly list. Drop exclude-from-BOM; keep DNP (marked).
     return {
         "exclude_dnp": False,
         "include_only_bom": True,

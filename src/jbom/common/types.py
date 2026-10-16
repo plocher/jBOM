@@ -83,6 +83,10 @@ class Component:
     in_bom: bool = True
     exclude_from_sim: bool = False
     dnp: bool = False
+    on_board: bool = True  # KiCad "Exclude from board" inverted (on_board no => False)
+    in_pos_files: bool = (
+        True  # KiCad "Not in POS file" inverted (in_pos_files no => False)
+    )
     source_file: Optional[
         Path
     ] = None  # Absolute path to the .kicad_sch this component came from
