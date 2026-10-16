@@ -73,6 +73,10 @@ def resolve_bom_field_value(
         return derive_package_from_footprint(entry.footprint)
     if resolved_field_token == "lcsc":
         return _get_attribute_value(entry, "LCSC")
+    if resolved_field_token == "cost":
+        # Optional bulk-break unit price (#381). Empty when not enriched or
+        # when LCSC identity/lookup failed — never invent a value here.
+        return _get_attribute_value(entry, "cost")
     return _get_attribute_value(entry, resolved_field_token)
 
 

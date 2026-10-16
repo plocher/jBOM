@@ -1,0 +1,47 @@
+{
+  "code": 200,
+  "data": {
+    "componentPageInfo": {
+      "list": [
+        {
+          "componentCode": "C25804",
+          "componentModelEn": "RC0603FR-0710KL",
+          "componentBrandEn": "Yageo",
+          "describe": "Thick Film Resistor 10k 1% 0603",
+          "lcscGoodsUrl": "https://www.lcsc.com/product-detail/C25804.html",
+          "dataManualUrl": "https://example.com/rc0603fr0710kl.pdf",
+          "stockCount": 236000,
+          "minBuyNumber": 1,
+          "componentPrices": [
+            {
+              "productPrice": "0.0100",
+              "productNumber": 1
+            },
+            {
+              "productPrice": "0.0060",
+              "productNumber": 10
+            },
+            {
+              "productPrice": "0.0040",
+              "productNumber": 50
+            },
+            {
+              "productPrice": "0.0030",
+              "productNumber": 100
+            }
+          ],
+          "attributes": [
+            {
+              "attribute_name_en": "Resistance",
+              "attribute_value_name": "10kΩ"
+            },
+            {
+              "attribute_name_en": "Package",
+              "attribute_value_name": "0603"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

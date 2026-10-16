@@ -39,6 +39,7 @@ from jbom.services.field_listing_service import (
 from jbom.services.pcb_reader import DefaultKiCadReaderService
 from jbom.services.project_component_collector import ProjectComponentCollector
 from jbom.services.fabricator_projection_service import FabricatorProjectionService
+from jbom.services.bom_cost_enrichment import enrich_bom_with_bulk_cost
 
 _BOM_COMPUTED_FIELDS: tuple[str, ...] = (
     "reference",
@@ -53,6 +54,8 @@ _BOM_COMPUTED_FIELDS: tuple[str, ...] = (
     "dnp",
     "lcsc",
     "package",
+    # Optional LCSC/JLC bulk-break unit price (charter Q5 / #381).
+    "cost",
 )
 _FIELD_REF_RESOLVER = FieldRefResolver()
 
@@ -364,6 +367,16 @@ class BOMWorkflow:
             selected_fields=selected_fields,
         )
         fabricator_config = projection.fabricator_config
+
+        # Optional bulk-break cost (#381): only when ``cost`` is selected.
+        # Soft-fail — missing LCSC identity or lookup errors leave cost empty.
+        cost_result = enrich_bom_with_bulk_cost(
+            bom_data,
+            selected_fields,
+            verbose=request.verbose,
+        )
+        bom_data = cost_result.bom_data
+        diagnostics.extend(cost_result.diagnostics)
 
         return BOMResult(
             mode=BOMMode.GENERATE,
