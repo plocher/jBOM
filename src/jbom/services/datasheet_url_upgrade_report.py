@@ -15,12 +15,11 @@ human (or a downstream tool acting on human instruction) to paste back.
 
 from __future__ import annotations
 
-import json
 from collections import defaultdict
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Callable, Sequence
 
+from jbom.common.fetch_fixtures import resolve_fixture_fetch
 from jbom.common.types import InventoryItem
 from jbom.services.datasheet_url_recovery import (
     OUTCOME_OK,
@@ -89,33 +88,22 @@ def resolve_check_urls_fetch(fetch_fixtures_manifest: str) -> Callable[[str], by
     When *fetch_fixtures_manifest* is set (test-only; see
     ``defaults.check_urls.fetch_fixtures_manifest`` in the active jBOM
     profile), URLs are resolved against that local JSON manifest instead
-    of the network -- mirroring
+    of the network — but only when the process has explicitly allowed
+    fixtures via ``JBOM_ALLOW_FETCH_FIXTURES`` (jBOM#372). Mirrors
     :func:`jbom.services.datasheet_staging._resolve_fetch`. Otherwise the
     current module-level :func:`default_fetch` is used, looked up by name
     at call time so tests can monkeypatch
     ``jbom.services.datasheet_url_upgrade_report.default_fetch`` directly.
+
+    Raises:
+        FetchFixturesNotAllowedError: Manifest is configured without the
+            allow env (never silent).
     """
 
-    manifest = (fetch_fixtures_manifest or "").strip()
-    if not manifest:
-        return default_fetch
-
-    manifest_path = Path(manifest)
-
-    def _fixture_fetch(url: str) -> bytes:
-        return _fetch_from_fixture_manifest(url, manifest_path)
-
-    return _fixture_fetch
-
-
-def _fetch_from_fixture_manifest(url: str, manifest_path: Path) -> bytes:
-    """Resolve *url* to local fixture bytes via a ``{url: file_path}`` manifest."""
-
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    file_path = manifest.get(url)
-    if not file_path:
-        raise RuntimeError(f"No fixture registered for URL {url!r} in {manifest_path}")
-    return Path(file_path).read_bytes()
+    fixture_fetch = resolve_fixture_fetch(fetch_fixtures_manifest)
+    if fixture_fetch is not None:
+        return fixture_fetch
+    return default_fetch
 
 
 def _item_datasheet_name(item: InventoryItem, *, name_column: str) -> str:

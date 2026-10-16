@@ -62,6 +62,23 @@ def _set_check_urls_value(context, key: str, value: Any) -> None:
     _write_common_profile(context, data)
 
 
+def _enable_fetch_fixtures_allow(context) -> None:
+    """Permit the test-only fixtures gate for this scenario's CLI subprocess.
+
+    jBOM#372 requires ``JBOM_ALLOW_FETCH_FIXTURES`` before any
+    ``fetch_fixtures_manifest`` profile key is honored. Production-like
+    scenarios that deliberately omit this env prove the gate refuses loudly.
+    """
+
+    from jbom.common.fetch_fixtures import ALLOW_FETCH_FIXTURES_ENV
+
+    mock_env = getattr(context, "mock_env", None)
+    if mock_env is None:
+        mock_env = {}
+        context.mock_env = mock_env
+    mock_env[ALLOW_FETCH_FIXTURES_ENV] = "1"
+
+
 def _fixture_manifest_path(context) -> Path:
     """Return this scenario's fixture manifest path, creating it if needed."""
 
@@ -69,6 +86,7 @@ def _fixture_manifest_path(context) -> Path:
     if not manifest_path.is_file():
         manifest_path.write_text("{}", encoding="utf-8")
         _set_check_urls_value(context, "fetch_fixtures_manifest", str(manifest_path))
+        _enable_fetch_fixtures_allow(context)
     return manifest_path
 
 
@@ -96,6 +114,16 @@ def given_a_check_urls_fixture_manifest(context) -> None:
     """
 
     _fixture_manifest_path(context)
+
+
+@given("a user profile sets check_urls fetch_fixtures_manifest without the allow env")
+def given_user_profile_check_urls_fixtures_without_allow(context) -> None:
+    """Production-like profile: fixtures key set, allow env deliberately omitted."""
+
+    manifest_path = Path(context.sandbox_root) / "_rogue_check_urls_fixtures.json"
+    manifest_path.write_text("{}", encoding="utf-8")
+    _set_check_urls_value(context, "fetch_fixtures_manifest", str(manifest_path))
+    # Intentionally do NOT call _enable_fetch_fixtures_allow.
 
 
 @given('the check-urls URL "{url}" resolves to a PDF')

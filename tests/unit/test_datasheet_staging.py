@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from jbom.common.types import InventoryItem
 from jbom.config.defaults import DefaultsConfig
 from jbom.services.datasheet_staging import (
@@ -332,8 +334,11 @@ class TestStageDatasheetUrl:
         assert staging_dir.is_dir()
 
     def test_fixture_manifest_resolves_bytes_without_a_fetch_callable(
-        self, tmp_path: Path
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        from jbom.common.fetch_fixtures import ALLOW_FETCH_FIXTURES_ENV
+
+        monkeypatch.setenv(ALLOW_FETCH_FIXTURES_ENV, "1")
         pdf_file = tmp_path / "fixture.pdf"
         pdf_file.write_bytes(_PDF_BYTES)
         manifest_path = tmp_path / "manifest.json"
@@ -348,6 +353,27 @@ class TestStageDatasheetUrl:
         )
 
         assert outcome.status == "verified"
+
+    def test_fixture_manifest_without_allow_env_fails_loudly(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from jbom.common.fetch_fixtures import (
+            ALLOW_FETCH_FIXTURES_ENV,
+            FetchFixturesNotAllowedError,
+        )
+
+        monkeypatch.delenv(ALLOW_FETCH_FIXTURES_ENV, raising=False)
+        manifest_path = tmp_path / "manifest.json"
+        manifest_path.write_text("{}", encoding="utf-8")
+
+        with pytest.raises(
+            FetchFixturesNotAllowedError, match=ALLOW_FETCH_FIXTURES_ENV
+        ):
+            stage_datasheet_url(
+                "https://example.com/docs/lm358.pdf",
+                staging_dir=tmp_path / "staging",
+                fetch_fixtures_manifest=str(manifest_path),
+            )
 
 
 class TestStageDatasheetUrls:

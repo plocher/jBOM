@@ -1054,23 +1054,65 @@ def test_check_urls_never_calls_audit_service(tmp_path: Path) -> None:
 def test_check_urls_never_touches_network_without_fixtures(
     tmp_path: Path, monkeypatch
 ) -> None:
-    """No fixture manifest configured -> default_fetch would touch the network;
-    assert it is simply never called for a catalog with no Datasheet URLs.
+    """No fixture manifest configured -> default_fetch is the resolved path.
+
+    Uses a populated Datasheet URL so the recovery ladder actually invokes
+    fetch; a vacuous empty-URL row would pass regardless of the guard
+    (jBOM#372). The patched default_fetch records the call and fails offline
+    so the ladder never needs a real network.
     """
     cat = tmp_path / "catalog.csv"
-    cat.write_text("RowType,IPN,Category,Datasheet\nITEM,R001,RES,\n", encoding="utf-8")
+    cat.write_text(
+        "RowType,IPN,Category,Datasheet\n"
+        "ITEM,R001,RES,https://example.com/docs/r001.pdf\n",
+        encoding="utf-8",
+    )
 
-    def _explode(_url: str) -> bytes:
-        raise AssertionError("must never touch the network in tests")
+    calls: list[str] = []
+
+    def _tracking(url: str, **_kwargs) -> bytes:
+        calls.append(url)
+        raise RuntimeError("simulated offline")
 
     monkeypatch.setattr(
-        "jbom.services.datasheet_url_upgrade_report.default_fetch", _explode
+        "jbom.services.datasheet_url_upgrade_report.default_fetch", _tracking
     )
 
     args = _make_args(inputs=[str(cat)], check_urls=True)
     result = handle_audit(args)
 
     assert result == 0
+    assert calls == ["https://example.com/docs/r001.pdf"]
+
+
+def test_check_urls_fixtures_without_allow_env_fail_loudly(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """Profile key alone must not activate fixtures (jBOM#372)."""
+    from jbom.common.fetch_fixtures import ALLOW_FETCH_FIXTURES_ENV
+    from jbom.config.defaults import DefaultsConfig
+
+    monkeypatch.delenv(ALLOW_FETCH_FIXTURES_ENV, raising=False)
+    cat = tmp_path / "catalog.csv"
+    cat.write_text(
+        "RowType,IPN,Category,Datasheet\n"
+        "ITEM,R001,RES,https://example.com/docs/r001.pdf\n",
+        encoding="utf-8",
+    )
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text("{}", encoding="utf-8")
+
+    cfg = DefaultsConfig.model_validate(
+        {"check_urls": {"fetch_fixtures_manifest": str(manifest)}}
+    )
+    monkeypatch.setattr(
+        "jbom.cli.audit.get_defaults",
+        lambda *args, **kwargs: cfg,
+    )
+
+    args = _make_args(inputs=[str(cat)], check_urls=True)
+    result = handle_audit(args)
+    assert result == 1
 
 
 def test_check_urls_with_inventory_flag_returns_1(tmp_path: Path) -> None:
