@@ -91,6 +91,34 @@ jbom search "10k 0603" --supplier lcsc --clear-cache # delete cached results and
 - **Rate limiting**: Aggressive polling will trigger throttling. The 2s default is
   intentional. Do not reduce `rate_limit_seconds` below 1.0.
 
+
+## Optional BOM `cost` field (bulk-break unit price)
+
+When generating a BOM, request the optional `cost` field via `--fields`:
+
+```bash
+jbom bom . --jlc --inventory parts.csv -f "+default,cost" -o bom.csv
+```
+
+Behavior (charter Q5 / issue #381):
+
+- **Identity**: an LCSC C-number already on the BOM row (`lcsc`, fabricator
+  part number, or SPN that looks like `C12345`). No identity → empty cost.
+- **Price source**: JLCPCB live parts API `componentPrices` breaks via the
+  existing LCSC provider path.
+- **Bulk default**: unit price at the **qty-50 bulk class** (largest break
+  quantity `<= 50`), not the inflated qty-1 sticker price. The selector
+  lives in `src/jbom/suppliers/lcsc/pricing.py`
+  (`DEFAULT_BULK_BREAK_QTY = 50`; qty-20 class is the same selector with
+  `target_qty=20`).
+- **Soft-fail**: lookup/network failures leave `cost` empty; the BOM still
+  succeeds. Cost is **not** written back to inventory.
+- **Not KiCost**: single-supplier bulk unit price only — no multi-supplier
+  comparison and no currency UI.
+
+Offline fixtures for the multi-break ladder live under
+`tests/fixtures/lcsc/price_breaks_bulk_c25804.json`.
+
 ## Related
 
 - [ADR 0002: JLCPCB/LCSC provider](../architecture/adr/0002-jlcpcb-lcsc-provider.md) —

@@ -336,6 +336,8 @@ unchanged. Families with zero URLs or conflicting distinct URLs emit blank
   regardless of whether a fabricator was explicitly selected. Use `-q/--quiet` to
   suppress it; stdout CSV output is unaffected either way.
 
+
+: Optional `cost` is the LCSC/JLC bulk-break unit price (qty-50 class by default). See `docs/reference/lcsc-provider.md`.
 **--list-fields**
 : List available fields and presets, then exit (no project needed).
 
@@ -1136,6 +1138,8 @@ jbom annotate ./my_project --normalize
 ```
 
 ## FIELDS
+
+Optional computed field **`cost`**: LCSC/JLC bulk-break unit price (default qty-50 class, not qty-1). Request with `-f cost` or `-f "+default,cost"`. Empty when the row has no LCSC C-number or the lookup fails; the BOM still succeeds. See [LCSC provider](lcsc-provider.md#optional-bom-cost-field-bulk-break-unit-price).
 
 Use `--list-fields` to see the complete list. Common fields include:
 
